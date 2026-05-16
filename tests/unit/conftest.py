@@ -3,14 +3,13 @@ from unittest.mock import MagicMock
 
 import pytest
 
-# Mock circular dependencies for all unit tests
-# Many sensor modules import from common.types which causes issues in standalone tests
-mock_types = MagicMock()
-
-
 from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.i18n import _t
 from sigenergy2mqtt.persistence import state_store
+
+# Mock circular dependencies for all unit tests
+# Many sensor modules import from common.types which causes issues in standalone tests
+mock_types = MagicMock()
 
 
 class MockHybridInverter:
@@ -46,13 +45,9 @@ def mock_persistence_defaults(monkeypatch):
 
 @pytest.fixture(autouse=True)
 def reset_state_store():
-    """Ensure StateStore is clean before each test."""
-    import traceback
-
-    traceback.print_stack()
-    state_store.shutdown()
+    """Ensure StateStore is shut down after each test to prevent side effects."""
     yield
-    import traceback
-
-    traceback.print_stack()
-    state_store.shutdown()
+    try:
+        state_store.shutdown()
+    except Exception:
+        pass

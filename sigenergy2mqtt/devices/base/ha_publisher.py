@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import abc
 import asyncio
 import json
@@ -34,7 +36,7 @@ class HaPublisherMixin(abc.ABC):
 
     # Plain attributes provided by the concrete class.
     name: str
-    children: list["Device"]
+    children: list[Device]
     _shutdown_event: asyncio.Event
 
     # Properties and methods that must be implemented by the concrete class.

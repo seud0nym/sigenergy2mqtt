@@ -15,8 +15,9 @@ from typing import TYPE_CHECKING, Any, Deque, cast
 import paho.mqtt.client as mqtt
 from pymodbus.pdu import ExceptionResponse
 
-from sigenergy2mqtt.common import DeviceClass, Protocol, RegisterAccess, StateClass
+from sigenergy2mqtt.common import DeviceClass, Protocol, StateClass
 from sigenergy2mqtt.config import active_config
+from sigenergy2mqtt.config.models import RegisterAccess
 from sigenergy2mqtt.i18n import _t
 from sigenergy2mqtt.metrics import Metrics
 from sigenergy2mqtt.modbus import ModbusClient, ModbusDataType
@@ -907,7 +908,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
                 logging.debug(f"{self.log_identity} Published  state={payload} to topic {topic} result={message.rc}")
         else:
             logging.warning(f"{self.log_identity} Failed to publish state={payload} to topic {topic} result={message.rc}")
-        return bool(message.is_published())
+        return message.is_published()
 
     async def _publish_derived_sensors(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool) -> None:
         """Publish all derived sensors.

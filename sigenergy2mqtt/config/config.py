@@ -30,7 +30,7 @@ from contextlib import contextmanager
 from copy import deepcopy
 from io import StringIO
 from pathlib import Path
-from typing import Any, Generator
+from typing import TYPE_CHECKING, Any, Generator
 
 from ruamel.yaml import YAML
 
@@ -64,8 +64,22 @@ class Config:
     origin: dict[str, str] = {"name": "sigenergy2mqtt", "sw": version.__version__, "url": "https://github.com/seud0nym/sigenergy2mqtt"}
     persistent_state_path: Path
 
+    validate_only_mode: str | None = None
+    validate_show_credentials: bool = False
+
     _settings: Settings | None
     _source: str | None
+
+    if TYPE_CHECKING:
+        from sigenergy2mqtt.common import ConsumptionMethod
+        from sigenergy2mqtt.config.settings import (
+            HomeAssistantConfig,
+            InfluxDbConfig,
+            ModbusConfig,
+            MqttConfig,
+            PersistenceConfig,
+            PvOutputConfig,
+        )
 
     def __init__(self):
         self._source = None
@@ -80,6 +94,242 @@ class Config:
             self.reload(skip_auto_discovery=True)
         except Exception:
             pass
+
+    @property
+    def log_level(self) -> int:
+        return self._settings.log_level if self._settings else logging.WARNING
+
+    @log_level.setter
+    def log_level(self, value: int):
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        self._settings.log_level = value
+
+    @log_level.deleter
+    def log_level(self):
+        pass
+
+    @property
+    def language(self) -> str:
+        return self._settings.language if self._settings else "en"
+
+    @language.setter
+    def language(self, value: str):
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        self._settings.language = value
+
+    @language.deleter
+    def language(self):
+        pass
+
+    @property
+    def consumption(self) -> ConsumptionMethod:
+        from sigenergy2mqtt.common import ConsumptionMethod
+
+        return self._settings.consumption if self._settings else ConsumptionMethod.TOTAL
+
+    @consumption.setter
+    def consumption(self, value: ConsumptionMethod):
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        self._settings.consumption = value
+
+    @consumption.deleter
+    def consumption(self):
+        pass
+
+    @property
+    def repeated_state_publish_interval(self) -> int:
+        return self._settings.repeated_state_publish_interval if self._settings else 0
+
+    @repeated_state_publish_interval.setter
+    def repeated_state_publish_interval(self, value: int):
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        self._settings.repeated_state_publish_interval = value
+
+    @repeated_state_publish_interval.deleter
+    def repeated_state_publish_interval(self):
+        pass
+
+    @property
+    def sanity_check_default_kw(self) -> float:
+        return self._settings.sanity_check_default_kw if self._settings else 500.0
+
+    @sanity_check_default_kw.setter
+    def sanity_check_default_kw(self, value: float):
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        self._settings.sanity_check_default_kw = value
+
+    @sanity_check_default_kw.deleter
+    def sanity_check_default_kw(self):
+        pass
+
+    @property
+    def sanity_check_failures_increment(self) -> bool:
+        return self._settings.sanity_check_failures_increment if self._settings else False
+
+    @sanity_check_failures_increment.setter
+    def sanity_check_failures_increment(self, value: bool):
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        self._settings.sanity_check_failures_increment = value
+
+    @sanity_check_failures_increment.deleter
+    def sanity_check_failures_increment(self):
+        pass
+
+    @property
+    def ems_mode_check(self) -> bool:
+        return self._settings.ems_mode_check if self._settings else True
+
+    @ems_mode_check.setter
+    def ems_mode_check(self, value: bool):
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        self._settings.ems_mode_check = value
+
+    @ems_mode_check.deleter
+    def ems_mode_check(self):
+        pass
+
+    @property
+    def metrics_enabled(self) -> bool:
+        return self._settings.metrics_enabled if self._settings else True
+
+    @metrics_enabled.setter
+    def metrics_enabled(self, value: bool):
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        self._settings.metrics_enabled = value
+
+    @metrics_enabled.deleter
+    def metrics_enabled(self):
+        pass
+
+    @property
+    def sensor_debug_logging(self) -> bool:
+        return self._settings.sensor_debug_logging if self._settings else False
+
+    @sensor_debug_logging.setter
+    def sensor_debug_logging(self, value: bool):
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        self._settings.sensor_debug_logging = value
+
+    @sensor_debug_logging.deleter
+    def sensor_debug_logging(self):
+        pass
+
+    @property
+    def home_assistant(self) -> HomeAssistantConfig:
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        return self._settings.home_assistant
+
+    @home_assistant.setter
+    def home_assistant(self, value: HomeAssistantConfig):
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        self._settings.home_assistant = value
+
+    @home_assistant.deleter
+    def home_assistant(self):
+        pass
+
+    @property
+    def mqtt(self) -> MqttConfig:
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        return self._settings.mqtt
+
+    @mqtt.setter
+    def mqtt(self, value: MqttConfig):
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        self._settings.mqtt = value
+
+    @mqtt.deleter
+    def mqtt(self):
+        pass
+
+    @property
+    def persistence(self) -> PersistenceConfig:
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        return self._settings.persistence
+
+    @persistence.setter
+    def persistence(self, value: PersistenceConfig):
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        self._settings.persistence = value
+
+    @persistence.deleter
+    def persistence(self):
+        pass
+
+    @property
+    def pvoutput(self) -> PvOutputConfig:
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        return self._settings.pvoutput
+
+    @pvoutput.setter
+    def pvoutput(self, value: PvOutputConfig):
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        self._settings.pvoutput = value
+
+    @pvoutput.deleter
+    def pvoutput(self):
+        pass
+
+    @property
+    def influxdb(self) -> InfluxDbConfig:
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        return self._settings.influxdb
+
+    @influxdb.setter
+    def influxdb(self, value: InfluxDbConfig):
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        self._settings.influxdb = value
+
+    @influxdb.deleter
+    def influxdb(self):
+        pass
+
+    @property
+    def modbus(self) -> list[ModbusConfig]:
+        return self._settings.modbus if self._settings else []
+
+    @modbus.setter
+    def modbus(self, value: list[ModbusConfig]):
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        self._settings.modbus = value
+
+    @modbus.deleter
+    def modbus(self):
+        pass
+
+    @property
+    def sensor_overrides(self) -> dict[str, Any]:
+        return self._settings.sensor_overrides if self._settings else {}
+
+    @sensor_overrides.setter
+    def sensor_overrides(self, value: dict[str, Any]):
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        self._settings.sensor_overrides = value
+
+    @sensor_overrides.deleter
+    def sensor_overrides(self):
+        pass
 
     @property
     def version(self) -> str:
@@ -189,12 +439,12 @@ class Config:
         auto_discovery = os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY)
         auto_discovery_cache = Path(self.persistent_state_path, "auto-discovery.yaml")
         auto_settings = self._load_auto_discovery_settings()
-        
+
         if auto_settings.modbus_auto_discovery:
             auto_discovery = auto_settings.modbus_auto_discovery
         if not auto_discovery and not self._has_modbus_source():
             auto_discovery = "once"
-            
+
         return auto_discovery, auto_discovery_cache, auto_settings
 
     def _should_run_discovery(self, auto_discovery, auto_discovery_cache) -> bool:
@@ -212,6 +462,7 @@ class Config:
     def _restore_discovery_from_mqtt_sync(self, auto_discovery_cache: Path):
         try:
             from sigenergy2mqtt.persistence import state_store
+
             if state_store.is_initialised:
                 cached = state_store.load_sync(Category.CONFIG, "auto-discovery")
                 if cached:
@@ -223,6 +474,7 @@ class Config:
     async def _restore_discovery_from_mqtt_async(self, auto_discovery_cache: Path):
         try:
             from sigenergy2mqtt.persistence import state_store
+
             if state_store.is_initialised:
                 cached = await state_store.load(Category.CONFIG, "auto-discovery")
                 if cached:
@@ -236,6 +488,7 @@ class Config:
         auto_discovery_cache.write_text(yaml_content)
         try:
             from sigenergy2mqtt.persistence import state_store
+
             if state_store.is_initialised:
                 state_store.save_sync(Category.CONFIG, "auto-discovery", yaml_content)
         except Exception:
@@ -246,6 +499,7 @@ class Config:
         auto_discovery_cache.write_text(yaml_content)
         try:
             from sigenergy2mqtt.persistence import state_store
+
             if state_store.is_initialised:
                 await state_store.save(Category.CONFIG, "auto-discovery", yaml_content)
         except Exception:
@@ -436,6 +690,7 @@ class Config:
 
         # Fallback: if we are in a loop but must be sync, use a thread to avoid deadlock.
         import threading
+
         result: list = []
         exception: Exception | None = None
 
@@ -460,8 +715,24 @@ class Config:
     def __getattr__(self, name: str) -> Any:
         if name == "_settings":
             raise AttributeError("_settings not initialised")
+        if self._settings is None:
+            raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}' (settings not loaded)")
         # Fall through to settings for all data attributes
-        return getattr(self._settings, name)
+        try:
+            return getattr(self._settings, name)
+        except AttributeError:
+            raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'") from None
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        if name.startswith("_") or name in ("persistent_state_path", "clean", "validate_only_mode", "validate_show_credentials"):
+            super().__setattr__(name, value)
+            return
+
+        # Delegate to settings if it's a known field
+        if self._settings and name in type(self._settings).model_fields:
+            setattr(self._settings, name, value)
+        else:
+            super().__setattr__(name, value)
 
     def __str__(self) -> str:
         """Return the current configuration as nicely formatted YAML.
@@ -688,4 +959,7 @@ def _swap_active_config(new_config: Config) -> Generator[Config, None, None]:
 _system_initialize()
 
 # Global singleton — the authoritative configuration instance at runtime.
-active_config = _ConfigProxy(Config())
+if TYPE_CHECKING:
+    active_config = Config()
+else:
+    active_config = _ConfigProxy(Config())

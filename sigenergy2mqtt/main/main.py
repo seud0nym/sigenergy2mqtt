@@ -654,21 +654,31 @@ def setup_signals(configs: list[ThreadConfig]) -> None:
         for config in configs:
             config.offline()
 
-    def reload_on_signal():
+    def reload_on_signal(caught=None, frame=None):
         """Handle SIGHUP by reloading config/logging and requesting restart."""
         logging.info("Signal SIGHUP received - Reloading configuration")
-        asyncio.create_task(active_config.reload_async())
+        try:
+            active_config.reload()
+        except Exception as e:
+            logging.error(f"SIGHUP reload failed: {e}")
+
         restart_controller.request("signal SIGHUP")
 
-    loop = asyncio.get_running_loop()
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+
     signal.signal(signal.SIGINT, exit_on_signal)
     signal.signal(signal.SIGTERM, exit_on_signal)
     signal.signal(signal.SIGUSR1, configure_for_restart)
-    try:
-        loop.add_signal_handler(signal.SIGHUP, reload_on_signal)
-    except NotImplementedError:
-        # Fallback for platforms without add_signal_handler (e.g. Windows, though this is Linux)
-        signal.signal(signal.SIGHUP, lambda s, f: asyncio.run_coroutine_threadsafe(active_config.reload_async(), loop))
+    signal.signal(signal.SIGHUP, reload_on_signal)
+
+    if loop:
+        try:
+            loop.add_signal_handler(signal.SIGHUP, reload_on_signal)
+        except (NotImplementedError, AttributeError):
+            pass
 
 
 # ---------------------------------------------------------------------------

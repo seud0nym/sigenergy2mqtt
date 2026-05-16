@@ -889,7 +889,7 @@ class TestSignals:
             main_mod.setup_signals([MagicMock()])
             handler = [call.args[1] for call in mock_sig.call_args_list if call.args[0] == signal.SIGHUP][0]
             handler(signal.SIGHUP, None)
-            assert not mock_reload.called
+            mock_reload.assert_called_once()
             mock_request.assert_called_once()
 
 
@@ -1022,7 +1022,19 @@ async def test_async_main_sighup_reload_suppresses_ha_during_restart(clean_confi
     active_config.modbus.extend([mock_device])
 
     handlers = {}
-    monkeypatch.setattr(signal, "signal", lambda sig, h: handlers.update({sig: h}))
+
+    def mock_signal(sig, h):
+        handlers.update({sig: h})
+
+    monkeypatch.setattr(signal, "signal", mock_signal)
+
+    loop = asyncio.get_running_loop()
+
+    def mock_add_handler(sig, h, *args):
+        handlers.update({sig: h})
+        # We don't call original to avoid actual signal registration in test
+
+    monkeypatch.setattr(loop, "add_signal_handler", mock_add_handler)
 
     calls = {"count": 0}
 
@@ -1034,7 +1046,7 @@ async def test_async_main_sighup_reload_suppresses_ha_during_restart(clean_confi
             def _reload():
                 active_config.home_assistant.enabled = True
 
-            with patch.object(active_config, "reload", side_effect=_reload):
+            with patch("sigenergy2mqtt.config.config.Config.reload", side_effect=_reload):
                 handlers[signal.SIGHUP](signal.SIGHUP, None)
 
             assert active_config.home_assistant.enabled is False
@@ -1046,6 +1058,7 @@ async def test_async_main_sighup_reload_suppresses_ha_during_restart(clean_confi
     mock_plant.sensors = {f"{active_config.home_assistant.unique_id_prefix}_0_247_40029": MagicMock()}
     mock_inverter = MagicMock(unique_id="i_uid", device_address=1, name="Inverter")
     monkeypatch.setattr(main_mod, "make_plant_and_inverter", AsyncMock(return_value=(mock_inverter, mock_plant)))
+    monkeypatch.setattr(main_mod, "initialize_with_persistence", AsyncMock())
 
     active_config.home_assistant.enabled = True
     await main_mod.async_main()

@@ -69,6 +69,7 @@ def test_publish_and_attributes():
 async def test_publish_state_calls_mqtt():
     mqtt = Mock()
     mqtt.publish = Mock()
+    mqtt.publish.return_value.is_published.return_value = True
 
     s = base.DerivedSensor(name="d2", unique_id="sigen_y", object_id="sigen_obj2", data_type=ModbusDataType.UINT16, unit=None, device_class=None, state_class=None, icon="mdi:test", gain=None, precision=None)
     s.configure_mqtt_topics("dev2")

@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import secrets
 import string
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -20,7 +20,7 @@ class MqttConfig(BaseModel):
     retry_delay: int = Field(30)
     tls: bool = Field(False, alias="tls")
     tls_insecure: bool = Field(False, alias="tls-insecure")
-    transport: str = Field("tcp", alias="transport", pattern=r"^(tcp|websockets)$")
+    transport: Literal["tcp", "websockets"] = Field("tcp", alias="transport")
     anonymous: bool = Field(False, alias="anonymous")
     username: Optional[str] = Field(None, alias="username")
     password: Optional[str] = Field(None, alias="password")
