@@ -16,7 +16,8 @@
 - Simplified `set_source_values` method signature across sensor classes
 - Restored debug guard for monitor topic update tracking
 - AC Chargers not connected to backup circuit caused startup to fail during a grid outage, so they are now skipped and will be retried when the grid restores
-- Upgraded `pydantic-settings` to 2.14.1 and `requests` to 2.34.0
+- Upgraded `pydantic-settings` to 2.14.1 
+- Upgraded `requests` to 2.34.2
 - Aligned zlib remediation with targeted package patch style in Dockerfile
 - Derived sensors now declare source dependencies via constructor injection
 
