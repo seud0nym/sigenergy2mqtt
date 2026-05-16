@@ -19,6 +19,8 @@ For testing, use :func:`_swap_active_config` to temporarily replace the global::
         ...
 """
 
+from __future__ import annotations
+
 import asyncio
 import ipaddress
 import logging
