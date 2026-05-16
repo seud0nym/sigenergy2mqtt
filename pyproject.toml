@@ -45,7 +45,7 @@ path = "sigenergy2mqtt/config/version.py"
 
 [tool.pyrefly]
 project-excludes = [".git", ".venv", "tests"]
-search-path = [".venv/lib/python3.14/site-packages"]
+search-path = ["./sigenergy2mqtt", ".venv/lib/python3.14/site-packages"]
 
 [tool.pyright]
 exclude = [".git", ".venv", "tests"]

@@ -967,6 +967,7 @@ async def run_async_server(
         [s for s in sensors.values() if hasattr(s, "address") and s["platform"] != "button" and not hasattr(s, "alarms")],
         key=lambda x: (x.device_address, x.address),
     )
+    devices: dict[int, str] = {}
     for sensor in sorted_sensors:
         if (
             device_address != sensor.device_address
@@ -983,6 +984,8 @@ async def run_async_server(
         count = sensor.count
         device_address = sensor.device_address
         input_type = sensor.input_type
+        if device_address not in devices:
+            devices[device_address] = sensor.parent_device.name
 
     if modbus_client is not None:
         await prepopulate(modbus_client, groups)
@@ -1000,10 +1003,13 @@ async def run_async_server(
             context[sensor.device_address].add_sensor(sensor)
     _logger.info("Data blocks created:")
     for device_address, data_block in context.items():
-        _logger.info(f"  Device {device_address}: {len(data_block.addresses)} addresses")
+        _logger.info(f"  Device {device_address:>3}: {devices[device_address]} ({len(data_block.addresses)} addresses)")
 
     _logger.info("Building SimDevice objects...")
     sim_devices: list[SimDevice] = [block.build_sim_device() for block in context.values()]
+    # Add a dummy catch-all device at ID 0 to prevent pymodbus simulator crashes
+    # when it tries to fall back to ID 0 for unknown unit IDs (e.g. during auto-discovery).
+    sim_devices.append(SimDevice(id=0, simdata=[SimData(0, datatype=DataType.REGISTERS, values=[0])]))
 
     try:
         with open("/app/build_date.txt", "r") as f:
