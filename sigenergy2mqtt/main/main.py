@@ -140,7 +140,7 @@ async def get_state(
     - Emits debug logs for successful reads and caught failures.
     """
     try:
-        state = await sensor.get_state(raw=raw, modbus_client=modbus_client)
+        state = await sensor.get_state(raw=raw, modbus_client=modbus_client, skip_failure_logging=True)
         logging.debug(
             f"READING {get_modbus_url(modbus_client)} - Acquiring {sensor.__class__.__name__} {'raw ' if raw else ''}{state=} to initialise {device} (idx={sensor.plant_index} id={sensor.device_address} addr={sensor.address})"
         )

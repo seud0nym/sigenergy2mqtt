@@ -148,7 +148,7 @@ class ModbusSensorMixin(SensorDebuggingMixin):
         self.plant_index = plant_index
         self.refresh_log_identity()
 
-    def _check_register_response(self, rr: ModbusPDU | None, source: str) -> bool:
+    def _check_register_response(self, rr: ModbusPDU | None, source: str, **kwargs) -> bool:
         """Check and handle Modbus register response.
 
         Args:
@@ -175,56 +175,74 @@ class ModbusSensorMixin(SensorDebuggingMixin):
         exc_code = rr.exception_code
 
         if exc_code == self.ExceptionCode.ILLEGAL_FUNCTION:
-            self._handle_illegal_function(source, rr)
+            self._handle_illegal_function(source, rr, **kwargs)
         elif exc_code == self.ExceptionCode.ILLEGAL_DATA_ADDRESS:
-            self._handle_illegal_data_address(source, rr)
+            self._handle_illegal_data_address(source, rr, **kwargs)
         elif exc_code == self.ExceptionCode.ILLEGAL_DATA_VALUE:
-            self._handle_illegal_data_value(source, rr)
+            self._handle_illegal_data_value(source, rr, **kwargs)
         elif exc_code == self.ExceptionCode.SLAVE_DEVICE_FAILURE:
-            self._handle_slave_device_failure(source, rr)
+            self._handle_slave_device_failure(source, rr, **kwargs)
         else:
             self._handle_unknown_exception(source, rr)
 
         return False
 
-    def _handle_illegal_function(self, source: str, rr: ModbusPDU) -> None:
+    def _handle_illegal_function(self, source: str, rr: ModbusPDU, **kwargs) -> None:
         """Handle illegal function exception."""
-        logging.error(f"{self.log_identity} Modbus {source} returned 0x01 ILLEGAL FUNCTION")
+        logging.log(
+            logging.ERROR if "skip_failure_logging" not in kwargs or not kwargs["skip_failure_logging"] else logging.DEBUG,
+            f"{self.log_identity} Modbus {source} returned 0x01 ILLEGAL FUNCTION",
+        )
         if self.debug_logging:
             logging.debug(rr)
         raise Exception("0x01 ILLEGAL FUNCTION")
 
-    def _handle_illegal_data_address(self, source: str, rr: ModbusPDU) -> None:
+    def _handle_illegal_data_address(self, source: str, rr: ModbusPDU, **kwargs) -> None:
         """Handle illegal data address exception."""
-        logging.error(f"{self.log_identity} Modbus {source} returned 0x02 ILLEGAL DATA ADDRESS")
+        logging.log(
+            logging.ERROR if "skip_failure_logging" not in kwargs or not kwargs["skip_failure_logging"] else logging.DEBUG,
+            logging.error(f"{self.log_identity} Modbus {source} returned 0x02 ILLEGAL DATA ADDRESS"),
+        )
         if self.debug_logging:
             logging.debug(rr)
 
         # Disable retries for invalid addresses on read operations
         if source != "write_registers":
-            logging.warning(f"{self.log_identity} Setting max allowed failures to 0 for '{self.unique_id}' because of ILLEGAL DATA ADDRESS exception")
+            logging.log(
+                logging.WARNING if "skip_failure_logging" not in kwargs or not kwargs["skip_failure_logging"] else logging.DEBUG,
+                f"{self.log_identity} Setting max allowed failures to 0 for '{self.unique_id}' because of ILLEGAL DATA ADDRESS exception",
+            )
             self._max_failures = 0
             self._max_failures_retry_interval = 0
 
         raise Exception("0x02 ILLEGAL DATA ADDRESS")
 
-    def _handle_illegal_data_value(self, source: str, rr: ModbusPDU) -> None:
+    def _handle_illegal_data_value(self, source: str, rr: ModbusPDU, **kwargs) -> None:
         """Handle illegal data value exception."""
-        logging.error(f"{self.log_identity} Modbus {source} returned 0x03 ILLEGAL DATA VALUE")
+        logging.log(
+            logging.ERROR if "skip_failure_logging" not in kwargs or not kwargs["skip_failure_logging"] else logging.DEBUG,
+            f"{self.log_identity} Modbus {source} returned 0x03 ILLEGAL DATA VALUE",
+        )
         if self.debug_logging:
             logging.debug(rr)
         raise Exception("0x03 ILLEGAL DATA VALUE")
 
-    def _handle_slave_device_failure(self, source: str, rr: ModbusPDU) -> None:
+    def _handle_slave_device_failure(self, source: str, rr: ModbusPDU, **kwargs) -> None:
         """Handle slave device failure exception."""
-        logging.error(f"{self.log_identity} Modbus {source} returned 0x04 SLAVE DEVICE FAILURE")
+        logging.log(
+            logging.ERROR if "skip_failure_logging" not in kwargs or not kwargs["skip_failure_logging"] else logging.DEBUG,
+            f"{self.log_identity} Modbus {source} returned 0x04 SLAVE DEVICE FAILURE",
+        )
         if self.debug_logging:
             logging.debug(rr)
         raise Exception("0x04 SLAVE DEVICE FAILURE")
 
-    def _handle_unknown_exception(self, source: str, rr: ModbusPDU) -> None:
+    def _handle_unknown_exception(self, source: str, rr: ModbusPDU, **kwargs) -> None:
         """Handle unknown exception."""
-        logging.error(f"{self.log_identity} Modbus {source} returned {rr}")
+        logging.log(
+            logging.ERROR if "skip_failure_logging" not in kwargs or not kwargs["skip_failure_logging"] else logging.DEBUG,
+            f"{self.log_identity} Modbus {source} returned {rr}",
+        )
         raise Exception(rr)
 
 

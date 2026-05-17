@@ -85,12 +85,13 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
             raise ValueError(f"{self.log_identity}: Required argument 'modbus_client' not supplied")
 
         modbus_client: ModbusClient = kwargs["modbus_client"]
+        kwargs.pop("modbus_client")
 
         if self.debug_logging:
             self._log_read_attempt()
 
         try:
-            return await self._perform_modbus_read(modbus_client)
+            return await self._perform_modbus_read(modbus_client, **kwargs)
         except asyncio.CancelledError:
             logging.warning(f"{self.log_identity} Modbus read interrupted")
             return False
@@ -113,7 +114,7 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
             f"actual={actual_interval}"
         )
 
-    async def _perform_modbus_read(self, modbus_client: ModbusClient) -> bool:
+    async def _perform_modbus_read(self, modbus_client: ModbusClient, **kwargs) -> bool:
         """Perform the actual Modbus read operation.
 
         Args:
@@ -138,7 +139,7 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
         await Metrics.modbus_read(self.count, elapsed)
 
         # Check response validity
-        result = self._check_register_response(rr, f"read_{self.input_type}_registers")
+        result = self._check_register_response(rr, f"read_{self.input_type}_registers", **kwargs)
 
         if result and rr:
             # Convert registers to value and update state
