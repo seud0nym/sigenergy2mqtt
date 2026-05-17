@@ -208,8 +208,26 @@ def apply_modbus_env_override(
                 break
 
     base = _flatten_modbus(modbus_list[idx])
-    base.update(override)
-
+    
+    # Merge non-device-ID fields from override
+    base.update(
+        {
+            k: v
+            for k, v in override.items()
+            if k not in (*_DEVICE_ID_KEYS, *_DEVICE_ID_KEYS_SNAKE)
+        }
+    )
+    
+    # Union device IDs
+    for dk in _DEVICE_ID_KEYS:
+        sk = dk.replace("-", "_")
+        base_ids = base.get(dk, base.get(sk, []))
+        overlay_ids = override.get(dk, override.get(sk, []))
+        if base_ids or overlay_ids:
+            base[dk] = _union_device_ids(base_ids or [], overlay_ids or [])
+            if sk != dk:
+                base.pop(sk, None)
+                
     result = list(modbus_list)
     result[idx] = ModbusConfig(**base)
     return result

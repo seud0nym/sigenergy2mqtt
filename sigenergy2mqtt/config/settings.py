@@ -161,7 +161,7 @@ class Settings(BaseSettings):
                 val = data.pop(negated_key)
                 if val is not None:
                     if positive_field not in data:
-                        bool_val = _bool(str(val)) if isinstance(val, str) else bool(val)
+                        bool_val = _bool(str(val)) if isinstance(val, str) else bool(val)  # pyrefly: ignore
                         data[positive_field] = not bool_val
 
         # 2. Merge YAML/kebab keys into their snake_case field names
@@ -229,6 +229,14 @@ class Settings(BaseSettings):
         discovery = self.discovery_modbus
         env_override = self.modbus_env_override
 
+        # Identify initially configured hosts (file/env/cli)
+        file_env_hosts = {f"{m.host}:{m.port}" for m in self.modbus if m.host}
+        blank_ports = {m.port for m in self.modbus if not m.host}
+        if env_override and env_override.get("host"):
+            file_env_hosts.add(f"{env_override.get('host')}:{env_override.get('port', 502)}")
+
+        discovery_hosts = {f"{d.get('host')}:{d.get('port', 502)}" for d in discovery} if discovery else set()
+
         # Step 1: merge discovery into YAML config
         if discovery:
             yaml_dicts = [m.model_dump(by_alias=False) for m in self.modbus]
@@ -256,6 +264,37 @@ class Settings(BaseSettings):
                     raise ValueError("When ems_mode_check is disabled, no_remote_ems must be False")
                 if not device.registers.read_write:
                     raise ValueError("When ems_mode_check is disabled, read_write must be True")
+
+        # Log combined sources
+        for device in self.modbus:
+            hp = f"{device.host}:{device.port}"
+            is_discovery = hp in discovery_hosts
+            is_file_env = hp in file_env_hosts or (is_discovery and device.port in blank_ports)
+            
+            if not is_file_env and env_override and self.modbus.index(device) == 0:
+                is_file_env = True
+                
+            if is_discovery and is_file_env:
+                source = "auto-discovery YAML and other sources combined (file/env/cli)"
+            elif is_discovery:
+                source = "auto-discovery YAML"
+            elif is_file_env:
+                source = "other sources (file/env/cli)"
+            else:
+                source = "other sources (file/env/cli)"
+                
+            msg = f"Loaded modbus config for {hp} from {source}"
+            ids_info = []
+            if device.inverters:
+                ids_info.append(f"inverters: {device.inverters}")
+            if device.dc_chargers:
+                ids_info.append(f"dc-chargers: {device.dc_chargers}")
+            if device.ac_chargers:
+                ids_info.append(f"ac-chargers: {device.ac_chargers}")
+            if ids_info:
+                msg += f" with {', '.join(ids_info)}"
+                
+            logging.info(msg)
 
     # ── Source customisation ──────────────────────────────────────────────────
 
