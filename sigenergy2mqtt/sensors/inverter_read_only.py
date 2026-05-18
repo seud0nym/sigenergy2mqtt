@@ -1538,11 +1538,8 @@ class PowerFactor(ReadOnlySensor, HybridInverter, PVInverter):
                     active_power_time = cast(float, self._active_power.latest_time)  # pyrefly: ignore
                     reactive_power_time = cast(float, self._reactive_power.latest_time)  # pyrefly: ignore
                     logging.debug(
-                        f"{self.log_identity} Calculated {power_factor=} from active_power={active_power} @ {time.strftime('%H:%M:%S', time.localtime(active_power_time))} reactive_power={reactive_power} @ {time.strftime('%H:%M:%S', time.localtime(reactive_power_time))} -> {apparent_power=}"
+                        f"{self.log_identity} Using calculated {power_factor=} from active_power={active_power} @ {time.strftime('%H:%M:%S', time.localtime(active_power_time))} reactive_power={reactive_power} @ {time.strftime('%H:%M:%S', time.localtime(reactive_power_time))} -> {apparent_power=} because {e}"
                     )
-                logging.info(
-                    f"{self.log_identity} Using calculated raw state={power_factor} (Active={self._active_power.latest_raw_state} Reactive={self._reactive_power.latest_raw_state} Apparent={apparent_power}) because {e}"
-                )
                 super().set_state(power_factor)
             else:
                 raise e
