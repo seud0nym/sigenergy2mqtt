@@ -9,10 +9,10 @@ RUN set -eux; \
 RUN set -eux; \
     apk update --no-cache; \
     apk upgrade --no-cache xz xz-libs; \
-    xz_version="$(apk info -e -v xz | cut -d- -f2-)"; \
-    xz_libs_version="$(apk info -e -v xz-libs | cut -d- -f2-)"; \
-    apk version -t "$xz_version" "5.8.1-r0" | grep -qv '<'; \
-    apk version -t "$xz_libs_version" "5.8.1-r0" | grep -qv '<'
+    xz_version="$(apk info -e -v xz | sed 's/^xz-//')"; \
+    xz_libs_version="$(apk info -e -v xz-libs | sed 's/^xz-libs-//')"; \
+    [ -z "$xz_version" ] || apk version -t "$xz_version" "5.8.1-r0" | grep -qv '<'; \
+    [ -z "$xz_libs_version" ] || apk version -t "$xz_libs_version" "5.8.1-r0" | grep -qv '<'
 
 ENV PYTHONUNBUFFERED=1
 

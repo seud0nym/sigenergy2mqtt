@@ -152,6 +152,9 @@
     "python.testing.unittestEnabled": false,
     "ruff.lineLength": 210,
     "terminal.integrated.defaultProfile.linux": "bash",
+    "terminal.integrated.env.linux": {
+        "PATH": "${workspaceFolder}/.venv/bin:${env:PATH}"
+    },
     "terminal.integrated.shellIntegration.enabled": true,
     "python.pyrefly.typeCheckingMode": "off",
     "python.analysis.completeFunctionParens": true,
