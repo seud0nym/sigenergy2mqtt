@@ -135,18 +135,30 @@ class TestPlantConsumedPower:
             assert sensor.latest_raw_state == 1700.0
 
     @pytest.mark.asyncio
-    async def test_plant_consumed_power_notify(self):
+    async def test_plant_consumed_power_publish_after_sources(self):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             sensor = PlantConsumedPower(0, ConsumptionMethod.CALCULATED)
             sensor.debug_logging = False
-            sensor._update_source("grid", 500.0)
-            sensor._update_source("pv", 1000.0)
+
+            b = MagicMock(spec=BatteryPower)
+            b.latest_raw_state = -200.0
+
+            g = MagicMock(spec=GridSensorActivePower)
+            g.latest_raw_state = 500.0
+
+            ppv = MagicMock(spec=PlantPVPower)
+            ppv.latest_raw_state = 1000.0
+
+            sensor.set_source_values(b)
+            sensor.set_source_values(g)
+            sensor.set_source_values(ppv)
+
             mock_mqtt = AsyncMock()
             mock_modbus = AsyncMock()
             with patch("sigenergy2mqtt.sensors.plant_derived.DerivedSensor.publish", new_callable=AsyncMock) as mock_pub:
-                await sensor.notify(mock_modbus, mock_mqtt, -200.0, "battery", MagicMock())
-                assert sensor.latest_raw_state == 1700.0
+                assert await sensor.publish(mock_mqtt, mock_modbus) is True
                 mock_pub.assert_called_once()
+                assert sensor.latest_raw_state == 1700.0
 
     def test_plant_consumed_power_set_source_values(self):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):

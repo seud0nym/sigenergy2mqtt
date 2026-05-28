@@ -27,6 +27,7 @@
 - Implemented asynchronous configuration loading and auto-discovery support to improve startup performance
 - When Power Factor is calculated because the Modbus interface provides an insane value, the log message will now only be visible if debug logging is enabled for that sensor
 - Metrics reads now count physical reads rather than imputing the time to read a single register 
+- Simplified PlantConsumedPower when using calculated consumption method to use new CrossDeviceDerivedSensor logic rather than relying on MQTT notifications
 
 ### Fixed
 

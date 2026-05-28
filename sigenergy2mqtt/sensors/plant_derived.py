@@ -6,16 +6,14 @@ import paho.mqtt.client as mqtt
 
 from sigenergy2mqtt.common import ConsumptionMethod, DeviceClass, HybridInverter, Protocol, PVInverter, StateClass, UnitOfEnergy, UnitOfPower
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.devices import DeviceRegistry
 from sigenergy2mqtt.modbus import ModbusClient, ModbusDataType
-from sigenergy2mqtt.mqtt import MqttHandler
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerChargingPower
 from sigenergy2mqtt.sensors.base import UnpublishResetSensorMixin
 from sigenergy2mqtt.sensors.base.accumulation import SimpleEnergyDailyAccumulationSensor
 from sigenergy2mqtt.sensors.inverter_derived import InverterSelfConsumedPower
 from sigenergy2mqtt.sensors.inverter_read_only import DCChargerOutputPower
 
-from .base import CrossDeviceDerivedSensor, DerivedSensor, EnergyDailyAccumulationSensor, ObservableMixin, PVPowerSensor, Sensor
+from .base import CrossDeviceDerivedSensor, DerivedSensor, EnergyDailyAccumulationSensor, PVPowerSensor, Sensor
 from .plant_read_only import (
     BatteryPower,
     ESSTotalChargedEnergy,
@@ -248,7 +246,7 @@ class TotalPVPower(DerivedSensor, HybridInverter, PVInverter):
         return True
 
 
-class PlantConsumedPower(DerivedSensor, HybridInverter, PVInverter, ObservableMixin):
+class PlantConsumedPower(CrossDeviceDerivedSensor, HybridInverter, PVInverter):
     @dataclass
     class Value:
         gain: float = 1.0
@@ -287,7 +285,6 @@ class PlantConsumedPower(DerivedSensor, HybridInverter, PVInverter, ObservableMi
         self._grid_status: int | None = None
         self.sanity_check.min_raw = 0.0
         self._sources: dict[str, PlantConsumedPower.Value] = dict()
-        self._topics: set[str] = set()
         match self.method:
             case ConsumptionMethod.CALCULATED:
                 self._sources.update({"battery": PlantConsumedPower.Value(negate=True), "grid": PlantConsumedPower.Value(), "pv": PlantConsumedPower.Value()})
@@ -298,6 +295,30 @@ class PlantConsumedPower(DerivedSensor, HybridInverter, PVInverter, ObservableMi
             case ConsumptionMethod.TOTAL:
                 self._sources.update({ConsumptionMethod.TOTAL.value: PlantConsumedPower.Value()})
                 self.protocol_version = Protocol.V2_8
+
+    def finalise_binding(self, plant_index: int) -> bool:
+        """Discover all publishable ACChargerChargingPower and DCChargerOutputPower sensors
+        across the plant and wire them as cross-device sources.
+        """
+        if self.method == ConsumptionMethod.CALCULATED:
+            from sigenergy2mqtt.devices.base.registry import DeviceRegistry
+            from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerChargingPower
+            from sigenergy2mqtt.sensors.inverter_read_only import DCChargerOutputPower
+
+            sources: list[Sensor] = []
+            for device in DeviceRegistry.get(plant_index):
+                for sensor in device.get_all_sensors(search_children=True).values():
+                    if isinstance(sensor, (ACChargerChargingPower, DCChargerOutputPower)):
+                        sources.append(sensor)
+                        self._sources[sensor.unique_id] = PlantConsumedPower.Value(
+                            gain=sensor.gain, negate=True, interval=sensor.scan_interval, requires_grid=True
+                        )
+                        if self.debug_logging:
+                            logging.debug(f"{self.log_identity} Added cross-device sensor {sensor.unique_id} as source")
+            if sources:
+                self.declare_cross_device_sources(*sources)
+                return super().finalise_binding(plant_index)
+        return True
 
     def _set_latest_consumption(self) -> bool:
         if any(value.state is None for value in self._sources.values() if not value.requires_grid or (value.requires_grid and self._grid_status == 0)):
@@ -339,30 +360,6 @@ class PlantConsumedPower(DerivedSensor, HybridInverter, PVInverter, ObservableMi
             value.state = None
         return True
 
-    async def notify(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
-        if source in self._sources:
-            self._update_source(source, value if isinstance(value, float) else float(value))
-            if self.debug_logging:
-                logging.debug(f"{self.log_identity} Updated from topic {source} - {self._sources}")
-            if self._set_latest_consumption():
-                await self.publish(mqtt_client, modbus_client, republish=True)
-            return True
-        else:
-            logging.warning(f"{self.log_identity} Attempt to call notify with topic {source}, but topic is not registered")
-        return False
-
-    def observable_topics(self) -> set[str]:
-        if not self._topics:
-            chargers = [device for device in DeviceRegistry.get(self.plant_index) if device.__class__.__name__.endswith("Charger")]
-            for charger in chargers:
-                for sensor in charger.get_all_sensors().values():
-                    if isinstance(sensor, (ACChargerChargingPower, DCChargerOutputPower)):
-                        self._sources[sensor.state_topic] = PlantConsumedPower.Value(gain=sensor.gain, negate=True, interval=sensor.scan_interval, requires_grid=True)
-                        self._topics.add(sensor.state_topic)
-                        if self.debug_logging:
-                            logging.debug(f"{self.log_identity} Added MQTT topic {sensor.state_topic} as source")
-        return set(self._topics)
-
     def set_source_values(self, sensor: Sensor) -> bool:
         if sensor.latest_raw_state is None:
             return False
@@ -387,6 +384,8 @@ class PlantConsumedPower(DerivedSensor, HybridInverter, PVInverter, ObservableMi
                         else:
                             logging.warning(f"{self.log_identity} Off Grid detected - ignoring AC/DC charger power in consumption calculations")
                     self._grid_status = grid
+        elif isinstance(sensor, (ACChargerChargingPower, DCChargerOutputPower)):
+            self._update_source(sensor.unique_id, raw)
         else:
             logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
             return False

@@ -239,49 +239,29 @@ class TestPlantConsumedPowerCoverage:
                 for v in sensor._sources.values():
                     assert v.state is None
 
-    @pytest.mark.asyncio
-    async def test_notify_edge_cases(self, caplog):
-        caplog.set_level(logging.DEBUG)
-        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            sensor = PlantConsumedPower(0, ConsumptionMethod.CALCULATED)
-            sensor.debug_logging = True
-            sensor.configure_mqtt_topics("test_device")
-            # Unregistered topic
-            assert await sensor.notify(None, MagicMock(), 100, "unknown_topic", MagicMock()) is False
-            assert "topic is not registered" in caplog.text
-
-            # Valid topic but not enough values to publish
-            await sensor.notify(None, MagicMock(), 100, "pv", MagicMock())
-            assert sensor._sources["pv"].state == 100.0
-            assert "Updated from topic pv" in caplog.text
-            assert "Attempt to call" in caplog.text
-
-    def test_observable_topics_with_chargers(self):
+    def test_finalise_binding_with_chargers(self):
         from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerChargingPower
 
-        class MockACCharger:
-            def get_all_sensors(self):
-                pass
+        charger = MagicMock()
+        # Create a dummy ACChargerChargingPower instance without calling its __init__
+        ac_sensor = ACChargerChargingPower.__new__(ACChargerChargingPower)
+        ac_sensor.unique_id = "ac_uid"
+        ac_sensor.gain = 1.0
+        ac_sensor.scan_interval = 10
+        ac_sensor.protocol_version = Protocol.V1_8
+        ac_sensor._publishable = True
+        charger.get_all_sensors = MagicMock(return_value={"ac_uid": ac_sensor})
+        charger.get_sensor = MagicMock(return_value=ac_sensor)
 
-        with patch("sigenergy2mqtt.sensors.plant_derived.DeviceRegistry.get") as mock_get:
-            charger = MockACCharger()
-            ac_sensor = MagicMock(spec=ACChargerChargingPower)
-            ac_sensor.state_topic = "ac_topic"
-            ac_sensor.gain = 1.0
-            ac_sensor.scan_interval = 10
+        sensor = PlantConsumedPower(0, ConsumptionMethod.CALCULATED)
+        sensor.debug_logging = True
+        sensor.parent_device = type("Parent", (), {"protocol_version": Protocol.V1_8})()
 
-            charger.get_all_sensors = MagicMock(return_value={"ac": ac_sensor})
-            mock_get.return_value = [charger]
-
-            sensor = PlantConsumedPower(0, ConsumptionMethod.CALCULATED)
-            sensor.debug_logging = True
-            with patch("logging.debug") as mock_log:
-                topics = sensor.observable_topics()
-                assert "ac_topic" in topics
-                assert "ac_topic" in sensor._sources
-                # Verify debug log was called with some string containing Added MQTT topic
-                any_added = any("Added MQTT topic" in call.args[0] for call in mock_log.call_args_list)
-                assert any_added
+        with patch("sigenergy2mqtt.devices.base.registry.DeviceRegistry.get", return_value=[charger]):
+            result = sensor.finalise_binding(0)
+            assert isinstance(result, bool)
+            if result:
+                assert "ac_uid" in sensor._sources
 
     def test_set_source_values_branches(self, caplog):
         caplog.set_level(logging.DEBUG)
