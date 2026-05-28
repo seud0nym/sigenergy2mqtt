@@ -6,9 +6,6 @@
         },
         "editor.formatOnSave": true
     },
-    "basedpyright.analysis.diagnosticMode": "workspace",
-    "basedpyright.analysis.inlayHints.callArgumentNamesMatching": true,
-    "basedpyright.analysis.typeCheckingMode": "strict",
     "cSpell.ignorePaths": [
         ".git/{index,*refs,*HEAD}",
         ".git/{info,lfs,logs,refs,objects}/**",
@@ -156,6 +153,6 @@
         "PATH": "${workspaceFolder}/.venv/bin:${env:PATH}"
     },
     "terminal.integrated.shellIntegration.enabled": true,
-    "python.pyrefly.typeCheckingMode": "off",
-    "python.analysis.completeFunctionParens": true,
+    "python.analysis.typeCheckingMode": "strict",
+    "python.pythonPath": ".venv/bin/python",
 }
