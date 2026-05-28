@@ -120,14 +120,14 @@ class TestMetricsRead:
     @pytest.fixture(autouse=True)
     def reset_metrics(self):
         """Reset Metrics state before each test."""
-        original_reads = Metrics.sigenergy2mqtt_modbus_register_reads
+        original_reads = Metrics.sigenergy2mqtt_modbus_reads
         original_total = Metrics.sigenergy2mqtt_modbus_read_total
         original_max = Metrics.sigenergy2mqtt_modbus_read_max
         original_mean = Metrics.sigenergy2mqtt_modbus_read_mean
         original_min = Metrics.sigenergy2mqtt_modbus_read_min
 
         # Reset to initial state
-        Metrics.sigenergy2mqtt_modbus_register_reads = 0
+        Metrics.sigenergy2mqtt_modbus_reads = 0
         Metrics.sigenergy2mqtt_modbus_read_total = 0.0
         Metrics.sigenergy2mqtt_modbus_read_max = 0.0
         Metrics.sigenergy2mqtt_modbus_read_mean = 0.0
@@ -136,7 +136,7 @@ class TestMetricsRead:
         yield
 
         # Restore original state
-        Metrics.sigenergy2mqtt_modbus_register_reads = original_reads
+        Metrics.sigenergy2mqtt_modbus_reads = original_reads
         Metrics.sigenergy2mqtt_modbus_read_total = original_total
         Metrics.sigenergy2mqtt_modbus_read_max = original_max
         Metrics.sigenergy2mqtt_modbus_read_mean = original_mean
@@ -148,11 +148,11 @@ class TestMetricsRead:
         await Metrics.modbus_read(registers=10, seconds=0.05)
         await Metrics.drain()
 
-        assert Metrics.sigenergy2mqtt_modbus_register_reads == 10
+        assert Metrics.sigenergy2mqtt_modbus_reads == 1
         assert Metrics.sigenergy2mqtt_modbus_read_total == 50.0  # 0.05 * 1000
         assert Metrics.sigenergy2mqtt_modbus_read_max == 50.0
         assert Metrics.sigenergy2mqtt_modbus_read_min == 50.0
-        assert Metrics.sigenergy2mqtt_modbus_read_mean == 5.0  # 50 / 10
+        assert Metrics.sigenergy2mqtt_modbus_read_mean == 50.0
 
     @pytest.mark.asyncio
     async def test_modbus_read_updates_min_max(self):
@@ -166,7 +166,7 @@ class TestMetricsRead:
 
         assert Metrics.sigenergy2mqtt_modbus_read_max == 150.0
         assert Metrics.sigenergy2mqtt_modbus_read_min == 50.0
-        assert Metrics.sigenergy2mqtt_modbus_register_reads == 15
+        assert Metrics.sigenergy2mqtt_modbus_reads == 3
 
     @pytest.mark.asyncio
     async def test_modbus_read_mean_calculation(self):
@@ -176,15 +176,15 @@ class TestMetricsRead:
         await Metrics.modbus_read(registers=10, seconds=0.2)  # 200ms
         await Metrics.drain()
 
-        # Total = 300ms, reads = 20, mean = 15ms
-        assert Metrics.sigenergy2mqtt_modbus_read_mean == 15.0
+        # Total = 300ms, reads = 2, mean = 15ms
+        assert Metrics.sigenergy2mqtt_modbus_read_mean == 150.0
 
     @pytest.mark.asyncio
     async def test_modbus_read_exception_handling(self):
         """Test exception handling with warning log."""
         with patch("logging.warning") as mock_warning:
             # Force an exception
-            await Metrics.modbus_read(registers=None, seconds=0.1)
+            await Metrics.modbus_read(registers=1, seconds=None)
             await Metrics.drain()
             assert mock_warning.called
             assert "modbus read metrics collection" in mock_warning.call_args[0][0]
@@ -348,16 +348,16 @@ class TestMetricsEnabledGate:
     @pytest.fixture(autouse=True)
     def reset_metrics(self):
         original_enabled = getattr(active_config, "metrics_enabled", True)
-        original_reads = Metrics.sigenergy2mqtt_modbus_register_reads
+        original_reads = Metrics.sigenergy2mqtt_modbus_reads
         original_errors = Metrics.sigenergy2mqtt_modbus_read_errors
 
-        Metrics.sigenergy2mqtt_modbus_register_reads = 0
+        Metrics.sigenergy2mqtt_modbus_reads = 0
         Metrics.sigenergy2mqtt_modbus_read_errors = 0
 
         yield
 
         active_config.metrics_enabled = original_enabled
-        Metrics.sigenergy2mqtt_modbus_register_reads = original_reads
+        Metrics.sigenergy2mqtt_modbus_reads = original_reads
         Metrics.sigenergy2mqtt_modbus_read_errors = original_errors
 
     @pytest.mark.asyncio
@@ -368,7 +368,7 @@ class TestMetricsEnabledGate:
         await Metrics.modbus_read_error()
         await Metrics.drain()
 
-        assert Metrics.sigenergy2mqtt_modbus_register_reads == 0
+        assert Metrics.sigenergy2mqtt_modbus_reads == 0
         assert Metrics.sigenergy2mqtt_modbus_read_errors == 0
 
     @pytest.mark.asyncio
@@ -379,7 +379,7 @@ class TestMetricsEnabledGate:
         await Metrics.modbus_read_error()
         await Metrics.drain()
 
-        assert Metrics.sigenergy2mqtt_modbus_register_reads == 5
+        assert Metrics.sigenergy2mqtt_modbus_reads == 1
         assert Metrics.sigenergy2mqtt_modbus_read_errors == 1
 
 

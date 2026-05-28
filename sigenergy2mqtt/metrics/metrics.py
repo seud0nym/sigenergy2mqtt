@@ -54,9 +54,6 @@ class Metrics:
     sigenergy2mqtt_modbus_reads: int = 0
     """Total number of modbus read calls."""
 
-    sigenergy2mqtt_modbus_register_reads: int = 0
-    """Total number of individual registers read across all calls."""
-
     sigenergy2mqtt_modbus_read_total: float = 0.0
     """Cumulative elapsed time of all modbus reads, in milliseconds."""
 
@@ -392,7 +389,7 @@ class Metrics:
         Record a completed modbus read operation.
 
         Args:
-            registers: Number of registers read in this operation.
+            registers: Number of registers read in this operation. (Unused in current metrics but recorded for potential future use in mean calculations.)
             seconds:   Wall-clock duration of the operation in seconds.
         """
 
@@ -401,12 +398,11 @@ class Metrics:
                 elapsed = seconds * 1000.0
                 cls.sigenergy2mqtt_modbus_reads += 1
                 cls.sigenergy2mqtt_modbus_physical_read_percentage = round(cls.sigenergy2mqtt_modbus_cache_fill_reads / cls.sigenergy2mqtt_modbus_reads * 100.0, 2)
-                cls.sigenergy2mqtt_modbus_register_reads += registers
                 cls.sigenergy2mqtt_modbus_read_total += elapsed
                 # min/max computed inside the lock to prevent TOCTOU races
                 cls.sigenergy2mqtt_modbus_read_max = max(cls.sigenergy2mqtt_modbus_read_max, elapsed)
                 cls.sigenergy2mqtt_modbus_read_min = min(cls.sigenergy2mqtt_modbus_read_min, elapsed)
-                cls.sigenergy2mqtt_modbus_read_mean = cls.sigenergy2mqtt_modbus_read_total / cls.sigenergy2mqtt_modbus_register_reads if cls.sigenergy2mqtt_modbus_register_reads > 0 else 0.0
+                cls.sigenergy2mqtt_modbus_read_mean = cls.sigenergy2mqtt_modbus_read_total / cls.sigenergy2mqtt_modbus_reads if cls.sigenergy2mqtt_modbus_reads > 0 else 0.0
 
             cls._update_with_lock(_operation, "modbus read metrics collection")
 
@@ -628,9 +624,7 @@ class Metrics:
                 if hit:
                     cls.sigenergy2mqtt_state_store_load_hits += 1
                 cls.sigenergy2mqtt_state_store_load_hit_percentage = (
-                    round(cls.sigenergy2mqtt_state_store_load_hits / cls.sigenergy2mqtt_state_store_loads * 100.0, 2)
-                    if cls.sigenergy2mqtt_state_store_loads > 0
-                    else 0.0
+                    round(cls.sigenergy2mqtt_state_store_load_hits / cls.sigenergy2mqtt_state_store_loads * 100.0, 2) if cls.sigenergy2mqtt_state_store_loads > 0 else 0.0
                 )
 
             cls._update_with_lock(_operation, "state store load metrics collection")

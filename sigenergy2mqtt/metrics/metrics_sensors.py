@@ -183,7 +183,7 @@ class ModbusReadsPerSecond(MetricsSensor):
     async def _update_internal_state(self, **kwargs) -> bool:
         elapsed = time.monotonic() - Metrics._started
         if elapsed > 0:
-            value = Metrics.sigenergy2mqtt_modbus_register_reads / elapsed
+            value = Metrics.sigenergy2mqtt_modbus_reads / elapsed
         else:
             value = 0.0
         self.set_latest_state(value)

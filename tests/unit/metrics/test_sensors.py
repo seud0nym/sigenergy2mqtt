@@ -82,7 +82,7 @@ class TestModbusReadsPerSecond:
     @pytest.mark.asyncio
     async def test_update_internal_state(self):
         sensor = ModbusReadsPerSecond()
-        Metrics.sigenergy2mqtt_modbus_register_reads = 100
+        Metrics.sigenergy2mqtt_modbus_reads = 100
         Metrics._started = time.monotonic() - 10
         await sensor._update_internal_state()
         # Roughly 10 reads per second
