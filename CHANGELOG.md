@@ -25,6 +25,7 @@
 - Aligned zlib remediation with targeted package patch style in Dockerfile
 - Derived sensors now declare source dependencies via constructor injection
 - Implemented asynchronous configuration loading and auto-discovery support to improve startup performance
+- When Power Factor is calculated because the Modbus interface provides an insane value, the log message will now only be visible if debug logging is enabled for that sensor
 
 ### Fixed
 
