@@ -28,7 +28,7 @@ if __name__ == "__main__":
     sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
 from pymodbus.client.mixin import ModbusClientMixin
-from pymodbus.pdu import ModbusPDU
+from pymodbus.pdu import ExceptionResponse, ModbusPDU
 
 from sigenergy2mqtt.common import HybridInverter, Protocol, ProtocolApplies, PVInverter
 from sigenergy2mqtt.config import Config, _swap_active_config, active_config, initialize
@@ -119,7 +119,7 @@ class DummyModbusClient(ModbusClientMixin):
         """
         result = self.data.get(address, None)
         if result is None:
-            raise ValueError(f"Unknown address {address}")
+            return ExceptionResponse(function_code=0x03, exception_code=0x02, device_id=device_id)  # Modbus exception response for "Illegal Data Address"
         return ModbusPDU(registers=result)
 
     async def read_holding_registers(self, address: int, count: int, device_id: int, trace: bool = False) -> ModbusPDU:  # noqa: unused arguments required to match real implementation
@@ -252,7 +252,6 @@ async def get_sensor_instances(
             for alarm in s.alarms:
                 add_sensor_instance(alarm)
 
-
     find_concrete_classes(Sensor)
     for parent in [plant, hybrid_inverter, dc_charger, ac_charger, pv_inverter]:
         devices: list[Device] = [parent]
@@ -260,7 +259,6 @@ async def get_sensor_instances(
         for device in devices:
             for sensor in device.sensors.values():
                 add_sensor_instance(sensor)
-
 
     if concrete_sensor_check:
         previous: tuple[int, int] | None = None
