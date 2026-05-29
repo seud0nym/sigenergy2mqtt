@@ -109,6 +109,9 @@ class WriteOnlySensor(WritableSensorMixin, Sensor):
         for action in ["on", "off"]:
             config: dict[str, Any] = {}
 
+            if self._names[action] == "" or self._names[action].isspace():
+                continue
+
             for k, v in self.items():
                 if v is None:
                     continue
