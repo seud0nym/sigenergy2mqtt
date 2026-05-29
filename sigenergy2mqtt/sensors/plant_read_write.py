@@ -187,6 +187,92 @@ class PowerFactorAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter
         return attributes
 
 
+class PCCPowerFactorAdjustmentTargetValueGridImport(NumericSensor, HybridInverter, PVInverter):
+    ADDRESS = 40157
+
+    def __init__(self, plant_index: int):
+        super().__init__(
+            availability_control_sensor=None,
+            name="PCC Power Factor Adjustment Target Value (Grid Import)",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_pcc_power_factor_adjustment_target_value_grid_import",
+            input_type=InputType.HOLDING,
+            plant_index=plant_index,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
+            address=self.ADDRESS,
+            count=1,
+            data_type=ModbusDataType.INT16,
+            scan_interval=ScanInterval.medium(plant_index),
+            unit=None,
+            device_class=None,
+            state_class=None,
+            icon="mdi:lightning-bolt",
+            gain=1000,
+            precision=2,
+            protocol_version=Protocol.V2_9,
+            minimum=(-1.0, -0.8),
+            maximum=(0.8, 1.0),
+        )
+
+    def get_attributes(self) -> dict[str, float | int | str]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Range: [(-1.0, -0.8) U (0.8, 1.0)]. Grid Sensor needed. Sets target power factor for grid import."
+        return attributes
+
+
+class PCCPowerFactorAdjustmentTargetValueGridExport(NumericSensor, HybridInverter, PVInverter):
+    ADDRESS = 40158
+
+    def __init__(self, plant_index: int):
+        super().__init__(
+            availability_control_sensor=None,
+            name="PCC Power Factor Adjustment Target Value (Grid Export)",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_pcc_power_factor_adjustment_target_value_grid_export",
+            input_type=InputType.HOLDING,
+            plant_index=plant_index,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
+            address=self.ADDRESS,
+            count=1,
+            data_type=ModbusDataType.INT16,
+            scan_interval=ScanInterval.medium(plant_index),
+            unit=None,
+            device_class=None,
+            state_class=None,
+            icon="mdi:lightning-bolt",
+            gain=1000,
+            precision=2,
+            protocol_version=Protocol.V2_9,
+            minimum=(-1.0, -0.8),
+            maximum=(0.8, 1.0),
+        )
+
+    def get_attributes(self) -> dict[str, float | int | str]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Range: [(-1.0, -0.8) U (0.8, 1.0)]. Grid Sensor needed. Sets target power factor for grid export."
+        return attributes
+
+
+class GridPowerLossLockoutAlarmClear(WriteOnlySensor, HybridInverter, PVInverter):
+    ADDRESS = 40159
+
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="Grid Power Loss Lockout Alarm Clear",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_grid_power_loss_lockout_alarm_clear",
+            plant_index=plant_index,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
+            address=self.ADDRESS,
+            protocol_version=Protocol.V2_9,
+            name_off="",
+            name_on="Clear",
+            icon_on="mdi:lock-reset",
+        )
+
+    def get_attributes(self) -> dict[str, float | int | str]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Write 1 to clear the grid power loss lockout alarm"
+        return attributes
+
+
 class IndependentPhasePowerControl(SwitchSensor, AvailabilityMixin, HybridInverter):
     ADDRESS = 40030
 
@@ -436,6 +522,8 @@ class RemoteEMSControlMode(SelectSensor, HybridInverter, PVInverter):
                 "Command Charging (Consume power from the PV first)",  # 4
                 "Command Discharging (Output power from PV first)",  # 5
                 "Command Discharging (Output power from the battery first)",  # 6
+                "",  # 7,
+                "V2G (Vehicle to Grid)",  # 8
             ],
             protocol_version=Protocol.V1_8,
         )

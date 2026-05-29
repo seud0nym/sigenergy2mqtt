@@ -1,5 +1,6 @@
 import sigenergy2mqtt.sensors.plant_derived as derived
 import sigenergy2mqtt.sensors.plant_read_only as ro
+import sigenergy2mqtt.sensors.plant_read_write as rw
 from sigenergy2mqtt.common import DeviceType, Protocol
 from sigenergy2mqtt.devices import ModbusDevice
 from sigenergy2mqtt.modbus import ModbusClient
@@ -32,18 +33,12 @@ class GridSensor(ModbusDevice):
         self._add_sensor(ro.GridSensorReactivePower(self.plant_index))
         self._add_sensor(ro.GridPhaseActivePower(self.plant_index, "A"))
         self._add_sensor(ro.GridPhaseReactivePower(self.plant_index, "A"))
-        self._add_sensor(ro.ReservedGridPhaseVoltage(self.plant_index, "A"))
-        self._add_sensor(ro.ReservedGridPhaseCurrent(self.plant_index, "A"))
         if power_phases > 1:
             self._add_sensor(ro.GridPhaseActivePower(self.plant_index, "B"))
             self._add_sensor(ro.GridPhaseReactivePower(self.plant_index, "B"))
-            self._add_sensor(ro.ReservedGridPhaseVoltage(self.plant_index, "B"))
-            self._add_sensor(ro.ReservedGridPhaseCurrent(self.plant_index, "B"))
         if power_phases > 2:
             self._add_sensor(ro.GridPhaseActivePower(self.plant_index, "C"))
             self._add_sensor(ro.GridPhaseReactivePower(self.plant_index, "C"))
-            self._add_sensor(ro.ReservedGridPhaseVoltage(self.plant_index, "C"))
-            self._add_sensor(ro.ReservedGridPhaseCurrent(self.plant_index, "C"))
 
         import_energy = ro.PlantTotalImportedEnergy(self.plant_index)
         export_energy = ro.PlantTotalExportedEnergy(self.plant_index)
@@ -56,3 +51,7 @@ class GridSensor(ModbusDevice):
         self._add_sensor(export_power)
         self._add_sensor(derived.GridSensorDailyExportEnergy(self.plant_index, export_energy))
         self._add_sensor(derived.GridSensorDailyImportEnergy(self.plant_index, import_energy))
+
+        self._add_sensor(rw.PCCPowerFactorAdjustmentTargetValueGridImport(self.plant_index))
+        self._add_sensor(rw.PCCPowerFactorAdjustmentTargetValueGridExport(self.plant_index))
+        self._add_sensor(rw.GridPowerLossLockoutAlarmClear(self.plant_index))

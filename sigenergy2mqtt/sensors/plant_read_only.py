@@ -11,12 +11,12 @@ from sigenergy2mqtt.common import (
     PVInverter,
     StateClass,
     UnitOfApparentPower,
-    UnitOfElectricCurrent,
     UnitOfElectricPotential,
     UnitOfEnergy,
     UnitOfFrequency,
     UnitOfPower,
     UnitOfReactivePower,
+    UnitOfTemperature,
 )
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus import ModbusDataType
@@ -1724,7 +1724,7 @@ class SITotalGeneratorOutputEnergy(StatisticsInterfaceSensor):
 # endregion
 
 
-class ReservedPVTotalGenerationToday(ReservedSensor, HybridInverter, PVInverter):
+class PlantPVTotalGenerationToday(ReadOnlySensor, HybridInverter, PVInverter):
     ADDRESS = 30272
 
     def __init__(self, plant_index: int):
@@ -1738,17 +1738,18 @@ class ReservedPVTotalGenerationToday(ReservedSensor, HybridInverter, PVInverter)
             count=2,
             data_type=ModbusDataType.UINT32,
             scan_interval=ScanInterval.low(plant_index),
-            unit=None,
-            device_class=None,
-            state_class=None,
+            unit=UnitOfEnergy.KILO_WATT_HOUR,
+            device_class=DeviceClass.ENERGY,
+            state_class=StateClass.TOTAL_INCREASING,
             icon="mdi:solar-power-variant",
-            gain=None,
-            precision=None,
-            protocol_version=Protocol.V2_8,
+            gain=100,
+            precision=2,
+            protocol_version=Protocol.V2_9,
         )
+        self["enabled_by_default"] = True
 
 
-class ReservedPVTotalGenerationYesterday(ReservedSensor, HybridInverter, PVInverter):
+class PlantPVTotalGenerationYesterday(ReadOnlySensor, HybridInverter, PVInverter):
     ADDRESS = 30274
 
     def __init__(self, plant_index: int):
@@ -1762,14 +1763,15 @@ class ReservedPVTotalGenerationYesterday(ReservedSensor, HybridInverter, PVInver
             count=2,
             data_type=ModbusDataType.UINT32,
             scan_interval=ScanInterval.low(plant_index),
-            unit=None,
-            device_class=None,
-            state_class=None,
+            unit=UnitOfEnergy.KILO_WATT_HOUR,
+            device_class=DeviceClass.ENERGY,
+            state_class=StateClass.TOTAL_INCREASING,
             icon="mdi:solar-power-variant",
-            gain=None,
-            precision=None,
-            protocol_version=Protocol.V2_8,
+            gain=100,
+            precision=2,
+            protocol_version=Protocol.V2_9,
         )
+        self["enabled_by_default"] = True
 
 
 class GridCodeRatedFrequency(ReadOnlySensor, HybridInverter, PVInverter):
@@ -1967,65 +1969,28 @@ class TotalLoadPower(ReadOnlySensor, HybridInverter, PVInverter):
         )
 
 
-class ReservedGridPhaseVoltage(ReservedSensor, HybridInverter, PVInverter):
-    def __init__(self, plant_index: int, phase: str):
-        match phase:
-            case "A":
-                address = 30286
-            case "B":
-                address = 30288
-            case "C":
-                address = 30290
-            case _:
-                raise ValueError("Phase must be 'A', 'B', or 'C'")
+class ESSAverageCellTemperature(ReadOnlySensor, HybridInverter):
+    ADDRESS = 30286
+
+    def __init__(self, plant_index: int):
         super().__init__(
-            name=f"Phase {phase} Voltage",
-            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_grid_phase_{phase.lower()}_voltage",
+            name="ESS Average Cell Temperature",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_ess_average_cell_temperature",
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=address,
-            count=2,
-            data_type=ModbusDataType.INT32,
+            address=self.ADDRESS,
+            count=1,
+            data_type=ModbusDataType.INT16,
             scan_interval=ScanInterval.high(plant_index),
-            unit=UnitOfElectricPotential.VOLT,
-            device_class=DeviceClass.VOLTAGE,
-            state_class=None,
-            icon="mdi:flash",
-            gain=100,
-            precision=2,
-            protocol_version=Protocol.V2_8,
-            phase=phase,
+            unit=UnitOfTemperature.CELSIUS,
+            device_class=DeviceClass.TEMPERATURE,
+            state_class=StateClass.MEASUREMENT,
+            icon="mdi:thermometer",
+            gain=10,
+            precision=1,
+            protocol_version=Protocol.V2_9,
         )
-
-
-class ReservedGridPhaseCurrent(ReservedSensor, HybridInverter, PVInverter):
-    def __init__(self, plant_index: int, phase: str):
-        match phase:
-            case "A":
-                address = 30292
-            case "B":
-                address = 30294
-            case "C":
-                address = 30296
-            case _:
-                raise ValueError("Phase must be 'A', 'B', or 'C'")
-        super().__init__(
-            name=f"Phase {phase} Current",
-            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_grid_phase_{phase.lower()}_current",
-            input_type=InputType.INPUT,
-            plant_index=plant_index,
-            device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=address,
-            count=2,
-            data_type=ModbusDataType.INT32,
-            scan_interval=ScanInterval.high(plant_index),
-            unit=UnitOfElectricCurrent.AMPERE,
-            device_class=DeviceClass.CURRENT,
-            state_class=None,
-            icon="mdi:current-ac",
-            gain=100,
-            precision=2,
-            protocol_version=Protocol.V2_8,
-            phase=phase,
-        )
+        self["enabled_by_default"] = True
+        self.sanity_check.min_raw = -400  # -40.0 °C
+        self.sanity_check.max_raw = 2000  # 200.0 °C

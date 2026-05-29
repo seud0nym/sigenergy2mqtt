@@ -16,6 +16,7 @@ def test_protocol_applies_coverage():
     assert ProtocolApplies(Protocol.V2_6) == "2025-03-31"
     assert ProtocolApplies(Protocol.V2_7) == "2025-05-23"
     assert ProtocolApplies(Protocol.V2_8) == "2025-11-28"
+    assert ProtocolApplies(Protocol.V2_9) == "2026-05-13"
     # Coverage for default case
     assert ProtocolApplies(Protocol.N_A) is not None
 
@@ -134,5 +135,3 @@ def test_main_validate_logs_config_yaml(monkeypatch):
             main_module.main()
 
     assert any(call.args and call.args[0].startswith("Validation configuration:\n") for call in mock_info.call_args_list)
-
-

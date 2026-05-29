@@ -57,7 +57,7 @@ class PowerPlant(ModbusDevice):
 
         self._add_child_device(await PlantStatistics.create(self.plant_index, self._device_type, self.protocol_version))
 
-        if self._device_type.has_grid_code_interface and self.protocol_version >= Protocol.V2_8:
+        if self.protocol_version >= Protocol.V2_8 and self._device_type.has_grid_code_interface:
             self._add_child_device(await GridCode.create(self.plant_index, self._device_type, self.protocol_version, modbus_client))
 
     async def _register_sensors(self, firmware: str, output_type: int, power_phases: int, modbus_client: ModbusClient) -> None:
@@ -153,6 +153,7 @@ class PowerPlant(ModbusDevice):
             total_charge_energy = ro.ESSTotalChargedEnergy(self.plant_index)
             total_discharge_energy = ro.ESSTotalDischargedEnergy(self.plant_index)
             self._add_sensor(ro.PlantBatterySoC(self.plant_index))
+            self._add_sensor(ro.ESSAverageCellTemperature(self.plant_index))
             self._add_sensor(battery_power, group=self._consumption_group)
             self._add_sensor(ro.AvailableMaxChargingPower(self.plant_index))
             self._add_sensor(ro.AvailableMaxDischargingPower(self.plant_index))
@@ -229,9 +230,9 @@ class PowerPlant(ModbusDevice):
         self._add_sensor(total_lifetime_pv_energy)
         self._add_sensor(derived.PlantDailyPVEnergy(self.plant_index, plant_lifetime_pv_energy))
         self._add_sensor(derived.TotalDailyPVEnergy(self.plant_index, total_lifetime_pv_energy))
+        self._add_sensor(ro.PlantPVTotalGenerationToday(self.plant_index))
+        self._add_sensor(ro.PlantPVTotalGenerationYesterday(self.plant_index))
 
         # Add the reserved registers to optimise sensor scanning
         self._add_sensor(ro.Reserved30073(self.plant_index))
-        self._add_sensor(ro.ReservedPVTotalGenerationToday(self.plant_index))
-        self._add_sensor(ro.ReservedPVTotalGenerationYesterday(self.plant_index))
         self._add_sensor(rw.Reserved40026(self.plant_index))

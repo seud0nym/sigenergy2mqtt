@@ -28,6 +28,7 @@ from sigenergy2mqtt.sensors.plant_read_only import (
     CurrentControlCommandValue,
     GridStatus,
     PlantBatterySoH,
+    PlantPVTotalGenerationToday,
     SITotalChargedEnergy,
     SITotalDischargedEnergy,
     SITotalEVACChargedEnergy,
@@ -187,6 +188,7 @@ async def probe_protocol(modbus_client: ModbusClient) -> Protocol:
     # Tuples of (register, count, protocol_version) — must be input registers
     # unique to each version, listed from newest to oldest.
     candidates = [
+        (PlantPVTotalGenerationToday.ADDRESS, 2, Protocol.V2_9),
         (TotalLoadPower.ADDRESS, 2, Protocol.V2_8),
         (ThirdPartyPVPower.ADDRESS, 2, Protocol.V2_7),
         (TotalLoadDailyConsumption.ADDRESS, 2, Protocol.V2_6),

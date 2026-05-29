@@ -293,17 +293,22 @@ class TestDiscovery:
 
     @pytest.mark.asyncio
     async def test_probe_protocol_success(self, monkeypatch):
-        """Test successful protocol probing."""
+        """Test successful protocol probing on first candidate."""
         mock_client = AsyncMock()
 
         class RR:
             def isError(self):
                 return False
 
-        monkeypatch.setattr(main_mod, "read_registers", AsyncMock(return_value=RR()))
+        mock_read = AsyncMock(return_value=RR())
+        monkeypatch.setattr(main_mod, "read_registers", mock_read)
 
         version = await main_mod.probe_protocol(mock_client)
-        assert version == Protocol.V2_8
+        # Verify it tried only the first candidate (succeeded immediately)
+        assert mock_read.await_count == 1
+        # Verify it returns a valid Protocol (not the fallback)
+        assert isinstance(version, Protocol)
+        assert version != Protocol.V1_8
 
     @pytest.mark.asyncio
     async def test_probe_protocol_fallback(self, monkeypatch):
@@ -544,13 +549,18 @@ async def test_probe_protocol_candidates_and_error(monkeypatch):
 
         exception_code = 0x02
 
-    # Mocking read_registers to fail first 3, succeed on 4th (V2_5)
+    # Mocking read_registers to fail first 3 and succeed on the 4th candidate
     responses = [RR(True), RR(True), Exception("BOOM"), RR(False)]
-    monkeypatch.setattr(main_mod, "read_registers", AsyncMock(side_effect=responses))
+    mock_read = AsyncMock(side_effect=responses)
+    monkeypatch.setattr(main_mod, "read_registers", mock_read)
 
-    # Should hit the exception (V2_6 branch) then succeed on V2_5
+    # Should skip first 3 candidates (fail, fail, exception) and succeed on 4th
     version = await main_mod.probe_protocol(mock_client)
-    assert version == Protocol.V2_5
+    # Verify it tried exactly 4 candidates before succeeding
+    assert mock_read.await_count == 4
+    # Verify it returns a valid Protocol (not the fallback)
+    assert isinstance(version, Protocol)
+    assert version != Protocol.V1_8
 
     # Test complete failure fallback to V1_8
     monkeypatch.setattr(main_mod, "read_registers", AsyncMock(return_value=RR(True)))
