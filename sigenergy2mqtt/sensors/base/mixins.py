@@ -201,7 +201,7 @@ class ModbusSensorMixin(SensorDebuggingMixin):
         """Handle illegal data address exception."""
         logging.log(
             logging.ERROR if "skip_failure_logging" not in kwargs or not kwargs["skip_failure_logging"] else logging.DEBUG,
-            logging.error(f"{self.log_identity} Modbus {source} returned 0x02 ILLEGAL DATA ADDRESS"),
+            f"{self.log_identity} Modbus {source} returned 0x02 ILLEGAL DATA ADDRESS",
         )
         if self.debug_logging:
             logging.debug(rr)
