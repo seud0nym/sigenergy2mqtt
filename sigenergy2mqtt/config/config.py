@@ -393,7 +393,7 @@ class Config:
 
     def _perform_auto_discovery(self, skip_auto_discovery: bool) -> Path | None:
         """Synchronous auto-discovery logic."""
-        auto_discovery, auto_discovery_cache, auto_settings = self._prepare_auto_discovery()
+        auto_discovery, auto_discovery_cache, auto_settings = self._prepare_auto_discovery(skip_auto_discovery)
 
         if not skip_auto_discovery and self._should_run_discovery(auto_discovery, auto_discovery_cache):
             if auto_discovery != "force":
@@ -416,7 +416,7 @@ class Config:
 
     async def _perform_auto_discovery_async(self, skip_auto_discovery: bool) -> Path | None:
         """Asynchronous auto-discovery logic."""
-        auto_discovery, auto_discovery_cache, auto_settings = self._prepare_auto_discovery()
+        auto_discovery, auto_discovery_cache, auto_settings = self._prepare_auto_discovery(skip_auto_discovery)
 
         if not skip_auto_discovery and self._should_run_discovery(auto_discovery, auto_discovery_cache):
             if auto_discovery != "force":
@@ -437,14 +437,14 @@ class Config:
 
         return self._get_final_cache_path(auto_discovery, auto_discovery_cache)
 
-    def _prepare_auto_discovery(self):
+    def _prepare_auto_discovery(self, skip_auto_discovery: bool):
         auto_discovery = os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY)
         auto_discovery_cache = Path(self.persistent_state_path, "auto-discovery.yaml")
         auto_settings = self._load_auto_discovery_settings()
 
         if auto_settings.modbus_auto_discovery:
             auto_discovery = auto_settings.modbus_auto_discovery
-        if not auto_discovery and not self._has_modbus_source():
+        if not auto_discovery and not self._has_modbus_source() and not skip_auto_discovery:
             auto_discovery = "once"
 
         return auto_discovery, auto_discovery_cache, auto_settings
@@ -453,11 +453,13 @@ class Config:
         return auto_discovery == "force" or (auto_discovery == "once" and not auto_discovery_cache.is_file())
 
     def _get_final_cache_path(self, auto_discovery, auto_discovery_cache) -> Path | None:
+        if auto_discovery not in ("once", "force"):
+            logging.debug("Auto-discovery disabled")
+            return None
         if auto_discovery == "once" and auto_discovery_cache.is_file():
             logging.info("Auto-discovery already completed, using cached results.")
             return auto_discovery_cache
-        if not self._should_run_discovery(auto_discovery, auto_discovery_cache) and not auto_discovery_cache.is_file():
-            logging.debug("Auto-discovery disabled")
+        if not auto_discovery_cache.is_file():
             return None
         return auto_discovery_cache
 
