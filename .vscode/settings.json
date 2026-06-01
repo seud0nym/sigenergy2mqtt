@@ -153,6 +153,8 @@
         "PATH": "${workspaceFolder}/.venv/bin:${env:PATH}"
     },
     "terminal.integrated.shellIntegration.enabled": true,
-    "python.analysis.typeCheckingMode": "strict",
     "python.pythonPath": ".venv/bin/python",
+    "cSpell.maxDuplicateProblems": 1,
+    "cSpell.unknownWords": "report-all",
+    "cSpell.spellCheckOnlyWorkspaceFiles": true,
 }
