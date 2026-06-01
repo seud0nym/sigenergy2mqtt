@@ -4,9 +4,10 @@
 
 ### Added
 
-- Added `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_NETWORKS` configuration setting and CLI argument to allow scanning of specific CIDR networks during auto-discovery
-- Added Inverter and Plant estimated self-consumed power and daily energy sensors
+- Added Inverter and Plant estimated self-consumed power and daily energy sensors (thanks to @swainstm https://whrl.pl/RgV4Rd)
 - Added simulated grid outage during startup for EVAC not on backup circuit to Modbus test server
+- Added `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_NETWORKS` configuration setting and CLI argument to allow scanning of specific CIDR networks during auto-discovery
+- Added `SIGENERGY2MQTT_LOG_FMT` configuration setting and CLI argument to allow override of the log message format
 
 ### Changed
 
@@ -28,6 +29,7 @@
 - When Power Factor is calculated because the Modbus interface provides an insane value, the log message will now only be visible if debug logging is enabled for that sensor
 - Metrics reads now count physical reads rather than imputing the time to read a single register 
 - Simplified PlantConsumedPower when using calculated consumption method to use new CrossDeviceDerivedSensor logic rather than relying on MQTT notifications
+- Modified early detection of Modbus 0x02 ILLEGAL_DATA_ADDRESS exceptions to use a pre-scan approach rather than hard-coding known problematic registers
 
 ### Fixed
 
