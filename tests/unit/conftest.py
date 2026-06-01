@@ -28,8 +28,17 @@ class MockPVInverter:
         return _t("PVInverter.name", "PV Inverter")
 
 
+class MockNonInverter:
+    def __init__(self, *args, **kwargs):
+        self.protocol_version = kwargs.get("protocol_version", Protocol.N_A)
+
+    def __str__(self) -> str:
+        return ""
+
+
 mock_types.HybridInverter = MockHybridInverter
 mock_types.PVInverter = MockPVInverter
+mock_types.NonInverter = MockNonInverter
 sys.modules["sigenergy2mqtt.common.types"] = mock_types
 
 
