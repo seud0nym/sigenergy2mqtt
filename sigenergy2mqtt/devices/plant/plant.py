@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from typing import cast
 
 import sigenergy2mqtt.sensors.plant_derived as derived
@@ -7,8 +8,10 @@ import sigenergy2mqtt.sensors.plant_read_write as rw
 from sigenergy2mqtt.common import ConsumptionMethod, DeviceType, FirmwareVersion, HybridInverter, Protocol
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import ModbusDevice
+from sigenergy2mqtt.devices.plant.ess_preheating import ESSPreHeating
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.sensors.inverter_read_only import OutputType
+from sigenergy2mqtt.sensors.plant_ess_preheating_read_write import ESSPreHeatingEnable
 from sigenergy2mqtt.sensors.plant_read_only import GridSensorActivePower, GridStatus
 from sigenergy2mqtt.sensors.plant_read_write import RemoteEMS
 
@@ -41,7 +44,7 @@ class PowerPlant(ModbusDevice):
         self._grid_sensor = None
 
     @classmethod
-    async def create(cls, plant_index: int, device_type: DeviceType, firmware: str, protocol_version: Protocol, output_type: int, modbus_client: ModbusClient) -> "PowerPlant":
+    async def create(cls, plant_index: int, device_type: DeviceType, firmware: FirmwareVersion, protocol_version: Protocol, output_type: int, modbus_client: ModbusClient) -> "PowerPlant":
         power_phases = OutputType.to_phases(output_type)
         plant = cls(plant_index, device_type, protocol_version)
         await plant._register_child_devices(power_phases, modbus_client)
@@ -60,7 +63,16 @@ class PowerPlant(ModbusDevice):
         if self.protocol_version >= Protocol.V2_8 and self._device_type.has_grid_code_interface:
             self._add_child_device(await GridCode.create(self.plant_index, self._device_type, self.protocol_version, modbus_client))
 
-    async def _register_sensors(self, firmware: str, output_type: int, power_phases: int, modbus_client: ModbusClient) -> None:
+        if self.protocol_version >= Protocol.V2_9:
+            pre_heating = ESSPreHeatingEnable(self.plant_index)
+            try:
+                pre_heating_enabled = await pre_heating.get_state(modbus_client=modbus_client, skip_failure_logging=True)
+                if pre_heating_enabled is not None:
+                    self._add_child_device(await ESSPreHeating.create(self.plant_index, self._device_type, self.protocol_version))
+            except Exception as e:
+                logging.debug(f"{self.log_identity} Failed to read ESS Pre-Heating Enable state — skipping registration of ESS Pre-Heating child device: {e}")
+
+    async def _register_sensors(self, fw: FirmwareVersion, output_type: int, power_phases: int, modbus_client: ModbusClient) -> None:
         rated_charging_power = ro.PlantRatedChargingPower(self.plant_index)
         rated_discharging_power = ro.PlantRatedDischargingPower(self.plant_index)
         # Fetch async values in parallel
@@ -110,7 +122,6 @@ class PowerPlant(ModbusDevice):
         self._add_sensor(ro.TotalLoadConsumption(self.plant_index))
         self._add_sensor(ro.TotalLoadDailyConsumption(self.plant_index))
 
-        fw = FirmwareVersion(firmware)
         remote_ems = rw.RemoteEMS(self.plant_index)
         remote_ems_mode = rw.RemoteEMSControlMode(self.plant_index, remote_ems)
 

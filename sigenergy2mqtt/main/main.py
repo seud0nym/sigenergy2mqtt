@@ -10,7 +10,7 @@ from paho.mqtt.enums import CallbackAPIVersion
 from pymodbus import pymodbus_apply_logging_config
 from pymodbus.pdu import ModbusPDU
 
-from sigenergy2mqtt.common import Constants, ConsumptionMethod, HybridInverter, InputType, Protocol, ProtocolApplies, PVInverter
+from sigenergy2mqtt.common import Constants, ConsumptionMethod, FirmwareVersion, HybridInverter, InputType, Protocol, ProtocolApplies, PVInverter
 from sigenergy2mqtt.config import active_config, configure_root_logging, initialize_with_persistence
 from sigenergy2mqtt.devices import ACCharger, DCCharger, Inverter, PowerPlant, bind_cross_device_sensors
 from sigenergy2mqtt.influxdb import get_influxdb_services
@@ -105,13 +105,7 @@ def get_modbus_url(modbus_client: ModbusClient) -> str:
     return "modbus://unknown"
 
 
-async def get_state(
-    sensor: Any,
-    modbus_client: ModbusClient,
-    device: str,
-    default_value: int | float | str | None = None,
-    raw: bool = False,
-) -> int | float | str | None:
+async def get_state(sensor: Any, modbus_client: ModbusClient, device: str, default_value: int | float | str | None = None, raw: bool = False) -> int | float | str | None:
     """Read a sensor state for bootstrap/probing while tolerating read failures.
 
     Returns the sensor value when successful, otherwise ``default_value``.
@@ -124,23 +118,17 @@ async def get_state(
     try:
         state = await sensor.get_state(raw=raw, modbus_client=modbus_client, skip_failure_logging=True)
         logging.debug(
-            f"READING {get_modbus_url(modbus_client)} - Acquiring {sensor.__class__.__name__} {'raw ' if raw else ''}{state=} to initialise {device} (idx={sensor.plant_index} id={sensor.device_address} addr={sensor.address})"
+            f"READING {get_modbus_url(modbus_client)} acquired {sensor.__class__.__name__} {'raw ' if raw else ''}{state=} to initialise {device} (idx={sensor.plant_index} id={sensor.device_address} addr={sensor.address})"
         )
     except Exception as e:
         state = default_value
         logging.debug(
-            f"FAILURE {get_modbus_url(modbus_client)} - Acquiring {sensor.__class__.__name__} to initialise {device} (idx={sensor.plant_index} id={sensor.device_address} addr={sensor.address}) -> {e} (returning {default_value=})"
+            f"FAILURE {get_modbus_url(modbus_client)} acquiring {sensor.__class__.__name__} to initialise {device} (idx={sensor.plant_index} id={sensor.device_address} addr={sensor.address}) -> {e} (returning {default_value=})"
         )
     return state
 
 
-async def read_registers(
-    modbus_client: ModbusClient,
-    register: int,
-    count: int,
-    device_id: int,
-    input_type: InputType,
-) -> ModbusPDU:
+async def read_registers(modbus_client: ModbusClient, register: int, count: int, device_id: int, input_type: InputType) -> ModbusPDU:
     """Read holding or input registers from a target device.
 
     ``input_type`` selects the Modbus function code. Raises ``ValueError`` if
@@ -191,11 +179,7 @@ async def probe_protocol(modbus_client: ModbusClient) -> Protocol:
     return Protocol.V1_8
 
 
-async def probe_optional_interface(
-    modbus_client: ModbusClient,
-    register: int,
-    interface_name: str,
-) -> bool:
+async def probe_optional_interface(modbus_client: ModbusClient, register: int, interface_name: str) -> bool:
     """Return True if the device responds successfully to a holding-register read."""
     try:
         rr = await read_registers(modbus_client, register, count=1, device_id=Constants.PLANT_DEVICE_ADDRESS, input_type=InputType.HOLDING)
@@ -209,19 +193,40 @@ async def probe_optional_interface(
         return False
 
 
+async def test_for_0x02_ILLEGAL_DATA_ADDRESS(modbus_client: ModbusClient, plant_index: int, device: PowerPlant | Inverter, *registers: int) -> None:
+    device_id: int = device.device_address
+    for register in registers:
+        sensor: Sensor = cast(
+            Sensor,
+            device.get_sensor(
+                f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_{device_id:03d}_{register}",
+                search_children=True,
+            ),
+        )
+        if not (sensor and sensor.publishable):
+            continue
+        id = (
+            f"{device.log_identity} - {sensor.log_identity} [{sensor['platform']}.{sensor['object_id']}]"
+            if active_config.home_assistant.enabled
+            else f"{device.log_identity} - {sensor.log_identity} [{sensor.state_topic}]"
+        )
+        if isinstance(sensor, ModbusSensorMixin):
+            try:
+                rr = await read_registers(modbus_client, register, sensor.count, device_id, sensor.input_type)
+                if rr and rr.isError() and rr.exception_code == 0x02:
+                    logging.info(f"{id}: ILLEGAL DATA ADDRESS - unpublishing")
+                    sensor.publishable = False
+            except Exception as e:
+                logging.info(f"{id}: {e} - unpublishing")
+                sensor.publishable = False
+
+
 # ---------------------------------------------------------------------------
 # Device factories
 # ---------------------------------------------------------------------------
 
 
-async def make_ac_charger(
-    plant_index: int,
-    modbus_client: ModbusClient,
-    device_address: int,
-    plant: PowerPlant,
-    sequence_number: int | None = None,
-    total_count: int | None = None,
-) -> ACCharger:
+async def make_ac_charger(plant_index: int, modbus_client: ModbusClient, device_address: int, plant: PowerPlant, sequence_number: int | None = None, total_count: int | None = None) -> ACCharger:
     """Create an AC charger device and link it to the parent plant.
 
     Side effects: performs async device initialisation reads and sets
@@ -239,14 +244,7 @@ async def make_ac_charger(
     return charger
 
 
-async def make_dc_charger(
-    plant_index: int,
-    device_address: int,
-    protocol_version: Protocol,
-    inverter_unique_id: str,
-    sequence_number: int | None = None,
-    total_count: int | None = None,
-) -> DCCharger:
+async def make_dc_charger(plant_index: int, device_address: int, protocol_version: Protocol, inverter_unique_id: str, sequence_number: int | None = None, total_count: int | None = None) -> DCCharger:
     """Create a DC charger device and associate it with its inverter.
 
     Side effects: performs async device initialisation and sets ``via_device``
@@ -263,13 +261,7 @@ async def make_dc_charger(
     return charger
 
 
-async def make_plant_and_inverter(
-    plant_index: int,
-    modbus_client: ModbusClient,
-    device_address: int,
-    plant: PowerPlant | None,
-    seen_serial_numbers: set[str],
-) -> Tuple[Inverter | None, PowerPlant | None]:
+async def make_plant_and_inverter(plant_index: int, modbus_client: ModbusClient, device_address: int, plant: PowerPlant | None, seen_serial_numbers: set[str]) -> Tuple[Inverter | None, PowerPlant | None]:
     """Create an Inverter and, on first call, a PowerPlant.
 
     ``seen_serial_numbers`` is updated in-place to guard against duplicate
@@ -296,7 +288,11 @@ async def make_plant_and_inverter(
     device_type.has_grid_code_interface = await probe_optional_interface(modbus_client, GridCodeLVRT.ADDRESS, "Grid Code Interface")
 
     if plant is None:
+        firmware = FirmwareVersion(cast(str, await get_state(InverterFirmwareVersion(plant_index, device_address), modbus_client, "plant/inverter")))
         protocol = await probe_protocol(modbus_client)
+        if protocol == Protocol.V2_8 and firmware.service_pack >= 114:
+            logging.debug(f"IGNORED {get_modbus_url(modbus_client)} detection of Protocol V{protocol.value} because Firmware {firmware} supports V2.9 features")
+            protocol = Protocol.V2_9
         logging.info(f"Interrogated {get_modbus_url(modbus_client)} and found Sigenergy Modbus Protocol V{protocol.value} ({ProtocolApplies(protocol)})")
 
         if protocol < Protocol.V2_8 and active_config.consumption != ConsumptionMethod.CALCULATED:
@@ -306,8 +302,7 @@ async def make_plant_and_inverter(
         ot = await get_state(OutputType(plant_index, device_address), modbus_client, "plant/inverter", raw=True)
         if ot is None:
             raise ValueError(f"Inverter {sn} OutputType cannot be None — cannot create PowerPlant (idx={plant_index} id={device_address})")
-        firmware = await get_state(InverterFirmwareVersion(plant_index, device_address), modbus_client, "plant/inverter")
-        plant = await PowerPlant.create(plant_index, device_type, cast(str, firmware), protocol, cast(int, ot), modbus_client)
+        plant = await PowerPlant.create(plant_index, device_type, firmware, protocol, cast(int, ot), modbus_client)
     else:
         protocol = plant.protocol_version
 
@@ -318,39 +313,6 @@ async def make_plant_and_inverter(
         seen_serial_numbers.add(str(sn))
 
     return inverter, plant
-
-
-async def test_for_0x02_ILLEGAL_DATA_ADDRESS(
-    modbus_client: ModbusClient,
-    plant_index: int,
-    device: PowerPlant | Inverter,
-    *registers: int,
-) -> None:
-    device_id: int = device.device_address
-    for register in registers:
-        sensor: Sensor = cast(
-            Sensor,
-            device.get_sensor(
-                f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_{device_id:03d}_{register}",
-                search_children=True,
-            ),
-        )
-        if not (sensor and sensor.publishable):
-            continue
-        id = (
-            f"{device.log_identity} - {sensor.log_identity} [{sensor['platform']}.{sensor['object_id']}]"
-            if active_config.home_assistant.enabled
-            else f"{device.log_identity} - {sensor.log_identity} [{sensor.state_topic}]"
-        )
-        if isinstance(sensor, ModbusSensorMixin):
-            try:
-                rr = await read_registers(modbus_client, register, sensor.count, device_id, sensor.input_type)
-                if rr and rr.isError() and rr.exception_code == 0x02:
-                    logging.info(f"{id}: ILLEGAL DATA ADDRESS - unpublishing")
-                    sensor.publishable = False
-            except Exception as e:
-                logging.info(f"{id}: {e} - unpublishing")
-                sensor.publishable = False
 
 
 # ---------------------------------------------------------------------------
@@ -439,145 +401,6 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
     return thread_config_registry.get_all(), protocol_version
 
 
-async def _setup_dc_chargers(
-    plant_index: int,
-    device,
-    plant: PowerPlant,
-    inverters: dict[int, str],
-    config: ThreadConfig,
-    sequence_start: int,
-    total_count: int,
-) -> int:
-    if not device.dc_chargers:
-        logging.debug(f"No DC chargers defined for plant {device.host}:{device.port} - disabling DC charger statistics interface sensors")
-        for register in (SITotalEVDCChargedEnergy.ADDRESS, SITotalEVDCDischargedEnergy.ADDRESS):
-            si_sensor = plant.get_sensor(
-                f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_{Constants.PLANT_DEVICE_ADDRESS}_{register}",
-                search_children=True,
-            )
-            if si_sensor:
-                si_sensor.publishable = False
-        return sequence_start
-
-    sequence_number = sequence_start
-    for device_address in device.dc_chargers:  # type: ignore[reportGeneralTypeIssues]
-        if device_address not in inverters:
-            logging.warning(f"DC charger at address {device_address} has no associated inverter (inverter may have been skipped as a duplicate) - skipping DC charger")
-            continue
-        sequence_number += 1
-        charger = await make_dc_charger(
-            plant_index,
-            device_address,
-            plant.protocol_version,
-            inverters[device_address],
-            sequence_number=sequence_number,
-            total_count=total_count,
-        )
-        config.add_device(charger)
-
-    return sequence_number
-
-
-async def _is_grid_outage(plant_index: int, modbus_client: ModbusClient) -> bool | None:
-    """Return True when grid is unavailable, False when on-grid, None when probe fails."""
-    grid_status = GridStatus(plant_index)
-    try:
-        raw_status = await grid_status.get_state(raw=True, modbus_client=modbus_client)
-    except Exception as exc:
-        logging.debug(f"Unable to probe GridStatus for outage detection: {exc}")
-        return None
-
-    if raw_status is None:
-        return None
-
-    try:
-        return int(raw_status) != 0
-    except (TypeError, ValueError):
-        logging.debug(f"Unexpected GridStatus raw value for outage detection: {raw_status}")
-        return None
-
-
-async def _watch_grid_restore_and_request_restart(host: str, port: int, timeout: float, retries: int, plant_index: int) -> None:
-    """Watch GridStatus and request runtime restart once grid returns on-line."""
-    key = (host, port, plant_index)
-    try:
-        while True:
-            modbus = ModbusClient(host, port=port, timeout=timeout, retries=retries)
-            async with modbus:
-                if modbus.connected:
-                    is_outage = await _is_grid_outage(plant_index, modbus)
-                    if is_outage is False:
-                        restart_controller.request(f"grid restored for AC charger setup on modbus://{host}:{port} plant {plant_index}")
-                        return
-            await asyncio.sleep(10)
-    except asyncio.CancelledError:
-        raise
-    finally:
-        _GRID_RESTORE_WATCH_TASKS.discard(key)
-
-
-def _schedule_restart_on_grid_restore(device, plant_index: int) -> None:
-    key = (device.host, device.port, plant_index)
-    if key in _GRID_RESTORE_WATCH_TASKS:
-        return
-    _GRID_RESTORE_WATCH_TASKS.add(key)
-    logging.info(f"Scheduling grid-restore watcher for modbus://{device.host}:{device.port} plant {plant_index} due to outage-time AC charger skip")
-    asyncio.create_task(_watch_grid_restore_and_request_restart(device.host, device.port, device.timeout, device.retries, plant_index))
-
-
-async def _setup_ac_chargers(
-    plant_index: int,
-    device,
-    plant: PowerPlant,
-    modbus_client: ModbusClient,
-    config: ThreadConfig,
-    protocol_version: Protocol | None,
-    sequence_start: int,
-    total_count: int,
-) -> int:
-    if not device.ac_chargers:
-        logging.debug(f"No AC chargers defined for plant {device.host}:{device.port} - disabling AC charger statistics interface sensors")
-        si_sensor = plant.get_sensor(
-            f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_247_{SITotalEVACChargedEnergy.ADDRESS}",
-            search_children=True,
-        )
-        if si_sensor:
-            si_sensor.publishable = False
-        return sequence_start
-
-    if protocol_version is not None and protocol_version < Protocol.V2_0:
-        logging.warning(f"AC Chargers are not supported on Sigenergy Modbus Protocol V{protocol_version.value} - skipping AC Charger device creation for modbus://{device.host}:{device.port}")
-        return sequence_start
-
-    sequence_number = sequence_start
-    skipped_due_to_outage = False
-    for device_address in device.ac_chargers:  # type: ignore[reportGeneralTypeIssues]
-        sequence_number += 1
-        try:
-            charger = await make_ac_charger(
-                plant_index,
-                modbus_client,
-                device_address,
-                plant,
-                sequence_number=sequence_number,
-                total_count=total_count,
-            )
-            config.add_device(charger)
-        except Exception as exc:
-            is_outage = await _is_grid_outage(plant_index, modbus_client)
-            if is_outage is True:
-                logging.warning(f"AC charger at address {device_address} initialization failed during grid outage; skipping this startup pass so other devices continue: {exc}")
-                skipped_due_to_outage = True
-                continue
-
-            logging.error(f"Failed to initialize AC charger at address {device_address}; skipping: {exc}")
-
-    if skipped_due_to_outage:
-        _schedule_restart_on_grid_restore(device, plant_index)
-
-    return sequence_number
-
-
 def setup_services(configs: list[ThreadConfig], protocol_version: Protocol | None) -> list[ThreadConfig]:
     """Attach optional service/monitor threads to the discovered device configs.
 
@@ -662,6 +485,128 @@ def setup_signals(configs: list[ThreadConfig]) -> None:
             loop.add_signal_handler(signal.SIGHUP, reload_on_signal)
         except (NotImplementedError, AttributeError):
             pass
+
+
+async def _setup_ac_chargers(plant_index: int, device, plant: PowerPlant, modbus_client: ModbusClient, config: ThreadConfig, protocol_version: Protocol | None, sequence_start: int, total_count: int) -> int:
+    if not device.ac_chargers:
+        logging.debug(f"No AC chargers defined for plant {device.host}:{device.port} - disabling AC charger statistics interface sensors")
+        si_sensor = plant.get_sensor(
+            f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_247_{SITotalEVACChargedEnergy.ADDRESS}",
+            search_children=True,
+        )
+        if si_sensor:
+            si_sensor.publishable = False
+        return sequence_start
+
+    if protocol_version is not None and protocol_version < Protocol.V2_0:
+        logging.warning(f"AC Chargers are not supported on Sigenergy Modbus Protocol V{protocol_version.value} - skipping AC Charger device creation for modbus://{device.host}:{device.port}")
+        return sequence_start
+
+    sequence_number = sequence_start
+    skipped_due_to_outage = False
+    for device_address in device.ac_chargers:  # type: ignore[reportGeneralTypeIssues]
+        sequence_number += 1
+        try:
+            charger = await make_ac_charger(
+                plant_index,
+                modbus_client,
+                device_address,
+                plant,
+                sequence_number=sequence_number,
+                total_count=total_count,
+            )
+            config.add_device(charger)
+        except Exception as exc:
+            is_outage = await _is_grid_outage(plant_index, modbus_client)
+            if is_outage is True:
+                logging.warning(f"AC charger at address {device_address} initialization failed during grid outage; skipping this startup pass so other devices continue: {exc}")
+                skipped_due_to_outage = True
+                continue
+
+            logging.error(f"Failed to initialize AC charger at address {device_address}; skipping: {exc}")
+
+    if skipped_due_to_outage:
+        _schedule_restart_on_grid_restore(device, plant_index)
+
+    return sequence_number
+
+
+async def _setup_dc_chargers(plant_index: int, device, plant: PowerPlant, inverters: dict[int, str], config: ThreadConfig, sequence_start: int, total_count: int) -> int:
+    if not device.dc_chargers:
+        logging.debug(f"No DC chargers defined for plant {device.host}:{device.port} - disabling DC charger statistics interface sensors")
+        for register in (SITotalEVDCChargedEnergy.ADDRESS, SITotalEVDCDischargedEnergy.ADDRESS):
+            si_sensor = plant.get_sensor(
+                f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_{Constants.PLANT_DEVICE_ADDRESS}_{register}",
+                search_children=True,
+            )
+            if si_sensor:
+                si_sensor.publishable = False
+        return sequence_start
+
+    sequence_number = sequence_start
+    for device_address in device.dc_chargers:  # type: ignore[reportGeneralTypeIssues]
+        if device_address not in inverters:
+            logging.warning(f"DC charger at address {device_address} has no associated inverter (inverter may have been skipped as a duplicate) - skipping DC charger")
+            continue
+        sequence_number += 1
+        charger = await make_dc_charger(
+            plant_index,
+            device_address,
+            plant.protocol_version,
+            inverters[device_address],
+            sequence_number=sequence_number,
+            total_count=total_count,
+        )
+        config.add_device(charger)
+
+    return sequence_number
+
+
+async def _is_grid_outage(plant_index: int, modbus_client: ModbusClient) -> bool | None:
+    """Return True when grid is unavailable, False when on-grid, None when probe fails."""
+    grid_status = GridStatus(plant_index)
+    try:
+        raw_status = await grid_status.get_state(raw=True, modbus_client=modbus_client)
+    except Exception as exc:
+        logging.debug(f"Unable to probe GridStatus for outage detection: {exc}")
+        return None
+
+    if raw_status is None:
+        return None
+
+    try:
+        return int(raw_status) != 0
+    except (TypeError, ValueError):
+        logging.debug(f"Unexpected GridStatus raw value for outage detection: {raw_status}")
+        return None
+
+
+async def _watch_grid_restore_and_request_restart(host: str, port: int, timeout: float, retries: int, plant_index: int) -> None:
+    """Watch GridStatus and request runtime restart once grid returns on-line."""
+    key = (host, port, plant_index)
+    try:
+        while True:
+            modbus = ModbusClient(host, port=port, timeout=timeout, retries=retries)
+            async with modbus:
+                if modbus.connected:
+                    is_outage = await _is_grid_outage(plant_index, modbus)
+                    if is_outage is False:
+                        restart_controller.request(f"grid restored for AC charger setup on modbus://{host}:{port} plant {plant_index}")
+                        return
+            await asyncio.sleep(10)
+    except asyncio.CancelledError:
+        raise
+    finally:
+        _GRID_RESTORE_WATCH_TASKS.discard(key)
+
+
+def _schedule_restart_on_grid_restore(device, plant_index: int) -> None:
+    key = (device.host, device.port, plant_index)
+    if key in _GRID_RESTORE_WATCH_TASKS:
+        return
+    _GRID_RESTORE_WATCH_TASKS.add(key)
+    logging.info(f"Scheduling grid-restore watcher for modbus://{device.host}:{device.port} plant {plant_index} due to outage-time AC charger skip")
+    asyncio.create_task(_watch_grid_restore_and_request_restart(device.host, device.port, device.timeout, device.retries, plant_index))
 
 
 # ---------------------------------------------------------------------------
