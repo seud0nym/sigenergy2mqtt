@@ -1780,6 +1780,8 @@ cli:
     help: 'Tempo limite de escrita do InfluxDB em segundos (padrão: 30.0)'
   SIGENERGY2MQTT_LANGUAGE:
     help: 'Define o idioma a ser usado para as traduções. O padrão é determinado pelo sistema (por exemplo, a variável de ambiente LANG) ou Inglês se nenhuma alternativa for encontrada.'
+  SIGENERGY2MQTT_LOG_FMT:
+    help: 'O formato de log. O padrão depende do ambiente de execução.'
   SIGENERGY2MQTT_LOG_LEVEL:
     help: 'Definir o nível de log. Valores válidos: DEBUG, INFO, WARNING, ERROR ou CRITICAL. Padrão: WARNING'
   SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID:

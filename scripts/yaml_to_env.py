@@ -44,6 +44,7 @@ def yaml_to_env(yaml_data):
 
     # Top level
     set_env(const.SIGENERGY2MQTT_LOG_LEVEL, yaml_data.get("log-level"))
+    set_env(const.SIGENERGY2MQTT_LOG_FMT, yaml_data.get("log-fmt"))
     set_env(const.SIGENERGY2MQTT_LANGUAGE, yaml_data.get("language"))
     set_env(const.SIGENERGY2MQTT_CONSUMPTION, yaml_data.get("consumption"))
     set_env(const.SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL, yaml_data.get("repeated-state-publish-interval"))

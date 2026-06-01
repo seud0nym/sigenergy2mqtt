@@ -1780,6 +1780,8 @@ cli:
     help: 'InfluxDB 写入超时（秒）（默认：30.0）'
   SIGENERGY2MQTT_LANGUAGE:
     help: '设置翻译使用的语言。默认值由系统决定（例如 LANG 环境变量），如果找不到备选方案，则默认为英语。'
+  SIGENERGY2MQTT_LOG_FMT:
+    help: '日志格式。默认值取决于运行环境。'
   SIGENERGY2MQTT_LOG_LEVEL:
     help: 设置日志级别。有效值：DEBUG, INFO, WARNING, ERROR, CRITICAL。默认：WARNING
   SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID:

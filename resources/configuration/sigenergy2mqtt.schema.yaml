@@ -11,6 +11,9 @@ properties:
         enum: [DEBUG, INFO, WARNING, ERROR, CRITICAL]
       - type: integer
     default: WARNING
+  log-fmt:
+    description: "Set the log format."
+    type: [string, "null"]
   language:
     description: "The language to use for translations."
     type: string

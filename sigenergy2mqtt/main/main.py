@@ -1,9 +1,7 @@
 import asyncio
 import logging
-import os
 import signal
 import sys
-from pathlib import Path
 from typing import Any, Tuple, cast
 
 import paho.mqtt.client as paho_mqtt
@@ -13,7 +11,7 @@ from pymodbus import pymodbus_apply_logging_config
 from pymodbus.pdu import ModbusPDU
 
 from sigenergy2mqtt.common import Constants, ConsumptionMethod, HybridInverter, InputType, Protocol, ProtocolApplies, PVInverter
-from sigenergy2mqtt.config import active_config, initialize_with_persistence
+from sigenergy2mqtt.config import active_config, configure_root_logging, initialize_with_persistence
 from sigenergy2mqtt.devices import ACCharger, DCCharger, Inverter, PowerPlant, bind_cross_device_sensors
 from sigenergy2mqtt.influxdb import get_influxdb_services
 from sigenergy2mqtt.metrics.metrics_service import MetricsService
@@ -63,27 +61,10 @@ _GRID_RESTORE_WATCH_TASKS: set[tuple[str, int, int]] = set()
 
 
 def configure_logging() -> None:
-    """Configure the root logger with a format appropriate to the runtime environment.
-
-    Three formats are used:
-
-    - **TTY**: includes timestamp and ``sigenergy2mqtt:`` prefix — for interactive use.
-    - **Docker**: includes timestamp but no prefix — for structured container log collectors.
-    - **Other**: no timestamp — for init systems (systemd, etc.) that add their own.
-    """
-    if os.isatty(sys.stdout.fileno()):
-        fmt = "{asctime} {levelname:<8} sigenergy2mqtt:{module:.<15.15}{lineno:04d} {message}"
-    else:
-        cgroup = Path("/proc/self/cgroup")
-        in_docker = Path("/.dockerenv").is_file() or (cgroup.is_file() and "docker" in cgroup.read_text())
-        fmt = "{asctime} {levelname:<8} {module:.<15.15}{lineno:04d} {message}" if in_docker else "{levelname:<8} {module:.<15.15}{lineno:04d} {message}"
-
-    # basicConfig is a no-op if handlers already exist; force our format by
-    # removing any pre-existing handlers first (e.g. added by pymodbus).
-    root = logging.getLogger()
-    if root.handlers:
-        root.handlers.clear()
-    logging.basicConfig(format=fmt, level=active_config.log_level, style="{")
+    """Configure the root logger with a format appropriate to the runtime environment."""
+    # Configure root logger format/level via shared helper so logic is unified
+    # with configure_root_logging() performed at import time.
+    configure_root_logging(active_config.log_level, active_config.log_fmt)
 
     _configure_logger("paho.mqtt", active_config.mqtt.log_level)
     _configure_logger("pvoutput", active_config.pvoutput.log_level)

@@ -129,6 +129,7 @@ class EnvSettingsSource(PydanticBaseSettingsSource):
 
         # ── Top-level ────────────────────────────────────────────────────────
         _set(result, "log_level", g(const.SIGENERGY2MQTT_LOG_LEVEL))
+        _set(result, "log_fmt", g(const.SIGENERGY2MQTT_LOG_FMT))
         _set(result, "language", g(const.SIGENERGY2MQTT_LANGUAGE))
         _set(result, "consumption", g(const.SIGENERGY2MQTT_CONSUMPTION))
         _set(result, "repeated_state_publish_interval", _int(g(const.SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL)))

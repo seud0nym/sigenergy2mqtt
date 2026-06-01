@@ -10,6 +10,10 @@
 #   description:  The sigenergy2mqtt default logging level. Must be one of:
 #                 DEBUG, INFO, WARNING, ERROR, or CRITICAL
 log-level: WARNING
+# log-fmt
+#   added: 2026.5.31
+#   description: Set the log format. The default depends on the runtime environment.
+# log-fmt: "{asctime} {levelname:<8} sigenergy2mqtt:{module:.<15.15}{lineno:04d} {message}"
 # language
 #   added: 2026.1.25
 #   default:      Determined from system (e.g. LANG environment variable) or 

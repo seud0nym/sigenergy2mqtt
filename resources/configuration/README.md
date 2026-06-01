@@ -56,6 +56,21 @@ The sigenergy2mqtt default logging level. Must be one of:
 - `ERROR`
 - `CRITICAL`
 
+<a id="opt_log_fmt"></a>
+### Log Format
+- CLI: `--log-fmt`
+- ENV: `SIGENERGY2MQTT_LOG_FMT`
+- Config key: `log-fmt`
+
+Set the log format. 
+
+e.g "{asctime} {levelname:<8} sigenergy2mqtt:{module:.<15.15}{lineno:04d} {message}"
+
+If not specified, the default depends on the runtime environment: 
+- includes timestamp and 'sigenergy2mqtt:' prefix for interactive use; 
+- includes timestamp but no prefix for structured container log collectors; 
+- no timestamp for init systems (systemd, etc.) that add their own.
+
 <a id="opt_no_ems_mode_check"></a>
 ### No Ems Mode Check
 - CLI: `--no-ems-mode-check`

@@ -116,6 +116,7 @@ class Settings(BaseSettings):
     # ── Top-level scalars ────────────────────────────────────────────────────
     log_level: int = Field(logging.WARNING, alias="log-level")
     _validate_log_level = field_validator("log_level", mode="before")(validate_log_level)
+    log_fmt: Optional[str] = Field(None, alias="log-fmt")
     language: str = Field("en", alias="language")
     consumption: ConsumptionMethod = Field(ConsumptionMethod.TOTAL, alias="consumption")
     repeated_state_publish_interval: int = Field(0, alias="repeated-state-publish-interval")

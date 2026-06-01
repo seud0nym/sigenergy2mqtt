@@ -1780,6 +1780,8 @@ cli:
     help: 'Délai d''écriture InfluxDB en secondes (par défaut : 30.0)'
   SIGENERGY2MQTT_LANGUAGE:
     help: 'Définir la langue à utiliser pour les traductions. Par défaut, elle est déterminée par le système (par exemple, la variable d''environnement LANG) ou l''anglais si aucune alternative n''est trouvée.'
+  SIGENERGY2MQTT_LOG_FMT:
+    help: 'Définir le format de journalisation. Le format par défaut dépend de l''environnement d''exécution.'
   SIGENERGY2MQTT_LOG_LEVEL:
     help: 'Définir le niveau de journalisation. Valeurs valides: DEBUG, INFO, WARNING, ERROR ou CRITICAL. Par défaut: WARNING (avertissements, erreurs et défaillances critiques)'
   SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID:

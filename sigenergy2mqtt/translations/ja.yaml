@@ -1780,6 +1780,8 @@ cli:
     help: 'InfluxDB書き込みタイムアウト（秒）（デフォルト: 30.0）'
   SIGENERGY2MQTT_LANGUAGE:
     help: '翻訳に使用する言語を設定します。デフォルトはシステム（例：LANG 環境変数）から決定されますが、代替が見つからない場合は英語になります。'
+  SIGENERGY2MQTT_LOG_FMT:
+    help: 'ログ形式を設定します。デフォルトは実行環境によって異なります。'
   SIGENERGY2MQTT_LOG_LEVEL:
     help: 'ログレベルを設定。有効な値: DEBUG, INFO, WARNING, ERROR, CRITICAL。デフォルト: WARNING'
   SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID:

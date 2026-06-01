@@ -1780,6 +1780,8 @@ cli:
     help: 'InfluxDB-Schreib-Zeitüberschreitung in Sekunden (Standard: 30.0)'
   SIGENERGY2MQTT_LANGUAGE:
     help: 'Legen Sie die Sprache für Übersetzungen fest. Der Standardwert wird vom System ermittelt (z. B. LANG-Umgebungsvariable) oder Englisch, falls keine Alternative gefunden wird.'
+  SIGENERGY2MQTT_LOG_FMT:
+    help: 'Legen Sie das Log-Format fest. Der Standardwert hängt von der Laufzeitumgebung ab.'
   SIGENERGY2MQTT_LOG_LEVEL:
     help: 'Protokollebene festlegen. Gültige Werte sind: DEBUG, INFO, WARNING, ERROR oder CRITICAL. Standard ist WARNING (Warnungen, Fehler und kritische Ausfälle)'
   SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID:

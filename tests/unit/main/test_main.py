@@ -132,7 +132,7 @@ class TestConfigureLogging:
         """Test the Docker logging format branch."""
         monkeypatch.setattr(os, "isatty", lambda fd: False)
         monkeypatch.setattr(sys.stdout, "fileno", lambda: 1)
-        with patch("sigenergy2mqtt.main.main.Path") as mock_path:
+        with patch("sigenergy2mqtt.config.config.Path") as mock_path:
             # Mocking /.dockerenv existance
             mock_path.return_value.is_file.return_value = True
             with patch("logging.basicConfig") as mock_basic:

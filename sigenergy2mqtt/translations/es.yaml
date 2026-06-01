@@ -1780,6 +1780,8 @@ cli:
     help: 'Tiempo de espera de escritura de InfluxDB en segundos (por defecto: 30.0)'
   SIGENERGY2MQTT_LANGUAGE:
     help: 'Establece el idioma a utilizar para las traducciones. El valor predeterminado se determina a partir del sistema (por ejemplo, la variable de entorno LANG) o Inglés si no se encuentra ninguna alternativa.'
+  SIGENERGY2MQTT_LOG_FMT:
+    help: 'Establece el formato de registro. El valor predeterminado depende del entorno de ejecución.'
   SIGENERGY2MQTT_LOG_LEVEL:
     help: 'Establecer el nivel de registro. Valores válidos son: DEBUG, INFO, WARNING, ERROR o CRITICAL. El predeterminado es WARNING (advertencias, errores y fallos críticos)'
   SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID:

@@ -1780,6 +1780,8 @@ cli:
     help: 'InfluxDB schrijf-timeout in seconden (standaard: 30.0)'
   SIGENERGY2MQTT_LANGUAGE:
     help: 'Stelt de taal in die gebruikt moet worden voor vertalingen. De standaardwaarde wordt bepaald door het systeem (bijv. de LANG-omgevingsvariabele) of Engels als er geen alternatief wordt gevonden.'
+  SIGENERGY2MQTT_LOG_FMT:
+    help: 'Het logformaat instellen. De standaardwaarde is afhankelijk van de uitvoeringsomgeving.'
   SIGENERGY2MQTT_LOG_LEVEL:
     help: 'Stel het logniveau in. Geldige waarden: DEBUG, INFO, WARNING, ERROR of CRITICAL. Standaard: WARNING'
   SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID:
