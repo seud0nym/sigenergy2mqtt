@@ -271,10 +271,10 @@ class Settings(BaseSettings):
             hp = f"{device.host}:{device.port}"
             is_discovery = hp in discovery_hosts
             is_file_env = hp in file_env_hosts or (is_discovery and device.port in blank_ports)
-            
+
             if not is_file_env and env_override and self.modbus.index(device) == 0:
                 is_file_env = True
-                
+
             if is_discovery and is_file_env:
                 source = "auto-discovery YAML and other sources combined (file/env/cli)"
             elif is_discovery:
@@ -283,8 +283,8 @@ class Settings(BaseSettings):
                 source = "other sources (file/env/cli)"
             else:
                 source = "other sources (file/env/cli)"
-                
-            msg = f"Loaded modbus config for {hp} from {source}"
+
+            msg = f"Configuring modbus://{hp} from {source}"
             ids_info = []
             if device.inverters:
                 ids_info.append(f"inverters: {device.inverters}")
@@ -294,7 +294,7 @@ class Settings(BaseSettings):
                 ids_info.append(f"ac-chargers: {device.ac_chargers}")
             if ids_info:
                 msg += f" with {', '.join(ids_info)}"
-                
+
             logging.info(msg)
 
     # ── Source customisation ──────────────────────────────────────────────────

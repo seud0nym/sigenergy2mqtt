@@ -21,7 +21,6 @@ from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 
 from sigenergy2mqtt.common import ConsumptionMethod, HybridInverter, Protocol, PVInverter
 from sigenergy2mqtt.config import Config, _swap_active_config
-from sigenergy2mqtt.main.main import INVERTER_ILLEGAL_DATA_ADDRESSES, PLANT_ILLEGAL_DATA_ADDRESSES
 from sigenergy2mqtt.metrics.metrics_service import MetricsService
 from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, ModbusSensorMixin, ReadableSensorMixin, ReservedSensor, Sensor, TypedSensorMixin, WritableSensorMixin, WriteOnlySensor
 from sigenergy2mqtt.sensors.plant_derived import PlantConsumedPower
@@ -29,7 +28,6 @@ from sigenergy2mqtt.sensors.plant_read_write import RemoteEMSLimit
 from tests.utils import get_sensor_instances
 
 HTTP_TIMEOUT = 15  # Default timeout (seconds) for all outbound GitHub API requests.
-ILLEGAL_DATA_ADDRESSES: list[int] = INVERTER_ILLEGAL_DATA_ADDRESSES + PLANT_ILLEGAL_DATA_ADDRESSES
 RANGE_PATTERN = r"Range:\s*\[(.*?)\]"
 SENSORS: Path = Path("sensors/SENSORS.md")
 TOPICS: Path = Path("sensors/TOPICS.md")
@@ -218,12 +216,8 @@ async def sensor_index() -> None:
                         protocol = "N/A"
                     else:
                         f.write(f"{attributes['source']}")
-                        if attributes["source"] in ILLEGAL_DATA_ADDRESSES:
-                            f.write(" (may not be available on all devices)")
                 elif isinstance(sensor, ModbusSensorMixin):
                     f.write(f"{sensor.address}")
-                    if sensor.address in ILLEGAL_DATA_ADDRESSES:
-                        f.write(" (may not be available on all devices)")
                 else:
                     logging.getLogger().error(f"Sensor {sensor_name} ({key}) does not have a Modbus address or derived description.")
                 f.write("</td></tr>\n")

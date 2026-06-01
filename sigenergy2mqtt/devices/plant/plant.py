@@ -11,7 +11,6 @@ from sigenergy2mqtt.devices import ModbusDevice
 from sigenergy2mqtt.devices.plant.ess_preheating import ESSPreHeating
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.sensors.inverter_read_only import OutputType
-from sigenergy2mqtt.sensors.plant_ess_preheating_read_write import ESSPreHeatingEnable
 from sigenergy2mqtt.sensors.plant_read_only import GridSensorActivePower, GridStatus
 from sigenergy2mqtt.sensors.plant_read_write import RemoteEMS
 
@@ -44,33 +43,33 @@ class PowerPlant(ModbusDevice):
         self._grid_sensor = None
 
     @classmethod
-    async def create(cls, plant_index: int, device_type: DeviceType, firmware: FirmwareVersion, protocol_version: Protocol, output_type: int, modbus_client: ModbusClient) -> "PowerPlant":
+    async def create(cls, plant_index: int, device_type: DeviceType, firmware: FirmwareVersion, protocol_version: Protocol, output_type: int, pre_heating: bool, modbus_client: ModbusClient) -> "PowerPlant":
         power_phases = OutputType.to_phases(output_type)
         plant = cls(plant_index, device_type, protocol_version)
-        await plant._register_child_devices(power_phases, modbus_client)
+        await plant._register_child_devices(power_phases, pre_heating, modbus_client)
         await plant._register_sensors(firmware, output_type, power_phases, modbus_client)
         availability_control_sensor = plant.sensors.get(f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_247_{RemoteEMS.ADDRESS}")
         if availability_control_sensor is None:
             raise RuntimeError(f"{plant.__class__.__name__} Failed to find RemoteEMS sensor — cannot continue setup")
         return plant
 
-    async def _register_child_devices(self, power_phases: int, modbus_client: ModbusClient) -> None:
+    async def _register_child_devices(self, power_phases: int, pre_heating: bool, modbus_client: ModbusClient) -> None:
         self._grid_sensor = await GridSensor.create(self.plant_index, self._device_type, self.protocol_version, power_phases, self._consumption_group, modbus_client)
         self._add_child_device(self._grid_sensor)
 
         self._add_child_device(await PlantStatistics.create(self.plant_index, self._device_type, self.protocol_version))
 
-        if self.protocol_version >= Protocol.V2_8 and self._device_type.has_grid_code_interface:
-            self._add_child_device(await GridCode.create(self.plant_index, self._device_type, self.protocol_version, modbus_client))
+        if self.protocol_version >= Protocol.V2_8:
+            if self._device_type.has_grid_code_interface:
+                self._add_child_device(await GridCode.create(self.plant_index, self._device_type, self.protocol_version, modbus_client))
+            else:
+                logging.info(f"{self.log_identity} GridCode child device not registered because this device type ({self._device_type}) does not support grid code interface")
 
         if self.protocol_version >= Protocol.V2_9:
-            pre_heating = ESSPreHeatingEnable(self.plant_index)
-            try:
-                pre_heating_enabled = await pre_heating.get_state(modbus_client=modbus_client, skip_failure_logging=True)
-                if pre_heating_enabled is not None:
-                    self._add_child_device(await ESSPreHeating.create(self.plant_index, self._device_type, self.protocol_version))
-            except Exception as e:
-                logging.debug(f"{self.log_identity} Failed to read ESS Pre-Heating Enable state — skipping registration of ESS Pre-Heating child device: {e}")
+            if pre_heating:
+                self._add_child_device(await ESSPreHeating.create(self.plant_index, self._device_type, self.protocol_version))
+            else:
+                logging.info(f"{self.log_identity} ESS Pre-Heating device not registered because pre-heating sensors not found")
 
     async def _register_sensors(self, fw: FirmwareVersion, output_type: int, power_phases: int, modbus_client: ModbusClient) -> None:
         rated_charging_power = ro.PlantRatedChargingPower(self.plant_index)

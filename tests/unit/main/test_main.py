@@ -3,7 +3,6 @@ import logging
 import os
 import signal
 import sys
-import types
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -590,119 +589,6 @@ async def test_probe_optional_interface_success(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_test_for_0x02_illegal_data_address_marks_unpublishable(monkeypatch):
-    device = MagicMock()
-    device.device_address = 247
-    device.name = "Device"
-    device.log_identity = "Device"
-    device.__format__ = lambda s, f: "Device"
-
-    class SensorObj(dict):
-        def __init__(self):
-            super().__init__()
-            self.publishable = True
-            self.input_type = InputType.HOLDING
-            self.count = 1
-            self.name = "Sensor"
-            self.log_identity = "Sensor"
-            self.state_topic = "topic"
-            self["platform"] = "sensor"
-            self["object_id"] = "obj"
-
-        def __format__(self, format_spec):
-            return "Sensor"
-
-    sensor = SensorObj()
-    monkeypatch.setattr(main_mod, "ModbusSensorMixin", SensorObj)
-    device.get_sensor = lambda *a, **k: sensor
-
-    class RR:
-        def isError(self):
-            return True
-
-        def __str__(self):
-            return "RR"
-
-        def __format__(self, format_spec):
-            return "RR"
-
-        @property
-        def exception_code(self):
-            return 0x02
-
-    class FakeModbus:
-        async def read_holding_registers(self, *a, **k):
-            return RR()
-
-        comm_params = types.SimpleNamespace(host="x", port=1)
-
-        def __str__(self):
-            return "FakeModbus"
-
-        def __format__(self, format_spec):
-            return "FakeModbus"
-
-    await main_mod.test_for_0x02_ILLEGAL_DATA_ADDRESS(FakeModbus(), 0, device, 40000)
-    assert sensor.publishable is False
-
-
-@pytest.mark.asyncio
-async def test_illegal_data_address_unknown_input_type(clean_config, monkeypatch):
-    mock_client = MagicMock()
-    mock_client.comm_params.host = "h"
-    mock_client.comm_params.port = 502
-    mock_client.__str__ = lambda x: "MockClient"
-    mock_client.__format__ = lambda x, f: "MockClient"
-    mock_device = MagicMock()
-    mock_device.device_address = 247
-    mock_device.name = "Device"
-    mock_device.log_identity = "Device"
-    mock_device.__format__ = lambda x, f: "Device"
-
-    class MockSensor(dict):
-        def __init__(self):
-            super().__init__()
-            self.publishable = True
-            self.input_type = "INVALID_TYPE"
-            self.count = 1
-            self.name = "BadSensor"
-            self.log_identity = "BadSensor"
-            self.state_topic = "topic"
-            self["platform"] = "sensor"
-            self["object_id"] = "obj"
-
-        def __format__(self, format_spec):
-            return "BadSensor"
-
-    mock_sensor = MockSensor()
-    monkeypatch.setattr(main_mod, "ModbusSensorMixin", MockSensor)
-    mock_device.get_sensor.return_value = mock_sensor
-
-    with patch("sigenergy2mqtt.main.main.logging.info") as mock_log:
-        await main_mod.test_for_0x02_ILLEGAL_DATA_ADDRESS(mock_client, 0, mock_device, 12345)
-
-    assert mock_sensor.publishable is False
-    assert mock_log.called
-
-
-@pytest.mark.asyncio
-async def test_test_for_0x02_illegal_data_address_not_publishable(monkeypatch):
-    """Test the continue branch when sensor is not publishable."""
-    device = FmtMock()
-    device.name = "TestDevice"
-    sensor = FmtMock(publishable=False)
-    sensor.name = "TestSensor"
-    device.get_sensor.return_value = sensor
-
-    mock_client = FmtAsyncMock()
-    mock_client.comm_params.host = "h"
-    mock_client.comm_params.port = 502
-
-    await main_mod.test_for_0x02_ILLEGAL_DATA_ADDRESS(mock_client, 0, device, 123)
-    assert not mock_client.read_holding_registers.called
-
-
-@pytest.mark.asyncio
 async def test_setup_devices_ignored_host(clean_config):
     """Test branch where Modbus host is ignored (no registers enabled)."""
     clean_config.modbus[0].registers.read_only = False
@@ -930,7 +816,7 @@ async def test_async_main_with_full_device_flow(clean_config, monkeypatch):
     mock_inverter = MagicMock(unique_id="i_uid", device_address=1)
     mock_inverter.name = "Inverter"
     monkeypatch.setattr(main_mod, "make_plant_and_inverter", AsyncMock(return_value=(mock_inverter, mock_plant)))
-    monkeypatch.setattr(main_mod, "test_for_0x02_ILLEGAL_DATA_ADDRESS", AsyncMock())
+    monkeypatch.setattr(main_mod, "validate_publishable_sensors", AsyncMock())
     monkeypatch.setattr(main_mod, "make_dc_charger", AsyncMock(return_value=MagicMock()))
     monkeypatch.setattr(main_mod, "make_ac_charger", AsyncMock(return_value=MagicMock()))
     monkeypatch.setattr(main_mod, "start", AsyncMock())
@@ -969,7 +855,7 @@ async def test_async_main_with_no_battery(clean_config, monkeypatch):
     mock_inverter = MagicMock(unique_id="i_uid", device_address=1)
     mock_inverter.name = "Inverter"
     monkeypatch.setattr(main_mod, "make_plant_and_inverter", AsyncMock(return_value=(mock_inverter, mock_plant)))
-    monkeypatch.setattr(main_mod, "test_for_0x02_ILLEGAL_DATA_ADDRESS", AsyncMock())
+    monkeypatch.setattr(main_mod, "validate_publishable_sensors", AsyncMock())
     monkeypatch.setattr(main_mod, "start", AsyncMock())
     monkeypatch.setattr(signal, "signal", lambda *a: None)
 

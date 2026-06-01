@@ -60,19 +60,17 @@ class Inverter(ModbusDevice):
         else:
             battery_count = 0
 
-        try:
-            parsed_firmware = FirmwareVersion(cast(str, firmware))
-            if active_config.ems_mode_check and parsed_firmware.service_pack >= 113:
-                logging.info(
-                    f"Inverter {serial}: Disabling Remote EMS Mode check because PV Max Power {'and ESS Charge/Discharge limits are' if battery_count > 0 else 'is'} globally available in firmware {firmware}"
-                )
-                active_config.ems_mode_check = False
-        except ValueError:
-            logging.warning(f"Inverter {serial}: Unable to parse firmware version '{firmware}' for ems_mode_check enforcement")
-
         inverter = cls(plant_index, device_address, device_type, protocol_version, cast(str, model_id), cast(str, serial), cast(str, firmware))
         await inverter._register_child_devices(plant_index, device_address, device_type, protocol_version, cast(str, model_id), cast(str, serial), cast(int, strings), battery_count)
         await inverter._register_sensors(plant_index, device_address, pv_string_count, firmware_version, model, serial_number, pack_bcu_count, battery_count, modbus_client)
+
+        try:
+            parsed_firmware = FirmwareVersion(cast(str, firmware))
+            if active_config.ems_mode_check and parsed_firmware.service_pack >= 113:
+                logging.info(f"{inverter.log_identity} ({serial}): Remote EMS Mode check disabled in firmware after SPC113 ({firmware})")
+                active_config.ems_mode_check = False
+        except ValueError:
+            logging.warning(f"{inverter.log_identity} ({serial}): Unable to parse firmware version '{firmware}' for ems_mode_check enforcement")
         return inverter
 
     async def _register_child_devices(

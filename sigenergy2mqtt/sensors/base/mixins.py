@@ -146,6 +146,7 @@ class ModbusSensorMixin(SensorDebuggingMixin):
         self.device_address = device_address
         self.input_type = input_type
         self.plant_index = plant_index
+        self.illegal_data_address = False  # Set to True when 0x02 ILLEGAL_DATA_ADDRESS exception occurs
         self.refresh_log_identity()
 
     def _check_register_response(self, rr: ModbusPDU | None, source: str, **kwargs) -> bool:
@@ -201,10 +202,13 @@ class ModbusSensorMixin(SensorDebuggingMixin):
         """Handle illegal data address exception."""
         logging.log(
             logging.ERROR if "skip_failure_logging" not in kwargs or not kwargs["skip_failure_logging"] else logging.DEBUG,
-            f"{self.log_identity} Modbus {source} returned 0x02 ILLEGAL DATA ADDRESS",
+            f"{self.log_identity} Modbus {source} returned 0x02 ILLEGAL DATA ADDRESS {self.address} (count={self.count} type={self.input_type})",
         )
         if self.debug_logging:
             logging.debug(rr)
+
+        # Mark this sensor as having an illegal data address
+        self.illegal_data_address = True
 
         # Disable retries for invalid addresses on read operations
         if source != "write_registers":

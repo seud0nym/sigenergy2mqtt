@@ -12,18 +12,17 @@ from pymodbus.pdu import ModbusPDU
 
 from sigenergy2mqtt.common import Constants, ConsumptionMethod, FirmwareVersion, HybridInverter, InputType, Protocol, ProtocolApplies, PVInverter
 from sigenergy2mqtt.config import active_config, configure_root_logging, initialize_with_persistence
-from sigenergy2mqtt.devices import ACCharger, DCCharger, Inverter, PowerPlant, bind_cross_device_sensors
+from sigenergy2mqtt.devices import ACCharger, DCCharger, Device, Inverter, PowerPlant, bind_cross_device_sensors
 from sigenergy2mqtt.influxdb import get_influxdb_services
 from sigenergy2mqtt.metrics.metrics_service import MetricsService
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.monitor import MonitorService
 from sigenergy2mqtt.persistence import state_store
 from sigenergy2mqtt.pvoutput import get_pvoutput_services
-from sigenergy2mqtt.sensors.base import ModbusSensorMixin, Sensor
-from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, InverterMaxCellVoltage, InverterMinCellVoltage, InverterModel, InverterSerialNumber, OutputType, PACKBCUCount
+from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, ModbusSensorMixin, WriteOnlySensor
+from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, InverterModel, InverterSerialNumber, OutputType, PACKBCUCount
+from sigenergy2mqtt.sensors.plant_ess_preheating_read_write import ESSPreHeatingEnable
 from sigenergy2mqtt.sensors.plant_read_only import (
-    Alarm7,
-    CurrentControlCommandValue,
     GridStatus,
     PlantBatterySoH,
     PlantPVTotalGenerationToday,
@@ -36,22 +35,11 @@ from sigenergy2mqtt.sensors.plant_read_only import (
     TotalLoadDailyConsumption,
     TotalLoadPower,
 )
-from sigenergy2mqtt.sensors.plant_read_write import ActivePowerRegulationGradient, GridCodeLVRT, IndependentPhasePowerControl
+from sigenergy2mqtt.sensors.plant_read_write import GridCodeLVRT, IndependentPhasePowerControl
 
 from .device_thread import start
 from .restart import restart_controller
 from .thread_config import ThreadConfig, thread_config_registry
-
-INVERTER_ILLEGAL_DATA_ADDRESSES: list[int] = [
-    InverterMaxCellVoltage.ADDRESS,
-    InverterMinCellVoltage.ADDRESS,
-]
-
-PLANT_ILLEGAL_DATA_ADDRESSES: list[int] = [
-    CurrentControlCommandValue.ADDRESS,
-    Alarm7.ADDRESS,
-    ActivePowerRegulationGradient.ADDRESS,
-]
 
 _GRID_RESTORE_WATCH_TASKS: set[tuple[str, int, int]] = set()
 
@@ -193,34 +181,6 @@ async def probe_optional_interface(modbus_client: ModbusClient, register: int, i
         return False
 
 
-async def test_for_0x02_ILLEGAL_DATA_ADDRESS(modbus_client: ModbusClient, plant_index: int, device: PowerPlant | Inverter, *registers: int) -> None:
-    device_id: int = device.device_address
-    for register in registers:
-        sensor: Sensor = cast(
-            Sensor,
-            device.get_sensor(
-                f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_{device_id:03d}_{register}",
-                search_children=True,
-            ),
-        )
-        if not (sensor and sensor.publishable):
-            continue
-        id = (
-            f"{device.log_identity} - {sensor.log_identity} [{sensor['platform']}.{sensor['object_id']}]"
-            if active_config.home_assistant.enabled
-            else f"{device.log_identity} - {sensor.log_identity} [{sensor.state_topic}]"
-        )
-        if isinstance(sensor, ModbusSensorMixin):
-            try:
-                rr = await read_registers(modbus_client, register, sensor.count, device_id, sensor.input_type)
-                if rr and rr.isError() and rr.exception_code == 0x02:
-                    logging.info(f"{id}: ILLEGAL DATA ADDRESS - unpublishing")
-                    sensor.publishable = False
-            except Exception as e:
-                logging.info(f"{id}: {e} - unpublishing")
-                sensor.publishable = False
-
-
 # ---------------------------------------------------------------------------
 # Device factories
 # ---------------------------------------------------------------------------
@@ -302,7 +262,10 @@ async def make_plant_and_inverter(plant_index: int, modbus_client: ModbusClient,
         ot = await get_state(OutputType(plant_index, device_address), modbus_client, "plant/inverter", raw=True)
         if ot is None:
             raise ValueError(f"Inverter {sn} OutputType cannot be None — cannot create PowerPlant (idx={plant_index} id={device_address})")
-        plant = await PowerPlant.create(plant_index, device_type, firmware, protocol, cast(int, ot), modbus_client)
+
+        pre_heating = await get_state(ESSPreHeatingEnable(plant_index), modbus_client, "plant/inverter")
+
+        plant = await PowerPlant.create(plant_index, device_type, firmware, protocol, cast(int, ot), pre_heating is not None, modbus_client)
     else:
         protocol = plant.protocol_version
 
@@ -354,7 +317,7 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
                     plant = plant_tmp
 
                     config.add_device(plant)
-                    await test_for_0x02_ILLEGAL_DATA_ADDRESS(modbus, plant_index, plant, *PLANT_ILLEGAL_DATA_ADDRESSES)
+                    await validate_publishable_sensors(modbus, plant)
 
                     if plant.protocol_version is not None:
                         protocol_version = plant.protocol_version if protocol_version is None or protocol_version < plant.protocol_version else protocol_version
@@ -372,13 +335,14 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
                 if inverter is not None:
                     inverters[device_address] = inverter.unique_id
                     config.add_device(inverter)
-                    await test_for_0x02_ILLEGAL_DATA_ADDRESS(modbus, plant_index, inverter, *INVERTER_ILLEGAL_DATA_ADDRESSES)
+                    await validate_publishable_sensors(modbus, inverter)
 
             if plant is not None:
                 dc_charger_sequence = await _setup_dc_chargers(
                     plant_index,
                     device,
                     plant,
+                    modbus,
                     inverters,
                     config,
                     dc_charger_sequence,
@@ -516,6 +480,7 @@ async def _setup_ac_chargers(plant_index: int, device, plant: PowerPlant, modbus
                 total_count=total_count,
             )
             config.add_device(charger)
+            await validate_publishable_sensors(modbus_client, charger)
         except Exception as exc:
             is_outage = await _is_grid_outage(plant_index, modbus_client)
             if is_outage is True:
@@ -531,7 +496,7 @@ async def _setup_ac_chargers(plant_index: int, device, plant: PowerPlant, modbus
     return sequence_number
 
 
-async def _setup_dc_chargers(plant_index: int, device, plant: PowerPlant, inverters: dict[int, str], config: ThreadConfig, sequence_start: int, total_count: int) -> int:
+async def _setup_dc_chargers(plant_index: int, device, plant: PowerPlant, modbus_client: ModbusClient, inverters: dict[int, str], config: ThreadConfig, sequence_start: int, total_count: int) -> int:
     if not device.dc_chargers:
         logging.debug(f"No DC chargers defined for plant {device.host}:{device.port} - disabling DC charger statistics interface sensors")
         for register in (SITotalEVDCChargedEnergy.ADDRESS, SITotalEVDCDischargedEnergy.ADDRESS):
@@ -558,6 +523,7 @@ async def _setup_dc_chargers(plant_index: int, device, plant: PowerPlant, invert
             total_count=total_count,
         )
         config.add_device(charger)
+        await validate_publishable_sensors(modbus_client, charger)
 
     return sequence_number
 
@@ -775,6 +741,44 @@ async def validate_connections(show_credentials: bool = False) -> None:
     _validate_mqtt_connection(show_credentials)
     _validate_influxdb_connection(show_credentials)
     _validate_pvoutput_connection(show_credentials)
+
+
+async def validate_publishable_sensors(modbus_client: ModbusClient, device: Device) -> None:
+    """Validate all publishable sensors for illegal data addresses.
+
+    Scans all publishable ModbusSensorMixin sensors that are not not WriteOnlySensors that
+    have not been previously probed (state_count == 0) and marks those returning Modbus
+    0x02 ILLEGAL_DATA_ADDRESS as unpublishable before scan groups are created.
+
+    This comprehensive approach detects all illegal addresses on the device, eliminating
+    the risk of data corruption from multi-register reads spanning unknown illegal addresses.
+
+    Args:
+        modbus_client: Modbus client for reads
+        device: Device to validate (and children recursively)
+    """
+    ###### CHECK ALARM SENSORS !!!!! ######
+    sensors_to_test = [s for s in device.get_all_sensors(search_children=True).values() if isinstance(s, ModbusSensorMixin) and not isinstance(s, WriteOnlySensor) and s.publishable and s.state_count == 0]
+
+    if not sensors_to_test:
+        return
+
+    logging.debug(f"{device.log_identity} Validating {len(sensors_to_test)} sensor{'s' if len(sensors_to_test) != 1 else ''} addresses")
+
+    # Test each sensor for illegal address exceptions
+    for sensor in sensors_to_test:
+        for s in sensor.alarms if isinstance(sensor, AlarmCombinedSensor) else [sensor]:
+            try:
+                rr = await read_registers(modbus_client, s.address, s.count, s.device_address, s.input_type)
+                if rr and rr.isError() and rr.exception_code == 0x02:
+                    logging.info(f"{s.log_identity} not supported on this device/firmware: ILLEGAL DATA ADDRESS {s.address} (count={s.count} type={s.input_type} protocol=V{s.protocol_version.value})")
+                    s.publishable = False
+            except Exception as e:
+                # Log but don't suppress sensor on transient errors (only explicit 0x02)
+                if "0x02 ILLEGAL DATA ADDRESS" in str(e):
+                    logging.debug(f"{s.log_identity}: Validation detected illegal address: {e}")
+                else:
+                    logging.debug(f"{s.log_identity}: Validation read failed: {e}")
 
 
 # ---------------------------------------------------------------------------
