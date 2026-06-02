@@ -316,27 +316,11 @@ class NumericSensor(ReadWriteSensor):
 
         self[DiscoveryKeys.PLATFORM] = "number"
 
-        # Set default min/max for percentage
-        if minimum is None and maximum is None and unit == PERCENTAGE:
-            self[DiscoveryKeys.MIN] = 0.0
-            self[DiscoveryKeys.MAX] = 100.0
-
-        # Set minimum
-        if minimum is not None:
-            self[DiscoveryKeys.MIN] = self._format_range_value(minimum)
-        elif minimum is None and maximum is not None:
-            self[DiscoveryKeys.MIN] = 0.0 if isinstance(maximum, float) else 0
-
-        # Set maximum
-        if maximum is not None:
-            self[DiscoveryKeys.MAX] = self._format_range_value(maximum)
-
         # Set input mode and step
         self[DiscoveryKeys.MODE] = "slider" if (unit == PERCENTAGE and not active_config.home_assistant.edit_percentage_with_box) else "box"
         self[DiscoveryKeys.STEP] = 1 if precision is None else 10**-precision
 
-        # Update sanity check ranges
-        self._update_sanity_check_ranges(gain)
+        self.apply_min_max(minimum, maximum)
 
     def _validate_min_max_ranges(self, minimum: float | tuple[float, float] | None, maximum: float | tuple[float, float] | None) -> None:
         """Validate minimum and maximum range values.
@@ -407,6 +391,31 @@ class NumericSensor(ReadWriteSensor):
             elif isinstance(self[DiscoveryKeys.MAX], tuple):
                 max_val = max(cast(tuple[float, ...], self[DiscoveryKeys.MAX]))
                 self.sanity_check.max_raw = int(max_val * gain) if gain else int(max_val)
+
+    def apply_min_max(self, minimum: float | tuple[float, float] | None, maximum: float | tuple[float, float] | None) -> None:
+        """Apply new min/max values and update sanity check.
+
+        Args:
+            minimum: New minimum value or range
+            maximum: New maximum value or range
+        """
+        # Set default min/max for percentage
+        if minimum is None and maximum is None and self.unit == PERCENTAGE:
+            self[DiscoveryKeys.MIN] = 0.0
+            self[DiscoveryKeys.MAX] = 100.0
+
+        # Set minimum
+        if minimum is not None:
+            self[DiscoveryKeys.MIN] = self._format_range_value(minimum)
+        elif minimum is None and maximum is not None:
+            self[DiscoveryKeys.MIN] = 0.0 if isinstance(maximum, float) else 0
+
+        # Set maximum
+        if maximum is not None:
+            self[DiscoveryKeys.MAX] = self._format_range_value(maximum)
+
+        # Update sanity check ranges
+        self._update_sanity_check_ranges(self.gain)
 
     def get_discovery_components(self) -> dict[str, dict[str, Any]]:
         """Get discovery components with flattened min/max.
