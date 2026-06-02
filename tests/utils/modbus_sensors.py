@@ -18,6 +18,7 @@ import asyncio
 import logging
 import os
 import sys
+from datetime import timedelta, timezone
 from typing import cast
 
 # Need to set a Modbus host otherwise configuration initialisation will launch auto-discovery
@@ -39,7 +40,13 @@ from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, AlarmSensor, Modbus
 from sigenergy2mqtt.sensors.inverter_read_only import DCChargerVehicleBatteryVoltage, InverterFirmwareVersion, InverterModel, InverterSerialNumber, OutputType, PACKBCUCount, PVStringCount, RatedGridVoltage
 from sigenergy2mqtt.sensors.inverter_read_write import DCChargerStatus, InverterStatus, ReservedInverterRemoteEMSDispatch
 from sigenergy2mqtt.sensors.plant_read_only import GridCodeRatedFrequency, PlantRatedChargingPower, PlantRatedDischargingPower, SystemTimeZone
-from sigenergy2mqtt.sensors.plant_read_write import PlantStatus
+from sigenergy2mqtt.sensors.plant_read_write import (
+    ActivePowerFixedAdjustmentTargetValue,
+    PhaseActivePowerFixedAdjustmentTargetValue,
+    PhaseReactivePowerFixedAdjustmentTargetValue,
+    PlantStatus,
+    ReactivePowerFixedAdjustmentTargetValue,
+)
 
 initialize()
 
@@ -212,11 +219,20 @@ async def get_sensor_instances(
     pv_device_type = PVInverter(has_grid_code_interface=True, has_independent_phase_power_control_interface=True)
     pv_modbus_client = DummyModbusClient("Sigen PV Max 5.0 TP", "CMU876A54BP321")
 
-    plant = await PowerPlant.create(plant_index, hi_device_type, FirmwareVersion(firmware_version), protocol_version, output_type, True, hi_modbus_client)
-    hybrid_inverter = await Inverter.create(plant_index, hybrid_inverter_device_address, hi_device_type, protocol_version, hi_modbus_client)
-    pv_inverter = await Inverter.create(plant_index, pv_inverter_device_address, pv_device_type, protocol_version, pv_modbus_client)
+    total_rated_active_power = 12 + 5  # Sum of RatedActivePower of both inverters
+
+    tz = timezone(timedelta(minutes=600))
+
+    plant = await PowerPlant.create(plant_index, hi_device_type, FirmwareVersion(firmware_version), protocol_version, tz, output_type, True, hi_modbus_client)
+    hybrid_inverter = await Inverter.create(plant_index, hybrid_inverter_device_address, hi_device_type, protocol_version, tz, hi_modbus_client)
+    pv_inverter = await Inverter.create(plant_index, pv_inverter_device_address, pv_device_type, protocol_version, tz, pv_modbus_client)
     dc_charger = await DCCharger.create(plant_index, dc_charger_device_address, protocol_version)
     ac_charger = await ACCharger.create(plant_index, ac_charger_device_address, protocol_version, hi_modbus_client)
+
+    for sensor in [s for s in plant.sensors.values() if isinstance(s, (ActivePowerFixedAdjustmentTargetValue, PhaseActivePowerFixedAdjustmentTargetValue))]:
+        sensor.apply_min_max(-total_rated_active_power, total_rated_active_power)
+    for sensor in [s for s in plant.sensors.values() if isinstance(s, (ReactivePowerFixedAdjustmentTargetValue, PhaseReactivePowerFixedAdjustmentTargetValue))]:
+        sensor.apply_min_max(-60 * total_rated_active_power, 60 * total_rated_active_power)
 
     classes: dict[str, int] = {}
     registers: dict[int, Sensor] = {}

@@ -2,6 +2,7 @@ import asyncio
 import logging
 import signal
 import sys
+from datetime import timedelta, timezone
 from typing import Any, Tuple, cast
 
 import paho.mqtt.client as paho_mqtt
@@ -20,7 +21,7 @@ from sigenergy2mqtt.monitor import MonitorService
 from sigenergy2mqtt.persistence import state_store
 from sigenergy2mqtt.pvoutput import get_pvoutput_services
 from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, ModbusSensorMixin, WriteOnlySensor
-from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, InverterModel, InverterSerialNumber, OutputType, PACKBCUCount
+from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, InverterModel, InverterSerialNumber, OutputType, PACKBCUCount, RatedActivePower
 from sigenergy2mqtt.sensors.plant_ess_preheating_read_write import ESSPreHeatingEnable
 from sigenergy2mqtt.sensors.plant_read_only import (
     GridStatus,
@@ -31,11 +32,19 @@ from sigenergy2mqtt.sensors.plant_read_only import (
     SITotalEVACChargedEnergy,
     SITotalEVDCChargedEnergy,
     SITotalEVDCDischargedEnergy,
+    SystemTimeZone,
     ThirdPartyPVPower,
     TotalLoadDailyConsumption,
     TotalLoadPower,
 )
-from sigenergy2mqtt.sensors.plant_read_write import GridCodeLVRT, IndependentPhasePowerControl
+from sigenergy2mqtt.sensors.plant_read_write import (
+    ActivePowerFixedAdjustmentTargetValue,
+    GridCodeLVRT,
+    IndependentPhasePowerControl,
+    PhaseActivePowerFixedAdjustmentTargetValue,
+    PhaseReactivePowerFixedAdjustmentTargetValue,
+    ReactivePowerFixedAdjustmentTargetValue,
+)
 
 from .device_thread import start
 from .restart import restart_controller
@@ -224,8 +233,8 @@ async def make_dc_charger(plant_index: int, device_address: int, protocol_versio
 async def make_plant_and_inverter(plant_index: int, modbus_client: ModbusClient, device_address: int, plant: PowerPlant | None, seen_serial_numbers: set[str]) -> Tuple[Inverter | None, PowerPlant | None]:
     """Create an Inverter and, on first call, a PowerPlant.
 
-    ``seen_serial_numbers`` is updated in-place to guard against duplicate
-    inverters across multiple Modbus hosts.
+    ``seen_serial_numbers`` is updated in-place to guard
+    against duplicate inverters.
     """
     sn = await get_state(InverterSerialNumber(plant_index, device_address), modbus_client, "inverter")
     if sn in seen_serial_numbers:
@@ -246,6 +255,7 @@ async def make_plant_and_inverter(plant_index: int, modbus_client: ModbusClient,
 
     device_type.has_independent_phase_power_control_interface = await probe_optional_interface(modbus_client, IndependentPhasePowerControl.ADDRESS, "Independent Phase Control Interface")
     device_type.has_grid_code_interface = await probe_optional_interface(modbus_client, GridCodeLVRT.ADDRESS, "Grid Code Interface")
+    tz = timezone(timedelta(minutes=cast(int, await get_state(SystemTimeZone(plant_index), modbus_client, "plant", raw=True))))
 
     if plant is None:
         firmware = FirmwareVersion(cast(str, await get_state(InverterFirmwareVersion(plant_index, device_address), modbus_client, "plant/inverter")))
@@ -265,11 +275,11 @@ async def make_plant_and_inverter(plant_index: int, modbus_client: ModbusClient,
 
         pre_heating = await get_state(ESSPreHeatingEnable(plant_index), modbus_client, "plant/inverter")
 
-        plant = await PowerPlant.create(plant_index, device_type, firmware, protocol, cast(int, ot), pre_heating is not None, modbus_client)
+        plant = await PowerPlant.create(plant_index, device_type, firmware, protocol, tz, cast(int, ot), pre_heating is not None, modbus_client)
     else:
         protocol = plant.protocol_version
 
-    inverter = await Inverter.create(plant_index, device_address, device_type, protocol, modbus_client)
+    inverter = await Inverter.create(plant_index, device_address, device_type, protocol, tz, modbus_client)
     inverter.via_device = plant.unique_id
 
     if sn is not None:
@@ -358,8 +368,29 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
                     ac_charger_sequence,
                     total_ac_chargers,
                 )
+
                 # Finalise cross-device sensor bindings now that all inverters and chargers are registered
                 bind_cross_device_sensors(plant_index)
+
+                # Set the min/max bounds for Active/Reactive Power Fixed Adjustment Target Value
+                total_rated_active_power: int = 0
+                for i in config.devices:
+                    if isinstance(i, Inverter) and i.plant_index == plant_index:
+                        sensor = i.get_sensor(RatedActivePower, search_children=True)
+                        if sensor is None:
+                            logging.warning(f"{i.log_identity} RatedActivePower sensor not found - cannot set bounds for Active/Reactive Power Fixed Adjustment Target Value sensors")
+                        else:
+                            rap = await get_state(sensor, modbus, "inverter", raw=True)
+                            if rap is not None:
+                                total_rated_active_power += cast(int, rap)
+                            else:
+                                logging.warning(f"{i.log_identity} Failed to acquire RatedActivePower")
+                if total_rated_active_power > 0:
+                    for sensor in [s for s in plant.sensors.values() if isinstance(s, (ActivePowerFixedAdjustmentTargetValue, PhaseActivePowerFixedAdjustmentTargetValue))]:
+                        sensor.apply_min_max(-total_rated_active_power, total_rated_active_power)
+                    for sensor in [s for s in plant.sensors.values() if isinstance(s, (ReactivePowerFixedAdjustmentTargetValue, PhaseReactivePowerFixedAdjustmentTargetValue))]:
+                        sensor.apply_min_max(-60 * total_rated_active_power, 60 * total_rated_active_power)
+
             logging.info(f"Disconnecting from modbus://{device.host}:{device.port} - register probing complete")
 
     return thread_config_registry.get_all(), protocol_version

@@ -30,7 +30,7 @@
 - Metrics reads now count physical reads rather than imputing the time to read a single register 
 - Simplified PlantConsumedPower when using calculated consumption method to use new CrossDeviceDerivedSensor logic rather than relying on MQTT notifications
 - Modified early detection of Modbus 0x02 ILLEGAL_DATA_ADDRESS exceptions to use a pre-scan approach rather than hard-coding known problematic registers
-- SystemTime sensor now returns date/time using the SystemTimeZone rather than UTC
+- SystemTime, StartupTime and ShutdownTime sensors now return date/time using the SystemTimeZone rather than UTC
 
 ### Fixed
 
@@ -41,6 +41,8 @@
 - Corrected the implementation of the `DerivedSensor` pattern
 - Fixed various type errors and test failures related to `latest_raw_state` assignments and `set_source_values` refactoring
 - Fixed deadlock when running auto-discovery (#177)
+- Fixed min/max for Active/Reactive Power Fixed Adjustment Target Value sensors to use total Rated Active Power of attached inverters as the base for calculation
+- Fixed invalid state when a TimestampSensor had a raw value of 0
 
 ### Removed
 

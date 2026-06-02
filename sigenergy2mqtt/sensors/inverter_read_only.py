@@ -1,6 +1,7 @@
 import logging
 import math
 import time
+from datetime import timezone
 from typing import cast
 
 from sigenergy2mqtt.common import (
@@ -1735,7 +1736,7 @@ class InsulationResistance(ReadOnlySensor, HybridInverter, PVInverter):
 class StartupTime(TimestampSensor, HybridInverter, PVInverter):
     ADDRESS = 31038
 
-    def __init__(self, plant_index: int, device_address: int):
+    def __init__(self, plant_index: int, device_address: int, tz: timezone):
         super().__init__(
             name="Startup Time",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_startup_time",
@@ -1745,13 +1746,14 @@ class StartupTime(TimestampSensor, HybridInverter, PVInverter):
             address=self.ADDRESS,
             scan_interval=ScanInterval.low(plant_index),
             protocol_version=Protocol.V1_8,
+            tz=tz,
         )
 
 
 class ShutdownTime(TimestampSensor, HybridInverter, PVInverter):
     ADDRESS = 31040
 
-    def __init__(self, plant_index: int, device_address: int):
+    def __init__(self, plant_index: int, device_address: int, tz: timezone):
         super().__init__(
             name="Shutdown Time",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_shutdown_time",
@@ -1761,6 +1763,7 @@ class ShutdownTime(TimestampSensor, HybridInverter, PVInverter):
             address=self.ADDRESS,
             scan_interval=ScanInterval.low(plant_index),
             protocol_version=Protocol.V1_8,
+            tz=tz,
         )
 
 

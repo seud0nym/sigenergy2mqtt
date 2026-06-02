@@ -56,6 +56,7 @@ class ActivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVInv
             precision=2,
             protocol_version=Protocol.V1_8,
         )
+        ## NOTE: Min/Max are set dynamically based on the total rated active power of the plant during main.setup_devices ##
 
 
 class ReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
@@ -83,6 +84,7 @@ class ReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVI
             minimum=-60.0,
             maximum=60.0,
         )
+        ## NOTE: Min/Max are set dynamically based on the total rated active power of the plant during main.setup_devices ##
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -329,6 +331,7 @@ class PhaseActivePowerFixedAdjustmentTargetValue(ThreePhaseAdjustmentTargetValue
             phase=phase,
             output_type=output_type,
         )
+        ## NOTE: Min/Max are set dynamically based on the total rated active power of the plant during main.setup_devices ##
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -368,6 +371,7 @@ class PhaseReactivePowerFixedAdjustmentTargetValue(ThreePhaseAdjustmentTargetVal
             phase=phase,
             output_type=output_type,
         )
+        ## NOTE: Min/Max are set dynamically based on the total rated active power of the plant during main.setup_devices ##
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()

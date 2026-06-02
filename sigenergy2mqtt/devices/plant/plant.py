@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from datetime import timedelta, timezone
+from datetime import timezone
 from typing import cast
 
 import sigenergy2mqtt.sensors.plant_derived as derived
@@ -44,17 +44,19 @@ class PowerPlant(ModbusDevice):
         self._grid_sensor = None
 
     @classmethod
-    async def create(cls, plant_index: int, device_type: DeviceType, firmware: FirmwareVersion, protocol_version: Protocol, output_type: int, pre_heating: bool, modbus_client: ModbusClient) -> "PowerPlant":
+    async def create(
+        cls, plant_index: int, device_type: DeviceType, firmware: FirmwareVersion, protocol_version: Protocol, tz: timezone, output_type: int, pre_heating: bool, modbus_client: ModbusClient
+    ) -> "PowerPlant":
         power_phases = OutputType.to_phases(output_type)
         plant = cls(plant_index, device_type, protocol_version)
-        await plant._register_child_devices(power_phases, pre_heating, modbus_client)
-        await plant._register_sensors(firmware, output_type, power_phases, modbus_client)
+        await plant._register_sensors(firmware, tz, output_type, power_phases, modbus_client)
         availability_control_sensor = plant.sensors.get(f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_247_{RemoteEMS.ADDRESS}")
         if availability_control_sensor is None:
             raise RuntimeError(f"{plant.__class__.__name__} Failed to find RemoteEMS sensor — cannot continue setup")
+        await plant._register_child_devices(power_phases, pre_heating, tz, modbus_client)
         return plant
 
-    async def _register_child_devices(self, power_phases: int, pre_heating: bool, modbus_client: ModbusClient) -> None:
+    async def _register_child_devices(self, power_phases: int, pre_heating: bool, tz: timezone, modbus_client: ModbusClient) -> None:
         self._grid_sensor = await GridSensor.create(self.plant_index, self._device_type, self.protocol_version, power_phases, self._consumption_group, modbus_client)
         self._add_child_device(self._grid_sensor)
 
@@ -68,25 +70,32 @@ class PowerPlant(ModbusDevice):
 
         if self.protocol_version >= Protocol.V2_9:
             if pre_heating:
-                self._add_child_device(await ESSPreHeating.create(self.plant_index, self._device_type, self.protocol_version))
+                rated_charging_power = self.sensors.get(f"{active_config.home_assistant.unique_id_prefix}_{self.plant_index}_247_{ro.PlantRatedChargingPower.ADDRESS}")
+                rated_discharging_power = self.sensors.get(f"{active_config.home_assistant.unique_id_prefix}_{self.plant_index}_247_{ro.PlantRatedDischargingPower.ADDRESS}")
+                if rated_charging_power is None or rated_discharging_power is None:
+                    logging.warning(f"{self.log_identity} ESS Pre-Heating child device not registered because PlantRatedChargingPower and/or PlantRatedDischargingPower sensors not found")
+                else:
+                    self._add_child_device(
+                        await ESSPreHeating.create(
+                            self.plant_index, self._device_type, tz, cast(float, rated_charging_power.latest_raw_state), cast(float, rated_discharging_power.latest_raw_state), self.protocol_version
+                        )
+                    )
             else:
                 logging.info(f"{self.log_identity} ESS Pre-Heating device not registered because pre-heating sensors not found")
 
-    async def _register_sensors(self, fw: FirmwareVersion, output_type: int, power_phases: int, modbus_client: ModbusClient) -> None:
-        plant_time_zone = ro.SystemTimeZone(self.plant_index)
+    async def _register_sensors(self, fw: FirmwareVersion, tz: timezone, output_type: int, power_phases: int, modbus_client: ModbusClient) -> None:
         rated_charging_power = ro.PlantRatedChargingPower(self.plant_index)
         rated_discharging_power = ro.PlantRatedDischargingPower(self.plant_index)
         # Fetch async values in parallel
-        tz_offset, rcp_value, rdp_value = await asyncio.gather(
-            tz_offset := plant_time_zone.get_state(modbus_client=modbus_client, raw=True),
+        rcp_value, rdp_value = await asyncio.gather(
             rated_charging_power.get_state(modbus_client=modbus_client),
             rated_discharging_power.get_state(modbus_client=modbus_client),
         )
 
         self.has_battery = isinstance(self._device_type, HybridInverter) and cast(float, rcp_value) > 0.0
 
-        self._add_sensor(ro.SystemTime(self.plant_index, timezone(timedelta(minutes=cast(int, tz_offset)))))
-        self._add_sensor(plant_time_zone)
+        self._add_sensor(ro.SystemTime(self.plant_index, tz))
+        self._add_sensor(ro.SystemTimeZone(self.plant_index))
         self._add_sensor(ro.EMSWorkMode(self.plant_index))
         self._add_sensor(ro.MaxActivePower(self.plant_index))
         self._add_sensor(ro.MaxApparentPower(self.plant_index))
