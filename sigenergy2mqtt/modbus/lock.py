@@ -1,4 +1,5 @@
 import asyncio
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from .client import ModbusClient
@@ -42,7 +43,7 @@ class ModbusLock:
             self.waiters -= 1
 
     @asynccontextmanager
-    async def lock(self, timeout=None):
+    async def lock(self, timeout=None) -> AsyncIterator[None]:
         """Async context manager that acquires and reliably releases the lock.
 
         Args:
