@@ -30,6 +30,7 @@
 - Metrics reads now count physical reads rather than imputing the time to read a single register 
 - Simplified PlantConsumedPower when using calculated consumption method to use new CrossDeviceDerivedSensor logic rather than relying on MQTT notifications
 - Modified early detection of Modbus 0x02 ILLEGAL_DATA_ADDRESS exceptions to use a pre-scan approach rather than hard-coding known problematic registers
+- SystemTime sensor now returns date/time using the SystemTimeZone rather than UTC
 
 ### Fixed
 

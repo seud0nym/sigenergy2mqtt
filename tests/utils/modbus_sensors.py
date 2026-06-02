@@ -38,7 +38,7 @@ from sigenergy2mqtt.sensors.ac_charger_read_write import ACChargerStatus
 from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, AlarmSensor, ModbusSensorMixin, Sensor
 from sigenergy2mqtt.sensors.inverter_read_only import DCChargerVehicleBatteryVoltage, InverterFirmwareVersion, InverterModel, InverterSerialNumber, OutputType, PACKBCUCount, PVStringCount, RatedGridVoltage
 from sigenergy2mqtt.sensors.inverter_read_write import DCChargerStatus, InverterStatus, ReservedInverterRemoteEMSDispatch
-from sigenergy2mqtt.sensors.plant_read_only import GridCodeRatedFrequency, PlantRatedChargingPower, PlantRatedDischargingPower
+from sigenergy2mqtt.sensors.plant_read_only import GridCodeRatedFrequency, PlantRatedChargingPower, PlantRatedDischargingPower, SystemTimeZone
 from sigenergy2mqtt.sensors.plant_read_write import PlantStatus
 
 initialize()
@@ -52,6 +52,7 @@ RATED_CHARGING_POWER: float = 12.6
 RATED_CURRENT: float = 32.0
 RATED_DISCHARGING_POWER: float = 13.68
 RATED_FREQUENCY: float = 50.0
+TIME_ZONE: int = 600
 
 
 class DummyModbusClient(ModbusClientMixin):
@@ -74,6 +75,7 @@ class DummyModbusClient(ModbusClientMixin):
     def __init__(self, model_id: str, serial_number: str):
         super().__init__()
 
+        time_zone = SystemTimeZone(0)
         rated_charging_power = PlantRatedChargingPower(0)
         rated_discharging_power = PlantRatedDischargingPower(0)
         rated_frequency = GridCodeRatedFrequency(0)
@@ -89,6 +91,7 @@ class DummyModbusClient(ModbusClientMixin):
         rated_current = ACChargerRatedCurrent(0, 1)
 
         self.data = {  # convert_to_registers will create the correct number of registers based on data_type, so we can ignore the count parameter in the read methods
+            time_zone.address: self.convert_to_registers(time_zone.state2raw(TIME_ZONE), time_zone.data_type),
             rated_charging_power.address: self.convert_to_registers(rated_charging_power.state2raw(RATED_CHARGING_POWER), rated_charging_power.data_type),
             rated_discharging_power.address: self.convert_to_registers(rated_discharging_power.state2raw(RATED_DISCHARGING_POWER), rated_discharging_power.data_type),
             rated_frequency.address: self.convert_to_registers(rated_frequency.state2raw(RATED_FREQUENCY), rated_frequency.data_type),
@@ -119,6 +122,7 @@ class DummyModbusClient(ModbusClientMixin):
         """
         result = self.data.get(address, None)
         if result is None:
+            logging.warning(f"Address {address} not found in dummy Modbus client data store")
             return ExceptionResponse(function_code=0x03, exception_code=0x02, device_id=device_id)  # Modbus exception response for "Illegal Data Address"
         return ModbusPDU(registers=result)
 
