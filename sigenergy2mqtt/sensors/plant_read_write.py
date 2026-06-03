@@ -45,7 +45,7 @@ class PlantStatus(WriteOnlySensor, HybridInverter, PVInverter):
 
 ## //---------------------- 5-2-2 Plant setting parameter power dispatch register definition ----------------------// ##
 """
-The power dispatch registers in Table5-2-2 applies at the location marked ③ in figure. For these registers to take effect, 
+The power dispatch registers in Table 5-2-2 applies at the location marked ③ in figure. For these registers to take effect, 
 the following two conditions must be met: 
 
     a.The Modbus register for remote EMS enable (40029) is set to 0x01; 
@@ -88,6 +88,11 @@ class ActivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVInv
                 {"topic": self._remote_ems_mode.is_pcs_remote_control_mode_topic, "payload_available": 1, "payload_not_available": 0}
             )
         return base
+
+    def get_attributes(self) -> dict[str, float | int | str]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect."
+        return attributes
 
     async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
         if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state == 0:
@@ -132,16 +137,16 @@ class ReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVI
             )
         return base
 
+    def get_attributes(self) -> dict[str, float | int | str]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Range: [-60.00 * base value ,60.00 * base value]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect."
+        return attributes
+
     async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
         if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state == 0:
             logging.error(f"{self.log_identity} Failed to write value '{raw_value}': {self._remote_ems_mode.name} is not in PCS Remote Control Mode")
             return False
         return await super().value_is_valid(modbus_client, raw_value)
-
-    def get_attributes(self) -> dict[str, float | int | str]:
-        attributes = super().get_attributes()
-        attributes["comment"] = "Range: [-60.00 * base value ,60.00 * base value]. Takes effect globally regardless of the EMS operating mode"
-        return attributes
 
 
 class ActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
@@ -179,16 +184,16 @@ class ActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInverter, 
             )
         return base
 
+    def get_attributes(self) -> dict[str, float | int | str]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Range: [-100.00,100.00]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect."
+        return attributes
+
     async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
         if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state == 0:
             logging.error(f"{self.log_identity} Failed to write value '{raw_value}': {self._remote_ems_mode.name} is not in PCS Remote Control Mode")
             return False
         return await super().value_is_valid(modbus_client, raw_value)
-
-    def get_attributes(self) -> dict[str, float | int | str]:
-        attributes = super().get_attributes()
-        attributes["comment"] = "Range: [-100.00,100.00]"
-        return attributes
 
 
 class QSAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
@@ -226,16 +231,16 @@ class QSAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
             )
         return base
 
+    def get_attributes(self) -> dict[str, float | int | str]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Range: [-60.0,60.00]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect."
+        return attributes
+
     async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
         if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state == 0:
             logging.error(f"{self.log_identity} Failed to write value '{raw_value}': {self._remote_ems_mode.name} is not in PCS Remote Control Mode")
             return False
         return await super().value_is_valid(modbus_client, raw_value)
-
-    def get_attributes(self) -> dict[str, float | int | str]:
-        attributes = super().get_attributes()
-        attributes["comment"] = "Range: [-60.0,60.00]. Takes effect globally regardless of the EMS operating mode"
-        return attributes
 
 
 class PowerFactorAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
@@ -274,16 +279,16 @@ class PowerFactorAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter
             )
         return base
 
+    def get_attributes(self) -> dict[str, float | int | str]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Range: [(-1.0, -0.8) U (0.8, 1.0)]. Grid Sensor needed. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect."
+        return attributes
+
     async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
         if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state == 0:
             logging.error(f"{self.log_identity} Failed to write value '{raw_value}': {self._remote_ems_mode.name} is not in PCS Remote Control Mode")
             return False
         return await super().value_is_valid(modbus_client, raw_value)
-
-    def get_attributes(self) -> dict[str, float | int | str]:
-        attributes = super().get_attributes()
-        attributes["comment"] = "Range: [(-1.0, -0.8) U (0.8, 1.0)]. Grid Sensor needed. Takes effect globally regardless of the EMS operating mode"
-        return attributes
 
 
 class PhaseActivePowerFixedAdjustmentTargetValue(ThreePhaseAdjustmentTargetValue, HybridInverter):
@@ -329,16 +334,16 @@ class PhaseActivePowerFixedAdjustmentTargetValue(ThreePhaseAdjustmentTargetValue
             )
         return base
 
+    def get_attributes(self) -> dict[str, float | int | str]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect."
+        return attributes
+
     async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
         if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state == 0:
             logging.error(f"{self.log_identity} Failed to write value '{raw_value}': {self._remote_ems_mode.name} is not in PCS Remote Control Mode")
             return False
         return await super().value_is_valid(modbus_client, raw_value)
-
-    def get_attributes(self) -> dict[str, float | int | str]:
-        attributes = super().get_attributes()
-        attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N"
-        return attributes
 
 
 class PhaseReactivePowerFixedAdjustmentTargetValue(ThreePhaseAdjustmentTargetValue, HybridInverter):
@@ -384,16 +389,16 @@ class PhaseReactivePowerFixedAdjustmentTargetValue(ThreePhaseAdjustmentTargetVal
             )
         return base
 
+    def get_attributes(self) -> dict[str, float | int | str]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect."
+        return attributes
+
     async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
         if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state == 0:
             logging.error(f"{self.log_identity} Failed to write value '{raw_value}': {self._remote_ems_mode.name} is not in PCS Remote Control Mode")
             return False
         return await super().value_is_valid(modbus_client, raw_value)
-
-    def get_attributes(self) -> dict[str, float | int | str]:
-        attributes = super().get_attributes()
-        attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N"
-        return attributes
 
 
 class PhaseActivePowerPercentageAdjustmentTargetValue(ThreePhaseAdjustmentTargetValue, HybridInverter):
@@ -440,16 +445,16 @@ class PhaseActivePowerPercentageAdjustmentTargetValue(ThreePhaseAdjustmentTarget
             )
         return base
 
+    def get_attributes(self) -> dict[str, float | int | str]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect."
+        return attributes
+
     async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
         if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state == 0:
             logging.error(f"{self.log_identity} Failed to write value '{raw_value}': {self._remote_ems_mode.name} is not in PCS Remote Control Mode")
             return False
         return await super().value_is_valid(modbus_client, raw_value)
-
-    def get_attributes(self) -> dict[str, float | int | str]:
-        attributes = super().get_attributes()
-        attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]"
-        return attributes
 
 
 class PhaseQSAdjustmentTargetValue(ThreePhaseAdjustmentTargetValue, HybridInverter):
@@ -496,16 +501,16 @@ class PhaseQSAdjustmentTargetValue(ThreePhaseAdjustmentTargetValue, HybridInvert
             )
         return base
 
+    def get_attributes(self) -> dict[str, float | int | str]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect."
+        return attributes
+
     async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
         if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state == 0:
             logging.error(f"{self.log_identity} Failed to write value '{raw_value}': {self._remote_ems_mode.name} is not in PCS Remote Control Mode")
             return False
         return await super().value_is_valid(modbus_client, raw_value)
-
-    def get_attributes(self) -> dict[str, float | int | str]:
-        attributes = super().get_attributes()
-        attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]"
-        return attributes
 
 
 ## //---------------------- End of Plant setting parameter power dispatch register definition ----------------------// ##
