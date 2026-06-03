@@ -138,30 +138,30 @@ class PowerPlant(ModbusDevice):
 
         self._add_sensor(remote_ems)
         self._add_sensor(remote_ems_mode)
-        self._add_sensor(rw.ActivePowerFixedAdjustmentTargetValue(self.plant_index, remote_ems))
-        self._add_sensor(rw.ReactivePowerFixedAdjustmentTargetValue(self.plant_index))
-        self._add_sensor(rw.ActivePowerPercentageAdjustmentTargetValue(self.plant_index, remote_ems))
+        self._add_sensor(rw.ActivePowerFixedAdjustmentTargetValue(self.plant_index, remote_ems, remote_ems_mode))
+        self._add_sensor(rw.ReactivePowerFixedAdjustmentTargetValue(self.plant_index, remote_ems, remote_ems_mode))
+        self._add_sensor(rw.ActivePowerPercentageAdjustmentTargetValue(self.plant_index, remote_ems, remote_ems_mode))
 
         self._add_sensor(rw.PVMaxPowerLimit(self.plant_index, remote_ems if fw.service_pack < 113 else None, remote_ems_mode if fw.service_pack < 113 else None))
 
-        self._add_sensor(rw.QSAdjustmentTargetValue(self.plant_index))
-        self._add_sensor(rw.PowerFactorAdjustmentTargetValue(self.plant_index))
+        self._add_sensor(rw.QSAdjustmentTargetValue(self.plant_index, remote_ems, remote_ems_mode))
+        self._add_sensor(rw.PowerFactorAdjustmentTargetValue(self.plant_index, remote_ems, remote_ems_mode))
 
         if self._device_type.has_independent_phase_power_control_interface and output_type == 2:  # L1/L2/L3/N
             independent_phase_power_control = rw.IndependentPhasePowerControl(self.plant_index, output_type)
             self._add_sensor(independent_phase_power_control)
-            self._add_sensor(rw.PhaseActivePowerFixedAdjustmentTargetValue(self.plant_index, independent_phase_power_control, output_type, "A"))
-            self._add_sensor(rw.PhaseReactivePowerFixedAdjustmentTargetValue(self.plant_index, independent_phase_power_control, output_type, "A"))
-            self._add_sensor(rw.PhaseActivePowerPercentageAdjustmentTargetValue(self.plant_index, independent_phase_power_control, output_type, "A"))
-            self._add_sensor(rw.PhaseQSAdjustmentTargetValue(self.plant_index, independent_phase_power_control, output_type, "A"))
-            self._add_sensor(rw.PhaseActivePowerFixedAdjustmentTargetValue(self.plant_index, independent_phase_power_control, output_type, "B"))
-            self._add_sensor(rw.PhaseReactivePowerFixedAdjustmentTargetValue(self.plant_index, independent_phase_power_control, output_type, "B"))
-            self._add_sensor(rw.PhaseActivePowerPercentageAdjustmentTargetValue(self.plant_index, independent_phase_power_control, output_type, "B"))
-            self._add_sensor(rw.PhaseQSAdjustmentTargetValue(self.plant_index, independent_phase_power_control, output_type, "B"))
-            self._add_sensor(rw.PhaseActivePowerFixedAdjustmentTargetValue(self.plant_index, independent_phase_power_control, output_type, "C"))
-            self._add_sensor(rw.PhaseReactivePowerFixedAdjustmentTargetValue(self.plant_index, independent_phase_power_control, output_type, "C"))
-            self._add_sensor(rw.PhaseActivePowerPercentageAdjustmentTargetValue(self.plant_index, independent_phase_power_control, output_type, "C"))
-            self._add_sensor(rw.PhaseQSAdjustmentTargetValue(self.plant_index, independent_phase_power_control, output_type, "C"))
+            self._add_sensor(rw.PhaseActivePowerFixedAdjustmentTargetValue(self.plant_index, remote_ems_mode, independent_phase_power_control, output_type, "A"))
+            self._add_sensor(rw.PhaseReactivePowerFixedAdjustmentTargetValue(self.plant_index, remote_ems_mode, independent_phase_power_control, output_type, "A"))
+            self._add_sensor(rw.PhaseActivePowerPercentageAdjustmentTargetValue(self.plant_index, remote_ems_mode, independent_phase_power_control, output_type, "A"))
+            self._add_sensor(rw.PhaseQSAdjustmentTargetValue(self.plant_index, remote_ems_mode, independent_phase_power_control, output_type, "A"))
+            self._add_sensor(rw.PhaseActivePowerFixedAdjustmentTargetValue(self.plant_index, remote_ems_mode, independent_phase_power_control, output_type, "B"))
+            self._add_sensor(rw.PhaseReactivePowerFixedAdjustmentTargetValue(self.plant_index, remote_ems_mode, independent_phase_power_control, output_type, "B"))
+            self._add_sensor(rw.PhaseActivePowerPercentageAdjustmentTargetValue(self.plant_index, remote_ems_mode, independent_phase_power_control, output_type, "B"))
+            self._add_sensor(rw.PhaseQSAdjustmentTargetValue(self.plant_index, remote_ems_mode, independent_phase_power_control, output_type, "B"))
+            self._add_sensor(rw.PhaseActivePowerFixedAdjustmentTargetValue(self.plant_index, remote_ems_mode, independent_phase_power_control, output_type, "C"))
+            self._add_sensor(rw.PhaseReactivePowerFixedAdjustmentTargetValue(self.plant_index, remote_ems_mode, independent_phase_power_control, output_type, "C"))
+            self._add_sensor(rw.PhaseActivePowerPercentageAdjustmentTargetValue(self.plant_index, remote_ems_mode, independent_phase_power_control, output_type, "C"))
+            self._add_sensor(rw.PhaseQSAdjustmentTargetValue(self.plant_index, remote_ems_mode, independent_phase_power_control, output_type, "C"))
 
         address = 30098  # Starting register for Smart Load 1 Total Consumption
         for n in range(1, 25):  # Smart Loads 1 to 24
