@@ -660,7 +660,7 @@ class SelectSensor(ReadWriteSensor):
         """
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
 
-        if raw or None:
+        if raw or value is None:
             return value
 
         if isinstance(value, (float, int)):
