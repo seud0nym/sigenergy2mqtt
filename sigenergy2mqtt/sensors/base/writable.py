@@ -227,9 +227,11 @@ class ReadWriteSensor(WritableSensorMixin, ReadOnlySensor):
             protocol_version,
             **kwargs,
         )
-
-        self._availability_control_sensor = availability_control_sensor
         self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
+        self._availability_control_sensor = availability_control_sensor
+        self._payload_available = 1
+        self._payload_not_available = 0
+        self._use_raw_for_availability = False
 
     def configure_mqtt_topics(self, device_id: str) -> str:
         """Configure MQTT topics including availability from control sensor.
@@ -244,13 +246,17 @@ class ReadWriteSensor(WritableSensorMixin, ReadOnlySensor):
 
         # Add availability from control sensor if configured
         if self._availability_control_sensor is not None and active_config.home_assistant.enabled:
-            control_topic = self._availability_control_sensor.state_topic
+            control_topic = (
+                self._availability_control_sensor.raw_state_topic if self._use_raw_for_availability and self._availability_control_sensor.publish_raw else self._availability_control_sensor.state_topic
+            )
 
             if not control_topic or control_topic.isspace():
-                raise RuntimeError("RemoteEMS state_topic has not been configured")
+                raise RuntimeError(
+                    f"{self.log_identity} - {self._availability_control_sensor.__class__.__name__} {'raw_state_topic' if self._use_raw_for_availability and self._availability_control_sensor.publish_raw else 'state_topic'} has not been configured"
+                )
 
             availability_list = cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY])
-            availability_list.append({"topic": control_topic, "payload_available": 1, "payload_not_available": 0})
+            availability_list.append({"topic": control_topic, "payload_available": self._payload_available, "payload_not_available": self._payload_not_available})
 
         return base
 
@@ -654,7 +660,7 @@ class SelectSensor(ReadWriteSensor):
         """
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
 
-        if raw:
+        if raw or None:
             return value
 
         if isinstance(value, (float, int)):
