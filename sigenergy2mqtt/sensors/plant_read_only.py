@@ -148,7 +148,7 @@ class EMSWorkMode(ReadOnlySensor, HybridInverter, PVInverter):
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
         if raw or value is None:
             return value
-        elif isinstance(value, (float, int)):
+        if isinstance(value, (float, int)):
             option = self._get_option(int(value))
             if option:
                 return option
@@ -190,11 +190,9 @@ class GridSensorStatus(ReadOnlySensor, HybridInverter, PVInverter):
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
-        if raw:
+        if raw or value is None:
             return value
-        elif value is None:
-            return None
-        elif isinstance(value, (float, int)):
+        if isinstance(value, (float, int)):
             return self._get_option(int(value)) or f"Unknown Status: {value}"
         else:
             return f"Unknown Status: {value}"
@@ -299,11 +297,9 @@ class GridStatus(ReadOnlySensor, HybridInverter):
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
-        if raw:
+        if raw or value is None:
             return value
-        elif value is None:
-            return None
-        elif isinstance(value, (float, int)):
+        if isinstance(value, (float, int)):
             return self._get_option(int(value)) or f"Unknown Status: {value}"
         else:
             return f"Unknown Status: {value}"

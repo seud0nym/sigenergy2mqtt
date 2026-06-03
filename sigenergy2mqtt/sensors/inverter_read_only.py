@@ -1375,11 +1375,9 @@ class OutputType(ReadOnlySensor, HybridInverter, PVInverter):
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
-        if raw:
+        if raw or value is None:
             return value
-        elif value is None:
-            return None
-        elif isinstance(value, (float, int)) and 0 <= value <= (len(cast(list[str], self[DiscoveryKeys.OPTIONS])) - 1):
+        if isinstance(value, (float, int)) and 0 <= value <= (len(cast(list[str], self[DiscoveryKeys.OPTIONS])) - 1):
             return cast(list[str], self[DiscoveryKeys.OPTIONS])[int(value)]
         else:
             return f"Unknown Output Type: {value}"
@@ -2010,11 +2008,9 @@ class DCChargerRunningState(ReadOnlySensor, HybridInverter):  # Not applicable t
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
-        if raw:
+        if raw or value is None:
             return value
-        elif value is None:
-            return None
-        elif isinstance(value, (float, int)):
+        if isinstance(value, (float, int)):
             option = self._get_option(int(value))
             if option:
                 return option
