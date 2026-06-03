@@ -51,6 +51,7 @@ class ESSPreHeatingMode(SelectSensor, AvailabilityMixin, HybridInverter):
             ],
             protocol_version=Protocol.V2_9,
         )
+        self.publish_raw = True  # Always publish raw value for Advance availability control
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -72,12 +73,7 @@ class ESSPreHeatingAdvanceEnable(SwitchSensor, HybridInverter):
             scan_interval=ScanInterval.high(plant_index),
             protocol_version=Protocol.V2_9,
         )
-
-    def configure_mqtt_topics(self, device_id: str) -> str:
-        base = super().configure_mqtt_topics(device_id)
-        if active_config.home_assistant.enabled and self._availability_control_sensor is not None:
-            cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append({"topic": self._availability_control_sensor.state_topic, "payload_available": 1, "payload_not_available": 0})
-        return base
+        self._use_raw_for_availability = True  # Use raw value of Preheating Mode for availability control
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
