@@ -115,12 +115,13 @@ class:
     name: Active Power
   ActivePowerFixedAdjustmentTargetValue:
     attributes:
+      comment: Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Active Power Fixed Adjustment Target Value
   ActivePowerPercentageAdjustmentTargetValue:
     attributes:
-      comment: 'Range: [-100.00,100.00]'
+      comment: 'Range: [-100.00,100.00]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.'
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Active Power Percentage Adjustment Target Value
@@ -344,11 +345,50 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Current Charging Duration
+  DCChargerCurrentDischargingCapacity:
+    attributes:
+      comment: Single time
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Current Discharging Capacity
+  DCChargerCurrentDischargingDuration:
+    attributes:
+      comment: Single time
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Current Discharging Duration
+  DCChargerDischargingCurrent:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Discharging Current
+  DCChargerMaxChargingPowerLimit:
+    attributes:
+      comment: Maximum DC charger charging power limit
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Max Charging Power Limit
+  DCChargerMaxDischargingPowerLimit:
+    attributes:
+      comment: Maximum DC charger discharging power limit
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Max Discharging Power Limit
   DCChargerOutputPower:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Output Power
+  DCChargerRatedChargingPower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Rated Charging Power
+  DCChargerRatedDischargingPower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Rated Discharging Power
   DCChargerRunningState:
     attributes:
       source: Modbus Register {address}
@@ -367,6 +407,16 @@ class:
     name: DC Charger Stop/Start
     name_off: Stop
     name_on: Start
+  DCChargerTotalChargingCapacity:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Total Charging Capacity
+  DCChargerTotalDischargingCapacity:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Total Discharging Capacity
   DCChargerVehicleBatteryVoltage:
     attributes:
       source: Modbus Register {address}
@@ -412,6 +462,11 @@ class:
       '9': Time-Based Control
   ESS:
     name: '{model_id} {serial_number} ESS'
+  ESSAverageCellTemperature:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Average Cell Temperature
   ESSBackupSOC:
     attributes:
       comment: 'Range: [0.00,100.00]'
@@ -430,6 +485,59 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Discharge Cut-Off SoC
+  ESSPreHeating:
+    name: Sigenergy Plant ESS Pre-Heating {plant_suffix}
+  ESSPreHeatingAdvanceEnable:
+    attributes:
+      comment: '0: Disable, 1: Enable. Takes effect when Preheating Mode is Manual.'
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Preheating Advance
+  ESSPreHeatingEnable:
+    attributes:
+      comment: '0: Disable, 1: Enable'
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Preheating
+  ESSPreHeatingMode:
+    attributes:
+      comment: '0: Automatic, 1: Manual'
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Preheating Mode
+    options:
+      '0': Automatic
+      '1': Manual
+  ESSPreHeatingReservedSOC:
+    attributes:
+      comment: 'Range: [0.00,100.00]'
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Preheating Reserved SoC
+  ESSPreHeatingTOUTargetPower:
+    attributes:
+      comment: '<0: discharging, >0: charging'
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: TOU {slot} Target Charging/Discharging Power
+  ESSPreHeatingTOUTime:
+    attributes:
+      comment: Epoch seconds with timezone; local time interpretation depends on the device.
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Hybrid Inverter
+  ESSPreHeatingTOUTimeEnd:
+    attributes:
+      comment: Epoch seconds with timezone; local time interpretation depends on the device.
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Hybrid Inverter
+  ESSPreHeatingTOUTimeStart:
+    attributes:
+      comment: Epoch seconds with timezone; local time interpretation depends on the device.
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: Hybrid Inverter
   ESSTotalChargedEnergy:
     attributes:
       source: Modbus Register {address}
@@ -673,13 +781,13 @@ class:
     name: Grid Frequency
   GridMaxExportLimit:
     attributes:
-      comment: Grid Sensor needed. Takes effect globally regardless of the EMS operating mode
+      comment: The maximum active power fed into the grid must not exceed the value configured in this sensor. Grid Sensor needed. Takes effect globally regardless of the EMS operating mode
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Grid Max Export Limit
   GridMaxImportLimit:
     attributes:
-      comment: Grid Sensor needed. Takes effect globally regardless of the EMS operating mode
+      comment: The maximum active power absorbed from the grid must not exceed the value configured in this sensor. Grid Sensor needed. Takes effect globally regardless of the EMS operating mode
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Grid Max Import Limit
@@ -695,6 +803,11 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Phase {phase} Reactive Power
+  GridPowerLossLockoutAlarmClear:
+    attributes:
+      comment: Write 1 to clear the grid power loss lockout alarm
+    name: Grid Power Loss Lockout Alarm Clear
+    name_on: Clear
   GridSensor:
     name: Sigenergy Plant Grid Sensor {plant_suffix}
   GridSensorActivePower:
@@ -1056,13 +1169,13 @@ class:
     name: Max Discharge Power
   MaxChargingLimit:
     attributes:
-      comment: 'Range: [0, Rated ESS charging power]{active_config}'
+      comment: 'The maximum charging power of the ESS in the plant must not exceed the value configured in this sensor. Range: [0, Rated ESS charging power]{active_config}'
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Max Charging Limit
   MaxDischargingLimit:
     attributes:
-      comment: 'Range: [0, Rated ESS charging power]{active_config}'
+      comment: 'The maximum discharging power of the ESS in the plant must not exceed the value configured in this sensor. Range: [0, Rated ESS discharging power]{active_config}'
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Max Discharging Limit
@@ -1136,18 +1249,260 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: PACK/BCU Count
+  PCCPowerFactorAdjustmentTargetValueGridExport:
+    attributes:
+      comment: 'When selling electricity at the grid connection point, the power factor must be controlled to the value configured in this sensor. Range: [(-1.0, -0.8) U (0.8, 1.0)]. Grid Sensor needed.'
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PCC Power Factor Adjustment Target Value (Grid Export)
+  PCCPowerFactorAdjustmentTargetValueGridImport:
+    attributes:
+      comment: 'When purchasing electricity at the grid connection point, the power factor must be controlled to the value configured in this sensor. Range: [(-1.0, -0.8) U (0.8, 1.0)]. Grid Sensor needed.'
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PCC Power Factor Adjustment Target Value (Grid Import)
   PCSMaxExportLimit:
     attributes:
-      comment: Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally.
+      comment: The maximum active power output of the inverter in the plant must not exceed the value configured in this sensor. Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally.
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: PCS Max Export Limit
   PCSMaxImportLimit:
     attributes:
-      comment: Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally.
+      comment: The maximum active power input of the inverter in the plant must not exceed the value configured in this sensor. Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally.
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: PCS Max Import Limit
+  PID:
+    name: Sigenergy Potential Induced Degradation Device {sequence_suffix}
+  PIDCommunicationStatus:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PID Communication Status
+  PIDMachineFirmwareVersion:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PID Machine Firmware Version
+  PIDModelType:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PID Model Type
+  PIDRunningStatus:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PID Running Status
+  PIDSerialNumber:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PID Serial Number
+  PIDStartStop:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PID Start/Stop
+    options:
+      '0': Stop
+      '1': Start
+  PID_ABLineVoltage:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PID AB Line Voltage
+  PID_BCLineVoltage:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PID BC Line Voltage
+  PID_BusVoltage:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PID Bus Voltage
+  PID_CALineVoltage:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PID CA Line Voltage
+  PID_GridFrequency:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PID Grid Frequency
+  PID_InternalTemperature1:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PID Internal Temperature 1
+  PID_InternalTemperature2:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PID Internal Temperature 2
+  PID_InternalTemperature3:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PID Internal Temperature 3
+  PID_InternalTemperature4:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PID Internal Temperature 4
+  PID_InternalTemperature5:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PID Internal Temperature 5
+  PID_InverterCurrent:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PID Inverter Current
+  PID_InverterVoltage:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PID Inverter Voltage
+  PID_OutputCurrent:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PID Output Current
+  PID_OutputVoltage:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PID Output Voltage
+  PID_PhaseAVoltage:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PID Phase A Voltage
+  PID_PhaseBVoltage:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PID Phase B Voltage
+  PID_PhaseCVoltage:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PID Phase C Voltage
+  PSS:
+    name: Sigenergy Packaged Substation System {sequence_suffix}
+  PSSLALowVoltageCabinetCircuitBreakerSwitchOff:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PSS LA Low Voltage Cabinet Circuit Breaker Switch Off
+    options:
+      '0': No Action
+      '1': Switch Off
+  PSSLALowVoltageCabinetCircuitBreakerSwitchOn:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PSS LA Low Voltage Cabinet Circuit Breaker Switch On
+    options:
+      '0': No Action
+      '1': Switch On
+  PSSLBLowVoltageCabinetCircuitBreakerSwitchOff:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PSS LB Low Voltage Cabinet Circuit Breaker Switch Off
+    options:
+      '0': No Action
+      '1': Switch Off
+  PSSLBLowVoltageCabinetCircuitBreakerSwitchOn:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PSS LB Low Voltage Cabinet Circuit Breaker Switch On
+    options:
+      '0': No Action
+      '1': Switch On
+  PSSMVCabinetG3CircuitBreakerSwitchOff:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PSS MV Cabinet G3 Circuit Breaker Switch Off
+    options:
+      '0': No Action
+      '1': Switch Off
+  PSSMVCabinetG3CircuitBreakerSwitchOn:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PSS MV Cabinet G3 Circuit Breaker Switch On
+    options:
+      '0': No Action
+      '1': Switch On
+  PSSModelType:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PSS Model Type
+  PSSSerialNumber:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PSS Serial Number
+  PSS_LAFrequency:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PSS [LA] Frequency
+  PSS_LAPhaseAActivePower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PSS [LA] Phase A Active Power
+  PSS_LAPhaseAVoltage:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PSS [LA] Phase A Voltage
+  PSS_LATotalActivePower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PSS [LA] Total Active Power
+  PSS_LATotalReactivePower:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PSS [LA] Total Reactive Power
+  PSS_MVFrequency:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PSS [MV] Frequency
+  PSS_MVPhaseACurrent:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PSS [MV] Phase A Current
+  PSS_MVPhaseBCurrent:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PSS [MV] Phase B Current
+  PSS_MVPhaseCCurrent:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PSS [MV] Phase C Current
+  PSS_MVTemperature:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PSS [MV] Temperature
   PVCurrentSensor:
     attributes:
       source: Modbus Register {address}
@@ -1157,7 +1512,7 @@ class:
     name: PV Inverter
   PVMaxPowerLimit:
     attributes:
-      comment: Takes effect when Remote EMS control mode (40031) is set to Command Charging/Discharging
+      comment: The maximum output power of the PV strings in the plant must not exceed the value configured in this sensor{active_config}
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: PV Max Power Limit
@@ -1193,13 +1548,13 @@ class:
     name: Voltage
   PhaseActivePowerFixedAdjustmentTargetValue:
     attributes:
-      comment: Valid only when Output Type is L1/L2/L3/N
+      comment: Valid only when Output Type is L1/L2/L3/N. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Phase {phase} Active Power Fixed Adjustment Target Value
   PhaseActivePowerPercentageAdjustmentTargetValue:
     attributes:
-      comment: 'Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]'
+      comment: 'Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.'
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Phase {phase} Active Power Percentage Adjustment Target Value
@@ -1210,13 +1565,13 @@ class:
     name: Phase{phase4name} Current
   PhaseQSAdjustmentTargetValue:
     attributes:
-      comment: 'Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]'
+      comment: 'Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.'
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Phase {phase} Q/S Fixed Adjustment Target Value
   PhaseReactivePowerFixedAdjustmentTargetValue:
     attributes:
-      comment: Valid only when Output Type is L1/L2/L3/N
+      comment: Valid only when Output Type is L1/L2/L3/N. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Phase {phase} Reactive Power Fixed Adjustment Target Value
@@ -1279,6 +1634,16 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Lifetime PV Production
+  PlantPVTotalGenerationToday:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PV Total Generation Today
+  PlantPVTotalGenerationYesterday:
+    attributes:
+      source: Modbus Register {address}
+      source_range: Modbus Registers {start}-{end}
+    name: PV Total Generation Yesterday
   PlantPhaseActivePower:
     attributes:
       source: Modbus Register {address}
@@ -1352,7 +1717,7 @@ class:
     name: Power Factor
   PowerFactorAdjustmentTargetValue:
     attributes:
-      comment: 'Range: [(-1.0, -0.8) U (0.8, 1.0)]. Grid Sensor needed. Takes effect globally regardless of the EMS operating mode'
+      comment: 'Range: [(-1.0, -0.8) U (0.8, 1.0)]. Grid Sensor needed. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.'
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Power Factor Adjustment Target Value
@@ -1364,7 +1729,7 @@ class:
     name: Protocol Version
   QSAdjustmentTargetValue:
     attributes:
-      comment: 'Range: [-60.0,60.00]. Takes effect globally regardless of the EMS operating mode'
+      comment: 'Range: [-60.0,60.00]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.'
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Q/S Adjustment Target Value
@@ -1405,7 +1770,7 @@ class:
     name: Reactive Power
   ReactivePowerFixedAdjustmentTargetValue:
     attributes:
-      comment: 'Range: [-60.00 * base value ,60.00 * base value]. Takes effect globally regardless of the EMS operating mode'
+      comment: 'Range: [-60.00 * base value ,60.00 * base value]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.'
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Reactive Power Fixed Adjustment Target Value
@@ -1436,6 +1801,7 @@ class:
       '4': Command Charging (Consume power from the PV first)
       '5': Command Discharging (Output power from PV first)
       '6': Command Discharging (Output power from the battery first)
+      '8': V2G (Vehicle to Grid)
   RemoteEMSLimit:
     attributes:
       source: Modbus Register {address}
@@ -1481,31 +1847,11 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Grid Code
-  ReservedGridPhaseCurrent:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Phase {phase} Current
-  ReservedGridPhaseVoltage:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Phase {phase} Voltage
   ReservedInverterRemoteEMSDispatch:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Remote EMS Dispatch
-  ReservedPVTotalGenerationToday:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PV Total Generation Today
-  ReservedPVTotalGenerationYesterday:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PV Total Generation Yesterday
   ReservedSensor:
     attributes:
       source: Modbus Register {address}

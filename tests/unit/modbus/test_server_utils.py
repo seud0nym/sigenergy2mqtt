@@ -163,7 +163,7 @@ def test_get_initial_value_covers_primary_branches(monkeypatch):
     with_min_max = FakeSensor(min=(3, 4), max=(9, 10))
     assert block._get_initial_value(with_min_max) == (3, "min_max")
 
-    with_options = FakeSensor(options=["a", "b"])
+    with_options = FakeSensor(device_class=DeviceClass.ENUM)
     assert block._get_initial_value(with_options) == (0, "options")
 
     with_sanity_delta = FakeSensor()
@@ -246,6 +246,7 @@ def test_async_set_values_remote_ems_guard_and_get_values_paths():
 
         block.addresses[300] = FakeSensor(address=300, count=1)
         block.addresses[301] = FakeSensor(address=301, count=1)
+
     asyncio.run(_run())
 
 
@@ -278,12 +279,14 @@ def test_simulate_grid_outage_and_callbacks(monkeypatch):
     async def _run():
         block = server.CustomDataBlock(device_address=1, mqtt_client=None, latency_budget=server.LatencyBudget())
         block.addresses[GridStatus.ADDRESS] = FakeSensor(address=GridStatus.ADDRESS)
-        
+
         mock_server = Mock()
         mock_server.context = Mock()
+
         async def mock_set_values(_unit, _fc, addr, vals):
             for i, v in enumerate(vals):
                 block._initial_registers[addr + i] = v
+
         mock_server.context.async_setValues.side_effect = mock_set_values
         block._server = mock_server
 

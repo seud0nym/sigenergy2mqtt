@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime
+import logging
 from typing import cast
 
 from sigenergy2mqtt.common import DeviceClass, InputType, Protocol
@@ -90,4 +91,8 @@ class TimestampSensor(ReadOnlySensor):
         if isinstance(state, (float, int)):
             return int(state)
 
-        return int(datetime.datetime.fromisoformat(state).timestamp())
+        try:
+            return int(datetime.datetime.fromisoformat(state).timestamp())
+        except ValueError:
+            logging.error(f"{self.log_identity} Invalid timestamp: {state}")
+            return 0

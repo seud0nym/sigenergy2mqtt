@@ -8,6 +8,25 @@
 - Added simulated grid outage during startup for EVAC not on backup circuit to Modbus test server
 - Added `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_NETWORKS` configuration setting and CLI argument to allow scanning of specific CIDR networks during auto-discovery
 - Added `SIGENERGY2MQTT_LOG_FMT` configuration setting and CLI argument to allow override of the log message format
+- Added new sensors defined in Modbus Protocol V2.9:
+  - New ESS Preheating Device for Sigen PV M1-HYA/HYB series _only_
+  - DC Charger:
+    - Discharging Current
+    - Current Discharging Capacity
+    - Current Discharging Duration
+    - Total Charging Capacity
+    - Total Discharging Capacity
+    - Rated Charging Power
+    - Rated Discharging Power
+    - Max Charging Power Limit
+    - Max Discharging Power Limit
+  - Plant
+    - PV Total Generation Today
+    - PV Total Generation Yesterday
+    - Average Cell Temperature
+    - PCC Power Factor Adjustment Target Value (Grid Import) - Sigen PV M1-HYB series _only_
+    - PCC Power Factor Adjustment Target Value (Grid Export) - Sigen PV M1-HYB series _only_
+    - Grid Power Loss Lockout Alarm Clear
 
 ### Changed
 
@@ -31,6 +50,17 @@
 - Simplified PlantConsumedPower when using calculated consumption method to use new CrossDeviceDerivedSensor logic rather than relying on MQTT notifications
 - Modified early detection of Modbus 0x02 ILLEGAL_DATA_ADDRESS exceptions to use a pre-scan approach rather than hard-coding known problematic registers
 - SystemTime, StartupTime and ShutdownTime sensors now return date/time using the SystemTimeZone rather than UTC
+- As of Modbus Protocol V2.9, Power dispatch sensors require Remote EMS to be enabled and the EMS to be in PCS Remote Control Mode for them to take effect. The affected sensors are:
+  - Active Power Fixed Adjustment Target Value
+  - Reactive Power Fixed Adjustment Target Value
+  - Active Power Percentage Adjustment Target Value
+  - Q/S Adjustment Target Value
+  - Power Factor Adjustment Target Value
+  - Phase A/B/C Active Power Fixed Adjustment Target Value
+  - Phase A/B/C Reactive Power Fixed Adjustment Target Value
+  - Phase A/B/C Active Power Percentage Adjustment Target Value
+  - Phase A/B/C Q/S Fixed Adjustment Target Value
+
 
 ### Fixed
 

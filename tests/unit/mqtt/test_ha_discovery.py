@@ -1,4 +1,5 @@
 import json
+from datetime import timezone
 from typing import cast
 from unittest.mock import MagicMock
 
@@ -709,7 +710,7 @@ def test_timestamp_sensor_discovery(mock_config):
     dev = Device("TestDevice", 0, "sigen_uid", "Sigenergy", "SigenStor", Protocol.V1_8)
 
     # name, object_id, input_type, plant_index, device_address, address, scan_interval, protocol_version
-    sensor = TimestampSensor("UpdateTime", "sigen_ts1", InputType.INPUT, 0, 1, 30005, 60, Protocol.V1_8)
+    sensor = TimestampSensor("UpdateTime", "sigen_ts1", InputType.INPUT, 0, 1, 30005, 60, Protocol.V1_8, tz=timezone.utc)
     dev._add_sensor(cast(Sensor, sensor))
 
     mqtt_client = MagicMock()
@@ -750,7 +751,7 @@ def test_discovery_keys_validity(mock_config):
     dev._add_sensor(cast(Sensor, source))
     energy_sensor = EnergyDailyAccumulationSensor("Daily Energy", "sigen_daily", "sigen_daily", source)
     dev._add_to_all_sensors(energy_sensor)
-    ts_sensor = TimestampSensor("UpdateTime", "sigen_ts1", InputType.INPUT, 0, 1, 30005, 60, Protocol.V1_8)
+    ts_sensor = TimestampSensor("UpdateTime", "sigen_ts1", InputType.INPUT, 0, 1, 30005, 60, Protocol.V1_8, tz=timezone.utc)
     dev._add_sensor(cast(Sensor, ts_sensor))
 
     mqtt_client = MagicMock()
