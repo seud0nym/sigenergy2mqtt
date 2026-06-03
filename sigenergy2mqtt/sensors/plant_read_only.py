@@ -1969,7 +1969,7 @@ class ESSAverageCellTemperature(ReadOnlySensor, HybridInverter):
 
     def __init__(self, plant_index: int):
         super().__init__(
-            name="ESS Average Cell Temperature",
+            name="Average Cell Temperature",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_ess_average_cell_temperature",
             input_type=InputType.INPUT,
             plant_index=plant_index,

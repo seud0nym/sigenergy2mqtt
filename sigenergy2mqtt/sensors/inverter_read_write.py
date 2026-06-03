@@ -82,7 +82,7 @@ class DCChargerMaxChargingPowerLimit(NumericSensor, HybridInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="DC Charger Max Charging Power Limit",
+            name="Max Charging Power Limit",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_dc_charger_{device_address}_max_charging_power_limit",
             input_type=InputType.HOLDING,
             plant_index=plant_index,
@@ -113,7 +113,7 @@ class DCChargerMaxDischargingPowerLimit(NumericSensor, HybridInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="DC Charger Max Discharging Power Limit",
+            name="Max Discharging Power Limit",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_dc_charger_{device_address}_max_discharging_power_limit",
             input_type=InputType.HOLDING,
             plant_index=plant_index,
