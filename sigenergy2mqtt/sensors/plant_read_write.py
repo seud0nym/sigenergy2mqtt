@@ -589,8 +589,8 @@ class RemoteEMSControlMode(SelectSensor, HybridInverter, PVInverter):
 
     def configure_mqtt_topics(self, device_id: str) -> str:
         base = super().configure_mqtt_topics(device_id)
+        self.is_pcs_remote_control_mode_topic = f"{base}/is_pcs_remote_control_mode"
         if active_config.home_assistant.enabled and active_config.ems_mode_check:
-            self.is_pcs_remote_control_mode_topic = f"{base}/is_pcs_remote_control_mode"
             self.is_charging_mode_topic = f"{base}/is_charging_mode"
             self.is_discharging_mode_topic = f"{base}/is_discharging_mode"
             self.is_charging_discharging_topic = f"{base}/is_command_mode"
