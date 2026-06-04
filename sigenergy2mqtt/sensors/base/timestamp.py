@@ -91,6 +91,9 @@ class TimestampSensor(ReadOnlySensor):
         if isinstance(state, (float, int)):
             return int(state)
 
+        if state == "--":  # Home Assistant uses "--" to represent unavailable timestamps??
+            return 0
+
         try:
             return int(datetime.datetime.fromisoformat(state).timestamp())
         except ValueError:
