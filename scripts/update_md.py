@@ -480,6 +480,7 @@ async def compare_sensor_instances() -> None:
         DC_CHARGER_RUNNING_INFO_REGISTERS,
         INVERTER_PARAMETER_REGISTERS,
         INVERTER_RUNNING_INFO_REGISTERS,
+        PLANT_ESS_PREHEATING_REGISTERS,
         PLANT_PARAMETER_REGISTERS,
         PLANT_RUNNING_INFO_REGISTERS,
         DataType,
@@ -497,6 +498,7 @@ async def compare_sensor_instances() -> None:
     for map in (
         PLANT_RUNNING_INFO_REGISTERS,
         PLANT_PARAMETER_REGISTERS,
+        PLANT_ESS_PREHEATING_REGISTERS,
         INVERTER_RUNNING_INFO_REGISTERS,
         INVERTER_PARAMETER_REGISTERS,
         AC_CHARGER_RUNNING_INFO_REGISTERS,
@@ -514,7 +516,7 @@ async def compare_sensor_instances() -> None:
     for k, v in registers.items():
         if isinstance(k, int) and k not in typqxq_instances:
             for i in v:
-                if isinstance(sensor_instances[i], ReservedSensor):
+                if isinstance(sensor_instances[i], ReservedSensor) or sensor_instances[i].parent_device.__class__.__name__ in ("PSS", "PID"):
                     continue
                 logging.warning(f"V{sensor_instances[i].protocol_version} Register {k} ({sensor_instances[i].name}) found in sensor instances but not defined in TypQxQ")
 

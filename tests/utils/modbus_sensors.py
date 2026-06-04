@@ -34,11 +34,16 @@ from pymodbus.pdu import ExceptionResponse, ModbusPDU
 from sigenergy2mqtt.common import FirmwareVersion, HybridInverter, Protocol, ProtocolApplies, PVInverter
 from sigenergy2mqtt.config import Config, _swap_active_config, active_config, initialize
 from sigenergy2mqtt.devices import ACCharger, DCCharger, Device, Inverter, PowerPlant
+from sigenergy2mqtt.devices.pid import PID
+from sigenergy2mqtt.devices.pss import PSS
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerInputBreaker, ACChargerRatedCurrent, ACChargerRunningState
 from sigenergy2mqtt.sensors.ac_charger_read_write import ACChargerStatus
 from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, AlarmSensor, ModbusSensorMixin, Sensor
 from sigenergy2mqtt.sensors.inverter_read_only import DCChargerVehicleBatteryVoltage, InverterFirmwareVersion, InverterModel, InverterSerialNumber, OutputType, PACKBCUCount, PVStringCount, RatedGridVoltage
 from sigenergy2mqtt.sensors.inverter_read_write import DCChargerStatus, InverterStatus, ReservedInverterRemoteEMSDispatch
+from sigenergy2mqtt.sensors.pid_read_only import PIDModelType
+from sigenergy2mqtt.sensors.pid_read_write import PIDStartStop
+from sigenergy2mqtt.sensors.plant_ess_preheating_read_write import ESSPreHeatingEnable
 from sigenergy2mqtt.sensors.plant_read_only import GridCodeRatedFrequency, PlantRatedChargingPower, PlantRatedDischargingPower, SystemTimeZone
 from sigenergy2mqtt.sensors.plant_read_write import (
     ActivePowerFixedAdjustmentTargetValue,
@@ -47,6 +52,8 @@ from sigenergy2mqtt.sensors.plant_read_write import (
     PlantStatus,
     ReactivePowerFixedAdjustmentTargetValue,
 )
+from sigenergy2mqtt.sensors.pss_read_only import PSSModelType
+from sigenergy2mqtt.sensors.pss_read_write import PSSMVCabinetG3CircuitBreakerSwitchOn
 
 initialize()
 
@@ -229,6 +236,13 @@ async def get_sensor_instances(
     dc_charger = await DCCharger.create(plant_index, dc_charger_device_address, protocol_version)
     ac_charger = await ACCharger.create(plant_index, ac_charger_device_address, protocol_version, hi_modbus_client)
 
+    if protocol_version >= Protocol.V2_9:
+        pid = await PID.create(plant_index, 241, protocol_version, DummyModbusClient("Sigen PID 1.0", "PID123A45BP678"))
+        pss = await PSS.create(plant_index, 242, protocol_version, DummyModbusClient("Sigen PSS 1.0", "PSS123A45BP678"))
+    else:
+        pid = None
+        pss = None
+
     for sensor in [s for s in plant.sensors.values() if isinstance(s, (ActivePowerFixedAdjustmentTargetValue, PhaseActivePowerFixedAdjustmentTargetValue))]:
         sensor.apply_min_max(-total_rated_active_power, total_rated_active_power)
     for sensor in [s for s in plant.sensors.values() if isinstance(s, (ReactivePowerFixedAdjustmentTargetValue, PhaseReactivePowerFixedAdjustmentTargetValue))]:
@@ -273,7 +287,9 @@ async def get_sensor_instances(
                 add_sensor_instance(alarm)
 
     find_concrete_classes(Sensor)
-    for parent in [plant, hybrid_inverter, dc_charger, ac_charger, pv_inverter]:
+    for parent in [plant, hybrid_inverter, dc_charger, ac_charger, pv_inverter, pid, pss]:
+        if parent is None:
+            continue
         devices: list[Device] = [parent]
         devices.extend(parent.children)
         for device in devices:
@@ -294,11 +310,16 @@ async def get_sensor_instances(
                         RatedGridVoltage.ADDRESS,  # 31500
                         DCChargerVehicleBatteryVoltage.ADDRESS,  # 32000
                         ACChargerRunningState.ADDRESS,  # 32000
+                        PSSModelType.ADDRESS,  # 32500
+                        PIDModelType.ADDRESS,  # 33000
                         PlantStatus.ADDRESS,  # 40000
                         InverterStatus.ADDRESS,  # 40500
                         DCChargerStatus.ADDRESS,  # 41000
                         ReservedInverterRemoteEMSDispatch.ADDRESS,  # 41500
                         ACChargerStatus.ADDRESS,  # 42000
+                        PSSMVCabinetG3CircuitBreakerSwitchOn.ADDRESS,  # 42500
+                        PIDStartStop.ADDRESS,  # 43000
+                        ESSPreHeatingEnable.ADDRESS,  # 50000
                     )
                     and last_address + last_count < address
                 ):
