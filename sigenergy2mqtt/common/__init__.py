@@ -15,7 +15,19 @@ from .tariff import Tariff
 from .tariff_type import TariffType
 from .time_period import TimePeriod
 from .types import DeviceType, HybridInverter, PVInverter
-from .units import PERCENTAGE, UnitOfApparentPower, UnitOfElectricCurrent, UnitOfElectricPotential, UnitOfEnergy, UnitOfFrequency, UnitOfPower, UnitOfReactivePower, UnitOfTemperature, UnitOfTime
+from .units import (
+    PERCENTAGE,
+    UnitOfApparentPower,
+    UnitOfElectricCurrent,
+    UnitOfElectricPotential,
+    UnitOfEnergy,
+    UnitOfFrequency,
+    UnitOfPower,
+    UnitOfReactiveEnergy,
+    UnitOfReactivePower,
+    UnitOfTemperature,
+    UnitOfTime,
+)
 from .voltage_source import VoltageSource
 
 __all__ = [
@@ -45,6 +57,7 @@ __all__ = [
     "UnitOfEnergy",
     "UnitOfFrequency",
     "UnitOfPower",
+    "UnitOfReactiveEnergy",
     "UnitOfReactivePower",
     "UnitOfTemperature",
     "UnitOfTime",
