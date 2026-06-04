@@ -44,6 +44,7 @@ class PSSModelType(ReadOnlySensor, NonInverter):
             precision=None,
             protocol_version=Protocol.V2_9,
         )
+        self["entity_category"] = "diagnostic"
 
 
 class PSSSerialNumber(ReadOnlySensor, NonInverter):
@@ -68,6 +69,7 @@ class PSSSerialNumber(ReadOnlySensor, NonInverter):
             precision=None,
             protocol_version=Protocol.V2_9,
         )
+        self["entity_category"] = "diagnostic"
 
 
 class PSSCommunicationStatus(ReadOnlySensor, NonInverter):

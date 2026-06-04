@@ -29,6 +29,7 @@ class PIDModelType(ReadOnlySensor, NonInverter):
             precision=None,
             protocol_version=Protocol.V2_9,
         )
+        self["entity_category"] = "diagnostic"
 
 
 class PIDSerialNumber(ReadOnlySensor, NonInverter):
@@ -53,6 +54,7 @@ class PIDSerialNumber(ReadOnlySensor, NonInverter):
             precision=None,
             protocol_version=Protocol.V2_9,
         )
+        self["entity_category"] = "diagnostic"
 
 
 class PIDMachineFirmwareVersion(ReadOnlySensor, NonInverter):
@@ -77,6 +79,7 @@ class PIDMachineFirmwareVersion(ReadOnlySensor, NonInverter):
             precision=None,
             protocol_version=Protocol.V2_9,
         )
+        self["entity_category"] = "diagnostic"
 
 
 class PIDCommunicationStatus(ReadOnlySensor, NonInverter):
