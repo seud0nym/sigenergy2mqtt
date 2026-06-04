@@ -258,3 +258,4 @@ class PowerPlant(ModbusDevice):
         # Add the reserved registers to optimise sensor scanning
         self._add_sensor(ro.Reserved30073(self.plant_index))
         self._add_sensor(rw.Reserved40026(self.plant_index))
+        self._add_sensor(rw.Reserved40069(self.plant_index))

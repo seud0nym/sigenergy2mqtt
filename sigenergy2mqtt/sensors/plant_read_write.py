@@ -1607,6 +1607,30 @@ class GridCodeUnderFrequencyPowerBoostCutOffFrequency(NumericSensor, HybridInver
         return attributes
 
 
+class Reserved40069(ReservedSensor, HybridInverter, PVInverter):
+    ADDRESS = 40069
+
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="Reserved",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_reserved_40069",
+            input_type=InputType.HOLDING,
+            plant_index=plant_index,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
+            address=self.ADDRESS,
+            count=88,
+            data_type=ModbusDataType.STRING,
+            scan_interval=ScanInterval.low(plant_index),
+            unit=None,
+            device_class=None,
+            state_class=None,
+            icon="mdi:comment-question",
+            gain=None,
+            precision=None,
+            protocol_version=Protocol.V2_9,
+        )
+
+
 class GridPowerLossLockoutAlarmClear(WriteOnlySensor, HybridInverter, PVInverter):
     ADDRESS = 40159
 

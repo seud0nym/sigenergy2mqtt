@@ -76,6 +76,30 @@ class DCChargerStatus(WriteOnlySensor, HybridInverter):
         return attributes
 
 
+class Reserved41001(ReservedSensor):
+    ADDRESS = 41001
+
+    def __init__(self, plant_index: int, device_address: int):
+        super().__init__(
+            name="Reserved",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_reserved_41001",
+            input_type=InputType.HOLDING,
+            plant_index=plant_index,
+            device_address=device_address,
+            address=self.ADDRESS,
+            count=1,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=ScanInterval.low(plant_index),
+            unit=None,
+            device_class=None,
+            state_class=None,
+            icon="mdi:comment-question",
+            gain=None,
+            precision=None,
+            protocol_version=Protocol.V2_9,
+        )
+
+
 class DCChargerMaxChargingPowerLimit(NumericSensor, HybridInverter):
     ADDRESS = 41002
 

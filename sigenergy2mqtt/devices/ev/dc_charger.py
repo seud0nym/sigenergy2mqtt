@@ -61,3 +61,5 @@ class DCCharger(ModbusDevice):
         self._add_sensor(rw.DCChargerStatus(plant_index, device_address))
         self._add_sensor(rw.DCChargerMaxChargingPowerLimit(plant_index, device_address))
         self._add_sensor(rw.DCChargerMaxDischargingPowerLimit(plant_index, device_address))
+
+        self._add_sensor(rw.Reserved41001(plant_index, device_address))
