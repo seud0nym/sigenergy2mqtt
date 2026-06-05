@@ -1225,6 +1225,9 @@ def _update_language_file(
     prune_empty_dicts(existing)
 
     # 3. Propagate within the language using topological order.
+    # Only propagate values that are genuinely translated in the parent
+    # (i.e. not themselves English/placeholder). Step 4a handles syncing
+    # from English; this step only handles translated inheritance.
     def _value_is_english_or_placeholder(cls: str, key: str, subkey: str | None, val: object) -> bool:
         """True if *val* appears to be an untranslated English (or placeholder) string."""
         if isinstance(val, str) and any(p in val for p in _UNRESOLVED_TOKENS):
@@ -1233,6 +1236,10 @@ def _update_language_file(
         en_val = en_class.get(cls, {}).get(key) if subkey is None else en_class.get(cls, {}).get(key, {}).get(subkey)
         old_val = old_en_class.get(cls, {}).get(key) if subkey is None else old_en_class.get(cls, {}).get(key, {}).get(subkey)
         return val == en_val or (old_val is not None and val == old_val)
+
+    def _is_translated(cls: str, key: str, subkey: str | None, val: object) -> bool:
+        """True if *val* appears to be a real translation (not English / placeholder)."""
+        return not _value_is_english_or_placeholder(cls, key, subkey, val)
 
     for cls in topological_sort(class_bases):
         if cls not in class_bases or cls not in existing["class"]:
@@ -1246,21 +1253,26 @@ def _update_language_file(
                     continue
                 base_val = base_trans[key]
                 if key not in existing["class"][cls]:
-                    existing["class"][cls][key] = base_val.copy() if isinstance(base_val, dict) else base_val
-                    updated = True
+                    # Only copy the parent value if it is translated.
+                    if isinstance(base_val, dict):
+                        translated_subset = {sk: sv for sk, sv in base_val.items() if _is_translated(base, key, sk, sv)}
+                        if translated_subset:
+                            existing["class"][cls][key] = translated_subset
+                            updated = True
+                    elif _is_translated(base, key, None, base_val):
+                        existing["class"][cls][key] = base_val
+                        updated = True
                 elif isinstance(base_val, dict) and isinstance(existing["class"][cls][key], dict):
                     for subkey, subval in base_val.items():
                         cur = existing["class"][cls][key].get(subkey)
-                        if cur is None or _value_is_english_or_placeholder(cls, key, subkey, cur):
-                            if cur != subval:
-                                existing["class"][cls][key][subkey] = subval
-                                updated = True
-                elif not isinstance(base_val, dict):
-                    cur = existing["class"][cls][key]
-                    if _value_is_english_or_placeholder(cls, key, None, cur) and cur != base_val:
-                        existing["class"][cls][key] = base_val
-                        updated = True
-
+                        # Only fill a missing slot with a genuinely translated parent value.
+                        if cur is None and _is_translated(base, key, subkey, subval):
+                            existing["class"][cls][key][subkey] = subval
+                            updated = True
+                        # Never overwrite an existing value here — step 4a handles that.
+                # Non-dict scalar: never overwrite an existing child value in step 3.
+                # If the child has no value yet, only copy if parent value is translated.
+                # (The key-not-present case is handled above.)
     # 4a. Sync class translations.
     for cls, cls_val in en_class.items():
         if cls not in existing["class"]:
