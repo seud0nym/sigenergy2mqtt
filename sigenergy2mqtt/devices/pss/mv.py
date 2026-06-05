@@ -23,6 +23,10 @@ class MV(ModbusDevice):
             device_address=device_address,
             model="PSS MV",
             protocol_version=protocol_version,
+            # HA device registry attributes
+            sn=serial,
+            model_id=model_id,
+            serial=serial,
         )
 
         self._add_sensor(ro.PSSMVPhaseACurrent(plant_index, device_address))

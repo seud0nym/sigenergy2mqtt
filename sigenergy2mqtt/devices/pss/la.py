@@ -23,6 +23,10 @@ class LA(ModbusDevice):
             device_address=device_address,
             model="PSS LA",
             protocol_version=protocol_version,
+            # HA device registry attributes
+            sn=serial,
+            model_id=model_id,
+            serial=serial,
         )
 
         self._add_sensor(ro.PSSLATemperature(plant_index, device_address))

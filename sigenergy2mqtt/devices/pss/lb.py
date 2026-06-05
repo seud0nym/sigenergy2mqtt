@@ -23,6 +23,10 @@ class LB(ModbusDevice):
             device_address=device_address,
             model="PSS LB",
             protocol_version=protocol_version,
+            # HA device registry attributes
+            sn=serial,
+            model_id=model_id,
+            serial=serial,
         )
 
         self._add_sensor(ro.PSSLBTemperature(plant_index, device_address))
