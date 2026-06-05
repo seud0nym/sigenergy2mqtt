@@ -33,15 +33,13 @@ from pymodbus.pdu import ExceptionResponse, ModbusPDU
 
 from sigenergy2mqtt.common import FirmwareVersion, HybridInverter, Protocol, ProtocolApplies, PVInverter
 from sigenergy2mqtt.config import Config, _swap_active_config, active_config, initialize
-from sigenergy2mqtt.devices import ACCharger, DCCharger, Device, Inverter, PowerPlant
-from sigenergy2mqtt.devices.pid import PID
-from sigenergy2mqtt.devices.pss import PSS
+from sigenergy2mqtt.devices import PID, PSS, ACCharger, DCCharger, Device, Inverter, PowerPlant
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerInputBreaker, ACChargerRatedCurrent, ACChargerRunningState
 from sigenergy2mqtt.sensors.ac_charger_read_write import ACChargerStatus
 from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, AlarmSensor, ModbusSensorMixin, Sensor
 from sigenergy2mqtt.sensors.inverter_read_only import DCChargerVehicleBatteryVoltage, InverterFirmwareVersion, InverterModel, InverterSerialNumber, OutputType, PACKBCUCount, PVStringCount, RatedGridVoltage
 from sigenergy2mqtt.sensors.inverter_read_write import DCChargerStatus, InverterStatus, ReservedInverterRemoteEMSDispatch
-from sigenergy2mqtt.sensors.pid_read_only import PIDModelType, PIDSerialNumber
+from sigenergy2mqtt.sensors.pid_read_only import PIDMachineFirmwareVersion, PIDModelType, PIDSerialNumber
 from sigenergy2mqtt.sensors.pid_read_write import PIDStartStop
 from sigenergy2mqtt.sensors.plant_ess_preheating_read_write import ESSPreHeatingEnable
 from sigenergy2mqtt.sensors.plant_read_only import GridCodeRatedFrequency, PlantRatedChargingPower, PlantRatedDischargingPower, SystemTimeZone
@@ -153,14 +151,16 @@ class DummyInverterModbusClient(DummyModbusClient):
 
 
 class DummyPIDModbusClient(DummyModbusClient):
-    def __init__(self, model_id: str, serial_number: str):
+    def __init__(self, model_id: str, serial_number: str, firmware_version: str):
         model = PIDModelType(0, 1)
         serial = PIDSerialNumber(0, 1)
+        fw = PIDMachineFirmwareVersion(0, 1)
 
         super().__init__(
             {  # convert_to_registers will create the correct number of registers based on data_type, so we can ignore the count parameter in the read methods
                 model.address: self.convert_to_registers(model_id, model.data_type),
                 serial.address: self.convert_to_registers(serial_number, serial.data_type),
+                fw.address: self.convert_to_registers(firmware_version, serial.data_type),
             }
         )
 
@@ -266,7 +266,7 @@ async def get_sensor_instances(
     ac_charger = await ACCharger.create(plant_index, ac_charger_device_address, protocol_version, hi_modbus_client)
 
     if protocol_version >= Protocol.V2_9:
-        pid = await PID.create(plant_index, 241, protocol_version, DummyPIDModbusClient("Sigen PID 1.0", "PID123A45BP678"))
+        pid = await PID.create(plant_index, 241, protocol_version, DummyPIDModbusClient("Sigen PID 1.0", "PID123A45BP678", "V100R001C00SPC113"))
         pss = await PSS.create(plant_index, 242, protocol_version, DummyPSSModbusClient("Sigen PSS 1.0", "PSS123A45BP678"))
     else:
         pid = None
