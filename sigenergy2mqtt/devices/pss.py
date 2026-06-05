@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-import logging
+import asyncio
+from typing import cast
 
 import sigenergy2mqtt.sensors.pss_read_only as ro
 import sigenergy2mqtt.sensors.pss_read_write as rw
@@ -16,46 +17,40 @@ class PSS(ModbusDevice):
         plant_index: int,
         device_address: int,
         protocol_version: Protocol,
-        sequence_number: int | None = None,
-        total_count: int | None = None,
+        model_id: str,
+        serial: str,
     ):
-        multi_pss = (total_count or 0) > 1 and sequence_number is not None
-        name = "Sigenergy PSS Device"
-        sequence_suffix = str(sequence_number) if multi_pss else ""
         super().__init__(
             NonInverter(),
-            name,
-            plant_index,
-            device_address,
-            "PSS",
-            protocol_version,
-            sequence_number=sequence_number,
-            sequence_suffix=sequence_suffix,
+            name=f"{model_id} {serial}",
+            plant_index=plant_index,
+            device_address=device_address,
+            model=model_id,
+            protocol_version=protocol_version,
+            # HA device registry attributes
+            sn=serial,
+            model_id=model_id,
+            serial=serial,
         )
 
     @classmethod
-    async def create(
-        cls,
-        plant_index: int,
-        device_address: int,
-        protocol_version: Protocol,
-        modbus_client: ModbusClient,
-        sequence_number: int | None = None,
-        total_count: int | None = None,
-    ) -> "PSS":
-        pss = cls(plant_index, device_address, protocol_version, sequence_number=sequence_number, total_count=total_count)
-        await pss._register_sensors(plant_index, device_address, modbus_client)
+    async def create(cls, plant_index: int, device_address: int, protocol_version: Protocol, modbus_client: ModbusClient) -> "PSS":
+        model = ro.PSSModelType(plant_index, device_address)
+        serial_number = ro.PSSSerialNumber(plant_index, device_address)
+
+        # Fetch async values in parallel for common inverter sensors
+        model_id, serial = await asyncio.gather(
+            model.get_state(modbus_client=modbus_client),
+            serial_number.get_state(modbus_client=modbus_client),
+        )
+
+        pss = cls(plant_index, device_address, protocol_version, cast(str, model_id), cast(str, serial))
+        await pss._register_sensors(plant_index, device_address, model, serial_number)
         return pss
 
-    async def _register_sensors(self, plant_index: int, device_address: int, modbus_client: ModbusClient) -> None:
-        model = ro.PSSModelType(plant_index, device_address)
-        serial = ro.PSSSerialNumber(plant_index, device_address)
-
-        # Need to pre-populate model and serial number for modbus_test_server
-        logging.debug(f"{self.log_identity} model={await model.get_state(modbus_client=modbus_client)} serial={await serial.get_state(modbus_client=modbus_client)}")
-
+    async def _register_sensors(self, plant_index: int, device_address: int, model: ro.PSSModelType, serial_number: ro.PSSSerialNumber) -> None:
         self._add_sensor(model)
-        self._add_sensor(serial)
+        self._add_sensor(serial_number)
         self._add_sensor(ro.PSSCommunicationStatus(plant_index, device_address))
         self._add_sensor(ro.PSSTeleindication1(plant_index, device_address))
         self._add_sensor(ro.PSSTeleindication2(plant_index, device_address))

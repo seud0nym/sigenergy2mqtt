@@ -115,7 +115,7 @@ async def get_state(sensor: Any, modbus_client: ModbusClient, device: str, defau
     - Emits debug logs for successful reads and caught failures.
     """
     try:
-        state = await sensor.get_state(raw=raw, modbus_client=modbus_client, skip_failure_logging=True)
+        state = await sensor.get_state(raw=raw, republish=True, modbus_client=modbus_client, skip_failure_logging=True)  # Use republish=True to use last read, if one exists
         logging.debug(
             f"READING {get_modbus_url(modbus_client)} acquired {sensor.__class__.__name__} {'raw ' if raw else ''}{state=} to initialise {device} (idx={sensor.plant_index} id={sensor.device_address} addr={sensor.address})"
         )
@@ -243,23 +243,20 @@ async def make_pid(
     Side effects: performs async device initialisation reads and sets
     ``via_device`` to the plant unique ID for topology/discovery metadata.
     """
-    sn = await get_state(PIDSerialNumber(plant_index, device_address), modbus_client, "inverter")
-    if sn in seen_serial_numbers:
-        logging.info(f"PID {sn} has already been detected - ignoring (idx={plant_index} id={device_address})")
-        return None
-
-    if sn is not None:
-        seen_serial_numbers.add(str(sn))
-
     pid = await PID.create(
         plant_index,
         device_address,
         plant.protocol_version,
         modbus_client,
-        sequence_number=sequence_number,
-        total_count=total_count,
     )
     pid.via_device = plant.unique_id
+
+    sn = await get_state(pid.get_sensor(PIDSerialNumber), modbus_client, "PID")
+    if sn in seen_serial_numbers:
+        logging.info(f"PID {sn} has already been detected - ignoring (idx={plant_index} id={device_address})")
+        return None
+    seen_serial_numbers.add(str(sn))
+
     return pid
 
 
@@ -332,23 +329,20 @@ async def make_pss(
     Side effects: performs async device initialisation reads and sets
     ``via_device`` to the plant unique ID for topology/discovery metadata.
     """
-    sn = await get_state(PSSSerialNumber(plant_index, device_address), modbus_client, "inverter")
-    if sn in seen_serial_numbers:
-        logging.info(f"PSS {sn} has already been detected - ignoring (idx={plant_index} id={device_address})")
-        return None
-
-    if sn is not None:
-        seen_serial_numbers.add(str(sn))
-
     pss = await PSS.create(
         plant_index,
         device_address,
         plant.protocol_version,
         modbus_client,
-        sequence_number=sequence_number,
-        total_count=total_count,
     )
     pss.via_device = plant.unique_id
+
+    sn = await get_state(pss.get_sensor(PSSSerialNumber), modbus_client, "PSS")
+    if sn in seen_serial_numbers:
+        logging.info(f"PSS {sn} has already been detected - ignoring (idx={plant_index} id={device_address})")
+        return None
+    seen_serial_numbers.add(str(sn))
+
     return pss
 
 
@@ -960,9 +954,10 @@ async def validate_publishable_sensors(modbus_client: ModbusClient, device: Devi
         modbus_client: Modbus client for reads
         device: Device to validate (and children recursively)
     """
-    ###### CHECK ALARM SENSORS !!!!! ######
-    sensors_to_test = [s for s in device.get_all_sensors(search_children=True).values() if isinstance(s, ModbusSensorMixin) and not isinstance(s, WriteOnlySensor) and s.publishable and s.state_count == 0]
+    if active_config.clean:
+        return
 
+    sensors_to_test = [s for s in device.get_all_sensors(search_children=True).values() if isinstance(s, ModbusSensorMixin) and not isinstance(s, WriteOnlySensor) and s.publishable and s.state_count == 0]
     if not sensors_to_test:
         return
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-import logging
+import asyncio
+from typing import cast
 
 import sigenergy2mqtt.sensors.pid_read_only as ro
 import sigenergy2mqtt.sensors.pid_read_write as rw
@@ -16,47 +17,45 @@ class PID(ModbusDevice):
         plant_index: int,
         device_address: int,
         protocol_version: Protocol,
-        sequence_number: int | None = None,
-        total_count: int | None = None,
+        model_id: str,
+        serial: str,
+        firmware: str,
     ):
-        multi_pid = (total_count or 0) > 1 and sequence_number is not None
-        name = "Sigenergy PID Device"
-        sequence_suffix = str(sequence_number) if multi_pid else ""
         super().__init__(
             NonInverter(),
-            name,
-            plant_index,
-            device_address,
-            "PID",
-            protocol_version,
-            sequence_number=sequence_number,
-            sequence_suffix=sequence_suffix,
+            name=f"{model_id} {serial}",
+            plant_index=plant_index,
+            device_address=device_address,
+            model=model_id,
+            protocol_version=protocol_version,
+            # HA device registry attributes
+            sn=serial,
+            hw=firmware,  # MUST use hw abbreviation - see InverterFirmwareVersion
+            model_id=model_id,
+            serial=serial,
         )
 
     @classmethod
-    async def create(
-        cls,
-        plant_index: int,
-        device_address: int,
-        protocol_version: Protocol,
-        modbus_client: ModbusClient,
-        sequence_number: int | None = None,
-        total_count: int | None = None,
-    ) -> "PID":
-        pid = cls(plant_index, device_address, protocol_version, sequence_number=sequence_number, total_count=total_count)
-        await pid._register_sensors(plant_index, device_address, modbus_client)
+    async def create(cls, plant_index: int, device_address: int, protocol_version: Protocol, modbus_client: ModbusClient) -> "PID":
+        model = ro.PIDModelType(plant_index, device_address)
+        firmware_version = ro.PIDMachineFirmwareVersion(plant_index, device_address)
+        serial_number = ro.PIDSerialNumber(plant_index, device_address)
+
+        # Fetch async values in parallel for common inverter sensors
+        firmware, model_id, serial = await asyncio.gather(
+            firmware_version.get_state(modbus_client=modbus_client),
+            model.get_state(modbus_client=modbus_client),
+            serial_number.get_state(modbus_client=modbus_client),
+        )
+
+        pid = cls(plant_index, device_address, protocol_version, cast(str, model_id), cast(str, serial), cast(str, firmware))
+        await pid._register_sensors(plant_index, device_address, model, firmware_version, serial_number)
         return pid
 
-    async def _register_sensors(self, plant_index: int, device_address: int, modbus_client: ModbusClient) -> None:
-        model = ro.PIDModelType(plant_index, device_address)
-        serial = ro.PIDSerialNumber(plant_index, device_address)
-
-        # Need to pre-populate model and serial number for modbus_test_server
-        logging.debug(f"{self.log_identity} model={await model.get_state(modbus_client=modbus_client)} serial={await serial.get_state(modbus_client=modbus_client)}")
-
+    async def _register_sensors(self, plant_index: int, device_address: int, model: ro.PIDModelType, firmware_version: ro.PIDMachineFirmwareVersion, serial_number: ro.PIDSerialNumber) -> None:
         self._add_sensor(model)
-        self._add_sensor(serial)
-        self._add_sensor(ro.PIDMachineFirmwareVersion(plant_index, device_address))
+        self._add_sensor(serial_number)
+        self._add_sensor(firmware_version)
         self._add_sensor(ro.PIDCommunicationStatus(plant_index, device_address))
         self._add_sensor(ro.PIDRunningStatus(plant_index, device_address))
         self._add_sensor(ro.PIDABLineVoltage(plant_index, device_address))
