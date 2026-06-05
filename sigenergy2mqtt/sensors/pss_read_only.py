@@ -360,7 +360,7 @@ class PSSMVPhaseACurrent(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[MV] Phase A Current",
+            name="Phase A Current",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_mv_phase_a_current",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -385,7 +385,7 @@ class PSSMVPhaseBCurrent(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[MV] Phase B Current",
+            name="Phase B Current",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_mv_phase_b_current",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -410,7 +410,7 @@ class PSSMVPhaseCCurrent(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[MV] Phase C Current",
+            name="Phase C Current",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_mv_phase_c_current",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -435,7 +435,7 @@ class PSSMVZeroSequenceCurrent(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[MV] Zero Sequence Current",
+            name="Zero Sequence Current",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_mv_zero_sequence_current",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -460,7 +460,7 @@ class PSSMVFrequency(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[MV] Frequency",
+            name="Frequency",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_mv_frequency",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -485,7 +485,7 @@ class PSSMVTemperature(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[MV] Temperature",
+            name="Temperature",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_mv_temperature",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -510,7 +510,7 @@ class PSSMVHumidity(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[MV] Humidity",
+            name="Humidity",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_mv_humidity",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -535,7 +535,7 @@ class PSSMVG1CableL1PhaseTemperature(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[MV] G1 Cable L1 Phase Temperature",
+            name="G1 Cable L1 Phase Temperature",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_mv_g1_cable_l1_phase_temperature",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -560,7 +560,7 @@ class PSSMVG1CableL2PhaseTemperature(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[MV] G1 Cable L2 Phase Temperature",
+            name="G1 Cable L2 Phase Temperature",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_mv_g1_cable_l2_phase_temperature",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -585,7 +585,7 @@ class PSSMVG1CableL3PhaseTemperature(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[MV] G1 Cable L3 Phase Temperature",
+            name="G1 Cable L3 Phase Temperature",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_mv_g1_cable_l3_phase_temperature",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -610,7 +610,7 @@ class PSSMVG2CableL1PhaseTemperature(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[MV] G2 Cable L1 Phase Temperature",
+            name="G2 Cable L1 Phase Temperature",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_mv_g2_cable_l1_phase_temperature",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -635,7 +635,7 @@ class PSSMVG2CableL2PhaseTemperature(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[MV] G2 Cable L2 Phase Temperature",
+            name="G2 Cable L2 Phase Temperature",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_mv_g2_cable_l2_phase_temperature",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -660,7 +660,7 @@ class PSSMVG2CableL3PhaseTemperature(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[MV] G2 Cable L3 Phase Temperature",
+            name="G2 Cable L3 Phase Temperature",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_mv_g2_cable_l3_phase_temperature",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -685,7 +685,7 @@ class PSSMVG3CableL1PhaseTemperature(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[MV] G3 Cable L1 Phase Temperature",
+            name="G3 Cable L1 Phase Temperature",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_mv_g3_cable_l1_phase_temperature",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -710,7 +710,7 @@ class PSSMVG3CableL2PhaseTemperature(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[MV] G3 Cable L2 Phase Temperature",
+            name="G3 Cable L2 Phase Temperature",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_mv_g3_cable_l2_phase_temperature",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -735,7 +735,7 @@ class PSSMVG3CableL3PhaseTemperature(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[MV] G3 Cable L3 Phase Temperature",
+            name="G3 Cable L3 Phase Temperature",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_mv_g3_cable_l3_phase_temperature",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -760,7 +760,7 @@ class PSSLATemperature(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LA] Temperature",
+            name="Temperature",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_la_temperature",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -785,7 +785,7 @@ class PSSLAHumidity(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LA] Humidity",
+            name="Humidity",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_la_humidity",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -810,7 +810,7 @@ class PSSLAPhaseAVoltage(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LA] Phase A Voltage",
+            name="Phase A Voltage",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_la_phase_a_voltage",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -835,7 +835,7 @@ class PSSLAPhaseBVoltage(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LA] Phase B Voltage",
+            name="Phase B Voltage",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_la_phase_b_voltage",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -860,7 +860,7 @@ class PSSLAPhaseCVoltage(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LA] Phase C Voltage",
+            name="Phase C Voltage",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_la_phase_c_voltage",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -885,7 +885,7 @@ class PSSLAABLineVoltage(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LA] AB Line Voltage",
+            name="AB Line Voltage",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_la_ab_line_voltage",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -910,7 +910,7 @@ class PSSLABCLineVoltage(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LA] BC Line Voltage",
+            name="BC Line Voltage",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_la_bc_line_voltage",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -935,7 +935,7 @@ class PSSLACALineVoltage(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LA] CA Line Voltage",
+            name="CA Line Voltage",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_la_ca_line_voltage",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -960,7 +960,7 @@ class PSSLAPhaseACurrent(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LA] Phase A Current",
+            name="Phase A Current",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_la_phase_a_current",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -985,7 +985,7 @@ class PSSLAPhaseBCurrent(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LA] Phase B Current",
+            name="Phase B Current",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_la_phase_b_current",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1010,7 +1010,7 @@ class PSSLAPhaseCCurrent(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LA] Phase C Current",
+            name="Phase C Current",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_la_phase_c_current",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1035,7 +1035,7 @@ class PSSLAPhaseAActivePower(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LA] Phase A Active Power",
+            name="Phase A Active Power",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_la_phase_a_active_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1060,7 +1060,7 @@ class PSSLAPhaseBActivePower(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LA] Phase B Active Power",
+            name="Phase B Active Power",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_la_phase_b_active_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1085,7 +1085,7 @@ class PSSLAPhaseCActivePower(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LA] Phase C Active Power",
+            name="Phase C Active Power",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_la_phase_c_active_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1110,7 +1110,7 @@ class PSSLATotalActivePower(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LA] Total Active Power",
+            name="Total Active Power",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_la_total_active_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1135,7 +1135,7 @@ class PSSLAPhaseAReactivePower(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LA] Phase A Reactive Power",
+            name="Phase A Reactive Power",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_la_phase_a_reactive_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1160,7 +1160,7 @@ class PSSLAPhaseBReactivePower(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LA] Phase B Reactive Power",
+            name="Phase B Reactive Power",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_la_phase_b_reactive_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1185,7 +1185,7 @@ class PSSLAPhaseCReactivePower(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LA] Phase C Reactive Power",
+            name="Phase C Reactive Power",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_la_phase_c_reactive_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1210,7 +1210,7 @@ class PSSLATotalReactivePower(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LA] Total Reactive Power",
+            name="Total Reactive Power",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_la_total_reactive_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1235,7 +1235,7 @@ class PSSLAPhaseAApparentPower(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LA] Phase A Apparent Power",
+            name="Phase A Apparent Power",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_la_phase_a_apparent_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1260,7 +1260,7 @@ class PSSLAPhaseBApparentPower(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LA] Phase B Apparent Power",
+            name="Phase B Apparent Power",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_la_phase_b_apparent_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1285,7 +1285,7 @@ class PSSLAPhaseCApparentPower(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LA] Phase C Apparent Power",
+            name="Phase C Apparent Power",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_la_phase_c_apparent_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1310,7 +1310,7 @@ class PSSLATotalApparentPower(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LA] Total Apparent Power",
+            name="Total Apparent Power",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_la_total_apparent_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1335,7 +1335,7 @@ class PSSLAPhaseAPowerFactor(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LA] Phase A Power Factor",
+            name="Phase A Power Factor",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_la_phase_a_power_factor",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1360,7 +1360,7 @@ class PSSLAPhaseBPowerFactor(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LA] Phase B Power Factor",
+            name="Phase B Power Factor",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_la_phase_b_power_factor",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1385,7 +1385,7 @@ class PSSLAPhaseCPowerFactor(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LA] Phase C Power Factor",
+            name="Phase C Power Factor",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_la_phase_c_power_factor",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1410,7 +1410,7 @@ class PSSLATotalPowerFactor(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LA] Total Power Factor",
+            name="Total Power Factor",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_la_total_power_factor",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1435,7 +1435,7 @@ class PSSLAFrequency(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LA] Frequency",
+            name="Frequency",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_la_frequency",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1460,7 +1460,7 @@ class PSSLAForwardActiveEnergy(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LA] Forward Active Energy",
+            name="Forward Active Energy",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_la_forward_active_energy",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1485,7 +1485,7 @@ class PSSLAReverseActiveEnergy(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LA] Reverse Active Energy",
+            name="Reverse Active Energy",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_la_reverse_active_energy",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1510,7 +1510,7 @@ class PSSLAForwardReactiveEnergy(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LA] Forward Reactive Energy",
+            name="Forward Reactive Energy",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_la_forward_reactive_energy",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1535,7 +1535,7 @@ class PSSLAReverseReactiveEnergy(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LA] Reverse Reactive Energy",
+            name="Reverse Reactive Energy",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_la_reverse_reactive_energy",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1560,7 +1560,7 @@ class PSSLBTemperature(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LB] Temperature",
+            name="Temperature",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_lb_temperature",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1585,7 +1585,7 @@ class PSSLBHumidity(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LB] Humidity",
+            name="Humidity",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_lb_humidity",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1610,7 +1610,7 @@ class PSSLBPhaseAVoltage(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LB] Phase A Voltage",
+            name="Phase A Voltage",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_lb_phase_a_voltage",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1635,7 +1635,7 @@ class PSSLBPhaseBVoltage(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LB] Phase B Voltage",
+            name="Phase B Voltage",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_lb_phase_b_voltage",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1660,7 +1660,7 @@ class PSSLBPhaseCVoltage(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LB] Phase C Voltage",
+            name="Phase C Voltage",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_lb_phase_c_voltage",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1685,7 +1685,7 @@ class PSSLBABLineVoltage(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LB] AB Line Voltage",
+            name="AB Line Voltage",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_lb_ab_line_voltage",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1710,7 +1710,7 @@ class PSSLBBCLineVoltage(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LB] BC Line Voltage",
+            name="BC Line Voltage",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_lb_bc_line_voltage",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1735,7 +1735,7 @@ class PSSLBCALineVoltage(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LB] CA Line Voltage",
+            name="CA Line Voltage",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_lb_ca_line_voltage",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1760,7 +1760,7 @@ class PSSLBPhaseACurrent(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LB] Phase A Current",
+            name="Phase A Current",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_lb_phase_a_current",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1785,7 +1785,7 @@ class PSSLBPhaseBCurrent(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LB] Phase B Current",
+            name="Phase B Current",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_lb_phase_b_current",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1810,7 +1810,7 @@ class PSSLBPhaseCCurrent(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LB] Phase C Current",
+            name="Phase C Current",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_lb_phase_c_current",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1835,7 +1835,7 @@ class PSSLBPhaseAActivePower(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LB] Phase A Active Power",
+            name="Phase A Active Power",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_lb_phase_a_active_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1860,7 +1860,7 @@ class PSSLBPhaseBActivePower(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LB] Phase B Active Power",
+            name="Phase B Active Power",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_lb_phase_b_active_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1885,7 +1885,7 @@ class PSSLBPhaseCActivePower(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LB] Phase C Active Power",
+            name="Phase C Active Power",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_lb_phase_c_active_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1910,7 +1910,7 @@ class PSSLBTotalActivePower(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LB] Total Active Power",
+            name="Total Active Power",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_lb_total_active_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1935,7 +1935,7 @@ class PSSLBPhaseAReactivePower(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LB] Phase A Reactive Power",
+            name="Phase A Reactive Power",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_lb_phase_a_reactive_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1960,7 +1960,7 @@ class PSSLBPhaseBReactivePower(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LB] Phase B Reactive Power",
+            name="Phase B Reactive Power",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_lb_phase_b_reactive_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -1985,7 +1985,7 @@ class PSSLBPhaseCReactivePower(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LB] Phase C Reactive Power",
+            name="Phase C Reactive Power",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_lb_phase_c_reactive_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -2010,7 +2010,7 @@ class PSSLBTotalReactivePower(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LB] Total Reactive Power",
+            name="Total Reactive Power",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_lb_total_reactive_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -2035,7 +2035,7 @@ class PSSLBPhaseAApparentPower(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LB] Phase A Apparent Power",
+            name="Phase A Apparent Power",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_lb_phase_a_apparent_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -2060,7 +2060,7 @@ class PSSLBPhaseBApparentPower(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LB] Phase B Apparent Power",
+            name="Phase B Apparent Power",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_lb_phase_b_apparent_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -2085,7 +2085,7 @@ class PSSLBPhaseCApparentPower(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LB] Phase C Apparent Power",
+            name="Phase C Apparent Power",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_lb_phase_c_apparent_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -2110,7 +2110,7 @@ class PSSLBTotalApparentPower(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LB] Total Apparent Power",
+            name="Total Apparent Power",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_lb_total_apparent_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -2135,7 +2135,7 @@ class PSSLBPhaseAPowerFactor(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LB] Phase A Power Factor",
+            name="Phase A Power Factor",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_lb_phase_a_power_factor",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -2160,7 +2160,7 @@ class PSSLBPhaseBPowerFactor(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LB] Phase B Power Factor",
+            name="Phase B Power Factor",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_lb_phase_b_power_factor",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -2185,7 +2185,7 @@ class PSSLBPhaseCPowerFactor(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LB] Phase C Power Factor",
+            name="Phase C Power Factor",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_lb_phase_c_power_factor",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -2210,7 +2210,7 @@ class PSSLBTotalPowerFactor(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LB] Total Power Factor",
+            name="Total Power Factor",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_lb_total_power_factor",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -2235,7 +2235,7 @@ class PSSLBFrequency(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LB] Frequency",
+            name="Frequency",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_lb_frequency",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -2260,7 +2260,7 @@ class PSSLBForwardActiveEnergy(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LB] Forward Active Energy",
+            name="Forward Active Energy",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_lb_forward_active_energy",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -2285,7 +2285,7 @@ class PSSLBReverseActiveEnergy(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LB] Reverse Active Energy",
+            name="Reverse Active Energy",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_lb_reverse_active_energy",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -2310,7 +2310,7 @@ class PSSLBForwardReactiveEnergy(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LB] Forward Reactive Energy",
+            name="Forward Reactive Energy",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_lb_forward_reactive_energy",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -2335,7 +2335,7 @@ class PSSLBReverseReactiveEnergy(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[LB] Reverse Reactive Energy",
+            name="Reverse Reactive Energy",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_lb_reverse_reactive_energy",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -2360,7 +2360,7 @@ class PSSTransformerOilSurfaceTemperature(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[Transformer] Oil Surface Temperature",
+            name="Oil Surface Temperature",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_transformer_oil_surface_temperature",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -2385,7 +2385,7 @@ class PSSTransformerWindingTemperature(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[Transformer] Winding Temperature",
+            name="Winding Temperature",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_transformer_winding_temperature",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -2410,7 +2410,7 @@ class PSSDistributionCabinetTemperature(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[Distribution Cabinet] Temperature",
+            name="Temperature",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_distribution_cabinet_temperature",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -2435,7 +2435,7 @@ class PSSDistributionCabinetHumidity(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[Distribution Cabinet] Humidity",
+            name="Humidity",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_distribution_cabinet_humidity",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -2460,7 +2460,7 @@ class PSSDistributionCabinetPhaseAVoltage(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[Distribution Cabinet] Phase A Voltage",
+            name="Phase A Voltage",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_distribution_cabinet_phase_a_voltage",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -2485,7 +2485,7 @@ class PSSDistributionCabinetPhaseBVoltage(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[Distribution Cabinet] Phase B Voltage",
+            name="Phase B Voltage",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_distribution_cabinet_phase_b_voltage",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -2510,7 +2510,7 @@ class PSSDistributionCabinetPhaseCVoltage(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[Distribution Cabinet] Phase C Voltage",
+            name="Phase C Voltage",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_distribution_cabinet_phase_c_voltage",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -2535,7 +2535,7 @@ class PSSDistributionCabinetABLineVoltage(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[Distribution Cabinet] AB Line Voltage",
+            name="AB Line Voltage",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_distribution_cabinet_ab_line_voltage",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -2560,7 +2560,7 @@ class PSSDistributionCabinetBCLineVoltage(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[Distribution Cabinet] BC Line Voltage",
+            name="BC Line Voltage",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_distribution_cabinet_bc_line_voltage",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -2585,7 +2585,7 @@ class PSSDistributionCabinetCALineVoltage(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[Distribution Cabinet] CA Line Voltage",
+            name="CA Line Voltage",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_distribution_cabinet_ca_line_voltage",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -2610,7 +2610,7 @@ class PSSDistributionCabinetPhaseACurrent(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[Distribution Cabinet] Phase A Current",
+            name="Phase A Current",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_distribution_cabinet_phase_a_current",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -2635,7 +2635,7 @@ class PSSDistributionCabinetPhaseBCurrent(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[Distribution Cabinet] Phase B Current",
+            name="Phase B Current",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_distribution_cabinet_phase_b_current",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -2660,7 +2660,7 @@ class PSSDistributionCabinetPhaseCCurrent(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[Distribution Cabinet] Phase C Current",
+            name="Phase C Current",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_distribution_cabinet_phase_c_current",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -2685,7 +2685,7 @@ class PSSDistributionCabinetPhaseAActivePower(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[Distribution Cabinet] Phase A Active Power",
+            name="Phase A Active Power",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_distribution_cabinet_phase_a_active_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -2710,7 +2710,7 @@ class PSSDistributionCabinetPhaseBActivePower(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[Distribution Cabinet] Phase B Active Power",
+            name="Phase B Active Power",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_distribution_cabinet_phase_b_active_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -2735,7 +2735,7 @@ class PSSDistributionCabinetPhaseCActivePower(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[Distribution Cabinet] Phase C Active Power",
+            name="Phase C Active Power",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_distribution_cabinet_phase_c_active_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -2760,7 +2760,7 @@ class PSSDistributionCabinetTotalActivePower(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[Distribution Cabinet] Total Active Power",
+            name="Total Active Power",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_distribution_cabinet_total_active_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -2785,7 +2785,7 @@ class PSSDistributionCabinetPhaseAReactivePower(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[Distribution Cabinet] Phase A Reactive Power",
+            name="Phase A Reactive Power",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_distribution_cabinet_phase_a_reactive_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -2810,7 +2810,7 @@ class PSSDistributionCabinetPhaseBReactivePower(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[Distribution Cabinet] Phase B Reactive Power",
+            name="Phase B Reactive Power",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_distribution_cabinet_phase_b_reactive_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -2835,7 +2835,7 @@ class PSSDistributionCabinetPhaseCReactivePower(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[Distribution Cabinet] Phase C Reactive Power",
+            name="Phase C Reactive Power",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_distribution_cabinet_phase_c_reactive_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -2860,7 +2860,7 @@ class PSSDistributionCabinetTotalReactivePower(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[Distribution Cabinet] Total Reactive Power",
+            name="Total Reactive Power",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_distribution_cabinet_total_reactive_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -2885,7 +2885,7 @@ class PSSDistributionCabinetPhaseAApparentPower(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[Distribution Cabinet] Phase A Apparent Power",
+            name="Phase A Apparent Power",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_distribution_cabinet_phase_a_apparent_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -2910,7 +2910,7 @@ class PSSDistributionCabinetPhaseBApparentPower(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[Distribution Cabinet] Phase B Apparent Power",
+            name="Phase B Apparent Power",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_distribution_cabinet_phase_b_apparent_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -2935,7 +2935,7 @@ class PSSDistributionCabinetPhaseCApparentPower(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[Distribution Cabinet] Phase C Apparent Power",
+            name="Phase C Apparent Power",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_distribution_cabinet_phase_c_apparent_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -2960,7 +2960,7 @@ class PSSDistributionCabinetTotalApparentPower(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[Distribution Cabinet] Total Apparent Power",
+            name="Total Apparent Power",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_distribution_cabinet_total_apparent_power",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -2985,7 +2985,7 @@ class PSSDistributionCabinetPhaseAPowerFactor(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[Distribution Cabinet] Phase A Power Factor",
+            name="Phase A Power Factor",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_distribution_cabinet_phase_a_power_factor",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -3010,7 +3010,7 @@ class PSSDistributionCabinetPhaseBPowerFactor(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[Distribution Cabinet] Phase B Power Factor",
+            name="Phase B Power Factor",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_distribution_cabinet_phase_b_power_factor",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -3035,7 +3035,7 @@ class PSSDistributionCabinetPhaseCPowerFactor(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[Distribution Cabinet] Phase C Power Factor",
+            name="Phase C Power Factor",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_distribution_cabinet_phase_c_power_factor",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -3060,7 +3060,7 @@ class PSSDistributionCabinetTotalPowerFactor(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[Distribution Cabinet] Total Power Factor",
+            name="Total Power Factor",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_distribution_cabinet_total_power_factor",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -3085,7 +3085,7 @@ class PSSDistributionCabinetFrequency(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[Distribution Cabinet] Frequency",
+            name="Frequency",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_distribution_cabinet_frequency",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -3110,7 +3110,7 @@ class PSSDistributionCabinetForwardActiveEnergy(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[Distribution Cabinet] Forward Active Energy",
+            name="Forward Active Energy",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_distribution_cabinet_forward_active_energy",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -3135,7 +3135,7 @@ class PSSDistributionCabinetReverseActiveEnergy(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[Distribution Cabinet] Reverse Active Energy",
+            name="Reverse Active Energy",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_distribution_cabinet_reverse_active_energy",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -3160,7 +3160,7 @@ class PSSDistributionCabinetForwardReactiveEnergy(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[Distribution Cabinet] Forward Reactive Energy",
+            name="Forward Reactive Energy",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_distribution_cabinet_forward_reactive_energy",
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -3185,7 +3185,7 @@ class PSSDistributionCabinetReverseReactiveEnergy(NumericSensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="[Distribution Cabinet] Reverse Reactive Energy",
+            name="Reverse Reactive Energy",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_distribution_cabinet_reverse_reactive_energy",
             input_type=InputType.INPUT,
             plant_index=plant_index,

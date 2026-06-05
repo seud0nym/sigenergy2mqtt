@@ -14,7 +14,7 @@ class PSSMVCabinetG3CircuitBreakerSwitchOn(WriteOnlySensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="MV Cabinet G3 Circuit Breaker Switch On",
+            name="G3 Circuit Breaker Switch On",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_mv_cabinet_g3_switch_on",
             plant_index=plant_index,
             device_address=device_address,
@@ -35,7 +35,7 @@ class PSSMVCabinetG3CircuitBreakerSwitchOff(WriteOnlySensor, NonInverter):
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="MV Cabinet G3 Circuit Breaker Switch Off",
+            name="G3 Circuit Breaker Switch Off",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_mv_cabinet_g3_switch_off",
             plant_index=plant_index,
             device_address=device_address,
@@ -56,7 +56,7 @@ class PSSLALowVoltageCabinetCircuitBreakerSwitchOn(WriteOnlySensor, NonInverter)
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="LA Low Voltage Cabinet Circuit Breaker Switch On",
+            name="Low Voltage Cabinet Circuit Breaker Switch On",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_la_low_voltage_cabinet_switch_on",
             plant_index=plant_index,
             device_address=device_address,
@@ -77,7 +77,7 @@ class PSSLALowVoltageCabinetCircuitBreakerSwitchOff(WriteOnlySensor, NonInverter
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="LA Low Voltage Cabinet Circuit Breaker Switch Off",
+            name="Low Voltage Cabinet Circuit Breaker Switch Off",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_la_low_voltage_cabinet_switch_off",
             plant_index=plant_index,
             device_address=device_address,
@@ -98,7 +98,7 @@ class PSSLBLowVoltageCabinetCircuitBreakerSwitchOn(WriteOnlySensor, NonInverter)
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="LB Low Voltage Cabinet Circuit Breaker Switch On",
+            name="Low Voltage Cabinet Circuit Breaker Switch On",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_lb_low_voltage_cabinet_switch_on",
             plant_index=plant_index,
             device_address=device_address,
@@ -119,7 +119,7 @@ class PSSLBLowVoltageCabinetCircuitBreakerSwitchOff(WriteOnlySensor, NonInverter
     def __init__(self, plant_index: int, device_address: int):
         super().__init__(
             availability_control_sensor=None,
-            name="LB Low Voltage Cabinet Circuit Breaker Switch Off",
+            name="Low Voltage Cabinet Circuit Breaker Switch Off",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_pss_{device_address}_lb_low_voltage_cabinet_switch_off",
             plant_index=plant_index,
             device_address=device_address,

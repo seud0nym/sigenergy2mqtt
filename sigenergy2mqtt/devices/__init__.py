@@ -11,7 +11,7 @@ from .plant.grid_code import GridCode
 from .plant.grid_sensor import GridSensor
 from .plant.plant import PowerPlant
 from .plant.statistics import PlantStatistics
-from .pss import PSS
+from .pss.pss import PSS
 
 __all__ = [
     "Device",
