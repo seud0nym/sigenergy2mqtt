@@ -13,7 +13,7 @@ from pymodbus.pdu import ModbusPDU
 
 from sigenergy2mqtt.common import Constants, ConsumptionMethod, FirmwareVersion, HybridInverter, InputType, Protocol, ProtocolApplies, PVInverter
 from sigenergy2mqtt.config import active_config, configure_root_logging, initialize_with_persistence
-from sigenergy2mqtt.devices import ACCharger, DCCharger, Device, Inverter, PowerPlant, bind_cross_device_sensors
+from sigenergy2mqtt.devices import PID, PSS, ACCharger, DCCharger, Device, Inverter, PowerPlant, bind_cross_device_sensors
 from sigenergy2mqtt.influxdb import get_influxdb_services
 from sigenergy2mqtt.metrics.metrics_service import MetricsService
 from sigenergy2mqtt.modbus import ModbusClient
@@ -22,6 +22,7 @@ from sigenergy2mqtt.persistence import state_store
 from sigenergy2mqtt.pvoutput import get_pvoutput_services
 from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, ModbusSensorMixin, WriteOnlySensor
 from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, InverterModel, InverterSerialNumber, OutputType, PACKBCUCount, RatedActivePower
+from sigenergy2mqtt.sensors.pid_read_only import PIDSerialNumber
 from sigenergy2mqtt.sensors.plant_ess_preheating_read_write import ESSPreHeatingEnable
 from sigenergy2mqtt.sensors.plant_read_only import (
     GridStatus,
@@ -45,6 +46,7 @@ from sigenergy2mqtt.sensors.plant_read_write import (
     PhaseReactivePowerFixedAdjustmentTargetValue,
     ReactivePowerFixedAdjustmentTargetValue,
 )
+from sigenergy2mqtt.sensors.pss_read_only import PSSSerialNumber
 
 from .device_thread import start
 from .restart import restart_controller
@@ -230,11 +232,42 @@ async def make_dc_charger(plant_index: int, device_address: int, protocol_versio
     return charger
 
 
+async def make_pid(
+    plant_index: int, modbus_client: ModbusClient, device_address: int, plant: PowerPlant, seen_serial_numbers: set[str], sequence_number: int | None = None, total_count: int | None = None
+) -> PID | None:
+    """Create a PID device and link it to the parent plant.
+
+    ``seen_serial_numbers`` is updated in-place to guard
+    against duplicate serial numbers.
+
+    Side effects: performs async device initialisation reads and sets
+    ``via_device`` to the plant unique ID for topology/discovery metadata.
+    """
+    sn = await get_state(PIDSerialNumber(plant_index, device_address), modbus_client, "inverter")
+    if sn in seen_serial_numbers:
+        logging.info(f"PID {sn} has already been detected - ignoring (idx={plant_index} id={device_address})")
+        return None
+
+    if sn is not None:
+        seen_serial_numbers.add(str(sn))
+
+    pid = await PID.create(
+        plant_index,
+        device_address,
+        plant.protocol_version,
+        modbus_client,
+        sequence_number=sequence_number,
+        total_count=total_count,
+    )
+    pid.via_device = plant.unique_id
+    return pid
+
+
 async def make_plant_and_inverter(plant_index: int, modbus_client: ModbusClient, device_address: int, plant: PowerPlant | None, seen_serial_numbers: set[str]) -> Tuple[Inverter | None, PowerPlant | None]:
     """Create an Inverter and, on first call, a PowerPlant.
 
     ``seen_serial_numbers`` is updated in-place to guard
-    against duplicate inverters.
+    against duplicate serial numbers.
     """
     sn = await get_state(InverterSerialNumber(plant_index, device_address), modbus_client, "inverter")
     if sn in seen_serial_numbers:
@@ -288,6 +321,37 @@ async def make_plant_and_inverter(plant_index: int, modbus_client: ModbusClient,
     return inverter, plant
 
 
+async def make_pss(
+    plant_index: int, modbus_client: ModbusClient, device_address: int, plant: PowerPlant, seen_serial_numbers: set[str], sequence_number: int | None = None, total_count: int | None = None
+) -> PSS | None:
+    """Create a PSS device and link it to the parent plant.
+
+    ``seen_serial_numbers`` is updated in-place to guard
+    against duplicate serial numbers.
+
+    Side effects: performs async device initialisation reads and sets
+    ``via_device`` to the plant unique ID for topology/discovery metadata.
+    """
+    sn = await get_state(PSSSerialNumber(plant_index, device_address), modbus_client, "inverter")
+    if sn in seen_serial_numbers:
+        logging.info(f"PSS {sn} has already been detected - ignoring (idx={plant_index} id={device_address})")
+        return None
+
+    if sn is not None:
+        seen_serial_numbers.add(str(sn))
+
+    pss = await PSS.create(
+        plant_index,
+        device_address,
+        plant.protocol_version,
+        modbus_client,
+        sequence_number=sequence_number,
+        total_count=total_count,
+    )
+    pss.via_device = plant.unique_id
+    return pss
+
+
 # ---------------------------------------------------------------------------
 # Top-level setup helpers
 # ---------------------------------------------------------------------------
@@ -301,6 +365,8 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
     total_dc_chargers = sum(len(d.dc_chargers) if d.dc_chargers else 0 for d in devices)  # type: ignore[reportGeneralTypeIssues]
     ac_charger_sequence = 0
     dc_charger_sequence = 0
+    pid_sequence = 0
+    pss_sequence = 0
 
     for plant_index, device in enumerate(devices):
         if not (device.registers.read_only or device.registers.read_write or device.registers.write_only):
@@ -367,6 +433,28 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
                     protocol_version,
                     ac_charger_sequence,
                     total_ac_chargers,
+                )
+                pid_sequence = await _setup_pid(
+                    plant_index,
+                    device,
+                    plant,
+                    seen_serial_numbers,
+                    modbus,
+                    config,
+                    protocol_version,
+                    pid_sequence,
+                    len(device.pid) if device.pid else 0,
+                )
+                pss_sequence = await _setup_pss(
+                    plant_index,
+                    device,
+                    plant,
+                    seen_serial_numbers,
+                    modbus,
+                    config,
+                    protocol_version,
+                    pss_sequence,
+                    len(device.pss) if device.pss else 0,
                 )
 
                 # Finalise cross-device sensor bindings now that all inverters and chargers are registered
@@ -555,6 +643,90 @@ async def _setup_dc_chargers(plant_index: int, device, plant: PowerPlant, modbus
         )
         config.add_device(charger)
         await validate_publishable_sensors(modbus_client, charger)
+
+    return sequence_number
+
+
+async def _setup_pid(
+    plant_index: int, device, plant: PowerPlant, seen_serial_numbers: set[str], modbus_client: ModbusClient, config: ThreadConfig, protocol_version: Protocol | None, sequence_start: int, total_count: int
+) -> int:
+    if not device.pid:
+        return sequence_start
+
+    if protocol_version is not None and protocol_version < Protocol.V2_9:
+        logging.warning(f"PID devices are not supported on Sigenergy Modbus Protocol V{protocol_version.value} - skipping PID device creation for modbus://{device.host}:{device.port}")
+        return sequence_start
+
+    sequence_number = sequence_start
+    skipped_due_to_outage = False
+    for device_address in device.pid:  # type: ignore[reportGeneralTypeIssues]
+        sequence_number += 1
+        try:
+            pid = await make_pid(
+                plant_index,
+                modbus_client,
+                device_address,
+                plant,
+                seen_serial_numbers,
+                sequence_number=sequence_number,
+                total_count=total_count,
+            )
+            if pid is not None:
+                config.add_device(pid)
+                await validate_publishable_sensors(modbus_client, pid)
+        except Exception as exc:
+            is_outage = await _is_grid_outage(plant_index, modbus_client)
+            if is_outage is True:
+                logging.warning(f"PID device at address {device_address} initialization failed during grid outage; skipping this startup pass so other devices continue: {exc}")
+                skipped_due_to_outage = True
+                continue
+
+            logging.error(f"Failed to initialize PID device at address {device_address}; skipping: {exc}")
+
+    if skipped_due_to_outage:
+        _schedule_restart_on_grid_restore(device, plant_index)
+
+    return sequence_number
+
+
+async def _setup_pss(
+    plant_index: int, device, plant: PowerPlant, seen_serial_numbers: set[str], modbus_client: ModbusClient, config: ThreadConfig, protocol_version: Protocol | None, sequence_start: int, total_count: int
+) -> int:
+    if not device.pss:
+        return sequence_start
+
+    if protocol_version is not None and protocol_version < Protocol.V2_9:
+        logging.warning(f"PSS devices are not supported on Sigenergy Modbus Protocol V{protocol_version.value} - skipping PSS device creation for modbus://{device.host}:{device.port}")
+        return sequence_start
+
+    sequence_number = sequence_start
+    skipped_due_to_outage = False
+    for device_address in device.pss:  # type: ignore[reportGeneralTypeIssues]
+        sequence_number += 1
+        try:
+            pss = await make_pss(
+                plant_index,
+                modbus_client,
+                device_address,
+                plant,
+                seen_serial_numbers,
+                sequence_number=sequence_number,
+                total_count=total_count,
+            )
+            if pss is not None:
+                config.add_device(pss)
+                await validate_publishable_sensors(modbus_client, pss)
+        except Exception as exc:
+            is_outage = await _is_grid_outage(plant_index, modbus_client)
+            if is_outage is True:
+                logging.warning(f"PSS device at address {device_address} initialization failed during grid outage; skipping this startup pass so other devices continue: {exc}")
+                skipped_due_to_outage = True
+                continue
+
+            logging.error(f"Failed to initialize PSS device at address {device_address}; skipping: {exc}")
+
+    if skipped_due_to_outage:
+        _schedule_restart_on_grid_restore(device, plant_index)
 
     return sequence_number
 

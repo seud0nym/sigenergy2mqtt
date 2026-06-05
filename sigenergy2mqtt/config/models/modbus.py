@@ -40,6 +40,8 @@ class ModbusConfig(BaseModel):
     inverters: list[int] = Field(default_factory=list, alias="inverters")
     ac_chargers: list[int] = Field(default_factory=list, alias="ac-chargers")
     dc_chargers: list[int] = Field(default_factory=list, alias="dc-chargers")
+    pss: list[int] = Field(default_factory=list, alias="pss")
+    pid: list[int] = Field(default_factory=list, alias="pid")
     log_level: int = Field(logging.WARNING, alias="log-level")
     _validate_log_level = field_validator("log_level", mode="before")(validate_log_level)
     registers: RegisterAccess = Field(default_factory=RegisterAccess, alias="registers")  # type: ignore[reportCallIssue]

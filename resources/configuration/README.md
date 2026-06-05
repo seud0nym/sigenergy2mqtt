@@ -497,11 +497,21 @@ When auto-discovery is enabled and modbus hosts are already configured (via YAML
 
 Device IDs found during auto-discovery are **cumulative** with any manually configured device IDs. For example, if you configure inverter device ID `1` in your modbus settings and auto-discovery also finds device ID `1` plus device ID `2`, the final configuration will include both `[1, 2]`. Device IDs must be unique within their type (inverters, ac-chargers, dc-chargers) and across all device types for a given host.
 
+<a id="opt_modbus_auto_discovery_exclude"></a>
+### Modbus Auto Discovery Exclude
+- CLI: `--modbus-auto-discovery-exclude`
+- ENV: `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_EXCLUDE`
+- Config key: `n\a`
+
+A comma-delimited list of Device class names to be excluded from auto-discovery. Valid class names are "ACCharger", "DCCharger", "PID", and "PSS". You cannot exclude Plant or Inverter.
+
+The default is "PID,PSS".
+
 <a id="opt_modbus_auto_discovery_networks"></a>
 ### Modbus Auto Discovery Networks
 - CLI: `--modbus-auto-discovery-networks`
 - ENV: `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_NETWORKS`
-- Config key: `modbus-auto-discovery-networks`
+- Config key: `n\a`
 
 A list of IPv4 networks in CIDR notation to scan during auto-discovery. Use this setting to include networks that are accessible via routing but not directly attached to a network interface on the host running sigenergy2mqtt.
 
@@ -548,7 +558,7 @@ The Modbus timeout, in seconds, to use when performing auto-discovery of Sigener
 ### Inverter Device Id
 - CLI: `--modbus-inverter-device-id`
 - ENV: `SIGENERGY2MQTT_MODBUS_INVERTER_DEVICE_ID`
-- Config key: `modbus[].inverter-device-id`
+- Config key: `modbus[].inverters`
 
 The Sigenergy device Modbus Device ID(s).
 
@@ -556,7 +566,7 @@ The Sigenergy device Modbus Device ID(s).
 ### AC  Charger Device Id
 - CLI: `--modbus-accharger-device-id`
 - ENV: `SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID`
-- Config key: `modbus[].accharger-device-id`
+- Config key: `modbus[].ac-chargers`
 
 The Sigenergy AC Charger Modbus Device ID(s).
 
@@ -564,9 +574,25 @@ The Sigenergy AC Charger Modbus Device ID(s).
 ### DC Charger Device Id
 - CLI: `--modbus-dccharger-device-id`
 - ENV: `SIGENERGY2MQTT_MODBUS_DCCHARGER_DEVICE_ID`
-- Config key: `modbus[].dccharger-device-id`
+- Config key: `modbus[].dc-chargers`
 
 The Sigenergy DC Charger Modbus Device ID(s).
+
+<a id="opt_modbus_pid_device_id"></a>
+### PID Device Id
+- CLI: `--modbus-pid-device-id`
+- ENV: `SIGENERGY2MQTT_MODBUS_PID_DEVICE_ID`
+- Config key: `modbus[].pid`
+
+The Sigenergy PID Modbus Device ID(s).
+
+<a id="opt_modbus_pss_device_id"></a>
+### PSS Device Id
+- CLI: `--modbus-pss-device-id`
+- ENV: `SIGENERGY2MQTT_MODBUS_PSS_DEVICE_ID`
+- Config key: `modbus[].pss`
+
+The Sigenergy PSS Modbus Device ID(s).
 
 <a id="opt_modbus_disable_chunking"></a>
 ### Disable Chunking

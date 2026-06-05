@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 import sigenergy2mqtt.sensors.pss_read_only as ro
 import sigenergy2mqtt.sensors.pss_read_write as rw
 from sigenergy2mqtt.common import Protocol
@@ -18,7 +20,7 @@ class PSS(ModbusDevice):
         total_count: int | None = None,
     ):
         multi_pss = (total_count or 0) > 1 and sequence_number is not None
-        name = "Sigenergy Packaged Substation System"
+        name = "Sigenergy PSS Device"
         sequence_suffix = str(sequence_number) if multi_pss else ""
         super().__init__(
             NonInverter(),
@@ -46,8 +48,14 @@ class PSS(ModbusDevice):
         return pss
 
     async def _register_sensors(self, plant_index: int, device_address: int, modbus_client: ModbusClient) -> None:
-        self._add_sensor(ro.PSSModelType(plant_index, device_address))
-        self._add_sensor(ro.PSSSerialNumber(plant_index, device_address))
+        model = ro.PSSModelType(plant_index, device_address)
+        serial = ro.PSSSerialNumber(plant_index, device_address)
+
+        # Need to pre-populate model and serial number for modbus_test_server
+        logging.debug(f"{self.log_identity} model={await model.get_state(modbus_client=modbus_client)} serial={await serial.get_state(modbus_client=modbus_client)}")
+
+        self._add_sensor(model)
+        self._add_sensor(serial)
         self._add_sensor(ro.PSSCommunicationStatus(plant_index, device_address))
         self._add_sensor(ro.PSSTeleindication1(plant_index, device_address))
         self._add_sensor(ro.PSSTeleindication2(plant_index, device_address))

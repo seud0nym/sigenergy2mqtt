@@ -8,8 +8,9 @@
 - Added simulated grid outage during startup for EVAC not on backup circuit to Modbus test server
 - Added `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_NETWORKS` configuration setting and CLI argument to allow scanning of specific CIDR networks during auto-discovery
 - Added `SIGENERGY2MQTT_LOG_FMT` configuration setting and CLI argument to allow override of the log message format
-- Added new sensors defined in Modbus Protocol V2.9 (may not be available depending on device/firmware):
-  - New ESS Preheating Device for Sigen PV M1-HYA/HYB series _only_
+- Added `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_EXCLUDE` to exclude devices from auto-discovery
+- Added new sensors defined in Modbus Protocol V2.9 (sensors may not be available depending on device/firmware):
+  - New PSS and PID devices, and configuration/auto-discovery changes to support them
   - DC Charger:
     - Discharging Current
     - Current Discharging Capacity
@@ -27,6 +28,7 @@
     - PCC Power Factor Adjustment Target Value (Grid Import) - Sigen PV M1-HYB series _only_
     - PCC Power Factor Adjustment Target Value (Grid Export) - Sigen PV M1-HYB series _only_
     - Grid Power Loss Lockout Alarm Clear
+    - New ESS Preheating Device - Sigen PV M1-HYA/HYB series _only_
 
 ### Changed
 

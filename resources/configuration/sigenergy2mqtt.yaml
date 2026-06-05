@@ -76,6 +76,204 @@ no-ems-mode-check: false
 #   description:  If true, sigenergy2mqtt will not publish any metrics to
 #                 MQTT.
 no-metrics: false
+# modbus
+#   default: [ ]
+#   description:  The array of Modbus device configurations. Each device
+#                 configuration must contain a host, and may optionally
+#                 contain the port, inverters, ac-chargers, dc-chargers,
+#                 log-level, read-only, read-write, write-only, no-remote-ems,
+#                 scan-interval-low, scan-interval-medium, scan-interval-high,
+#                 and scan-interval-realtime configurations.
+#                 If you have multiple Sigenergy devices, you may specify
+#                 multiple host/port configurations. You can also automatically
+#                 discover Sigenergy devices on your network, using either the
+#                 command line option --modbus-auto-discovery=once or the 
+#                 environment variable SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY=once.
+modbus:
+    # host
+    #   default: ""
+    #   description:  The host name or IP address of a Sigenergy Modbus 
+    #                 interface. There may be multiple hosts defined if 
+    #                 there are multiple Sigenergy devices.
+  - host: sigenergy.local
+    # port
+    #   default: 502
+    #   description:  The port number used by the Sigenergy Modbus interface.
+    port: 502
+    # timeout
+    #   added: 2025.10.14
+    #   default: 1
+    #   description:  The timeout for connecting and receiving Modbus data, 
+    #                 in seconds (use decimals for milliseconds). 
+    #                 The default is 1.0.
+    timeout: 1.0
+    # retries
+    #   added: 2025.10.14
+    #   default: 3
+    #   description:  The maximum number of times to retry a Modbus operation
+    #                 if it fails. The default is 3.
+    retries: 3
+    # disable-chunking
+    #   added: 2025.9.19
+    #   default: false
+    #   description:  If true, chunking of Modbus reads will be disabled and 
+    #                 each register will be read individually. This is NOT
+    #                 recommended for production use.
+    disable-chunking: false
+    # inverters
+    #   default: [ ]
+    #   description:  The array of device ids to access the inverter
+    #                 registers. If you have multiple inverters, specify
+    #                 the device ids separated with commas e.g. [ 1, 2 ]
+    #                 At least 1 inverter device id must be specified 
+    #                 (unless the host is an AC Charger).
+    inverters: [ 1 ]
+    # ac-chargers
+    #   default: [ ]
+    #   description:  The array of device ids to access the AC Charger
+    #                 registers. If do not have an AC Charger, use [ ].
+    ac-chargers: [ ]
+    # dc-chargers
+    #   default: [ ]
+    #   description:  The array of device ids to access the DC Charger 
+    #                 registers. This is normally the same as the inverter
+    #                 device id. If do not have an DC Charger, 
+    #                 use [ ].
+    dc-chargers: [ ]
+    # pss
+    #   default: [ ]
+    #   added: 2026.6.4
+    #   description:  The array of device ids to access the PSS 
+    #                 registers. This is normally the same as the inverter
+    #                 device id. If do not have a PSS device, use [ ].
+    pss: [ ] 
+    # pid
+    #   default: [ ]
+    #   added: 2026.6.4
+    #   description:  The array of device ids to access the PID 
+    #                 registers. This is normally the same as the inverter
+    #                 device id. If do not have a PID device, use [ ].
+    pid: [ ]
+    # log-level
+    #   default: WARNING
+    #   description:  The Modbus interface logging level. Must be one of:
+    #                 DEBUG, INFO, WARNING, ERROR, or CRITICAL
+    log-level: WARNING
+    # read-only
+    #   default: true
+    #   description:  If true, all read-only entities will be published to
+    #                 MQTT.
+    read-only: true
+    # read-write
+    #   default: true
+    #   description:  If true, all read-write entities will be published to
+    #                 MQTT. Specify false to disable read-write entities.
+    read-write: false
+    # write-only
+    #   default: true
+    #   description:  If true, all write-only entities (usually power on/off
+    #                 buttons) will be published to MQTT. Specify false to 
+    #                 disable write-only entities.
+    write-only: true
+    # no-remote-ems
+    #   added: 2025.5.31
+    #   default: false
+    #   description:  If true, read-write entities related to remote Energy
+    #                 Management System (EMS) integration will NOT be published
+    #                 to MQTT. Ignored if read-write option is false.
+    no-remote-ems: false
+    # scan-interval-low
+    #   added: 2025.6.11
+    #   default: 600
+    #   description:  The scan interval in seconds for Modbus registers that
+    #                 are to be scanned at a low frequency. Default is 600
+    #                 (seconds), and the minimum value is 1.
+    scan-interval-low: 600
+    # scan-interval-medium
+    #   added: 2025.6.11
+    #   default: 60
+    #   description:  The scan interval in seconds for Modbus registers that
+    #                 are to be scanned at a medium frequency. Default is 60
+    #                 (seconds), and the minimum value is 1.
+    scan-interval-medium: 60
+    # scan-interval-high
+    #   added: 2025.6.11
+    #   default: 10
+    #   description:  The scan interval in seconds for Modbus registers that
+    #                 are to be scanned at a high frequency. Default is 10
+    #                 (seconds), and the minimum value is 1.
+    scan-interval-high: 10
+    # scan-interval-realtime
+    #   added: 2025.6.11
+    #   default: 5
+    #   description:  The scan interval in seconds for Modbus registers that
+    #                 are to be scanned in near-real time. Default is 5
+    #                 (seconds), and the minimum value is 1.
+    scan-interval-realtime: 5
+# mqtt
+#   description:  The configuration for the MQTT broker to which sigenergy2mqtt 
+#                 will publish.
+mqtt:
+  # broker
+  #   default: 127.0.0.1
+  #   description:  The host name or IP address of the MQTT broker.
+  broker: 127.0.0.1
+  # port
+  #   default: 1883 unless tls:true then 8883
+  #   description:  The port number used by the MQTT broker.
+  port: 1883
+  # keepalive
+  #   added: 2025.10.15
+  #   default: 60
+  #   description:  The maximum period in seconds between communications with
+  #                 the broker. If no other messages are being exchanged, this 
+  #                 controls the rate at which the client will send ping 
+  #                 messages to the broker. Default is 60 and minimum is 1.
+  keepalive: 60
+  # tls
+  #   added: 2025.8.11
+  #   default: false
+  #   description: If true, secure communication to the broker over TLS/SSL
+  #                is enabled.
+  tls: false
+  # tls-insecure
+  #   added: 2025.8.12
+  #   default: false
+  #   description: If true, allows insecure communication over TLS. If your 
+  #                broker is using a self-signed certificate, you must set
+  #                this to true. If you are using a valid certificate, set 
+  #                this to false. Ignored unless tls is also true. 
+  tls-insecure: false
+  # transport
+  #   add: 2026.1.4
+  #   default: tcp
+  #   description: Sets the MQTT transport mechanism. Must be one of 
+  #                websockets or tcp.
+  transport: tcp
+  # anonymous
+  #   default: false
+  #   description:  If true, the MQTT broker does not require authentication.
+  #                 If false, username and password must be supplied.
+  anonymous: false
+  # username
+  #   default: ""
+  #   description:  The username for authenticating to the MQTT broker. Not
+  #                 required if anonymous: true
+  username: not_required_for_anonymous
+  # password
+  #   default: ""
+  #   description:  The password for authenticating to the MQTT broker. Not
+  #                 required if anonymous: true
+  password: not_required_for_anonymous
+  # log-level
+  #   default: WARNING
+  #   description:  The MQTT interface logging level. Must be one of:
+  #                 DEBUG, INFO, WARNING, ERROR, or CRITICAL
+  log-level: WARNING
+# home-assistant
+#   description:  The configuration for Home Assistant integration. If enabled,
+#                 sigenergy2mqtt will publish auto-discovery messages for Home 
+#                 Assistant to automatically configure the devices and entities.
 home-assistant:
   # enabled
   #   default: false
@@ -144,63 +342,6 @@ home-assistant:
   #                 to change the value (true) or use a slider to change the 
   #                 value (false).
   edit-pct-box: false
-mqtt:
-  # broker
-  #   default: 127.0.0.1
-  #   description:  The host name or IP address of the MQTT broker.
-  broker: 127.0.0.1
-  # port
-  #   default: 1883 unless tls:true then 8883
-  #   description:  The port number used by the MQTT broker.
-  port: 1883
-  # keepalive
-  #   added: 2025.10.15
-  #   default: 60
-  #   description:  The maximum period in seconds between communications with
-  #                 the broker. If no other messages are being exchanged, this 
-  #                 controls the rate at which the client will send ping 
-  #                 messages to the broker. Default is 60 and minimum is 1.
-  keepalive: 60
-  # tls
-  #   added: 2025.8.11
-  #   default: false
-  #   description: If true, secure communication to the broker over TLS/SSL
-  #                is enabled.
-  tls: false
-  # tls-insecure
-  #   added: 2025.8.12
-  #   default: false
-  #   description: If true, allows insecure communication over TLS. If your 
-  #                broker is using a self-signed certificate, you must set
-  #                this to true. If you are using a valid certificate, set 
-  #                this to false. Ignored unless tls is also true. 
-  tls-insecure: false
-  # transport
-  #   add: 2026.1.4
-  #   default: tcp
-  #   description: Sets the MQTT transport mechanism. Must be one of 
-  #                websockets or tcp.
-  transport: tcp
-  # anonymous
-  #   default: false
-  #   description:  If true, the MQTT broker does not require authentication.
-  #                 If false, username and password must be supplied.
-  anonymous: false
-  # username
-  #   default: ""
-  #   description:  The username for authenticating to the MQTT broker. Not
-  #                 required if anonymous: true
-  username: not_required_for_anonymous
-  # password
-  #   default: ""
-  #   description:  The password for authenticating to the MQTT broker. Not
-  #                 required if anonymous: true
-  password: not_required_for_anonymous
-  # log-level
-  #   default: WARNING
-  #   description:  The MQTT interface logging level. Must be one of:
-  #                 DEBUG, INFO, WARNING, ERROR, or CRITICAL
-  log-level: WARNING
 # persistence
 #   added: 2026.4.5
 #   description: Configuration for state persistence and MQTT redundancy.
@@ -232,126 +373,6 @@ persistence:
   #   description: The timeout in seconds for synchronous persistence
   #                operations when called from a non-asyncio thread.
   sync-timeout: 5.0
-# modbus
-#   default: [ ]
-#   description:  The array of Modbus device configurations. Each device
-#                 configuration must contain a host, and may optionally
-#                 contain the port, inverters, ac-chargers, dc-chargers,
-#                 log-level, read-only, read-write, write-only, no-remote-ems,
-#                 scan-interval-low, scan-interval-medium, scan-interval-high,
-#                 and scan-interval-realtime configurations.
-#                 If you have multiple Sigenergy devices, you may specify
-#                 multiple host/port configurations. You can also automatically
-#                 discover Sigenergy devices on your network, using either the
-#                 command line option --modbus-auto-discovery=once or the 
-#                 environment variable SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY=once.
-modbus:
-    # host
-    #   default: ""
-    #   description:  The host name or IP address of a Sigenergy Modbus 
-    #                 interface. There may be multiple hosts defined if 
-    #                 there are multiple Sigenergy devices.
-  - host: sigenergy.local
-    # port
-    #   default: 502
-    #   description:  The port number used by the Sigenergy Modbus interface.
-    port: 502
-    # timeout
-    #   added: 2025.10.14
-    #   default: 1
-    #   description:  The timeout for connecting and receiving Modbus data, 
-    #                 in seconds (use decimals for milliseconds). 
-    #                 The default is 1.0.
-    timeout: 1.0
-    # retries
-    #   added: 2025.10.14
-    #   default: 3
-    #   description:  The maximum number of times to retry a Modbus operation
-    #                 if it fails. The default is 3.
-    retries: 3
-    # disable-chunking
-    #   added: 2025.9.19
-    #   default: false
-    #   description:  If true, chunking of Modbus reads will be disabled and 
-    #                 each register will be read individually. This is NOT
-    #                 recommended for production use.
-    disable-chunking: false
-    # inverters
-    #   default: [ ]
-    #   description:  The array of device ids to access the inverter
-    #                 registers. If you have multiple inverters, specify
-    #                 the device ids separated with commas e.g. [ 1, 2 ]
-    #                 At least 1 inverter device id must be specified 
-    #                 (unless the host is an AC Charger).
-    inverters: [ 1 ]
-    # ac-chargers
-    #   default: [ ]
-    #   description:  The array of device ids to access the AC Charger
-    #                 registers. If do not have an AC Charger, use [ ].
-    ac-chargers: [ ]
-    # dc-chargers
-    #   default: [ ]
-    #   description:  The array of device ids to access the DC Charger 
-    #                 registers. This is normally the same as the inverter
-    #                 device id. If do not have an DC Charger, 
-    #                 use [ ].
-    dc-chargers: [ ]
-    # log-level
-    #   default: WARNING
-    #   description:  The Modbus interface logging level. Must be one of:
-    #                 DEBUG, INFO, WARNING, ERROR, or CRITICAL
-    log-level: WARNING
-    # read-only
-    #   default: true
-    #   description:  If true, all read-only entities will be published to
-    #                 MQTT.
-    read-only: true
-    # read-write
-    #   default: true
-    #   description:  If true, all read-write entities will be published to
-    #                 MQTT. Specify false to disable read-write entities.
-    read-write: false
-    # write-only
-    #   default: true
-    #   description:  If true, all write-only entities (usually power on/off
-    #                 buttons) will be published to MQTT. Specify false to 
-    #                 disable write-only entities.
-    write-only: true
-    # no-remote-ems
-    #   added: 2025.5.31
-    #   default: false
-    #   description:  If true, read-write entities related to remote Energy
-    #                 Management System (EMS) integration will NOT be published
-    #                 to MQTT. Ignored if read-write option is false.
-    no-remote-ems: false
-    # scan-interval-low
-    #   added: 2025.6.11
-    #   default: 600
-    #   description:  The scan interval in seconds for Modbus registers that
-    #                 are to be scanned at a low frequency. Default is 600
-    #                 (seconds), and the minimum value is 1.
-    scan-interval-low: 600
-    # scan-interval-medium
-    #   added: 2025.6.11
-    #   default: 60
-    #   description:  The scan interval in seconds for Modbus registers that
-    #                 are to be scanned at a medium frequency. Default is 60
-    #                 (seconds), and the minimum value is 1.
-    scan-interval-medium: 60
-    # scan-interval-high
-    #   added: 2025.6.11
-    #   default: 10
-    #   description:  The scan interval in seconds for Modbus registers that
-    #                 are to be scanned at a high frequency. Default is 10
-    #                 (seconds), and the minimum value is 1.
-    scan-interval-high: 10
-    # scan-interval-realtime
-    #   added: 2025.6.11
-    #   default: 5
-    #   description:  The scan interval in seconds for Modbus registers that
-    #                 are to be scanned in near-real time. Default is 5
-    #                 (seconds), and the minimum value is 1.
-    scan-interval-realtime: 5
 # sensor-debug-logging
 #   default: false
 #   description:  When log-level is DEBUG, controls whether individual

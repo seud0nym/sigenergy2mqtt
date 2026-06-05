@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 import sigenergy2mqtt.sensors.pid_read_only as ro
 import sigenergy2mqtt.sensors.pid_read_write as rw
 from sigenergy2mqtt.common import Protocol
@@ -18,7 +20,7 @@ class PID(ModbusDevice):
         total_count: int | None = None,
     ):
         multi_pid = (total_count or 0) > 1 and sequence_number is not None
-        name = "Sigenergy Potential Induced Degradation Device"
+        name = "Sigenergy PID Device"
         sequence_suffix = str(sequence_number) if multi_pid else ""
         super().__init__(
             NonInverter(),
@@ -46,8 +48,14 @@ class PID(ModbusDevice):
         return pid
 
     async def _register_sensors(self, plant_index: int, device_address: int, modbus_client: ModbusClient) -> None:
-        self._add_sensor(ro.PIDModelType(plant_index, device_address))
-        self._add_sensor(ro.PIDSerialNumber(plant_index, device_address))
+        model = ro.PIDModelType(plant_index, device_address)
+        serial = ro.PIDSerialNumber(plant_index, device_address)
+
+        # Need to pre-populate model and serial number for modbus_test_server
+        logging.debug(f"{self.log_identity} model={await model.get_state(modbus_client=modbus_client)} serial={await serial.get_state(modbus_client=modbus_client)}")
+
+        self._add_sensor(model)
+        self._add_sensor(serial)
         self._add_sensor(ro.PIDMachineFirmwareVersion(plant_index, device_address))
         self._add_sensor(ro.PIDCommunicationStatus(plant_index, device_address))
         self._add_sensor(ro.PIDRunningStatus(plant_index, device_address))

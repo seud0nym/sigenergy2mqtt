@@ -422,6 +422,7 @@ class Config:
                     auto_settings.modbus_auto_discovery_timeout,
                     auto_settings.modbus_auto_discovery_retries,
                     include_networks=include_networks,
+                    exclude_devices=auto_settings.modbus_auto_discovery_exclude,
                 )
                 if auto_discovered:
                     self._save_discovery_results_sync(auto_discovery_cache, auto_discovered)
@@ -445,6 +446,7 @@ class Config:
                     auto_settings.modbus_auto_discovery_timeout,
                     auto_settings.modbus_auto_discovery_retries,
                     include_networks=include_networks,
+                    exclude_devices=auto_settings.modbus_auto_discovery_exclude,
                 )
                 if auto_discovered:
                     await self._save_discovery_results_async(auto_discovery_cache, auto_discovered)
@@ -669,11 +671,12 @@ class Config:
         modbus_retries: int,
         timeout: float = 120.0,
         include_networks: list[str] | None = None,
+        exclude_devices: list[str] | None = None,
     ) -> list:
         """Asynchronous execution of auto-discovery scan."""
         try:
             return await asyncio.wait_for(
-                auto_discovery_scan(include_networks, port, ping_timeout, modbus_timeout, modbus_retries),
+                auto_discovery_scan(include_networks, exclude_devices, port, ping_timeout, modbus_timeout, modbus_retries),
                 timeout=timeout,
             )
         except asyncio.TimeoutError:
@@ -691,6 +694,7 @@ class Config:
         modbus_retries: int,
         timeout: float = 120.0,
         include_networks: list[str] | None = None,
+        exclude_devices: list[str] | None = None,
     ) -> list:
         """Synchronous execution of auto-discovery scan (wraps async version)."""
         try:
@@ -698,7 +702,7 @@ class Config:
         except RuntimeError:
             loop = None
 
-        coro = auto_discovery_scan(include_networks, port, ping_timeout, modbus_timeout, modbus_retries)
+        coro = auto_discovery_scan(include_networks, exclude_devices, port, ping_timeout, modbus_timeout, modbus_retries)
         if loop is None:
             try:
                 return asyncio.run(coro)
@@ -889,7 +893,7 @@ def configure_root_logging(level: int | None = None, fmt: str | None = None) -> 
         fmt = os.getenv(const.SIGENERGY2MQTT_LOG_FMT)
     if not fmt:
         try:
-            if 'active_config' in globals() and active_config is not None:
+            if "active_config" in globals() and active_config is not None:
                 fmt = active_config.log_fmt
         except Exception:
             pass
