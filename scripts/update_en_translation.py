@@ -82,7 +82,7 @@ DEVICE_BASE_CLASSES: frozenset[str] = CLASSES_WITH_TYPE_ARG | {"Device"}
 
 #: Classes that should NEVER have automatic suffixes appended because they are
 #: already uniquely identified by their hardware IDs.
-SKIP_SUFFIX_CLASSES: frozenset[str] = frozenset({"Inverter", "ESS", "PVString"})
+SKIP_SUFFIX_CLASSES: frozenset[str] = frozenset({"Inverter", "ESS", "PVString", "PID", "PSS"})
 
 #: Classes that are infrastructure/base devices – their ``name`` field is
 #: typically dynamic and should not be emitted as a static translation.
@@ -753,15 +753,18 @@ class TranslationExtractor(ast.NodeVisitor):
             # We only do this for top-level device classes to avoid cluttering
             # individual sensors with plant indices.
             if self._has_ancestor(self._current_class, DEVICE_BASE_CLASSES):
-                for kw in node.keywords:
-                    # Skip plant_index for classes that are uniquely identified (e.g. Inverter)
-                    if kw.arg == "plant_index" and self._current_class in SKIP_SUFFIX_CLASSES:
-                        continue
-
-                    if kw.arg in ("plant_index", "sequence_suffix", "plant_suffix"):
-                        placeholder = f"{{{kw.arg}}}"
-                        if placeholder not in name:
-                            name = f"{name} {placeholder}"
+                # Count existing placeholders in the name — if the name already
+                # contains dynamic {tokens}, it is self-disambiguating and does
+                # not need automatic suffix appending.
+                existing_placeholders = re.findall(r"\{[^{}]+\}", name)
+                if not existing_placeholders:
+                    for kw in node.keywords:
+                        if kw.arg == "plant_index" and self._current_class in SKIP_SUFFIX_CLASSES:
+                            continue
+                        if kw.arg in ("plant_index", "sequence_suffix", "plant_suffix"):
+                            placeholder = f"{{{kw.arg}}}"
+                            if placeholder not in name:
+                                name = f"{name} {placeholder}"
 
             self._add_translation(self._current_class, "name", name)
             if self._is_resettable:
