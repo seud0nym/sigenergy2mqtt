@@ -61,7 +61,6 @@ class PSSLALowVoltageCabinetCircuitBreakerSwitchOn(WriteOnlySensor, NonInverter)
             plant_index=plant_index,
             device_address=device_address,
             address=self.ADDRESS,
-            options=["No Action", "Switch On"],
             protocol_version=Protocol.V2_9,
             payload_off="no-action",
             payload_on="on",
