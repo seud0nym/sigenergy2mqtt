@@ -115,13 +115,13 @@ class:
     name: Potenza Attiva
   ActivePowerFixedAdjustmentTargetValue:
     attributes:
-      comment: Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.
+      comment: Affinché questo registro abbia effetto, l'EMS remoto deve essere abilitato e l'EMS deve essere in modalità di controllo remoto PCS.
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Valore Obiettivo Regolazione Fissa Potenza Attiva
   ActivePowerPercentageAdjustmentTargetValue:
     attributes:
-      comment: "Range: [-100.00,100.00]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect."
+      comment: "Intervallo: [-100,00,100,00]. Affinché questo registro abbia effetto, l'EMS remoto deve essere abilitato e l'EMS deve essere in modalità di controllo remoto PCS."
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Valore Obiettivo Regolazione Percentuale Potenza Attiva
@@ -347,33 +347,33 @@ class:
     name: Durata di Carica Attuale
   DCChargerCurrentDischargingCapacity:
     attributes:
-      comment: Single time
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Current Discharging Capacity
+      comment: Una sola volta
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Capacità di scarica attuale
   DCChargerCurrentDischargingDuration:
     attributes:
-      comment: Single time
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Current Discharging Duration
+      comment: Una sola volta
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Durata di scarica attuale
   DCChargerDischargingCurrent:
     attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Discharging Current
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Corrente di scarica
   DCChargerMaxChargingPowerLimit:
     attributes:
-      comment: Maximum DC charger charging power limit
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Max Charging Power Limit
+      comment: Limite massimo di potenza di carica del caricabatterie CC
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Limite massimo di potenza di ricarica
   DCChargerMaxDischargingPowerLimit:
     attributes:
-      comment: Maximum DC charger discharging power limit
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Max Discharging Power Limit
+      comment: Limite massimo della potenza di scarica del caricabatterie CC
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Limite massimo della potenza di scarica
   DCChargerOutputPower:
     attributes:
       source: Registro Modbus {address}
@@ -381,14 +381,14 @@ class:
     name: Potenza di Uscita
   DCChargerRatedChargingPower:
     attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Rated Charging Power
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Potenza di carica nominale
   DCChargerRatedDischargingPower:
     attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Rated Discharging Power
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Potenza di scarica nominale
   DCChargerRunningState:
     attributes:
       source: Registro Modbus {address}
@@ -409,14 +409,14 @@ class:
     name_on: Avviare
   DCChargerTotalChargingCapacity:
     attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Total Charging Capacity
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Capacità di ricarica totale
   DCChargerTotalDischargingCapacity:
     attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Total Discharging Capacity
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Capacità di scarico totale
   DCChargerVehicleBatteryVoltage:
     attributes:
       source: Registro Modbus {address}
@@ -447,6 +447,8 @@ class:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Stato di carica di interruzione scarica
+  DistributionCabinet:
+    name: '{model_id} XPLACEholderx1X Armadio di distribuzione'
   EMSWorkMode:
     attributes:
       source: Registro Modbus {address}
@@ -464,9 +466,9 @@ class:
     name: '{model_id} {serial_number} Sistema di Accumulo di Energia'
   ESSAverageCellTemperature:
     attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Average Cell Temperature
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Temperatura media della cella
   ESSBackupSOC:
     attributes:
       comment: "Intervallo: [0,00, 100,00]"
@@ -486,58 +488,58 @@ class:
       source_range: Registri Modbus {start}-{end}
     name: Stato di carica di interruzione scarica
   ESSPreHeating:
-    name: Sigenergy Plant ESS Pre-Heating {plant_suffix}
+    name: Preriscaldamento ESS dell'impianto Sigenergy {plant_suffix}
   ESSPreHeatingAdvanceEnable:
     attributes:
-      comment: '0: Disable, 1: Enable. Takes effect when Preheating Mode is Manual.'
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Preheating Advance
+      comment: '0: Disabilita, 1: Abilita. Ha effetto quando la modalità di preriscaldamento è manuale.'
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Avanzamento del preriscaldamento
   ESSPreHeatingEnable:
     attributes:
-      comment: '0: Disable, 1: Enable'
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Preheating
+      comment: '0: Disabilita, 1: Abilita'
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Preriscaldamento
   ESSPreHeatingMode:
     attributes:
-      comment: '0: Automatic, 1: Manual'
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Preheating Mode
+      comment: '0: Automatico, 1: Manuale'
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Modalità di preriscaldamento
     options:
-      '0': Automatic
-      '1': Manual
+      '0': Automatico
+      '1': Manuale
   ESSPreHeatingReservedSOC:
     attributes:
-      comment: 'Range: [0.00,100.00]'
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Preheating Reserved SoC
+      comment: 'Intervallo: [0,00.100,00]'
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: SoC riservato al preriscaldamento
   ESSPreHeatingTOUTargetPower:
     attributes:
-      comment: '<0: discharging, >0: charging'
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: TOU {slot} Target Charging/Discharging Power
+      comment: '<0: scarica, >0: ricarica'
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: TOU {slot} Potenza di carica/scarica target
   ESSPreHeatingTOUTime:
     attributes:
-      comment: Epoch seconds with timezone; local time interpretation depends on the device.
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Hybrid Inverter
+      comment: Secondi dell'epoca con fuso orario; l'interpretazione dell'ora locale dipende dal dispositivo.
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Invertitore ibrido
   ESSPreHeatingTOUTimeEnd:
     attributes:
-      comment: Epoch seconds with timezone; local time interpretation depends on the device.
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Hybrid Inverter
+      comment: Secondi dell'epoca con fuso orario; l'interpretazione dell'ora locale dipende dal dispositivo.
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Invertitore ibrido
   ESSPreHeatingTOUTimeStart:
     attributes:
-      comment: Epoch seconds with timezone; local time interpretation depends on the device.
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Hybrid Inverter
+      comment: Secondi dell'epoca con fuso orario; l'interpretazione dell'ora locale dipende dal dispositivo.
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Invertitore ibrido
   ESSTotalChargedEnergy:
     attributes:
       source: Registro Modbus {address}
@@ -781,13 +783,13 @@ class:
     name: Frequenza di Rete
   GridMaxExportLimit:
     attributes:
-      comment: The maximum active power fed into the grid must not exceed the value configured in this sensor. Grid Sensor needed. Takes effect globally regardless of the EMS operating mode
+      comment: La potenza attiva massima immessa in rete non deve superare il valore configurato in questo sensore. È necessario il sensore di rete. Ha effetto a livello globale indipendentemente dalla modalità operativa EMS
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Limite Max Esportazione Rete
   GridMaxImportLimit:
     attributes:
-      comment: The maximum active power absorbed from the grid must not exceed the value configured in this sensor. Grid Sensor needed. Takes effect globally regardless of the EMS operating mode
+      comment: La massima potenza attiva assorbita dalla rete non deve superare il valore configurato in questo sensore. È necessario il sensore di rete. Ha effetto a livello globale indipendentemente dalla modalità operativa EMS
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Limite Max Importazione Rete
@@ -805,9 +807,9 @@ class:
     name: Potenza reattiva fase {phase}
   GridPowerLossLockoutAlarmClear:
     attributes:
-      comment: Write 1 to clear the grid power loss lockout alarm
-    name: Grid Power Loss Lockout Alarm Clear
-    name_on: Clear
+      comment: Scrivere 1 per cancellare l'allarme di blocco della perdita di potenza della rete
+    name: Cancellazione allarme blocco perdita potenza rete
+    name_on: Chiaro
   GridSensor:
     name: Sensore Rete Impianto Sigenergy {plant_suffix}
   GridSensorActivePower:
@@ -1121,6 +1123,10 @@ class:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Temperatura
+  LA:
+    name: 'XPLACE SUPPORTO X0X XPLACE SUPPORTO X1X LA'
+  LB:
+    name: 'XPLACE SUPPORTO X0X XPLACE SUPPORTO X1X LIBBRA'
   LineVoltage:
     attributes:
       source: Registro Modbus {address}
@@ -1135,6 +1141,8 @@ class:
     name: Pubblicazioni Fisiche MQTT
   MQTTPublishFailures:
     name: Fallimenti di Pubblicazione MQTT
+  MV:
+    name: 'XPLACEholderx0X Xplaceholderx1X MV'
   MaxAbsorptionPower:
     attributes:
       source: Registro Modbus {address}
@@ -1169,13 +1177,13 @@ class:
     name: Potenza di Scarica Max
   MaxChargingLimit:
     attributes:
-      comment: 'The maximum charging power of the ESS in the plant must not exceed the value configured in this sensor. Range: [0, Rated ESS charging power]{active_config}'
+      comment: 'La potenza di carica massima dell''ESS nell''impianto non deve superare il valore configurato in questo sensore. Intervallo: [0, potenza di ricarica ESS nominale]{active_config}'
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Limite Massimo di Carica
   MaxDischargingLimit:
     attributes:
-      comment: 'The maximum discharging power of the ESS in the plant must not exceed the value configured in this sensor. Range: [0, Rated ESS discharging power]{active_config}'
+      comment: 'La potenza di scarica massima dell''ESS nell''impianto non deve superare il valore configurato in questo sensore. Intervallo: [0, potenza di scarica ESS nominale]{active_config}'
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Limite Massimo di Scarica
@@ -1251,258 +1259,913 @@ class:
     name: Conteggio PACK/BCU
   PCCPowerFactorAdjustmentTargetValueGridExport:
     attributes:
-      comment: 'When selling electricity at the grid connection point, the power factor must be controlled to the value configured in this sensor. Range: [(-1.0, -0.8) U (0.8, 1.0)]. Grid Sensor needed.'
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PCC Power Factor Adjustment Target Value (Grid Export)
+      comment: 'Quando si vende elettricità nel punto di connessione alla rete, il fattore di potenza deve essere controllato sul valore configurato in questo sensore. Intervallo: [(-1,0, -0,8) U (0,8, 1,0)]. È necessario il sensore di rete.'
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Valore target di regolazione del fattore di potenza PCC (esportazione in rete)
   PCCPowerFactorAdjustmentTargetValueGridImport:
     attributes:
-      comment: 'When purchasing electricity at the grid connection point, the power factor must be controlled to the value configured in this sensor. Range: [(-1.0, -0.8) U (0.8, 1.0)]. Grid Sensor needed.'
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PCC Power Factor Adjustment Target Value (Grid Import)
+      comment: 'Quando si acquista elettricità nel punto di connessione alla rete, il fattore di potenza deve essere controllato sul valore configurato in questo sensore. Intervallo: [(-1,0, -0,8) U (0,8, 1,0)]. È necessario il sensore di rete.'
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Valore target di regolazione del fattore di potenza PCC (importazione dalla rete)
   PCSMaxExportLimit:
     attributes:
-      comment: "The maximum active power output of the inverter in the plant must not exceed the value configured in this sensor. Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally."
+      comment: "La potenza attiva massima erogata dall'inverter nell'impianto non deve superare il valore configurato in questo sensore. Intervallo:[0, 0xFFFFFFFE].Con valore 0xFFFFFFFF, il registro non è valido. In tutti gli altri casi, ha effetto a livello globale."
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Limite Max Esportazione PCS
   PCSMaxImportLimit:
     attributes:
-      comment: "The maximum active power input of the inverter in the plant must not exceed the value configured in this sensor. Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally."
+      comment: "La massima potenza attiva assorbita dall'inverter nell'impianto non deve superare il valore configurato in questo sensore. Intervallo:[0, 0xFFFFFFFE].Con valore 0xFFFFFFFF, il registro non è valido. In tutti gli altri casi, ha effetto a livello globale."
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Limite Max Importazione PCS
   PID:
-    name: Sigenergy Potential Induced Degradation Device {sequence_suffix}
+    name: '{model_id} {serial}'
+  PIDABLineVoltage:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Tensione di linea AB
+  PIDAlarm1:
+    alarm:
+      '0': Mancata corrispondenza della versione del software
+      '1': Mancata corrispondenza della versione software e hardware
+      '2': Errore di avvio
+      '3': Allarme resistenza di isolamento
+      '4': Preallarme resistenza di isolamento
+      '5': Sovratemperatura
+      '6': Modulo di alimentazione anomalo
+      '7': Guasto alla ventola
+      '8': Prenotato
+      '9': Protezione da sovratensione del bus dell'inverter
+      '10': Protezione da sovratensione in uscita
+      '11': Protezione da sovratensione in uscita dell'inverter
+      '12': Protezione da sovracorrente in uscita dall'inverter
+      '13': Protezione da sovracorrente in uscita
+      '14': Errore di uscita
+      '15': Comunicazione Rs485 anomala
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Allarme 1
+  PIDAlarm2:
+    alarm:
+      '0': Perdita di potenza della rete
+      '1': Sovratensione della rete
+      '2': Sottotensione della rete
+      '3': Sovrafrequenza della rete
+      '4': Sottofrequenza di rete
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Allarme 2
+  PIDAlarms:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Allarmi
+  PIDBCLineVoltage:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Tensione di linea BC
+  PIDBusVoltage:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Tensione del bus
+  PIDCALineVoltage:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Tensione di linea CA
   PIDCommunicationStatus:
     attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID Communication Status
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Stato della comunicazione
+  PIDGridFrequency:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Frequenza di rete
+  PIDInternalTemperature1:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Temperatura interna 1
+  PIDInternalTemperature2:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Temperatura interna 2
+  PIDInternalTemperature3:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Temperatura interna 3
+  PIDInternalTemperature4:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Temperatura interna 4
+  PIDInternalTemperature5:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Temperatura interna 5
+  PIDInverterCurrent:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Corrente dell'inverter
+  PIDInverterVoltage:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Tensione dell'invertitore
   PIDMachineFirmwareVersion:
     attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID Machine Firmware Version
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Versione del firmware
   PIDModelType:
     attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID Model Type
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Tipo di modello
+  PIDOutputCurrent:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Corrente di uscita
+  PIDOutputVoltage:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Tensione di uscita
+  PIDPhaseAVoltage:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Tensione di fase A
+  PIDPhaseBVoltage:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Tensione di fase B
+  PIDPhaseCVoltage:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Tensione di fase C
   PIDRunningStatus:
     attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID Running Status
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Stato di esecuzione
   PIDSerialNumber:
     attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID Serial Number
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Numero di serie
   PIDStartStop:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID Start/Stop
+    name: Avvio/arresto PID
+    name_off: Fermare
+    name_on: Inizio
     options:
-      '0': Stop
-      '1': Start
-  PID_ABLineVoltage:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID AB Line Voltage
-  PID_BCLineVoltage:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID BC Line Voltage
-  PID_BusVoltage:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID Bus Voltage
-  PID_CALineVoltage:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID CA Line Voltage
-  PID_GridFrequency:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID Grid Frequency
-  PID_InternalTemperature1:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID Internal Temperature 1
-  PID_InternalTemperature2:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID Internal Temperature 2
-  PID_InternalTemperature3:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID Internal Temperature 3
-  PID_InternalTemperature4:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID Internal Temperature 4
-  PID_InternalTemperature5:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID Internal Temperature 5
-  PID_InverterCurrent:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID Inverter Current
-  PID_InverterVoltage:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID Inverter Voltage
-  PID_OutputCurrent:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID Output Current
-  PID_OutputVoltage:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID Output Voltage
-  PID_PhaseAVoltage:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID Phase A Voltage
-  PID_PhaseBVoltage:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID Phase B Voltage
-  PID_PhaseCVoltage:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID Phase C Voltage
+      '0': Fermare
+      '1': Inizio
   PSS:
-    name: Sigenergy Packaged Substation System {sequence_suffix}
+    name: '{model_id} {serial}'
+  PSSCommunicationStatus:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Stato della comunicazione
+  PSSDistributionCabinetABLineVoltage:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Tensione di linea AB
+  PSSDistributionCabinetBCLineVoltage:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Tensione di linea BC
+  PSSDistributionCabinetCALineVoltage:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Tensione di linea CA
+  PSSDistributionCabinetForwardActiveEnergy:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Energia attiva in avanti
+  PSSDistributionCabinetForwardReactiveEnergy:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Energia reattiva diretta
+  PSSDistributionCabinetFrequency:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Frequenza
+  PSSDistributionCabinetHumidity:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Umidità
+  PSSDistributionCabinetPhaseAActivePower:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Potenza attiva fase A
+  PSSDistributionCabinetPhaseAApparentPower:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Potenza apparente di fase A
+  PSSDistributionCabinetPhaseACurrent:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Corrente di fase A
+  PSSDistributionCabinetPhaseAPowerFactor:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Fattore di potenza della fase A
+  PSSDistributionCabinetPhaseAReactivePower:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Potenza reattiva di fase A
+  PSSDistributionCabinetPhaseAVoltage:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Tensione di fase A
+  PSSDistributionCabinetPhaseBActivePower:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Potenza Attiva Fase B
+  PSSDistributionCabinetPhaseBApparentPower:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Potenza apparente della fase B
+  PSSDistributionCabinetPhaseBCurrent:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Corrente di fase B
+  PSSDistributionCabinetPhaseBPowerFactor:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Fattore di potenza della fase B
+  PSSDistributionCabinetPhaseBReactivePower:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Potenza reattiva di fase B
+  PSSDistributionCabinetPhaseBVoltage:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Tensione di fase B
+  PSSDistributionCabinetPhaseCActivePower:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Potenza Attiva Fase C
+  PSSDistributionCabinetPhaseCApparentPower:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Potenza apparente di fase C
+  PSSDistributionCabinetPhaseCCurrent:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Corrente di fase C
+  PSSDistributionCabinetPhaseCPowerFactor:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Fattore di potenza fase C
+  PSSDistributionCabinetPhaseCReactivePower:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Potenza reattiva di fase C
+  PSSDistributionCabinetPhaseCVoltage:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Tensione di fase C
+  PSSDistributionCabinetReverseActiveEnergy:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Energia attiva inversa
+  PSSDistributionCabinetReverseReactiveEnergy:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Energia reattiva inversa
+  PSSDistributionCabinetTemperature:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Temperatura
+  PSSDistributionCabinetTotalActivePower:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Potenza attiva totale
+  PSSDistributionCabinetTotalApparentPower:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Potenza apparente totale
+  PSSDistributionCabinetTotalPowerFactor:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Fattore di potenza totale
+  PSSDistributionCabinetTotalReactivePower:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Potenza reattiva totale
+  PSSLAABLineVoltage:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Tensione di linea AB
+  PSSLABCLineVoltage:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Tensione di linea BC
+  PSSLACALineVoltage:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Tensione di linea CA
+  PSSLAForwardActiveEnergy:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Energia attiva in avanti
+  PSSLAForwardReactiveEnergy:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Energia reattiva diretta
+  PSSLAFrequency:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Frequenza
+  PSSLAHumidity:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Umidità
   PSSLALowVoltageCabinetCircuitBreakerSwitchOff:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PSS LA Low Voltage Cabinet Circuit Breaker Switch Off
+    name: Spegnimento dell'interruttore automatico dell'armadio a bassa tensione
+    name_on: Spegnere l'interruttore automatico dell'armadio a bassa tensione LA
     options:
-      '0': No Action
-      '1': Switch Off
+      '0': Nessuna azione
+      '1': Spegnere
   PSSLALowVoltageCabinetCircuitBreakerSwitchOn:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PSS LA Low Voltage Cabinet Circuit Breaker Switch On
+    name: Interruttore automatico dell'armadio a bassa tensione Acceso
+    name_on: Accendere l'interruttore automatico dell'armadio a bassa tensione LA
     options:
-      '0': No Action
-      '1': Switch On
+      '0': Nessuna azione
+      '1': Accendi
+  PSSLAPhaseAActivePower:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Potenza attiva fase A
+  PSSLAPhaseAApparentPower:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Potenza apparente di fase A
+  PSSLAPhaseACurrent:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Corrente di fase A
+  PSSLAPhaseAPowerFactor:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Fattore di potenza della fase A
+  PSSLAPhaseAReactivePower:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Potenza reattiva di fase A
+  PSSLAPhaseAVoltage:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Tensione di fase A
+  PSSLAPhaseBActivePower:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Potenza Attiva Fase B
+  PSSLAPhaseBApparentPower:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Potenza apparente della fase B
+  PSSLAPhaseBCurrent:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Corrente di fase B
+  PSSLAPhaseBPowerFactor:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Fattore di potenza della fase B
+  PSSLAPhaseBReactivePower:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Potenza reattiva di fase B
+  PSSLAPhaseBVoltage:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Tensione di fase B
+  PSSLAPhaseCActivePower:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Potenza Attiva Fase C
+  PSSLAPhaseCApparentPower:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Potenza apparente di fase C
+  PSSLAPhaseCCurrent:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Corrente di fase C
+  PSSLAPhaseCPowerFactor:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Fattore di potenza fase C
+  PSSLAPhaseCReactivePower:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Potenza reattiva di fase C
+  PSSLAPhaseCVoltage:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Tensione di fase C
+  PSSLAReverseActiveEnergy:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Energia attiva inversa
+  PSSLAReverseReactiveEnergy:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Energia reattiva inversa
+  PSSLATemperature:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Temperatura
+  PSSLATotalActivePower:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Potenza attiva totale
+  PSSLATotalApparentPower:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Potenza apparente totale
+  PSSLATotalPowerFactor:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Fattore di potenza totale
+  PSSLATotalReactivePower:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Potenza reattiva totale
+  PSSLBABLineVoltage:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Tensione di linea AB
+  PSSLBBCLineVoltage:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Tensione di linea BC
+  PSSLBCALineVoltage:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Tensione di linea CA
+  PSSLBForwardActiveEnergy:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Energia attiva in avanti
+  PSSLBForwardReactiveEnergy:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Energia reattiva diretta
+  PSSLBFrequency:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Frequenza
+  PSSLBHumidity:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Umidità
   PSSLBLowVoltageCabinetCircuitBreakerSwitchOff:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PSS LB Low Voltage Cabinet Circuit Breaker Switch Off
+    name: Spegnimento dell'interruttore automatico dell'armadio a bassa tensione
+    name_on: Spegnere l'interruttore automatico dell'armadio a bassa tensione LB
     options:
-      '0': No Action
-      '1': Switch Off
+      '0': Nessuna azione
+      '1': Spegnere
   PSSLBLowVoltageCabinetCircuitBreakerSwitchOn:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PSS LB Low Voltage Cabinet Circuit Breaker Switch On
+    name: Interruttore automatico dell'armadio a bassa tensione Acceso
+    name_on: Accendere l'interruttore automatico dell'armadio a bassa tensione LB
     options:
-      '0': No Action
-      '1': Switch On
+      '0': Nessuna azione
+      '1': Accendi
+  PSSLBPhaseAActivePower:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Potenza attiva fase A
+  PSSLBPhaseAApparentPower:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Potenza apparente di fase A
+  PSSLBPhaseACurrent:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Corrente di fase A
+  PSSLBPhaseAPowerFactor:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Fattore di potenza della fase A
+  PSSLBPhaseAReactivePower:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Potenza reattiva di fase A
+  PSSLBPhaseAVoltage:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Tensione di fase A
+  PSSLBPhaseBActivePower:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Potenza Attiva Fase B
+  PSSLBPhaseBApparentPower:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Potenza apparente della fase B
+  PSSLBPhaseBCurrent:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Corrente di fase B
+  PSSLBPhaseBPowerFactor:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Fattore di potenza della fase B
+  PSSLBPhaseBReactivePower:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Potenza reattiva di fase B
+  PSSLBPhaseBVoltage:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Tensione di fase B
+  PSSLBPhaseCActivePower:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Potenza Attiva Fase C
+  PSSLBPhaseCApparentPower:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Potenza apparente di fase C
+  PSSLBPhaseCCurrent:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Corrente di fase C
+  PSSLBPhaseCPowerFactor:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Fattore di potenza fase C
+  PSSLBPhaseCReactivePower:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Potenza reattiva di fase C
+  PSSLBPhaseCVoltage:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Tensione di fase C
+  PSSLBReverseActiveEnergy:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Energia attiva inversa
+  PSSLBReverseReactiveEnergy:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Energia reattiva inversa
+  PSSLBTemperature:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Temperatura
+  PSSLBTotalActivePower:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Potenza attiva totale
+  PSSLBTotalApparentPower:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Potenza apparente totale
+  PSSLBTotalPowerFactor:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Fattore di potenza totale
+  PSSLBTotalReactivePower:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Potenza reattiva totale
   PSSMVCabinetG3CircuitBreakerSwitchOff:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PSS MV Cabinet G3 Circuit Breaker Switch Off
+    name: Spegnimento dell'interruttore automatico G3
+    name_on: Spegnere l'interruttore automatico dell'armadio MT G3
     options:
-      '0': No Action
-      '1': Switch Off
+      '0': Nessuna azione
+      '1': Spegnere
   PSSMVCabinetG3CircuitBreakerSwitchOn:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PSS MV Cabinet G3 Circuit Breaker Switch On
+    name: Interruttore automatico G3 acceso
+    name_on: Accendere l'interruttore automatico dell'armadio MT G3
     options:
-      '0': No Action
-      '1': Switch On
+      '0': Nessuna azione
+      '1': Accendi
+  PSSMVFrequency:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Frequenza
+  PSSMVG1CableL1PhaseTemperature:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Temperatura di fase L1 del cavo G1
+  PSSMVG1CableL2PhaseTemperature:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Temperatura di fase L2 del cavo G1
+  PSSMVG1CableL3PhaseTemperature:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Temperatura di fase L3 del cavo G1
+  PSSMVG2CableL1PhaseTemperature:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Temperatura di fase L1 del cavo G2
+  PSSMVG2CableL2PhaseTemperature:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Temperatura fase L2 del cavo G2
+  PSSMVG2CableL3PhaseTemperature:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Temperatura di fase L3 del cavo G2
+  PSSMVG3CableL1PhaseTemperature:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Temperatura di fase L1 del cavo G3
+  PSSMVG3CableL2PhaseTemperature:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Temperatura fase L2 del cavo G3
+  PSSMVG3CableL3PhaseTemperature:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Temperatura fase L3 del cavo G3
+  PSSMVHumidity:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Umidità
+  PSSMVPhaseACurrent:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Corrente di fase A
+  PSSMVPhaseBCurrent:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Corrente di fase B
+  PSSMVPhaseCCurrent:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Corrente di fase C
+  PSSMVTemperature:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Temperatura
+  PSSMVZeroSequenceCurrent:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Corrente di sequenza zero
   PSSModelType:
     attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PSS Model Type
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Tipo di modello
   PSSSerialNumber:
     attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PSS Serial Number
-  PSS_LAFrequency:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Numero di serie
+  PSSTeleindication1:
+    alarm:
+      '0': Intervento generale dell'unità di misurazione e controllo
+      '1': Allarme generale unità di misura e controllo
+      '2': Viaggio del gas pesante del trasformatore
+      '3': Allarme gas luce trasformatore
+      '4': Intervento di limitazione della pressione del trasformatore
+      '5': Allarme basso livello olio trasformatore
+      '6': Allarme livello olio elevato trasformatore
+      '7': Allarme alta temperatura olio trasformatore
+      '8': Intervento per sovratemperatura dell'olio del trasformatore
+      '9': Allarme alta temperatura avvolgimento trasformatore
+      '10': Intervento per sovratemperatura dell'avvolgimento del trasformatore
+      '11': Intervento sensore fumo doppio ambiente a bassa tensione
+      '12': Intervento sensore di fumo doppio ambiente in media tensione
+      '13': Intervento di apertura della porta di manutenzione della stanza a bassa tensione
+      '14': Scatto di apertura della porta della sala trasformatore
+      '15': LA Intervento per sovratemperatura dell'armadio a bassa tensione
     attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PSS [LA] Frequency
-  PSS_LAPhaseAActivePower:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Teleindicazione1
+  PSSTeleindication2:
+    alarm:
+      '0': Intervento per sovratemperatura armadio a bassa tensione LB
+      '1': Intervento per sovratemperatura ambiente in media tensione
+      '2': Allarme di bassa pressione del gas di isolamento dell'armadio di media tensione
+      '3': Arresto di emergenza
+      '4': Guasto al condizionatore/scambiatore di calore ambiente media tensione
+      '5': LA Guasto allo scambiatore di calore ambiente a bassa tensione
+      '6': LB Guasto allo scambiatore di calore ambiente a bassa tensione
+      '7': Allarme sensore fumo ambiente a bassa tensione
+      '8': Allarme sensore fumo ambiente a media tensione
+      '9': Mancato spegnimento dell'interruttore G3 dell'armadio di media tensione
+      '10': Guasto SPD dell'armadio bassa tensione LA
+      '11': Guasto SPD armadio bassa tensione LB
+      '12': Guasto SPD dell'armadio di distribuzione
+      '13': LA Allarme sovratemperatura armadio bassa tensione
+      '14': Allarme sovratemperatura armadio bassa tensione LB
+      '15': Allarme sovratemperatura ambiente in media tensione
     attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PSS [LA] Phase A Active Power
-  PSS_LAPhaseAVoltage:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Teleindicazione2
+  PSSTeleindication3:
+    alarm:
+      '0': Preallarme IMD armadio bassa tensione LA
+      '1': Allarme IMD dell'armadio a bassa tensione LA
+      '2': Preallarme IMD armadio bassa tensione LB
+      '3': Allarme IMD armadio bassa tensione LB
+      '4': Allarme guasto UPS
+      '5': LA Accensione dell'interruttore dell'armadio bassa tensione
+      '6': LA Spegnimento dell'interruttore dell'armadio bassa tensione
+      '7': LA Scatto per guasto dell'interruttore automatico dell'armadio a bassa tensione
+      '8': Comando a distanza dell'interruttore dell'armadio di bassa tensione LA
+      '9': Accensione dell'interruttore dell'armadio bassa tensione LB
+      '10': Spegnimento dell'interruttore dell'armadio bassa tensione LB
+      '11': Intervento per guasto dell'interruttore dell'armadio bassa tensione LB
+      '12': Comando a distanza dell'interruttore dell'armadio di bassa tensione LB
+      '13': Accensione dell'interruttore G3 dell'armadio di media tensione
+      '14': Spegnimento interruttore automatico G3 dell'armadio di media tensione
+      '15': Accensione del sezionatore G3 dell'armadio di media tensione
     attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PSS [LA] Phase A Voltage
-  PSS_LATotalActivePower:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Teleindicazione3
+  PSSTeleindication4:
+    alarm:
+      '0': Spegnimento sezionatore G3 dell'armadio di media tensione
+      '1': Accensione del sezionatore di terra dell'armadio di media tensione G3
+      '2': Spegnimento sezionatore di terra dell'armadio di media tensione G3
+      '3': Batteria di accumulo energia G3 dell'armadio di media tensione non carica
+      '4': Comando a distanza dell'interruttore G3 dell'armadio di media tensione
+      '5': Accensione del sezionatore di carico dell'armadio di media tensione G1
+      '6': Spegnimento del sezionatore di carico dell'armadio di media tensione G1
+      '7': Accensione del sezionatore di terra dell'armadio di media tensione G1
+      '8': Spegnimento sezionatore di terra dell'armadio di media tensione G1
+      '9': Accensione del sezionatore di carico G2 dell'armadio di media tensione
+      '10': Sezionatore di carico G2 dell'armadio di media tensione
+      '11': Accensione del sezionatore di terra G2 dell'armadio di media tensione
+      '12': Spegnimento sezionatore di terra dell'armadio di media tensione G2
+      '13': Porta operativa della sala LA a bassa tensione aperta
+      '14': Porta operativa LB della sala bassa tensione aperta
+      '15': Porta della stanza di media tensione aperta
     attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PSS [LA] Total Active Power
-  PSS_LATotalReactivePower:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Teleindicazione4
+  PSSTeleindication5:
+    alarm:
+      '0': Sovratemperatura fase L1 del cavo G1 dell'armadio di media tensione
+      '1': Sovratemperatura fase L2 del cavo G1 dell'armadio di media tensione
+      '2': Sovratemperatura fase L3 del cavo G1 dell'armadio di media tensione
+      '3': Sovratemperatura fase L1 del cavo G2 dell'armadio di media tensione
+      '4': Sovratemperatura fase L2 del cavo G2 dell'armadio di media tensione
+      '5': Sovratemperatura fase L3 del cavo G2 dell'armadio di media tensione
+      '6': Sovratemperatura fase L1 del cavo G3 dell'armadio di media tensione
+      '7': Sovratemperatura fase L2 del cavo G3 dell'armadio di media tensione
+      '8': Sovratemperatura fase L3 del cavo G3 dell'armadio di media tensione
+      '9': Protezione generale di media tensione
+      '10': Allarme generale protezione media tensione
     attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PSS [LA] Total Reactive Power
-  PSS_MVFrequency:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Teleindicazione5
+  PSSTransformerOilSurfaceTemperature:
     attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PSS [MV] Frequency
-  PSS_MVPhaseACurrent:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Temperatura superficiale dell'olio
+  PSSTransformerWindingTemperature:
     attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PSS [MV] Phase A Current
-  PSS_MVPhaseBCurrent:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PSS [MV] Phase B Current
-  PSS_MVPhaseCCurrent:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PSS [MV] Phase C Current
-  PSS_MVTemperature:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PSS [MV] Temperature
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Temperatura dell'avvolgimento
   PVCurrentSensor:
     attributes:
       source: Registro Modbus {address}
@@ -1512,7 +2175,7 @@ class:
     name: Inverter fotovoltaico
   PVMaxPowerLimit:
     attributes:
-      comment: The maximum output power of the PV strings in the plant must not exceed the value configured in this sensor{active_config}
+      comment: La potenza massima in uscita delle stringhe FV nell'impianto non deve superare il valore configurato in questo sensore{active_config}
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Limite Potenza Max PV
@@ -1548,13 +2211,13 @@ class:
     name: Tensione
   PhaseActivePowerFixedAdjustmentTargetValue:
     attributes:
-      comment: Valid only when Output Type is L1/L2/L3/N. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.
+      comment: Valido solo quando il tipo di uscita è L1/L2/L3/N. Affinché questo registro abbia effetto, l'EMS remoto deve essere abilitato e l'EMS deve essere in modalità di controllo remoto PCS.
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Valore target regolazione fissa potenza attiva fase {phase}
   PhaseActivePowerPercentageAdjustmentTargetValue:
     attributes:
-      comment: "Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect."
+      comment: "Valido solo quando il tipo di uscita è L1/L2/L3/N. Intervallo: [-100,00,100,00]. Affinché questo registro abbia effetto, l'EMS remoto deve essere abilitato e l'EMS deve essere in modalità di controllo remoto PCS."
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Valore target regolazione percentuale potenza attiva fase {phase}
@@ -1565,13 +2228,13 @@ class:
     name: Corrente fase{phase4name}
   PhaseQSAdjustmentTargetValue:
     attributes:
-      comment: "Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect."
+      comment: "Valido solo quando il tipo di uscita è L1/L2/L3/N. Intervallo: [-60.00,60.00]. Affinché questo registro abbia effetto, l'EMS remoto deve essere abilitato e l'EMS deve essere in modalità di controllo remoto PCS."
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Valore target regolazione fissa Q/S fase {phase}
   PhaseReactivePowerFixedAdjustmentTargetValue:
     attributes:
-      comment: Valid only when Output Type is L1/L2/L3/N. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.
+      comment: Valido solo quando il tipo di uscita è L1/L2/L3/N. Affinché questo registro abbia effetto, l'EMS remoto deve essere abilitato e l'EMS deve essere in modalità di controllo remoto PCS.
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Valore target regolazione fissa potenza reattiva fase {phase}
@@ -1636,14 +2299,14 @@ class:
     name: Produzione PV Totale
   PlantPVTotalGenerationToday:
     attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PV Total Generation Today
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Generazione totale fotovoltaica oggi
   PlantPVTotalGenerationYesterday:
     attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PV Total Generation Yesterday
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Generazione totale fotovoltaica ieri
   PlantPhaseActivePower:
     attributes:
       source: Registro Modbus {address}
@@ -1717,7 +2380,7 @@ class:
     name: Fattore di Potenza
   PowerFactorAdjustmentTargetValue:
     attributes:
-      comment: "Range: [(-1.0, -0.8) U (0.8, 1.0)]. Grid Sensor needed. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect."
+      comment: "Intervallo: [(-1,0, -0,8) U (0,8, 1,0)]. È necessario il sensore di rete. Affinché questo registro abbia effetto, l'EMS remoto deve essere abilitato e l'EMS deve essere in modalità di controllo remoto PCS."
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Valore Obiettivo Regolazione Fattore di Potenza
@@ -1729,7 +2392,7 @@ class:
     name: Versione Protocollo
   QSAdjustmentTargetValue:
     attributes:
-      comment: "Range: [-60.0,60.00]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect."
+      comment: "Intervallo: [-60.0,60.00]. Affinché questo registro abbia effetto, l'EMS remoto deve essere abilitato e l'EMS deve essere in modalità di controllo remoto PCS."
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Valore Obiettivo Regolazione Q/S
@@ -1770,7 +2433,7 @@ class:
     name: Potenza Reattiva
   ReactivePowerFixedAdjustmentTargetValue:
     attributes:
-      comment: "Range: [-60.00 * base value ,60.00 * base value]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect."
+      comment: "Intervallo: [-60,00 * valore base ,60,00 * valore base]. Affinché questo registro abbia effetto, l'EMS remoto deve essere abilitato e l'EMS deve essere in modalità di controllo remoto PCS."
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Valore Obiettivo Regolazione Fissa Potenza Reattiva
@@ -1801,7 +2464,7 @@ class:
       '4': Carica a comando (consumare energia dal PV prima)
       '5': Scarica a comando (uscita energia dal PV prima)
       '6': Scarica a comando (uscita energia dalla batteria prima)
-      '8': V2G (Vehicle to Grid)
+      '8': V2G (dal veicolo alla rete)
   RemoteEMSLimit:
     attributes:
       source: Registro Modbus {address}
@@ -1822,6 +2485,16 @@ class:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Riservato
+  Reserved40069:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Prenotato
+  Reserved41001:
+    attributes:
+      source: Registro Modbus {address}
+      source_range: Registri Modbus {start}-{end}
+    name: Prenotato
   ReservedAccumulatedExportEnergy:
     attributes:
       source: Registro Modbus {address}
@@ -2050,6 +2723,8 @@ class:
     attributes:
       source: Potenza PV + Potenza PV di Terze Parti
     name: Potenza PV Totale
+  Transformer:
+    name: '{model_id} XPLACEholderx1X Trasformatore'
   WriteOnlySensor:
     name_off: Spegnere
     name_on: Accendere
@@ -2134,6 +2809,8 @@ cli:
     help: L'ID dispositivo Modbus del Caricatore CA Sigenergy. Possono essere specificati più ID separati da virgole.
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY:
     help: Tenta l'auto-scoperta degli host Modbus Sigenergy e degli ID dispositivo. Se 'once' è specificato, l'auto-scoperta avverrà solo se non vengono trovati risultati precedenti. Se 'force', sovrascriverà gli host Modbus e ID precedentemente scoperti. Se non specificato, l'auto-scoperta è disabilitata.
+  SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_EXCLUDE:
+    help: Un elenco separato da virgole di nomi di classi di dispositivi da escludere dal rilevamento automatico. Il valore predefinito è 'PID,PSS'.
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_NETWORKS:
     help: Un elenco separato da virgole di reti IPv4 in notazione CIDR da scansionare durante il rilevamento automatico (ad es. '192.168.1.0/24,10.0.0.0/24'). Utilizzare questo per scansionare reti accessibili tramite routing ma non direttamente collegate a un'interfaccia di rete.
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_PING_TIMEOUT:
@@ -2154,8 +2831,12 @@ cli:
     help: 'Imposta il livello di log pymodbus. Valori validi: DEBUG, INFO, WARNING, ERROR o CRITICAL. Predefinito: WARNING (avvisi, errori e guasti critici)'
   SIGENERGY2MQTT_MODBUS_NO_REMOTE_EMS:
     help: Non pubblicare sensori lettura-scrittura per l'integrazione del Sistema di Gestione dell'Energia (EMS) remoto su MQTT. Ignorato se --modbus-read-only è specificato.
+  SIGENERGY2MQTT_MODBUS_PID_DEVICE_ID:
+    help: L'ID del dispositivo Modbus PID Sigenergy. È possibile specificare più ID dispositivo, separati da virgole.
   SIGENERGY2MQTT_MODBUS_PORT:
     help: 'Il numero di porta Modbus del dispositivo Sigenergy (predefinito: 502)'
+  SIGENERGY2MQTT_MODBUS_PSS_DEVICE_ID:
+    help: L'ID del dispositivo Sigenergy PSS Modbus. È possibile specificare più ID dispositivo, separati da virgole.
   SIGENERGY2MQTT_MODBUS_READ_ONLY:
     help: Pubblica solo sensori in sola lettura su MQTT. Né sensori lettura-scrittura né sola scrittura saranno pubblicati se specificato.
   SIGENERGY2MQTT_MODBUS_RETRIES:

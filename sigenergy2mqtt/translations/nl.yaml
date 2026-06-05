@@ -115,13 +115,13 @@ class:
     name: Actief Vermogen
   ActivePowerFixedAdjustmentTargetValue:
     attributes:
-      comment: Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.
+      comment: Om dit register in werking te laten treden, moet het externe EMS zijn ingeschakeld en moet het EMS in de PCS-afstandsbedieningsmodus staan.
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Actief Vermogen Vast Instelwaarde
   ActivePowerPercentageAdjustmentTargetValue:
     attributes:
-      comment: "Range: [-100.00,100.00]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect."
+      comment: "Bereik: [-100,00,100,00]. Om dit register in werking te laten treden, moet het externe EMS zijn ingeschakeld en moet het EMS in de PCS-afstandsbedieningsmodus staan."
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Actief Vermogen Percentage Instelwaarde
@@ -347,33 +347,33 @@ class:
     name: Huidige Laadduur
   DCChargerCurrentDischargingCapacity:
     attributes:
-      comment: Single time
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Current Discharging Capacity
+      comment: Enkele keer
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Huidige ontladingscapaciteit
   DCChargerCurrentDischargingDuration:
     attributes:
-      comment: Single time
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Current Discharging Duration
+      comment: Enkele keer
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Huidige ontladingsduur
   DCChargerDischargingCurrent:
     attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Discharging Current
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Ontlaadstroom
   DCChargerMaxChargingPowerLimit:
     attributes:
-      comment: Maximum DC charger charging power limit
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Max Charging Power Limit
+      comment: Maximaal laadvermogen van de DC-lader
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Maximale laadvermogenlimiet
   DCChargerMaxDischargingPowerLimit:
     attributes:
-      comment: Maximum DC charger discharging power limit
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Max Discharging Power Limit
+      comment: Maximaal ontlaadvermogen van de DC-lader
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Maximale ontladingsvermogenslimiet
   DCChargerOutputPower:
     attributes:
       source: Modbus-register {address}
@@ -381,14 +381,14 @@ class:
     name: Uitgangsvermogen
   DCChargerRatedChargingPower:
     attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Rated Charging Power
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Nominaal laadvermogen
   DCChargerRatedDischargingPower:
     attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Rated Discharging Power
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Nominaal ontlaadvermogen
   DCChargerRunningState:
     attributes:
       source: Modbus-register {address}
@@ -409,14 +409,14 @@ class:
     name_on: Starten
   DCChargerTotalChargingCapacity:
     attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Total Charging Capacity
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Totale laadcapaciteit
   DCChargerTotalDischargingCapacity:
     attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Total Discharging Capacity
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Totale ontladingscapaciteit
   DCChargerVehicleBatteryVoltage:
     attributes:
       source: Modbus-register {address}
@@ -447,6 +447,8 @@ class:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Ontlaad Afkap Laadtoestand
+  DistributionCabinet:
+    name: '{model_id} {serial} Verdeelkast'
   EMSWorkMode:
     attributes:
       source: Modbus-register {address}
@@ -464,9 +466,9 @@ class:
     name: '{model_id} {serial_number} Energieopslagsysteem'
   ESSAverageCellTemperature:
     attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Average Cell Temperature
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Gemiddelde celtemperatuur
   ESSBackupSOC:
     attributes:
       comment: "Bereik: [0,00, 100,00]"
@@ -486,58 +488,58 @@ class:
       source_range: Modbus-registers {start}-{end}
     name: Ontlaad Afkap Laadtoestand
   ESSPreHeating:
-    name: Sigenergy Plant ESS Pre-Heating {plant_suffix}
+    name: Sigenergy Plant ESS voorverwarmen {plant_suffix}
   ESSPreHeatingAdvanceEnable:
     attributes:
-      comment: '0: Disable, 1: Enable. Takes effect when Preheating Mode is Manual.'
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Preheating Advance
+      comment: '0: Uitschakelen, 1: Inschakelen. Treedt in werking wanneer de voorverwarmingsmodus handmatig is.'
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Voorverwarmen vooruit
   ESSPreHeatingEnable:
     attributes:
-      comment: '0: Disable, 1: Enable'
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Preheating
+      comment: '0: Uitschakelen, 1: Inschakelen'
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Voorverwarmen
   ESSPreHeatingMode:
     attributes:
-      comment: '0: Automatic, 1: Manual'
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Preheating Mode
+      comment: '0: automatisch, 1: handmatig'
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Voorverwarmmodus
     options:
-      '0': Automatic
-      '1': Manual
+      '0': Automatisch
+      '1': Handmatig
   ESSPreHeatingReservedSOC:
     attributes:
-      comment: 'Range: [0.00,100.00]'
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Preheating Reserved SoC
+      comment: 'Bereik: [0,00,100,00]'
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Voorverwarmen van gereserveerde SoC
   ESSPreHeatingTOUTargetPower:
     attributes:
-      comment: '<0: discharging, >0: charging'
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: TOU {slot} Target Charging/Discharging Power
+      comment: '<0: ontladen, >0: opladen'
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: TOU {slot} Doellaad-/ontlaadvermogen
   ESSPreHeatingTOUTime:
     attributes:
-      comment: Epoch seconds with timezone; local time interpretation depends on the device.
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Hybrid Inverter
+      comment: Epoch-seconden met tijdzone; De interpretatie van de lokale tijd is afhankelijk van het apparaat.
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Hybride omvormer
   ESSPreHeatingTOUTimeEnd:
     attributes:
-      comment: Epoch seconds with timezone; local time interpretation depends on the device.
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Hybrid Inverter
+      comment: Epoch-seconden met tijdzone; De interpretatie van de lokale tijd is afhankelijk van het apparaat.
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Hybride omvormer
   ESSPreHeatingTOUTimeStart:
     attributes:
-      comment: Epoch seconds with timezone; local time interpretation depends on the device.
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: Hybrid Inverter
+      comment: Epoch-seconden met tijdzone; De interpretatie van de lokale tijd is afhankelijk van het apparaat.
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Hybride omvormer
   ESSTotalChargedEnergy:
     attributes:
       source: Modbus-register {address}
@@ -781,13 +783,13 @@ class:
     name: Netfrequentie
   GridMaxExportLimit:
     attributes:
-      comment: The maximum active power fed into the grid must not exceed the value configured in this sensor. Grid Sensor needed. Takes effect globally regardless of the EMS operating mode
+      comment: Het maximale actieve vermogen dat aan het elektriciteitsnet wordt geleverd, mag de in deze sensor geconfigureerde waarde niet overschrijden. Rastersensor nodig. Wordt wereldwijd van kracht, ongeacht de EMS-bedrijfsmodus
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Net Max Exportlimiet
   GridMaxImportLimit:
     attributes:
-      comment: The maximum active power absorbed from the grid must not exceed the value configured in this sensor. Grid Sensor needed. Takes effect globally regardless of the EMS operating mode
+      comment: Het maximale actieve vermogen dat uit het elektriciteitsnet wordt opgenomen, mag de in deze sensor geconfigureerde waarde niet overschrijden. Rastersensor nodig. Wordt wereldwijd van kracht, ongeacht de EMS-bedrijfsmodus
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Net Max Importlimiet
@@ -805,9 +807,9 @@ class:
     name: Reactief vermogen fase {phase}
   GridPowerLossLockoutAlarmClear:
     attributes:
-      comment: Write 1 to clear the grid power loss lockout alarm
-    name: Grid Power Loss Lockout Alarm Clear
-    name_on: Clear
+      comment: Schrijf 1 om het blokkeringsalarm bij verlies van netstroom te wissen
+    name: Alarm voor uitsluiting netstroomverlies gewist
+    name_on: Duidelijk
   GridSensor:
     name: Sigenergy-installatie Netsensor {plant_suffix}
   GridSensorActivePower:
@@ -1121,6 +1123,10 @@ class:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Temperatuur
+  LA:
+    name: '{model_id} {serial} LA'
+  LB:
+    name: '{model_id} {serial} LB'
   LineVoltage:
     attributes:
       source: Modbus-register {address}
@@ -1135,6 +1141,8 @@ class:
     name: MQTT Fysieke Publicaties
   MQTTPublishFailures:
     name: MQTT Publicatiefouten
+  MV:
+    name: '{model_id} {serial} MV'
   MaxAbsorptionPower:
     attributes:
       source: Modbus-register {address}
@@ -1169,13 +1177,13 @@ class:
     name: Max Ontlaadvermogen
   MaxChargingLimit:
     attributes:
-      comment: 'The maximum charging power of the ESS in the plant must not exceed the value configured in this sensor. Range: [0, Rated ESS charging power]{active_config}'
+      comment: 'Het maximale laadvermogen van de ESS in de installatie mag de in deze sensor geconfigureerde waarde niet overschrijden. Bereik: [0, nominaal ESS-laadvermogen]{active_config}'
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Max Laadlimiet
   MaxDischargingLimit:
     attributes:
-      comment: 'The maximum discharging power of the ESS in the plant must not exceed the value configured in this sensor. Range: [0, Rated ESS discharging power]{active_config}'
+      comment: 'Het maximale ontlaadvermogen van de ESS in de installatie mag de in deze sensor geconfigureerde waarde niet overschrijden. Bereik: [0, nominaal ESS-ontlaadvermogen]{active_config}'
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Max Ontlaadlimiet
@@ -1251,258 +1259,913 @@ class:
     name: PACK/BCU Aantal
   PCCPowerFactorAdjustmentTargetValueGridExport:
     attributes:
-      comment: 'When selling electricity at the grid connection point, the power factor must be controlled to the value configured in this sensor. Range: [(-1.0, -0.8) U (0.8, 1.0)]. Grid Sensor needed.'
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PCC Power Factor Adjustment Target Value (Grid Export)
+      comment: 'Bij de verkoop van elektriciteit op het netaansluitpunt moet de arbeidsfactor worden geregeld op de waarde die in deze sensor is geconfigureerd. Bereik: [(-1,0, -0,8) U (0,8, 1,0)]. Rastersensor nodig.'
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: PCC-vermogensfactoraanpassing, doelwaarde (netexport)
   PCCPowerFactorAdjustmentTargetValueGridImport:
     attributes:
-      comment: 'When purchasing electricity at the grid connection point, the power factor must be controlled to the value configured in this sensor. Range: [(-1.0, -0.8) U (0.8, 1.0)]. Grid Sensor needed.'
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PCC Power Factor Adjustment Target Value (Grid Import)
+      comment: 'Bij de inkoop van elektriciteit op het netaansluitpunt moet de arbeidsfactor worden geregeld op de waarde die in deze sensor is geconfigureerd. Bereik: [(-1,0, -0,8) U (0,8, 1,0)]. Rastersensor nodig.'
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: PCC-vermogensfactoraanpassing, doelwaarde (netimport)
   PCSMaxExportLimit:
     attributes:
-      comment: "The maximum active power output of the inverter in the plant must not exceed the value configured in this sensor. Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally."
+      comment: "Het maximale werkelijke vermogen van de omvormer in de installatie mag de in deze sensor geconfigureerde waarde niet overschrijden. Bereik:[0, 0xFFFFFFFE]。Met waarde 0xFFFFFFFF is het register niet geldig. In alle andere gevallen wordt het wereldwijd van kracht."
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: PCS Max Exportlimiet
   PCSMaxImportLimit:
     attributes:
-      comment: "The maximum active power input of the inverter in the plant must not exceed the value configured in this sensor. Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally."
+      comment: "Het maximale actieve vermogen van de omvormer in de installatie mag de in deze sensor geconfigureerde waarde niet overschrijden. Bereik:[0, 0xFFFFFFFE]。Met waarde 0xFFFFFFFF is het register niet geldig. In alle andere gevallen wordt het wereldwijd van kracht."
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: PCS Max Importlimiet
   PID:
-    name: Sigenergy Potential Induced Degradation Device {sequence_suffix}
+    name: '{model_id} {serial}'
+  PIDABLineVoltage:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: AB-lijnspanning
+  PIDAlarm1:
+    alarm:
+      '0': Softwareversie komt niet overeen
+      '1': Software- en hardwareversie komen niet overeen
+      '2': Opstartfout
+      '3': Alarm voor isolatieweerstand
+      '4': Isolatieweerstand vooralarm
+      '5': Overtemperatuur
+      '6': Voedingsmodule abnormaal
+      '7': Fout ventilator
+      '8': Gereserveerd
+      '9': Overspanningsbeveiliging van de omvormerbus
+      '10': Uitgangsoverspanningsbeveiliging
+      '11': Overspanningsbeveiliging van de omvormeruitgang
+      '12': Overstroombeveiliging van de omvormeruitgang
+      '13': Uitgangsoverstroombeveiliging
+      '14': Uitgangsfout
+      '15': Rs485-communicatie abnormaal
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Wekker 1
+  PIDAlarm2:
+    alarm:
+      '0': Verlies van netstroom
+      '1': Overspanning van het net
+      '2': Onderspanning van het net
+      '3': Rasteroverfrequentie
+      '4': Netonderfrequentie
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Wekker 2
+  PIDAlarms:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Alarmen
+  PIDBCLineVoltage:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: BC-lijnspanning
+  PIDBusVoltage:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Busspanning
+  PIDCALineVoltage:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: CA-lijnspanning
   PIDCommunicationStatus:
     attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID Communication Status
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Communicatiestatus
+  PIDGridFrequency:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Netfrequentie
+  PIDInternalTemperature1:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Interne temperatuur 1
+  PIDInternalTemperature2:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Interne temperatuur 2
+  PIDInternalTemperature3:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Interne temperatuur 3
+  PIDInternalTemperature4:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Interne temperatuur 4
+  PIDInternalTemperature5:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Interne temperatuur 5
+  PIDInverterCurrent:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Omvormerstroom
+  PIDInverterVoltage:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Omvormer spanning
   PIDMachineFirmwareVersion:
     attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID Machine Firmware Version
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Firmwareversie
   PIDModelType:
     attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID Model Type
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Modeltype
+  PIDOutputCurrent:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Uitgangsstroom
+  PIDOutputVoltage:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Uitgangsspanning
+  PIDPhaseAVoltage:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase A-spanning
+  PIDPhaseBVoltage:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase B-spanning
+  PIDPhaseCVoltage:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase C-spanning
   PIDRunningStatus:
     attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID Running Status
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Lopende status
   PIDSerialNumber:
     attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID Serial Number
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Serienummer
   PIDStartStop:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID Start/Stop
+    name: PID-start/stop
+    name_off: Stop
+    name_on: Begin
     options:
       '0': Stop
-      '1': Start
-  PID_ABLineVoltage:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID AB Line Voltage
-  PID_BCLineVoltage:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID BC Line Voltage
-  PID_BusVoltage:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID Bus Voltage
-  PID_CALineVoltage:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID CA Line Voltage
-  PID_GridFrequency:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID Grid Frequency
-  PID_InternalTemperature1:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID Internal Temperature 1
-  PID_InternalTemperature2:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID Internal Temperature 2
-  PID_InternalTemperature3:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID Internal Temperature 3
-  PID_InternalTemperature4:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID Internal Temperature 4
-  PID_InternalTemperature5:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID Internal Temperature 5
-  PID_InverterCurrent:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID Inverter Current
-  PID_InverterVoltage:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID Inverter Voltage
-  PID_OutputCurrent:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID Output Current
-  PID_OutputVoltage:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID Output Voltage
-  PID_PhaseAVoltage:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID Phase A Voltage
-  PID_PhaseBVoltage:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID Phase B Voltage
-  PID_PhaseCVoltage:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PID Phase C Voltage
+      '1': Begin
   PSS:
-    name: Sigenergy Packaged Substation System {sequence_suffix}
+    name: '{model_id} {serial}'
+  PSSCommunicationStatus:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Communicatiestatus
+  PSSDistributionCabinetABLineVoltage:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: AB-lijnspanning
+  PSSDistributionCabinetBCLineVoltage:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: BC-lijnspanning
+  PSSDistributionCabinetCALineVoltage:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: CA-lijnspanning
+  PSSDistributionCabinetForwardActiveEnergy:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Voorwaartse actieve energie
+  PSSDistributionCabinetForwardReactiveEnergy:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Voorwaartse reactieve energie
+  PSSDistributionCabinetFrequency:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Frequentie
+  PSSDistributionCabinetHumidity:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Vochtigheid
+  PSSDistributionCabinetPhaseAActivePower:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase A Actief vermogen
+  PSSDistributionCabinetPhaseAApparentPower:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase A Schijnbaar vermogen
+  PSSDistributionCabinetPhaseACurrent:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase A-stroom
+  PSSDistributionCabinetPhaseAPowerFactor:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase A Vermogensfactor
+  PSSDistributionCabinetPhaseAReactivePower:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase A Reactief vermogen
+  PSSDistributionCabinetPhaseAVoltage:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase A-spanning
+  PSSDistributionCabinetPhaseBActivePower:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase B Actief vermogen
+  PSSDistributionCabinetPhaseBApparentPower:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase B Schijnbaar vermogen
+  PSSDistributionCabinetPhaseBCurrent:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase B-stroom
+  PSSDistributionCabinetPhaseBPowerFactor:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase B-vermogensfactor
+  PSSDistributionCabinetPhaseBReactivePower:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase B reactief vermogen
+  PSSDistributionCabinetPhaseBVoltage:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase B-spanning
+  PSSDistributionCabinetPhaseCActivePower:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase C Actief vermogen
+  PSSDistributionCabinetPhaseCApparentPower:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase C Schijnbaar vermogen
+  PSSDistributionCabinetPhaseCCurrent:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase C-stroom
+  PSSDistributionCabinetPhaseCPowerFactor:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase C Vermogensfactor
+  PSSDistributionCabinetPhaseCReactivePower:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase C reactief vermogen
+  PSSDistributionCabinetPhaseCVoltage:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase C-spanning
+  PSSDistributionCabinetReverseActiveEnergy:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Omgekeerde actieve energie
+  PSSDistributionCabinetReverseReactiveEnergy:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Omgekeerde reactieve energie
+  PSSDistributionCabinetTemperature:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Temperatuur
+  PSSDistributionCabinetTotalActivePower:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Totaal actief vermogen
+  PSSDistributionCabinetTotalApparentPower:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Totaal schijnbaar vermogen
+  PSSDistributionCabinetTotalPowerFactor:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Totale vermogensfactor
+  PSSDistributionCabinetTotalReactivePower:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Totaal reactief vermogen
+  PSSLAABLineVoltage:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: AB-lijnspanning
+  PSSLABCLineVoltage:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: BC-lijnspanning
+  PSSLACALineVoltage:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: CA-lijnspanning
+  PSSLAForwardActiveEnergy:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Voorwaartse actieve energie
+  PSSLAForwardReactiveEnergy:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Voorwaartse reactieve energie
+  PSSLAFrequency:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Frequentie
+  PSSLAHumidity:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Vochtigheid
   PSSLALowVoltageCabinetCircuitBreakerSwitchOff:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PSS LA Low Voltage Cabinet Circuit Breaker Switch Off
+    name: Stroomonderbreker laagspanningskast uitgeschakeld
+    name_on: Schakel LA laagspanningskaststroomonderbreker uit
     options:
-      '0': No Action
-      '1': Switch Off
+      '0': Geen actie
+      '1': Schakel uit
   PSSLALowVoltageCabinetCircuitBreakerSwitchOn:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PSS LA Low Voltage Cabinet Circuit Breaker Switch On
+    name: Laagspanningsstroomonderbreker in kast ingeschakeld
+    name_on: Schakel de laagspanningsstroomonderbreker LA in
     options:
-      '0': No Action
-      '1': Switch On
+      '0': Geen actie
+      '1': Schakel in
+  PSSLAPhaseAActivePower:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase A Actief vermogen
+  PSSLAPhaseAApparentPower:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase A Schijnbaar vermogen
+  PSSLAPhaseACurrent:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase A-stroom
+  PSSLAPhaseAPowerFactor:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase A Vermogensfactor
+  PSSLAPhaseAReactivePower:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase A Reactief vermogen
+  PSSLAPhaseAVoltage:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase A-spanning
+  PSSLAPhaseBActivePower:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase B Actief vermogen
+  PSSLAPhaseBApparentPower:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase B Schijnbaar vermogen
+  PSSLAPhaseBCurrent:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase B-stroom
+  PSSLAPhaseBPowerFactor:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase B-vermogensfactor
+  PSSLAPhaseBReactivePower:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase B reactief vermogen
+  PSSLAPhaseBVoltage:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase B-spanning
+  PSSLAPhaseCActivePower:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase C Actief vermogen
+  PSSLAPhaseCApparentPower:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase C Schijnbaar vermogen
+  PSSLAPhaseCCurrent:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase C-stroom
+  PSSLAPhaseCPowerFactor:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase C Vermogensfactor
+  PSSLAPhaseCReactivePower:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase C reactief vermogen
+  PSSLAPhaseCVoltage:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase C-spanning
+  PSSLAReverseActiveEnergy:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Omgekeerde actieve energie
+  PSSLAReverseReactiveEnergy:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Omgekeerde reactieve energie
+  PSSLATemperature:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Temperatuur
+  PSSLATotalActivePower:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Totaal actief vermogen
+  PSSLATotalApparentPower:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Totaal schijnbaar vermogen
+  PSSLATotalPowerFactor:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Totale vermogensfactor
+  PSSLATotalReactivePower:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Totaal reactief vermogen
+  PSSLBABLineVoltage:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: AB-lijnspanning
+  PSSLBBCLineVoltage:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: BC-lijnspanning
+  PSSLBCALineVoltage:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: CA-lijnspanning
+  PSSLBForwardActiveEnergy:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Voorwaartse actieve energie
+  PSSLBForwardReactiveEnergy:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Voorwaartse reactieve energie
+  PSSLBFrequency:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Frequentie
+  PSSLBHumidity:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Vochtigheid
   PSSLBLowVoltageCabinetCircuitBreakerSwitchOff:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PSS LB Low Voltage Cabinet Circuit Breaker Switch Off
+    name: Stroomonderbreker laagspanningskast uitgeschakeld
+    name_on: Schakel de LB laagspanningskaststroomonderbreker uit
     options:
-      '0': No Action
-      '1': Switch Off
+      '0': Geen actie
+      '1': Schakel uit
   PSSLBLowVoltageCabinetCircuitBreakerSwitchOn:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PSS LB Low Voltage Cabinet Circuit Breaker Switch On
+    name: Laagspanningsstroomonderbreker in kast ingeschakeld
+    name_on: Schakel de LB laagspanningskaststroomonderbreker in
     options:
-      '0': No Action
-      '1': Switch On
+      '0': Geen actie
+      '1': Schakel in
+  PSSLBPhaseAActivePower:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase A Actief vermogen
+  PSSLBPhaseAApparentPower:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase A Schijnbaar vermogen
+  PSSLBPhaseACurrent:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase A-stroom
+  PSSLBPhaseAPowerFactor:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase A Vermogensfactor
+  PSSLBPhaseAReactivePower:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase A Reactief vermogen
+  PSSLBPhaseAVoltage:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase A-spanning
+  PSSLBPhaseBActivePower:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase B Actief vermogen
+  PSSLBPhaseBApparentPower:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase B Schijnbaar vermogen
+  PSSLBPhaseBCurrent:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase B-stroom
+  PSSLBPhaseBPowerFactor:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase B-vermogensfactor
+  PSSLBPhaseBReactivePower:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase B reactief vermogen
+  PSSLBPhaseBVoltage:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase B-spanning
+  PSSLBPhaseCActivePower:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase C Actief vermogen
+  PSSLBPhaseCApparentPower:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase C Schijnbaar vermogen
+  PSSLBPhaseCCurrent:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase C-stroom
+  PSSLBPhaseCPowerFactor:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase C Vermogensfactor
+  PSSLBPhaseCReactivePower:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase C reactief vermogen
+  PSSLBPhaseCVoltage:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase C-spanning
+  PSSLBReverseActiveEnergy:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Omgekeerde actieve energie
+  PSSLBReverseReactiveEnergy:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Omgekeerde reactieve energie
+  PSSLBTemperature:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Temperatuur
+  PSSLBTotalActivePower:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Totaal actief vermogen
+  PSSLBTotalApparentPower:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Totaal schijnbaar vermogen
+  PSSLBTotalPowerFactor:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Totale vermogensfactor
+  PSSLBTotalReactivePower:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Totaal reactief vermogen
   PSSMVCabinetG3CircuitBreakerSwitchOff:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PSS MV Cabinet G3 Circuit Breaker Switch Off
+    name: G3 Stroomonderbrekerschakelaar uitgeschakeld
+    name_on: Schakel de stroomonderbreker van de MV-kast G3 uit
     options:
-      '0': No Action
-      '1': Switch Off
+      '0': Geen actie
+      '1': Schakel uit
   PSSMVCabinetG3CircuitBreakerSwitchOn:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PSS MV Cabinet G3 Circuit Breaker Switch On
+    name: G3 Stroomonderbrekerschakelaar Aan
+    name_on: Schakel de stroomonderbreker van de MV-kast G3 in
     options:
-      '0': No Action
-      '1': Switch On
+      '0': Geen actie
+      '1': Schakel in
+  PSSMVFrequency:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Frequentie
+  PSSMVG1CableL1PhaseTemperature:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: G1 Kabel L1 Fasetemperatuur
+  PSSMVG1CableL2PhaseTemperature:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: G1 Kabel L2 Fasetemperatuur
+  PSSMVG1CableL3PhaseTemperature:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: G1 Kabel L3 Fasetemperatuur
+  PSSMVG2CableL1PhaseTemperature:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: G2 Kabel L1 Fasetemperatuur
+  PSSMVG2CableL2PhaseTemperature:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: G2 Kabel L2 Fasetemperatuur
+  PSSMVG2CableL3PhaseTemperature:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: G2 Kabel L3 Fasetemperatuur
+  PSSMVG3CableL1PhaseTemperature:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: G3 Kabel L1 Fasetemperatuur
+  PSSMVG3CableL2PhaseTemperature:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: G3 Kabel L2 Fasetemperatuur
+  PSSMVG3CableL3PhaseTemperature:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: G3 Kabel L3 Fasetemperatuur
+  PSSMVHumidity:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Vochtigheid
+  PSSMVPhaseACurrent:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase A-stroom
+  PSSMVPhaseBCurrent:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase B-stroom
+  PSSMVPhaseCCurrent:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Fase C-stroom
+  PSSMVTemperature:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Temperatuur
+  PSSMVZeroSequenceCurrent:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Nulsequentiestroom
   PSSModelType:
     attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PSS Model Type
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Modeltype
   PSSSerialNumber:
     attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PSS Serial Number
-  PSS_LAFrequency:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Serienummer
+  PSSTeleindication1:
+    alarm:
+      '0': Meet- en regeleenheid algemene rit
+      '1': Meet- en regelunit algemeen alarm
+      '2': Transformator zwaar gas reis
+      '3': Transformator licht gasalarm
+      '4': Overdrukontlasting van de transformator
+      '5': Alarm voor laag oliepeil transformator
+      '6': Alarm hoog oliepeil transformator
+      '7': Alarm voor hoge temperatuur transformatorolie
+      '8': Oververhitting van de transformatorolie wordt uitgeschakeld
+      '9': Transformatorwikkeling alarm voor hoge temperatuur
+      '10': Uitschakeling door overtemperatuur van transformatorwikkeling
+      '11': Uitschakeling dubbele rooksensor laagspanningskamer
+      '12': Uitschakeling dubbele rooksensor middenspanningskamer
+      '13': Laagspanning kameronderhoud deur open trip
+      '14': Deur van de transformatorkamer opent
+      '15': LA Oververhittingsbeveiliging laagspanningskast
     attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PSS [LA] Frequency
-  PSS_LAPhaseAActivePower:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Tele-indicatie1
+  PSSTeleindication2:
+    alarm:
+      '0': LB-oververhittingsbeveiliging bij laagspanningskast
+      '1': Uitschakeling overtemperatuur kamer middenspanning
+      '2': Middenspanningskastisolatie gas-lagedrukalarm
+      '3': Noodstop
+      '4': Storing middenspanning kamerairconditioner/warmtewisselaar
+      '5': LA Storing in kamerwarmtewisselaar met lage spanning
+      '6': LB Storing kamerwarmtewisselaar met lage spanning
+      '7': Rookmelder voor laagspanning in de kamer
+      '8': Rookmelder voor middenspanning
+      '9': Uitschakeling van middenspanningskast G3-stroomonderbreker
+      '10': LA laagspanningskast SPD-fout
+      '11': LB laagspanningskast SPD-fout
+      '12': Verdeelkast SPD-fout
+      '13': LA alarm voor overtemperatuur laagspanningskast
+      '14': LB-alarm voor overtemperatuur van laagspanningskast
+      '15': Alarm voor overtemperatuur middenspanning kamer
     attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PSS [LA] Phase A Active Power
-  PSS_LAPhaseAVoltage:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Tele-indicatie2
+  PSSTeleindication3:
+    alarm:
+      '0': LA laagspanningskast IMD vooralarm
+      '1': LA laagspanningskast IMD-alarm
+      '2': LB laagspanningskast IMD vooralarm
+      '3': LB laagspanningskast IMD-alarm
+      '4': UPS-foutalarm
+      '5': LA Inschakeling laagspanningskastschakelaar
+      '6': LA Uitschakeling van laagspanningskastschakelaar
+      '7': LA Uitschakeling van stroomonderbreker laagspanningskast
+      '8': LA laagspanningskastschakelaar met afstandsbediening
+      '9': Inschakeling van laagspanningskastschakelaar LB
+      '10': LB-laagspanningskastschakelaar met uitschakeling
+      '11': Foutmelding LB-laagspanningskastschakelaar
+      '12': LB afstandsbediening voor laagspanningskastschakelaar
+      '13': Middenspanningskast G3 stroomonderbreker inschakelen
+      '14': Middenspanningskast G3 stroomonderbreker uitschakeling
+      '15': Middenspanningskast G3-scheidingsschakelaar inschakelen
     attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PSS [LA] Phase A Voltage
-  PSS_LATotalActivePower:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Tele-indicatie3
+  PSSTeleindication4:
+    alarm:
+      '0': Middenspanningskast G3 scheidingsschakelaar uitschakeling
+      '1': Middenspanningskast G3 aardingsschakelaar inschakelbaar
+      '2': Middenspanningskast G3 aardingsschakelaar uitschakeling
+      '3': Middenspanningskast G3 energieopslagspoel niet opgeladen
+      '4': Middenspanningskast G3 stroomonderbreker afstandsbediening
+      '5': Middenspanningskast G1 lastschakelaar inschakeling
+      '6': Middenspanningskast G1 lastschakelaar uitschakeling
+      '7': Middenspanningskast G1 aardingsschakelaar inschakelbaar
+      '8': Middenspanningskast G1 aardingsschakelaar uitschakeling
+      '9': Middenspanningskast G2 lastschakelaar inschakeling
+      '10': Middenspanningskast G2 lastschakelaar uitschakeling
+      '11': Middenspanningskast G2 aardingsschakelaar inschakelbaar
+      '12': Middenspanningskast G2 aardingsschakelaar uitschakeling
+      '13': Laagspanningskamer LA bedieningsdeur open
+      '14': Laagspanningsruimte LB-bedieningsdeur open
+      '15': Middenspanningskamerdeur open
     attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PSS [LA] Total Active Power
-  PSS_LATotalReactivePower:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Tele-indicatie4
+  PSSTeleindication5:
+    alarm:
+      '0': Middenspanningskast G1 kabel L1 fase overtemperatuur
+      '1': Middenspanningskast G1 kabel L2 fase overtemperatuur
+      '2': Middenspanningskast G1 kabel L3 fase overtemperatuur
+      '3': Middenspanningskast G2-kabel L1-fase overtemperatuur
+      '4': Middenspanningskast G2-kabel L2-fase overtemperatuur
+      '5': Middenspanningskast G2-kabel L3-fase overtemperatuur
+      '6': Middenspanningskast G3 kabel L1 fase overtemperatuur
+      '7': Middenspanningskast G3-kabel L2-fase overtemperatuur
+      '8': Middenspanningskast G3-kabel L3-fase overtemperatuur
+      '9': Middenspanningsbeveiliging algemene bescherming
+      '10': Middenspanningsbeveiliging algemeen alarm
     attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PSS [LA] Total Reactive Power
-  PSS_MVFrequency:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Tele-indicatie5
+  PSSTransformerOilSurfaceTemperature:
     attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PSS [MV] Frequency
-  PSS_MVPhaseACurrent:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Oppervlaktetemperatuur olie
+  PSSTransformerWindingTemperature:
     attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PSS [MV] Phase A Current
-  PSS_MVPhaseBCurrent:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PSS [MV] Phase B Current
-  PSS_MVPhaseCCurrent:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PSS [MV] Phase C Current
-  PSS_MVTemperature:
-    attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PSS [MV] Temperature
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Wikkeltemperatuur
   PVCurrentSensor:
     attributes:
       source: Modbus-register {address}
@@ -1512,7 +2175,7 @@ class:
     name: PV-omvormer
   PVMaxPowerLimit:
     attributes:
-      comment: The maximum output power of the PV strings in the plant must not exceed the value configured in this sensor{active_config}
+      comment: Het maximale uitgangsvermogen van de PV-strings in de installatie mag de in deze sensor{active_config} geconfigureerde waarde niet overschrijden
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: PV Max Vermogenslimiet
@@ -1548,13 +2211,13 @@ class:
     name: Spanning
   PhaseActivePowerFixedAdjustmentTargetValue:
     attributes:
-      comment: Valid only when Output Type is L1/L2/L3/N. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.
+      comment: Alleen geldig als Uitvoertype L1/L2/L3/N is. Om dit register in werking te laten treden, moet het externe EMS zijn ingeschakeld en moet het EMS in de PCS-afstandsbedieningsmodus staan.
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Instelwaarde vaste aanpassing actief vermogen fase {phase}
   PhaseActivePowerPercentageAdjustmentTargetValue:
     attributes:
-      comment: "Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect."
+      comment: "Alleen geldig als Uitvoertype L1/L2/L3/N is. Bereik: [-100,00,100,00]. Om dit register in werking te laten treden, moet het externe EMS zijn ingeschakeld en moet het EMS in de PCS-afstandsbedieningsmodus staan."
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Instelwaarde percentage aanpassing actief vermogen fase {phase}
@@ -1565,13 +2228,13 @@ class:
     name: Stroom fase{phase4name}
   PhaseQSAdjustmentTargetValue:
     attributes:
-      comment: "Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect."
+      comment: "Alleen geldig als Uitvoertype L1/L2/L3/N is. Bereik: [-60,00,60,00]. Om dit register in werking te laten treden, moet het externe EMS zijn ingeschakeld en moet het EMS in de PCS-afstandsbedieningsmodus staan."
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Instelwaarde vaste aanpassing Q/S fase {phase}
   PhaseReactivePowerFixedAdjustmentTargetValue:
     attributes:
-      comment: Valid only when Output Type is L1/L2/L3/N. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.
+      comment: Alleen geldig als Uitvoertype L1/L2/L3/N is. Om dit register in werking te laten treden, moet het externe EMS zijn ingeschakeld en moet het EMS in de PCS-afstandsbedieningsmodus staan.
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Instelwaarde vaste aanpassing reactief vermogen fase {phase}
@@ -1636,14 +2299,14 @@ class:
     name: Totale PV Productie
   PlantPVTotalGenerationToday:
     attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PV Total Generation Today
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Totale PV-opwekking vandaag
   PlantPVTotalGenerationYesterday:
     attributes:
-      source: Modbus Register {address}
-      source_range: Modbus Registers {start}-{end}
-    name: PV Total Generation Yesterday
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Totale PV-opwekking gisteren
   PlantPhaseActivePower:
     attributes:
       source: Modbus-register {address}
@@ -1717,7 +2380,7 @@ class:
     name: Arbeidsfactor
   PowerFactorAdjustmentTargetValue:
     attributes:
-      comment: "Range: [(-1.0, -0.8) U (0.8, 1.0)]. Grid Sensor needed. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect."
+      comment: "Bereik: [(-1,0, -0,8) U (0,8, 1,0)]. Rastersensor nodig. Om dit register in werking te laten treden, moet het externe EMS zijn ingeschakeld en moet het EMS in de PCS-afstandsbedieningsmodus staan."
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Arbeidsfactor Instelwaarde
@@ -1729,7 +2392,7 @@ class:
     name: Protocolversie
   QSAdjustmentTargetValue:
     attributes:
-      comment: "Range: [-60.0,60.00]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect."
+      comment: "Bereik: [-60,0,60,00]. Om dit register in werking te laten treden, moet het externe EMS zijn ingeschakeld en moet het EMS in de PCS-afstandsbedieningsmodus staan."
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Q/S Instelwaarde
@@ -1770,7 +2433,7 @@ class:
     name: Reactief Vermogen
   ReactivePowerFixedAdjustmentTargetValue:
     attributes:
-      comment: "Range: [-60.00 * base value ,60.00 * base value]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect."
+      comment: "Bereik: [-60,00 * basiswaarde, 60,00 * basiswaarde]. Om dit register in werking te laten treden, moet het externe EMS zijn ingeschakeld en moet het EMS in de PCS-afstandsbedieningsmodus staan."
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Reactief Vermogen Vast Instelwaarde
@@ -1801,7 +2464,7 @@ class:
       '4': Commando laden (eerst stroom van PV verbruiken)
       '5': Commando ontladen (eerst PV-vermogen uitvoeren)
       '6': Commando ontladen (eerst batterijvermogen uitvoeren)
-      '8': V2G (Vehicle to Grid)
+      '8': V2G (voertuig naar elektriciteitsnet)
   RemoteEMSLimit:
     attributes:
       source: Modbus-register {address}
@@ -1818,6 +2481,16 @@ class:
       source_range: Modbus-registers {start}-{end}
     name: Gereserveerd
   Reserved40026:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Gereserveerd
+  Reserved40069:
+    attributes:
+      source: Modbus-register {address}
+      source_range: Modbus-registers {start}-{end}
+    name: Gereserveerd
+  Reserved41001:
     attributes:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
@@ -2050,6 +2723,8 @@ class:
     attributes:
       source: PV Vermogen + Derde Partij PV Vermogen
     name: Totaal PV Vermogen
+  Transformer:
+    name: '{model_id} {serial} Transformator'
   WriteOnlySensor:
     name_off: Uitschakelen
     name_on: Inschakelen
@@ -2134,6 +2809,8 @@ cli:
     help: 'De Sigenergy AC-lader Modbus Apparaat-ID. Er kunnen meerdere apparaat-IDs worden opgegeven, gescheiden door komma''s.'
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY:
     help: 'Probeer Sigenergy Modbus-hosts en apparaat-IDs automatisch te ontdekken. Indien ''once'' is opgegeven, vindt auto-discovery alleen plaats als er geen bestaande resultaten voor automatische detectie gevonden zijn. Indien ''force'', zal auto-discovery alle eerder ontdekte Modbus-hosts en apparaat-IDs overschrijven. Indien niet opgegeven, is auto-discovery uitgeschakeld.'
+  SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_EXCLUDE:
+    help: Een door komma's gescheiden lijst met apparaatklassenamen die moeten worden uitgesloten van automatische detectie. De standaardinstelling is 'PID,PSS'.
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_NETWORKS:
     help: Een door komma's gescheiden lijst van IPv4-netwerken in CIDR-notatie om te scannen tijdens automatische detectie (bijv. '192.168.1.0/24,10.0.0.0/24'). Gebruik dit om netwerken te scannen die toegankelijk zijn via routering maar niet rechtstreeks zijn aangesloten op een netwerkinterface.
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_PING_TIMEOUT:
@@ -2154,8 +2831,12 @@ cli:
     help: 'Stel het pymodbus-logniveau in.'
   SIGENERGY2MQTT_MODBUS_NO_REMOTE_EMS:
     help: 'Publiceer geen lees-schrijf sensoren voor remote EMS-integratie.'
+  SIGENERGY2MQTT_MODBUS_PID_DEVICE_ID:
+    help: De Sigenergy PID Modbus-apparaat-ID. Er kunnen meerdere apparaat-ID's worden opgegeven, gescheiden door komma's.
   SIGENERGY2MQTT_MODBUS_PORT:
     help: 'Het Sigenergy Modbus-poortnummer (standaard: 502)'
+  SIGENERGY2MQTT_MODBUS_PSS_DEVICE_ID:
+    help: De Sigenergy PSS Modbus-apparaat-ID. Er kunnen meerdere apparaat-ID's worden opgegeven, gescheiden door komma's.
   SIGENERGY2MQTT_MODBUS_READ_ONLY:
     help: 'Publiceer alleen alleen-lezen sensoren naar MQTT.'
   SIGENERGY2MQTT_MODBUS_RETRIES:
