@@ -508,6 +508,8 @@ class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
         Returns:
             True if value is valid
         """
+        if raw_value is not None and isinstance(raw_value, (float, int)) and self.data_type in (ModbusDataType.UINT16, ModbusDataType.UINT32, ModbusDataType.UINT64) and raw_value < 0:
+            raise ValueError(f"Negative value {raw_value} is not valid for unsigned data type {self.data_type.name}")
         return True
 
 
