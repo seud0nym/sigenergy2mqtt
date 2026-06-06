@@ -152,6 +152,7 @@ class:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: PCS
   Alarm2Sensor:
     alarm:
       '0': Leak current out of limit
@@ -166,6 +167,7 @@ class:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: PCS
   Alarm3Sensor:
     alarm:
       '0': Software version mismatch
@@ -178,6 +180,7 @@ class:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: ESS
   Alarm4Sensor:
     alarm:
       '0': Software version mismatch
@@ -191,6 +194,7 @@ class:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: GW
   Alarm5Sensor:
     alarm:
       '0': Software version mismatch
@@ -202,6 +206,7 @@ class:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+    name: EVDC
   Alarm6:
     alarm:
       '0': Gateway communication abnormal
@@ -533,13 +538,13 @@ class:
       comment: Epoch seconds with timezone; local time interpretation depends on the device.
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
-    name: Hybrid Inverter
+    name: TOU {slot} End
   ESSPreHeatingTOUTimeStart:
     attributes:
       comment: Epoch seconds with timezone; local time interpretation depends on the device.
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
-    name: Hybrid Inverter
+    name: TOU {slot} Start
   ESSTotalChargedEnergy:
     attributes:
       source: Modbus Register {address}

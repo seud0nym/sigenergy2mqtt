@@ -152,6 +152,7 @@ class:
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: PCS
   Alarm2Sensor:
     alarm:
       '0': 누설 전류 한계 초과
@@ -166,6 +167,7 @@ class:
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: PCS
   Alarm3Sensor:
     alarm:
       '0': 소프트웨어 버전 불일치
@@ -178,6 +180,7 @@ class:
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: ESS
   Alarm4Sensor:
     alarm:
       '0': 소프트웨어 버전 불일치
@@ -191,6 +194,7 @@ class:
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: GW
   Alarm5Sensor:
     alarm:
       '0': 소프트웨어 버전 불일치
@@ -202,6 +206,7 @@ class:
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+    name: EVDC
   Alarm6:
     alarm:
       '0': 게이트웨이 통신 이상
@@ -533,13 +538,13 @@ class:
       comment: 시간대가 포함된 에포크 초입니다. 현지 시간 해석은 장치에 따라 다릅니다.
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
-    name: 하이브리드 인버터
+    name: TOU {slot} 끝
   ESSPreHeatingTOUTimeStart:
     attributes:
       comment: 시간대가 포함된 에포크 초입니다. 현지 시간 해석은 장치에 따라 다릅니다.
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
-    name: 하이브리드 인버터
+    name: TOU {slot} 시작
   ESSTotalChargedEnergy:
     attributes:
       source: Modbus 레지스터 {address}

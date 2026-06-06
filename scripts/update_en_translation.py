@@ -703,7 +703,24 @@ class TranslationExtractor(ast.NodeVisitor):
                     values = get_ast_string_values(arg_node)
                     name = values[0] if values else None
 
-        # Apply per-class dynamic fallbacks.
+            # ── NEW: if the expected index didn't yield a string, scan all
+            # positional args for any string value.  This handles intermediate
+            # base classes whose __init__ signature puts `name` at a non-standard
+            # position (e.g. index 2 as in ESSPreHeatingTOUTime).
+            if not name or name in _UNRESOLVED_TOKENS:
+                for arg_node in node.args:
+                    if isinstance(arg_node, ast.Name) and arg_node.id in self._local_vars:
+                        candidate = self._local_vars[arg_node.id]
+                    elif isinstance(arg_node, (ast.Constant, ast.JoinedStr, ast.BinOp)):
+                        vals = get_ast_string_values(arg_node)
+                        candidate = vals[0] if vals else None
+                    else:
+                        continue
+                    if candidate and candidate not in _UNRESOLVED_TOKENS and not is_placeholder_only(candidate):
+                        name = candidate
+                        break
+
+        # Apply per-class dynamic fallbacks.  (unchanged)
         if (not name or name in _UNRESOLVED_TOKENS) and self._current_class:
             name = DYNAMIC_CLASS_NAMES.get(self._current_class, name)
 

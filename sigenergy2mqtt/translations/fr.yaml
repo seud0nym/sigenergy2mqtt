@@ -152,6 +152,7 @@ class:
     attributes:
       source: Registre Modbus {address}
       source_range: Registres Modbus {start}-{end}
+    name: PC
   Alarm2Sensor:
     alarm:
       '0': Courant de fuite hors limite
@@ -166,6 +167,7 @@ class:
     attributes:
       source: Registre Modbus {address}
       source_range: Registres Modbus {start}-{end}
+    name: PC
   Alarm3Sensor:
     alarm:
       '0': Incompatibilité de version logicielle
@@ -178,6 +180,7 @@ class:
     attributes:
       source: Registre Modbus {address}
       source_range: Registres Modbus {start}-{end}
+    name: ESS
   Alarm4Sensor:
     alarm:
       '0': Incompatibilité de version logicielle
@@ -191,6 +194,7 @@ class:
     attributes:
       source: Registre Modbus {address}
       source_range: Registres Modbus {start}-{end}
+    name: GW
   Alarm5Sensor:
     alarm:
       '0': Incompatibilité de version logicielle
@@ -202,6 +206,7 @@ class:
     attributes:
       source: Registre Modbus {address}
       source_range: Registres Modbus {start}-{end}
+    name: EVDC
   Alarm6:
     alarm:
       '0': Communication de la passerelle anormale
@@ -533,13 +538,13 @@ class:
       comment: Secondes d'époque avec fuseau horaire ; L’interprétation de l’heure locale dépend de l’appareil.
       source: Registre Modbus {address}
       source_range: Registres Modbus {start}-{end}
-    name: Onduleur hybride
+    name: TOU {slot} Fin
   ESSPreHeatingTOUTimeStart:
     attributes:
       comment: Secondes d'époque avec fuseau horaire ; L’interprétation de l’heure locale dépend de l’appareil.
       source: Registre Modbus {address}
       source_range: Registres Modbus {start}-{end}
-    name: Onduleur hybride
+    name: TOU {slot} Démarrer
   ESSTotalChargedEnergy:
     attributes:
       source: Registre Modbus {address}

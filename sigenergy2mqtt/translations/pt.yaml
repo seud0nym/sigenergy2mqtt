@@ -152,6 +152,7 @@ class:
     attributes:
       source: Registo Modbus {address}
       source_range: Registos Modbus {start}-{end}
+    name: PCS
   Alarm2Sensor:
     alarm:
       '0': Corrente de fuga fora do limite
@@ -166,6 +167,7 @@ class:
     attributes:
       source: Registo Modbus {address}
       source_range: Registos Modbus {start}-{end}
+    name: PCS
   Alarm3Sensor:
     alarm:
       '0': Incompatibilidade de versão de software
@@ -178,6 +180,7 @@ class:
     attributes:
       source: Registo Modbus {address}
       source_range: Registos Modbus {start}-{end}
+    name: ESE
   Alarm4Sensor:
     alarm:
       '0': Incompatibilidade de versão de software
@@ -191,6 +194,7 @@ class:
     attributes:
       source: Registo Modbus {address}
       source_range: Registos Modbus {start}-{end}
+    name: GW
   Alarm5Sensor:
     alarm:
       '0': Incompatibilidade de versão de software
@@ -202,6 +206,7 @@ class:
     attributes:
       source: Registo Modbus {address}
       source_range: Registos Modbus {start}-{end}
+    name: EVDC
   Alarm6:
     alarm:
       '0': Comunicação do gateway anormal
@@ -508,8 +513,8 @@ class:
       source_range: Registos Modbus {start}-{end}
     name: Modo de pré-aquecimento
     options:
-      '1': Manual
       '0': Automático
+      '1': Manual
   ESSPreHeatingReservedSOC:
     attributes:
       comment: 'Faixa: [0,00,100,00]'
@@ -533,13 +538,13 @@ class:
       comment: Segundos de época com fuso horário; a interpretação da hora local depende do dispositivo.
       source: Registo Modbus {address}
       source_range: Registos Modbus {start}-{end}
-    name: Inversor Híbrido
+    name: TOU {slot} Fim
   ESSPreHeatingTOUTimeStart:
     attributes:
       comment: Segundos de época com fuso horário; a interpretação da hora local depende do dispositivo.
       source: Registo Modbus {address}
       source_range: Registos Modbus {start}-{end}
-    name: Inversor Híbrido
+    name: TOU {slot} Iniciar
   ESSTotalChargedEnergy:
     attributes:
       source: Registo Modbus {address}

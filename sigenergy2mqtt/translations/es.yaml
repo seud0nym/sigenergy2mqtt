@@ -152,6 +152,7 @@ class:
     attributes:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
+    name: piezas
   Alarm2Sensor:
     alarm:
       '0': Corriente de fuga fuera de límite
@@ -166,6 +167,7 @@ class:
     attributes:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
+    name: piezas
   Alarm3Sensor:
     alarm:
       '0': Discrepancia de versión de software
@@ -178,6 +180,7 @@ class:
     attributes:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
+    name: ESS
   Alarm4Sensor:
     alarm:
       '0': Discrepancia de versión de software
@@ -191,6 +194,7 @@ class:
     attributes:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
+    name: G.W.
   Alarm5Sensor:
     alarm:
       '0': Discrepancia de versión de software
@@ -202,6 +206,7 @@ class:
     attributes:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
+    name: EVCD
   Alarm6:
     alarm:
       '0': Comunicación de Gateway anormal
@@ -508,8 +513,8 @@ class:
       source_range: Registros Modbus {start}-{end}
     name: Modo de precalentamiento
     options:
-      '1': Manual
       '0': Automático
+      '1': Manual
   ESSPreHeatingReservedSOC:
     attributes:
       comment: 'Rango: [0,00,100,00]'
@@ -533,13 +538,13 @@ class:
       comment: Segundos de época con zona horaria; La interpretación de la hora local depende del dispositivo.
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
-    name: Inversor híbrido
+    name: TOU {slot} Fin
   ESSPreHeatingTOUTimeStart:
     attributes:
       comment: Segundos de época con zona horaria; La interpretación de la hora local depende del dispositivo.
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
-    name: Inversor híbrido
+    name: TOU {slot} Inicio
   ESSTotalChargedEnergy:
     attributes:
       source: Registro Modbus {address}

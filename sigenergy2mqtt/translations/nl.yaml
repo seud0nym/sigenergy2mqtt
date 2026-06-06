@@ -152,6 +152,7 @@ class:
     attributes:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
+    name: STUKS
   Alarm2Sensor:
     alarm:
       '0': Lekstroom buiten limiet
@@ -166,6 +167,7 @@ class:
     attributes:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
+    name: STUKS
   Alarm3Sensor:
     alarm:
       '0': Softwareversie komt niet overeen
@@ -178,6 +180,7 @@ class:
     attributes:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
+    name: ESS
   Alarm4Sensor:
     alarm:
       '0': Softwareversie komt niet overeen
@@ -191,6 +194,7 @@ class:
     attributes:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
+    name: GW
   Alarm5Sensor:
     alarm:
       '0': Softwareversie komt niet overeen
@@ -202,6 +206,7 @@ class:
     attributes:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
+    name: EVDC
   Alarm6:
     alarm:
       '0': Gateway communicatie abnormaal
@@ -533,13 +538,13 @@ class:
       comment: Epoch-seconden met tijdzone; De interpretatie van de lokale tijd is afhankelijk van het apparaat.
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
-    name: Hybride omvormer
+    name: TOU {slot} Einde
   ESSPreHeatingTOUTimeStart:
     attributes:
       comment: Epoch-seconden met tijdzone; De interpretatie van de lokale tijd is afhankelijk van het apparaat.
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
-    name: Hybride omvormer
+    name: TOU {slot} Beginnen
   ESSTotalChargedEnergy:
     attributes:
       source: Modbus-register {address}

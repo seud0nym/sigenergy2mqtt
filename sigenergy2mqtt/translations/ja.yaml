@@ -152,6 +152,7 @@ class:
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: PCS
   Alarm2Sensor:
     alarm:
       '0': 漏電電流制限超過
@@ -166,6 +167,7 @@ class:
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: PCS
   Alarm3Sensor:
     alarm:
       '0': ソフトウェアバージョン不一致
@@ -178,6 +180,7 @@ class:
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: ESS
   Alarm4Sensor:
     alarm:
       '0': ソフトウェアバージョン不一致
@@ -191,6 +194,7 @@ class:
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: GW
   Alarm5Sensor:
     alarm:
       '0': ソフトウェアバージョン不一致
@@ -202,6 +206,7 @@ class:
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+    name: EVDC
   Alarm6:
     alarm:
       '0': ゲートウェイ通信異常
@@ -533,13 +538,13 @@ class:
       comment: タイムゾーン付きのエポック秒。現地時間の解釈はデバイスによって異なります。
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
-    name: ハイブリッドインバーター
+    name: TOU {slot} 終了
   ESSPreHeatingTOUTimeStart:
     attributes:
       comment: タイムゾーン付きのエポック秒。現地時間の解釈はデバイスによって異なります。
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
-    name: ハイブリッドインバーター
+    name: TOU {slot} スタート
   ESSTotalChargedEnergy:
     attributes:
       source: Modbusレジスタ {address}

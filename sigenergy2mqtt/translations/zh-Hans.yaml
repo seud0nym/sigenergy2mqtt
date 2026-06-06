@@ -152,6 +152,7 @@ class:
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
+    name: 件
   Alarm2Sensor:
     alarm:
       '0': 漏电流超限
@@ -166,6 +167,7 @@ class:
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
+    name: 件
   Alarm3Sensor:
     alarm:
       '0': 软件版本不匹配
@@ -178,6 +180,7 @@ class:
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
+    name: ESS
   Alarm4Sensor:
     alarm:
       '0': 软件版本不匹配
@@ -191,6 +194,7 @@ class:
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
+    name: GW
   Alarm5Sensor:
     alarm:
       '0': 软件版本不匹配
@@ -202,6 +206,7 @@ class:
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
+    name: 电动直流
   Alarm6:
     alarm:
       '0': 网关通信异常
@@ -533,13 +538,13 @@ class:
       comment: 带时区的纪元秒；当地时间解释取决于设备。
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
-    name: 混合逆变器
+    name: TOU {slot} 结束
   ESSPreHeatingTOUTimeStart:
     attributes:
       comment: 带时区的纪元秒；当地时间解释取决于设备。
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
-    name: 混合逆变器
+    name: TOU {slot} 开始
   ESSTotalChargedEnergy:
     attributes:
       source: Modbus 寄存器 {address}
