@@ -31,7 +31,6 @@ class TimestampSensor(ReadOnlySensor):
         address: int,
         scan_interval: int,
         protocol_version: Protocol,
-        tz: datetime.timezone,
         **kwargs,
     ):
         super().__init__(
@@ -54,7 +53,6 @@ class TimestampSensor(ReadOnlySensor):
             **kwargs,
         )
         self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
-        self._tz = tz
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         """Get timestamp state in ISO 8601 format.
@@ -76,7 +74,7 @@ class TimestampSensor(ReadOnlySensor):
             return None
 
         # Convert to ISO 8601 format
-        dt_object = datetime.datetime.fromtimestamp(value, self._tz)
+        dt_object = datetime.datetime.fromtimestamp(value, datetime.timezone.utc)
         return dt_object.isoformat()
 
     def state2raw(self, state: float | int | str) -> float | int | str | None:

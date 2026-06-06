@@ -105,7 +105,7 @@ class ESSPreHeatingTOUTime(NumericSensor, HybridInverter, ABC):
     device's timezone configuration.
     """
 
-    def __init__(self, plant_index: int, slot: int, name: str, icon: str, address: int, tz: timezone):
+    def __init__(self, plant_index: int, slot: int, name: str, icon: str, address: int):
         self.slot = slot
         super().__init__(
             availability_control_sensor=None,
@@ -128,8 +128,6 @@ class ESSPreHeatingTOUTime(NumericSensor, HybridInverter, ABC):
             slot=slot,
         )
         self[DiscoveryKeys.PLATFORM] = "time"
-        self._tz = tz
-        self._tz_offset_seconds = int(self._tz.utcoffset(None).total_seconds())
 
     def _raw2state(self, raw_value: float | int | str) -> float | int | str:
         if isinstance(raw_value, (float, int)):
@@ -194,13 +192,13 @@ class ESSPreHeatingTOUTime(NumericSensor, HybridInverter, ABC):
 
 
 class ESSPreHeatingTOUTimeStart(ESSPreHeatingTOUTime):
-    def __init__(self, plant_index: int, slot: int, address: int, tz: timezone):
-        super().__init__(plant_index, slot, f"TOU {slot} Start", "mdi:clock-start", address, tz)
+    def __init__(self, plant_index: int, slot: int, address: int):
+        super().__init__(plant_index, slot, f"TOU {slot} Start", "mdi:clock-start", address)
 
 
 class ESSPreHeatingTOUTimeEnd(ESSPreHeatingTOUTime):
-    def __init__(self, plant_index: int, slot: int, address: int, tz: timezone):
-        super().__init__(plant_index, slot, f"TOU {slot} End", "mdi:clock-end", address, tz)
+    def __init__(self, plant_index: int, slot: int, address: int):
+        super().__init__(plant_index, slot, f"TOU {slot} End", "mdi:clock-end", address)
 
 
 class ESSPreHeatingTOUTargetPower(NumericSensor, HybridInverter):

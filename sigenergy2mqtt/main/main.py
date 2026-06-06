@@ -2,7 +2,6 @@ import asyncio
 import logging
 import signal
 import sys
-from datetime import timedelta, timezone
 from typing import Any, Tuple, cast
 
 import paho.mqtt.client as paho_mqtt
@@ -33,7 +32,6 @@ from sigenergy2mqtt.sensors.plant_read_only import (
     SITotalEVACChargedEnergy,
     SITotalEVDCChargedEnergy,
     SITotalEVDCDischargedEnergy,
-    SystemTimeZone,
     ThirdPartyPVPower,
     TotalLoadDailyConsumption,
     TotalLoadPower,
@@ -285,7 +283,6 @@ async def make_plant_and_inverter(plant_index: int, modbus_client: ModbusClient,
 
     device_type.has_independent_phase_power_control_interface = await probe_optional_interface(modbus_client, IndependentPhasePowerControl.ADDRESS, "Independent Phase Control Interface")
     device_type.has_grid_code_interface = await probe_optional_interface(modbus_client, GridCodeLVRT.ADDRESS, "Grid Code Interface")
-    tz = timezone(timedelta(minutes=cast(int, await get_state(SystemTimeZone(plant_index), modbus_client, "plant", raw=True))))
 
     if plant is None:
         firmware = FirmwareVersion(cast(str, await get_state(InverterFirmwareVersion(plant_index, device_address), modbus_client, "plant/inverter")))
@@ -305,11 +302,11 @@ async def make_plant_and_inverter(plant_index: int, modbus_client: ModbusClient,
 
         pre_heating = await get_state(ESSPreHeatingEnable(plant_index), modbus_client, "plant/inverter")
 
-        plant = await PowerPlant.create(plant_index, device_type, firmware, protocol, tz, cast(int, ot), pre_heating is not None, modbus_client)
+        plant = await PowerPlant.create(plant_index, device_type, firmware, protocol, cast(int, ot), pre_heating is not None, modbus_client)
     else:
         protocol = plant.protocol_version
 
-    inverter = await Inverter.create(plant_index, device_address, device_type, protocol, tz, modbus_client)
+    inverter = await Inverter.create(plant_index, device_address, device_type, protocol, modbus_client)
     inverter.via_device = plant.unique_id
 
     if sn is not None:

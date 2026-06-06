@@ -1,6 +1,5 @@
 import asyncio
 import logging
-from datetime import timezone
 from typing import cast
 
 import sigenergy2mqtt.sensors.plant_derived as derived
@@ -44,19 +43,17 @@ class PowerPlant(ModbusDevice):
         self._grid_sensor = None
 
     @classmethod
-    async def create(
-        cls, plant_index: int, device_type: DeviceType, firmware: FirmwareVersion, protocol_version: Protocol, tz: timezone, output_type: int, pre_heating: bool, modbus_client: ModbusClient
-    ) -> "PowerPlant":
+    async def create(cls, plant_index: int, device_type: DeviceType, firmware: FirmwareVersion, protocol_version: Protocol, output_type: int, pre_heating: bool, modbus_client: ModbusClient) -> "PowerPlant":
         power_phases = OutputType.to_phases(output_type)
         plant = cls(plant_index, device_type, protocol_version)
-        await plant._register_sensors(firmware, tz, output_type, power_phases, modbus_client)
+        await plant._register_sensors(firmware, output_type, power_phases, modbus_client)
         availability_control_sensor = plant.sensors.get(f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_247_{RemoteEMS.ADDRESS}")
         if availability_control_sensor is None:
             raise RuntimeError(f"{plant.__class__.__name__} Failed to find RemoteEMS sensor — cannot continue setup")
-        await plant._register_child_devices(power_phases, pre_heating, tz, modbus_client)
+        await plant._register_child_devices(power_phases, pre_heating, modbus_client)
         return plant
 
-    async def _register_child_devices(self, power_phases: int, pre_heating: bool, tz: timezone, modbus_client: ModbusClient) -> None:
+    async def _register_child_devices(self, power_phases: int, pre_heating: bool, modbus_client: ModbusClient) -> None:
         self._grid_sensor = await GridSensor.create(self.plant_index, self._device_type, self.protocol_version, power_phases, self._consumption_group, modbus_client)
         self._add_child_device(self._grid_sensor)
 
@@ -77,13 +74,13 @@ class PowerPlant(ModbusDevice):
                 else:
                     self._add_child_device(
                         await ESSPreHeating.create(
-                            self.plant_index, self._device_type, tz, cast(float, rated_charging_power.latest_raw_state), cast(float, rated_discharging_power.latest_raw_state), self.protocol_version
+                            self.plant_index, self._device_type, cast(float, rated_charging_power.latest_raw_state), cast(float, rated_discharging_power.latest_raw_state), self.protocol_version
                         )
                     )
             else:
                 logging.info(f"{self.log_identity} ESS Pre-Heating device not registered because pre-heating sensors not found")
 
-    async def _register_sensors(self, fw: FirmwareVersion, tz: timezone, output_type: int, power_phases: int, modbus_client: ModbusClient) -> None:
+    async def _register_sensors(self, fw: FirmwareVersion, output_type: int, power_phases: int, modbus_client: ModbusClient) -> None:
         rated_charging_power = ro.PlantRatedChargingPower(self.plant_index)
         rated_discharging_power = ro.PlantRatedDischargingPower(self.plant_index)
         # Fetch async values in parallel
@@ -94,7 +91,7 @@ class PowerPlant(ModbusDevice):
 
         self.has_battery = isinstance(self._device_type, HybridInverter) and cast(float, rcp_value) > 0.0
 
-        self._add_sensor(ro.SystemTime(self.plant_index, tz))
+        self._add_sensor(ro.SystemTime(self.plant_index))
         self._add_sensor(ro.SystemTimeZone(self.plant_index))
         self._add_sensor(ro.EMSWorkMode(self.plant_index))
         self._add_sensor(ro.MaxActivePower(self.plant_index))
