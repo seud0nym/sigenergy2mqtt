@@ -129,6 +129,7 @@ class EnvSettingsSource(PydanticBaseSettingsSource):
 
         # ── Top-level ────────────────────────────────────────────────────────
         _set(result, "log_level", g(const.SIGENERGY2MQTT_LOG_LEVEL))
+        _set(result, "log_fmt", g(const.SIGENERGY2MQTT_LOG_FMT))
         _set(result, "language", g(const.SIGENERGY2MQTT_LANGUAGE))
         _set(result, "consumption", g(const.SIGENERGY2MQTT_CONSUMPTION))
         _set(result, "repeated_state_publish_interval", _int(g(const.SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL)))
@@ -194,6 +195,8 @@ class EnvSettingsSource(PydanticBaseSettingsSource):
         _set(modbus, "inverters", _int_list(g(const.SIGENERGY2MQTT_MODBUS_INVERTER_DEVICE_ID)))
         _set(modbus, "ac_chargers", _int_list(g(const.SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID)))
         _set(modbus, "dc_chargers", _int_list(g(const.SIGENERGY2MQTT_MODBUS_DCCHARGER_DEVICE_ID)))
+        _set(modbus, "pss", _int_list(g(const.SIGENERGY2MQTT_MODBUS_PSS_DEVICE_ID)))
+        _set(modbus, "pid", _int_list(g(const.SIGENERGY2MQTT_MODBUS_PID_DEVICE_ID)))
         _set(modbus, "scan_interval_low", _int(g(const.SIGENERGY2MQTT_SCAN_INTERVAL_LOW)))
         _set(modbus, "scan_interval_medium", _int(g(const.SIGENERGY2MQTT_SCAN_INTERVAL_MEDIUM)))
         _set(modbus, "scan_interval_high", _int(g(const.SIGENERGY2MQTT_SCAN_INTERVAL_HIGH)))
@@ -272,6 +275,7 @@ class EnvSettingsSource(PydanticBaseSettingsSource):
 def _auto_discovery_env_values(getenv: Any, include_modbus_port: bool = False) -> dict[str, Any]:
     result: dict[str, Any] = {}
     _set(result, "modbus_auto_discovery", getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY))
+    _set(result, "modbus_auto_discovery_exclude", getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_EXCLUDE))
     _set(result, "modbus_auto_discovery_timeout", _float(getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_TIMEOUT)))
     _set(result, "modbus_auto_discovery_ping_timeout", _float(getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_PING_TIMEOUT)))
     _set(result, "modbus_auto_discovery_retries", _int(getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_RETRIES)))

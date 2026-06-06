@@ -18,6 +18,7 @@ import asyncio
 import logging
 import os
 import sys
+from datetime import timedelta, timezone
 from typing import cast
 
 # Need to set a Modbus host otherwise configuration initialisation will launch auto-discovery
@@ -30,16 +31,27 @@ if __name__ == "__main__":
 from pymodbus.client.mixin import ModbusClientMixin
 from pymodbus.pdu import ExceptionResponse, ModbusPDU
 
-from sigenergy2mqtt.common import HybridInverter, Protocol, ProtocolApplies, PVInverter
+from sigenergy2mqtt.common import FirmwareVersion, HybridInverter, Protocol, ProtocolApplies, PVInverter
 from sigenergy2mqtt.config import Config, _swap_active_config, active_config, initialize
-from sigenergy2mqtt.devices import ACCharger, DCCharger, Device, Inverter, PowerPlant
+from sigenergy2mqtt.devices import PID, PSS, ACCharger, DCCharger, Device, Inverter, PowerPlant
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerInputBreaker, ACChargerRatedCurrent, ACChargerRunningState
 from sigenergy2mqtt.sensors.ac_charger_read_write import ACChargerStatus
 from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, AlarmSensor, ModbusSensorMixin, Sensor
 from sigenergy2mqtt.sensors.inverter_read_only import DCChargerVehicleBatteryVoltage, InverterFirmwareVersion, InverterModel, InverterSerialNumber, OutputType, PACKBCUCount, PVStringCount, RatedGridVoltage
 from sigenergy2mqtt.sensors.inverter_read_write import DCChargerStatus, InverterStatus, ReservedInverterRemoteEMSDispatch
-from sigenergy2mqtt.sensors.plant_read_only import GridCodeRatedFrequency, PlantRatedChargingPower, PlantRatedDischargingPower
-from sigenergy2mqtt.sensors.plant_read_write import PlantStatus
+from sigenergy2mqtt.sensors.pid_read_only import PIDMachineFirmwareVersion, PIDModelType, PIDSerialNumber
+from sigenergy2mqtt.sensors.pid_read_write import PIDStartStop
+from sigenergy2mqtt.sensors.plant_ess_preheating_read_write import ESSPreHeatingEnable
+from sigenergy2mqtt.sensors.plant_read_only import GridCodeRatedFrequency, PlantRatedChargingPower, PlantRatedDischargingPower, SystemTimeZone
+from sigenergy2mqtt.sensors.plant_read_write import (
+    ActivePowerFixedAdjustmentTargetValue,
+    PhaseActivePowerFixedAdjustmentTargetValue,
+    PhaseReactivePowerFixedAdjustmentTargetValue,
+    PlantStatus,
+    ReactivePowerFixedAdjustmentTargetValue,
+)
+from sigenergy2mqtt.sensors.pss_read_only import PSSModelType, PSSSerialNumber
+from sigenergy2mqtt.sensors.pss_read_write import PSSMVCabinetG3CircuitBreakerSwitchOn
 
 initialize()
 
@@ -52,6 +64,7 @@ RATED_CHARGING_POWER: float = 12.6
 RATED_CURRENT: float = 32.0
 RATED_DISCHARGING_POWER: float = 13.68
 RATED_FREQUENCY: float = 50.0
+TIME_ZONE: int = 600
 
 
 class DummyModbusClient(ModbusClientMixin):
@@ -65,42 +78,12 @@ class DummyModbusClient(ModbusClientMixin):
     are stored and retrieved by start address, with the correct number of registers
     determined at construction time by ``convert_to_registers`` based on each
     sensor's ``data_type``.
-
-    Args:
-        model_id: The inverter model string to serve (e.g. ``"SigenStor EC 12.0 TP"``).
-        serial_number: The inverter serial number string to serve (e.g. ``"CMU123A45BP678"``).
     """
 
-    def __init__(self, model_id: str, serial_number: str):
+    def __init__(self, data: dict[int, list[int]]):
         super().__init__()
 
-        rated_charging_power = PlantRatedChargingPower(0)
-        rated_discharging_power = PlantRatedDischargingPower(0)
-        rated_frequency = GridCodeRatedFrequency(0)
-
-        model = InverterModel(0, 1)
-        serial = InverterSerialNumber(0, 1)
-        firmware = InverterFirmwareVersion(0, 1)
-        pv_strings = PVStringCount(0, 1)
-        output_type = OutputType(0, 1)
-        pack_bcu_count = PACKBCUCount(0, 1)
-
-        input_breaker = ACChargerInputBreaker(0, 1)
-        rated_current = ACChargerRatedCurrent(0, 1)
-
-        self.data = {  # convert_to_registers will create the correct number of registers based on data_type, so we can ignore the count parameter in the read methods
-            rated_charging_power.address: self.convert_to_registers(rated_charging_power.state2raw(RATED_CHARGING_POWER), rated_charging_power.data_type),
-            rated_discharging_power.address: self.convert_to_registers(rated_discharging_power.state2raw(RATED_DISCHARGING_POWER), rated_discharging_power.data_type),
-            rated_frequency.address: self.convert_to_registers(rated_frequency.state2raw(RATED_FREQUENCY), rated_frequency.data_type),
-            model.address: self.convert_to_registers(model_id, model.data_type),
-            serial.address: self.convert_to_registers(serial_number, serial.data_type),
-            firmware.address: self.convert_to_registers(FIRMWARE_VERSION, firmware.data_type),
-            pv_strings.address: self.convert_to_registers(pv_strings.state2raw(PV_STRING_COUNT), pv_strings.data_type),
-            output_type.address: self.convert_to_registers(output_type.state2raw(OUTPUT_TYPE), output_type.data_type),  # 2 = 3-phase (L1/L2/L3/N)
-            pack_bcu_count.address: self.convert_to_registers(pack_bcu_count.state2raw(PACK_BCU_COUNT), pack_bcu_count.data_type),
-            input_breaker.address: self.convert_to_registers(input_breaker.state2raw(INPUT_BREAKER), input_breaker.data_type),
-            rated_current.address: self.convert_to_registers(rated_current.state2raw(RATED_CURRENT), rated_current.data_type),
-        }
+        self.data = data
 
     def get_state(self, address: int, device_id: int) -> ModbusPDU:
         """Return the pre-populated register data for the given address.
@@ -119,6 +102,7 @@ class DummyModbusClient(ModbusClientMixin):
         """
         result = self.data.get(address, None)
         if result is None:
+            logging.warning(f"Address {address} not found in dummy Modbus client data store")
             return ExceptionResponse(function_code=0x03, exception_code=0x02, device_id=device_id)  # Modbus exception response for "Illegal Data Address"
         return ModbusPDU(registers=result)
 
@@ -129,6 +113,69 @@ class DummyModbusClient(ModbusClientMixin):
     async def read_input_registers(self, address: int, count: int, device_id: int, trace: bool = False) -> ModbusPDU:  # noqa: unused arguments required to match real implementation
         """Simulate an input register read by returning pre-populated data for ``address``."""
         return self.get_state(address, device_id)
+
+
+class DummyInverterModbusClient(DummyModbusClient):
+    def __init__(self, model_id: str, serial_number: str):
+        time_zone = SystemTimeZone(0)
+        rated_charging_power = PlantRatedChargingPower(0)
+        rated_discharging_power = PlantRatedDischargingPower(0)
+        rated_frequency = GridCodeRatedFrequency(0)
+
+        model = InverterModel(0, 1)
+        serial = InverterSerialNumber(0, 1)
+        firmware = InverterFirmwareVersion(0, 1)
+        pv_strings = PVStringCount(0, 1)
+        output_type = OutputType(0, 1)
+        pack_bcu_count = PACKBCUCount(0, 1)
+
+        input_breaker = ACChargerInputBreaker(0, 1)
+        rated_current = ACChargerRatedCurrent(0, 1)
+
+        super().__init__(
+            {  # convert_to_registers will create the correct number of registers based on data_type, so we can ignore the count parameter in the read methods
+                time_zone.address: self.convert_to_registers(time_zone.state2raw(TIME_ZONE), time_zone.data_type),
+                rated_charging_power.address: self.convert_to_registers(rated_charging_power.state2raw(RATED_CHARGING_POWER), rated_charging_power.data_type),
+                rated_discharging_power.address: self.convert_to_registers(rated_discharging_power.state2raw(RATED_DISCHARGING_POWER), rated_discharging_power.data_type),
+                rated_frequency.address: self.convert_to_registers(rated_frequency.state2raw(RATED_FREQUENCY), rated_frequency.data_type),
+                model.address: self.convert_to_registers(model_id, model.data_type),
+                serial.address: self.convert_to_registers(serial_number, serial.data_type),
+                firmware.address: self.convert_to_registers(FIRMWARE_VERSION, firmware.data_type),
+                pv_strings.address: self.convert_to_registers(pv_strings.state2raw(PV_STRING_COUNT), pv_strings.data_type),
+                output_type.address: self.convert_to_registers(output_type.state2raw(OUTPUT_TYPE), output_type.data_type),  # 2 = 3-phase (L1/L2/L3/N)
+                pack_bcu_count.address: self.convert_to_registers(pack_bcu_count.state2raw(PACK_BCU_COUNT), pack_bcu_count.data_type),
+                input_breaker.address: self.convert_to_registers(input_breaker.state2raw(INPUT_BREAKER), input_breaker.data_type),
+                rated_current.address: self.convert_to_registers(rated_current.state2raw(RATED_CURRENT), rated_current.data_type),
+            }
+        )
+
+
+class DummyPIDModbusClient(DummyModbusClient):
+    def __init__(self, model_id: str, serial_number: str, firmware_version: str):
+        model = PIDModelType(0, 1)
+        serial = PIDSerialNumber(0, 1)
+        fw = PIDMachineFirmwareVersion(0, 1)
+
+        super().__init__(
+            {  # convert_to_registers will create the correct number of registers based on data_type, so we can ignore the count parameter in the read methods
+                model.address: self.convert_to_registers(model_id, model.data_type),
+                serial.address: self.convert_to_registers(serial_number, serial.data_type),
+                fw.address: self.convert_to_registers(firmware_version, serial.data_type),
+            }
+        )
+
+
+class DummyPSSModbusClient(DummyModbusClient):
+    def __init__(self, model_id: str, serial_number: str):
+        model = PSSModelType(0, 1)
+        serial = PSSSerialNumber(0, 1)
+
+        super().__init__(
+            {  # convert_to_registers will create the correct number of registers based on data_type, so we can ignore the count parameter in the read methods
+                model.address: self.convert_to_registers(model_id, model.data_type),
+                serial.address: self.convert_to_registers(serial_number, serial.data_type),
+            }
+        )
 
 
 async def get_sensor_instances(
@@ -204,15 +251,31 @@ async def get_sensor_instances(
     active_config.influxdb.enabled = True
 
     hi_device_type = HybridInverter(has_grid_code_interface=True, has_independent_phase_power_control_interface=True)
-    hi_modbus_client = DummyModbusClient("SigenStor EC 12.0 TP", "CMU123A45BP678")
+    hi_modbus_client = DummyInverterModbusClient("SigenStor EC 12.0 TP", "CMU123A45BP678")
     pv_device_type = PVInverter(has_grid_code_interface=True, has_independent_phase_power_control_interface=True)
-    pv_modbus_client = DummyModbusClient("Sigen PV Max 5.0 TP", "CMU876A54BP321")
+    pv_modbus_client = DummyInverterModbusClient("Sigen PV Max 5.0 TP", "CMU876A54BP321")
 
-    plant = await PowerPlant.create(plant_index, hi_device_type, firmware_version, protocol_version, output_type, hi_modbus_client)
-    hybrid_inverter = await Inverter.create(plant_index, hybrid_inverter_device_address, hi_device_type, protocol_version, hi_modbus_client)
-    pv_inverter = await Inverter.create(plant_index, pv_inverter_device_address, pv_device_type, protocol_version, pv_modbus_client)
+    total_rated_active_power = 12 + 5  # Sum of RatedActivePower of both inverters
+
+    tz = timezone(timedelta(minutes=600))
+
+    plant = await PowerPlant.create(plant_index, hi_device_type, FirmwareVersion(firmware_version), protocol_version, tz, output_type, True, hi_modbus_client)
+    hybrid_inverter = await Inverter.create(plant_index, hybrid_inverter_device_address, hi_device_type, protocol_version, tz, hi_modbus_client)
+    pv_inverter = await Inverter.create(plant_index, pv_inverter_device_address, pv_device_type, protocol_version, tz, pv_modbus_client)
     dc_charger = await DCCharger.create(plant_index, dc_charger_device_address, protocol_version)
     ac_charger = await ACCharger.create(plant_index, ac_charger_device_address, protocol_version, hi_modbus_client)
+
+    if protocol_version >= Protocol.V2_9:
+        pid = await PID.create(plant_index, 241, protocol_version, DummyPIDModbusClient("Sigen PID 1.0", "PID123A45BP678", "V100R001C00SPC113"))
+        pss = await PSS.create(plant_index, 242, protocol_version, DummyPSSModbusClient("Sigen PSS 1.0", "PSS123A45BP678"))
+    else:
+        pid = None
+        pss = None
+
+    for sensor in [s for s in plant.sensors.values() if isinstance(s, (ActivePowerFixedAdjustmentTargetValue, PhaseActivePowerFixedAdjustmentTargetValue))]:
+        sensor.apply_min_max(-total_rated_active_power, total_rated_active_power)
+    for sensor in [s for s in plant.sensors.values() if isinstance(s, (ReactivePowerFixedAdjustmentTargetValue, PhaseReactivePowerFixedAdjustmentTargetValue))]:
+        sensor.apply_min_max(-60 * total_rated_active_power, 60 * total_rated_active_power)
 
     classes: dict[str, int] = {}
     registers: dict[int, Sensor] = {}
@@ -253,7 +316,9 @@ async def get_sensor_instances(
                 add_sensor_instance(alarm)
 
     find_concrete_classes(Sensor)
-    for parent in [plant, hybrid_inverter, dc_charger, ac_charger, pv_inverter]:
+    for parent in [plant, hybrid_inverter, dc_charger, ac_charger, pv_inverter, pid, pss]:
+        if parent is None:
+            continue
         devices: list[Device] = [parent]
         devices.extend(parent.children)
         for device in devices:
@@ -274,11 +339,16 @@ async def get_sensor_instances(
                         RatedGridVoltage.ADDRESS,  # 31500
                         DCChargerVehicleBatteryVoltage.ADDRESS,  # 32000
                         ACChargerRunningState.ADDRESS,  # 32000
+                        PSSModelType.ADDRESS,  # 32500
+                        PIDModelType.ADDRESS,  # 33000
                         PlantStatus.ADDRESS,  # 40000
                         InverterStatus.ADDRESS,  # 40500
                         DCChargerStatus.ADDRESS,  # 41000
                         ReservedInverterRemoteEMSDispatch.ADDRESS,  # 41500
                         ACChargerStatus.ADDRESS,  # 42000
+                        PSSMVCabinetG3CircuitBreakerSwitchOn.ADDRESS,  # 42500
+                        PIDStartStop.ADDRESS,  # 43000
+                        ESSPreHeatingEnable.ADDRESS,  # 50000
                     )
                     and last_address + last_count < address
                 ):

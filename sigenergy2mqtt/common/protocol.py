@@ -11,6 +11,7 @@ class Protocol(float, Enum):
     V2_6 = 2.6
     V2_7 = 2.7
     V2_8 = 2.8
+    V2_9 = 2.9
 
 
 def ProtocolApplies(version: Protocol) -> str:
@@ -29,5 +30,7 @@ def ProtocolApplies(version: Protocol) -> str:
             return "2025-05-23"
         case Protocol.V2_8:
             return "2025-11-28"
+        case Protocol.V2_9:
+            return "2026-05-13"
         case _:
             return datetime.today().strftime("%Y-%m-%d")

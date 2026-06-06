@@ -21,7 +21,6 @@ from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 
 from sigenergy2mqtt.common import ConsumptionMethod, HybridInverter, Protocol, PVInverter
 from sigenergy2mqtt.config import Config, _swap_active_config
-from sigenergy2mqtt.main.main import INVERTER_ILLEGAL_DATA_ADDRESSES, PLANT_ILLEGAL_DATA_ADDRESSES
 from sigenergy2mqtt.metrics.metrics_service import MetricsService
 from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, ModbusSensorMixin, ReadableSensorMixin, ReservedSensor, Sensor, TypedSensorMixin, WritableSensorMixin, WriteOnlySensor
 from sigenergy2mqtt.sensors.plant_derived import PlantConsumedPower
@@ -29,7 +28,6 @@ from sigenergy2mqtt.sensors.plant_read_write import RemoteEMSLimit
 from tests.utils import get_sensor_instances
 
 HTTP_TIMEOUT = 15  # Default timeout (seconds) for all outbound GitHub API requests.
-ILLEGAL_DATA_ADDRESSES: list[int] = INVERTER_ILLEGAL_DATA_ADDRESSES + PLANT_ILLEGAL_DATA_ADDRESSES
 RANGE_PATTERN = r"Range:\s*\[(.*?)\]"
 SENSORS: Path = Path("sensors/SENSORS.md")
 TOPICS: Path = Path("sensors/TOPICS.md")
@@ -218,12 +216,8 @@ async def sensor_index() -> None:
                         protocol = "N/A"
                     else:
                         f.write(f"{attributes['source']}")
-                        if attributes["source"] in ILLEGAL_DATA_ADDRESSES:
-                            f.write(" (may not be available on all devices)")
                 elif isinstance(sensor, ModbusSensorMixin):
                     f.write(f"{sensor.address}")
-                    if sensor.address in ILLEGAL_DATA_ADDRESSES:
-                        f.write(" (may not be available on all devices)")
                 else:
                     logging.getLogger().error(f"Sensor {sensor_name} ({key}) does not have a Modbus address or derived description.")
                 f.write("</td></tr>\n")
@@ -486,6 +480,7 @@ async def compare_sensor_instances() -> None:
         DC_CHARGER_RUNNING_INFO_REGISTERS,
         INVERTER_PARAMETER_REGISTERS,
         INVERTER_RUNNING_INFO_REGISTERS,
+        PLANT_ESS_PREHEATING_REGISTERS,
         PLANT_PARAMETER_REGISTERS,
         PLANT_RUNNING_INFO_REGISTERS,
         DataType,
@@ -503,6 +498,7 @@ async def compare_sensor_instances() -> None:
     for map in (
         PLANT_RUNNING_INFO_REGISTERS,
         PLANT_PARAMETER_REGISTERS,
+        PLANT_ESS_PREHEATING_REGISTERS,
         INVERTER_RUNNING_INFO_REGISTERS,
         INVERTER_PARAMETER_REGISTERS,
         AC_CHARGER_RUNNING_INFO_REGISTERS,
@@ -520,7 +516,7 @@ async def compare_sensor_instances() -> None:
     for k, v in registers.items():
         if isinstance(k, int) and k not in typqxq_instances:
             for i in v:
-                if isinstance(sensor_instances[i], ReservedSensor):
+                if isinstance(sensor_instances[i], ReservedSensor) or sensor_instances[i].parent_device.__class__.__name__ in ("PSS", "PID"):
                     continue
                 logging.warning(f"V{sensor_instances[i].protocol_version} Register {k} ({sensor_instances[i].name}) found in sensor instances but not defined in TypQxQ")
 

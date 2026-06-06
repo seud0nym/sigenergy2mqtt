@@ -1,6 +1,7 @@
 import logging
 import math
 import time
+from datetime import timezone
 from typing import cast
 
 from sigenergy2mqtt.common import (
@@ -1374,11 +1375,9 @@ class OutputType(ReadOnlySensor, HybridInverter, PVInverter):
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
-        if raw:
+        if raw or value is None:
             return value
-        elif value is None:
-            return None
-        elif isinstance(value, (float, int)) and 0 <= value <= (len(cast(list[str], self[DiscoveryKeys.OPTIONS])) - 1):
+        if isinstance(value, (float, int)) and 0 <= value <= (len(cast(list[str], self[DiscoveryKeys.OPTIONS])) - 1):
             return cast(list[str], self[DiscoveryKeys.OPTIONS])[int(value)]
         else:
             return f"Unknown Output Type: {value}"
@@ -1735,7 +1734,7 @@ class InsulationResistance(ReadOnlySensor, HybridInverter, PVInverter):
 class StartupTime(TimestampSensor, HybridInverter, PVInverter):
     ADDRESS = 31038
 
-    def __init__(self, plant_index: int, device_address: int):
+    def __init__(self, plant_index: int, device_address: int, tz: timezone):
         super().__init__(
             name="Startup Time",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_startup_time",
@@ -1745,13 +1744,14 @@ class StartupTime(TimestampSensor, HybridInverter, PVInverter):
             address=self.ADDRESS,
             scan_interval=ScanInterval.low(plant_index),
             protocol_version=Protocol.V1_8,
+            tz=tz,
         )
 
 
 class ShutdownTime(TimestampSensor, HybridInverter, PVInverter):
     ADDRESS = 31040
 
-    def __init__(self, plant_index: int, device_address: int):
+    def __init__(self, plant_index: int, device_address: int, tz: timezone):
         super().__init__(
             name="Shutdown Time",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_inverter_{device_address}_shutdown_time",
@@ -1761,6 +1761,7 @@ class ShutdownTime(TimestampSensor, HybridInverter, PVInverter):
             address=self.ADDRESS,
             scan_interval=ScanInterval.low(plant_index),
             protocol_version=Protocol.V1_8,
+            tz=tz,
         )
 
 
@@ -2007,11 +2008,9 @@ class DCChargerRunningState(ReadOnlySensor, HybridInverter):  # Not applicable t
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
-        if raw:
+        if raw or value is None:
             return value
-        elif value is None:
-            return None
-        elif isinstance(value, (float, int)):
+        if isinstance(value, (float, int)):
             option = self._get_option(int(value))
             if option:
                 return option
@@ -2019,3 +2018,181 @@ class DCChargerRunningState(ReadOnlySensor, HybridInverter):  # Not applicable t
                 return f"Unknown State code: {value}"
         else:
             return f"Unknown State code: {value}"
+
+
+class DCChargerDischargingCurrent(ReadOnlySensor, HybridInverter):
+    ADDRESS = 31514
+
+    def __init__(self, plant_index: int, device_address: int):
+        super().__init__(
+            name="Discharging Current",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_dc_charger_{device_address}_discharging_current",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=device_address,
+            address=self.ADDRESS,
+            count=1,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=ScanInterval.high(plant_index),
+            unit=UnitOfElectricCurrent.AMPERE,
+            device_class=DeviceClass.CURRENT,
+            state_class=None,
+            icon="mdi:car-electric",
+            gain=10,
+            precision=2,
+            protocol_version=Protocol.V2_9,
+        )
+
+
+class DCChargerCurrentDischargingCapacity(ReadOnlySensor, HybridInverter):
+    ADDRESS = 31515
+
+    def __init__(self, plant_index: int, device_address: int):
+        super().__init__(
+            name="Current Discharging Capacity",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_dc_charger_{device_address}_current_discharging_capacity",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=device_address,
+            address=self.ADDRESS,
+            count=2,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=ScanInterval.low(plant_index),
+            unit=UnitOfEnergy.KILO_WATT_HOUR,
+            device_class=DeviceClass.ENERGY,
+            state_class=None,
+            icon="mdi:car-electric",
+            gain=100,
+            precision=2,
+            protocol_version=Protocol.V2_9,
+        )
+
+    def get_attributes(self) -> dict[str, float | int | str]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Single time"
+        return attributes
+
+
+class DCChargerCurrentDischargingDuration(ReadOnlySensor, HybridInverter):
+    ADDRESS = 31517
+
+    def __init__(self, plant_index: int, device_address: int):
+        super().__init__(
+            name="Current Discharging Duration",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_dc_charger_{device_address}_current_discharging_duration",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=device_address,
+            address=self.ADDRESS,
+            count=2,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=ScanInterval.low(plant_index),
+            unit=UnitOfTime.SECONDS,
+            device_class=None,
+            state_class=None,
+            icon="mdi:car-clock",
+            gain=1,
+            precision=None,
+            protocol_version=Protocol.V2_9,
+        )
+
+    def get_attributes(self) -> dict[str, float | int | str]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Single time"
+        return attributes
+
+
+class DCChargerTotalChargingCapacity(ReadOnlySensor, HybridInverter):
+    ADDRESS = 31519
+
+    def __init__(self, plant_index: int, device_address: int):
+        super().__init__(
+            name="Total Charging Capacity",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_dc_charger_{device_address}_total_charging_capacity",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=device_address,
+            address=self.ADDRESS,
+            count=2,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=ScanInterval.high(plant_index),
+            unit=UnitOfEnergy.KILO_WATT_HOUR,
+            device_class=DeviceClass.ENERGY,
+            state_class=None,
+            icon="mdi:car-electric",
+            gain=100,
+            precision=2,
+            protocol_version=Protocol.V2_9,
+        )
+
+
+class DCChargerTotalDischargingCapacity(ReadOnlySensor, HybridInverter):
+    ADDRESS = 31521
+
+    def __init__(self, plant_index: int, device_address: int):
+        super().__init__(
+            name="Total Discharging Capacity",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_dc_charger_{device_address}_total_discharging_capacity",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=device_address,
+            address=self.ADDRESS,
+            count=2,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=ScanInterval.high(plant_index),
+            unit=UnitOfEnergy.KILO_WATT_HOUR,
+            device_class=DeviceClass.ENERGY,
+            state_class=None,
+            icon="mdi:car-electric",
+            gain=100,
+            precision=2,
+            protocol_version=Protocol.V2_9,
+        )
+
+
+class DCChargerRatedChargingPower(ReadOnlySensor, HybridInverter):
+    ADDRESS = 31523
+
+    def __init__(self, plant_index: int, device_address: int):
+        super().__init__(
+            name="Rated Charging Power",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_dc_charger_{device_address}_rated_charging_power",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=device_address,
+            address=self.ADDRESS,
+            count=2,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=ScanInterval.high(plant_index),
+            unit=UnitOfPower.KILO_WATT,
+            device_class=DeviceClass.POWER,
+            state_class=None,
+            icon="mdi:ev-plug-ccs2",
+            gain=1000,
+            precision=2,
+            protocol_version=Protocol.V2_9,
+        )
+
+
+class DCChargerRatedDischargingPower(ReadOnlySensor, HybridInverter):
+    ADDRESS = 31525
+
+    def __init__(self, plant_index: int, device_address: int):
+        super().__init__(
+            name="Rated Discharging Power",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_dc_charger_{device_address}_rated_discharging_power",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=device_address,
+            address=self.ADDRESS,
+            count=2,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=ScanInterval.high(plant_index),
+            unit=UnitOfPower.KILO_WATT,
+            device_class=DeviceClass.POWER,
+            state_class=None,
+            icon="mdi:ev-plug-ccs2",
+            gain=1000,
+            precision=2,
+            protocol_version=Protocol.V2_9,
+        )

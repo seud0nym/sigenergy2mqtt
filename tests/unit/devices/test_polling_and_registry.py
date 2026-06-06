@@ -212,7 +212,7 @@ class ConcreteModbusDevice(ModbusDevice):
 
 
 @pytest.fixture(autouse=True)
-def mock_config():
+def mock_config(tmp_path):
     cfg = Config()
     mock_modbus = MagicMock()
     mock_modbus.registers = {}
@@ -225,7 +225,7 @@ def mock_config():
     cfg.home_assistant.enabled = True
     cfg.home_assistant.republish_discovery_interval = 60
     cfg.origin = {}
-    cfg.persistent_state_path = "."
+    cfg.persistent_state_path = tmp_path
     with _swap_active_config(cfg):
         yield cfg
     DeviceRegistry.clear()

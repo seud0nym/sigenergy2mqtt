@@ -76,6 +76,92 @@ class DCChargerStatus(WriteOnlySensor, HybridInverter):
         return attributes
 
 
+class Reserved41001(ReservedSensor):
+    ADDRESS = 41001
+
+    def __init__(self, plant_index: int, device_address: int):
+        super().__init__(
+            name="Reserved",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_reserved_41001",
+            input_type=InputType.HOLDING,
+            plant_index=plant_index,
+            device_address=device_address,
+            address=self.ADDRESS,
+            count=1,
+            data_type=ModbusDataType.UINT16,
+            scan_interval=ScanInterval.low(plant_index),
+            unit=None,
+            device_class=None,
+            state_class=None,
+            icon="mdi:comment-question",
+            gain=None,
+            precision=None,
+            protocol_version=Protocol.V2_9,
+        )
+
+
+class DCChargerMaxChargingPowerLimit(NumericSensor, HybridInverter):
+    ADDRESS = 41002
+
+    def __init__(self, plant_index: int, device_address: int):
+        super().__init__(
+            availability_control_sensor=None,
+            name="Max Charging Power Limit",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_dc_charger_{device_address}_max_charging_power_limit",
+            input_type=InputType.HOLDING,
+            plant_index=plant_index,
+            device_address=device_address,
+            address=self.ADDRESS,
+            count=2,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=ScanInterval.medium(plant_index),
+            unit=UnitOfPower.KILO_WATT,
+            device_class=DeviceClass.POWER,
+            state_class=None,
+            icon="mdi:ev-station",
+            gain=1000,
+            precision=2,
+            protocol_version=Protocol.V2_9,
+            minimum=0.0,
+        )
+
+    def get_attributes(self) -> dict[str, float | int | str]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Maximum DC charger charging power limit"
+        return attributes
+
+
+class DCChargerMaxDischargingPowerLimit(NumericSensor, HybridInverter):
+    ADDRESS = 41004
+
+    def __init__(self, plant_index: int, device_address: int):
+        super().__init__(
+            availability_control_sensor=None,
+            name="Max Discharging Power Limit",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_dc_charger_{device_address}_max_discharging_power_limit",
+            input_type=InputType.HOLDING,
+            plant_index=plant_index,
+            device_address=device_address,
+            address=self.ADDRESS,
+            count=2,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=ScanInterval.medium(plant_index),
+            unit=UnitOfPower.KILO_WATT,
+            device_class=DeviceClass.POWER,
+            state_class=None,
+            icon="mdi:ev-station",
+            gain=1000,
+            precision=2,
+            protocol_version=Protocol.V2_9,
+            minimum=0.0,
+        )
+
+    def get_attributes(self) -> dict[str, float | int | str]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Maximum DC charger discharging power limit"
+        return attributes
+
+
 class ReservedInverterRemoteEMSDispatch(ReservedSensor, PVInverter):  # 41500 Marked as Reserved in v2.8 2025-11-20
     ADDRESS = 41500
 

@@ -11,6 +11,9 @@ properties:
         enum: [DEBUG, INFO, WARNING, ERROR, CRITICAL]
       - type: integer
     default: WARNING
+  log-fmt:
+    description: "Set the log format."
+    type: [string, "null"]
   language:
     description: "The language to use for translations."
     type: string
@@ -49,43 +52,101 @@ properties:
     description: "Internal pydantic field for metrics enabled"
     type: boolean
 
-  home-assistant:
-    type: object
-    additionalProperties: false
-    properties:
-      enabled:
-        type: boolean
-        default: false
-      device-name-prefix:
-        type: string
-        default: ""
-      discovery-prefix:
-        type: string
-        default: homeassistant
-      entity-id-prefix:
-        type: string
-        default: sigen
-      republish-discovery-interval:
-        type: integer
-        default: 0
-      sensors-enabled-by-default:
-        type: boolean
-        default: false
-      unique-id-prefix:
-        type: string
-        default: sigen
-      sigenergy-local-modbus-naming:
-        type: boolean
-        default: false
-      use-simplified-topics:
-        type: boolean
-        default: false
-      edit-pct-box:
-        type: boolean
-        default: false
-      discovery-only:
-        type: boolean
-        default: false
+  modbus:
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required:
+        - host
+      properties:
+        host:
+          type: string
+        port:
+          type: integer
+          default: 502
+        timeout:
+          type: number
+          default: 1.0
+        retries:
+          type: integer
+          default: 3
+        disable-chunking:
+          type: boolean
+          default: false
+        inverters:
+          type: array
+          items:
+            type: integer
+          default: [ 1 ]
+        ac-chargers:
+          type: array
+          items:
+            type: integer
+          default: []
+        dc-chargers:
+          type: array
+          items:
+            type: integer
+          default: []
+        pss:
+          type: array
+          items:
+            type: integer
+          default: []
+        pid:
+          type: array
+          items:
+            type: integer
+          default: []
+        log-level:
+          oneOf:
+            - type: string
+              enum: [DEBUG, INFO, WARNING, ERROR, CRITICAL]
+            - type: integer
+          default: WARNING
+        read-only:
+          type: boolean
+          default: true
+        read-write:
+          type: boolean
+          default: true
+        write-only:
+          type: boolean
+          default: true
+        no-remote-ems:
+          type: boolean
+          default: false
+        scan-interval-low:
+          type: integer
+          minimum: 1
+          default: 600
+        scan-interval-medium:
+          type: integer
+          minimum: 1
+          default: 60
+        scan-interval-high:
+          type: integer
+          minimum: 1
+          default: 10
+        scan-interval-realtime:
+          type: integer
+          minimum: 1
+          default: 5
+        registers:
+          type: object
+          properties:
+            no-remote-ems: {type: boolean}
+            read-only: {type: boolean}
+            read-write: {type: boolean}
+            write-only: {type: boolean}
+        scan-interval:
+          type: object
+          properties:
+            low: {type: integer}
+            medium: {type: integer}
+            high: {type: integer}
+            realtime: {type: integer}
 
   mqtt:
     type: object
@@ -155,92 +216,43 @@ properties:
         minimum: 0.1
         maximum: 30.0
 
-
-  modbus:
-    type: array
-    items:
-      type: object
-      additionalProperties: false
-      required:
-        - host
-      properties:
-        host:
-          type: string
-        port:
-          type: integer
-          default: 502
-        timeout:
-          type: number
-          default: 1.0
-        retries:
-          type: integer
-          default: 3
-        disable-chunking:
-          type: boolean
-          default: false
-        inverters:
-          type: array
-          items:
-            type: integer
-          default: [ 1 ]
-        ac-chargers:
-          type: array
-          items:
-            type: integer
-          default: []
-        dc-chargers:
-          type: array
-          items:
-            type: integer
-          default: []
-        log-level:
-          oneOf:
-            - type: string
-              enum: [DEBUG, INFO, WARNING, ERROR, CRITICAL]
-            - type: integer
-          default: WARNING
-        read-only:
-          type: boolean
-          default: true
-        read-write:
-          type: boolean
-          default: true
-        write-only:
-          type: boolean
-          default: true
-        no-remote-ems:
-          type: boolean
-          default: false
-        scan-interval-low:
-          type: integer
-          minimum: 1
-          default: 600
-        scan-interval-medium:
-          type: integer
-          minimum: 1
-          default: 60
-        scan-interval-high:
-          type: integer
-          minimum: 1
-          default: 10
-        scan-interval-realtime:
-          type: integer
-          minimum: 1
-          default: 5
-        registers:
-          type: object
-          properties:
-            no-remote-ems: {type: boolean}
-            read-only: {type: boolean}
-            read-write: {type: boolean}
-            write-only: {type: boolean}
-        scan-interval:
-          type: object
-          properties:
-            low: {type: integer}
-            medium: {type: integer}
-            high: {type: integer}
-            realtime: {type: integer}
+  home-assistant:
+    type: object
+    additionalProperties: false
+    properties:
+      enabled:
+        type: boolean
+        default: false
+      device-name-prefix:
+        type: string
+        default: ""
+      discovery-prefix:
+        type: string
+        default: homeassistant
+      entity-id-prefix:
+        type: string
+        default: sigen
+      republish-discovery-interval:
+        type: integer
+        default: 0
+      sensors-enabled-by-default:
+        type: boolean
+        default: false
+      unique-id-prefix:
+        type: string
+        default: sigen
+      sigenergy-local-modbus-naming:
+        type: boolean
+        default: false
+      use-simplified-topics:
+        type: boolean
+        default: false
+      edit-pct-box:
+        type: boolean
+        default: false
+      discovery-only:
+        type: boolean
+        default: false
 
   sensor-debug-logging:
     type: boolean
@@ -481,6 +493,7 @@ properties:
 
   # Pydantic internal
   modbus-auto-discovery: {type: [string, "null"]}
+  modbus-auto-discovery-exclude: { type: array, items: { type: string }, default: [ "PID", "PSS" ] }
   modbus-auto-discovery-timeout: {type: [number, "null"]}
   modbus-auto-discovery-ping-timeout: {type: [number, "null"]}
   modbus-auto-discovery-retries: {type: [integer, "null"]}

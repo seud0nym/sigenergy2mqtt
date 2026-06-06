@@ -68,7 +68,8 @@ class TestPlantReadWrite:
 
     def test_active_power_adjustment(self, mock_config):
         availability = MagicMock(spec=AvailabilityMixin)
-        sensor = ActivePowerFixedAdjustmentTargetValue(plant_index=0, remote_ems=availability)
+        remote_ems_mode = MagicMock(spec=RemoteEMSControlMode)
+        sensor = ActivePowerFixedAdjustmentTargetValue(plant_index=0, remote_ems=availability, remote_ems_mode=remote_ems_mode)
         assert sensor["unit_of_measurement"] == "kW"
 
     def test_max_charging_limit_configure_topics_without_remote_ems_mode(self, mock_config):
@@ -179,6 +180,7 @@ class TestPlantDerived:
         mock_config.ems_mode_check = True
         remote_ems = MagicMock(spec=AvailabilityMixin)
         remote_ems.state_topic = "some/topic"
+        remote_ems.latest_raw_state = 1
         sensor = RemoteEMSControlMode(plant_index=0, remote_ems=remote_ems)
         sensor.configure_mqtt_topics("test_device")
 

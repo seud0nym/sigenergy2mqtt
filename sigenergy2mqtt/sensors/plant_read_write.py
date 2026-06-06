@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from abc import ABC
 from typing import cast
 
 import paho.mqtt.client as mqtt
@@ -8,8 +9,17 @@ import paho.mqtt.client as mqtt
 from sigenergy2mqtt.common import PERCENTAGE, Constants, DeviceClass, HybridInverter, InputType, Protocol, PVInverter, UnitOfFrequency, UnitOfPower, UnitOfReactivePower
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus import ModbusClient, ModbusDataType
-from sigenergy2mqtt.sensors.base import DiscoveryKeys, NumericSensor, ReservedSensor, ScanInterval, SelectSensor, SwitchSensor, ThreePhaseAdjustmentTargetValue, WriteOnlySensor
-from sigenergy2mqtt.sensors.base.sensor import AvailabilityMixin
+from sigenergy2mqtt.sensors.base import (
+    AvailabilityMixin,
+    DiscoveryKeys,
+    NumericSensor,
+    ReservedSensor,
+    ScanInterval,
+    SelectSensor,
+    SwitchSensor,
+    ThreePhaseAdjustmentTargetValue,
+    WriteOnlySensor,
+)
 
 # 5.2 Plant parameter setting address definition (holding register)
 
@@ -33,10 +43,22 @@ class PlantStatus(WriteOnlySensor, HybridInverter, PVInverter):
         return attributes
 
 
+## //---------------------- 5-2-2 Plant setting parameter power dispatch register definition ----------------------// ##
+"""
+The power dispatch registers in Table 5-2-2 applies at the location marked ③ in figure. For these registers to take effect, 
+the following two conditions must be met: 
+
+    a.The Modbus register for remote EMS enable (40029) is set to 0x01; 
+    b.The Modbus register for remote EMS control mode (40031)is set to 0x00. 
+
+*Note: These registers only control the power of PCS and is independent of loads and grid sensors.
+"""
+
+
 class ActivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
     ADDRESS = 40001
 
-    def __init__(self, plant_index: int, remote_ems: AvailabilityMixin):
+    def __init__(self, plant_index: int, remote_ems: AvailabilityMixin, remote_ems_mode: RemoteEMSControlMode):
         super().__init__(
             availability_control_sensor=remote_ems,
             name="Active Power Fixed Adjustment Target Value",
@@ -56,14 +78,35 @@ class ActivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVInv
             precision=2,
             protocol_version=Protocol.V1_8,
         )
+        ## NOTE: Min/Max are set dynamically based on the total rated active power of the plant during main.setup_devices ##
+        self._remote_ems_mode: RemoteEMSControlMode = remote_ems_mode
+
+    def configure_mqtt_topics(self, device_id: str) -> str:
+        base = super().configure_mqtt_topics(device_id)
+        if active_config.home_assistant.enabled:
+            cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append(
+                {"topic": self._remote_ems_mode.is_pcs_remote_control_mode_topic, "payload_available": 1, "payload_not_available": 0}
+            )
+        return base
+
+    def get_attributes(self) -> dict[str, float | int | str]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect."
+        return attributes
+
+    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
+        if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state == 0:
+            logging.error(f"{self.log_identity} Failed to write value '{raw_value}': {self._remote_ems_mode.name} is not in PCS Remote Control Mode")
+            return False
+        return await super().value_is_valid(modbus_client, raw_value)
 
 
 class ReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
     ADDRESS = 40003
 
-    def __init__(self, plant_index: int):
+    def __init__(self, plant_index: int, remote_ems: AvailabilityMixin, remote_ems_mode: RemoteEMSControlMode):
         super().__init__(
-            availability_control_sensor=None,
+            availability_control_sensor=remote_ems,
             name="Reactive Power Fixed Adjustment Target Value",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_reactive_power_fixed_adjustment_target_value",
             input_type=InputType.HOLDING,
@@ -83,17 +126,33 @@ class ReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVI
             minimum=-60.0,
             maximum=60.0,
         )
+        ## NOTE: Min/Max are set dynamically based on the total rated active power of the plant during main.setup_devices ##
+        self._remote_ems_mode: RemoteEMSControlMode = remote_ems_mode
+
+    def configure_mqtt_topics(self, device_id: str) -> str:
+        base = super().configure_mqtt_topics(device_id)
+        if active_config.home_assistant.enabled:
+            cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append(
+                {"topic": self._remote_ems_mode.is_pcs_remote_control_mode_topic, "payload_available": 1, "payload_not_available": 0}
+            )
+        return base
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["comment"] = "Range: [-60.00 * base value ,60.00 * base value]. Takes effect globally regardless of the EMS operating mode"
+        attributes["comment"] = "Range: [-60.00 * base value ,60.00 * base value]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect."
         return attributes
+
+    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
+        if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state == 0:
+            logging.error(f"{self.log_identity} Failed to write value '{raw_value}': {self._remote_ems_mode.name} is not in PCS Remote Control Mode")
+            return False
+        return await super().value_is_valid(modbus_client, raw_value)
 
 
 class ActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
     ADDRESS = 40005
 
-    def __init__(self, plant_index: int, remote_ems: AvailabilityMixin):
+    def __init__(self, plant_index: int, remote_ems: AvailabilityMixin, remote_ems_mode: RemoteEMSControlMode):
         super().__init__(
             availability_control_sensor=remote_ems,
             name="Active Power Percentage Adjustment Target Value",
@@ -115,19 +174,34 @@ class ActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInverter, 
             minimum=-100.00,
             maximum=100.00,
         )
+        self._remote_ems_mode: RemoteEMSControlMode = remote_ems_mode
+
+    def configure_mqtt_topics(self, device_id: str) -> str:
+        base = super().configure_mqtt_topics(device_id)
+        if active_config.home_assistant.enabled:
+            cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append(
+                {"topic": self._remote_ems_mode.is_pcs_remote_control_mode_topic, "payload_available": 1, "payload_not_available": 0}
+            )
+        return base
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["comment"] = "Range: [-100.00,100.00]"
+        attributes["comment"] = "Range: [-100.00,100.00]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect."
         return attributes
+
+    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
+        if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state == 0:
+            logging.error(f"{self.log_identity} Failed to write value '{raw_value}': {self._remote_ems_mode.name} is not in PCS Remote Control Mode")
+            return False
+        return await super().value_is_valid(modbus_client, raw_value)
 
 
 class QSAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
     ADDRESS = 40006
 
-    def __init__(self, plant_index: int):
+    def __init__(self, plant_index: int, remote_ems: AvailabilityMixin, remote_ems_mode: RemoteEMSControlMode):
         super().__init__(
-            availability_control_sensor=None,
+            availability_control_sensor=remote_ems,
             name="Q/S Adjustment Target Value",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_q_s_adjustment_target_value",
             input_type=InputType.HOLDING,
@@ -147,20 +221,35 @@ class QSAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
             minimum=-60.0,
             maximum=60.0,
         )
+        self._remote_ems_mode: RemoteEMSControlMode = remote_ems_mode
+
+    def configure_mqtt_topics(self, device_id: str) -> str:
+        base = super().configure_mqtt_topics(device_id)
+        if active_config.home_assistant.enabled:
+            cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append(
+                {"topic": self._remote_ems_mode.is_pcs_remote_control_mode_topic, "payload_available": 1, "payload_not_available": 0}
+            )
+        return base
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["comment"] = "Range: [-60.0,60.00]. Takes effect globally regardless of the EMS operating mode"
+        attributes["comment"] = "Range: [-60.0,60.00]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect."
         return attributes
+
+    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
+        if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state == 0:
+            logging.error(f"{self.log_identity} Failed to write value '{raw_value}': {self._remote_ems_mode.name} is not in PCS Remote Control Mode")
+            return False
+        return await super().value_is_valid(modbus_client, raw_value)
 
 
 class PowerFactorAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
     ADDRESS = 40007
 
     # Range: (-1,-0.8]U[0.8, 1]
-    def __init__(self, plant_index: int):
+    def __init__(self, plant_index: int, remote_ems: AvailabilityMixin, remote_ems_mode: RemoteEMSControlMode):
         super().__init__(
-            availability_control_sensor=None,
+            availability_control_sensor=remote_ems,
             name="Power Factor Adjustment Target Value",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_power_factor_adjustment_target_value",
             input_type=InputType.HOLDING,
@@ -180,39 +269,30 @@ class PowerFactorAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter
             minimum=(-1.0, -0.8),
             maximum=(0.8, 1.0),
         )
+        self._remote_ems_mode: RemoteEMSControlMode = remote_ems_mode
+
+    def configure_mqtt_topics(self, device_id: str) -> str:
+        base = super().configure_mqtt_topics(device_id)
+        if active_config.home_assistant.enabled:
+            cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append(
+                {"topic": self._remote_ems_mode.is_pcs_remote_control_mode_topic, "payload_available": 1, "payload_not_available": 0}
+            )
+        return base
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["comment"] = "Range: [(-1.0, -0.8) U (0.8, 1.0)]. Grid Sensor needed. Takes effect globally regardless of the EMS operating mode"
+        attributes["comment"] = "Range: [(-1.0, -0.8) U (0.8, 1.0)]. Grid Sensor needed. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect."
         return attributes
 
-
-class IndependentPhasePowerControl(SwitchSensor, AvailabilityMixin, HybridInverter):
-    ADDRESS = 40030
-
-    # Valid only when Output Type is L1/L2/L3/N. To enable independent phase control, this parameter must be enabled.
-    def __init__(self, plant_index: int, output_type: int):
-        super().__init__(
-            availability_control_sensor=None,
-            name="Independent Phase Power Control",
-            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_independent_phase_power_control",
-            plant_index=plant_index,
-            device_address=Constants.PLANT_DEVICE_ADDRESS,
-            address=self.ADDRESS,
-            scan_interval=ScanInterval.high(plant_index),
-            protocol_version=Protocol.V1_8,
-        )
-        if output_type != Constants.THREE_PHASE_OUTPUT_TYPE:  # L1/L2/L3/N
-            self.publishable = False
-
-    def get_attributes(self) -> dict[str, float | int | str]:
-        attributes = super().get_attributes()
-        attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N. To enable independent phase control, this parameter must be enabled"
-        return attributes
+    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
+        if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state == 0:
+            logging.error(f"{self.log_identity} Failed to write value '{raw_value}': {self._remote_ems_mode.name} is not in PCS Remote Control Mode")
+            return False
+        return await super().value_is_valid(modbus_client, raw_value)
 
 
 class PhaseActivePowerFixedAdjustmentTargetValue(ThreePhaseAdjustmentTargetValue, HybridInverter):
-    def __init__(self, plant_index: int, independent_phase_power_control: IndependentPhasePowerControl, output_type: int, phase: str):
+    def __init__(self, plant_index: int, remote_ems_mode: RemoteEMSControlMode, independent_phase_power_control: IndependentPhasePowerControl, output_type: int, phase: str):
         match phase:
             case "A":
                 address = 40008
@@ -243,15 +323,31 @@ class PhaseActivePowerFixedAdjustmentTargetValue(ThreePhaseAdjustmentTargetValue
             phase=phase,
             output_type=output_type,
         )
+        ## NOTE: Min/Max are set dynamically based on the total rated active power of the plant during main.setup_devices ##
+        self._remote_ems_mode: RemoteEMSControlMode = remote_ems_mode
+
+    def configure_mqtt_topics(self, device_id: str) -> str:
+        base = super().configure_mqtt_topics(device_id)
+        if active_config.home_assistant.enabled:
+            cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append(
+                {"topic": self._remote_ems_mode.is_pcs_remote_control_mode_topic, "payload_available": 1, "payload_not_available": 0}
+            )
+        return base
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N"
+        attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect."
         return attributes
+
+    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
+        if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state == 0:
+            logging.error(f"{self.log_identity} Failed to write value '{raw_value}': {self._remote_ems_mode.name} is not in PCS Remote Control Mode")
+            return False
+        return await super().value_is_valid(modbus_client, raw_value)
 
 
 class PhaseReactivePowerFixedAdjustmentTargetValue(ThreePhaseAdjustmentTargetValue, HybridInverter):
-    def __init__(self, plant_index: int, independent_phase_power_control: IndependentPhasePowerControl, output_type: int, phase: str):
+    def __init__(self, plant_index: int, remote_ems_mode: RemoteEMSControlMode, independent_phase_power_control: IndependentPhasePowerControl, output_type: int, phase: str):
         match phase:
             case "A":
                 address = 40014
@@ -282,15 +378,31 @@ class PhaseReactivePowerFixedAdjustmentTargetValue(ThreePhaseAdjustmentTargetVal
             phase=phase,
             output_type=output_type,
         )
+        ## NOTE: Min/Max are set dynamically based on the total rated active power of the plant during main.setup_devices ##
+        self._remote_ems_mode: RemoteEMSControlMode = remote_ems_mode
+
+    def configure_mqtt_topics(self, device_id: str) -> str:
+        base = super().configure_mqtt_topics(device_id)
+        if active_config.home_assistant.enabled:
+            cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append(
+                {"topic": self._remote_ems_mode.is_pcs_remote_control_mode_topic, "payload_available": 1, "payload_not_available": 0}
+            )
+        return base
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N"
+        attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect."
         return attributes
+
+    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
+        if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state == 0:
+            logging.error(f"{self.log_identity} Failed to write value '{raw_value}': {self._remote_ems_mode.name} is not in PCS Remote Control Mode")
+            return False
+        return await super().value_is_valid(modbus_client, raw_value)
 
 
 class PhaseActivePowerPercentageAdjustmentTargetValue(ThreePhaseAdjustmentTargetValue, HybridInverter):
-    def __init__(self, plant_index: int, independent_phase_power_control: IndependentPhasePowerControl, output_type: int, phase: str):
+    def __init__(self, plant_index: int, remote_ems_mode: RemoteEMSControlMode, independent_phase_power_control: IndependentPhasePowerControl, output_type: int, phase: str):
         match phase:
             case "A":
                 address = 40020
@@ -323,15 +435,30 @@ class PhaseActivePowerPercentageAdjustmentTargetValue(ThreePhaseAdjustmentTarget
             phase=phase,
             output_type=output_type,
         )
+        self._remote_ems_mode: RemoteEMSControlMode = remote_ems_mode
+
+    def configure_mqtt_topics(self, device_id: str) -> str:
+        base = super().configure_mqtt_topics(device_id)
+        if active_config.home_assistant.enabled:
+            cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append(
+                {"topic": self._remote_ems_mode.is_pcs_remote_control_mode_topic, "payload_available": 1, "payload_not_available": 0}
+            )
+        return base
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]"
+        attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect."
         return attributes
+
+    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
+        if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state == 0:
+            logging.error(f"{self.log_identity} Failed to write value '{raw_value}': {self._remote_ems_mode.name} is not in PCS Remote Control Mode")
+            return False
+        return await super().value_is_valid(modbus_client, raw_value)
 
 
 class PhaseQSAdjustmentTargetValue(ThreePhaseAdjustmentTargetValue, HybridInverter):
-    def __init__(self, plant_index: int, independent_phase_power_control: IndependentPhasePowerControl, output_type: int, phase: str):
+    def __init__(self, plant_index: int, remote_ems_mode: RemoteEMSControlMode, independent_phase_power_control: IndependentPhasePowerControl, output_type: int, phase: str):
         match phase:
             case "A":
                 address = 40023
@@ -364,11 +491,29 @@ class PhaseQSAdjustmentTargetValue(ThreePhaseAdjustmentTargetValue, HybridInvert
             phase=phase,
             output_type=output_type,
         )
+        self._remote_ems_mode: RemoteEMSControlMode = remote_ems_mode
+
+    def configure_mqtt_topics(self, device_id: str) -> str:
+        base = super().configure_mqtt_topics(device_id)
+        if active_config.home_assistant.enabled:
+            cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append(
+                {"topic": self._remote_ems_mode.is_pcs_remote_control_mode_topic, "payload_available": 1, "payload_not_available": 0}
+            )
+        return base
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]"
+        attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect."
         return attributes
+
+    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
+        if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state == 0:
+            logging.error(f"{self.log_identity} Failed to write value '{raw_value}': {self._remote_ems_mode.name} is not in PCS Remote Control Mode")
+            return False
+        return await super().value_is_valid(modbus_client, raw_value)
+
+
+## //---------------------- End of Plant setting parameter power dispatch register definition ----------------------// ##
 
 
 class Reserved40026(ReservedSensor, HybridInverter, PVInverter):
@@ -436,12 +581,15 @@ class RemoteEMSControlMode(SelectSensor, HybridInverter, PVInverter):
                 "Command Charging (Consume power from the PV first)",  # 4
                 "Command Discharging (Output power from PV first)",  # 5
                 "Command Discharging (Output power from the battery first)",  # 6
+                "",  # 7,
+                "V2G (Vehicle to Grid)",  # 8
             ],
             protocol_version=Protocol.V1_8,
         )
 
     def configure_mqtt_topics(self, device_id: str) -> str:
         base = super().configure_mqtt_topics(device_id)
+        self.is_pcs_remote_control_mode_topic = f"{base}/is_pcs_remote_control_mode"
         if active_config.home_assistant.enabled and active_config.ems_mode_check:
             self.is_charging_mode_topic = f"{base}/is_charging_mode"
             self.is_discharging_mode_topic = f"{base}/is_discharging_mode"
@@ -450,20 +598,28 @@ class RemoteEMSControlMode(SelectSensor, HybridInverter, PVInverter):
 
     async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool = False) -> bool:
         result = await super().publish(mqtt_client, modbus_client, republish=republish)
-        if result and active_config.home_assistant.enabled and active_config.ems_mode_check:
-            match self.latest_raw_state:
-                case 3 | 4:
-                    mqtt_client.publish(self.is_charging_mode_topic, "1", self._qos, self._retain)
-                    mqtt_client.publish(self.is_discharging_mode_topic, "0", self._qos, self._retain)
-                    mqtt_client.publish(self.is_charging_discharging_topic, "1", self._qos, self._retain)
-                case 5 | 6:
-                    mqtt_client.publish(self.is_charging_mode_topic, "0", self._qos, self._retain)
-                    mqtt_client.publish(self.is_discharging_mode_topic, "1", self._qos, self._retain)
-                    mqtt_client.publish(self.is_charging_discharging_topic, "1", self._qos, self._retain)
-                case _:
-                    mqtt_client.publish(self.is_charging_mode_topic, "0", self._qos, self._retain)
-                    mqtt_client.publish(self.is_discharging_mode_topic, "0", self._qos, self._retain)
-                    mqtt_client.publish(self.is_charging_discharging_topic, "0", self._qos, self._retain)
+        if result and active_config.home_assistant.enabled:
+            pcs_remote_control_mode = "0"
+            charging_mode = "0"
+            discharging_mode = "0"
+            charging_discharging_mode = "0"
+            if self._availability_control_sensor is not None and self._availability_control_sensor.latest_raw_state in (1, "1"):
+                match self.latest_raw_state:
+                    case 0:
+                        pcs_remote_control_mode = "1"
+                    case 3 | 4:
+                        charging_mode = "1"
+                        discharging_mode = "0"
+                        charging_discharging_mode = "1"
+                    case 5 | 6:
+                        charging_mode = "0"
+                        discharging_mode = "1"
+                        charging_discharging_mode = "1"
+            mqtt_client.publish(self.is_pcs_remote_control_mode_topic, pcs_remote_control_mode, self._qos, self._retain)
+            if active_config.ems_mode_check:
+                mqtt_client.publish(self.is_charging_mode_topic, charging_mode, self._qos, self._retain)
+                mqtt_client.publish(self.is_discharging_mode_topic, discharging_mode, self._qos, self._retain)
+                mqtt_client.publish(self.is_charging_discharging_topic, charging_discharging_mode, self._qos, self._retain)
             return True
         return result
 
@@ -476,7 +632,36 @@ class RemoteEMSControlMode(SelectSensor, HybridInverter, PVInverter):
         return await super().value_is_valid(modbus_client, raw_value)
 
 
-class RemoteEMSLimit(NumericSensor, HybridInverter):
+class IndependentPhasePowerControl(SwitchSensor, AvailabilityMixin, HybridInverter):
+    ADDRESS = 40030
+
+    # Valid only when Output Type is L1/L2/L3/N. To enable independent phase control, this parameter must be enabled.
+    def __init__(self, plant_index: int, output_type: int):
+        super().__init__(
+            availability_control_sensor=None,
+            name="Independent Phase Power Control",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_independent_phase_power_control",
+            plant_index=plant_index,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
+            address=self.ADDRESS,
+            scan_interval=ScanInterval.high(plant_index),
+            protocol_version=Protocol.V1_8,
+        )
+        if output_type != Constants.THREE_PHASE_OUTPUT_TYPE:  # L1/L2/L3/N
+            self.publishable = False
+
+    def get_attributes(self) -> dict[str, float | int | str]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N. To enable independent phase control, this parameter must be enabled"
+        return attributes
+
+
+## //--------------------- 5-2-1 Plant setting parameter power limitation register definition ---------------------// ##
+
+
+class RemoteEMSLimit(NumericSensor, HybridInverter, ABC):
+    """Base class for Remote EMS limits. This is not meant to be instantiated directly."""
+
     def __init__(
         self,
         availability_control_sensor: AvailabilityMixin | None,
@@ -556,7 +741,9 @@ class MaxChargingLimit(RemoteEMSLimit):
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["comment"] = f"Range: [0, Rated ESS charging power]{'. Takes effect when Remote EMS control mode (40031) is set to Command Charging' if active_config.ems_mode_check else ''}"
+        attributes["comment"] = (
+            f"The maximum charging power of the ESS in the plant must not exceed the value configured in this sensor. Range: [0, Rated ESS charging power]{'. Takes effect when Remote EMS control mode (40031) is set to Command Charging.' if active_config.ems_mode_check else ''}"
+        )
         return attributes
 
     async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
@@ -587,7 +774,9 @@ class MaxDischargingLimit(RemoteEMSLimit):
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["comment"] = f"Range: [0, Rated ESS charging power]{'. Takes effect when Remote EMS control mode (40031) is set to Command Discharging' if active_config.ems_mode_check else ''}"
+        attributes["comment"] = (
+            f"The maximum discharging power of the ESS in the plant must not exceed the value configured in this sensor. Range: [0, Rated ESS discharging power]{'. Takes effect when Remote EMS control mode (40031) is set to Command Discharging.' if active_config.ems_mode_check else ''}"
+        )
         return attributes
 
     async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
@@ -617,8 +806,9 @@ class PVMaxPowerLimit(RemoteEMSLimit):
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        if active_config.ems_mode_check:
-            attributes["comment"] = "Takes effect when Remote EMS control mode (40031) is set to Command Charging/Discharging"
+        attributes["comment"] = (
+            f"The maximum output power of the PV strings in the plant must not exceed the value configured in this sensor{'. Takes effect when Remote EMS control mode (40031) is set to Command Charging.' if active_config.ems_mode_check else ''}"
+        )
         return attributes
 
     async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
@@ -655,7 +845,7 @@ class GridMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["comment"] = "Grid Sensor needed. Takes effect globally regardless of the EMS operating mode"
+        attributes["comment"] = "The maximum active power fed into the grid must not exceed the value configured in this sensor. Grid Sensor needed. Takes effect globally regardless of the EMS operating mode"
         return attributes
 
 
@@ -686,7 +876,9 @@ class GridMaxImportLimit(NumericSensor, HybridInverter, PVInverter):
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["comment"] = "Grid Sensor needed. Takes effect globally regardless of the EMS operating mode"
+        attributes["comment"] = (
+            "The maximum active power absorbed from the grid must not exceed the value configured in this sensor. Grid Sensor needed. Takes effect globally regardless of the EMS operating mode"
+        )
         return attributes
 
 
@@ -718,7 +910,9 @@ class PCSMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["comment"] = "Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally."
+        attributes["comment"] = (
+            "The maximum active power output of the inverter in the plant must not exceed the value configured in this sensor. Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally."
+        )
         return attributes
 
 
@@ -750,8 +944,81 @@ class PCSMaxImportLimit(NumericSensor, HybridInverter, PVInverter):
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["comment"] = "Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally."
+        attributes["comment"] = (
+            "The maximum active power input of the inverter in the plant must not exceed the value configured in this sensor. Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally."
+        )
         return attributes
+
+
+class PCCPowerFactorAdjustmentTargetValueGridImport(NumericSensor, HybridInverter, PVInverter):
+    ADDRESS = 40157
+
+    def __init__(self, plant_index: int):
+        super().__init__(
+            availability_control_sensor=None,
+            name="PCC Power Factor Adjustment Target Value (Grid Import)",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_pcc_power_factor_adjustment_target_value_grid_import",
+            input_type=InputType.HOLDING,
+            plant_index=plant_index,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
+            address=self.ADDRESS,
+            count=1,
+            data_type=ModbusDataType.INT16,
+            scan_interval=ScanInterval.medium(plant_index),
+            unit=None,
+            device_class=None,
+            state_class=None,
+            icon="mdi:lightning-bolt",
+            gain=1000,
+            precision=2,
+            protocol_version=Protocol.V2_9,
+            minimum=(-1.0, -0.8),
+            maximum=(0.8, 1.0),
+        )
+
+    def get_attributes(self) -> dict[str, float | int | str]:
+        attributes = super().get_attributes()
+        attributes["comment"] = (
+            "When purchasing electricity at the grid connection point, the power factor must be controlled to the value configured in this sensor. Range: [(-1.0, -0.8) U (0.8, 1.0)]. Grid Sensor needed."
+        )
+        return attributes
+
+
+class PCCPowerFactorAdjustmentTargetValueGridExport(NumericSensor, HybridInverter, PVInverter):
+    ADDRESS = 40158
+
+    def __init__(self, plant_index: int):
+        super().__init__(
+            availability_control_sensor=None,
+            name="PCC Power Factor Adjustment Target Value (Grid Export)",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_pcc_power_factor_adjustment_target_value_grid_export",
+            input_type=InputType.HOLDING,
+            plant_index=plant_index,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
+            address=self.ADDRESS,
+            count=1,
+            data_type=ModbusDataType.INT16,
+            scan_interval=ScanInterval.medium(plant_index),
+            unit=None,
+            device_class=None,
+            state_class=None,
+            icon="mdi:lightning-bolt",
+            gain=1000,
+            precision=2,
+            protocol_version=Protocol.V2_9,
+            minimum=(-1.0, -0.8),
+            maximum=(0.8, 1.0),
+        )
+
+    def get_attributes(self) -> dict[str, float | int | str]:
+        attributes = super().get_attributes()
+        attributes["comment"] = (
+            "When selling electricity at the grid connection point, the power factor must be controlled to the value configured in this sensor. Range: [(-1.0, -0.8) U (0.8, 1.0)]. Grid Sensor needed."
+        )
+        return attributes
+
+
+## //--------------------- End of Plant setting parameter power limitation register definition ---------------------// ##
 
 
 class ESSBackupSOC(NumericSensor, HybridInverter):
@@ -1337,4 +1604,50 @@ class GridCodeUnderFrequencyPowerBoostCutOffFrequency(NumericSensor, HybridInver
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Range:[0.8*Fn, 1.0*Fn] Reference:[Grid code] Rated Frequency (Register 30276)"
+        return attributes
+
+
+class Reserved40069(ReservedSensor, HybridInverter, PVInverter):
+    ADDRESS = 40069
+
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="Reserved",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_reserved_40069",
+            input_type=InputType.HOLDING,
+            plant_index=plant_index,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
+            address=self.ADDRESS,
+            count=88,
+            data_type=ModbusDataType.STRING,
+            scan_interval=ScanInterval.low(plant_index),
+            unit=None,
+            device_class=None,
+            state_class=None,
+            icon="mdi:comment-question",
+            gain=None,
+            precision=None,
+            protocol_version=Protocol.V2_9,
+        )
+
+
+class GridPowerLossLockoutAlarmClear(WriteOnlySensor, HybridInverter, PVInverter):
+    ADDRESS = 40159
+
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="Grid Power Loss Lockout Alarm Clear",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_grid_power_loss_lockout_alarm_clear",
+            plant_index=plant_index,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
+            address=self.ADDRESS,
+            protocol_version=Protocol.V2_9,
+            name_off="",
+            name_on="Clear",
+            icon_on="mdi:lock-reset",
+        )
+
+    def get_attributes(self) -> dict[str, float | int | str]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Write 1 to clear the grid power loss lockout alarm"
         return attributes

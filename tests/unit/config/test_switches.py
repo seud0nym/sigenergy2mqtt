@@ -111,11 +111,14 @@ class TestConfigSwitches:
 
         mock_remote_ems = MagicMock(spec=AvailabilityMixin)
         mock_remote_ems.state_topic = "some/topic"
+        mock_remote_ems.latest_raw_state = 1
 
         sensor = RemoteEMSControlMode(0, mock_remote_ems)
         base_topic = sensor.configure_mqtt_topics("device_id")
 
         # Verify extra topics are created
+        assert hasattr(sensor, "is_pcs_remote_control_mode_topic")
+        assert sensor.is_pcs_remote_control_mode_topic == f"{base_topic}/is_pcs_remote_control_mode"
         assert hasattr(sensor, "is_charging_mode_topic")
         assert sensor.is_charging_mode_topic == f"{base_topic}/is_charging_mode"
 
@@ -146,12 +149,16 @@ class TestConfigSwitches:
 
         mock_remote_ems = MagicMock(spec=AvailabilityMixin)
         mock_remote_ems.state_topic = "some/topic"
+        mock_remote_ems.latest_raw_state = 0
 
         sensor = RemoteEMSControlMode(0, mock_remote_ems)
-        sensor.configure_mqtt_topics("device_id")
+        base_topic = sensor.configure_mqtt_topics("device_id")
 
         # Verify extra topics are NOT created
         assert not hasattr(sensor, "is_charging_mode_topic")
+        # Verify is_pcs_remote_control_mode_topic was created
+        assert hasattr(sensor, "is_pcs_remote_control_mode_topic")
+        assert sensor.is_pcs_remote_control_mode_topic == f"{base_topic}/is_pcs_remote_control_mode"
 
         # Verify publishing logic does NOT publish extras
         mock_mqtt = MagicMock()
@@ -185,6 +192,7 @@ class TestConfigSwitches:
         active_config.ems_mode_check = True
 
         mock_remote_ems = MagicMock(spec=AvailabilityMixin)
+        mock_remote_ems.latest_raw_state = 1
         mock_mode = MagicMock(spec=RemoteEMSControlMode)
         mock_mode.latest_raw_state = 0  # Not Command Charging
 
@@ -202,6 +210,7 @@ class TestConfigSwitches:
         active_config.ems_mode_check = False
 
         mock_remote_ems = MagicMock(spec=AvailabilityMixin)
+        mock_remote_ems.latest_raw_state = 1
         mock_mode = MagicMock(spec=RemoteEMSControlMode)
         mock_mode.latest_raw_state = 0  # Not Command Charging
 

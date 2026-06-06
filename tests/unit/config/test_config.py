@@ -97,6 +97,10 @@ class TestConfigDefaults:
         """Test default log level."""
         assert active_config.log_level == logging.WARNING
 
+    def test_default_log_fmt(self):
+        """Test default log format."""
+        assert active_config.log_fmt is None
+
     def test_default_metrics_enabled(self):
         """Test default metrics enabled flag."""
         assert active_config.metrics_enabled is True
@@ -132,6 +136,11 @@ class TestConfigSettings:
         """Test configuring log level via Settings."""
         s = Settings(log_level="INFO", modbus=[ModbusConfig(host="localhost")])
         assert s.log_level == logging.INFO
+
+    def test_settings_log_fmt(self):
+        """Test configuring log format via Settings."""
+        s = Settings(log_fmt="{message}", modbus=[ModbusConfig(host="localhost")])
+        assert s.log_fmt == "{message}"
 
     def test_settings_consumption(self):
         """Test configuring consumption method via Settings."""
@@ -534,10 +543,10 @@ class TestConfigCoverageAugmentation:
             assert "Mock OS Error" in caplog.text
 
     def test_setup_logging_tty(self):
-        from sigenergy2mqtt.config.config import _setup_logging
+        from sigenergy2mqtt.config.config import configure_root_logging
 
         with patch("sigenergy2mqtt.config.config.os.isatty", return_value=True):
-            _setup_logging()
+            configure_root_logging()
 
     def test_config_proxy_methods(self):
         from sigenergy2mqtt.config.config import _ConfigProxy
@@ -595,10 +604,10 @@ class TestConfigCoverageAugmentation:
             assert cfg._source is None
 
     def test_setup_logging_level_from_env(self):
-        from sigenergy2mqtt.config.config import _setup_logging
+        from sigenergy2mqtt.config.config import configure_root_logging
 
         with patch.dict("os.environ", {"SIGENERGY2MQTT_LOG_LEVEL": "DEBUG"}):
-            _setup_logging()
+            configure_root_logging()
             assert logging.getLogger().level == logging.DEBUG
 
 

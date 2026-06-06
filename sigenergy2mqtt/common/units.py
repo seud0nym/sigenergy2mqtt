@@ -56,6 +56,11 @@ class UnitOfPower(StrEnum):
     BTU_PER_HOUR = "BTU/h"
 
 
+class UnitOfReactiveEnergy(StrEnum):
+    VOLT_AMPERE_REACTIVE_HOUR = "varh"
+    KILO_VOLT_AMPERE_REACTIVE_HOUR = "kvarh"
+
+
 class UnitOfReactivePower(StrEnum):
     VOLT_AMPERE_REACTIVE = "var"
     KILO_VOLT_AMPERE_REACTIVE = "kvar"

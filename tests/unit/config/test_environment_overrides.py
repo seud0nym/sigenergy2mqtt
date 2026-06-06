@@ -11,6 +11,7 @@ from sigenergy2mqtt.config import Config, _swap_active_config, const
 class TestConfigEnvironmentOverrides:
     def test_all_env_overrides(self, monkeypatch, tmp_path):
         monkeypatch.setenv(const.SIGENERGY2MQTT_LOG_LEVEL, "DEBUG")
+        monkeypatch.setenv(const.SIGENERGY2MQTT_LOG_FMT, "{message}")
         monkeypatch.setenv(const.SIGENERGY2MQTT_MODBUS_HOST, "10.0.0.1")
         monkeypatch.setenv(const.SIGENERGY2MQTT_MQTT_BROKER, "mqtt.local")
         monkeypatch.setenv(const.SIGENERGY2MQTT_MQTT_USERNAME, "user")
@@ -21,6 +22,7 @@ class TestConfigEnvironmentOverrides:
                 cfg.persistent_state_path = tmp_path
                 cfg.reload()
                 assert cfg.log_level == logging.DEBUG
+                assert cfg.log_fmt == "{message}"
                 assert len(cfg.modbus) >= 1
                 assert cfg.modbus[0].host == "10.0.0.1"
                 assert cfg.mqtt.broker == "mqtt.local"

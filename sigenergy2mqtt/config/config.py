@@ -112,6 +112,20 @@ class Config:
         pass
 
     @property
+    def log_fmt(self) -> str | None:
+        return self._settings.log_fmt if self._settings else None
+
+    @log_fmt.setter
+    def log_fmt(self, value: str | None):
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        self._settings.log_fmt = value
+
+    @log_fmt.deleter
+    def log_fmt(self):
+        pass
+
+    @property
     def language(self) -> str:
         return self._settings.language if self._settings else "en"
 
@@ -393,7 +407,7 @@ class Config:
 
     def _perform_auto_discovery(self, skip_auto_discovery: bool) -> Path | None:
         """Synchronous auto-discovery logic."""
-        auto_discovery, auto_discovery_cache, auto_settings = self._prepare_auto_discovery()
+        auto_discovery, auto_discovery_cache, auto_settings = self._prepare_auto_discovery(skip_auto_discovery)
 
         if not skip_auto_discovery and self._should_run_discovery(auto_discovery, auto_discovery_cache):
             if auto_discovery != "force":
@@ -408,6 +422,7 @@ class Config:
                     auto_settings.modbus_auto_discovery_timeout,
                     auto_settings.modbus_auto_discovery_retries,
                     include_networks=include_networks,
+                    exclude_devices=auto_settings.modbus_auto_discovery_exclude,
                 )
                 if auto_discovered:
                     self._save_discovery_results_sync(auto_discovery_cache, auto_discovered)
@@ -416,7 +431,7 @@ class Config:
 
     async def _perform_auto_discovery_async(self, skip_auto_discovery: bool) -> Path | None:
         """Asynchronous auto-discovery logic."""
-        auto_discovery, auto_discovery_cache, auto_settings = self._prepare_auto_discovery()
+        auto_discovery, auto_discovery_cache, auto_settings = self._prepare_auto_discovery(skip_auto_discovery)
 
         if not skip_auto_discovery and self._should_run_discovery(auto_discovery, auto_discovery_cache):
             if auto_discovery != "force":
@@ -431,20 +446,21 @@ class Config:
                     auto_settings.modbus_auto_discovery_timeout,
                     auto_settings.modbus_auto_discovery_retries,
                     include_networks=include_networks,
+                    exclude_devices=auto_settings.modbus_auto_discovery_exclude,
                 )
                 if auto_discovered:
                     await self._save_discovery_results_async(auto_discovery_cache, auto_discovered)
 
         return self._get_final_cache_path(auto_discovery, auto_discovery_cache)
 
-    def _prepare_auto_discovery(self):
+    def _prepare_auto_discovery(self, skip_auto_discovery: bool):
         auto_discovery = os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY)
         auto_discovery_cache = Path(self.persistent_state_path, "auto-discovery.yaml")
         auto_settings = self._load_auto_discovery_settings()
 
         if auto_settings.modbus_auto_discovery:
             auto_discovery = auto_settings.modbus_auto_discovery
-        if not auto_discovery and not self._has_modbus_source():
+        if not auto_discovery and not self._has_modbus_source() and not skip_auto_discovery:
             auto_discovery = "once"
 
         return auto_discovery, auto_discovery_cache, auto_settings
@@ -453,11 +469,13 @@ class Config:
         return auto_discovery == "force" or (auto_discovery == "once" and not auto_discovery_cache.is_file())
 
     def _get_final_cache_path(self, auto_discovery, auto_discovery_cache) -> Path | None:
+        if auto_discovery not in ("once", "force"):
+            logging.debug("Auto-discovery disabled")
+            return None
         if auto_discovery == "once" and auto_discovery_cache.is_file():
             logging.info("Auto-discovery already completed, using cached results.")
             return auto_discovery_cache
-        if not self._should_run_discovery(auto_discovery, auto_discovery_cache) and not auto_discovery_cache.is_file():
-            logging.debug("Auto-discovery disabled")
+        if not auto_discovery_cache.is_file():
             return None
         return auto_discovery_cache
 
@@ -653,11 +671,12 @@ class Config:
         modbus_retries: int,
         timeout: float = 120.0,
         include_networks: list[str] | None = None,
+        exclude_devices: list[str] | None = None,
     ) -> list:
         """Asynchronous execution of auto-discovery scan."""
         try:
             return await asyncio.wait_for(
-                auto_discovery_scan(include_networks, port, ping_timeout, modbus_timeout, modbus_retries),
+                auto_discovery_scan(include_networks, exclude_devices, port, ping_timeout, modbus_timeout, modbus_retries),
                 timeout=timeout,
             )
         except asyncio.TimeoutError:
@@ -675,6 +694,7 @@ class Config:
         modbus_retries: int,
         timeout: float = 120.0,
         include_networks: list[str] | None = None,
+        exclude_devices: list[str] | None = None,
     ) -> list:
         """Synchronous execution of auto-discovery scan (wraps async version)."""
         try:
@@ -682,7 +702,7 @@ class Config:
         except RuntimeError:
             loop = None
 
-        coro = auto_discovery_scan(include_networks, port, ping_timeout, modbus_timeout, modbus_retries)
+        coro = auto_discovery_scan(include_networks, exclude_devices, port, ping_timeout, modbus_timeout, modbus_retries)
         if loop is None:
             try:
                 return asyncio.run(coro)
@@ -838,7 +858,7 @@ def _create_persistent_state_path() -> Path:
     raise ConfigurationError("Unable to create persistent state folder!")
 
 
-def _setup_logging() -> None:
+def configure_root_logging(level: int | None = None, fmt: str | None = None) -> None:
     """Configure the root logger with a format appropriate to the runtime environment.
 
     Three formats are used:
@@ -846,21 +866,63 @@ def _setup_logging() -> None:
     - **TTY**: includes timestamp and ``sigenergy2mqtt:`` prefix — for interactive use.
     - **Docker**: includes timestamp but no prefix — for structured container log collectors.
     - **Other**: no timestamp — for init systems (systemd, etc.) that add their own.
-    """
-    if os.isatty(sys.stdout.fileno()):
-        fmt = "{asctime} {levelname:<8} sigenergy2mqtt:{module:.<15.15}{lineno:04d} {message}"
-    else:
-        cgroup = Path("/proc/self/cgroup")
-        in_docker = Path("/.dockerenv").is_file() or (cgroup.is_file() and "docker" in cgroup.read_text())
-        fmt = "{asctime} {levelname:<8} {module:.<15.15}{lineno:04d} {message}" if in_docker else "{levelname:<8} {module:.<15.15}{lineno:04d} {message}"
-    logging.basicConfig(format=fmt, level=logging.INFO, style="{")
 
-    # Apply log level immediately from env so initial logging is correct.
-    log_level_name = os.getenv(const.SIGENERGY2MQTT_LOG_LEVEL)
-    if log_level_name:
-        level = getattr(logging, log_level_name, None)
-        if level:
-            logging.getLogger().setLevel(level)
+    The optional *level* overrides the default starting log level. Environment
+    variables ``SIGENERGY2MQTT_LOG_FMT`` and ``SIGENERGY2MQTT_LOG_LEVEL`` still
+    apply for format and level overrides.
+
+
+    **Why logging is initialized twice**
+
+    There are two separate phases in the app:
+
+    1. config._system_initialize() / _setup_logging()
+
+    - Runs early when sigenergy2mqtt.config is imported.
+    - Establishes a baseline root logger format and initial level for startup logs.
+    - This happens before the full runtime config is loaded, so it cannot use active_config values yet.
+
+    2. main.configure_logging()
+
+    - Runs inside async_main() before the main runtime loop.
+    - Reconfigures logging using active_config.log_level and component-specific levels (paho.mqtt, pvoutput, pymodbus, etc.).
+    - Ensures pymodbus’s logging integration uses the intended handler/format and prevents handler races.
+
+    """
+    if not fmt:
+        fmt = os.getenv(const.SIGENERGY2MQTT_LOG_FMT)
+    if not fmt:
+        try:
+            if "active_config" in globals() and active_config is not None:
+                fmt = active_config.log_fmt
+        except Exception:
+            pass
+    if not fmt:
+        if os.isatty(sys.stdout.fileno()):
+            fmt = "{asctime} {levelname:<8} sigenergy2mqtt:{module:.<15.15}{lineno:04d} {message}"
+        else:
+            cgroup = Path("/proc/self/cgroup")
+            in_docker = Path("/.dockerenv").is_file() or (cgroup.is_file() and "docker" in cgroup.read_text())
+            fmt = "{asctime} {levelname:<8} {module:.<15.15}{lineno:04d} {message}" if in_docker else "{levelname:<8} {module:.<15.15}{lineno:04d} {message}"
+
+    # basicConfig is a no-op if handlers already exist; remove any pre-existing
+    # handlers so our format/level take effect (e.g. handlers added by pymodbus).
+    root = logging.getLogger()
+    if root.handlers:
+        root.handlers.clear()
+
+    # Determine the initial log level: explicit argument -> env -> INFO
+    if level is None:
+        env_level_name = os.getenv(const.SIGENERGY2MQTT_LOG_LEVEL)
+        if env_level_name:
+            env_level = getattr(logging, env_level_name, None)
+            initial_level = env_level if env_level else logging.INFO
+        else:
+            initial_level = logging.INFO
+    else:
+        initial_level = level
+
+    logging.basicConfig(format=fmt, level=initial_level, style="{")
 
 
 def _system_initialize():
@@ -878,7 +940,7 @@ def _system_initialize():
         ConfigurationError: If the Python version requirement is not met, or if no
             writable directory can be found for persistent state storage.
     """
-    _setup_logging()
+    configure_root_logging()
 
     logging.info(f"Release {version.__version__} (Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro})")
 

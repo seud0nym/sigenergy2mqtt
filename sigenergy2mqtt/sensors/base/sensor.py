@@ -276,16 +276,19 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
             f"dev={device_address}",
         ]
 
-        if hasattr(self, "string_number"):
-            suffix_parts.append(f"string={getattr(self, 'string_number')}")
-
         if hasattr(self, "phase"):
             phase = str(getattr(self, "phase")).strip()
             if phase:
                 suffix_parts.append(f"phase={phase}")
 
+        if hasattr(self, "slot"):
+            suffix_parts.append(f"slot={getattr(self, 'slot')}")
+
         if hasattr(self, "smart_load_index"):
             suffix_parts.append(f"idx={getattr(self, 'smart_load_index')}")
+
+        if hasattr(self, "string_number"):
+            suffix_parts.append(f"string={getattr(self, 'string_number')}")
 
         return f"{self.__class__.__name__}[{','.join(suffix_parts)}]"
 
@@ -1258,7 +1261,3 @@ class AvailabilityMixin(Sensor):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-
-
-# =============================================================================
-# Derived Sensor Classes

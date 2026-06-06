@@ -250,7 +250,7 @@ class TestModbusSensor:
                 {30005: {"object_id": "sigen_local_ts_name", "gain": 1.0, "unit": "s"}},
                 clear=True,
             ):
-                sensor = TimestampSensor("TS", "sigen_ts", InputType.INPUT, 0, 1, 30005, 10, Protocol.V2_4)
+                sensor = TimestampSensor("TS", "sigen_ts", InputType.INPUT, 0, 1, 30005, 10, Protocol.V2_4, tz=datetime.timezone.utc)
 
             assert sensor.object_id == "sigen_local_ts_name"
             assert getattr(sensor, "unit", sensor.get("unit_of_measurement")) is None
@@ -297,7 +297,7 @@ class TestTimestampSensor:
     @pytest.mark.asyncio
     async def test_get_state_timestamp(self):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            sensor = TimestampSensor("TS", "sigen_ts", InputType.INPUT, 0, 1, 30005, 10, Protocol.V2_4)
+            sensor = TimestampSensor("TS", "sigen_ts", InputType.INPUT, 0, 1, 30005, 10, Protocol.V2_4, tz=datetime.timezone.utc)
 
             ts = 1700000000  # 2023-11-14 22:13:20 UTC
             with patch("sigenergy2mqtt.sensors.base.ReadOnlySensor.get_state", new_callable=AsyncMock) as mock_super_get:
@@ -309,7 +309,7 @@ class TestTimestampSensor:
 
     def test_state2raw_timestamp(self):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            sensor = TimestampSensor("TS", "sigen_ts", InputType.INPUT, 0, 1, 30005, 10, Protocol.V2_4)
+            sensor = TimestampSensor("TS", "sigen_ts", InputType.INPUT, 0, 1, 30005, 10, Protocol.V2_4, tz=datetime.timezone.utc)
             iso_str = "2023-11-14T22:13:20+00:00"
             raw = sensor.state2raw(iso_str)
             assert raw == 1700000000

@@ -22,6 +22,7 @@ class AutoDiscoverySettings(BaseSettings):
     modbus_auto_discovery_ping_timeout: float = Field(0.5, alias="modbus-auto-discovery-ping-timeout")
     modbus_auto_discovery_retries: int = Field(0, alias="modbus-auto-discovery-retries")
     modbus_auto_discovery_networks: list[str] = Field(default_factory=list, alias="modbus-auto-discovery-networks")
+    modbus_auto_discovery_exclude: list[str] = Field(default_factory=lambda: ["PID", "PSS"], alias="modbus-auto-discovery-exclude")
 
     @field_validator("modbus_auto_discovery_networks", mode="before")
     @classmethod
@@ -38,4 +39,20 @@ class AutoDiscoverySettings(BaseSettings):
                 validated.append(str(network))
             except (ValueError, TypeError) as e:
                 raise ValueError(f"Invalid IPv4 CIDR network '{entry}': {e}")
+        return validated
+
+    @field_validator("modbus_auto_discovery_exclude", mode="before")
+    @classmethod
+    def validate_excludes(cls, v: list[str] | str | None) -> list[str]:
+        """Validate that each entry is a valid device class name."""
+        if v is None:
+            return ["PID", "PSS"]  # defaults
+        if isinstance(v, str):
+            v = [x.strip() for x in v.split(",") if x.strip()]
+        validated: list[str] = []
+        for entry in v:
+            if entry in ["ACCharger", "DCCharger", "PID", "PSS"]:
+                validated.append(entry)
+            else:
+                raise ValueError(f"Invalid Device class name '{entry}'")
         return validated

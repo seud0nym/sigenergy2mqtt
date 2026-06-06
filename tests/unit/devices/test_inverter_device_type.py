@@ -10,6 +10,7 @@ PVInverter devices, causing a failure because PACKBCUCount only applies
 to HybridInverter devices.
 """
 
+from datetime import timezone
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -92,6 +93,7 @@ class TestInverterCreateWithDeviceType:
                 device_address=1,
                 device_type=device_type,
                 protocol_version=Protocol.V2_4,
+                tz=timezone.utc,
                 modbus_client=mock_modbus,
             )
 
@@ -110,6 +112,7 @@ class TestInverterCreateWithDeviceType:
                 device_address=1,
                 device_type=device_type,
                 protocol_version=Protocol.V2_4,
+                tz=timezone.utc,
                 modbus_client=mock_modbus,
             )
 
@@ -132,6 +135,7 @@ class TestInverterSensorDeviceTypeInheritance:
                 device_address=1,
                 device_type=device_type,
                 protocol_version=Protocol.V2_4,
+                tz=timezone.utc,
                 modbus_client=mock_modbus,
             )
 
@@ -150,6 +154,7 @@ class TestInverterSensorDeviceTypeInheritance:
                 device_address=1,
                 device_type=device_type,
                 protocol_version=Protocol.V2_4,
+                tz=timezone.utc,
                 modbus_client=mock_modbus,
             )
 
@@ -171,6 +176,7 @@ class TestInverterSensorDeviceTypeInheritance:
                 device_address=1,
                 device_type=HybridInverter(),
                 protocol_version=Protocol.V2_4,
+                tz=timezone.utc,
                 modbus_client=mock_modbus,
             )
 
@@ -181,6 +187,7 @@ class TestInverterSensorDeviceTypeInheritance:
                     device_address=1,
                     device_type=PVInverter(),
                     protocol_version=Protocol.V2_4,
+                    tz=timezone.utc,
                     modbus_client=mock_modbus,
                 )
 
@@ -200,6 +207,7 @@ class TestInverterSensorDeviceTypeInheritance:
                 device_address=1,
                 device_type=HybridInverter(),
                 protocol_version=Protocol.V2_4,
+                tz=timezone.utc,
                 modbus_client=mock_modbus,
             )
 
@@ -213,6 +221,7 @@ class TestInverterSensorDeviceTypeInheritance:
                     device_address=1,
                     device_type=PVInverter(),
                     protocol_version=Protocol.V2_4,
+                    tz=timezone.utc,
                     modbus_client=mock_modbus,
                 )
 

@@ -45,6 +45,7 @@ The first host will be called `Sigenergy Plant` (plant is the terminology used i
 Example:
 ```
 Sigenergy Plant
+   ├─ Sigenergy Plant ESS Pre-Heating
    ├─ Sigenergy Plant Grid Code
    ├─ Sigenergy Plant Grid Sensor
    ├─ Sigenergy Plant Statistics
@@ -62,6 +63,9 @@ Sigenergy Plant
         ├─ SigenStor CMUyyyyyyyyyy PV String 2
         └─ Sigenergy DC Charger
 ```
+
+> [!IMPORTANT]
+> Not all devices will be created for every installation. The `ESS Pre-Heating` device, for example, is only applicable to the Sigen PV M1-HYA/HYB series. AC and DC Charger devices are only created if you have a charger installed.
 
 ## Beta Channel
 

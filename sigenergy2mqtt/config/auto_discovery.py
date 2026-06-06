@@ -41,15 +41,19 @@ def _check_interrupted() -> None:
 # Register address constants
 # ---------------------------------------------------------------------------
 
-REG_PLANT_RUNNING_STATE = 30051
-REG_INVERTER_RUNNING_STATE = 30578
-REG_DC_CHARGER_CHARGING_CURRENT = 31501
 REG_AC_CHARGER_SYSTEM_STATE = 32000
-REG_SERIAL_NUMBER = 30515
+REG_DC_CHARGER_CHARGING_CURRENT = 31501
+REG_INVERTER_RUNNING_STATE = 30578
+REG_INVERTER_SERIAL_NUMBER = 30515
+REG_PID_RUNNING_STATUS = 33041
+REG_PID_SERIAL_NUMBER = 33015
+REG_PSS_COMMUNICATION_STATUS = 32525
+REG_PSS_SERIAL_NUMBER = 32515
+REG_PLANT_RUNNING_STATE = 30051
 REG_SERIAL_NUMBER_COUNT = 10
 
 # ---------------------------------------------------------------------------
-# Module-level serial number registry
+# Module-level inverter serial number registry
 #
 # Kept at module level so that external callers (tests, main()) can read and
 # reset it between scans via auto_discovery.serial_numbers.
@@ -69,9 +73,11 @@ class DiscoveredDevice:
     ac_chargers: list[int] = field(default_factory=list)
     dc_chargers: list[int] = field(default_factory=list)
     inverters: list[int] = field(default_factory=list)
+    pid: list[int] = field(default_factory=list)
+    pss: list[int] = field(default_factory=list)
 
     def has_devices(self) -> bool:
-        return bool(self.ac_chargers or self.dc_chargers or self.inverters)
+        return bool(self.ac_chargers or self.dc_chargers or self.inverters or self.pid or self.pss)
 
     def to_dict(self) -> dict:
         return {
@@ -80,6 +86,8 @@ class DiscoveredDevice:
             "ac-chargers": self.ac_chargers,
             "dc-chargers": self.dc_chargers,
             "inverters": self.inverters,
+            "pid": self.pid,
+            "pss": self.pss,
         }
 
 
@@ -188,13 +196,13 @@ async def probe_register(modbus: AsyncModbusTcpClient, address: int, count: int 
     return False
 
 
-async def get_serial_number(modbus: AsyncModbusTcpClient, device_id: int = 1) -> str | None:
+async def get_serial_number(modbus: AsyncModbusTcpClient, sn_address: int, device_id: int = 1) -> str | None:
     """Read and decode the serial number string from a device."""
     host = modbus.comm_params.host
     port = modbus.comm_params.port
-    logging.debug(f" -> Reading serial number from modbus://{host}:{port} device_id={device_id} register {REG_SERIAL_NUMBER} count={REG_SERIAL_NUMBER_COUNT}")
+    logging.debug(f" -> Reading serial number from modbus://{host}:{port} device_id={device_id} register {sn_address} count={REG_SERIAL_NUMBER_COUNT}")
     try:
-        rr = await modbus.read_input_registers(address=REG_SERIAL_NUMBER, count=REG_SERIAL_NUMBER_COUNT, device_id=device_id)
+        rr = await modbus.read_input_registers(address=sn_address, count=REG_SERIAL_NUMBER_COUNT, device_id=device_id)
         if rr and not rr.isError() and not isinstance(rr, ExceptionResponse) and hasattr(rr, "registers") and len(rr.registers) >= REG_SERIAL_NUMBER_COUNT:
             return cast(str, modbus.convert_from_registers(rr.registers, AsyncModbusTcpClient.DATATYPE.STRING))
     except ModbusException as exc:
@@ -227,20 +235,19 @@ async def _reconnect(modbus: AsyncModbusTcpClient, *, max_attempts: int = 3) -> 
         logging.warning(f"Could not reconnect to {host}:{port} after {max_attempts} attempts")
 
 
-async def _probe_device_id(modbus: AsyncModbusTcpClient, device_id: int, device: DiscoveredDevice, max_reconnect_attempts: int = 3) -> None:
+async def _probe_device_id(modbus: AsyncModbusTcpClient, device_id: int, device: DiscoveredDevice, max_reconnect_attempts: int = 3, exclude_devices: list[str] = []) -> None:
     """Attempt to identify a device at this device_id. Appends to device."""
     host = device.host
     port = device.port
 
     # DC charger (probe at lowest device_id first, max 4 devices per host)
-    if len(device.dc_chargers) < 4 and await probe_register(modbus, REG_DC_CHARGER_CHARGING_CURRENT, device_id=device_id):
+    if "DCCharger" not in exclude_devices and len(device.dc_chargers) < 4 and await probe_register(modbus, REG_DC_CHARGER_CHARGING_CURRENT, device_id=device_id):
         logging.info(f" -> Found DC-Charger at {host}:{port}: Device ID={device_id}")
         device.dc_chargers.append(device_id)
 
     # Inverter
     if await probe_register(modbus, REG_INVERTER_RUNNING_STATE, device_id=device_id):
-        serial = await get_serial_number(modbus, device_id=device_id)
-
+        serial = await get_serial_number(modbus, REG_INVERTER_SERIAL_NUMBER, device_id=device_id)
         if serial:
             if serial not in serial_numbers:
                 serial_numbers.append(serial)
@@ -250,13 +257,35 @@ async def _probe_device_id(modbus: AsyncModbusTcpClient, device_id: int, device:
                 logging.info(f" -> IGNORED Inverter {device_id} at {host}:{port} - serial number {serial} already discovered")
         return
 
-    # AC charger (only probe once at least one inverter is confirmed on this host)
-    if device.inverters and await probe_register(modbus, REG_AC_CHARGER_SYSTEM_STATE, device_id=device_id):
+    # AC charger
+    if "ACCharger" not in exclude_devices and await probe_register(modbus, REG_AC_CHARGER_SYSTEM_STATE, device_id=device_id):
         logging.info(f" -> Found AC-Charger at {host}:{port}: Device ID={device_id}")
         device.ac_chargers.append(device_id)
 
+    # PSS
+    if "PSS" not in exclude_devices and await probe_register(modbus, REG_PSS_COMMUNICATION_STATUS, device_id=device_id):
+        serial = await get_serial_number(modbus, REG_PSS_SERIAL_NUMBER, device_id=device_id)
+        if serial:
+            if serial not in serial_numbers:
+                serial_numbers.append(serial)
+                logging.info(f" -> Found PSS {device_id} ({serial}) at {host}:{port}: Device ID={device_id}")
+                device.pss.append(device_id)
+            else:
+                logging.info(f" -> IGNORED PSS {device_id} at {host}:{port} - serial number {serial} already discovered")
 
-async def scan_host(ip: str, port: int, results: list, timeout: float = 0.25, retries: int = 0, max_reconnect_attempts: int = 3) -> None:
+    # PID
+    if "PID" not in exclude_devices and await probe_register(modbus, REG_PID_RUNNING_STATUS, device_id=device_id):
+        serial = await get_serial_number(modbus, REG_PID_SERIAL_NUMBER, device_id=device_id)
+        if serial:
+            if serial not in serial_numbers:
+                serial_numbers.append(serial)
+                logging.info(f" -> Found PID {device_id} ({serial}) at {host}:{port}: Device ID={device_id}")
+                device.pid.append(device_id)
+            else:
+                logging.info(f" -> IGNORED PID {device_id} at {host}:{port} - serial number {serial} already discovered")
+
+
+async def scan_host(ip: str, port: int, results: list, timeout: float = 0.25, retries: int = 0, max_reconnect_attempts: int = 3, exclude_devices: list[str] = []) -> None:
     """Connect to a single host, enumerate its Sigenergy devices, and append to results."""
     modbus = AsyncModbusTcpClient(host=ip, port=port, framer=FramerType.SOCKET, timeout=timeout, retries=retries)
     try:
@@ -282,7 +311,7 @@ async def scan_host(ip: str, port: int, results: list, timeout: float = 0.25, re
 
         for device_id in range(1, total_device_ids + 1):
             _check_interrupted()
-            await _probe_device_id(modbus, device_id, device, max_reconnect_attempts)
+            await _probe_device_id(modbus, device_id, device, max_reconnect_attempts, exclude_devices)
 
             # Log progress every 25 device IDs scanned
             if device_id - last_progress_log >= 25:
@@ -296,7 +325,9 @@ async def scan_host(ip: str, port: int, results: list, timeout: float = 0.25, re
             logging.info(
                 f" -> Scan complete for {ip}:{port}: Found {len(device.inverters)} inverter(s) {sorted(device.inverters)}, "
                 f"{len(device.dc_chargers)} DC charger(s) {sorted(device.dc_chargers)}, "
-                f"{len(device.ac_chargers)} AC charger(s) {sorted(device.ac_chargers)}"
+                f"{len(device.ac_chargers)} AC charger(s) {sorted(device.ac_chargers)}, "
+                f"{len(device.pid)} PID(s) {sorted(device.pid)}, "
+                f"{len(device.pss)} PSS(s) {sorted(device.pss)}"
             )
 
     except DiscoveryInterruptedError:
@@ -373,6 +404,7 @@ def _local_networks(include_networks: list[str] | None = None) -> dict[str, ipad
 
 async def scan(
     include_networks: list[str] | None = None,
+    exclude_devices: list[str] | None = None,
     port: int = 502,
     ping_timeout: float = 0.5,
     modbus_timeout: float = 0.25,
@@ -404,17 +436,15 @@ async def scan(
     networks = _local_networks(include_networks)
     if not networks:
         logging.warning("No networks found to be scanned for auto-discovery! Scanning localhost only.")
+        networks["127.0.0.1"] = ipaddress.IPv4Network("127.0.0.1/255.255.255.255", strict=False)
 
     candidate_ips: list[str] = [str(host) for subnet in networks.values() for host in subnet.hosts()]
-    if "127.0.0.1" not in candidate_ips:
-        candidate_ips.insert(0, "127.0.0.1")
 
     logging.info(f"Scanning for active devices across {len(candidate_ips)} candidate IPs…")
     ping_results = await ping_scan(candidate_ips, concurrent=ping_concurrency, timeout=ping_timeout, port=port)
 
-    # Always include localhost first; sort the rest by ascending latency.
-    active_ips: list[str] = ["127.0.0.1"]
-    active_ips.extend(sorted((ip for ip in ping_results if ip != "127.0.0.1"), key=lambda ip: ping_results[ip]))
+    # Sort by ascending latency.
+    active_ips: list[str] = sorted((ip for ip in ping_results), key=lambda ip: ping_results[ip])
 
     logging.info(f"Found {len(active_ips)} active Modbus device(s), starting detailed scan…")
 
@@ -424,7 +454,7 @@ async def scan(
     async def scan_with_sem(ip: str) -> None:
         _check_interrupted()
         async with sem:
-            await scan_host(ip, port, results, timeout=modbus_timeout, retries=modbus_retries, max_reconnect_attempts=max_reconnect_attempts)
+            await scan_host(ip, port, results, timeout=modbus_timeout, retries=modbus_retries, max_reconnect_attempts=max_reconnect_attempts, exclude_devices=exclude_devices or [])
 
     try:
         await asyncio.gather(
@@ -439,13 +469,16 @@ async def scan(
     elapsed = time.perf_counter() - started
 
     # Summary of findings
-    total_inverters = sum(len(r.get("inverters", [])) for r in results)
-    total_dc_chargers = sum(len(r.get("dc-chargers", [])) for r in results)
-    total_ac_chargers = sum(len(r.get("ac-chargers", [])) for r in results)
-
     logging.info(f"Scan completed in {elapsed:.2f}s")
     if results:
-        logging.info(f"Found {len(results)} Sigenergy plant(s) with {total_inverters} inverter(s), {total_dc_chargers} DC charger(s), {total_ac_chargers} AC charger(s)")
+        logging.info(
+            f"Found {len(results)} Sigenergy plant(s) with "
+            f"{sum(len(r.get('inverters', [])) for r in results)} inverter(s), "
+            f"{sum(len(r.get('dc-chargers', [])) for r in results)} DC charger(s), "
+            f"{sum(len(r.get('ac-chargers', [])) for r in results)} AC charger(s), "
+            f"{sum(len(r.get('pid', [])) for r in results)} PID(s), "
+            f"{sum(len(r.get('pss', [])) for r in results)} PSS(s)"
+        )
     else:
         logging.info("No Sigenergy plants found during auto-discovery.")
 

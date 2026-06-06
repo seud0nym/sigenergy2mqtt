@@ -40,6 +40,8 @@ class ModbusConfig(BaseModel):
     inverters: list[int] = Field(default_factory=list, alias="inverters")
     ac_chargers: list[int] = Field(default_factory=list, alias="ac-chargers")
     dc_chargers: list[int] = Field(default_factory=list, alias="dc-chargers")
+    pss: list[int] = Field(default_factory=list, alias="pss")
+    pid: list[int] = Field(default_factory=list, alias="pid")
     log_level: int = Field(logging.WARNING, alias="log-level")
     _validate_log_level = field_validator("log_level", mode="before")(validate_log_level)
     registers: RegisterAccess = Field(default_factory=RegisterAccess, alias="registers")  # type: ignore[reportCallIssue]
@@ -112,6 +114,6 @@ class ModbusConfig(BaseModel):
     @model_validator(mode="after")
     def default_inverters(self) -> "ModbusConfig":
         """Default to inverter device ID 1 when nothing is specified."""
-        if not self.inverters and not self.ac_chargers and not self.dc_chargers:
+        if not self.inverters and not self.ac_chargers and not self.dc_chargers and not self.pid and not self.pss:
             self.inverters = [1]
         return self

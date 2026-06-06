@@ -4,9 +4,31 @@
 
 ### Added
 
+- Added Inverter and Plant estimated self-consumed power and daily energy sensors (thanks to @swainstm https://whrl.pl/RgV4Rd)
+- Added simulated grid outage during startup to Modbus test server for testing EVAC not on backup circuit
+- Added `SIGENERGY2MQTT_LOG_FMT` configuration setting and CLI argument to allow override of the log message format
 - Added `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_NETWORKS` configuration setting and CLI argument to allow scanning of specific CIDR networks during auto-discovery
-- Added Inverter and Plant estimated self-consumed power and daily energy sensors
-- Added simulated grid outage during startup for EVAC not on backup circuit to Modbus test server
+- Added `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_EXCLUDE` to exclude devices from auto-discovery
+- Added new sensors defined in Modbus Protocol V2.9 (sensors may not be available depending on device/firmware):
+  - New PSS and PID devices, and configuration/auto-discovery changes to support them (these are commercial/enterprise products, not residential)
+  - DC Charger:
+    - Discharging Current
+    - Current Discharging Capacity
+    - Current Discharging Duration
+    - Total Charging Capacity
+    - Total Discharging Capacity
+    - Rated Charging Power
+    - Rated Discharging Power
+    - Max Charging Power Limit
+    - Max Discharging Power Limit
+  - Plant
+    - PV Total Generation Today
+    - PV Total Generation Yesterday
+    - Average Cell Temperature
+    - PCC Power Factor Adjustment Target Value (Grid Import) - Sigen PV M1-HYB series _only_
+    - PCC Power Factor Adjustment Target Value (Grid Export) - Sigen PV M1-HYB series _only_
+    - Grid Power Loss Lockout Alarm Clear
+    - New ESS Preheating Device - Sigen PV M1-HYA/HYB series _only_
 
 ### Changed
 
@@ -28,6 +50,19 @@
 - When Power Factor is calculated because the Modbus interface provides an insane value, the log message will now only be visible if debug logging is enabled for that sensor
 - Metrics reads now count physical reads rather than imputing the time to read a single register 
 - Simplified PlantConsumedPower when using calculated consumption method to use new CrossDeviceDerivedSensor logic rather than relying on MQTT notifications
+- Modified early detection of Modbus 0x02 ILLEGAL_DATA_ADDRESS exceptions to use a pre-scan approach rather than hard-coding known problematic registers
+- SystemTime, StartupTime and ShutdownTime sensors now return correct date/time adjusted to the SystemTimeZone
+- As of Modbus Protocol V2.9, power dispatch sensors require Remote EMS to be enabled and the EMS to be in PCS Remote Control Mode for them to take effect. The affected sensors are:
+  - Active Power Fixed Adjustment Target Value
+  - Reactive Power Fixed Adjustment Target Value
+  - Active Power Percentage Adjustment Target Value
+  - Q/S Adjustment Target Value
+  - Power Factor Adjustment Target Value
+  - Phase A/B/C Active Power Fixed Adjustment Target Value
+  - Phase A/B/C Reactive Power Fixed Adjustment Target Value
+  - Phase A/B/C Active Power Percentage Adjustment Target Value
+  - Phase A/B/C Q/S Fixed Adjustment Target Value
+
 
 ### Fixed
 
@@ -38,6 +73,8 @@
 - Corrected the implementation of the `DerivedSensor` pattern
 - Fixed various type errors and test failures related to `latest_raw_state` assignments and `set_source_values` refactoring
 - Fixed deadlock when running auto-discovery (#177)
+- Fixed min/max for Active/Reactive Power Fixed Adjustment Target Value sensors to use total Rated Active Power of attached inverters as the base for calculation
+- Fixed invalid state when a TimestampSensor had a raw value of 0
 
 ### Removed
 

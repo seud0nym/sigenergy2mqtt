@@ -33,6 +33,13 @@ def get_parser() -> argparse.ArgumentParser:
         help="Set the log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)",
     )
     parser.add_argument(
+        "--log-fmt",
+        action="store",
+        dest=const.SIGENERGY2MQTT_LOG_FMT,
+        default=os.getenv(const.SIGENERGY2MQTT_LOG_FMT, None),
+        help="Set the log format. The default depends on the runtime environment.",
+    )
+    parser.add_argument(
         "--language",
         action="store",
         dest=const.SIGENERGY2MQTT_LANGUAGE,
@@ -270,6 +277,14 @@ def get_parser() -> argparse.ArgumentParser:
         help="The Modbus maximum retry count to use when performing auto-discovery of Sigenergy devices on the network. The default is 0.",
     )
     parser.add_argument(
+        "--modbus-auto-discovery-exclude",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_EXCLUDE,
+        default=os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_EXCLUDE, None),
+        help="A comma-separated list of Device class names to be excluded from auto-discovery. The defaults is 'PID,PSS'.",
+    )
+    parser.add_argument(
         "--modbus-auto-discovery-networks",
         nargs="?",
         action="store",
@@ -318,6 +333,22 @@ def get_parser() -> argparse.ArgumentParser:
         dest=const.SIGENERGY2MQTT_MODBUS_DCCHARGER_DEVICE_ID,
         default=os.getenv(const.SIGENERGY2MQTT_MODBUS_DCCHARGER_DEVICE_ID, None),
         help="The Sigenergy DC Charger Modbus Device ID. Multiple device IDS may be specified, separated by commas.",
+    )
+    parser.add_argument(
+        "--modbus-pss-device-id",
+        nargs="*",
+        action="store",
+        dest=const.SIGENERGY2MQTT_MODBUS_PSS_DEVICE_ID,
+        default=os.getenv(const.SIGENERGY2MQTT_MODBUS_PSS_DEVICE_ID, None),
+        help="The Sigenergy PSS Modbus Device ID. Multiple device IDS may be specified, separated by commas.",
+    )
+    parser.add_argument(
+        "--modbus-pid-device-id",
+        nargs="*",
+        action="store",
+        dest=const.SIGENERGY2MQTT_MODBUS_PID_DEVICE_ID,
+        default=os.getenv(const.SIGENERGY2MQTT_MODBUS_PID_DEVICE_ID, None),
+        help="The Sigenergy PID Modbus Device ID. Multiple device IDS may be specified, separated by commas.",
     )
     parser.add_argument(
         "--modbus-readonly",

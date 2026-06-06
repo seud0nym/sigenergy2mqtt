@@ -82,7 +82,7 @@ DEVICE_BASE_CLASSES: frozenset[str] = CLASSES_WITH_TYPE_ARG | {"Device"}
 
 #: Classes that should NEVER have automatic suffixes appended because they are
 #: already uniquely identified by their hardware IDs.
-SKIP_SUFFIX_CLASSES: frozenset[str] = frozenset({"Inverter", "ESS", "PVString"})
+SKIP_SUFFIX_CLASSES: frozenset[str] = frozenset({"Inverter", "ESS", "PVString", "PID", "PSS"})
 
 #: Classes that are infrastructure/base devices – their ``name`` field is
 #: typically dynamic and should not be emitted as a static translation.
@@ -703,7 +703,24 @@ class TranslationExtractor(ast.NodeVisitor):
                     values = get_ast_string_values(arg_node)
                     name = values[0] if values else None
 
-        # Apply per-class dynamic fallbacks.
+            # ── NEW: if the expected index didn't yield a string, scan all
+            # positional args for any string value.  This handles intermediate
+            # base classes whose __init__ signature puts `name` at a non-standard
+            # position (e.g. index 2 as in ESSPreHeatingTOUTime).
+            if not name or name in _UNRESOLVED_TOKENS:
+                for arg_node in node.args:
+                    if isinstance(arg_node, ast.Name) and arg_node.id in self._local_vars:
+                        candidate = self._local_vars[arg_node.id]
+                    elif isinstance(arg_node, (ast.Constant, ast.JoinedStr, ast.BinOp)):
+                        vals = get_ast_string_values(arg_node)
+                        candidate = vals[0] if vals else None
+                    else:
+                        continue
+                    if candidate and candidate not in _UNRESOLVED_TOKENS and not is_placeholder_only(candidate):
+                        name = candidate
+                        break
+
+        # Apply per-class dynamic fallbacks.  (unchanged)
         if (not name or name in _UNRESOLVED_TOKENS) and self._current_class:
             name = DYNAMIC_CLASS_NAMES.get(self._current_class, name)
 
@@ -753,15 +770,18 @@ class TranslationExtractor(ast.NodeVisitor):
             # We only do this for top-level device classes to avoid cluttering
             # individual sensors with plant indices.
             if self._has_ancestor(self._current_class, DEVICE_BASE_CLASSES):
-                for kw in node.keywords:
-                    # Skip plant_index for classes that are uniquely identified (e.g. Inverter)
-                    if kw.arg == "plant_index" and self._current_class in SKIP_SUFFIX_CLASSES:
-                        continue
-
-                    if kw.arg in ("plant_index", "sequence_suffix", "plant_suffix"):
-                        placeholder = f"{{{kw.arg}}}"
-                        if placeholder not in name:
-                            name = f"{name} {placeholder}"
+                # Count existing placeholders in the name — if the name already
+                # contains dynamic {tokens}, it is self-disambiguating and does
+                # not need automatic suffix appending.
+                existing_placeholders = re.findall(r"\{[^{}]+\}", name)
+                if not existing_placeholders:
+                    for kw in node.keywords:
+                        if kw.arg == "plant_index" and self._current_class in SKIP_SUFFIX_CLASSES:
+                            continue
+                        if kw.arg in ("plant_index", "sequence_suffix", "plant_suffix"):
+                            placeholder = f"{{{kw.arg}}}"
+                            if placeholder not in name:
+                                name = f"{name} {placeholder}"
 
             self._add_translation(self._current_class, "name", name)
             if self._is_resettable:
@@ -1225,6 +1245,9 @@ def _update_language_file(
     prune_empty_dicts(existing)
 
     # 3. Propagate within the language using topological order.
+    # Only propagate values that are genuinely translated in the parent
+    # (i.e. not themselves English/placeholder). Step 4a handles syncing
+    # from English; this step only handles translated inheritance.
     def _value_is_english_or_placeholder(cls: str, key: str, subkey: str | None, val: object) -> bool:
         """True if *val* appears to be an untranslated English (or placeholder) string."""
         if isinstance(val, str) and any(p in val for p in _UNRESOLVED_TOKENS):
@@ -1233,6 +1256,10 @@ def _update_language_file(
         en_val = en_class.get(cls, {}).get(key) if subkey is None else en_class.get(cls, {}).get(key, {}).get(subkey)
         old_val = old_en_class.get(cls, {}).get(key) if subkey is None else old_en_class.get(cls, {}).get(key, {}).get(subkey)
         return val == en_val or (old_val is not None and val == old_val)
+
+    def _is_translated(cls: str, key: str, subkey: str | None, val: object) -> bool:
+        """True if *val* appears to be a real translation (not English / placeholder)."""
+        return not _value_is_english_or_placeholder(cls, key, subkey, val)
 
     for cls in topological_sort(class_bases):
         if cls not in class_bases or cls not in existing["class"]:
@@ -1246,21 +1273,26 @@ def _update_language_file(
                     continue
                 base_val = base_trans[key]
                 if key not in existing["class"][cls]:
-                    existing["class"][cls][key] = base_val.copy() if isinstance(base_val, dict) else base_val
-                    updated = True
+                    # Only copy the parent value if it is translated.
+                    if isinstance(base_val, dict):
+                        translated_subset = {sk: sv for sk, sv in base_val.items() if _is_translated(base, key, sk, sv)}
+                        if translated_subset:
+                            existing["class"][cls][key] = translated_subset
+                            updated = True
+                    elif _is_translated(base, key, None, base_val):
+                        existing["class"][cls][key] = base_val
+                        updated = True
                 elif isinstance(base_val, dict) and isinstance(existing["class"][cls][key], dict):
                     for subkey, subval in base_val.items():
                         cur = existing["class"][cls][key].get(subkey)
-                        if cur is None or _value_is_english_or_placeholder(cls, key, subkey, cur):
-                            if cur != subval:
-                                existing["class"][cls][key][subkey] = subval
-                                updated = True
-                elif not isinstance(base_val, dict):
-                    cur = existing["class"][cls][key]
-                    if _value_is_english_or_placeholder(cls, key, None, cur) and cur != base_val:
-                        existing["class"][cls][key] = base_val
-                        updated = True
-
+                        # Only fill a missing slot with a genuinely translated parent value.
+                        if cur is None and _is_translated(base, key, subkey, subval):
+                            existing["class"][cls][key][subkey] = subval
+                            updated = True
+                        # Never overwrite an existing value here — step 4a handles that.
+                # Non-dict scalar: never overwrite an existing child value in step 3.
+                # If the child has no value yet, only copy if parent value is translated.
+                # (The key-not-present case is handled above.)
     # 4a. Sync class translations.
     for cls, cls_val in en_class.items():
         if cls not in existing["class"]:

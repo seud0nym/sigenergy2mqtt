@@ -109,6 +109,9 @@ class WriteOnlySensor(WritableSensorMixin, Sensor):
         for action in ["on", "off"]:
             config: dict[str, Any] = {}
 
+            if self._names[action] == "" or self._names[action].isspace():
+                continue
+
             for k, v in self.items():
                 if v is None:
                     continue
@@ -224,9 +227,11 @@ class ReadWriteSensor(WritableSensorMixin, ReadOnlySensor):
             protocol_version,
             **kwargs,
         )
-
-        self._availability_control_sensor = availability_control_sensor
         self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
+        self._availability_control_sensor = availability_control_sensor
+        self._payload_available = 1
+        self._payload_not_available = 0
+        self._use_raw_for_availability = False
 
     def configure_mqtt_topics(self, device_id: str) -> str:
         """Configure MQTT topics including availability from control sensor.
@@ -241,13 +246,17 @@ class ReadWriteSensor(WritableSensorMixin, ReadOnlySensor):
 
         # Add availability from control sensor if configured
         if self._availability_control_sensor is not None and active_config.home_assistant.enabled:
-            control_topic = self._availability_control_sensor.state_topic
+            control_topic = (
+                self._availability_control_sensor.raw_state_topic if self._use_raw_for_availability and self._availability_control_sensor.publish_raw else self._availability_control_sensor.state_topic
+            )
 
             if not control_topic or control_topic.isspace():
-                raise RuntimeError("RemoteEMS state_topic has not been configured")
+                raise RuntimeError(
+                    f"{self.log_identity} - {self._availability_control_sensor.__class__.__name__} {'raw_state_topic' if self._use_raw_for_availability and self._availability_control_sensor.publish_raw else 'state_topic'} has not been configured"
+                )
 
             availability_list = cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY])
-            availability_list.append({"topic": control_topic, "payload_available": 1, "payload_not_available": 0})
+            availability_list.append({"topic": control_topic, "payload_available": self._payload_available, "payload_not_available": self._payload_not_available})
 
         return base
 
@@ -313,27 +322,11 @@ class NumericSensor(ReadWriteSensor):
 
         self[DiscoveryKeys.PLATFORM] = "number"
 
-        # Set default min/max for percentage
-        if minimum is None and maximum is None and unit == PERCENTAGE:
-            self[DiscoveryKeys.MIN] = 0.0
-            self[DiscoveryKeys.MAX] = 100.0
-
-        # Set minimum
-        if minimum is not None:
-            self[DiscoveryKeys.MIN] = self._format_range_value(minimum)
-        elif minimum is None and maximum is not None:
-            self[DiscoveryKeys.MIN] = 0.0 if isinstance(maximum, float) else 0
-
-        # Set maximum
-        if maximum is not None:
-            self[DiscoveryKeys.MAX] = self._format_range_value(maximum)
-
         # Set input mode and step
         self[DiscoveryKeys.MODE] = "slider" if (unit == PERCENTAGE and not active_config.home_assistant.edit_percentage_with_box) else "box"
         self[DiscoveryKeys.STEP] = 1 if precision is None else 10**-precision
 
-        # Update sanity check ranges
-        self._update_sanity_check_ranges(gain)
+        self.apply_min_max(minimum, maximum)
 
     def _validate_min_max_ranges(self, minimum: float | tuple[float, float] | None, maximum: float | tuple[float, float] | None) -> None:
         """Validate minimum and maximum range values.
@@ -404,6 +397,31 @@ class NumericSensor(ReadWriteSensor):
             elif isinstance(self[DiscoveryKeys.MAX], tuple):
                 max_val = max(cast(tuple[float, ...], self[DiscoveryKeys.MAX]))
                 self.sanity_check.max_raw = int(max_val * gain) if gain else int(max_val)
+
+    def apply_min_max(self, minimum: float | tuple[float, float] | None, maximum: float | tuple[float, float] | None) -> None:
+        """Apply new min/max values and update sanity check.
+
+        Args:
+            minimum: New minimum value or range
+            maximum: New maximum value or range
+        """
+        # Set default min/max for percentage
+        if minimum is None and maximum is None and self.unit == PERCENTAGE:
+            self[DiscoveryKeys.MIN] = 0.0
+            self[DiscoveryKeys.MAX] = 100.0
+
+        # Set minimum
+        if minimum is not None:
+            self[DiscoveryKeys.MIN] = self._format_range_value(minimum)
+        elif minimum is None and maximum is not None:
+            self[DiscoveryKeys.MIN] = 0.0 if isinstance(maximum, float) else 0
+
+        # Set maximum
+        if maximum is not None:
+            self[DiscoveryKeys.MAX] = self._format_range_value(maximum)
+
+        # Update sanity check ranges
+        self._update_sanity_check_ranges(self.gain)
 
     def get_discovery_components(self) -> dict[str, dict[str, Any]]:
         """Get discovery components with flattened min/max.
@@ -642,7 +660,7 @@ class SelectSensor(ReadWriteSensor):
         """
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
 
-        if raw:
+        if raw or value is None:
             return value
 
         if isinstance(value, (float, int)):

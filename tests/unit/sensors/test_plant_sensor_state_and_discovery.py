@@ -1,3 +1,4 @@
+from datetime import timezone
 import inspect
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -5,7 +6,7 @@ import pytest
 
 import sigenergy2mqtt.sensors.plant_read_only as pro
 import sigenergy2mqtt.sensors.plant_read_write as prw
-from sigenergy2mqtt.common import ConsumptionMethod, Protocol
+from sigenergy2mqtt.common import ConsumptionMethod, Protocol, FirmwareVersion
 from sigenergy2mqtt.devices.plant.plant import PowerPlant
 from sigenergy2mqtt.sensors.base import AvailabilityMixin, Sensor
 
@@ -236,7 +237,7 @@ def test_powerplant_register_sensors_calculated_consumption_uses_grid_sensors_by
     ):
         import asyncio
 
-        asyncio.run(plant._register_sensors("V122R001C00SPC113", output_type=2, power_phases=3, modbus_client=MagicMock()))
+        asyncio.run(plant._register_sensors(FirmwareVersion("V122R001C00SPC113"), timezone.utc, output_type=2, power_phases=3, modbus_client=MagicMock()))
 
     assert grid_sensor.get_sensor.call_count >= 2
     first_call_type = grid_sensor.get_sensor.call_args_list[0].args[0]

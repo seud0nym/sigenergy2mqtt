@@ -50,5 +50,16 @@ class DCCharger(ModbusDevice):
         self._add_sensor(ro.DCChargerVehicleSoC(plant_index, device_address))
         self._add_sensor(ro.InverterAlarm5(plant_index, device_address))
         self._add_sensor(ro.DCChargerRunningState(plant_index, device_address))
+        self._add_sensor(ro.DCChargerDischargingCurrent(plant_index, device_address))
+        self._add_sensor(ro.DCChargerCurrentDischargingCapacity(plant_index, device_address))
+        self._add_sensor(ro.DCChargerCurrentDischargingDuration(plant_index, device_address))
+        self._add_sensor(ro.DCChargerTotalChargingCapacity(plant_index, device_address))
+        self._add_sensor(ro.DCChargerTotalDischargingCapacity(plant_index, device_address))
+        self._add_sensor(ro.DCChargerRatedChargingPower(plant_index, device_address))
+        self._add_sensor(ro.DCChargerRatedDischargingPower(plant_index, device_address))
 
         self._add_sensor(rw.DCChargerStatus(plant_index, device_address))
+        self._add_sensor(rw.DCChargerMaxChargingPowerLimit(plant_index, device_address))
+        self._add_sensor(rw.DCChargerMaxDischargingPowerLimit(plant_index, device_address))
+
+        self._add_sensor(rw.Reserved41001(plant_index, device_address))

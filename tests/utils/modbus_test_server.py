@@ -703,7 +703,7 @@ class CustomDataBlock:
            each have fixed test values (see inline comments for rationale).
         3. ``sensor.latest_raw_state`` — used when already populated by
            :func:`prepopulate`.
-        4. Sensor metadata — ``min``/``max`` bounds, ``options``, sanity-check
+        4. Sensor metadata — ``options``, ``min``/``max`` bounds, sanity-check
            bounds, or data-type limits, sampled randomly in that order.
 
         Args:
@@ -735,14 +735,14 @@ class CustomDataBlock:
             return (sensor.latest_raw_state / sensor.gain, "latest_raw_state")
         if sensor.device_class == DeviceClass.TIMESTAMP:
             return (datetime.now().isoformat(), "timestamp")
+        if sensor.device_class == DeviceClass.ENUM:
+            return (0, "options")
         if hasattr(sensor, "state_off") and hasattr(sensor, "state_on"):  # SwitchSensor
             return (0, "switch_sensor")
         if hasattr(sensor, "min") and hasattr(sensor, "max"):
             lo = sensor["min"][0] if isinstance(sensor["min"], (tuple, list)) else sensor["min"]
             hi = sensor["max"][1] if isinstance(sensor["max"], (tuple, list)) else sensor["max"]
             return (randint(lo, hi), "min_max")
-        if hasattr(sensor, "options"):
-            return (0, "options")
         if sensor.sanity_check.min_raw is not None and sensor.sanity_check.max_raw is not None:
             if sensor.sanity_check.delta:
                 raw = sensor.sanity_check.min_raw + randint(0, int(sensor.sanity_check.max_raw - sensor.sanity_check.min_raw) // sensor.sanity_check.delta) * sensor.sanity_check.delta
