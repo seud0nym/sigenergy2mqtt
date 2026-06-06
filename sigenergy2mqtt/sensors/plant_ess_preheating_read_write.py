@@ -3,12 +3,18 @@ from __future__ import annotations
 import logging
 from abc import ABC
 from datetime import datetime, timezone
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
-from sigenergy2mqtt.common import PERCENTAGE, Constants, DeviceClass, HybridInverter, InputType, Protocol, UnitOfPower, UnitOfTime
+import paho.mqtt.client as mqtt
+
+from sigenergy2mqtt.common import Constants, Protocol
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.modbus import ModbusDataType
-from sigenergy2mqtt.modbus.client import ModbusClient
+from sigenergy2mqtt.modbus import ModbusClient, ModbusDataType
+
+if TYPE_CHECKING:
+    from sigenergy2mqtt.mqtt import MqttHandler
+
+from sigenergy2mqtt.common import PERCENTAGE, DeviceClass, HybridInverter, InputType, UnitOfPower, UnitOfTime
 from sigenergy2mqtt.sensors.base import AvailabilityMixin, DiscoveryKeys, NumericSensor, ScanInterval, SelectSensor, SwitchSensor
 
 
@@ -119,10 +125,16 @@ class ESSPreHeatingTOUTime(NumericSensor, HybridInverter, ABC):
             gain=1,
             precision=0,
             protocol_version=Protocol.V2_9,
+            slot=slot,
         )
         self[DiscoveryKeys.PLATFORM] = "time"
         self._tz = tz
         self._tz_offset_seconds = int(self._tz.utcoffset(None).total_seconds())
+
+    def _raw2state(self, raw_value: float | int | str) -> float | int | str:
+        if isinstance(raw_value, (float, int)):
+            return datetime.strftime(datetime.fromtimestamp(raw_value, timezone.utc), "%H:%M:%S")
+        return super()._raw2state(raw_value)
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -145,9 +157,17 @@ class ESSPreHeatingTOUTime(NumericSensor, HybridInverter, ABC):
         if raw or value is None:
             return value
 
-        # Convert to date object and apply timezone offset
-        dt_object = datetime.fromtimestamp(value + self._tz_offset_seconds, self._tz)
-        return dt_object.strftime("%-H:%M")
+        dt = datetime.fromtimestamp(value, timezone.utc)  # Target data type is UINT32, so need to convert to UTC to prevent negative numbers caused by positive timezone offsets
+        state = dt.strftime("%H:%M:%S")
+
+        if self.debug_logging:
+            logging.debug(f"{self.log_identity} get_state raw={value} {dt=} {state=}")
+
+        return state
+
+    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+        epoch = cast(int, self.state2raw(value))
+        return await super().set_value(modbus_client, mqtt_client, epoch, source, handler)
 
     def state2raw(self, state: float | int | str) -> float | int | str | None:
         """Convert time string back to Unix epoch value.
@@ -158,10 +178,19 @@ class ESSPreHeatingTOUTime(NumericSensor, HybridInverter, ABC):
         Returns:
             Unix epoch value
         """
+        if state is None:
+            return None
+
         if isinstance(state, (float, int)):
             return int(state)
 
-        return int(datetime.strptime(state, "%-H:%M").timestamp()) - self._tz_offset_seconds
+        dt = datetime.strptime("01-01-1970 " + state + " +0000", "%d-%m-%Y %H:%M:%S %z")  # Target data type is UINT32, so need to convert to UTC to prevent negative numbers caused by positive timezone offsets
+        ts = dt.timestamp()
+        value = int(ts // 60) * 60  # Remove seconds (whole minutes only)
+
+        logging.info(f"{self.log_identity} state2raw {state=} {dt=} {ts=} raw={value=} (seconds removed)")
+
+        return value
 
 
 class ESSPreHeatingTOUTimeStart(ESSPreHeatingTOUTime):
@@ -197,6 +226,7 @@ class ESSPreHeatingTOUTargetPower(NumericSensor, HybridInverter):
             protocol_version=Protocol.V2_9,
             min=-rated_discharging_power,
             max=rated_charging_power,
+            slot=slot,
         )
 
     def get_attributes(self) -> dict[str, float | int | str]:
