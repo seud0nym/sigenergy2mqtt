@@ -114,6 +114,6 @@ class ModbusConfig(BaseModel):
     @model_validator(mode="after")
     def default_inverters(self) -> "ModbusConfig":
         """Default to inverter device ID 1 when nothing is specified."""
-        if not self.inverters and not self.ac_chargers and not self.dc_chargers:
+        if not self.inverters and not self.ac_chargers and not self.dc_chargers and not self.pid and not self.pss:
             self.inverters = [1]
         return self
