@@ -115,7 +115,7 @@ class TimestampSensor(ReadOnlySensor):
             if self.debug_logging:
                 logging.debug(f"{self.log_identity} state2raw: {state=} {epoch=} tz_offset={self._tz_offset_seconds} corrected_epoch={raw}")
 
-            return raw
+            return int(raw)
         except ValueError:
             logging.error(f"{self.log_identity} Invalid timestamp: {state}")
             return 0
