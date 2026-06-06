@@ -162,6 +162,33 @@ class TestAccumulationLogic:
             assert sensor._current_total == 123.45
             assert sensor.latest_raw_state == 123.45
 
+    @pytest.mark.asyncio
+    async def test_resettable_get_discovery_components(self):
+        """Test get_discovery_components adds reset component."""
+        source = MagicMock(spec=Sensor)
+        source.unique_id = "source_uid"
+        
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            sensor = ResettableAccumulationSensor(
+                name="Accumulator",
+                unique_id="sigen_accumulator_uid",
+                object_id="sigen_accumulator_oid",
+                source=source,
+                data_type=ModbusDataType.UINT32,
+                unit="kWh",
+                device_class=DeviceClass.ENERGY,
+                state_class=StateClass.TOTAL_INCREASING,
+                icon="mdi:battery",
+                gain=1.0,
+                precision=2,
+            )
+            
+            components = sensor.get_discovery_components()
+            assert "sigen_accumulator_uid_reset" in components
+            reset_comp = components["sigen_accumulator_uid_reset"]
+            assert reset_comp["platform"] == "number"
+            assert reset_comp["command_topic"] == sensor._reset_topic
+
 
 class TestAccumulationSensor:
     @pytest.mark.asyncio
