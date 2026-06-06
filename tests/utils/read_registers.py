@@ -16,7 +16,7 @@ os.environ["SIGENERGY2MQTT_LOG_FMT"] = "{asctime} {levelname:<8} {message}"
 from sigenergy2mqtt.modbus.client import ModbusClient  # noqa: E402
 
 
-async def read_single_register(client: ModbusClient, device_address: int, register: int, count: int, type: str, data_type: ModbusDataType):
+async def read_registers(client, device_address, register, count, type):
     logging.info(f"read: registers = {register}:{register + count - 1} ({count=}) device address = {device_address}")
     if type == "input":
         rr = await client.read_input_registers(register, count=count, device_id=device_address, trace=True)
@@ -36,8 +36,28 @@ async def read_single_register(client: ModbusClient, device_address: int, regist
                 logging.error("then: 0x04 SLAVE DEVICE FAILURE")
             case _:
                 logging.error(rr)
-    else:
+        return None
+    return rr
+
+
+async def read_single_register(client: ModbusClient, device_address: int, register: int, count: int, type: str, data_type: ModbusDataType):
+    rr = await read_registers(client, device_address, register, count, type)
+    if rr is not None:
         logging.info(f"then: value returned = {client.convert_from_registers(rr.registers, data_type)} ({data_type.name})")
+
+
+async def read_multiple_registers(client: ModbusClient, device_address: int, register: int, type: str, *spec: list):
+    count = 0
+    for s in spec:
+        count += s[0]
+    rr = await read_registers(client, device_address, register, count, type)
+    if rr is not None:
+        offset = 0
+        for i in range(len(spec)):
+            c = spec[i][0]
+            t = spec[i][1]
+            logging.info(f"then: value returned from {register + offset}:{register + offset + c - 1} = {client.convert_from_registers(rr.registers[offset : offset + c], t)} ({t.name})")
+            offset += c
 
 
 async def main():
@@ -46,30 +66,34 @@ async def main():
     logging.info("Connecting to Modbus server...")
     await client.connect()
 
-    await read_single_register(client, 1, 30500, 15, type="input", data_type=ModbusDataType.STRING)
-    await read_single_register(client, 1, 30515, 10, type="input", data_type=ModbusDataType.STRING)
-    await read_single_register(client, 1, 30525, 15, type="input", data_type=ModbusDataType.STRING)
+    await read_single_register(client, 247, 30268, 4, type="input", data_type=ModbusDataType.UINT64)
+    await read_multiple_registers(client, 247, 30268, "input", (4, ModbusDataType.UINT64), (2, ModbusDataType.UINT32), (2, ModbusDataType.UINT32), (1, ModbusDataType.UINT16))
+    await read_multiple_registers(client, 247, 30272, "input", (2, ModbusDataType.UINT32), (2, ModbusDataType.UINT32), (1, ModbusDataType.UINT16))
 
-    await read_single_register(client, 247, 30272, 2, type="input", data_type=ModbusDataType.UINT32)
-    await read_single_register(client, 247, 30274, 2, type="input", data_type=ModbusDataType.UINT32)
-    await read_single_register(client, 247, 30286, 1, type="input", data_type=ModbusDataType.UINT16)
-    await read_single_register(client, 247, 40157, 1, type="holding", data_type=ModbusDataType.UINT16)
-    await read_single_register(client, 247, 40158, 1, type="holding", data_type=ModbusDataType.UINT16)
-    await read_single_register(client, 247, 40159, 1, type="holding", data_type=ModbusDataType.UINT16)
+    # await read_single_register(client, 1, 30500, 15, type="input", data_type=ModbusDataType.STRING)
+    # await read_single_register(client, 1, 30515, 10, type="input", data_type=ModbusDataType.STRING)
+    # await read_single_register(client, 1, 30525, 15, type="input", data_type=ModbusDataType.STRING)
 
-    await read_single_register(client, 247, 50000, 1, type="holding", data_type=ModbusDataType.UINT16)
+    # await read_single_register(client, 247, 30272, 2, type="input", data_type=ModbusDataType.UINT32)
+    # await read_single_register(client, 247, 30274, 2, type="input", data_type=ModbusDataType.UINT32)
+    # await read_single_register(client, 247, 30286, 1, type="input", data_type=ModbusDataType.UINT16)
+    # await read_single_register(client, 247, 40157, 1, type="holding", data_type=ModbusDataType.UINT16)
+    # await read_single_register(client, 247, 40158, 1, type="holding", data_type=ModbusDataType.UINT16)
+    # await read_single_register(client, 247, 40159, 1, type="holding", data_type=ModbusDataType.UINT16)
 
-    await read_single_register(client, 247, 32500, 15, type="input", data_type=ModbusDataType.STRING)
+    # await read_single_register(client, 247, 50000, 1, type="holding", data_type=ModbusDataType.UINT16)
 
-    await read_single_register(client, 247, 42500, 1, type="holding", data_type=ModbusDataType.UINT16)
+    # await read_single_register(client, 247, 32500, 15, type="input", data_type=ModbusDataType.STRING)
 
-    await read_single_register(client, 247, 30002, 1, type="input", data_type=ModbusDataType.INT16)
+    # await read_single_register(client, 247, 42500, 1, type="holding", data_type=ModbusDataType.UINT16)
 
-    await read_single_register(client, 1, 30622, 1, type="input", data_type=ModbusDataType.UINT16)
-    await read_single_register(client, 1, 30623, 1, type="input", data_type=ModbusDataType.UINT16)
+    # await read_single_register(client, 247, 30002, 1, type="input", data_type=ModbusDataType.INT16)
 
-    await read_single_register(client, 247, 30281, 2, type="input", data_type=ModbusDataType.UINT16)
-    await read_single_register(client, 247, 40049, 2, type="holding", data_type=ModbusDataType.UINT32)
+    # await read_single_register(client, 1, 30622, 1, type="input", data_type=ModbusDataType.UINT16)
+    # await read_single_register(client, 1, 30623, 1, type="input", data_type=ModbusDataType.UINT16)
+
+    # await read_single_register(client, 247, 30281, 2, type="input", data_type=ModbusDataType.UINT16)
+    # await read_single_register(client, 247, 40049, 2, type="holding", data_type=ModbusDataType.UINT32)
 
     logging.info("Disconnecting from Modbus server...")
     client.close()
