@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from datetime import timezone
 from typing import cast
 
 import sigenergy2mqtt.sensors.inverter_read_only as ro
@@ -40,7 +41,7 @@ class Inverter(ModbusDevice):
         )
 
     @classmethod
-    async def create(cls, plant_index: int, device_address: int, device_type: DeviceType, protocol_version: Protocol, modbus_client: ModbusClient) -> "Inverter":
+    async def create(cls, plant_index: int, device_address: int, device_type: DeviceType, protocol_version: Protocol, tz: timezone, modbus_client: ModbusClient) -> "Inverter":
         model = ro.InverterModel(plant_index, device_address)
         pv_string_count = ro.PVStringCount(plant_index, device_address)
         firmware_version = ro.InverterFirmwareVersion(plant_index, device_address)
@@ -62,7 +63,7 @@ class Inverter(ModbusDevice):
 
         inverter = cls(plant_index, device_address, device_type, protocol_version, cast(str, model_id), cast(str, serial), cast(str, firmware))
         await inverter._register_child_devices(plant_index, device_address, device_type, protocol_version, cast(str, model_id), cast(str, serial), cast(int, strings), battery_count)
-        await inverter._register_sensors(plant_index, device_address, firmware_version, model, serial_number, pv_string_count, pack_bcu_count, battery_count, modbus_client)
+        await inverter._register_sensors(plant_index, device_address, firmware_version, model, serial_number, tz, pv_string_count, pack_bcu_count, battery_count, modbus_client)
 
         try:
             parsed_firmware = FirmwareVersion(cast(str, firmware))
@@ -156,6 +157,7 @@ class Inverter(ModbusDevice):
         firmware_version: ro.InverterFirmwareVersion,
         model: ro.InverterModel,
         serial_number: ro.InverterSerialNumber,
+        tz: timezone,
         pv_string_count: ro.PVStringCount,
         pack_bcu_count: ro.PACKBCUCount,
         battery_count: int,
@@ -205,8 +207,8 @@ class Inverter(ModbusDevice):
         self._add_sensor(pv_string_count)
         self._add_sensor(ro.InverterPVPower(plant_index, device_address))
         self._add_sensor(ro.InsulationResistance(plant_index, device_address))
-        self._add_sensor(ro.StartupTime(plant_index, device_address))
-        self._add_sensor(ro.ShutdownTime(plant_index, device_address))
+        self._add_sensor(ro.StartupTime(plant_index, device_address, tz))
+        self._add_sensor(ro.ShutdownTime(plant_index, device_address, tz))
 
         self._add_sensor(rw.InverterActivePowerFixedValueAdjustment(plant_index, device_address))
         self._add_sensor(rw.InverterReactivePowerFixedValueAdjustment(plant_index, device_address))

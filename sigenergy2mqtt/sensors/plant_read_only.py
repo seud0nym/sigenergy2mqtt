@@ -44,7 +44,7 @@ from .base import (
 class SystemTime(TimestampSensor, HybridInverter, PVInverter):
     ADDRESS = 30000
 
-    def __init__(self, plant_index: int):
+    def __init__(self, plant_index: int, tz: timezone):
         super().__init__(
             name="System Time",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_system_time",
@@ -54,6 +54,7 @@ class SystemTime(TimestampSensor, HybridInverter, PVInverter):
             address=self.ADDRESS,
             scan_interval=ScanInterval.medium(plant_index),
             protocol_version=Protocol.V1_8,
+            tz=tz,
         )
 
 

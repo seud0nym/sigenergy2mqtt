@@ -6,11 +6,11 @@
 
 - Added Inverter and Plant estimated self-consumed power and daily energy sensors (thanks to @swainstm https://whrl.pl/RgV4Rd)
 - Added simulated grid outage during startup for EVAC not on backup circuit to Modbus test server
-- Added `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_NETWORKS` configuration setting and CLI argument to allow scanning of specific CIDR networks during auto-discovery
 - Added `SIGENERGY2MQTT_LOG_FMT` configuration setting and CLI argument to allow override of the log message format
+- Added `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_NETWORKS` configuration setting and CLI argument to allow scanning of specific CIDR networks during auto-discovery
 - Added `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_EXCLUDE` to exclude devices from auto-discovery
 - Added new sensors defined in Modbus Protocol V2.9 (sensors may not be available depending on device/firmware):
-  - New PSS and PID devices, and configuration/auto-discovery changes to support them
+  - New PSS and PID devices, and configuration/auto-discovery changes to support them (these are commercial/enterprise products, not residential)
   - DC Charger:
     - Discharging Current
     - Current Discharging Capacity
@@ -51,7 +51,7 @@
 - Metrics reads now count physical reads rather than imputing the time to read a single register 
 - Simplified PlantConsumedPower when using calculated consumption method to use new CrossDeviceDerivedSensor logic rather than relying on MQTT notifications
 - Modified early detection of Modbus 0x02 ILLEGAL_DATA_ADDRESS exceptions to use a pre-scan approach rather than hard-coding known problematic registers
-- SystemTime, StartupTime and ShutdownTime sensors now return date/time using the SystemTimeZone rather than UTC
+- SystemTime, StartupTime and ShutdownTime sensors now return correct date/time adjusted to the SystemTimeZone
 - As of Modbus Protocol V2.9, power dispatch sensors require Remote EMS to be enabled and the EMS to be in PCS Remote Control Mode for them to take effect. The affected sensors are:
   - Active Power Fixed Adjustment Target Value
   - Reactive Power Fixed Adjustment Target Value

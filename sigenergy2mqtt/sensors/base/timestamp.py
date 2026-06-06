@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import datetime
 import logging
+from datetime import datetime, timezone
 from typing import cast
 
 from sigenergy2mqtt.common import DeviceClass, InputType, Protocol
@@ -31,6 +31,7 @@ class TimestampSensor(ReadOnlySensor):
         address: int,
         scan_interval: int,
         protocol_version: Protocol,
+        tz: timezone,
         **kwargs,
     ):
         super().__init__(
@@ -53,6 +54,8 @@ class TimestampSensor(ReadOnlySensor):
             **kwargs,
         )
         self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
+        self._tz = tz
+        self._tz_offset_seconds = tz.utcoffset(None).total_seconds()
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         """Get timestamp state in ISO 8601 format.
@@ -73,9 +76,19 @@ class TimestampSensor(ReadOnlySensor):
         if value == 0:
             return None
 
-        # Convert to ISO 8601 format
-        dt_object = datetime.datetime.fromtimestamp(value, datetime.timezone.utc)
-        return dt_object.isoformat()
+        # 1. Correct the epoch by subtracting the offset (in seconds)
+        correct_epoch = value - self._tz_offset_seconds
+
+        # 2. Generate the correct datetime object in ISO 8601 format
+        dt_object = datetime.fromtimestamp(correct_epoch, self._tz)
+
+        # 3. Convert to ISO 8601
+        iso8601 = dt_object.isoformat()
+
+        if self.debug_logging:
+            logging.debug(f"{self.log_identity} get_state: raw={value} tz_offset={self._tz_offset_seconds} corrected_epoch={correct_epoch} {iso8601=}")
+
+        return iso8601
 
     def state2raw(self, state: float | int | str) -> float | int | str | None:
         """Convert ISO 8601 timestamp back to Unix timestamp.
@@ -93,7 +106,16 @@ class TimestampSensor(ReadOnlySensor):
             return 0
 
         try:
-            return int(datetime.datetime.fromisoformat(state).timestamp())
+            # 1. Convert the ISO 8601 value to the epoch
+            epoch = int(datetime.fromisoformat(state).timestamp())
+
+            # 2. Correct the epoch by adding the offset (in seconds)
+            raw = epoch + self._tz_offset_seconds
+
+            if self.debug_logging:
+                logging.debug(f"{self.log_identity} state2raw: {state=} {epoch=} tz_offset={self._tz_offset_seconds} corrected_epoch={raw}")
+
+            return raw
         except ValueError:
             logging.error(f"{self.log_identity} Invalid timestamp: {state}")
             return 0
