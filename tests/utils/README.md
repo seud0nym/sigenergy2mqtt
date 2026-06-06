@@ -13,5 +13,5 @@ This directory contains various utility scripts, configuration files, and tools 
 
 ### Other Utilities
 - **`launch.py`**: A local test entrypoint script that simply executes the `sigenergy2mqtt.__main__` module, allowing developers to manually launch and debug the application from their IDE or terminal.
-- **`test_read_registers.py`**: A script for testing reading registers and debugging the Modbus comms.
+- **`read_registers.py`**: A script for testing reading registers and debugging the Modbus comms.
 - **`__init__.py`**: Python package initialisation file.
