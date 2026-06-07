@@ -75,6 +75,7 @@ The attributes payload currently includes:
 <a href='#sigen_0_247_30043'>Available Max Reactive Power</a><br>
 <a href='#sigen_0_247_30041'>Available Min Active Power</a><br>
 <a href='#sigen_0_247_30045'>Available Min Reactive Power</a><br>
+<a href='#sigen_0_247_30286'>Average Cell Temperature</a><br>
 <a href='#sigen_0_247_40046'>Backup SoC</a><br>
 <a href='#sigen_0_battery_charging_power'>Battery Charging Power</a><br>
 <a href='#sigen_0_battery_discharging_power'>Battery Discharging Power</a><br>
@@ -119,6 +120,8 @@ The attributes payload currently includes:
 <a href='#sigen_0_247_40044'>PCS Max Import Limit</a><br>
 <a href='#sigen_0_247_40036'>PV Max Power Limit</a><br>
 <a href='#sigen_0_247_30035'>PV Power</a><br>
+<a href='#sigen_0_247_30272'>PV Total Generation Today</a><br>
+<a href='#sigen_0_247_30274'>PV Total Generation Yesterday</a><br>
 <a href='#sigen_0_247_30015'>Phase A Active Power</a><br>
 <a href='#sigen_0_247_40008'>Phase A Active Power Fixed Adjustment Target Value</a><br>
 <a href='#sigen_0_247_40020'>Phase A Active Power Percentage Adjustment Target Value</a><br>
@@ -213,6 +216,8 @@ The attributes payload currently includes:
 <a href='#sigen_0_grid_sensor_import_power'>Import Power</a><br>
 <a href='#sigen_0_grid_sensor_lifetime_export_energy'>Lifetime Exported Energy</a><br>
 <a href='#sigen_0_grid_sensor_lifetime_import_energy'>Lifetime Imported Energy</a><br>
+<a href='#sigen_0_247_40158'>PCC Power Factor Adjustment Target Value (Grid Export)</a><br>
+<a href='#sigen_0_247_40157'>PCC Power Factor Adjustment Target Value (Grid Import)</a><br>
 <a href='#sigen_0_247_30052'>Phase A Active Power</a><br>
 <a href='#sigen_0_247_30058'>Phase A Reactive Power</a><br>
 <a href='#sigen_0_247_30054'>Phase B Active Power</a><br>
@@ -509,8 +514,17 @@ The attributes payload currently includes:
 <a href='#sigen_0_001_30609'>Alarms</a><br>
 <a href='#sigen_0_001_31505'>Current Charging Capacity</a><br>
 <a href='#sigen_0_001_31507'>Current Charging Duration</a><br>
+<a href='#sigen_0_001_31515'>Current Discharging Capacity</a><br>
+<a href='#sigen_0_001_31517'>Current Discharging Duration</a><br>
+<a href='#sigen_0_001_31514'>Discharging Current</a><br>
+<a href='#sigen_0_001_41002'>Max Charging Power Limit</a><br>
+<a href='#sigen_0_001_41004'>Max Discharging Power Limit</a><br>
 <a href='#sigen_0_001_31502'>Output Power</a><br>
+<a href='#sigen_0_001_31523'>Rated Charging Power</a><br>
+<a href='#sigen_0_001_31525'>Rated Discharging Power</a><br>
 <a href='#sigen_0_001_31513'>Running State</a><br>
+<a href='#sigen_0_001_31519'>Total Charging Capacity</a><br>
+<a href='#sigen_0_001_31521'>Total Discharging Capacity</a><br>
 <a href='#sigen_0_001_31500'>Vehicle Battery Voltage</a><br>
 <a href='#sigen_0_001_31501'>Vehicle Charging Current</a><br>
 <a href='#sigen_0_001_31504'>Vehicle SoC</a><br>
@@ -602,7 +616,9 @@ The attributes payload currently includes:
 
 <h6>DC Charger</h6>
 <a href='#sigen_0_001_41000_set'>DC Charger Stop/Start</a><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></td></tr>
+<a href='#sigen_0_001_41002_set'>Max Charging Power Limit</a><br>
+<a href='#sigen_0_001_41004_set'>Max Discharging Power Limit</a><br>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></td></tr>
 </table>
 
 ## Published Topics
@@ -631,8 +647,9 @@ The attributes payload currently includes:
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_active_power_fixed_adjustment_target_value/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_active_power_fixed_adjustment_target_value/state</td></tr>
 <tr><td>Source</td><td>Modbus Registers 40001-40002</td></tr>
+<tr><td>Comment</td><td>Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -500.0 kW and 500.0 kW (-500000 ≦ raw value ≦ 500000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -17.0 kW and 17.0 kW (-17000 ≦ raw value ≦ 17000)</td></tr>
 </table>
 <h5><a id='sigen_0_247_40005'>Active Power Percentage Adjustment Target Value</a></h5>
 <table>
@@ -644,7 +661,7 @@ The attributes payload currently includes:
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_active_power_percentage_adjustment_target_value/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_active_power_percentage_adjustment_target_value/state</td></tr>
 <tr><td>Source</td><td>Modbus Register 40005</td></tr>
-<tr><td>Comment</td><td>Range: [-100.00,100.00]</td></tr>
+<tr><td>Comment</td><td>Range: [-100.00,100.00]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 <tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -100.0 % and 100.0 % (-10000 ≦ raw value ≦ 10000)</td></tr>
 </table>
@@ -773,6 +790,19 @@ The attributes payload currently includes:
 <tr><td>Comment</td><td>Absorb from the AC terminal. Count only the running inverters</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 <tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 kvar and 4294967.29 kvar (0 ≦ raw value ≦ 4294967295)</td></tr>
+</table>
+<h5><a id='sigen_0_247_30286'>Average Cell Temperature</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>ESSAverageCellTemperature</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>°C</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_ess_average_cell_temperature</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_ess_average_cell_temperature/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_ess_average_cell_temperature/state</td></tr>
+<tr><td>Source</td><td>Modbus Register 30286</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.9</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -40.0 °C and 200.0 °C (-400 ≦ raw value ≦ 2000)</td></tr>
 </table>
 <h5><a id='sigen_0_247_40046'>Backup SoC</a></h5>
 <table>
@@ -1071,7 +1101,7 @@ The attributes payload currently includes:
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_grid_max_export_limit/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_max_export_limit/state</td></tr>
 <tr><td>Source</td><td>Modbus Registers 40038-40039</td></tr>
-<tr><td>Comment</td><td>Grid Sensor needed. Takes effect globally regardless of the EMS operating mode</td></tr>
+<tr><td>Comment</td><td>The maximum active power fed into the grid must not exceed the value configured in this sensor. Grid Sensor needed. Takes effect globally regardless of the EMS operating mode</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.5</td></tr>
 <tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 kW and 4294967.29 kW (0 ≦ raw value ≦ 4294967295)</td></tr>
 </table>
@@ -1085,7 +1115,7 @@ The attributes payload currently includes:
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_grid_max_import_limit/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_max_import_limit/state</td></tr>
 <tr><td>Source</td><td>Modbus Registers 40040-40041</td></tr>
-<tr><td>Comment</td><td>Grid Sensor needed. Takes effect globally regardless of the EMS operating mode</td></tr>
+<tr><td>Comment</td><td>The maximum active power absorbed from the grid must not exceed the value configured in this sensor. Grid Sensor needed. Takes effect globally regardless of the EMS operating mode</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.5</td></tr>
 <tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 kW and 4294967.29 kW (0 ≦ raw value ≦ 4294967295)</td></tr>
 </table>
@@ -1255,7 +1285,7 @@ The attributes payload currently includes:
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_max_charging_limit/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_max_charging_limit/state</td></tr>
 <tr><td>Source</td><td>Modbus Registers 40032-40033</td></tr>
-<tr><td>Comment</td><td>Range: [0, Rated ESS charging power]. Takes effect when Remote EMS control mode (40031) is set to Command Charging<br><i>NOTE: For Firmware SPC113 and later, available globally and not restricted by Remote EMS Control Mode.</i></td></tr>
+<tr><td>Comment</td><td>The maximum charging power of the ESS in the plant must not exceed the value configured in this sensor. Range: [0, Rated ESS charging power]. Takes effect when Remote EMS control mode (40031) is set to Command Charging.<br><i>NOTE: For Firmware SPC113 and later, available globally and not restricted by Remote EMS Control Mode.</i></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 <tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 kW and 4294967.29 kW (0 ≦ raw value ≦ 4294967295)</td></tr>
 </table>
@@ -1269,7 +1299,7 @@ The attributes payload currently includes:
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_max_discharging_limit/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_max_discharging_limit/state</td></tr>
 <tr><td>Source</td><td>Modbus Registers 40034-40035</td></tr>
-<tr><td>Comment</td><td>Range: [0, Rated ESS charging power]. Takes effect when Remote EMS control mode (40031) is set to Command Discharging<br><i>NOTE: For Firmware SPC113 and later, available globally and not restricted by Remote EMS Control Mode.</i></td></tr>
+<tr><td>Comment</td><td>The maximum discharging power of the ESS in the plant must not exceed the value configured in this sensor. Range: [0, Rated ESS discharging power]. Takes effect when Remote EMS control mode (40031) is set to Command Discharging.<br><i>NOTE: For Firmware SPC113 and later, available globally and not restricted by Remote EMS Control Mode.</i></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 <tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 kW and 4294967.29 kW (0 ≦ raw value ≦ 4294967295)</td></tr>
 </table>
@@ -1294,7 +1324,7 @@ The attributes payload currently includes:
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_pcs_max_export_limit/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_pcs_max_export_limit/state</td></tr>
 <tr><td>Source</td><td>Modbus Registers 40042-40043</td></tr>
-<tr><td>Comment</td><td>Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally.</td></tr>
+<tr><td>Comment</td><td>The maximum active power output of the inverter in the plant must not exceed the value configured in this sensor. Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally.</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.5</td></tr>
 <tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 kW and 4294967.29 kW (0 ≦ raw value ≦ 4294967295)</td></tr>
 </table>
@@ -1308,7 +1338,7 @@ The attributes payload currently includes:
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_pcs_max_import_limit/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_pcs_max_import_limit/state</td></tr>
 <tr><td>Source</td><td>Modbus Registers 40044-40045</td></tr>
-<tr><td>Comment</td><td>Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally.</td></tr>
+<tr><td>Comment</td><td>The maximum active power input of the inverter in the plant must not exceed the value configured in this sensor. Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally.</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.5</td></tr>
 <tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 kW and 4294967.29 kW (0 ≦ raw value ≦ 4294967295)</td></tr>
 </table>
@@ -1322,7 +1352,7 @@ The attributes payload currently includes:
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_pv_max_power_limit/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_pv_max_power_limit/state</td></tr>
 <tr><td>Source</td><td>Modbus Registers 40036-40037</td></tr>
-<tr><td>Comment</td><td>Takes effect when Remote EMS control mode (40031) is set to Command Charging/Discharging<br><i>NOTE: For Firmware SPC113 and later, available globally and not restricted by Remote EMS Control Mode.</i></td></tr>
+<tr><td>Comment</td><td>The maximum output power of the PV strings in the plant must not exceed the value configured in this sensor. Takes effect when Remote EMS control mode (40031) is set to Command Charging.<br><i>NOTE: For Firmware SPC113 and later, available globally and not restricted by Remote EMS Control Mode.</i></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 <tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 kW and 4294967.29 kW (0 ≦ raw value ≦ 4294967295)</td></tr>
 </table>
@@ -1337,6 +1367,32 @@ The attributes payload currently includes:
 <tr><td>Source</td><td>Modbus Registers 30035-30036</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 <tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0 W and 500000.0 W (0 ≦ raw value ≦ 500000)</td></tr>
+</table>
+<h5><a id='sigen_0_247_30272'>PV Total Generation Today</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PlantPVTotalGenerationToday</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>600s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_pv_total_generation_today</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_pv_total_generation_today/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_pv_total_generation_today/state</td></tr>
+<tr><td>Source</td><td>Modbus Registers 30272-30273</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.9</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The delta of the value compared to the previous value must be a minimum of 0.0 kWh (raw value ≧ 0)</td></tr>
+</table>
+<h5><a id='sigen_0_247_30274'>PV Total Generation Yesterday</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PlantPVTotalGenerationYesterday</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>600s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_pv_total_generation_yesterday</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_pv_total_generation_yesterday/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_pv_total_generation_yesterday/state</td></tr>
+<tr><td>Source</td><td>Modbus Registers 30274-30275</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.9</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The delta of the value compared to the previous value must be a minimum of 0.0 kWh (raw value ≧ 0)</td></tr>
 </table>
 <h5><a id='sigen_0_247_30015'>Phase A Active Power</a></h5>
 <table>
@@ -1361,9 +1417,9 @@ The attributes payload currently includes:
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_a_active_power_fixed_adjustment_target_value/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_a_active_power_fixed_adjustment_target_value/state</td></tr>
 <tr><td>Source</td><td>Modbus Registers 40008-40009</td></tr>
-<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -500.0 kW and 500.0 kW (-500000 ≦ raw value ≦ 500000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -17.0 kW and 17.0 kW (-17000 ≦ raw value ≦ 17000)</td></tr>
 </table>
 <h5><a id='sigen_0_247_40020'>Phase A Active Power Percentage Adjustment Target Value</a></h5>
 <table>
@@ -1375,7 +1431,7 @@ The attributes payload currently includes:
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_a_active_power_percentage_adjustment_target_value/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_a_active_power_percentage_adjustment_target_value/state</td></tr>
 <tr><td>Source</td><td>Modbus Register 40020</td></tr>
-<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 <tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -100.0 % and 100.0 % (-10000 ≦ raw value ≦ 10000)</td></tr>
 </table>
@@ -1389,7 +1445,7 @@ The attributes payload currently includes:
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_a_q_s_fixed_adjustment_target_value/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_a_q_s_fixed_adjustment_target_value/state</td></tr>
 <tr><td>Source</td><td>Modbus Register 40023</td></tr>
-<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 <tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -60.0 % and 60.0 % (-6000 ≦ raw value ≦ 6000)</td></tr>
 </table>
@@ -1416,9 +1472,9 @@ The attributes payload currently includes:
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_a_reactive_power_fixed_adjustment_target_value/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_a_reactive_power_fixed_adjustment_target_value/state</td></tr>
 <tr><td>Source</td><td>Modbus Registers 40014-40015</td></tr>
-<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -2147483.65 kvar and 2147483.65 kvar (-2147483647 ≦ raw value ≦ 2147483647)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -1020.0 kvar and 1020.0 kvar (-1020000 ≦ raw value ≦ 1020000)</td></tr>
 </table>
 <h5><a id='sigen_0_247_30017'>Phase B Active Power</a></h5>
 <table>
@@ -1443,9 +1499,9 @@ The attributes payload currently includes:
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_b_active_power_fixed_adjustment_target_value/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_b_active_power_fixed_adjustment_target_value/state</td></tr>
 <tr><td>Source</td><td>Modbus Registers 40010-40011</td></tr>
-<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -500.0 kW and 500.0 kW (-500000 ≦ raw value ≦ 500000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -17.0 kW and 17.0 kW (-17000 ≦ raw value ≦ 17000)</td></tr>
 </table>
 <h5><a id='sigen_0_247_40021'>Phase B Active Power Percentage Adjustment Target Value</a></h5>
 <table>
@@ -1457,7 +1513,7 @@ The attributes payload currently includes:
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_b_active_power_percentage_adjustment_target_value/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_b_active_power_percentage_adjustment_target_value/state</td></tr>
 <tr><td>Source</td><td>Modbus Register 40021</td></tr>
-<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 <tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -100.0 % and 100.0 % (-10000 ≦ raw value ≦ 10000)</td></tr>
 </table>
@@ -1471,7 +1527,7 @@ The attributes payload currently includes:
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_b_q_s_fixed_adjustment_target_value/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_b_q_s_fixed_adjustment_target_value/state</td></tr>
 <tr><td>Source</td><td>Modbus Register 40024</td></tr>
-<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 <tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -60.0 % and 60.0 % (-6000 ≦ raw value ≦ 6000)</td></tr>
 </table>
@@ -1498,9 +1554,9 @@ The attributes payload currently includes:
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_b_reactive_power_fixed_adjustment_target_value/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_b_reactive_power_fixed_adjustment_target_value/state</td></tr>
 <tr><td>Source</td><td>Modbus Registers 40016-40017</td></tr>
-<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -2147483.65 kvar and 2147483.65 kvar (-2147483647 ≦ raw value ≦ 2147483647)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -1020.0 kvar and 1020.0 kvar (-1020000 ≦ raw value ≦ 1020000)</td></tr>
 </table>
 <h5><a id='sigen_0_247_30019'>Phase C Active Power</a></h5>
 <table>
@@ -1525,9 +1581,9 @@ The attributes payload currently includes:
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_c_active_power_fixed_adjustment_target_value/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_c_active_power_fixed_adjustment_target_value/state</td></tr>
 <tr><td>Source</td><td>Modbus Registers 40012-40013</td></tr>
-<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -500.0 kW and 500.0 kW (-500000 ≦ raw value ≦ 500000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -17.0 kW and 17.0 kW (-17000 ≦ raw value ≦ 17000)</td></tr>
 </table>
 <h5><a id='sigen_0_247_40022'>Phase C Active Power Percentage Adjustment Target Value</a></h5>
 <table>
@@ -1539,7 +1595,7 @@ The attributes payload currently includes:
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_c_active_power_percentage_adjustment_target_value/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_c_active_power_percentage_adjustment_target_value/state</td></tr>
 <tr><td>Source</td><td>Modbus Register 40022</td></tr>
-<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 <tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -100.0 % and 100.0 % (-10000 ≦ raw value ≦ 10000)</td></tr>
 </table>
@@ -1553,7 +1609,7 @@ The attributes payload currently includes:
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_c_q_s_fixed_adjustment_target_value/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_c_q_s_fixed_adjustment_target_value/state</td></tr>
 <tr><td>Source</td><td>Modbus Register 40025</td></tr>
-<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 <tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -60.0 % and 60.0 % (-6000 ≦ raw value ≦ 6000)</td></tr>
 </table>
@@ -1580,9 +1636,9 @@ The attributes payload currently includes:
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_c_reactive_power_fixed_adjustment_target_value/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_c_reactive_power_fixed_adjustment_target_value/state</td></tr>
 <tr><td>Source</td><td>Modbus Registers 40018-40019</td></tr>
-<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -2147483.65 kvar and 2147483.65 kvar (-2147483647 ≦ raw value ≦ 2147483647)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -1020.0 kvar and 1020.0 kvar (-1020000 ≦ raw value ≦ 1020000)</td></tr>
 </table>
 <h5><a id='sigen_0_plant_alarms'>Plant Alarms</a></h5>
 <table>
@@ -1603,7 +1659,7 @@ The attributes payload currently includes:
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_power_factor_adjustment_target_value/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_power_factor_adjustment_target_value/state</td></tr>
 <tr><td>Source</td><td>Modbus Register 40007</td></tr>
-<tr><td>Comment</td><td>Range: [(-1.0, -0.8) U (0.8, 1.0)]. Grid Sensor needed. Takes effect globally regardless of the EMS operating mode</td></tr>
+<tr><td>Comment</td><td>Range: [(-1.0, -0.8) U (0.8, 1.0)]. Grid Sensor needed. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 <tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -1.0  and 1.0  (-1000 ≦ raw value ≦ 1000)</td></tr>
 </table>
@@ -1617,7 +1673,7 @@ The attributes payload currently includes:
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_q_s_adjustment_target_value/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_q_s_adjustment_target_value/state</td></tr>
 <tr><td>Source</td><td>Modbus Register 40006</td></tr>
-<tr><td>Comment</td><td>Range: [-60.0,60.00]. Takes effect globally regardless of the EMS operating mode</td></tr>
+<tr><td>Comment</td><td>Range: [-60.0,60.00]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 <tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -60.0 % and 60.0 % (-6000 ≦ raw value ≦ 6000)</td></tr>
 </table>
@@ -1683,9 +1739,9 @@ The attributes payload currently includes:
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_reactive_power_fixed_adjustment_target_value/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_reactive_power_fixed_adjustment_target_value/state</td></tr>
 <tr><td>Source</td><td>Modbus Registers 40003-40004</td></tr>
-<tr><td>Comment</td><td>Range: [-60.00 * base value ,60.00 * base value]. Takes effect globally regardless of the EMS operating mode</td></tr>
+<tr><td>Comment</td><td>Range: [-60.00 * base value ,60.00 * base value]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -60.0 kvar and 60.0 kvar (-60000 ≦ raw value ≦ 60000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -1020.0 kvar and 1020.0 kvar (-1020000 ≦ raw value ≦ 1020000)</td></tr>
 </table>
 <h5><a id='sigen_0_247_40029'>Remote EMS</a></h5>
 <table>
@@ -1707,9 +1763,9 @@ The attributes payload currently includes:
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/select/sigen_0_247_powerplant/sigen_0_plant_remote_ems_control_mode/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_remote_ems_control_mode/state</td></tr>
 <tr><td>Source</td><td>Modbus Register 40031</td></tr>
-<tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='0'>PCS remote control</li><li value='1'>Standby</li><li value='2'>Maximum Self-consumption (Default)</li><li value='3'>Command Charging (Consume power from the grid first)</li><li value='4'>Command Charging (Consume power from the PV first)</li><li value='5'>Command Discharging (Output power from PV first)</li><li value='6'>Command Discharging (Output power from the battery first)</li></ol></td></tr>
+<tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='0'>PCS remote control</li><li value='1'>Standby</li><li value='2'>Maximum Self-consumption (Default)</li><li value='3'>Command Charging (Consume power from the grid first)</li><li value='4'>Command Charging (Consume power from the PV first)</li><li value='5'>Command Discharging (Output power from PV first)</li><li value='6'>Command Discharging (Output power from the battery first)</li><li value='8'>V2G (Vehicle to Grid)</li></ol></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0  and 6  (0 ≦ raw value ≦ 6)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0  and 8  (0 ≦ raw value ≦ 8)</td></tr>
 </table>
 <h5><a id='sigen_0_247_30051'>Running State</a></h5>
 <table>
@@ -2526,6 +2582,32 @@ The attributes payload currently includes:
 <tr><td>Source</td><td>Modbus Registers 30216-30219</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.7</td></tr>
 <tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The delta of the value compared to the previous value must be a minimum of 0.0 kWh (raw value ≧ 0)</td></tr>
+</table>
+<h5><a id='sigen_0_247_40158'>PCC Power Factor Adjustment Target Value (Grid Export)</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PCCPowerFactorAdjustmentTargetValueGridExport</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>60s</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_plant_pcc_power_factor_adjustment_target_value_grid_export</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_gridsensor/sigen_0_plant_pcc_power_factor_adjustment_target_value_grid_export/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_pcc_power_factor_adjustment_target_value_grid_export/state</td></tr>
+<tr><td>Source</td><td>Modbus Register 40158</td></tr>
+<tr><td>Comment</td><td>When selling electricity at the grid connection point, the power factor must be controlled to the value configured in this sensor. Range: [(-1.0, -0.8) U (0.8, 1.0)]. Grid Sensor needed.</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.9</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -1.0  and 1.0  (-1000 ≦ raw value ≦ 1000)</td></tr>
+</table>
+<h5><a id='sigen_0_247_40157'>PCC Power Factor Adjustment Target Value (Grid Import)</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PCCPowerFactorAdjustmentTargetValueGridImport</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>60s</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_plant_pcc_power_factor_adjustment_target_value_grid_import</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_gridsensor/sigen_0_plant_pcc_power_factor_adjustment_target_value_grid_import/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_pcc_power_factor_adjustment_target_value_grid_import/state</td></tr>
+<tr><td>Source</td><td>Modbus Register 40157</td></tr>
+<tr><td>Comment</td><td>When purchasing electricity at the grid connection point, the power factor must be controlled to the value configured in this sensor. Range: [(-1.0, -0.8) U (0.8, 1.0)]. Grid Sensor needed.</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.9</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -1.0  and 1.0  (-1000 ≦ raw value ≦ 1000)</td></tr>
 </table>
 <h5><a id='sigen_0_247_30052'>Phase A Active Power</a></h5>
 <table>
@@ -6315,6 +6397,75 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 <tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 s and 4294967295.0 s (0 ≦ raw value ≦ 4294967295)</td></tr>
 </table>
+<h5><a id='sigen_0_001_31515'>Current Discharging Capacity</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>DCChargerCurrentDischargingCapacity</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>600s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_dc_charger_1_current_discharging_capacity</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_dccharger/sigen_0_dc_charger_1_current_discharging_capacity/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_dc_charger_1_current_discharging_capacity/state</td></tr>
+<tr><td>Source</td><td>Modbus Registers 31515-31516</td></tr>
+<tr><td>Comment</td><td>Single time</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.9</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The delta of the value compared to the previous value must be between 0.0 kWh and 5000.0 kWh (0 ≦ raw value ≦ 500000)</td></tr>
+</table>
+<h5><a id='sigen_0_001_31517'>Current Discharging Duration</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>DCChargerCurrentDischargingDuration</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>600s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>s</td></tr>
+<tr><td>Gain</td><td>1</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_dc_charger_1_current_discharging_duration</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_dccharger/sigen_0_dc_charger_1_current_discharging_duration/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_dc_charger_1_current_discharging_duration/state</td></tr>
+<tr><td>Source</td><td>Modbus Registers 31517-31518</td></tr>
+<tr><td>Comment</td><td>Single time</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.9</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 s and 4294967295.0 s (0 ≦ raw value ≦ 4294967295)</td></tr>
+</table>
+<h5><a id='sigen_0_001_31514'>Discharging Current</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>DCChargerDischargingCurrent</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>10</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_dc_charger_1_discharging_current</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_dccharger/sigen_0_dc_charger_1_discharging_current/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_dc_charger_1_discharging_current/state</td></tr>
+<tr><td>Source</td><td>Modbus Register 31514</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.9</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 A and 6553.5 A (0 ≦ raw value ≦ 65535)</td></tr>
+</table>
+<h5><a id='sigen_0_001_41002'>Max Charging Power Limit</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>DCChargerMaxChargingPowerLimit</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>60s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_dc_charger_1_max_charging_power_limit</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_001_dccharger/sigen_0_dc_charger_1_max_charging_power_limit/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_dc_charger_1_max_charging_power_limit/state</td></tr>
+<tr><td>Source</td><td>Modbus Registers 41002-41003</td></tr>
+<tr><td>Comment</td><td>Maximum DC charger charging power limit</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.9</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 kW and 500.0 kW (0 ≦ raw value ≦ 500000)</td></tr>
+</table>
+<h5><a id='sigen_0_001_41004'>Max Discharging Power Limit</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>DCChargerMaxDischargingPowerLimit</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>60s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_dc_charger_1_max_discharging_power_limit</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_001_dccharger/sigen_0_dc_charger_1_max_discharging_power_limit/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_dc_charger_1_max_discharging_power_limit/state</td></tr>
+<tr><td>Source</td><td>Modbus Registers 41004-41005</td></tr>
+<tr><td>Comment</td><td>Maximum DC charger discharging power limit</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.9</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 kW and 500.0 kW (0 ≦ raw value ≦ 500000)</td></tr>
+</table>
 <h5><a id='sigen_0_001_31502'>Output Power</a></h5>
 <table>
 <tr><td>Sensor&nbsp;Class</td><td>DCChargerOutputPower</td></tr>
@@ -6328,6 +6479,32 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 <tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -500.0 kW and 500.0 kW (-500000 ≦ raw value ≦ 500000)</td></tr>
 </table>
+<h5><a id='sigen_0_001_31523'>Rated Charging Power</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>DCChargerRatedChargingPower</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_dc_charger_1_rated_charging_power</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_dccharger/sigen_0_dc_charger_1_rated_charging_power/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_dc_charger_1_rated_charging_power/state</td></tr>
+<tr><td>Source</td><td>Modbus Registers 31523-31524</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.9</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 kW and 500.0 kW (0 ≦ raw value ≦ 500000)</td></tr>
+</table>
+<h5><a id='sigen_0_001_31525'>Rated Discharging Power</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>DCChargerRatedDischargingPower</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_dc_charger_1_rated_discharging_power</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_dccharger/sigen_0_dc_charger_1_rated_discharging_power/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_dc_charger_1_rated_discharging_power/state</td></tr>
+<tr><td>Source</td><td>Modbus Registers 31525-31526</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.9</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 kW and 500.0 kW (0 ≦ raw value ≦ 500000)</td></tr>
+</table>
 <h5><a id='sigen_0_001_31513'>Running State</a></h5>
 <table>
 <tr><td>Sensor&nbsp;Class</td><td>DCChargerRunningState</td></tr>
@@ -6339,6 +6516,32 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='0'>Idle</li><li value='1'>Occupied (Charging Gun plugged in but not detected)</li><li value='2'>Preparing (Establishing communication)</li><li value='3'>Charging</li><li value='4'>Fault</li><li value='5'>Scheduled</li></ol></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
 <tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0  and 5  (0 ≦ raw value ≦ 5)</td></tr>
+</table>
+<h5><a id='sigen_0_001_31519'>Total Charging Capacity</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>DCChargerTotalChargingCapacity</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_dc_charger_1_total_charging_capacity</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_dccharger/sigen_0_dc_charger_1_total_charging_capacity/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_dc_charger_1_total_charging_capacity/state</td></tr>
+<tr><td>Source</td><td>Modbus Registers 31519-31520</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.9</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The delta of the value compared to the previous value must be between 0.0 kWh and 5000.0 kWh (0 ≦ raw value ≦ 500000)</td></tr>
+</table>
+<h5><a id='sigen_0_001_31521'>Total Discharging Capacity</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>DCChargerTotalDischargingCapacity</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>10s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_dc_charger_1_total_discharging_capacity</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_dccharger/sigen_0_dc_charger_1_total_discharging_capacity/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_dc_charger_1_total_discharging_capacity/state</td></tr>
+<tr><td>Source</td><td>Modbus Registers 31521-31522</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.9</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The delta of the value compared to the previous value must be between 0.0 kWh and 5000.0 kWh (0 ≦ raw value ≦ 500000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_31500'>Vehicle Battery Voltage</a></h5>
 <table>
@@ -6433,6 +6636,9 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <table>
 <tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_active_power_fixed_adjustment_target_value/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_active_power_fixed_adjustment_target_value/set</td></tr>
+<tr><td>Comment</td><td>Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>-17.0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>17.0</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40005_set'>Active Power Percentage Adjustment Target Value
@@ -6440,7 +6646,7 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <table>
 <tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_active_power_percentage_adjustment_target_value/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_active_power_percentage_adjustment_target_value/set</td></tr>
-<tr><td>Comment</td><td>Range: [-100.00,100.00]</td></tr>
+<tr><td>Comment</td><td>Range: [-100.00,100.00]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>-100</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>100</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
@@ -6490,7 +6696,7 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <table>
 <tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_grid_max_export_limit/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_max_export_limit/set</td></tr>
-<tr><td>Comment</td><td>Grid Sensor needed. Takes effect globally regardless of the EMS operating mode</td></tr>
+<tr><td>Comment</td><td>The maximum active power fed into the grid must not exceed the value configured in this sensor. Grid Sensor needed. Takes effect globally regardless of the EMS operating mode</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>4294967.295</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.5</td></tr>
@@ -6500,7 +6706,7 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <table>
 <tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_grid_max_import_limit/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_max_import_limit/set</td></tr>
-<tr><td>Comment</td><td>Grid Sensor needed. Takes effect globally regardless of the EMS operating mode</td></tr>
+<tr><td>Comment</td><td>The maximum active power absorbed from the grid must not exceed the value configured in this sensor. Grid Sensor needed. Takes effect globally regardless of the EMS operating mode</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>4294967.295</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.5</td></tr>
@@ -6518,7 +6724,7 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <table>
 <tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_max_charging_limit/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_max_charging_limit/set</td></tr>
-<tr><td>Comment</td><td>Range: [0, Rated ESS charging power]. Takes effect when Remote EMS control mode (40031) is set to Command Charging</td></tr>
+<tr><td>Comment</td><td>The maximum charging power of the ESS in the plant must not exceed the value configured in this sensor. Range: [0, Rated ESS charging power]. Takes effect when Remote EMS control mode (40031) is set to Command Charging.</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>Rated ESS charging power</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
@@ -6528,9 +6734,9 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <table>
 <tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_max_discharging_limit/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_max_discharging_limit/set</td></tr>
-<tr><td>Comment</td><td>Range: [0, Rated ESS charging power]. Takes effect when Remote EMS control mode (40031) is set to Command Discharging</td></tr>
+<tr><td>Comment</td><td>The maximum discharging power of the ESS in the plant must not exceed the value configured in this sensor. Range: [0, Rated ESS discharging power]. Takes effect when Remote EMS control mode (40031) is set to Command Discharging.</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
-<tr><td>Maximum&nbsp;Value</td><td>Rated ESS charging power</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>Rated ESS discharging power</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40042_set'>PCS Max Export Limit
@@ -6538,7 +6744,7 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <table>
 <tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_pcs_max_export_limit/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_pcs_max_export_limit/set</td></tr>
-<tr><td>Comment</td><td>Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally.</td></tr>
+<tr><td>Comment</td><td>The maximum active power output of the inverter in the plant must not exceed the value configured in this sensor. Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally.</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>4294967.295</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.5</td></tr>
@@ -6548,7 +6754,7 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <table>
 <tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_pcs_max_import_limit/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_pcs_max_import_limit/set</td></tr>
-<tr><td>Comment</td><td>Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally.</td></tr>
+<tr><td>Comment</td><td>The maximum active power input of the inverter in the plant must not exceed the value configured in this sensor. Range:[0, 0xFFFFFFFE]。With value 0xFFFFFFFF, register is not valid. In all other cases, Takes effect globally.</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>4294967.295</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.5</td></tr>
@@ -6558,7 +6764,7 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <table>
 <tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_pv_max_power_limit/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_pv_max_power_limit/set</td></tr>
-<tr><td>Comment</td><td>Takes effect when Remote EMS control mode (40031) is set to Command Charging/Discharging</td></tr>
+<tr><td>Comment</td><td>The maximum output power of the PV strings in the plant must not exceed the value configured in this sensor. Takes effect when Remote EMS control mode (40031) is set to Command Charging.</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>4294967.295</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
@@ -6568,7 +6774,9 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <table>
 <tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_a_active_power_fixed_adjustment_target_value/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_a_active_power_fixed_adjustment_target_value/set</td></tr>
-<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>-17.0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>17.0</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40020_set'>Phase A Active Power Percentage Adjustment Target Value
@@ -6576,7 +6784,7 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <table>
 <tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_a_active_power_percentage_adjustment_target_value/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_a_active_power_percentage_adjustment_target_value/set</td></tr>
-<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>-100</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>100</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
@@ -6586,7 +6794,7 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <table>
 <tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_a_q_s_fixed_adjustment_target_value/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_a_q_s_fixed_adjustment_target_value/set</td></tr>
-<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>-60</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>60</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
@@ -6596,7 +6804,9 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <table>
 <tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_a_reactive_power_fixed_adjustment_target_value/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_a_reactive_power_fixed_adjustment_target_value/set</td></tr>
-<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>-1020.0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>1020.0</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40010_set'>Phase B Active Power Fixed Adjustment Target Value
@@ -6604,7 +6814,9 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <table>
 <tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_b_active_power_fixed_adjustment_target_value/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_b_active_power_fixed_adjustment_target_value/set</td></tr>
-<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>-17.0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>17.0</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40021_set'>Phase B Active Power Percentage Adjustment Target Value
@@ -6612,7 +6824,7 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <table>
 <tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_b_active_power_percentage_adjustment_target_value/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_b_active_power_percentage_adjustment_target_value/set</td></tr>
-<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>-100</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>100</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
@@ -6622,7 +6834,7 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <table>
 <tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_b_q_s_fixed_adjustment_target_value/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_b_q_s_fixed_adjustment_target_value/set</td></tr>
-<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>-60</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>60</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
@@ -6632,7 +6844,9 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <table>
 <tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_b_reactive_power_fixed_adjustment_target_value/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_b_reactive_power_fixed_adjustment_target_value/set</td></tr>
-<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>-1020.0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>1020.0</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40012_set'>Phase C Active Power Fixed Adjustment Target Value
@@ -6640,7 +6854,9 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <table>
 <tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_c_active_power_fixed_adjustment_target_value/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_c_active_power_fixed_adjustment_target_value/set</td></tr>
-<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>-17.0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>17.0</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40022_set'>Phase C Active Power Percentage Adjustment Target Value
@@ -6648,7 +6864,7 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <table>
 <tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_c_active_power_percentage_adjustment_target_value/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_c_active_power_percentage_adjustment_target_value/set</td></tr>
-<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>-100</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>100</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
@@ -6658,7 +6874,7 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <table>
 <tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_c_q_s_fixed_adjustment_target_value/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_c_q_s_fixed_adjustment_target_value/set</td></tr>
-<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>-60</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>60</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
@@ -6668,7 +6884,9 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <table>
 <tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_phase_c_reactive_power_fixed_adjustment_target_value/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_phase_c_reactive_power_fixed_adjustment_target_value/set</td></tr>
-<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N</td></tr>
+<tr><td>Comment</td><td>Valid only when Output Type is L1/L2/L3/N. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>-1020.0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>1020.0</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 <h5><a id='sigen_0_247_40000_set'>Plant Power On/Off
@@ -6684,7 +6902,7 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <table>
 <tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_power_factor_adjustment_target_value/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_power_factor_adjustment_target_value/set</td></tr>
-<tr><td>Comment</td><td>Range: [(-1.0, -0.8) U (0.8, 1.0)]. Grid Sensor needed. Takes effect globally regardless of the EMS operating mode</td></tr>
+<tr><td>Comment</td><td>Range: [(-1.0, -0.8) U (0.8, 1.0)]. Grid Sensor needed. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>(-1.0, -0.8)</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>(0.8, 1.0)</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
@@ -6694,7 +6912,7 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <table>
 <tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_q_s_adjustment_target_value/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_q_s_adjustment_target_value/set</td></tr>
-<tr><td>Comment</td><td>Range: [-60.0,60.00]. Takes effect globally regardless of the EMS operating mode</td></tr>
+<tr><td>Comment</td><td>Range: [-60.0,60.00]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>-60</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>60</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
@@ -6704,7 +6922,7 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <table>
 <tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_reactive_power_fixed_adjustment_target_value/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_reactive_power_fixed_adjustment_target_value/set</td></tr>
-<tr><td>Comment</td><td>Range: [-60.00 * base value ,60.00 * base value]. Takes effect globally regardless of the EMS operating mode</td></tr>
+<tr><td>Comment</td><td>Range: [-60.00 * base value ,60.00 * base value]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>-60.00 * base value</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>60.00 * base value</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
@@ -6722,7 +6940,7 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <table>
 <tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/select/sigen_0_247_powerplant/sigen_0_plant_remote_ems_control_mode/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_remote_ems_control_mode/set</td></tr>
-<tr><td>Valid&nbsp;Values</td><td><ul><li value='0'>"PCS remote control"</li><li value='1'>"Standby"</li><li value='2'>"Maximum Self-consumption (Default)"</li><li value='3'>"Command Charging (Consume power from the grid first)"</li><li value='4'>"Command Charging (Consume power from the PV first)"</li><li value='5'>"Command Discharging (Output power from PV first)"</li><li value='6'>"Command Discharging (Output power from the battery first)"</li></ol></td></tr>
+<tr><td>Valid&nbsp;Values</td><td><ul><li value='0'>"PCS remote control"</li><li value='1'>"Standby"</li><li value='2'>"Maximum Self-consumption (Default)"</li><li value='3'>"Command Charging (Consume power from the grid first)"</li><li value='4'>"Command Charging (Consume power from the PV first)"</li><li value='5'>"Command Discharging (Output power from PV first)"</li><li value='6'>"Command Discharging (Output power from the battery first)"</li><li value='7'>""</li><li value='8'>"V2G (Vehicle to Grid)"</li></ol></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 </table>
 
@@ -6811,4 +7029,22 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_dc_charger_1/set</td></tr>
 <tr><td>Valid&nbsp;Values</td><td>0:Start 1:Stop</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
+</table>
+<h5><a id='sigen_0_001_41002_set'>Max Charging Power Limit
+</a></h5>
+<table>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_001_dccharger/sigen_0_dc_charger_1_max_charging_power_limit/set</td></tr>
+<tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_dc_charger_1_max_charging_power_limit/set</td></tr>
+<tr><td>Comment</td><td>Maximum DC charger charging power limit</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.9</td></tr>
+</table>
+<h5><a id='sigen_0_001_41004_set'>Max Discharging Power Limit
+</a></h5>
+<table>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_001_dccharger/sigen_0_dc_charger_1_max_discharging_power_limit/set</td></tr>
+<tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_dc_charger_1_max_discharging_power_limit/set</td></tr>
+<tr><td>Comment</td><td>Maximum DC charger discharging power limit</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.9</td></tr>
 </table>
