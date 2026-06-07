@@ -180,7 +180,7 @@ class:
     attributes:
       source: Registre Modbus {address}
       source_range: Registres Modbus {start}-{end}
-    name: ESS
+    name: ESS  # verify:ignore
   Alarm4Sensor:
     alarm:
       '0': Incompatibilité de version logicielle
@@ -194,7 +194,7 @@ class:
     attributes:
       source: Registre Modbus {address}
       source_range: Registres Modbus {start}-{end}
-    name: GW
+    name: GW  # verify:ignore
   Alarm5Sensor:
     alarm:
       '0': Incompatibilité de version logicielle
@@ -206,7 +206,7 @@ class:
     attributes:
       source: Registre Modbus {address}
       source_range: Registres Modbus {start}-{end}
-    name: EVDC
+    name: EVDC  # verify:ignore
   Alarm6:
     alarm:
       '0': Communication de la passerelle anormale
@@ -1129,9 +1129,9 @@ class:
       source_range: Registres Modbus {start}-{end}
     name: Température
   LA:
-    name: '{model_id} {serial} LA'
+    name: '{model_id} {serial} LA'  # verify:ignore
   LB:
-    name: '{model_id} {serial} LB'
+    name: '{model_id} {serial} LB'  # verify:ignore
   LineVoltage:
     attributes:
       source: Registre Modbus {address}
@@ -1147,7 +1147,7 @@ class:
   MQTTPublishFailures:
     name: Échecs de Publication MQTT
   MV:
-    name: '{model_id} {serial} MV'
+    name: '{model_id} {serial} MV'  # verify:ignore
   MaxAbsorptionPower:
     attributes:
       source: Registre Modbus {address}

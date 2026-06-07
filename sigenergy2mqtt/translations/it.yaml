@@ -180,7 +180,7 @@ class:
     attributes:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
-    name: ESS
+    name: ESS  # verify:ignore
   Alarm4Sensor:
     alarm:
       '0': Mancata corrispondenza versione software
@@ -194,7 +194,7 @@ class:
     attributes:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
-    name: GW
+    name: GW  # verify:ignore
   Alarm5Sensor:
     alarm:
       '0': Mancata corrispondenza versione software
@@ -206,7 +206,7 @@ class:
     attributes:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
-    name: EVDC
+    name: EVDC  # verify:ignore
   Alarm6:
     alarm:
       '0': Comunicazione del gateway anomala

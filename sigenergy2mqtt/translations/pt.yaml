@@ -152,7 +152,7 @@ class:
     attributes:
       source: Registo Modbus {address}
       source_range: Registos Modbus {start}-{end}
-    name: PCS
+    name: PCS  # verify:ignore
   Alarm2Sensor:
     alarm:
       '0': Corrente de fuga fora do limite
@@ -167,7 +167,7 @@ class:
     attributes:
       source: Registo Modbus {address}
       source_range: Registos Modbus {start}-{end}
-    name: PCS
+    name: PCS  # verify:ignore
   Alarm3Sensor:
     alarm:
       '0': Incompatibilidade de versão de software
@@ -194,7 +194,7 @@ class:
     attributes:
       source: Registo Modbus {address}
       source_range: Registos Modbus {start}-{end}
-    name: GW
+    name: GW  # verify:ignore
   Alarm5Sensor:
     alarm:
       '0': Incompatibilidade de versão de software
@@ -206,7 +206,7 @@ class:
     attributes:
       source: Registo Modbus {address}
       source_range: Registos Modbus {start}-{end}
-    name: EVDC
+    name: EVDC  # verify:ignore
   Alarm6:
     alarm:
       '0': Comunicação do gateway anormal
@@ -508,13 +508,13 @@ class:
     name: Pré-aquecimento
   ESSPreHeatingMode:
     attributes:
-      comment: '0: Automático, 1: Manual'
+      comment: '0: Automático, 1: Manual' #verify:ignore
       source: Registo Modbus {address}
       source_range: Registos Modbus {start}-{end}
     name: Modo de pré-aquecimento
     options:
       '0': Automático
-      '1': Manual
+      '1': Manual #verify:ignore
   ESSPreHeatingReservedSOC:
     attributes:
       comment: 'Faixa: [0,00,100,00]'
@@ -1129,9 +1129,9 @@ class:
       source_range: Registos Modbus {start}-{end}
     name: Temperatura
   LA:
-    name: '{model_id} {serial} LA'
+    name: '{model_id} {serial} LA'  # verify:ignore
   LB:
-    name: '{model_id} {serial} LB'
+    name: '{model_id} {serial} LB'  # verify:ignore
   LineVoltage:
     attributes:
       source: Registo Modbus {address}
@@ -1147,7 +1147,7 @@ class:
   MQTTPublishFailures:
     name: Falhas de Publicação MQTT
   MV:
-    name: '{model_id} {serial} MV'
+    name: '{model_id} {serial} MV'  # verify:ignore
   MaxAbsorptionPower:
     attributes:
       source: Registo Modbus {address}

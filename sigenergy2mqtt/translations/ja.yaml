@@ -152,7 +152,7 @@ class:
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
-    name: PCS
+    name: PCS  # verify:ignore
   Alarm2Sensor:
     alarm:
       '0': 漏電電流制限超過
@@ -167,7 +167,7 @@ class:
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
-    name: PCS
+    name: PCS  # verify:ignore
   Alarm3Sensor:
     alarm:
       '0': ソフトウェアバージョン不一致
@@ -180,7 +180,7 @@ class:
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
-    name: ESS
+    name: ESS  # verify:ignore
   Alarm4Sensor:
     alarm:
       '0': ソフトウェアバージョン不一致
@@ -194,7 +194,7 @@ class:
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
-    name: GW
+    name: GW  # verify:ignore
   Alarm5Sensor:
     alarm:
       '0': ソフトウェアバージョン不一致
@@ -206,7 +206,7 @@ class:
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
-    name: EVDC
+    name: EVDC  # verify:ignore
   Alarm6:
     alarm:
       '0': ゲートウェイ通信異常
@@ -1129,9 +1129,9 @@ class:
       source_range: Modbusレジスタ {start}-{end}
     name: 温度
   LA:
-    name: '{model_id} {serial} LA'
+    name: '{model_id} {serial} LA'  # verify:ignore
   LB:
-    name: '{model_id} {serial} LB'
+    name: '{model_id} {serial} LB'  # verify:ignore
   LineVoltage:
     attributes:
       source: Modbusレジスタ {address}
@@ -1147,7 +1147,7 @@ class:
   MQTTPublishFailures:
     name: MQTT パブリッシュ失敗
   MV:
-    name: '{model_id} {serial} MV'
+    name: '{model_id} {serial} MV'  # verify:ignore
   MaxAbsorptionPower:
     attributes:
       source: Modbusレジスタ {address}

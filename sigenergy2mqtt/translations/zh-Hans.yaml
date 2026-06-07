@@ -180,7 +180,7 @@ class:
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
-    name: ESS
+    name: ESS  # verify:ignore
   Alarm4Sensor:
     alarm:
       '0': 软件版本不匹配
@@ -194,7 +194,7 @@ class:
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
-    name: GW
+    name: GW  # verify:ignore
   Alarm5Sensor:
     alarm:
       '0': 软件版本不匹配
@@ -1129,9 +1129,9 @@ class:
       source_range: Modbus 寄存器 {start}-{end}
     name: 温度
   LA:
-    name: '{model_id} {serial} LA'
+    name: '{model_id} {serial} LA'  # verify:ignore
   LB:
-    name: '{model_id} {serial} LB'
+    name: '{model_id} {serial} LB'  # verify:ignore
   LineVoltage:
     attributes:
       source: Modbus 寄存器 {address}
@@ -1147,7 +1147,7 @@ class:
   MQTTPublishFailures:
     name: MQTT 发布失败
   MV:
-    name: '{model_id} {serial} MV'
+    name: '{model_id} {serial} MV'  # verify:ignore
   MaxAbsorptionPower:
     attributes:
       source: Modbus 寄存器 {address}

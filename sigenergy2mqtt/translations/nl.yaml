@@ -89,8 +89,8 @@ class:
       "7": Fout
   ACChargerStatus:
     attributes:
-      comment: 0:Start 1:Stop # verify:ignore
-    name: AC Lader Start/Stop
+      comment: 0:Starten 1:Stoppen
+    name: AC Lader Starten/Stoppen
     name_off: Stoppen
     name_on: Starten
   ACChargerTotalEnergyConsumed:
@@ -180,7 +180,7 @@ class:
     attributes:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
-    name: ESS
+    name: ESS  # verify:ignore
   Alarm4Sensor:
     alarm:
       '0': Softwareversie komt niet overeen
@@ -194,7 +194,7 @@ class:
     attributes:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
-    name: GW
+    name: GW  # verify:ignore
   Alarm5Sensor:
     alarm:
       '0': Softwareversie komt niet overeen
@@ -206,7 +206,7 @@ class:
     attributes:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
-    name: EVDC
+    name: EVDC  # verify:ignore
   Alarm6:
     alarm:
       '0': Gateway communicatie abnormaal
@@ -408,8 +408,8 @@ class:
       "5": Gepland
   DCChargerStatus:
     attributes:
-      comment: 0:Start 1:Stop # verify:ignore
-    name: DC Lader Start/Stop
+      comment: 0:Starten 1:Stoppen
+    name: DC Lader Starten/Stoppen
     name_off: Stoppen
     name_on: Starten
   DCChargerTotalChargingCapacity:
@@ -1121,7 +1121,7 @@ class:
     name: Serienummer
   InverterStatus:
     attributes:
-      comment: 0:Stop 1:Start # verify:ignore
+      comment: 0:Starten 1:Stoppen
     name: Omvormer Aan/Uit
   InverterTemperature:
     attributes:
@@ -1129,9 +1129,9 @@ class:
       source_range: Modbus-registers {start}-{end}
     name: Temperatuur
   LA:
-    name: '{model_id} {serial} LA'
+    name: '{model_id} {serial} LA'  # verify:ignore
   LB:
-    name: '{model_id} {serial} LB'
+    name: '{model_id} {serial} LB'  # verify:ignore
   LineVoltage:
     attributes:
       source: Modbus-register {address}
@@ -1147,7 +1147,7 @@ class:
   MQTTPublishFailures:
     name: MQTT Publicatiefouten
   MV:
-    name: '{model_id} {serial} MV'
+    name: '{model_id} {serial} MV'  # verify:ignore
   MaxAbsorptionPower:
     attributes:
       source: Modbus-register {address}
@@ -1438,10 +1438,10 @@ class:
     name: Serienummer
   PIDStartStop:
     name: PID-start/stop
-    name_off: Stop
+    name_off: Stoppen
     name_on: Begin
     options:
-      '0': Stop
+      '0': Stoppen
       '1': Begin
   PSS:
     name: '{model_id} {serial}'
@@ -2361,7 +2361,7 @@ class:
     name: Sigenergy-installatie Statistieken {plant_suffix}
   PlantStatus:
     attributes:
-      comment: 0:Stop 1:Start # verify:ignore
+      comment: 0:Starten 1:Stoppen
     name: Installatie Aan/Uit
   PlantTotalExportedEnergy:
     attributes:

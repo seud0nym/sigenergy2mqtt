@@ -180,7 +180,7 @@ class:
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
-    name: ESS
+    name: ESS  # verify:ignore
   Alarm4Sensor:
     alarm:
       '0': Softwareversionskonflikt
@@ -194,7 +194,7 @@ class:
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
-    name: GW
+    name: GW  # verify:ignore
   Alarm5Sensor:
     alarm:
       '0': Softwareversionskonflikt
@@ -206,7 +206,7 @@ class:
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
-    name: EVDC
+    name: EVDC  # verify:ignore
   Alarm6:
     alarm:
       '0': Gateway-Kommunikation abnormal
@@ -544,7 +544,7 @@ class:
       comment: Epochensekunden mit Zeitzone; Die Interpretation der Ortszeit hängt vom Gerät ab.
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
-    name: TOU {slot} Start
+    name: TOU {slot} Start  # verify:ignore
   ESSTotalChargedEnergy:
     attributes:
       source: Modbus-Register {address}
@@ -1129,9 +1129,9 @@ class:
       source_range: Modbus-Register {start}-{end}
     name: Temperatur
   LA:
-    name: '{model_id} {serial} LA'
+    name: '{model_id} {serial} LA'  # verify:ignore
   LB:
-    name: '{model_id} {serial} LB'
+    name: '{model_id} {serial} LB'  # verify:ignore
   LineVoltage:
     attributes:
       source: Modbus-Register {address}
@@ -1147,7 +1147,7 @@ class:
   MQTTPublishFailures:
     name: MQTT Veröffentlichungsfehler
   MV:
-    name: '{model_id} {serial} MV'
+    name: '{model_id} {serial} MV'  # verify:ignore
   MaxAbsorptionPower:
     attributes:
       source: Modbus-Register {address}
@@ -1314,7 +1314,7 @@ class:
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
-    name: Alarm 1
+    name: Alarm 1  # verify:ignore
   PIDAlarm2:
     alarm:
       '0': Netzstromausfall
@@ -1325,7 +1325,7 @@ class:
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
-    name: Alarm 2
+    name: Alarm 2  # verify:ignore
   PIDAlarms:
     attributes:
       source: Modbus-Register {address}
@@ -1439,10 +1439,10 @@ class:
   PIDStartStop:
     name: PID-Start/Stopp
     name_off: Stoppen
-    name_on: Start
+    name_on: Start # verify:ignore
     options:
       '0': Stoppen
-      '1': Start
+      '1': Start # verify:ignore
   PSS:
     name: '{model_id} {serial}'
   PSSCommunicationStatus:
@@ -2469,7 +2469,7 @@ class:
       '4': Befehlsladung (Zuerst Strom aus PV verbrauchen)
       '5': Befehlsentladung (Strom aus PV zuerst ausgeben)
       '6': Befehlsentladung (Strom aus Batterie zuerst ausgeben)
-      '8': V2G (Vehicle to Grid)
+      '8': V2G (Vehicle to Grid) # verify:ignore
   RemoteEMSLimit:
     attributes:
       source: Modbus-Register {address}

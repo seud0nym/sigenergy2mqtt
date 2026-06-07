@@ -180,7 +180,7 @@ class:
     attributes:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
-    name: ESS
+    name: ESS  # verify:ignore
   Alarm4Sensor:
     alarm:
       '0': Discrepancia de versión de software
@@ -514,7 +514,7 @@ class:
     name: Modo de precalentamiento
     options:
       '0': Automático
-      '1': Manual
+      '1': Manual # verify:ignore
   ESSPreHeatingReservedSOC:
     attributes:
       comment: 'Rango: [0,00,100,00]'
@@ -1129,9 +1129,9 @@ class:
       source_range: Registros Modbus {start}-{end}
     name: Temperatura
   LA:
-    name: '{model_id} {serial} LA'
+    name: '{model_id} {serial} LA'  # verify:ignore
   LB:
-    name: '{model_id} {serial} LB'
+    name: '{model_id} {serial} LB'  # verify:ignore
   LineVoltage:
     attributes:
       source: Registro Modbus {address}
@@ -1147,7 +1147,7 @@ class:
   MQTTPublishFailures:
     name: Fallos de Publicación MQTT
   MV:
-    name: '{model_id} {serial} MV'
+    name: '{model_id} {serial} MV'  # verify:ignore
   MaxAbsorptionPower:
     attributes:
       source: Registro Modbus {address}
