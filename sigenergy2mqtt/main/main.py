@@ -1,9 +1,11 @@
 import asyncio
+import hashlib
+import json
 import logging
 import signal
 import sys
 from datetime import timedelta, timezone
-from typing import Any, Tuple, cast
+from typing import Any, Mapping, Tuple, cast
 
 import paho.mqtt.client as paho_mqtt
 import requests
@@ -18,7 +20,7 @@ from sigenergy2mqtt.influxdb import get_influxdb_services
 from sigenergy2mqtt.metrics.metrics_service import MetricsService
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.monitor import MonitorService
-from sigenergy2mqtt.persistence import state_store
+from sigenergy2mqtt.persistence import Category, state_store
 from sigenergy2mqtt.pvoutput import get_pvoutput_services
 from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, ModbusSensorMixin, WriteOnlySensor
 from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, InverterModel, InverterSerialNumber, OutputType, PACKBCUCount, RatedActivePower
@@ -379,6 +381,8 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
 
             plant: PowerPlant | None = None
             inverters: dict[int, str] = {}
+            inverter_devices: list[Inverter] = []
+            inverter_firmware_versions: dict[int, str] = {}
 
             for device_address in device.inverters:  # type: ignore[reportGeneralTypeIssues]
                 inverter, plant_tmp = await make_plant_and_inverter(plant_index, modbus, device_address, plant, seen_serial_numbers)
@@ -387,7 +391,6 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
                     plant = plant_tmp
 
                     config.add_device(plant)
-                    await validate_publishable_sensors(modbus, plant)
 
                     if plant.protocol_version is not None:
                         protocol_version = plant.protocol_version if protocol_version is None or protocol_version < plant.protocol_version else protocol_version
@@ -404,10 +407,15 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
 
                 if inverter is not None:
                     inverters[device_address] = inverter.unique_id
+                    inverter_devices.append(inverter)
+                    inverter_firmware_versions[device_address] = str(inverter["hw"])
                     config.add_device(inverter)
-                    await validate_publishable_sensors(modbus, inverter)
 
             if plant is not None:
+                await validate_publishable_sensors(modbus, plant, inverter_firmware_versions)
+                for inverter in inverter_devices:
+                    await validate_publishable_sensors(modbus, inverter, inverter_firmware_versions)
+
                 dc_charger_sequence = await _setup_dc_chargers(
                     plant_index,
                     device,
@@ -417,6 +425,7 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
                     config,
                     dc_charger_sequence,
                     total_dc_chargers,
+                    inverter_firmware_versions,
                 )
                 ac_charger_sequence = await _setup_ac_chargers(
                     plant_index,
@@ -427,6 +436,7 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
                     protocol_version,
                     ac_charger_sequence,
                     total_ac_chargers,
+                    inverter_firmware_versions,
                 )
                 pid_sequence = await _setup_pid(
                     plant_index,
@@ -438,6 +448,7 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
                     protocol_version,
                     pid_sequence,
                     len(device.pid) if device.pid else 0,
+                    inverter_firmware_versions,
                 )
                 pss_sequence = await _setup_pss(
                     plant_index,
@@ -449,6 +460,7 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
                     protocol_version,
                     pss_sequence,
                     len(device.pss) if device.pss else 0,
+                    inverter_firmware_versions,
                 )
 
                 # Finalise cross-device sensor bindings now that all inverters and chargers are registered
@@ -564,7 +576,17 @@ def setup_signals(configs: list[ThreadConfig]) -> None:
             pass
 
 
-async def _setup_ac_chargers(plant_index: int, device, plant: PowerPlant, modbus_client: ModbusClient, config: ThreadConfig, protocol_version: Protocol | None, sequence_start: int, total_count: int) -> int:
+async def _setup_ac_chargers(
+    plant_index: int,
+    device,
+    plant: PowerPlant,
+    modbus_client: ModbusClient,
+    config: ThreadConfig,
+    protocol_version: Protocol | None,
+    sequence_start: int,
+    total_count: int,
+    inverter_firmware_versions: Mapping[int, str] | None = None,
+) -> int:
     if not device.ac_chargers:
         logging.debug(f"No AC chargers defined for plant {device.host}:{device.port} - disabling AC charger statistics interface sensors")
         si_sensor = plant.get_sensor(
@@ -593,7 +615,7 @@ async def _setup_ac_chargers(plant_index: int, device, plant: PowerPlant, modbus
                 total_count=total_count,
             )
             config.add_device(charger)
-            await validate_publishable_sensors(modbus_client, charger)
+            await validate_publishable_sensors(modbus_client, charger, inverter_firmware_versions)
         except Exception as exc:
             is_outage = await _is_grid_outage(plant_index, modbus_client)
             if is_outage is True:
@@ -609,7 +631,17 @@ async def _setup_ac_chargers(plant_index: int, device, plant: PowerPlant, modbus
     return sequence_number
 
 
-async def _setup_dc_chargers(plant_index: int, device, plant: PowerPlant, modbus_client: ModbusClient, inverters: dict[int, str], config: ThreadConfig, sequence_start: int, total_count: int) -> int:
+async def _setup_dc_chargers(
+    plant_index: int,
+    device,
+    plant: PowerPlant,
+    modbus_client: ModbusClient,
+    inverters: dict[int, str],
+    config: ThreadConfig,
+    sequence_start: int,
+    total_count: int,
+    inverter_firmware_versions: Mapping[int, str] | None = None,
+) -> int:
     if not device.dc_chargers:
         logging.debug(f"No DC chargers defined for plant {device.host}:{device.port} - disabling DC charger statistics interface sensors")
         for register in (SITotalEVDCChargedEnergy.ADDRESS, SITotalEVDCDischargedEnergy.ADDRESS):
@@ -636,13 +668,22 @@ async def _setup_dc_chargers(plant_index: int, device, plant: PowerPlant, modbus
             total_count=total_count,
         )
         config.add_device(charger)
-        await validate_publishable_sensors(modbus_client, charger)
+        await validate_publishable_sensors(modbus_client, charger, inverter_firmware_versions)
 
     return sequence_number
 
 
 async def _setup_pid(
-    plant_index: int, device, plant: PowerPlant, seen_serial_numbers: set[str], modbus_client: ModbusClient, config: ThreadConfig, protocol_version: Protocol | None, sequence_start: int, total_count: int
+    plant_index: int,
+    device,
+    plant: PowerPlant,
+    seen_serial_numbers: set[str],
+    modbus_client: ModbusClient,
+    config: ThreadConfig,
+    protocol_version: Protocol | None,
+    sequence_start: int,
+    total_count: int,
+    inverter_firmware_versions: Mapping[int, str] | None = None,
 ) -> int:
     if not device.pid:
         return sequence_start
@@ -667,7 +708,7 @@ async def _setup_pid(
             )
             if pid is not None:
                 config.add_device(pid)
-                await validate_publishable_sensors(modbus_client, pid)
+                await validate_publishable_sensors(modbus_client, pid, inverter_firmware_versions)
         except Exception as exc:
             is_outage = await _is_grid_outage(plant_index, modbus_client)
             if is_outage is True:
@@ -684,7 +725,16 @@ async def _setup_pid(
 
 
 async def _setup_pss(
-    plant_index: int, device, plant: PowerPlant, seen_serial_numbers: set[str], modbus_client: ModbusClient, config: ThreadConfig, protocol_version: Protocol | None, sequence_start: int, total_count: int
+    plant_index: int,
+    device,
+    plant: PowerPlant,
+    seen_serial_numbers: set[str],
+    modbus_client: ModbusClient,
+    config: ThreadConfig,
+    protocol_version: Protocol | None,
+    sequence_start: int,
+    total_count: int,
+    inverter_firmware_versions: Mapping[int, str] | None = None,
 ) -> int:
     if not device.pss:
         return sequence_start
@@ -709,7 +759,7 @@ async def _setup_pss(
             )
             if pss is not None:
                 config.add_device(pss)
-                await validate_publishable_sensors(modbus_client, pss)
+                await validate_publishable_sensors(modbus_client, pss, inverter_firmware_versions)
         except Exception as exc:
             is_outage = await _is_grid_outage(plant_index, modbus_client)
             if is_outage is True:
@@ -940,19 +990,74 @@ async def validate_connections(show_credentials: bool = False) -> None:
     _validate_pvoutput_connection(show_credentials)
 
 
-async def validate_publishable_sensors(modbus_client: ModbusClient, device: Device) -> None:
+_PUBLISHABLE_SENSOR_VALIDATION_CACHE_VERSION = 1
+
+
+def _validation_hash(value: Any) -> str:
+    serialized = json.dumps(value, sort_keys=True, separators=(",", ":"), default=str)
+    return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+
+
+def _current_modbus_config_hash() -> str:
+    return _validation_hash([device.model_dump(mode="json", by_alias=True) for device in active_config.modbus])
+
+
+def _inverter_firmware_payload(inverter_firmware_versions: Mapping[int, str] | None) -> dict[str, str]:
+    return {str(address): str(firmware) for address, firmware in sorted((inverter_firmware_versions or {}).items())}
+
+
+def _validation_cache_key(device: Device) -> str:
+    return f"publishable-sensor-validation.{_validation_hash(device.unique_id)}.json"
+
+
+def _validation_sensor_lookup(device: Device) -> dict[str, Any]:
+    sensors: dict[str, Any] = {}
+    for sensor in device.get_all_sensors(search_children=True).values():
+        candidates = sensor.alarms if isinstance(sensor, AlarmCombinedSensor) else [sensor]
+        for candidate in candidates:
+            if isinstance(candidate, ModbusSensorMixin):
+                sensors[candidate.unique_id] = candidate
+    return sensors
+
+
+def _log_illegal_data_address(sensor: Any) -> None:
+    logging.info(f"{sensor.log_identity} not supported on this device/firmware: ILLEGAL DATA ADDRESS {sensor.address} (count={sensor.count} type={sensor.input_type} protocol=V{sensor.protocol_version.value})")
+
+
+def _is_valid_validation_cache_payload(value: str) -> bool:
+    try:
+        payload = json.loads(value)
+    except json.JSONDecodeError:
+        return False
+
+    return (
+        isinstance(payload, dict)
+        and payload.get("cache_version") == _PUBLISHABLE_SENSOR_VALIDATION_CACHE_VERSION
+        and isinstance(payload.get("inverter_firmware_versions"), dict)
+        and isinstance(payload.get("inverter_firmware_hash"), str)
+        and isinstance(payload.get("modbus_config_hash"), str)
+        and isinstance(payload.get("illegal_sensor_unique_ids"), list)
+        and all(isinstance(sensor_id, str) for sensor_id in payload["illegal_sensor_unique_ids"])
+    )
+
+
+async def validate_publishable_sensors(modbus_client: ModbusClient, device: Device, inverter_firmware_versions: Mapping[int, str] | None = None) -> None:
     """Validate all publishable sensors for illegal data addresses.
 
-    Scans all publishable ModbusSensorMixin sensors that are not not WriteOnlySensors that
-    have not been previously probed (state_count == 0) and marks those returning Modbus
-    0x02 ILLEGAL_DATA_ADDRESS as unpublishable before scan groups are created.
+    Scans all publishable ModbusSensorMixin sensors that are not WriteOnlySensors and
+    have not been previously probed (state_count == 0), then marks those returning
+    Modbus 0x02 ILLEGAL_DATA_ADDRESS as unpublishable before scan groups are created.
 
-    This comprehensive approach detects all illegal addresses on the device, eliminating
-    the risk of data corruption from multi-register reads spanning unknown illegal addresses.
+    Physical scan results are cached per device and reused on later startups while both
+    the active Modbus configuration and the full plant inverter firmware set are
+    unchanged. The firmware set is supplied by setup_devices from inverter ``hw``
+    attributes only; non-inverter device software/hardware attributes are ignored.
 
     Args:
         modbus_client: Modbus client for reads
         device: Device to validate (and children recursively)
+        inverter_firmware_versions: Firmware versions for all created inverters in the
+            plant, keyed by inverter Modbus device address.
     """
     if active_config.clean:
         return
@@ -961,7 +1066,35 @@ async def validate_publishable_sensors(modbus_client: ModbusClient, device: Devi
     if not sensors_to_test:
         return
 
+    firmware_versions = _inverter_firmware_payload(inverter_firmware_versions)
+    firmware_hash = _validation_hash(firmware_versions)
+    modbus_config_hash = _current_modbus_config_hash()
+    cache_key = _validation_cache_key(device)
+    cached = await state_store.load(Category.CONFIG, cache_key, validator=_is_valid_validation_cache_payload)
+    if cached is None:
+        logging.debug(f"{device.log_identity} ILLEGAL DATA ADDRESS errors cache not found ({cache_key=})")
+    else:
+        payload = json.loads(cached)
+        if payload["inverter_firmware_hash"] == firmware_hash:
+            if payload["modbus_config_hash"] == modbus_config_hash:
+                cached_illegal_sensor_unique_ids = payload["illegal_sensor_unique_ids"]
+                logging.debug(f"{device.log_identity} Applying {len(cached_illegal_sensor_unique_ids)} sensor{'s' if len(cached_illegal_sensor_unique_ids) != 1 else ''} ILLEGAL DATA ADDRESS errors from cache")
+                sensor_lookup = _validation_sensor_lookup(device)
+                for sensor_unique_id in cached_illegal_sensor_unique_ids:
+                    sensor = sensor_lookup.get(sensor_unique_id)
+                    if sensor is not None:
+                        sensor.publishable = False
+                        _log_illegal_data_address(sensor)
+                return
+            else:
+                logging.debug(f"{device.log_identity} ILLEGAL DATA ADDRESS errors cache modbus config hash mismatch (cached={payload['modbus_config_hash']} current={modbus_config_hash})")
+        else:
+            logging.debug(f"{device.log_identity} ILLEGAL DATA ADDRESS errors cache inverter firmware hash mismatch (cached={payload['inverter_firmware_hash']} current={firmware_hash})")
+
     logging.debug(f"{device.log_identity} Validating {len(sensors_to_test)} sensor{'s' if len(sensors_to_test) != 1 else ''} addresses")
+
+    illegal_sensor_unique_ids: list[str] = []
+    scan_completed = True
 
     # Test each sensor for illegal address exceptions
     for sensor in sensors_to_test:
@@ -969,14 +1102,29 @@ async def validate_publishable_sensors(modbus_client: ModbusClient, device: Devi
             try:
                 rr = await read_registers(modbus_client, s.address, s.count, s.device_address, s.input_type)
                 if rr and rr.isError() and rr.exception_code == 0x02:
-                    logging.info(f"{s.log_identity} not supported on this device/firmware: ILLEGAL DATA ADDRESS {s.address} (count={s.count} type={s.input_type} protocol=V{s.protocol_version.value})")
+                    _log_illegal_data_address(s)
                     s.publishable = False
+                    illegal_sensor_unique_ids.append(s.unique_id)
             except Exception as e:
+                scan_completed = False
                 # Log but don't suppress sensor on transient errors (only explicit 0x02)
                 if "0x02 ILLEGAL DATA ADDRESS" in str(e):
                     logging.debug(f"{s.log_identity}: Validation detected illegal address: {e}")
                 else:
                     logging.debug(f"{s.log_identity}: Validation read failed: {e}")
+
+    if not scan_completed:
+        logging.debug(f"{device.log_identity} Validation scan not cached because one or more sensor reads failed")
+        return
+
+    payload = {
+        "cache_version": _PUBLISHABLE_SENSOR_VALIDATION_CACHE_VERSION,
+        "inverter_firmware_versions": firmware_versions,
+        "inverter_firmware_hash": firmware_hash,
+        "modbus_config_hash": modbus_config_hash,
+        "illegal_sensor_unique_ids": sorted(set(illegal_sensor_unique_ids)),
+    }
+    await state_store.save(Category.CONFIG, cache_key, json.dumps(payload, sort_keys=True))
 
 
 # ---------------------------------------------------------------------------

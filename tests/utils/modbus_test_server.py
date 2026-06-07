@@ -55,7 +55,7 @@ from sigenergy2mqtt.sensors.plant_read_write import RemoteEMS
 from tests.utils import get_sensor_instances
 
 logging.getLogger("asyncio").setLevel(logging.CRITICAL)
-logging.getLogger("pymodbus").setLevel(logging.CRITICAL)
+logging.getLogger("pymodbus.logging").setLevel(logging.CRITICAL)
 
 _logger = logging.getLogger(__file__)
 _logger.setLevel(logging.INFO)
@@ -956,11 +956,10 @@ async def run_async_server(
     _logger.setLevel(log_level)
 
     _logger.info("Getting sensor instances...")
-    inverter_device_address = 3
     sensors: dict = await get_sensor_instances(
         home_assistant_enabled=not use_simplified_topics,
         protocol_version=protocol_version,
-        pv_inverter_device_address=inverter_device_address,
+        pv_inverter_device_address=3,
         concrete_sensor_check=False,
     )
     sorted_sensors: list = sorted(
@@ -996,10 +995,13 @@ async def run_async_server(
 
     _logger.info("Creating data blocks...")
     latency_budget = LatencyBudget()
+    inverter_device_address: list[int] = []
     for sensor in sorted_sensors:
         if hasattr(sensor, "device_address"):
             if sensor.device_address not in context:
                 context[sensor.device_address] = CustomDataBlock(sensor.device_address, mqtt_client, latency_budget)
+            if sensor.address == InverterFirmwareVersion.ADDRESS:
+                inverter_device_address.append(sensor.device_address)
             context[sensor.device_address].add_sensor(sensor)
     _logger.info("Data blocks created:")
     for device_address, data_block in context.items():
@@ -1072,7 +1074,8 @@ async def run_async_server(
                 else asyncio.sleep(0)
             )
         if TestConfig.simulate_firmware_upgrade:
-            tasks.append(simulate_firmware_version_upgrade(context[inverter_device_address], wait_for_seconds=45))
+            for idx in inverter_device_address:
+                tasks.append(simulate_firmware_version_upgrade(context[idx], wait_for_seconds=randint(30, 60)))
         await asyncio.gather(*tasks)
     except asyncio.CancelledError as e:
         _logger.debug(f"Modbus TCP Testing Server cancelled: {e}")
