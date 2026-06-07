@@ -1021,10 +1021,7 @@ def _validation_sensor_lookup(device: Device) -> dict[str, Any]:
 
 
 def _log_illegal_data_address(sensor: Any) -> None:
-    logging.info(
-        f"{sensor.log_identity} not supported on this device/firmware: ILLEGAL DATA ADDRESS {sensor.address} "
-        f"(count={sensor.count} type={sensor.input_type} protocol=V{sensor.protocol_version.value})"
-    )
+    logging.info(f"{sensor.log_identity} not supported on this device/firmware: ILLEGAL DATA ADDRESS {sensor.address} (count={sensor.count} type={sensor.input_type} protocol=V{sensor.protocol_version.value})")
 
 
 def _is_valid_validation_cache_payload(value: str) -> bool:
@@ -1074,16 +1071,25 @@ async def validate_publishable_sensors(modbus_client: ModbusClient, device: Devi
     modbus_config_hash = _current_modbus_config_hash()
     cache_key = _validation_cache_key(device)
     cached = await state_store.load(Category.CONFIG, cache_key, validator=_is_valid_validation_cache_payload)
-    if cached is not None:
+    if cached is None:
+        logging.debug(f"{device.log_identity} ILLEGAL DATA ADDRESS errors cache not found ({cache_key=})")
+    else:
         payload = json.loads(cached)
-        if payload["inverter_firmware_hash"] == firmware_hash and payload["modbus_config_hash"] == modbus_config_hash:
-            sensor_lookup = _validation_sensor_lookup(device)
-            for sensor_unique_id in payload["illegal_sensor_unique_ids"]:
-                sensor = sensor_lookup.get(sensor_unique_id)
-                if sensor is not None:
-                    sensor.publishable = False
-                    _log_illegal_data_address(sensor)
-            return
+        if payload["inverter_firmware_hash"] == firmware_hash:
+            if payload["modbus_config_hash"] == modbus_config_hash:
+                cached_illegal_sensor_unique_ids = payload["illegal_sensor_unique_ids"]
+                logging.debug(f"{device.log_identity} Applying {len(cached_illegal_sensor_unique_ids)} sensor{'s' if len(cached_illegal_sensor_unique_ids) != 1 else ''} ILLEGAL DATA ADDRESS errors from cache")
+                sensor_lookup = _validation_sensor_lookup(device)
+                for sensor_unique_id in cached_illegal_sensor_unique_ids:
+                    sensor = sensor_lookup.get(sensor_unique_id)
+                    if sensor is not None:
+                        sensor.publishable = False
+                        _log_illegal_data_address(sensor)
+                return
+            else:
+                logging.debug(f"{device.log_identity} ILLEGAL DATA ADDRESS errors cache modbus config hash mismatch (cached={payload['modbus_config_hash']} current={modbus_config_hash})")
+        else:
+            logging.debug(f"{device.log_identity} ILLEGAL DATA ADDRESS errors cache inverter firmware hash mismatch (cached={payload['inverter_firmware_hash']} current={firmware_hash})")
 
     logging.debug(f"{device.log_identity} Validating {len(sensors_to_test)} sensor{'s' if len(sensors_to_test) != 1 else ''} addresses")
 
