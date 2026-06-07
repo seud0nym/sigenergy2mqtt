@@ -1,4 +1,5 @@
 import asyncio
+import json
 import logging
 import os
 import signal
@@ -27,6 +28,61 @@ class FmtAsyncMock(AsyncMock):
     def __format__(self, format_spec):
         return str(self)
 
+
+
+
+class IllegalAddressResponse:
+    exception_code = 0x02
+
+    def isError(self):
+        return True
+
+
+def make_validation_sensor(suffix: str, address: int = 30001):
+    from sigenergy2mqtt.modbus import ModbusDataType
+    from sigenergy2mqtt.sensors.base import ReadOnlySensor
+
+    return ReadOnlySensor(
+        name=f"Test RO {suffix}",
+        object_id=f"sigen_test_ro_{suffix}",
+        input_type=InputType.HOLDING,
+        plant_index=0,
+        device_address=1,
+        address=address,
+        count=1,
+        data_type=ModbusDataType.UINT16,
+        scan_interval=10,
+        unit=None,
+        device_class=None,
+        state_class=None,
+        icon="mdi:power",
+        gain=1.0,
+        precision=0,
+        protocol_version=Protocol.V2_4,
+        unique_id_override=f"sigen_validation_{suffix}",
+    )
+
+
+def make_validation_device(sensor, unique_id: str = "sigen_validation_device"):
+    device = MagicMock()
+    device.unique_id = unique_id
+    device.log_identity = f"Device[{unique_id}]"
+    device.get_all_sensors.return_value = {sensor.unique_id: sensor}
+    return device
+
+
+def validation_payload(firmware_versions, modbus_hash, sensor_ids):
+    firmware_payload = main_mod._inverter_firmware_payload(firmware_versions)
+    return json.dumps(
+        {
+            "cache_version": main_mod._PUBLISHABLE_SENSOR_VALIDATION_CACHE_VERSION,
+            "inverter_firmware_versions": firmware_payload,
+            "inverter_firmware_hash": main_mod._validation_hash(firmware_payload),
+            "modbus_config_hash": modbus_hash,
+            "illegal_sensor_unique_ids": sensor_ids,
+        },
+        sort_keys=True,
+    )
 
 # Use locally aliased function for backward compatibility
 configure_logging = main_mod.configure_logging
@@ -682,6 +738,131 @@ async def test_coverage_gap_closers(clean_config, monkeypatch):
     monkeypatch.setattr(main_mod, "read_registers", AsyncMock(return_value=RR()))
     await main_mod.validate_publishable_sensors(mock_client, device)
     assert sensor.publishable is False
+
+
+@pytest.mark.asyncio
+async def test_validate_publishable_sensors_saves_illegal_address_cache(clean_config, monkeypatch):
+    sensor = make_validation_sensor("cache_save", 30011)
+    device = make_validation_device(sensor, "sigen_validation_cache_save_device")
+    firmware_versions = {1: "V100R001C00SPC112B107G", 2: "V100R001C00SPC113"}
+    mock_client = AsyncMock()
+
+    load = AsyncMock(return_value=None)
+    save = AsyncMock()
+    monkeypatch.setattr(main_mod.state_store, "load", load)
+    monkeypatch.setattr(main_mod.state_store, "save", save)
+    monkeypatch.setattr(main_mod, "read_registers", AsyncMock(return_value=IllegalAddressResponse()))
+    monkeypatch.setattr(main_mod, "_current_modbus_config_hash", lambda: "modbus-a")
+
+    await main_mod.validate_publishable_sensors(mock_client, device, firmware_versions)
+
+    assert sensor.publishable is False
+    main_mod.read_registers.assert_awaited_once()
+    save.assert_awaited_once()
+    saved_payload = json.loads(save.await_args.args[2])
+    assert saved_payload["inverter_firmware_versions"] == {"1": firmware_versions[1], "2": firmware_versions[2]}
+    assert saved_payload["modbus_config_hash"] == "modbus-a"
+    assert saved_payload["illegal_sensor_unique_ids"] == [sensor.unique_id]
+
+
+@pytest.mark.asyncio
+async def test_validate_publishable_sensors_uses_cache_without_scan(clean_config, monkeypatch, caplog):
+    sensor = make_validation_sensor("cache_hit", 30012)
+    device = make_validation_device(sensor, "sigen_validation_cache_hit_device")
+    firmware_versions = {1: "V100R001C00SPC112B107G"}
+    mock_client = AsyncMock()
+
+    monkeypatch.setattr(main_mod, "_current_modbus_config_hash", lambda: "modbus-a")
+    monkeypatch.setattr(
+        main_mod.state_store,
+        "load",
+        AsyncMock(return_value=validation_payload(firmware_versions, "modbus-a", [sensor.unique_id])),
+    )
+    save = AsyncMock()
+    monkeypatch.setattr(main_mod.state_store, "save", save)
+    read_registers = AsyncMock(return_value=IllegalAddressResponse())
+    monkeypatch.setattr(main_mod, "read_registers", read_registers)
+
+    with caplog.at_level(logging.INFO):
+        await main_mod.validate_publishable_sensors(mock_client, device, firmware_versions)
+
+    assert sensor.publishable is False
+    read_registers.assert_not_awaited()
+    save.assert_not_awaited()
+    assert "not supported on this device/firmware: ILLEGAL DATA ADDRESS 30012" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_validate_publishable_sensors_rescans_when_any_inverter_firmware_changes(clean_config, monkeypatch):
+    sensor = make_validation_sensor("firmware_change", 30013)
+    device = make_validation_device(sensor, "sigen_validation_firmware_change_device")
+    persisted_firmware_versions = {1: "V100R001C00SPC112B107G", 2: "V100R001C00SPC113"}
+    current_firmware_versions = {1: "V100R001C00SPC112B107G", 2: "V100R001C00SPC114"}
+    mock_client = AsyncMock()
+
+    monkeypatch.setattr(main_mod, "_current_modbus_config_hash", lambda: "modbus-a")
+    monkeypatch.setattr(
+        main_mod.state_store,
+        "load",
+        AsyncMock(return_value=validation_payload(persisted_firmware_versions, "modbus-a", [sensor.unique_id])),
+    )
+    save = AsyncMock()
+    monkeypatch.setattr(main_mod.state_store, "save", save)
+    read_registers = AsyncMock(return_value=IllegalAddressResponse())
+    monkeypatch.setattr(main_mod, "read_registers", read_registers)
+
+    await main_mod.validate_publishable_sensors(mock_client, device, current_firmware_versions)
+
+    read_registers.assert_awaited_once()
+    save.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_validate_publishable_sensors_rescans_when_modbus_config_changes(clean_config, monkeypatch):
+    sensor = make_validation_sensor("modbus_change", 30014)
+    device = make_validation_device(sensor, "sigen_validation_modbus_change_device")
+    firmware_versions = {1: "V100R001C00SPC112B107G"}
+    mock_client = AsyncMock()
+
+    monkeypatch.setattr(main_mod, "_current_modbus_config_hash", lambda: "modbus-b")
+    monkeypatch.setattr(
+        main_mod.state_store,
+        "load",
+        AsyncMock(return_value=validation_payload(firmware_versions, "modbus-a", [sensor.unique_id])),
+    )
+    save = AsyncMock()
+    monkeypatch.setattr(main_mod.state_store, "save", save)
+    read_registers = AsyncMock(return_value=IllegalAddressResponse())
+    monkeypatch.setattr(main_mod, "read_registers", read_registers)
+
+    await main_mod.validate_publishable_sensors(mock_client, device, firmware_versions)
+
+    read_registers.assert_awaited_once()
+    save.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_validate_publishable_sensors_ignores_non_inverter_device_attributes(clean_config, monkeypatch):
+    sensor = make_validation_sensor("device_attrs_ignored", 30015)
+    device = make_validation_device(sensor, "sigen_validation_device_attrs_ignored_device")
+    device["hw"] = "device-hardware-that-is-not-firmware"
+    device["sw"] = "device-software-that-is-not-firmware"
+    firmware_versions = {1: "V100R001C00SPC112B107G"}
+    mock_client = AsyncMock()
+
+    monkeypatch.setattr(main_mod, "_current_modbus_config_hash", lambda: "modbus-a")
+    monkeypatch.setattr(
+        main_mod.state_store,
+        "load",
+        AsyncMock(return_value=validation_payload(firmware_versions, "modbus-a", [sensor.unique_id])),
+    )
+    read_registers = AsyncMock(return_value=IllegalAddressResponse())
+    monkeypatch.setattr(main_mod, "read_registers", read_registers)
+
+    await main_mod.validate_publishable_sensors(mock_client, device, firmware_versions)
+
+    assert sensor.publishable is False
+    read_registers.assert_not_awaited()
 
 
 @pytest.mark.asyncio
