@@ -307,13 +307,7 @@ class _MqttBackend:
                 self._cache[key_pair] = (value, ts)
             from sigenergy2mqtt.config import active_config
 
-            show = True
-            if category == Category.SENSOR:
-                show = active_config.sensor_debug_logging
-            elif category == Category.PVOUTPUT:
-                show = active_config.pvoutput.update_debug_logging
-
-            if show:
+            if active_config.persistence_debug:
                 logging.debug(f"MqttBackend: cached {category}/{key} (ts={ts})")
 
     def publish(self, client: mqtt.Client, category: Category | str, key: str, value: str, _attempt: int = 0) -> None:
