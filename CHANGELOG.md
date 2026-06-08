@@ -32,7 +32,7 @@
 
 ### Changed
 
-- Auto-discovery now prioritizes statically configured Modbus hosts and unions newly discovered Modbus device IDs with existing configurations
+- Auto-discovery now prioritizes statically configured Modbus hosts and unions newly discovered Modbus device IDs with existing configurations (fixes #191)
 - Improved Modbus auto-discovery with detailed per-host device ID logging and fixed stale serial number tracking during re-scans
 - Improved Modbus auto-discovery with quiet connection handling and sequential device scanning
 - Reimplemented Modbus test server using Pymodbus SimDevice and custom latency tracking to support device communication failures simulation
