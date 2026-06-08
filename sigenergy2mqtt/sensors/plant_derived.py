@@ -265,7 +265,7 @@ class PlantConsumedPower(CrossDeviceDerivedSensor, HybridInverter, PVInverter):
             else:
                 return "Never"
 
-    def __init__(self, plant_index: int, *sources: Sensor, method: ConsumptionMethod = ConsumptionMethod.CALCULATED):
+    def __init__(self, plant_index: int, method: ConsumptionMethod = ConsumptionMethod.CALCULATED, *sources: Sensor):
         # Set properties before super().__init__ so that log_identity is correctly generated
         self.plant_index = plant_index
         super().__init__(
@@ -279,9 +279,13 @@ class PlantConsumedPower(CrossDeviceDerivedSensor, HybridInverter, PVInverter):
             icon="mdi:home-lightning-bolt-outline",
             gain=None,
             precision=2,
-            source_sensors=sources,
         )
         self.method = method
+        self._initial_sources: list[Sensor] = []
+        for s in sources:
+            if isinstance(s, Sensor):
+                self._initial_sources.append(s)
+
         self._grid_status: int | None = None
         self.sanity_check.min_raw = 0.0
         self._sources: dict[str, PlantConsumedPower.Value] = dict()
@@ -296,29 +300,30 @@ class PlantConsumedPower(CrossDeviceDerivedSensor, HybridInverter, PVInverter):
                 self._sources.update({ConsumptionMethod.TOTAL.value: PlantConsumedPower.Value()})
                 self.protocol_version = Protocol.V2_8
 
-    def finalise_binding(self, plant_index: int) -> bool:
+    def finalise_binding(self, plant_index: int, *sources: Sensor) -> bool:  # noqa: ARG002 – sources ignored; this class discovers its own
         """Discover all publishable ACChargerChargingPower and DCChargerOutputPower sensors
-        across the plant and wire them as cross-device sources.
+        across the plant and wire them as cross-device sources (pattern 2).
+
+        The *sources* parameter is accepted for signature compatibility with
+        ``CrossDeviceDerivedSensor.finalise_binding`` but is always ignored here;
+        sources are discovered from the ``DeviceRegistry`` at binding time.
         """
+        sources_to_bind = list(self._initial_sources)
+
         if self.method == ConsumptionMethod.CALCULATED:
             from sigenergy2mqtt.devices.base.registry import DeviceRegistry
             from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerChargingPower
             from sigenergy2mqtt.sensors.inverter_read_only import DCChargerOutputPower
 
-            sources: list[Sensor] = []
             for device in DeviceRegistry.get(plant_index):
                 for sensor in device.get_all_sensors(search_children=True).values():
                     if isinstance(sensor, (ACChargerChargingPower, DCChargerOutputPower)):
-                        sources.append(sensor)
-                        self._sources[sensor.unique_id] = PlantConsumedPower.Value(
-                            gain=sensor.gain, negate=True, interval=sensor.scan_interval, requires_grid=True
-                        )
+                        sources_to_bind.append(sensor)
+                        self._sources[sensor.unique_id] = PlantConsumedPower.Value(gain=sensor.gain, negate=True, interval=sensor.scan_interval, requires_grid=True)
                         if self.debug_logging:
                             logging.debug(f"{self.log_identity} Added cross-device sensor {sensor.unique_id} as source")
-            if sources:
-                self.declare_cross_device_sources(*sources)
-                return super().finalise_binding(plant_index)
-        return True
+
+        return super().finalise_binding(plant_index, *sources_to_bind)
 
     def _set_latest_consumption(self) -> bool:
         if any(value.state is None for value in self._sources.values() if not value.requires_grid or (value.requires_grid and self._grid_status == 0)):
@@ -577,9 +582,13 @@ class PlantSelfConsumedPower(CrossDeviceDerivedSensor, HybridInverter):
         # _values is populated in finalise_binding() once inverter sensors are known
         self._values: dict[str, int | None] = {}
 
-    def finalise_binding(self, plant_index: int) -> bool:
+    def finalise_binding(self, plant_index: int, *_sources: Sensor) -> bool:  # noqa: ARG002 – _sources ignored; this class discovers its own
         """Discover all publishable InverterSelfConsumedPower sensors across inverters
-        and wire them as cross-device sources.
+        and wire them as cross-device sources (pattern 2).
+
+        The *sources* parameter is accepted for signature compatibility with
+        ``CrossDeviceDerivedSensor.finalise_binding`` but is always ignored here;
+        sources are discovered from the ``DeviceRegistry`` at binding time.
         """
         from sigenergy2mqtt.devices.base.registry import DeviceRegistry
         from sigenergy2mqtt.sensors.inverter_derived import InverterSelfConsumedPower
@@ -595,8 +604,7 @@ class PlantSelfConsumedPower(CrossDeviceDerivedSensor, HybridInverter):
             return False
 
         self._values = {s.object_id: None for s in sources}
-        self.declare_cross_device_sources(*sources)
-        return super().finalise_binding(plant_index)
+        return super().finalise_binding(plant_index, *sources)
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()

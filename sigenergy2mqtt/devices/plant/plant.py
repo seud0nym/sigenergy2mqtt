@@ -49,14 +49,31 @@ class PowerPlant(ModbusDevice):
     ) -> "PowerPlant":
         power_phases = OutputType.to_phases(output_type)
         plant = cls(plant_index, device_type, protocol_version)
-        await plant._register_sensors(firmware, tz, output_type, power_phases, modbus_client)
+
+        rated_charging_power = ro.PlantRatedChargingPower(plant_index)
+        rated_discharging_power = ro.PlantRatedDischargingPower(plant_index)
+        # Fetch async values in parallel
+        rcp_value, rdp_value = await asyncio.gather(
+            rated_charging_power.get_state(modbus_client=modbus_client),
+            rated_discharging_power.get_state(modbus_client=modbus_client),
+        )
+
+        # Child devices MUST be registered before sensors because there is a dependency when ConsumptionMethod == CALCULATED
+        await plant._register_child_devices(power_phases, pre_heating, modbus_client, cast(float, rcp_value), cast(float, rdp_value))
+        await plant._register_sensors(firmware, tz, output_type, power_phases, rated_charging_power, cast(float, rcp_value), rated_discharging_power, cast(float, rdp_value))
         availability_control_sensor = plant.sensors.get(f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_247_{RemoteEMS.ADDRESS}")
         if availability_control_sensor is None:
             raise RuntimeError(f"{plant.__class__.__name__} Failed to find RemoteEMS sensor — cannot continue setup")
-        await plant._register_child_devices(power_phases, pre_heating, tz, modbus_client)
         return plant
 
-    async def _register_child_devices(self, power_phases: int, pre_heating: bool, tz: timezone, modbus_client: ModbusClient) -> None:
+    async def _register_child_devices(
+        self,
+        power_phases: int,
+        pre_heating: bool,
+        modbus_client: ModbusClient,
+        rcp_value: float,
+        rdp_value: float,
+    ) -> None:
         self._grid_sensor = await GridSensor.create(self.plant_index, self._device_type, self.protocol_version, power_phases, self._consumption_group, modbus_client)
         self._add_child_device(self._grid_sensor)
 
@@ -70,28 +87,21 @@ class PowerPlant(ModbusDevice):
 
         if self.protocol_version >= Protocol.V2_9:
             if pre_heating:
-                rated_charging_power = self.sensors.get(f"{active_config.home_assistant.unique_id_prefix}_{self.plant_index}_247_{ro.PlantRatedChargingPower.ADDRESS}")
-                rated_discharging_power = self.sensors.get(f"{active_config.home_assistant.unique_id_prefix}_{self.plant_index}_247_{ro.PlantRatedDischargingPower.ADDRESS}")
-                if rated_charging_power is None or rated_discharging_power is None:
-                    logging.warning(f"{self.log_identity} ESS Pre-Heating child device not registered because PlantRatedChargingPower and/or PlantRatedDischargingPower sensors not found")
-                else:
-                    self._add_child_device(
-                        await ESSPreHeating.create(
-                            self.plant_index, self._device_type, cast(float, rated_charging_power.latest_raw_state), cast(float, rated_discharging_power.latest_raw_state), self.protocol_version
-                        )
-                    )
+                self._add_child_device(await ESSPreHeating.create(self.plant_index, self._device_type, cast(float, rcp_value), cast(float, rdp_value), self.protocol_version))
             else:
                 logging.info(f"{self.log_identity} ESS Pre-Heating device not registered because pre-heating sensors not found")
 
-    async def _register_sensors(self, fw: FirmwareVersion, tz: timezone, output_type: int, power_phases: int, modbus_client: ModbusClient) -> None:
-        rated_charging_power = ro.PlantRatedChargingPower(self.plant_index)
-        rated_discharging_power = ro.PlantRatedDischargingPower(self.plant_index)
-        # Fetch async values in parallel
-        rcp_value, rdp_value = await asyncio.gather(
-            rated_charging_power.get_state(modbus_client=modbus_client),
-            rated_discharging_power.get_state(modbus_client=modbus_client),
-        )
-
+    async def _register_sensors(
+        self,
+        fw: FirmwareVersion,
+        tz: timezone,
+        output_type: int,
+        power_phases: int,
+        rated_charging_power: ro.PlantRatedChargingPower,
+        rcp_value: float,
+        rated_discharging_power: ro.PlantRatedDischargingPower,
+        rdp_value: float,
+    ) -> None:
         self.has_battery = isinstance(self._device_type, HybridInverter) and cast(float, rcp_value) > 0.0
 
         self._add_sensor(ro.SystemTime(self.plant_index, tz))
@@ -236,13 +246,13 @@ class PowerPlant(ModbusDevice):
                 if not grid_status:
                     raise RuntimeError(f"{self.log_identity} GridStatus not registered in GridSensor device???")
                 if battery_power is not None:
-                    self._add_sensor(derived.PlantConsumedPower(self.plant_index, total_pv_power, battery_power, active_power, grid_status, method=self._consumption_source), search_children=True)
+                    self._add_sensor(derived.PlantConsumedPower(self.plant_index, self._consumption_source, total_pv_power, battery_power, active_power, grid_status), search_children=True)
                 else:
-                    self._add_sensor(derived.PlantConsumedPower(self.plant_index, total_pv_power, active_power, grid_status, method=self._consumption_source), search_children=True)
+                    self._add_sensor(derived.PlantConsumedPower(self.plant_index, self._consumption_source, total_pv_power, active_power, grid_status), search_children=True)
             case ConsumptionMethod.GENERAL:
-                self._add_sensor(derived.PlantConsumedPower(self.plant_index, general_load_power, method=self._consumption_source))
+                self._add_sensor(derived.PlantConsumedPower(self.plant_index, self._consumption_source, general_load_power))
             case ConsumptionMethod.TOTAL:
-                self._add_sensor(derived.PlantConsumedPower(self.plant_index, total_load_power, method=self._consumption_source))
+                self._add_sensor(derived.PlantConsumedPower(self.plant_index, self._consumption_source, total_load_power))
 
         plant_lifetime_pv_energy = ro.PlantPVTotalGeneration(self.plant_index)
         plant_3rd_party_lifetime_pv_energy = ro.ThirdPartyLifetimePVEnergy(self.plant_index)
