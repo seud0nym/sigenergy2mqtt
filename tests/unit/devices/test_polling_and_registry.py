@@ -179,6 +179,7 @@ class DummyDerived(DerivedSensor):
         object.__setattr__(self, "protocol_version", protocol_version)
         object.__setattr__(self, "debug_logging", False)
         object.__setattr__(self, "_derived_sensors", {})
+        object.__setattr__(self, "_log_identity", unique_id)
 
     def apply_sensor_overrides(self, registers):
         pass

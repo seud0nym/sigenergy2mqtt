@@ -52,6 +52,7 @@ class DummyDerived(DerivedSensor):
         object.__setattr__(self, "unique_id", unique_id)
         object.__setattr__(self, "protocol_version", Protocol.V1_8)
         object.__setattr__(self, "debug_logging", False)
+        object.__setattr__(self, "_log_identity", unique_id)
 
 
 @pytest.fixture(autouse=True)
