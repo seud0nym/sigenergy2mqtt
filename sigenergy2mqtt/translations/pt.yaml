@@ -2874,6 +2874,8 @@ cli:
     help: 'Não publicar métricas sigenergy2mqtt.'
   SIGENERGY2MQTT_PERSISTENCE_CACHE_WARMUP_TIMEOUT:
     help: 'Segundos máximos para aguardar o estado retido MQTT durante o aquecimento do cache de inicialização (padrão: 10.0, intervalo: 1-60)'
+  SIGENERGY2MQTT_PERSISTENCE_DEBUG:
+    help: Habilite o log de depuração para todas as operações de armazenamento de estado (persistência).
   SIGENERGY2MQTT_PERSISTENCE_MQTT_REDUNDANCY:
     help: 'Desativar a redundância de mensagens retidas MQTT para persistência de estado. Quando definido, o estado é persistido apenas no disco.'
   SIGENERGY2MQTT_PERSISTENCE_MQTT_STATE_PREFIX:

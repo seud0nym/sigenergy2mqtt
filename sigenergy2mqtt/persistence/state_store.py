@@ -117,16 +117,18 @@ class _DiskBackend:
             raise ValueError(f"Invalid category or key: {category}/{key}")
         return self._state_path / str(category) / key
 
-    def save(self, category: Category | str, key: str, value: str, debug: bool = False) -> None:
+    def save(self, category: Category | str, key: str, value: str) -> None:
         """Write *value* to disk under ``{state_path}/{category}/{key}``."""
+        from sigenergy2mqtt.config import active_config
+
         path = self._path_for(category, key)
         path.parent.mkdir(parents=True, exist_ok=True)
         envelope = _make_envelope(value, self._version)
         path.write_text(envelope, encoding="utf-8")
-        if debug:
+        if active_config.persistence_debug:
             logging.debug(f"DiskBackend.save {category}/{key}")
 
-    def load(self, category: Category | str, key: str, debug: bool = False) -> tuple[str, int, bool, bool] | None:
+    def load(self, category: Category | str, key: str) -> tuple[str, int, bool, bool] | None:
         """Read and return ``(value, ts, was_legacy, found_in_root)`` from disk, or ``None`` if absent.
 
         Legacy files containing raw (non-JSON-envelope) content are migrated
@@ -158,13 +160,15 @@ class _DiskBackend:
             logging.warning(f"DiskBackend.load failed for {category}/{key}: {exc}")
             return None
 
-    def delete(self, category: Category | str, key: str, debug: bool = False) -> None:
+    def delete(self, category: Category | str, key: str) -> None:
         """Remove the state file for *category*/*key* if it exists, including legacy root positions."""
+        from sigenergy2mqtt.config import active_config
+
         # Remove from the category subdirectory
         path = self._path_for(category, key)
         try:
             path.unlink(missing_ok=True)
-            if debug:
+            if active_config.persistence_debug:
                 logging.debug(f"DiskBackend.delete {category}/{key}")
         except OSError as exc:
             logging.warning(f"DiskBackend.delete failed for {category}/{key}: {exc}")
@@ -174,7 +178,7 @@ class _DiskBackend:
         if root_path.is_file():
             try:
                 root_path.unlink()
-                if debug:
+                if active_config.persistence_debug:
                     logging.debug(f"DiskBackend.delete legacy root file {key}")
             except OSError as exc:
                 logging.warning(f"DiskBackend.delete failed for legacy root file {key}: {exc}")
@@ -303,17 +307,13 @@ class _MqttBackend:
                 self._cache[key_pair] = (value, ts)
             from sigenergy2mqtt.config import active_config
 
-            show = True
-            if category == Category.SENSOR:
-                show = active_config.sensor_debug_logging
-            elif category == Category.PVOUTPUT:
-                show = active_config.pvoutput.update_debug_logging
-
-            if show:
+            if active_config.persistence_debug:
                 logging.debug(f"MqttBackend: cached {category}/{key} (ts={ts})")
 
-    def publish(self, client: mqtt.Client, category: Category | str, key: str, value: str, debug: bool = False, _attempt: int = 0) -> None:
+    def publish(self, client: mqtt.Client, category: Category | str, key: str, value: str, _attempt: int = 0) -> None:
         """Publish a retained state message."""
+        from sigenergy2mqtt.config import active_config
+
         self._drain_retries(client)
         topic = self._key_to_topic(category, key)
         envelope = _make_envelope(value, self._version)
@@ -322,13 +322,15 @@ class _MqttBackend:
             if info.rc != mqtt.MQTT_ERR_SUCCESS:
                 raise RuntimeError(info.rc)
         except RuntimeError:
-            self._schedule_retry(_attempt, self.publish, category, key, value, debug)
+            self._schedule_retry(_attempt, self.publish, category, key, value)
             return
-        if debug:
+        if active_config.persistence_debug:
             logging.debug(f"MqttBackend.publish {category}/{key}")
 
-    def publish_delete(self, client: mqtt.Client, category: Category | str, key: str, debug: bool = False, _attempt: int = 0) -> None:
+    def publish_delete(self, client: mqtt.Client, category: Category | str, key: str, _attempt: int = 0) -> None:
         """Clear a retained message by publishing an empty payload."""
+        from sigenergy2mqtt.config import active_config
+
         self._drain_retries(client)
         topic = self._key_to_topic(category, key)
         try:
@@ -336,13 +338,13 @@ class _MqttBackend:
             if info.rc != mqtt.MQTT_ERR_SUCCESS:
                 raise RuntimeError(info.rc)
         except RuntimeError:
-            self._schedule_retry(_attempt, self.publish_delete, category, key, debug)
+            self._schedule_retry(_attempt, self.publish_delete, category, key)
             return
 
         with self._lock:
             self._cache.pop((category, key), None)
 
-        if debug:
+        if active_config.persistence_debug:
             logging.debug(f"MqttBackend.publish_delete {category}/{key}")
 
     def load(self, category: Category | str, key: str) -> tuple[str, int] | None:
@@ -511,7 +513,6 @@ class StateStore:
         value: str,
         *,
         stale_after: timedelta | None = None,
-        debug: bool = False,
     ) -> None:
         """Persist *value* to both disk and MQTT (fire-and-forget via executor).
 
@@ -520,14 +521,15 @@ class StateStore:
             key:         File/topic name within the category.
             value:       String value to persist.
             stale_after: Unused on save; present for API symmetry with :meth:`load`.
-            debug:       If False, suppresses debug logging for this operation.
         """
+        from sigenergy2mqtt.config import active_config
+
         if not self._initialised or self._executor is None:
-            if debug:
+            if active_config.persistence_debug:
                 logging.debug(f"StateStore.save called before initialise — skipping {category}/{key}")
             return
         loop = asyncio.get_running_loop()
-        await loop.run_in_executor(self._executor, self._save_sync_impl, category, key, value, debug)
+        await loop.run_in_executor(self._executor, self._save_sync_impl, category, key, value)
 
     async def load(
         self,
@@ -536,7 +538,6 @@ class StateStore:
         *,
         stale_after: timedelta | None = None,
         validator: Callable[[str], bool] | None = None,
-        debug: bool = False,
     ) -> str | None:
         """Load a persisted value, applying staleness check and optional validator.
 
@@ -550,7 +551,6 @@ class StateStore:
             stale_after: If set, values older than this timedelta are discarded.
             validator:   Optional callable that asserts the loaded value is valid;
                          returns False to discard the value.
-            debug:       If False, suppresses debug logging for this operation.
 
         Returns:
             The persisted value string, or ``None`` if absent/stale/invalid.
@@ -566,10 +566,9 @@ class StateStore:
             key,
             stale_after,
             validator,
-            debug,
         )
 
-    async def delete(self, category: Category | str, key: str, debug: bool = False) -> None:
+    async def delete(self, category: Category | str, key: str) -> None:
         """Remove *category*/*key* from both backends.
 
         MQTT removal is achieved by publishing an empty retained message,
@@ -578,7 +577,7 @@ class StateStore:
         if not self._initialised or self._executor is None:
             return
         loop = asyncio.get_running_loop()
-        await loop.run_in_executor(self._executor, self._delete_sync_impl, category, key, debug)
+        await loop.run_in_executor(self._executor, self._delete_sync_impl, category, key)
 
     async def clean_all(self) -> None:
         """Clear all persisted state from both backends.
@@ -596,7 +595,7 @@ class StateStore:
     # Synchronous wrappers (for use from Config.reload() sync context)
     # ------------------------------------------------------------------
 
-    def save_sync(self, category: Category | str, key: str, value: str, debug: bool = False) -> None:
+    def save_sync(self, category: Category | str, key: str, value: str) -> None:
         """Synchronous wrapper for :meth:`save`.
 
         When called from a synchronous context while an asyncio event loop is
@@ -608,13 +607,13 @@ class StateStore:
             return
         loop = self._loop
         if loop is not None and loop.is_running() and threading.get_ident() != self._loop_thread_id:
-            future = asyncio.run_coroutine_threadsafe(self.save(category, key, value, debug=debug), loop)
+            future = asyncio.run_coroutine_threadsafe(self.save(category, key, value), loop)
             try:
                 future.result(timeout=self._sync_timeout)
             except Exception as exc:
                 logging.warning(f"StateStore.save_sync failed for {category}/{key}: {repr(exc)}")
         else:
-            self._save_sync_impl(category, key, value, debug)
+            self._save_sync_impl(category, key, value)
 
     def load_sync(
         self,
@@ -623,7 +622,6 @@ class StateStore:
         *,
         stale_after: timedelta | None = None,
         validator: Callable[[str], bool] | None = None,
-        debug: bool = False,
     ) -> str | None:
         """Synchronous wrapper for :meth:`load`.
 
@@ -634,36 +632,38 @@ class StateStore:
             return None
         loop = self._loop
         if loop is not None and loop.is_running() and threading.get_ident() != self._loop_thread_id:
-            future = asyncio.run_coroutine_threadsafe(self.load(category, key, stale_after=stale_after, validator=validator, debug=debug), loop)
+            future = asyncio.run_coroutine_threadsafe(self.load(category, key, stale_after=stale_after, validator=validator), loop)
             try:
                 return future.result(timeout=self._sync_timeout)
             except Exception as exc:
                 logging.warning(f"StateStore.load_sync failed for {category}/{key}: {repr(exc)}")
                 return None
         else:
-            return self._load_sync_impl(category, key, stale_after, validator, debug)
+            return self._load_sync_impl(category, key, stale_after, validator)
 
-    def delete_sync(self, category: Category | str, key: str, debug: bool = False) -> None:
+    def delete_sync(self, category: Category | str, key: str) -> None:
         """Synchronous wrapper for :meth:`delete`."""
         if not self._initialised or self._executor is None:
             return
         loop = self._loop
         if loop is not None and loop.is_running() and threading.get_ident() != self._loop_thread_id:
-            future = asyncio.run_coroutine_threadsafe(self.delete(category, key, debug=debug), loop)
+            future = asyncio.run_coroutine_threadsafe(self.delete(category, key), loop)
             try:
                 future.result(timeout=self._sync_timeout)
             except Exception as exc:
                 logging.warning(f"StateStore.delete_sync failed for {category}/{key}: {repr(exc)}")
         else:
-            self._delete_sync_impl(category, key, debug)
+            self._delete_sync_impl(category, key)
 
-    def _accept(self, value: str, ts: int, cutoff: int | None, validator: Callable[[str], bool] | None, debug: bool) -> bool:
+    def _accept(self, value: str, ts: int, cutoff: int | None, validator: Callable[[str], bool] | None) -> bool:
+        from sigenergy2mqtt.config import active_config
+
         if cutoff is not None and ts < cutoff:
-            if debug:
+            if active_config.persistence_debug:
                 logging.debug(f"StateStore: discarding stale value (ts={ts} cutoff={cutoff})")
             return False
         if validator is not None and not validator(value):
-            if debug:
+            if active_config.persistence_debug:
                 logging.debug("StateStore: validator rejected value")
             return False
         return True
@@ -700,20 +700,20 @@ class StateStore:
         except Exception:
             pass
 
-    def _save_sync_impl(self, category: Category | str, key: str, value: str, debug: bool = False) -> None:
+    def _save_sync_impl(self, category: Category | str, key: str, value: str) -> None:
         """Write to disk and MQTT; called from the ThreadPoolExecutor."""
         assert self._disk is not None
         t0 = time.perf_counter()
         error = False
         try:
-            self._disk.save(category, key, value, debug=debug)
+            self._disk.save(category, key, value)
         except Exception as exc:
             error = True
             logging.warning(f"StateStore: disk save failed for {category}/{key}: {exc}")
 
         if self._mqtt_enabled and self._client is not None:
             try:
-                self._mqtt.publish(self._client, category, key, value, debug=debug)
+                self._mqtt.publish(self._client, category, key, value)
             except Exception as exc:
                 error = True
                 logging.warning(f"StateStore: MQTT publish failed for {category}/{key}: {exc}")
@@ -730,9 +730,10 @@ class StateStore:
         key: str,
         stale_after: timedelta | None,
         validator: Callable[[str], bool] | None,
-        debug: bool = False,
     ) -> str | None:
         """Read from backends in priority order; called from the ThreadPoolExecutor."""
+        from sigenergy2mqtt.config import active_config
+
         assert self._disk is not None
 
         cutoff: int | None = None
@@ -746,15 +747,15 @@ class StateStore:
             result = self._load_from_backend(backend, category, key)
             if result is not None:
                 value, ts, was_legacy, found_in_root = result
-                if self._accept(value, ts, cutoff, validator, debug):
+                if self._accept(value, ts, cutoff, validator):
                     if was_legacy or found_in_root:
-                        if debug:
+                        if active_config.persistence_debug:
                             logging.debug(f"StateStore.load migrating legacy file {category}/{key}")
-                        self._save_sync_impl(category, key, value, debug=debug)
+                        self._save_sync_impl(category, key, value)
                         if found_in_root:
                             self._disk.delete_root_legacy(key)
 
-                    if debug:
+                    if active_config.persistence_debug:
                         logging.debug(f"StateStore.load {category}/{key} from {backend} (ts={ts})")
                     self._fire_metric("state_store_load", True)
                     return value
@@ -762,15 +763,15 @@ class StateStore:
         self._fire_metric("state_store_load", False)
         return None
 
-    def _delete_sync_impl(self, category: Category | str, key: str, debug: bool = False) -> None:
+    def _delete_sync_impl(self, category: Category | str, key: str) -> None:
         """Remove from disk and MQTT; called from the ThreadPoolExecutor."""
         assert self._disk is not None
         error = False
-        self._disk.delete(category, key, debug=debug)
+        self._disk.delete(category, key)
 
         if self._mqtt_enabled and self._client is not None:
             try:
-                self._mqtt.publish_delete(self._client, category, key, debug=debug)
+                self._mqtt.publish_delete(self._client, category, key)
             except Exception as exc:
                 error = True
                 logging.warning(f"StateStore: MQTT delete failed for {category}/{key}: {exc}")

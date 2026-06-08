@@ -2874,6 +2874,8 @@ cli:
     help: '不发布sigenergy2mqtt指标。'
   SIGENERGY2MQTT_PERSISTENCE_CACHE_WARMUP_TIMEOUT:
     help: '启动缓存预热期间等待 MQTT 保留状态的最大秒数（默认：10.0，范围：1-60）'
+  SIGENERGY2MQTT_PERSISTENCE_DEBUG:
+    help: 为所有状态存储（持久性）操作启用调试日志记录。
   SIGENERGY2MQTT_PERSISTENCE_MQTT_REDUNDANCY:
     help: '禁用状态持久化的 MQTT 保留消息冗余。设置后，状态仅持久化到磁盘。'
   SIGENERGY2MQTT_PERSISTENCE_MQTT_STATE_PREFIX:
