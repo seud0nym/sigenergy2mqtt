@@ -2874,6 +2874,8 @@ cli:
     help: 'sigenergy2mqtt 메트릭 게시 안 함.'
   SIGENERGY2MQTT_PERSISTENCE_CACHE_WARMUP_TIMEOUT:
     help: '시작 캐시 워밍업 중 MQTT 보관 상태를 기다리는 최대 초 (기본값: 10.0, 범위: 1-60)'
+  SIGENERGY2MQTT_PERSISTENCE_DEBUG:
+    help: 모든 상태 저장소(지속성) 작업에 대해 디버그 로깅을 활성화합니다.
   SIGENERGY2MQTT_PERSISTENCE_MQTT_REDUNDANCY:
     help: '상태 지속성을 위한 MQTT 보관 메시지 중복을 비활성화합니다. 설정된 경우 상태는 디스크에만 저장됩니다.'
   SIGENERGY2MQTT_PERSISTENCE_MQTT_STATE_PREFIX:

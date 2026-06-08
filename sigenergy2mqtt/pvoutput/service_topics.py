@@ -372,7 +372,7 @@ class ServiceTopics(dict[str, Topic]):
         key = f"{sid}-{name}.state"
         self._persistence_key = key
 
-        content = state_store.load_sync(Category.PVOUTPUT, key, stale_after=timedelta(hours=24), debug=active_config.pvoutput.log_level == logging.DEBUG)
+        content = state_store.load_sync(Category.PVOUTPUT, key, stale_after=timedelta(hours=24))
         if content is not None:
             try:
                 saved = json.loads(content, object_hook=Topic.json_decoder)
@@ -401,7 +401,7 @@ class ServiceTopics(dict[str, Topic]):
         for child in self._time_periods:
             child.reset()
         if self._persistence_key:
-            state_store.delete_sync(Category.PVOUTPUT, self._persistence_key, debug=active_config.pvoutput.log_level == logging.DEBUG)
+            state_store.delete_sync(Category.PVOUTPUT, self._persistence_key)
 
     def subscribe(self, mqtt_client: mqtt.Client, mqtt_handler: MqttHandler) -> None:
         """Subscribe each registered topic to MQTT updates.
@@ -441,7 +441,7 @@ class ServiceTopics(dict[str, Topic]):
                     self[topic].timestamp = time.localtime()
                     if self._persistence_key and ((self._always_persist and state_was != state) or (self.calculation & (Calculation.DIFFERENCE | Calculation.PEAK)) or len(self._time_periods) > 0):
                         payload = json.dumps(self, default=Topic.json_encoder)
-                        state_store.save_sync(Category.PVOUTPUT, self._persistence_key, payload, debug=active_config.pvoutput.update_debug_logging)
+                        state_store.save_sync(Category.PVOUTPUT, self._persistence_key, payload)
             elif active_config.pvoutput.update_debug_logging and state and Calculation.PEAK in self.calculation:
                 ts = self[topic].timestamp
                 if self[topic].restore_timestamp is not None and (ts is None or cast(time.struct_time, ts) < cast(time.struct_time, self[topic].restore_timestamp)):  # pyrefly: ignore

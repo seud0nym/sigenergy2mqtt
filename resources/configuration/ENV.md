@@ -89,6 +89,7 @@ Environment variables override the configuration file, but *not* command line op
 | `SIGENERGY2MQTT_PERSISTENCE_DISK_PRIMARY` | Set to `true` to prefer local disk-based state over MQTT if both are available. Default is `true`. [<sup>(More…)</sup>](README.md#opt_persistence_disk_primary) | 2026.4.5 |
 | `SIGENERGY2MQTT_PERSISTENCE_CACHE_WARMUP_TIMEOUT` | The maximum time in seconds to wait for the MQTT state cache to warm up from retained messages on startup. (default: `5.0`) [<sup>(More…)</sup>](README.md#opt_persistence_cache_warmup_timeout) | 2026.4.5 |
 | `SIGENERGY2MQTT_PERSISTENCE_SYNC_TIMEOUT` | The timeout in seconds for synchronous persistence operations when called from a non-asyncio thread. (default: `5.0`) [<sup>(More…)</sup>](README.md#opt_persistence_sync_timeout) | 2026.4.10 |
+| `SIGENERGY2MQTT_PERSISTENCE_DEBUG` | Set to `true` to enable debug logging for the state persistence system. (default: `false`) [<sup>(More…)</sup>](README.md#opt_persistence_debug) | 2026.6.8 |
 
 
 ## PVOutput Configuration Variables

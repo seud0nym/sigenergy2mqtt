@@ -798,6 +798,12 @@ def get_parser() -> argparse.ArgumentParser:
         default=os.getenv(const.SIGENERGY2MQTT_PERSISTENCE_SYNC_TIMEOUT, None),
         help="Timeout in seconds for synchronous persistence operations when called from a non-asyncio thread (default: 5.0, range: 0.1-30.0)",
     )
+    parser.add_argument(
+        "--persistence-debug",
+        action="store_true",
+        dest=const.SIGENERGY2MQTT_PERSISTENCE_DEBUG,
+        help="Enable debug logging for all state store (persistence) operations.",
+    )
     # endregion
 
     parser.add_argument(

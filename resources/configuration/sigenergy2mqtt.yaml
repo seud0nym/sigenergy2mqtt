@@ -373,6 +373,12 @@ persistence:
   #   description: The timeout in seconds for synchronous persistence
   #                operations when called from a non-asyncio thread.
   sync-timeout: 5.0
+  # debug
+  #   added: 2026.6.8
+  #   default: false
+  #   description: Enable debug logging for all state store (persistence)
+  #                operations.
+  debug: false
 # sensor-debug-logging
 #   default: false
 #   description:  When log-level is DEBUG, controls whether individual

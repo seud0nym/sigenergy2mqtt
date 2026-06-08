@@ -52,3 +52,8 @@ class PersistenceConfig(BaseModel):
         le=30.0,
     )
     """Timeout in seconds for synchronous persistence operations when called from a non-asyncio thread."""
+
+    debug: bool = Field(
+        False,
+    )
+    """Set to True to enable debug logging for all state store (persistence) operations."""

@@ -772,6 +772,14 @@ The maximum time in seconds to wait for the MQTT state cache to warm up from ret
 
 The timeout in seconds for synchronous persistence operations when called from a non-asyncio thread. (default: `5.0`)
 
+<a id="opt_persistence_debug"></a>
+### Persistence Debug
+- CLI: `--persistence-debug`
+- ENV: `SIGENERGY2MQTT_PERSISTENCE_DEBUG`
+- Config key: `persistence.debug`
+
+Set to `true` to enable debug logging for the state persistence system. (default: `false`)
+
 
 ## MQTT
 

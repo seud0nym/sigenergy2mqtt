@@ -66,16 +66,16 @@ def test_sync_wrappers_no_running_loop(temp_state_dir, mock_persistence_config):
     store._executor = ThreadPoolExecutor(max_workers=1)
 
     # Calling save_sync without async context
-    store.save_sync("test", "key", "val", debug=True)
-    store._disk.save.assert_called_with("test", "key", "val", debug=True)
+    store.save_sync("test", "key", "val")
+    store._disk.save.assert_called_with("test", "key", "val")
 
     # Calling load_sync without async context
     val = store.load_sync("test", "key")
     assert val == "val"
 
     # Calling delete_sync without async context
-    store.delete_sync("test", "key", debug=True)
-    store._disk.delete.assert_called_with("test", "key", debug=True)
+    store.delete_sync("test", "key")
+    store._disk.delete.assert_called_with("test", "key")
 
 
 @pytest.mark.asyncio

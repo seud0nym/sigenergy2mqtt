@@ -689,7 +689,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
 
     def _cleanup_persistent_state_file(self) -> None:
         """Remove persistent state if sensor is publishable and not in clean mode."""
-        state_store.delete_sync(Category.SENSOR, self._publish_persistence_key, debug=self.debug_logging)
+        state_store.delete_sync(Category.SENSOR, self._publish_persistence_key)
 
         if self.debug_logging:
             logging.debug(f"{self.log_identity} Removed persistence for {self._publish_persistence_key} (publishable={self.publishable} clean={active_config.clean})")
@@ -711,7 +711,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
                 logging.debug(f"{self.log_identity} unpublished - removed any retained messages in topic {self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC]}")
 
         # Check for persistent state
-        persisted = state_store.load_sync(Category.SENSOR, self._publish_persistence_key, debug=self.debug_logging)
+        persisted = state_store.load_sync(Category.SENSOR, self._publish_persistence_key)
 
         if persisted is not None or active_config.clean:
             components = {}
@@ -722,7 +722,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
             for comp_id in components.keys():
                 components[comp_id] = {"p": self[DiscoveryKeys.PLATFORM]}
 
-            state_store.save_sync(Category.SENSOR, self._publish_persistence_key, "0", debug=self.debug_logging)
+            state_store.save_sync(Category.SENSOR, self._publish_persistence_key, "0")
             if self.debug_logging:
                 logging.debug(f"{self.log_identity} unpublished - removed all discovery except {components} (persistence handling)")
 

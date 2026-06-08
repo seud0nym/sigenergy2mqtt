@@ -240,6 +240,20 @@ class Config:
         pass
 
     @property
+    def persistence_debug(self) -> bool:
+        return self._settings.persistence.debug if self._settings else False
+
+    @persistence_debug.setter
+    def persistence_debug(self, value: bool):
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        self._settings.persistence.debug = value
+
+    @persistence_debug.deleter
+    def persistence_debug(self):
+        pass
+
+    @property
     def home_assistant(self) -> HomeAssistantConfig:
         if not self._settings:
             raise AttributeError("settings not initialised")

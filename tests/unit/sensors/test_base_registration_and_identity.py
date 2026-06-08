@@ -32,6 +32,7 @@ def mock_config(tmp_path):
         patch("sigenergy2mqtt.config.active_config.home_assistant.unique_id_prefix", "sigen"),
         patch("sigenergy2mqtt.config.active_config.home_assistant.entity_id_prefix", "sigenergy2mqtt"),
         patch("sigenergy2mqtt.config.active_config.sensor_debug_logging", True),
+        patch("sigenergy2mqtt.config.active_config.persistence_debug", True),
         patch("sigenergy2mqtt.config.active_config.home_assistant.enabled_by_default", True),
     ):
         # Initialize state_store for tests
