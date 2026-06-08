@@ -2221,5 +2221,14 @@
   "zh-CN:ESS": "ESS",
   "zh-CN:TOU {slot} Start": "TOU {slot} 开始",
   "zh-CN:TOU {slot} End": "TOU {slot} 结束",
-  "zh-CN:EVDC": "电动直流"
+  "zh-CN:EVDC": "电动直流",
+  "de:Enable debug logging for all state store (persistence) operations.": "Aktivieren Sie die Debug-Protokollierung für alle Vorgänge des Zustandsspeichers (Persistenz).",
+  "es:Enable debug logging for all state store (persistence) operations.": "Habilite el registro de depuración para todas las operaciones de almacenamiento de estado (persistencia).",
+  "fr:Enable debug logging for all state store (persistence) operations.": "Activez la journalisation du débogage pour toutes les opérations du magasin d’état (persistance).",
+  "it:Enable debug logging for all state store (persistence) operations.": "Abilita la registrazione del debug per tutte le operazioni di archiviazione dello stato (persistenza).",
+  "ja:Enable debug logging for all state store (persistence) operations.": "すべての状態ストア (永続) 操作のデバッグ ログを有効にします。",
+  "ko:Enable debug logging for all state store (persistence) operations.": "모든 상태 저장소(지속성) 작업에 대해 디버그 로깅을 활성화합니다.",
+  "nl:Enable debug logging for all state store (persistence) operations.": "Schakel logboekregistratie voor foutopsporing in voor alle statusopslagbewerkingen (persistentie).",
+  "pt:Enable debug logging for all state store (persistence) operations.": "Habilite o log de depuração para todas as operações de armazenamento de estado (persistência).",
+  "zh-CN:Enable debug logging for all state store (persistence) operations.": "为所有状态存储（持久性）操作启用调试日志记录。"
 }
