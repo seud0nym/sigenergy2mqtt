@@ -49,11 +49,12 @@ class PowerPlant(ModbusDevice):
     ) -> "PowerPlant":
         power_phases = OutputType.to_phases(output_type)
         plant = cls(plant_index, device_type, protocol_version)
+        # Child devices MUST be registered before sensors because there is a dependency when ConsumptionMethod == CALCULATED
+        await plant._register_child_devices(power_phases, pre_heating, tz, modbus_client)
         await plant._register_sensors(firmware, tz, output_type, power_phases, modbus_client)
         availability_control_sensor = plant.sensors.get(f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_247_{RemoteEMS.ADDRESS}")
         if availability_control_sensor is None:
             raise RuntimeError(f"{plant.__class__.__name__} Failed to find RemoteEMS sensor — cannot continue setup")
-        await plant._register_child_devices(power_phases, pre_heating, tz, modbus_client)
         return plant
 
     async def _register_child_devices(self, power_phases: int, pre_heating: bool, tz: timezone, modbus_client: ModbusClient) -> None:
@@ -236,13 +237,13 @@ class PowerPlant(ModbusDevice):
                 if not grid_status:
                     raise RuntimeError(f"{self.log_identity} GridStatus not registered in GridSensor device???")
                 if battery_power is not None:
-                    self._add_sensor(derived.PlantConsumedPower(self.plant_index, total_pv_power, battery_power, active_power, grid_status, method=self._consumption_source), search_children=True)
+                    self._add_sensor(derived.PlantConsumedPower(self.plant_index, self._consumption_source, total_pv_power, battery_power, active_power, grid_status), search_children=True)
                 else:
-                    self._add_sensor(derived.PlantConsumedPower(self.plant_index, total_pv_power, active_power, grid_status, method=self._consumption_source), search_children=True)
+                    self._add_sensor(derived.PlantConsumedPower(self.plant_index, self._consumption_source, total_pv_power, active_power, grid_status), search_children=True)
             case ConsumptionMethod.GENERAL:
-                self._add_sensor(derived.PlantConsumedPower(self.plant_index, general_load_power, method=self._consumption_source))
+                self._add_sensor(derived.PlantConsumedPower(self.plant_index, self._consumption_source, general_load_power))
             case ConsumptionMethod.TOTAL:
-                self._add_sensor(derived.PlantConsumedPower(self.plant_index, total_load_power, method=self._consumption_source))
+                self._add_sensor(derived.PlantConsumedPower(self.plant_index, self._consumption_source, total_load_power))
 
         plant_lifetime_pv_energy = ro.PlantPVTotalGeneration(self.plant_index)
         plant_3rd_party_lifetime_pv_energy = ro.ThirdPartyLifetimePVEnergy(self.plant_index)

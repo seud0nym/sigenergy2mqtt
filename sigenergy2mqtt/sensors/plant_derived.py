@@ -265,7 +265,7 @@ class PlantConsumedPower(CrossDeviceDerivedSensor, HybridInverter, PVInverter):
             else:
                 return "Never"
 
-    def __init__(self, plant_index: int, *sources: Sensor, method: ConsumptionMethod = ConsumptionMethod.CALCULATED):
+    def __init__(self, plant_index: int, method: ConsumptionMethod = ConsumptionMethod.CALCULATED, *sources: Sensor):
         # Set properties before super().__init__ so that log_identity is correctly generated
         self.plant_index = plant_index
         super().__init__(
@@ -279,9 +279,13 @@ class PlantConsumedPower(CrossDeviceDerivedSensor, HybridInverter, PVInverter):
             icon="mdi:home-lightning-bolt-outline",
             gain=None,
             precision=2,
-            source_sensors=sources,
         )
         self.method = method
+        self._initial_sources: list[Sensor] = []
+        for s in sources:
+            if isinstance(s, Sensor):
+                self._initial_sources.append(s)
+
         self._grid_status: int | None = None
         self.sanity_check.min_raw = 0.0
         self._sources: dict[str, PlantConsumedPower.Value] = dict()
@@ -300,24 +304,24 @@ class PlantConsumedPower(CrossDeviceDerivedSensor, HybridInverter, PVInverter):
         """Discover all publishable ACChargerChargingPower and DCChargerOutputPower sensors
         across the plant and wire them as cross-device sources.
         """
+        sources_to_bind = list(self._initial_sources)
+
         if self.method == ConsumptionMethod.CALCULATED:
             from sigenergy2mqtt.devices.base.registry import DeviceRegistry
             from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerChargingPower
             from sigenergy2mqtt.sensors.inverter_read_only import DCChargerOutputPower
 
-            sources: list[Sensor] = []
             for device in DeviceRegistry.get(plant_index):
                 for sensor in device.get_all_sensors(search_children=True).values():
                     if isinstance(sensor, (ACChargerChargingPower, DCChargerOutputPower)):
-                        sources.append(sensor)
-                        self._sources[sensor.unique_id] = PlantConsumedPower.Value(
-                            gain=sensor.gain, negate=True, interval=sensor.scan_interval, requires_grid=True
-                        )
+                        sources_to_bind.append(sensor)
+                        self._sources[sensor.unique_id] = PlantConsumedPower.Value(gain=sensor.gain, negate=True, interval=sensor.scan_interval, requires_grid=True)
                         if self.debug_logging:
                             logging.debug(f"{self.log_identity} Added cross-device sensor {sensor.unique_id} as source")
-            if sources:
-                self.declare_cross_device_sources(*sources)
-                return super().finalise_binding(plant_index)
+
+        if sources_to_bind:
+            self.declare_cross_device_sources(*sources_to_bind)
+            return super().finalise_binding(plant_index)
         return True
 
     def _set_latest_consumption(self) -> bool:

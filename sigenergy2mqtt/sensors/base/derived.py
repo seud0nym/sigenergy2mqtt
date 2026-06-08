@@ -57,8 +57,7 @@ class DerivedSensor(TypedSensorMixin, Sensor):
         """
         self.source_sensors = [s for s in sensors if s is not None]
         if not self.source_sensors:
-            log_id = getattr(self, "_log_identity", self.__class__.__name__)
-            logging.error(f"{log_id} - no declared source sensors")
+            logging.error(f"{self.log_identity} - no declared source sensors")
         if not hasattr(self, "bound_source_sensors"):
             self.bound_source_sensors = []
 
@@ -156,8 +155,7 @@ class CrossDeviceDerivedSensor(DerivedSensor):
         """
         self._pending_sources = [s for s in sensors if s is not None]
         if not self._pending_sources:
-            log_id = getattr(self, "_log_identity", self.__class__.__name__)
-            logging.error(f"{log_id} - no declared cross-device sources")
+            logging.error(f"{self.log_identity} - no declared cross-device sources")
 
     def finalise_binding(self, plant_index: int) -> bool:
         """Wire up sources from the full device graph after all devices are constructed.
@@ -182,22 +180,13 @@ class CrossDeviceDerivedSensor(DerivedSensor):
 
         owner_device = self.parent_device
         if owner_device is None:
-            raise RuntimeError(
-                f"{self.log_identity} finalise_binding called before sensor was added to a device"
-            )
+            raise RuntimeError(f"{self.log_identity} finalise_binding called before sensor was added to a device")
 
         added = False
         for pending in self._pending_sources:
             # Skip sources that violate the owner device's protocol version
-            if (
-                owner_device.protocol_version > Protocol.N_A
-                and pending.protocol_version > owner_device.protocol_version
-            ):
-                logging.debug(
-                    f"{self.log_identity} skipped cross-device binding of "
-                    f"{pending.__class__.__name__} - source protocol {pending.protocol_version} "
-                    f"> device protocol {owner_device.protocol_version}"
-                )
+            if owner_device.protocol_version > Protocol.N_A and pending.protocol_version > owner_device.protocol_version:
+                logging.debug(f"{self.log_identity} skipped cross-device binding of {pending.__class__.__name__} - source protocol {pending.protocol_version} > device protocol {owner_device.protocol_version}")
                 continue
 
             # Search all devices registered for this plant
@@ -208,11 +197,7 @@ class CrossDeviceDerivedSensor(DerivedSensor):
                     break
 
             if not found:
-                logging.warning(
-                    f"{self.log_identity} cannot bind cross-device source "
-                    f"{pending.__class__.__name__} ({pending.unique_id}) - "
-                    f"not found in plant {plant_index}"
-                )
+                logging.warning(f"{self.log_identity} cannot bind cross-device source {pending.__class__.__name__} ({pending.unique_id}) - not found in plant {plant_index}")
                 continue
 
             if found not in self.bound_source_sensors:
@@ -220,11 +205,7 @@ class CrossDeviceDerivedSensor(DerivedSensor):
                 self.bind_source_sensor(found)
                 added = True
                 if self.debug_logging:
-                    logging.debug(
-                        f"{self.log_identity} bound cross-device source "
-                        f"{found.__class__.__name__} from "
-                        f"{getattr(found.parent_device, 'log_identity', 'unknown')}"
-                    )
+                    logging.debug(f"{self.log_identity} bound cross-device source {found.__class__.__name__} from {getattr(found.parent_device, 'log_identity', 'unknown')}")
 
         # Populate source_sensors from what was actually bound so that the
         # rest of the framework (protocol checks, etc.) can inspect it.
