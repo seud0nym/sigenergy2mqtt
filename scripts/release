@@ -28,6 +28,7 @@ fi
 
 for file in \
     CHANGELOG.md \
+    pyproject.toml\
     resources/configuration/CLI.md \
     resources/sensors/SENSORS.md \
     resources/sensors/TOPICS.md \
