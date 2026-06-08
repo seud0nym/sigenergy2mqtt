@@ -237,7 +237,18 @@ def test_powerplant_register_sensors_calculated_consumption_uses_grid_sensors_by
     ):
         import asyncio
 
-        asyncio.run(plant._register_sensors(FirmwareVersion("V122R001C00SPC113"), timezone.utc, output_type=2, power_phases=3, modbus_client=MagicMock()))
+        asyncio.run(
+            plant._register_sensors(
+                FirmwareVersion("V122R001C00SPC113"),
+                timezone.utc,
+                output_type=2,
+                power_phases=3,
+                rated_charging_power=MagicMock(),
+                rcp_value=5000.0,
+                rated_discharging_power=MagicMock(),
+                rdp_value=5000.0,
+            )
+        )
 
     assert grid_sensor.get_sensor.call_count >= 2
     first_call_type = grid_sensor.get_sensor.call_args_list[0].args[0]
