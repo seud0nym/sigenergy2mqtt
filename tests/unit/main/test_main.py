@@ -29,8 +29,6 @@ class FmtAsyncMock(AsyncMock):
         return str(self)
 
 
-
-
 class IllegalAddressResponse:
     exception_code = 0x02
 
@@ -83,6 +81,7 @@ def validation_payload(firmware_versions, modbus_hash, sensor_ids):
         },
         sort_keys=True,
     )
+
 
 # Use locally aliased function for backward compatibility
 configure_logging = main_mod.configure_logging
@@ -709,8 +708,8 @@ async def test_coverage_gap_closers(clean_config, monkeypatch):
         inv, plant = await main_mod.make_plant_and_inverter(0, mock_client, 1, mock_plant, seen)
         assert plant is mock_plant
 
-    from sigenergy2mqtt.sensors.base import ReadOnlySensor
     from sigenergy2mqtt.modbus import ModbusDataType
+    from sigenergy2mqtt.sensors.base import ReadOnlySensor
 
     sensor = ReadOnlySensor(
         name="Test RO",
@@ -732,9 +731,13 @@ async def test_coverage_gap_closers(clean_config, monkeypatch):
     )
     device = MagicMock()
     device.get_all_sensors.return_value = {"sensor": sensor}
+
     class RR:
-        def isError(self): return True
+        def isError(self):
+            return True
+
         exception_code = 0x02
+
     monkeypatch.setattr(main_mod, "read_registers", AsyncMock(return_value=RR()))
     await main_mod.validate_publishable_sensors(mock_client, device)
     assert sensor.publishable is False
@@ -881,9 +884,9 @@ async def test_setup_services_comprehensive(clean_config):
         patch("sigenergy2mqtt.main.main.get_influxdb_services", return_value=[MagicMock()]),
     ):
         result = main_mod.setup_services(configs, Protocol.V2_8)
-        # Should have Services thread at 0 and Monitor thread at end
-        assert result[0].name == "Services"
-        assert result[-1].name == "Monitor"
+        # Should have Monitor thread at 0 and Services thread at end
+        assert result[0].name == "Monitor"
+        assert result[-1].name == "Services"
         assert len(result) == 3
 
 

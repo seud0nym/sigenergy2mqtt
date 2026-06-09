@@ -495,11 +495,15 @@ def setup_services(configs: list[ThreadConfig], protocol_version: Protocol | Non
 
     Side effects:
 
-    - Mutates ``configs`` in-place by inserting a ``Services`` thread at index 0
-      and/or appending a debug ``Monitor`` thread.
+    - Mutates ``configs`` in-place by inserting a ``Monitor`` thread at index 0
+      and/or appending a ``Services`` thread.
     - Instantiates integration services that may later make outbound API/network
       calls (PVOutput/InfluxDB/Metrics) once started.
     """
+    mon_thread_cfg = ThreadConfig.create(name="Monitor", host=None, port=None)
+    mon_thread_cfg.add_device(MonitorService([d for c in configs for d in c.devices]))
+    configs.insert(0, mon_thread_cfg)
+
     svc_thread_cfg = ThreadConfig.create(name="Services", host=None, port=None)
 
     if active_config.metrics_enabled:
@@ -514,13 +518,9 @@ def setup_services(configs: list[ThreadConfig], protocol_version: Protocol | Non
             svc_thread_cfg.add_device(service)
 
     if svc_thread_cfg.has_devices:
-        configs.insert(0, svc_thread_cfg)
+        configs.append(svc_thread_cfg)
     else:
         logging.info("No services configured - skipping service thread")
-
-    mon_thread_cfg = ThreadConfig.create(name="Monitor", host=None, port=None)
-    mon_thread_cfg.add_device(MonitorService([d for c in configs for d in c.devices]))
-    configs.append(mon_thread_cfg)
 
     return configs
 

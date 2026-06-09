@@ -1,12 +1,13 @@
 """Unit tests for ModbusClient class."""
 
+import threading
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from pymodbus.pdu import ExceptionResponse, ModbusPDU
 
 from sigenergy2mqtt.common import InputType
-from sigenergy2mqtt.modbus.client import ModbusClient
+from sigenergy2mqtt.modbus.client import ModbusClient, ModbusClientHealth
 from sigenergy2mqtt.modbus.read_ahead import ReadAhead
 
 
@@ -22,6 +23,8 @@ class TestModbusClient:
             client._trace = False
             client._read_count = 0
             client._cache_hits = 0
+            client._health: ModbusClientHealth = ModbusClientHealth("modbus://localhost:502")
+            client._health_lock = threading.RLock()
             return client
 
     @pytest.fixture

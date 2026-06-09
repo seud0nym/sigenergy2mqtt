@@ -162,6 +162,7 @@ async def test_monitor_marks_overdue_and_stops(monkeypatch):
     monkeypatch.setattr(asyncio, "sleep", mock_sleep)
 
     svc = MonitorService([])
+    svc._started = 0
     topic = "topic/overdue"
     # make last_seen well in the past so it's overdue
     ms = MonitoredSensor("Dev", "S", 1, last_seen=time.time() - 100)
@@ -172,7 +173,7 @@ async def test_monitor_marks_overdue_and_stops(monkeypatch):
     fut = loop.create_future()
     svc.online = fut
 
-    task = asyncio.create_task(svc._monitor(None, FakeMqttClient()))
+    task = asyncio.create_task(svc._monitor(FakeMqttClient()))
 
     # let the monitor run one iteration
     await original_sleep(0.2)
@@ -190,12 +191,20 @@ async def test_publish_health_includes_modbus_and_mqtt_connectivity(monkeypatch,
     svc._health_file = tmp_path / "health.json"
     mqtt_client = FakeMqttClient(connected=True)
 
+    class MockHealth:
+        client_id = "127.0.0.1"
+        close_count = 0
+        connect_count = 1
+        last_read_at = time.monotonic()
+
     class Modbus:
         connected = True
+        def snapshot(self):
+            return MockHealth()
 
     monkeypatch.setattr(ModbusClientFactory, "_clients", {("127.0.0.1", 502): Modbus()})
 
-    await svc._publish_health(mqtt_client, overdue_count=0)
+    await svc._publish_health(mqtt_client)
 
     assert svc._health_file.exists()
     content = svc._health_file.read_text(encoding="utf-8")
@@ -211,11 +220,27 @@ async def test_publish_health_considers_all_modbus_clients(monkeypatch, tmp_path
     svc._health_file = tmp_path / "health.json"
     mqtt_client = FakeMqttClient(connected=True)
 
+    class MockHealth1:
+        client_id = "127.0.0.1"
+        close_count = 0
+        connect_count = 1
+        last_read_at = time.monotonic()
+
+    class MockHealth2:
+        client_id = "192.168.0.2"
+        close_count = 1
+        connect_count = 0
+        last_read_at = time.monotonic()
+
     class ConnectedModbus:
         connected = True
+        def snapshot(self):
+            return MockHealth1()
 
     class DisconnectedModbus:
         connected = False
+        def snapshot(self):
+            return MockHealth2()
 
     monkeypatch.setattr(
         ModbusClientFactory,
@@ -226,7 +251,7 @@ async def test_publish_health_considers_all_modbus_clients(monkeypatch, tmp_path
         },
     )
 
-    await svc._publish_health(mqtt_client, overdue_count=0)
+    await svc._publish_health(mqtt_client)
 
     content = svc._health_file.read_text(encoding="utf-8")
     assert '"modbus_connected": false' in content
