@@ -162,7 +162,7 @@ async def test_monitor_marks_overdue_and_stops(monkeypatch):
     monkeypatch.setattr(asyncio, "sleep", mock_sleep)
 
     svc = MonitorService([])
-    svc._started = 0
+    svc._last_checked_at = 0
     topic = "topic/overdue"
     # make last_seen well in the past so it's overdue
     ms = MonitoredSensor("Dev", "S", 1, last_seen=time.time() - 100)
@@ -199,6 +199,7 @@ async def test_publish_health_includes_modbus_and_mqtt_connectivity(monkeypatch,
 
     class Modbus:
         connected = True
+
         def snapshot(self):
             return MockHealth()
 
@@ -234,11 +235,13 @@ async def test_publish_health_considers_all_modbus_clients(monkeypatch, tmp_path
 
     class ConnectedModbus:
         connected = True
+
         def snapshot(self):
             return MockHealth1()
 
     class DisconnectedModbus:
         connected = False
+
         def snapshot(self):
             return MockHealth2()
 

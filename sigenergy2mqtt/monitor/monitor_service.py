@@ -45,7 +45,8 @@ class MonitorService(Device):
         # Health publication should remain reasonably frequent and independent
         # of repeated-state payload cadence so Docker HEALTHCHECKs remain timely.
         self._health_publish_interval = 30
-        self._started = time.monotonic()
+        self._degraded_recheck_interval = 5
+        self._last_checked_at = time.monotonic()
 
     async def _monitor(self, mqtt_client: mqtt.Client):
         """Check for overdue topics and log warning/recovery events.
@@ -55,9 +56,13 @@ class MonitorService(Device):
         """
 
         while self.online:
-            await self._publish_health(mqtt_client)
+            if await self._publish_health(mqtt_client):
+                duration = self._health_publish_interval
+            else:
+                duration = self._degraded_recheck_interval
+            self._last_checked_at = time.monotonic()
             try:
-                task = asyncio.create_task(asyncio.sleep(self._health_publish_interval))
+                task = asyncio.create_task(asyncio.sleep(duration))
                 self.sleeper_task = task
                 await task
             except asyncio.CancelledError:
@@ -68,9 +73,11 @@ class MonitorService(Device):
 
     def _check_modbus(self) -> bool:
         """Checks that all Modbus Client instances are connected"""
+        clients = ModbusClientFactory._clients.values()
+        if not clients:
+            return False
         now = time.monotonic()
         modbus_healthy_connections = 0
-        clients = ModbusClientFactory._clients.values()
         for client in clients:
             health = client.snapshot()
             cid = health.client_id
@@ -86,8 +93,10 @@ class MonitorService(Device):
 
     def _check_mqtt(self) -> bool:
         """Checks that all MQTT client connections are healthy"""
-        now = time.monotonic()
         mqtt_snapshot = mqtt_health_registry.snapshot()
+        if not mqtt_snapshot:
+            return False
+        now = time.monotonic()
         mqtt_healthy_connections = 0
         for cid, health in mqtt_snapshot.items():
             if not health.connected:
@@ -101,9 +110,9 @@ class MonitorService(Device):
         return bool(mqtt_healthy_connections == len(mqtt_snapshot))
 
     async def _check_topic_health(self) -> int:
-        if time.monotonic() < (self._started + self._health_publish_interval):
+        if time.monotonic() < (self._last_checked_at + self._health_publish_interval):
             if self._debugging:
-                logging.debug(f"{self.log_identity} Topic health check not due yet (last check {time.monotonic() - self._started}s ago)")
+                logging.debug(f"{self.log_identity} Topic health check not due yet (last check {time.monotonic() - self._last_checked_at}s ago)")
             return 0
         async with self._lock:
             overdue: dict[str, MonitoredSensor] = {t: s for t, s in self._topics.items() if self._monitor_topic_updates and s.is_overdue}
@@ -113,7 +122,7 @@ class MonitorService(Device):
                 logging.warning(f"{self.log_identity} '{sensor.name}' has not been seen for {sensor.overdue}s (scan_interval={sensor.scan_interval}s {topic=})")
         return len(overdue)
 
-    async def _publish_health(self, mqtt_client: mqtt.Client) -> None:
+    async def _publish_health(self, mqtt_client: mqtt.Client) -> bool:
         modbus_connected = self._check_modbus()
         mqtt_connected = self._check_mqtt()
         overdue_count = await self._check_topic_health()
@@ -144,6 +153,7 @@ class MonitorService(Device):
                     logging.debug(f"{self.log_identity} Published health payload to mqtt://{active_config.mqtt.broker}:{active_config.mqtt.port} {self._health_attributes_topic}")
         except Exception as ex:
             logging.warning(f"{self.log_identity} Failed to publish health payload: {ex}")
+        return bool(status == "healthy")
 
     async def on_ha_state_change(self, modbus_client: Any | None, mqtt_client: mqtt.Client, ha_state: str, source: str, mqtt_handler: MqttHandler) -> bool:
         """Handle Home Assistant state updates.
