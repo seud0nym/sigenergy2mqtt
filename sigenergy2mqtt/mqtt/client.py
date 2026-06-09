@@ -54,16 +54,18 @@ class MqttClient(mqtt.Client):
         )
         self.enable_logger(logger)
 
+        self._client_id = client_id
+
         if tls:
             ssl_context = ssl.create_default_context()
             if tls_insecure:
                 ssl_context.check_hostname = False
                 ssl_context.verify_mode = ssl.CERT_NONE
-                logging.warning(f"Using insecure TLS connection for client_id={client_id} - TLS certificate validation is DISABLED!")
+                logger.warning(f"Using insecure TLS connection for client_id={client_id} - TLS certificate validation is DISABLED!")
             else:
                 ssl_context.check_hostname = True
                 ssl_context.verify_mode = ssl.CERT_REQUIRED
-                logging.info(f"Using secure TLS connection for client_id={client_id}")
+                logger.info(f"Using secure TLS connection for client_id={client_id}")
             self.tls_set_context(ssl_context)
 
         self.on_disconnect = on_disconnect
@@ -72,6 +74,9 @@ class MqttClient(mqtt.Client):
         self.on_publish = on_publish
         self.on_subscribe = on_subscribe
         self.on_unsubscribe = on_unsubscribe
+
+    def __repr__(self):
+        return f"<MQTTClientWrapper(client_id='{self._client_id}', broker='{self.host}', port={self.port}, keepalive={self.keepalive})>"
 
 
 # ---------------------------------------------------------------------------
@@ -125,6 +130,7 @@ def on_connect(client: mqtt.Client, userdata: MqttHandler, flags, reason_code, p
     """
     if reason_code == 0:
         logger.debug(f"Connected to mqtt://{client.host}:{client.port} (client_id={userdata.client_id})")
+        userdata.registry.mark_connected(userdata.client_id)
         userdata.on_reconnect(client)
     else:
         logger.critical(f"Connection to mqtt://{client.host}:{client.port} REFUSED - {reason_code} (client_id={userdata.client_id})")
@@ -156,6 +162,7 @@ def on_disconnect(client: mqtt.Client, userdata: MqttHandler, disconnect_flags, 
     """
     userdata.connected = False
     logger.info(f"Disconnected from mqtt://{client.host}:{client.port} - {reason_code} (client_id={userdata.client_id})")
+    userdata.registry.mark_disconnected(userdata.client_id)
 
 
 def on_message(client: mqtt.Client, userdata: MqttHandler, message) -> None:
@@ -179,6 +186,7 @@ def on_message(client: mqtt.Client, userdata: MqttHandler, message) -> None:
         message.topic,
         message.payload.decode("utf-8", errors="replace"),
     )
+    userdata.registry.record_message(userdata.client_id)
     _ensure_subscriptions_are_fresh(client, userdata)
 
 
@@ -200,6 +208,7 @@ def on_publish(client: mqtt.Client, userdata: MqttHandler, mid: int, reason_code
     """
     logger.debug(f"Acknowledged publish MID={mid} (client_id={userdata.client_id})")
     userdata.on_response(mid, "publish", client)
+    userdata.registry.record_publish_ack(userdata.client_id)
     _ensure_subscriptions_are_fresh(client, userdata)
 
 
@@ -242,9 +251,8 @@ def on_subscribe(client: mqtt.Client, userdata: MqttHandler, mid: int, reason_co
     for r in succeeded:
         logger.debug(f"Acknowledged subscribe MID={mid} (reason_code={r} client_id={userdata.client_id})")
 
-    if succeeded:
-        # Signal once per mid regardless of how many topics succeeded.
-        userdata.on_response(mid, "subscribe", client)
+    # Signal once per mid regardless of how many topics succeeded.
+    userdata.on_response(mid, "subscribe", client)
 
 
 def on_unsubscribe(client: mqtt.Client, userdata: MqttHandler, mid: int, reason_codes, properties) -> None:
@@ -284,6 +292,5 @@ def on_unsubscribe(client: mqtt.Client, userdata: MqttHandler, mid: int, reason_
     for r in succeeded:
         logger.debug(f"Acknowledged unsubscribe MID={mid} (reason_code={r} client_id={userdata.client_id})")
 
-    if succeeded:
-        # Signal once per mid regardless of how many topics succeeded.
-        userdata.on_response(mid, "unsubscribe", client)
+    # Signal once per mid regardless of how many topics succeeded.
+    userdata.on_response(mid, "unsubscribe", client)

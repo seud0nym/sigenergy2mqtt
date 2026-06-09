@@ -7,10 +7,13 @@ from sigenergy2mqtt.modbus import ModbusClient
 
 from .client import MqttClient
 from .handler import MqttHandler
+from .registry import MqttHealthRegistry
 
-__all__ = ["MqttHandler", "mqtt_setup"]
+__all__ = ["MqttHandler", "mqtt_setup", "mqtt_health_registry"]
 
 _MAX_CONNECT_ATTEMPTS: int = 3
+
+mqtt_health_registry = MqttHealthRegistry()
 
 
 def _build_broker_url() -> str:
@@ -89,7 +92,7 @@ async def mqtt_setup(
 
     logging.debug(f"Creating MQTT Client ID {mqtt_client_id} for {broker_url} over {active_config.mqtt.transport}")
 
-    mqtt_handler = MqttHandler(mqtt_client_id, modbus_client, loop)
+    mqtt_handler = MqttHandler(mqtt_client_id, modbus_client, loop, mqtt_health_registry)
     mqtt_client = MqttClient(
         client_id=mqtt_client_id,
         userdata=mqtt_handler,

@@ -32,13 +32,15 @@ import logging
 import threading
 import time
 from collections import namedtuple
-from typing import Any, Callable, Coroutine
+from typing import Any, Callable, Coroutine, Optional
 
 import paho.mqtt.client as mqtt
 from paho.mqtt.enums import MQTTErrorCode
 
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus import ModbusClient
+
+from .registry import MqttHealthRegistry
 
 logger = logging.getLogger("paho.mqtt")
 
@@ -80,14 +82,21 @@ class MqttHandler:
         The running asyncio event loop.  Coroutines returned by topic
         handlers are scheduled on this loop via
         :func:`asyncio.run_coroutine_threadsafe`.
+    health_registry:
+        Optional :class:`MqttHealthRegistry` to register with, allowing
+        the monitor to report on publish success and failure. Should only
+        be omitted for testing.
     """
 
-    def __init__(self, client_id: str, modbus_client: ModbusClient | None, loop: asyncio.AbstractEventLoop):
+    def __init__(self, client_id: str, modbus_client: ModbusClient | None, loop: asyncio.AbstractEventLoop, health_registry: Optional[MqttHealthRegistry] = None):
         """Initialise internal state; no network I/O is performed here."""
         self._loop = loop
         self._modbus = modbus_client
         self.client_id = client_id
         self.connected = False
+
+        # Maybe none when testing
+        self._registry = MqttHealthRegistry() if health_registry is None else health_registry
 
         # Protects: self.connected, self._topics.
         self._state_lock = threading.Lock()
@@ -109,6 +118,10 @@ class MqttHandler:
         # Set when close() is called; signals background threads to stop
         # scheduling new coroutines.
         self._closing = threading.Event()
+
+    @property
+    def registry(self) -> MqttHealthRegistry:
+        return self._registry
 
     # ------------------------------------------------------------------
     # Internal helpers
