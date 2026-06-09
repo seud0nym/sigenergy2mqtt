@@ -100,6 +100,7 @@ async def mqtt_setup(
         tls=active_config.mqtt.tls,
         tls_insecure=active_config.mqtt.tls_insecure,
     )
+    mqtt_health_registry.register(mqtt_client_id)
 
     if active_config.mqtt.anonymous:
         logging.debug(f"MQTT Client ID {mqtt_client_id} connecting to {broker_url} anonymously")
