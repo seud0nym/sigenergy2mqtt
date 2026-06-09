@@ -205,6 +205,14 @@ async def test_publish_health_includes_modbus_and_mqtt_connectivity(monkeypatch,
 
     monkeypatch.setattr(ModbusClientFactory, "_clients", {("127.0.0.1", 502): Modbus()})
 
+    class MockMqttHealth:
+        connected = True
+        last_message_at = time.monotonic()
+        connect_count = 1
+        disconnect_count = 0
+
+    monkeypatch.setattr("sigenergy2mqtt.monitor.monitor_service.mqtt_health_registry.snapshot", lambda: {"fake": MockMqttHealth()})
+
     await svc._publish_health(mqtt_client)
 
     assert svc._health_file.exists()
@@ -253,6 +261,14 @@ async def test_publish_health_considers_all_modbus_clients(monkeypatch, tmp_path
             ("192.168.0.2", 502): DisconnectedModbus(),
         },
     )
+
+    class MockMqttHealth:
+        connected = True
+        last_message_at = time.monotonic()
+        connect_count = 1
+        disconnect_count = 0
+
+    monkeypatch.setattr("sigenergy2mqtt.monitor.monitor_service.mqtt_health_registry.snapshot", lambda: {"fake": MockMqttHealth()})
 
     await svc._publish_health(mqtt_client)
 
