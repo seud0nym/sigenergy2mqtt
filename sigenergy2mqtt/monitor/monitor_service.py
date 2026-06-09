@@ -105,7 +105,7 @@ class MonitorService(Device):
         """Checks for overdue topics (sensors that haven't been seen in their scan_interval)"""
         if time.monotonic() < (self._started + self._health_publish_interval):
             logging.debug(
-                f"{self.log_identity} Topic health check not due yet (only started {time.monotonic() - self._started}s ago) - next check in {self._health_publish_interval - (time.monotonic() - self._started)}s"
+                f"{self.log_identity} Topic health check not due yet (only started {time.monotonic() - self._started:0.2f}s ago) - next check in {self._health_publish_interval - (time.monotonic() - self._started):0.2f}s"
             )
             return 0
         async with self._lock:
