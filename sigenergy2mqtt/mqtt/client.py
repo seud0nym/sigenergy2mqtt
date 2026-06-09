@@ -54,8 +54,6 @@ class MqttClient(mqtt.Client):
         )
         self.enable_logger(logger)
 
-        self._client_id = client_id
-
         if tls:
             ssl_context = ssl.create_default_context()
             if tls_insecure:
@@ -74,9 +72,6 @@ class MqttClient(mqtt.Client):
         self.on_publish = on_publish
         self.on_subscribe = on_subscribe
         self.on_unsubscribe = on_unsubscribe
-
-    def __repr__(self):
-        return f"<MQTTClientWrapper(client_id='{self._client_id}', broker='{self.host}', port={self.port}, keepalive={self.keepalive})>"
 
 
 # ---------------------------------------------------------------------------
