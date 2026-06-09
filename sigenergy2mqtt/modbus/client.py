@@ -23,7 +23,7 @@ class ModbusClientHealth:
     """Observed health state for a single Modbus client."""
 
     client_id: str
-    last_connected_at: Optional[float] = None  # epoch seconds
+    last_connected_at: Optional[float] = None
     last_closed_at: Optional[float] = None
     last_read_at: Optional[float] = None
     connect_count: int = 0

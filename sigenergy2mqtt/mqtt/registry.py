@@ -18,7 +18,7 @@ class MqttClientHealth:
 
     client_id: str
     connected: bool = False
-    last_connected_at: Optional[float] = None  # epoch seconds
+    last_connected_at: Optional[float] = None
     last_disconnected_at: Optional[float] = None
     last_message_at: Optional[float] = None
     last_publish_ack_at: Optional[float] = None
