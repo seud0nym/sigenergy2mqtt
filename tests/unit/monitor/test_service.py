@@ -162,7 +162,7 @@ async def test_monitor_marks_overdue_and_stops(monkeypatch):
     monkeypatch.setattr(asyncio, "sleep", mock_sleep)
 
     svc = MonitorService([])
-    svc._last_checked_at = 0
+    svc._started = 0
     topic = "topic/overdue"
     # make last_seen well in the past so it's overdue
     ms = MonitoredSensor("Dev", "S", 1, last_seen=time.time() - 100)

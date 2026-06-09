@@ -45,8 +45,7 @@ class MonitorService(Device):
         # Health publication should remain reasonably frequent and independent
         # of repeated-state payload cadence so Docker HEALTHCHECKs remain timely.
         self._health_publish_interval = 30
-        self._degraded_recheck_interval = 5
-        self._last_checked_at = time.monotonic()
+        self._started = time.monotonic()
 
     async def _monitor(self, mqtt_client: mqtt.Client):
         """Check for overdue topics and log warning/recovery events.
@@ -56,13 +55,9 @@ class MonitorService(Device):
         """
 
         while self.online:
-            if await self._publish_health(mqtt_client):
-                duration = self._health_publish_interval
-            else:
-                duration = self._degraded_recheck_interval
-            self._last_checked_at = time.monotonic()
+            await self._publish_health(mqtt_client)
             try:
-                task = asyncio.create_task(asyncio.sleep(duration))
+                task = asyncio.create_task(asyncio.sleep(self._health_publish_interval))
                 self.sleeper_task = task
                 await task
             except asyncio.CancelledError:
@@ -110,9 +105,12 @@ class MonitorService(Device):
         return bool(mqtt_healthy_connections == len(mqtt_snapshot))
 
     async def _check_topic_health(self) -> int:
-        if time.monotonic() < (self._last_checked_at + self._health_publish_interval):
+        """Checks for overdue topics (sensors that haven't been seen in their scan_interval)"""
+        if time.monotonic() < (self._started + self._health_publish_interval):
             if self._debugging:
-                logging.debug(f"{self.log_identity} Topic health check not due yet (last check {time.monotonic() - self._last_checked_at}s ago)")
+                logging.debug(
+                    f"{self.log_identity} Topic health check not due yet (only started {time.monotonic() - self._started}s ago) - next check in {self._health_publish_interval - (time.monotonic() - self._started)}s"
+                )
             return 0
         async with self._lock:
             overdue: dict[str, MonitoredSensor] = {t: s for t, s in self._topics.items() if self._monitor_topic_updates and s.is_overdue}
