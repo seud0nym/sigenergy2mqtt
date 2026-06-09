@@ -1,8 +1,13 @@
+import copy
 import logging
+import threading
 import time
+from dataclasses import dataclass
+from typing import Optional
 
 from pymodbus import FramerType
 from pymodbus.client import AsyncModbusTcpClient
+from pymodbus.client.mixin import ModbusClientMixin
 from pymodbus.exceptions import ModbusException
 from pymodbus.logging import Log
 from pymodbus.pdu import ExceptionResponse, ModbusPDU
@@ -13,7 +18,16 @@ from sigenergy2mqtt.metrics import Metrics
 from .read_ahead import ReadAhead
 
 
-from pymodbus.client.mixin import ModbusClientMixin
+@dataclass
+class ModbusClientHealth:
+    """Observed health state for a single Modbus client."""
+
+    client_id: str
+    last_connected_at: Optional[float] = None  # epoch seconds
+    last_closed_at: Optional[float] = None
+    last_read_at: Optional[float] = None
+    connect_count: int = 0
+    close_count: int = 0
 
 
 class ModbusClient(AsyncModbusTcpClient, ModbusClientMixin):
@@ -63,6 +77,9 @@ class ModbusClient(AsyncModbusTcpClient, ModbusClientMixin):
         self._trace: bool = False
         self._read_count: int = 0
         self._cache_hits: int = 0
+        # Health tracking
+        self._health: ModbusClientHealth = ModbusClientHealth(f"modbus://{self.comm_params.host}:{self.comm_params.port}")
+        self._health_lock = threading.RLock()
 
     async def _read_registers(
         self, address: int, count: int = 1, device_id: int = 1, input_type: InputType = InputType.HOLDING, no_response_expected: bool = False, use_pre_read: bool = False, trace: bool = False
@@ -109,6 +126,8 @@ class ModbusClient(AsyncModbusTcpClient, ModbusClientMixin):
             else:
                 raise Exception(f"Unknown input type '{input_type}'")
             elapsed = time.monotonic() - start
+            with self._health_lock:
+                self._health.last_read_at = start
             if rr is None:
                 rr = ExceptionResponse(function_code=0x3 if input_type == InputType.HOLDING else 0x04, exception_code=0x5, device_id=device_id)
             if rr.isError() or isinstance(rr, ExceptionResponse):
@@ -138,6 +157,20 @@ class ModbusClient(AsyncModbusTcpClient, ModbusClientMixin):
         """
         if device_id in self._read_ahead_pdu:
             self._read_ahead_pdu[device_id].update({key: None for key in range(address, address + count)})
+
+    async def connect(self) -> bool:
+        connected = await super().connect()
+        if connected:
+            with self._health_lock:
+                self._health.connect_count += 1
+                self._health.last_connected_at = time.monotonic()
+        return connected
+
+    def close(self) -> None:
+        super().close()
+        with self._health_lock:
+            self._health.close_count += 1
+            self._health.last_closed_at = time.monotonic()
 
     async def read_ahead_registers(self, address, count: int = 1, device_id: int = 1, input_type: InputType = InputType.INPUT, no_response_expected: bool = False, trace: bool = False) -> int:
         """Pre-fetch a register range and populate the read-ahead cache.
@@ -199,3 +232,12 @@ class ModbusClient(AsyncModbusTcpClient, ModbusClientMixin):
             A Modbus PDU response.
         """
         return await self._read_registers(address, count=count, device_id=device_id, input_type=InputType.INPUT, no_response_expected=no_response_expected, use_pre_read=True, trace=trace)
+
+    def snapshot(self) -> ModbusClientHealth:
+        """Return a shallow copy of client health.
+
+        Safe to iterate without holding any lock.  :class:`ModbusClientHealth`
+        value is itself a copy — mutating it has no effect.
+        """
+        with self._health_lock:
+            return copy.copy(self._health)
