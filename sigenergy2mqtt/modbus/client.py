@@ -167,10 +167,12 @@ class ModbusClient(AsyncModbusTcpClient, ModbusClientMixin):
         return connected
 
     def close(self) -> None:
+        was_connected = self.connected
         super().close()
-        with self._health_lock:
-            self._health.close_count += 1
-            self._health.last_closed_at = time.monotonic()
+        if was_connected:
+            with self._health_lock:
+                self._health.close_count += 1
+                self._health.last_closed_at = time.monotonic()
 
     async def read_ahead_registers(self, address, count: int = 1, device_id: int = 1, input_type: InputType = InputType.INPUT, no_response_expected: bool = False, trace: bool = False) -> int:
         """Pre-fetch a register range and populate the read-ahead cache.
