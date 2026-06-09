@@ -13,14 +13,14 @@ from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.modbus import ModbusClientFactory
-from sigenergy2mqtt.mqtt import MqttHandler
+from sigenergy2mqtt.mqtt import MqttHandler, mqtt_health_registry
 from sigenergy2mqtt.sensors.base import ReadableSensorMixin
 
 from .monitored_sensor import MonitoredSensor
 
 
 class MonitorService(Device):
-    """Background service that warns when expected sensor topics go silent.
+    """Background service that monitors system health.
 
     Args:
         devices: Devices whose readable/publishable sensors should be monitored.
@@ -44,35 +44,17 @@ class MonitorService(Device):
         # Health publication should remain reasonably frequent and independent
         # of repeated-state payload cadence so Docker HEALTHCHECKs remain timely.
         self._health_publish_interval = 30
+        self._started = time.monotonic()
 
-    async def _monitor(self, modbus_client: Any, mqtt_client: Any, *sensors: Any):
+    async def _monitor(self, mqtt_client: mqtt.Client):
         """Check for overdue topics and log warning/recovery events.
 
         Args:
-            modbus_client: Unused; part of the shared ``Device`` scheduler signature.
-            mqtt_client: Unused; part of the shared ``Device`` scheduler signature.
-            *sensors: Unused; optional positional values from the scheduler.
+            mqtt_client: MQTT client instance.
         """
 
-        logging.info(f"{self.log_identity} Sleeping for 30s before commencing...")
-        try:
-            task = asyncio.create_task(asyncio.sleep(30))
-            self.sleeper_task = task
-            await task
-        except asyncio.CancelledError:
-            logging.debug(f"{self.log_identity} sleep interrupted")
-            return
-        finally:
-            self.sleeper_task = None
-
         while self.online:
-            async with self._lock:
-                overdue: dict[str, MonitoredSensor] = {t: s for t, s in self._topics.items() if self._monitor_topic_updates and s.is_overdue}
-            if any(overdue):
-                for topic, sensor in overdue.items():
-                    sensor.notified = True
-                    logging.warning(f"{self.log_identity} '{sensor.name}' has not been seen for {sensor.overdue}s (scan_interval={sensor.scan_interval}s {topic=})")
-            await self._publish_health(mqtt_client, len(overdue))
+            await self._publish_health(mqtt_client)
             try:
                 task = asyncio.create_task(asyncio.sleep(self._health_publish_interval))
                 self.sleeper_task = task
@@ -83,26 +65,86 @@ class MonitorService(Device):
             finally:
                 self.sleeper_task = None
 
-    async def _publish_health(self, mqtt_client: mqtt.Client, overdue_count: int) -> None:
-        modbus_connected = all(client.connected for client in ModbusClientFactory._clients.values())
-        mqtt_connected = bool(mqtt_client and mqtt_client.is_connected())
-        status = "healthy" if overdue_count == 0 and mqtt_connected and modbus_connected else "degraded"
-        now = int(time.time())
+    def _check_modbus(self) -> bool:
+        """Checks that all Modbus Client instances are connected"""
+        clients = ModbusClientFactory._clients.values()
+        if not clients:
+            return False
+        now = time.monotonic()
+        modbus_healthy_connections = 0
+        for client in clients:
+            health = client.snapshot()
+            cid = health.client_id
+            if not client.connected:
+                logging.warning(f"{self.log_identity} Modbus connection {cid} disconnected ({health.close_count}x total)")
+            elif health.last_read_at and (now - health.last_read_at) > self._health_publish_interval:
+                logging.warning(f"{self.log_identity} Modbus connection {cid} connected but no reads for {self._health_publish_interval}s")
+            else:
+                logging.debug(f"{self.log_identity} Modbus connection {cid} healthy (connected {health.connect_count}x)")
+                modbus_healthy_connections += 1
+        return bool(modbus_healthy_connections == len(clients))
+
+    def _check_mqtt(self) -> bool:
+        """Checks that all MQTT client connections are healthy"""
+        mqtt_snapshot = mqtt_health_registry.snapshot()
+        if not mqtt_snapshot:
+            return False
+        now = time.monotonic()
+        mqtt_healthy_connections = 0
+        for cid, health in mqtt_snapshot.items():
+            if not health.connected:
+                logging.warning(f"{self.log_identity} MQTT Client ID {cid} disconnected ({health.disconnect_count}x total)")
+            elif health.last_message_at and (now - health.last_message_at) > self._health_publish_interval:
+                logging.warning(f"{self.log_identity} MQTT Client ID {cid} connected but no messages for {self._health_publish_interval}s")
+            else:
+                logging.debug(f"{self.log_identity} MQTT Client ID {cid} healthy (connected {health.connect_count}x)")
+                mqtt_healthy_connections += 1
+        return bool(mqtt_healthy_connections == len(mqtt_snapshot))
+
+    async def _check_topic_health(self) -> int:
+        """Checks for overdue topics (sensors that haven't been seen in their scan_interval)"""
+        if time.monotonic() < (self._started + self._health_publish_interval):
+            logging.debug(
+                f"{self.log_identity} Topic health check not due yet (only started {time.monotonic() - self._started:0.2f}s ago) - next check in {self._health_publish_interval - (time.monotonic() - self._started):0.2f}s"
+            )
+            return 0
+        async with self._lock:
+            overdue: dict[str, MonitoredSensor] = {t: s for t, s in self._topics.items() if self._monitor_topic_updates and s.is_overdue}
+        if any(overdue):
+            for topic, sensor in overdue.items():
+                sensor.notified = True
+                logging.warning(f"{self.log_identity} '{sensor.name}' has not been seen for {sensor.overdue}s (scan_interval={sensor.scan_interval}s {topic=})")
+        return len(overdue)
+
+    async def _publish_health(self, mqtt_client: mqtt.Client) -> bool:
+        modbus_connected = self._check_modbus()
+        mqtt_connected = self._check_mqtt()
+        overdue_count = await self._check_topic_health()
+        if overdue_count == 0 and mqtt_connected and modbus_connected:
+            status = "healthy"
+            logging.debug(f"{self.log_identity} Status is Healthy (topic_{overdue_count=} {mqtt_connected=} {modbus_connected=})")
+        else:
+            status = "degraded"
+            logging.warning(f"{self.log_identity} Status is DEGRADED (topic_{overdue_count=} {mqtt_connected=} {modbus_connected=})")
+
         payload = {
             "status": status,
             "mqtt_connected": mqtt_connected,
             "modbus_connected": modbus_connected,
             "overdue_topics": overdue_count,
             "monitored_topics": len(self._topics),
-            "timestamp": now,
+            "timestamp": int(time.time()),
         }
         try:
             self._health_file.write_text(json.dumps(payload), encoding="utf-8")
+            logging.debug(f"{self.log_identity} Published health payload to {self._health_file}")
             if mqtt_client:
                 mqtt_client.publish(self._health_state_topic, status, qos=1, retain=True)
                 mqtt_client.publish(self._health_attributes_topic, json.dumps(payload), qos=1, retain=True)
+                logging.debug(f"{self.log_identity} Published health payload to mqtt://{active_config.mqtt.broker}:{active_config.mqtt.port} {self._health_attributes_topic}")
         except Exception as ex:
-            logging.debug(f"{self.log_identity} unable to publish health payload: {ex}")
+            logging.warning(f"{self.log_identity} Failed to publish health payload: {ex}")
+        return bool(status == "healthy")
 
     async def on_ha_state_change(self, modbus_client: Any | None, mqtt_client: mqtt.Client, ha_state: str, source: str, mqtt_handler: MqttHandler) -> bool:
         """Handle Home Assistant state updates.
@@ -194,7 +236,7 @@ class MonitorService(Device):
         """Return the monitor coroutine(s) to schedule for this service.
 
         Args:
-            modbus_client: Modbus client instance.
+            modbus_client: Modbus client instance (unused).
             mqtt_client: MQTT client instance.
 
         Returns:
@@ -202,7 +244,7 @@ class MonitorService(Device):
             publishing is disabled for unchanged values.
         """
 
-        return [self._monitor(modbus_client, mqtt_client, [])]
+        return [self._monitor(mqtt_client)]
 
     def subscribe(self, mqtt_client: mqtt.Client, mqtt_handler: MqttHandler) -> None:
         """Subscribe to all publishable readable sensor state topics.

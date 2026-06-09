@@ -5,7 +5,7 @@
 ### Added
 
 - Added Inverter and Plant estimated self-consumed power and daily energy sensors (thanks to @swainstm https://whrl.pl/RgV4Rd)
-- Added simulated grid outage during startup to Modbus test server for testing EVAC not on backup circuit
+- Added health check for Docker to MonitorService and also published it to MQTT for other potential monitoring services
 - Added `SIGENERGY2MQTT_LOG_FMT` configuration setting and CLI argument to allow override of the log message format
 - Added `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_NETWORKS` configuration setting and CLI argument to allow scanning of specific CIDR networks during auto-discovery
 - Added `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_EXCLUDE` to exclude devices from auto-discovery

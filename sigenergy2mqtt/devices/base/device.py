@@ -117,6 +117,8 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
 
     def _build_log_identity(self) -> str:
         """Build a stable log identity for device and service classes."""
+        if self.plant_index < 0:
+            return f"{self.__class__.__name__}"
         device_address = getattr(self, "device_address", "n/a")
         return f"{self.__class__.__name__}[plant={self.plant_index},dev={device_address}]"
 
