@@ -104,9 +104,13 @@ class MonitorService(Device):
         now = time.monotonic()
         mqtt_healthy_connections = 0
         for cid, health in mqtt_snapshot.items():
-            max = 2 * self._health_publish_interval if cid.encode("utf-8") == mqtt_client._client_id else self._health_publish_interval
+            is_monitor = bool(cid.encode("utf-8") == mqtt_client._client_id)
+            max = 2 * self._health_publish_interval if is_monitor else self._health_publish_interval
             if not health.connected:
                 logging.warning(f"{self.log_identity} MQTT Client ID {cid} disconnected ({health.disconnect_count}x total)")
+            elif is_monitor and (self._started + self._health_publish_interval) > now:
+                logging.debug(f"{self.log_identity} MQTT Client ID {cid} not checked (nothing published yet)")
+                mqtt_healthy_connections += 1
             else:
                 ack = bool(health.last_publish_ack_at and (now - health.last_publish_ack_at) <= max)
                 msg = bool(health.last_message_at and (now - health.last_message_at) <= max)
