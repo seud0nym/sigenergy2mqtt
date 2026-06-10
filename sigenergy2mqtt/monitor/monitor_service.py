@@ -54,6 +54,17 @@ class MonitorService(Device):
             mqtt_client: MQTT client instance.
         """
 
+        logging.info(f"{self.log_identity} Sleeping for 5s before commencing...")
+        try:
+            task = asyncio.create_task(asyncio.sleep(5))
+            self.sleeper_task = task
+            await task
+        except asyncio.CancelledError:
+            logging.debug(f"{self.log_identity} sleep interrupted")
+            return
+        finally:
+            self.sleeper_task = None
+
         while self.online:
             await self._publish_health(mqtt_client)
             try:
@@ -130,9 +141,7 @@ class MonitorService(Device):
         overdue_count = await self._check_topic_health()
         if overdue_count == 0 and mqtt_connected and modbus_connected:
             status = "healthy"
-            logging.debug(f"{self.log_identity} Status is Healthy (topic_{overdue_count=} {mqtt_connected=} {modbus_connected=})")
-            if self._current_status == "degraded":
-                logging.info(f"{self.log_identity} Status has recovered from Degraded to Healthy")
+            logging.log(logging.INFO if self._current_status != status else logging.DEBUG, f"{self.log_identity} Status is HEALTHY (topic_{overdue_count=} {mqtt_connected=} {modbus_connected=})")
         else:
             status = "degraded"
             logging.warning(f"{self.log_identity} Status is DEGRADED (topic_{overdue_count=} {mqtt_connected=} {modbus_connected=})")
