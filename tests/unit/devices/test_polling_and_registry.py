@@ -254,7 +254,8 @@ def test_device_init_ignores_unknown_kwargs():
 def test_device_log_identity_format_excludes_name():
     """Device log_identity should include plant/dev and not include name."""
     dev = Device("TestDev", 0, "uid_logid", "mf", "model", Protocol.V1_8)
-    assert "plant=0,dev=n/a" in dev.log_identity
+    assert "plant=0" in dev.log_identity
+    assert "dev=n/a" not in dev.log_identity
     assert "name=" not in dev.log_identity
     DeviceRegistry._devices.clear()
 
