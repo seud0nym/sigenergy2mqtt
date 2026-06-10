@@ -26,7 +26,7 @@ class MonitorService(Device):
         devices: Devices whose readable/publishable sensors should be monitored.
     """
 
-    def __init__(self, devices: list[Device]):
+    def __init__(self, devices: list[Device]) -> "MonitorService":
         """Initialize the monitor service and internal topic registry.
 
         Args:
@@ -46,7 +46,7 @@ class MonitorService(Device):
         self._health_publish_interval = 30
         self._started = time.monotonic()
 
-    async def _monitor(self, mqtt_client: mqtt.Client):
+    async def _monitor(self, mqtt_client: mqtt.Client) -> None:
         """Check for overdue topics and log warning/recovery events.
 
         Args:
@@ -84,7 +84,7 @@ class MonitorService(Device):
                 modbus_healthy_connections += 1
         return bool(modbus_healthy_connections == len(clients))
 
-    def _check_mqtt(self) -> bool:
+    def _check_mqtt(self, mqtt_client: mqtt.Client) -> bool:
         """Checks that all MQTT client connections are healthy"""
         mqtt_snapshot = mqtt_health_registry.snapshot()
         if not mqtt_snapshot:
@@ -92,13 +92,20 @@ class MonitorService(Device):
         now = time.monotonic()
         mqtt_healthy_connections = 0
         for cid, health in mqtt_snapshot.items():
+            max = 2 * self._health_publish_interval if cid.encode("utf-8") == mqtt_client._client_id else self._health_publish_interval
             if not health.connected:
                 logging.warning(f"{self.log_identity} MQTT Client ID {cid} disconnected ({health.disconnect_count}x total)")
-            elif health.last_publish_ack_at and (now - health.last_publish_ack_at) > self._health_publish_interval:
-                logging.warning(f"{self.log_identity} MQTT Client ID {cid} connected but no publish acknowledgement received for {self._health_publish_interval}s")
             else:
-                logging.debug(f"{self.log_identity} MQTT Client ID {cid} healthy (connected {health.connect_count}x)")
-                mqtt_healthy_connections += 1
+                ack = bool(health.last_publish_ack_at and (now - health.last_publish_ack_at) <= max)
+                msg = bool(health.last_message_at and (now - health.last_message_at) <= max)
+                if not ack or not msg:
+                    if not ack:
+                        logging.warning(f"{self.log_identity} MQTT Client ID {cid} connected but no publish acknowledgement received for {max}s")
+                    if not msg:
+                        logging.warning(f"{self.log_identity} MQTT Client ID {cid} connected but no messages sent for {max}s")
+                else:
+                    logging.debug(f"{self.log_identity} MQTT Client ID {cid} healthy (connected {health.connect_count}x)")
+                    mqtt_healthy_connections += 1
         return bool(mqtt_healthy_connections == len(mqtt_snapshot))
 
     async def _check_topic_health(self) -> int:
@@ -118,7 +125,7 @@ class MonitorService(Device):
 
     async def _publish_health(self, mqtt_client: mqtt.Client) -> bool:
         modbus_connected = self._check_modbus()
-        mqtt_connected = self._check_mqtt()
+        mqtt_connected = self._check_mqtt(mqtt_client)
         overdue_count = await self._check_topic_health()
         if overdue_count == 0 and mqtt_connected and modbus_connected:
             status = "healthy"
