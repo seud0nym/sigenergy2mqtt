@@ -94,8 +94,8 @@ class MonitorService(Device):
         for cid, health in mqtt_snapshot.items():
             if not health.connected:
                 logging.warning(f"{self.log_identity} MQTT Client ID {cid} disconnected ({health.disconnect_count}x total)")
-            elif health.last_message_at and (now - health.last_message_at) > self._health_publish_interval:
-                logging.warning(f"{self.log_identity} MQTT Client ID {cid} connected but no messages for {self._health_publish_interval}s")
+            elif health.last_publish_ack_at and (now - health.last_publish_ack_at) > self._health_publish_interval:
+                logging.warning(f"{self.log_identity} MQTT Client ID {cid} connected but no publish acknowledgement received for {self._health_publish_interval}s")
             else:
                 logging.debug(f"{self.log_identity} MQTT Client ID {cid} healthy (connected {health.connect_count}x)")
                 mqtt_healthy_connections += 1
