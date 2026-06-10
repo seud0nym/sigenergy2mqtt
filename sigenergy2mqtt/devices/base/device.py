@@ -120,6 +120,8 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
         if self.plant_index < 0:
             return f"{self.__class__.__name__}"
         device_address = getattr(self, "device_address", "n/a")
+        if device_address == "n/a":
+            return f"{self.__class__.__name__}[plant={self.plant_index}]"
         return f"{self.__class__.__name__}[plant={self.plant_index},dev={device_address}]"
 
     def refresh_log_identity(self) -> None:
