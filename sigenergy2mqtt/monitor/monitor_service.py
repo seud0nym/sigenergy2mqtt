@@ -41,6 +41,7 @@ class MonitorService(Device):
         self._health_attributes_topic = "sigenergy2mqtt/health/attributes"
         self._health_file = Path("/tmp/sigenergy2mqtt-health.json")
         self._monitor_topic_updates = active_config.log_level == logging.DEBUG and active_config.repeated_state_publish_interval >= 0
+        self._current_status = "unknown"
         # Health publication should remain reasonably frequent and independent
         # of repeated-state payload cadence so Docker HEALTHCHECKs remain timely.
         self._health_publish_interval = 30
@@ -98,7 +99,7 @@ class MonitorService(Device):
             else:
                 ack = bool(health.last_publish_ack_at and (now - health.last_publish_ack_at) <= max)
                 msg = bool(health.last_message_at and (now - health.last_message_at) <= max)
-                if not ack or not msg:
+                if not ack and not msg:
                     if not ack:
                         logging.warning(f"{self.log_identity} MQTT Client ID {cid} connected but no publish acknowledgement received for {max}s")
                     if not msg:
@@ -123,13 +124,15 @@ class MonitorService(Device):
                 logging.warning(f"{self.log_identity} '{sensor.name}' has not been seen for {sensor.overdue}s (scan_interval={sensor.scan_interval}s {topic=})")
         return len(overdue)
 
-    async def _publish_health(self, mqtt_client: mqtt.Client) -> bool:
+    async def _publish_health(self, mqtt_client: mqtt.Client) -> None:
         modbus_connected = self._check_modbus()
         mqtt_connected = self._check_mqtt(mqtt_client)
         overdue_count = await self._check_topic_health()
         if overdue_count == 0 and mqtt_connected and modbus_connected:
             status = "healthy"
             logging.debug(f"{self.log_identity} Status is Healthy (topic_{overdue_count=} {mqtt_connected=} {modbus_connected=})")
+            if self._current_status == "degraded":
+                logging.info(f"{self.log_identity} Status has recovered from Degraded to Healthy")
         else:
             status = "degraded"
             logging.warning(f"{self.log_identity} Status is DEGRADED (topic_{overdue_count=} {mqtt_connected=} {modbus_connected=})")
@@ -151,7 +154,7 @@ class MonitorService(Device):
                 logging.debug(f"{self.log_identity} Published health payload to mqtt://{active_config.mqtt.broker}:{active_config.mqtt.port} {self._health_attributes_topic}")
         except Exception as ex:
             logging.warning(f"{self.log_identity} Failed to publish health payload: {ex}")
-        return bool(status == "healthy")
+        self._current_status = status
 
     async def on_ha_state_change(self, modbus_client: Any | None, mqtt_client: mqtt.Client, ha_state: str, source: str, mqtt_handler: MqttHandler) -> bool:
         """Handle Home Assistant state updates.
