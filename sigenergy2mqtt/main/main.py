@@ -20,6 +20,7 @@ from sigenergy2mqtt.influxdb import get_influxdb_services
 from sigenergy2mqtt.metrics.metrics_service import MetricsService
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.monitor import MonitorService
+from sigenergy2mqtt.mqtt import mqtt_health_registry
 from sigenergy2mqtt.persistence import Category, state_store
 from sigenergy2mqtt.pvoutput import get_pvoutput_services
 from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, ModbusSensorMixin, WriteOnlySensor
@@ -1149,6 +1150,7 @@ async def async_main() -> None:
 
         restart_controller.reset()
         thread_config_registry.clear()
+        mqtt_health_registry.clear()
 
         # Initialise StateStore with dedicated MQTT connection + sentinel-based warming
         if active_config.persistence.mqtt_redundancy or not active_config.clean:

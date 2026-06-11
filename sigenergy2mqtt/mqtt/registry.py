@@ -49,6 +49,11 @@ class MqttHealthRegistry:
         self._lock = threading.RLock()
         self._clients: Dict[str, MqttClientHealth] = {}
 
+    def clear(self) -> None:
+        """Clear the registry."""
+        with self._lock:
+            self._clients.clear()
+
     # ------------------------------------------------------------------
     # Registration (called once per client at startup)
     # ------------------------------------------------------------------
