@@ -85,12 +85,20 @@ class MqttHealthRegistry:
             entry = self._clients.get(client_id)
             if entry:
                 entry.last_message_at = time.monotonic()
+                # if last_message_at is later than last_connected_at, then the client must be connected
+                if not entry.connected and entry.last_message_at > entry.last_connected_at:
+                    entry.connected = True
+                    entry.connect_count += 1
 
     def record_publish_ack(self, client_id: str) -> None:
         with self._lock:
             entry = self._clients.get(client_id)
             if entry:
                 entry.last_publish_ack_at = time.monotonic()
+                # if last_publish_ack_at is later than last_connected_at, then the client must be connected
+                if not entry.connected and entry.last_publish_ack_at > entry.last_connected_at:
+                    entry.connected = True
+                    entry.connect_count += 1
 
     # ------------------------------------------------------------------
     # Read-only interface for external consumers
