@@ -1,8 +1,6 @@
 import pytest
 from typing import Any
 
-from pydantic import ValidationError
-
 from sigenergy2mqtt.config.merge import (
     _flatten_modbus,
     apply_modbus_env_override,
@@ -276,13 +274,6 @@ def test_merge_modbus_by_host_port_blank_host_multiple_entries_match_distinct_de
     assert hosts == {"192.168.1.100", "192.168.1.101"}
     assert any(entry.get("read_only") is True for entry in result)
     assert any(entry.get("read_write") is False for entry in result)
-
-
-def test_apply_modbus_env_override_bootstrap_requires_host() -> None:
-    base: list[ModbusConfig] = []
-
-    with pytest.raises(ValidationError, match="modbus entry must have a host"):
-        apply_modbus_env_override(base, {"port": 503})
 
 
 def test_propagate_to_all_devices_empty_list_returns_empty_list() -> None:

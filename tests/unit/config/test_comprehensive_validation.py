@@ -31,10 +31,6 @@ class TestConfigComprehensiveValidation:
         assert config.broker == "localhost"
         assert config.username == "user"
 
-    def test_device_validation_empty_host(self):
-        with pytest.raises(ValidationError, match="modbus entry must have a host"):
-            ModbusConfig(host="")
-
     def test_device_validation_passes(self):
         config = ModbusConfig(host="1.2.3.4")
         assert config.host == "1.2.3.4"

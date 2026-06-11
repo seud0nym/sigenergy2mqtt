@@ -408,16 +408,26 @@ class Config:
         """Reload configuration from the YAML source file and re-apply all overrides."""
         auto_discovery_cache = self._perform_auto_discovery(skip_auto_discovery)
         self._finalize_reload(auto_discovery_cache)
+        if not skip_auto_discovery:
+            self._validate_hosts_after_discovery()
 
     async def reload_async(self, skip_auto_discovery: bool = False) -> None:
         """Async version of :meth:`reload`."""
         auto_discovery_cache = await self._perform_auto_discovery_async(skip_auto_discovery)
         self._finalize_reload(auto_discovery_cache)
+        if not skip_auto_discovery:
+            self._validate_hosts_after_discovery()
 
     def _finalize_reload(self, auto_discovery_cache: Path | None) -> None:
         """Final load including the auto discovery results (if any), WITH post-init validation."""
         self._settings = Settings(yaml_file_arg=self._source, discovery_yaml_arg=auto_discovery_cache)  # type: ignore[reportCallIssue]
         i18n.load(self._settings.language)
+
+    def _validate_hosts_after_discovery(self) -> None:
+        """Ensure all Modbus devices have a host after auto-discovery finishes."""
+        for device in self._settings.modbus:
+            if not device.host:
+                raise ConfigurationError("modbus entry must have a host")
 
     def _perform_auto_discovery(self, skip_auto_discovery: bool) -> Path | None:
         """Synchronous auto-discovery logic."""
@@ -441,7 +451,7 @@ class Config:
                 if auto_discovered:
                     self._save_discovery_results_sync(auto_discovery_cache, auto_discovered)
 
-        return self._get_final_cache_path(auto_discovery, auto_discovery_cache)
+        return self._get_final_cache_path(auto_discovery, auto_discovery_cache, skip_auto_discovery)
 
     async def _perform_auto_discovery_async(self, skip_auto_discovery: bool) -> Path | None:
         """Asynchronous auto-discovery logic."""
@@ -465,7 +475,7 @@ class Config:
                 if auto_discovered:
                     await self._save_discovery_results_async(auto_discovery_cache, auto_discovered)
 
-        return self._get_final_cache_path(auto_discovery, auto_discovery_cache)
+        return self._get_final_cache_path(auto_discovery, auto_discovery_cache, skip_auto_discovery)
 
     def _prepare_auto_discovery(self, skip_auto_discovery: bool):
         auto_discovery = os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY)
@@ -474,20 +484,20 @@ class Config:
 
         if auto_settings.modbus_auto_discovery:
             auto_discovery = auto_settings.modbus_auto_discovery
-        if not auto_discovery and not self._has_modbus_source() and not skip_auto_discovery:
-            auto_discovery = "once"
 
         return auto_discovery, auto_discovery_cache, auto_settings
 
     def _should_run_discovery(self, auto_discovery, auto_discovery_cache) -> bool:
         return auto_discovery == "force" or (auto_discovery == "once" and not auto_discovery_cache.is_file())
 
-    def _get_final_cache_path(self, auto_discovery, auto_discovery_cache) -> Path | None:
+    def _get_final_cache_path(self, auto_discovery, auto_discovery_cache, skip_auto_discovery: bool = False) -> Path | None:
+        if skip_auto_discovery:
+            return None
         if auto_discovery not in ("once", "force"):
             logging.debug("Auto-discovery disabled")
             return None
         if auto_discovery == "once" and auto_discovery_cache.is_file():
-            logging.info("Auto-discovery already completed, using cached results.")
+            logging.info(f"Auto-discovery already completed, using cached results from {auto_discovery_cache}")
             return auto_discovery_cache
         if not auto_discovery_cache.is_file():
             return None
@@ -866,7 +876,7 @@ def _create_persistent_state_path() -> Path:
                 logging.info(f"Persistent state folder '{path}' created")
                 path.mkdir()
             else:
-                logging.debug(f"Persistent state folder '{path}' already exists")
+                logging.debug(f"Persistent state folder '{path}' found")
                 _clean_stale_files(path)
             return path.resolve()
     raise ConfigurationError("Unable to create persistent state folder!")

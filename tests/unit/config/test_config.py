@@ -5,7 +5,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest  # noqa: F401
 from ruamel.yaml import YAML
-from pydantic import ValidationError
 
 from sigenergy2mqtt.config import Config, _promote_cli_to_env, active_config, const
 from sigenergy2mqtt.config.config import _swap_active_config
@@ -243,17 +242,17 @@ class TestConfigReload:
 
     @patch("sigenergy2mqtt.config.config.Config._run_auto_discovery", return_value=[{"host": "2.3.4.5", "port": 502}])
     def test_reload_triggers_auto_discovery_when_no_hosts_configured(self, mock_run_auto_discovery):
-        """Test reload triggers auto-discovery if neither env nor YAML have modbus configured."""
+        """Test reload triggers auto-discovery if neither env nor YAML have modbus configured, but auto-discovery is enabled."""
         with _swap_active_config(Config()) as cfg:
-            with patch.dict("os.environ", {}, clear=True):
+            with patch.dict("os.environ", {const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY: "once"}, clear=True):
                 cfg.reload()
             mock_run_auto_discovery.assert_called_once()
 
     @patch("sigenergy2mqtt.config.config.Config._run_auto_discovery", return_value=[{"host": "2.3.4.5", "port": 502}])
     def test_reload_triggers_auto_discovery_yaml_no_host(self, mock_run_auto_discovery, tmp_path):
-        """Test reload triggers auto-discovery if YAML possesses modbus array without a host."""
+        """Test reload triggers auto-discovery if YAML possesses modbus array without a host and auto-discovery is enabled."""
         config_file = tmp_path / "config.yaml"
-        config_file.write_text("modbus:\n  - port: 502\n")
+        config_file.write_text("modbus-auto-discovery: once\nmodbus:\n  - port: 502\n")
         with _swap_active_config(Config()) as cfg:
             cfg._source = str(config_file)
             cfg.persistent_state_path = tmp_path
@@ -261,8 +260,8 @@ class TestConfigReload:
             if cache_file.exists():
                 cache_file.unlink()
             with patch.dict("os.environ", {}, clear=True):
-                with pytest.raises(ValidationError):
-                    cfg.reload()
+                cfg.reload()
+                assert cfg.modbus[0].host == "2.3.4.5"
             mock_run_auto_discovery.assert_called_once()
 
     @patch("sigenergy2mqtt.config.config.Config._run_auto_discovery", return_value=[])

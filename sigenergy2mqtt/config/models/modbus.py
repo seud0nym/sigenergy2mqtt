@@ -106,14 +106,8 @@ class ModbusConfig(BaseModel):
         return data
 
     @model_validator(mode="after")
-    def check_host_set(self) -> "ModbusConfig":
-        if not self.host:
-            raise ValueError("modbus entry must have a host")
-        return self
-
-    @model_validator(mode="after")
     def default_inverters(self) -> "ModbusConfig":
         """Default to inverter device ID 1 when nothing is specified."""
-        if not self.inverters and not self.ac_chargers and not self.dc_chargers and not self.pid and not self.pss:
+        if self.host and not self.inverters and not self.ac_chargers and not self.dc_chargers and not self.pid and not self.pss:
             self.inverters = [1]
         return self

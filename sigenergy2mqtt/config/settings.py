@@ -268,6 +268,8 @@ class Settings(BaseSettings):
 
         # Log combined sources
         for device in self.modbus:
+            if not device.host:
+                continue
             hp = f"{device.host}:{device.port}"
             is_discovery = hp in discovery_hosts
             is_file_env = hp in file_env_hosts or (is_discovery and device.port in blank_ports)

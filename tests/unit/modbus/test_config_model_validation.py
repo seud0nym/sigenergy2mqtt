@@ -2,16 +2,7 @@
 
 import logging
 
-import pytest
-from pydantic import ValidationError
-
 from sigenergy2mqtt.config.models import ModbusConfig
-
-
-def test_modbus_config_empty_host_raises():
-    """ModbusConfig with empty host must raise validation error."""
-    with pytest.raises(ValidationError, match="modbus entry must have a host"):
-        ModbusConfig(host="")
 
 
 def test_modbus_config_all_fields():
