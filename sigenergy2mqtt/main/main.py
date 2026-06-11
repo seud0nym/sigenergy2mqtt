@@ -501,9 +501,10 @@ def setup_services(configs: list[ThreadConfig], protocol_version: Protocol | Non
     - Instantiates integration services that may later make outbound API/network
       calls (PVOutput/InfluxDB/Metrics) once started.
     """
-    mon_thread_cfg = ThreadConfig.create(name="Monitor", host=None, port=None)
-    mon_thread_cfg.add_device(MonitorService([d for c in configs for d in c.devices]))
-    configs.insert(0, mon_thread_cfg)
+    if not active_config.clean:
+        mon_thread_cfg = ThreadConfig.create(name="Monitor", host=None, port=None)
+        mon_thread_cfg.add_device(MonitorService([d for c in configs for d in c.devices]))
+        configs.insert(0, mon_thread_cfg)
 
     svc_thread_cfg = ThreadConfig.create(name="Services", host=None, port=None)
 

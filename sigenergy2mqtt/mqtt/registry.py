@@ -92,7 +92,7 @@ class MqttHealthRegistry:
             if entry:
                 entry.last_message_at = time.monotonic()
                 # if last_message_at is later than last_connected_at, then the client must be connected
-                if not entry.connected and entry.last_message_at > entry.last_connected_at:
+                if not entry.connected and entry.last_message_at and entry.last_connected_at and entry.last_message_at > entry.last_connected_at:
                     logging.info(f"MQTT client {client_id} currently marked as disconnected but message received so assume it IS connected")
                     entry.connected = True
                     entry.connect_count += 1
@@ -103,7 +103,7 @@ class MqttHealthRegistry:
             if entry:
                 entry.last_publish_ack_at = time.monotonic()
                 # if last_publish_ack_at is later than last_connected_at, then the client must be connected
-                if not entry.connected and entry.last_publish_ack_at > entry.last_connected_at:
+                if not entry.connected and entry.last_publish_ack_at and entry.last_connected_at and entry.last_publish_ack_at > entry.last_connected_at:
                     logging.info(f"MQTT client {client_id} currently marked as disconnected but publish acknowledgment received so assume it IS connected")
                     entry.connected = True
                     entry.connect_count += 1
