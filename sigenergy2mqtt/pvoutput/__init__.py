@@ -121,6 +121,9 @@ def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusSer
     logger = logging.getLogger("pvoutput")
     logger.setLevel(active_config.pvoutput.log_level)
 
+    if active_config.pvoutput.testing:
+        logger.warning("PVOutput system-id is set to 'testing'. PVOutput data will not be sent to the actual PVOutput service.")
+
     plant_pv_power: PlantPVPower | None = None
     total_pv_power: TotalPVPower | None = None
 

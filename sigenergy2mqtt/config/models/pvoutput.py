@@ -185,7 +185,6 @@ class PvOutputConfig(BaseModel):
     def set_testing_flag(self) -> "PvOutputConfig":
         if self.system_id == "testing":
             self.testing = True
-            logging.warning("PVOutput system-id is set to 'testing'. PVOutput data will not be sent to the actual PVOutput service.")
         return self
 
     @model_validator(mode="after")
