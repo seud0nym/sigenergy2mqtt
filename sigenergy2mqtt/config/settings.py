@@ -114,7 +114,7 @@ class Settings(BaseSettings):
     discovery_yaml_arg: Optional[str | Path] = Field(None, exclude=True)
 
     # ── Top-level scalars ────────────────────────────────────────────────────
-    log_level: int = Field(logging.WARNING, alias="log-level")
+    log_level: int = Field(logging.INFO, alias="log-level")
     _validate_log_level = field_validator("log_level", mode="before")(validate_log_level)
     log_fmt: Optional[str] = Field(None, alias="log-fmt")
     language: str = Field("en", alias="language")

@@ -94,7 +94,7 @@ class TestConfigDefaults:
 
     def test_default_log_level(self):
         """Test default log level."""
-        assert active_config.log_level == logging.WARNING
+        assert active_config.log_level == logging.INFO
 
     def test_default_log_fmt(self):
         """Test default log format."""
@@ -451,9 +451,10 @@ class TestConfigCoverageAugmentation:
             mock_thread_class.return_value = mock_thread
 
             coros = []
+
             async def mock_scan_side_effect(*args, **kwargs):
                 return []
-            
+
             def mock_scan_wrapper(*args, **kwargs):
                 c = mock_scan_side_effect(*args, **kwargs)
                 coros.append(c)
@@ -464,7 +465,7 @@ class TestConfigCoverageAugmentation:
                 # Set a very short timeout for the test
                 result = cfg._run_auto_discovery(502, 0.5, 0.25, 3, timeout=0.01)
                 assert result == []
-                
+
                 # Close all coroutines to avoid RuntimeWarning since thread never runs them
                 for c in coros:
                     c.close()
@@ -476,11 +477,12 @@ class TestConfigCoverageAugmentation:
 
         # Test the exception branch inside the worker thread
         with patch("threading.Thread") as mock_thread_class:
+
             def mock_thread_start(*args, **kwargs):
                 # We extract the target function (worker) and run it,
                 # but we mock asyncio.run to throw an exception
                 pass
-                
+
             mock_thread = MagicMock()
             mock_thread.start.side_effect = mock_thread_start
             mock_thread.is_alive.return_value = False
@@ -488,28 +490,30 @@ class TestConfigCoverageAugmentation:
 
             with patch("sigenergy2mqtt.config.config.asyncio.run", side_effect=Exception("Generic")):
                 coros = []
+
                 async def mock_scan_side_effect(*args, **kwargs):
                     return []
+
                 def mock_scan_wrapper(*args, **kwargs):
                     c = mock_scan_side_effect(*args, **kwargs)
                     coros.append(c)
                     return c
-                    
+
                 with patch("sigenergy2mqtt.config.config.auto_discovery_scan", new_callable=MagicMock, side_effect=mock_scan_wrapper):
                     cfg = Config()
                     result = cfg._run_auto_discovery(502, 0.5, 0.25, 3)
                     assert result == []
-                    
+
                     # Manually run the worker function to trigger the exception block
                     # The worker function is passed to Thread as the 'target' kwarg
-                    worker_func = mock_thread_class.call_args.kwargs['target']
+                    worker_func = mock_thread_class.call_args.kwargs["target"]
                     worker_func()
-                    
+
                     # We have to re-evaluate the result because the worker sets nonlocal exception
                     # but wait, the exception is already checked in _run_auto_discovery.
-                    # Since we are mocking Thread, we should just let the real Thread run, 
+                    # Since we are mocking Thread, we should just let the real Thread run,
                     # but mock asyncio.run to throw! That's much simpler and tests the actual flow.
-                    
+
                     # Close the coroutines
                     for c in coros:
                         c.close()
@@ -670,6 +674,7 @@ class TestConfigYamlString:
 # CLI overrides and reload edge-cases (merged from low-volume modules)
 # =============================================================================
 
+
 class TestConfigHostResolution:
     @patch("socket.getaddrinfo")
     def test_resolve_host_to_cidr_valid_ip(self, mock_getaddrinfo):
@@ -680,11 +685,12 @@ class TestConfigHostResolution:
     @patch("socket.getaddrinfo")
     def test_resolve_host_to_cidr_valid_hostname(self, mock_getaddrinfo):
         import socket
+
         cfg = Config()
         mock_getaddrinfo.return_value = [
             (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("192.168.1.101", 0)),
-            (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("192.168.1.101", 0)), # Duplicate
-            (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("192.168.1.102", 0))
+            (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("192.168.1.101", 0)),  # Duplicate
+            (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("192.168.1.102", 0)),
         ]
         result = cfg._resolve_host_to_cidr("my-inverter.local")
         assert result == ["192.168.1.101/32", "192.168.1.102/32"]
@@ -693,6 +699,7 @@ class TestConfigHostResolution:
     @patch("socket.getaddrinfo")
     def test_resolve_host_to_cidr_hostname_not_found(self, mock_getaddrinfo):
         import socket
+
         cfg = Config()
         mock_getaddrinfo.side_effect = socket.gaierror("Name or service not known")
         assert cfg._resolve_host_to_cidr("unknown.local") == []
