@@ -428,61 +428,67 @@ async def scan(
         the scan. The connection overhead is minimal compared to the time
         saved by failing fast on non-existent device IDs.
     """
-    logging.getLogger("pymodbus").setLevel(logging.CRITICAL)
-    started = time.perf_counter()
-
-    serial_numbers.clear()
-
-    networks = _local_networks(include_networks)
-    if not networks:
-        logging.warning("No networks found to be scanned for auto-discovery! Scanning localhost only.")
-        networks["127.0.0.1"] = ipaddress.IPv4Network("127.0.0.1/255.255.255.255", strict=False)
-
-    candidate_ips: list[str] = [str(host) for subnet in networks.values() for host in subnet.hosts()]
-
-    logging.info(f"Scanning for active devices across {len(candidate_ips)} candidate IPs…")
-    ping_results = await ping_scan(candidate_ips, concurrent=ping_concurrency, timeout=ping_timeout, port=port)
-
-    # Sort by ascending latency.
-    active_ips: list[str] = sorted((ip for ip in ping_results), key=lambda ip: ping_results[ip])
-
-    logging.info(f"Found {len(active_ips)} active Modbus device(s), starting detailed scan…")
-
-    results: list[dict] = []
-    sem = asyncio.Semaphore(host_concurrency)
-
-    async def scan_with_sem(ip: str) -> None:
-        _check_interrupted()
-        async with sem:
-            await scan_host(ip, port, results, timeout=modbus_timeout, retries=modbus_retries, max_reconnect_attempts=max_reconnect_attempts, exclude_devices=exclude_devices or [])
+    pymodbus_logger = logging.getLogger("pymodbus.logging")
+    pymodbus_original_level = pymodbus_logger.level
+    pymodbus_logger.setLevel(logging.CRITICAL)
 
     try:
-        await asyncio.gather(
-            *[scan_with_sem(ip) for ip in active_ips],
-            return_exceptions=False,
-        )
-    except DiscoveryInterruptedError:
-        raise KeyboardInterrupt("Auto-discovery interrupted by signal")
-    except Exception as exc:
-        logging.debug(f"Scan failed: {exc}")
+        started = time.perf_counter()
 
-    elapsed = time.perf_counter() - started
+        serial_numbers.clear()
 
-    # Summary of findings
-    logging.info(f"Scan completed in {elapsed:.2f}s")
-    if results:
-        logging.info(
-            f"Found {len(results)} Sigenergy plant(s) with "
-            f"{sum(len(r.get('inverters', [])) for r in results)} inverter(s), "
-            f"{sum(len(r.get('dc-chargers', [])) for r in results)} DC charger(s), "
-            f"{sum(len(r.get('ac-chargers', [])) for r in results)} AC charger(s), "
-            f"{sum(len(r.get('pid', [])) for r in results)} PID(s), "
-            f"{sum(len(r.get('pss', [])) for r in results)} PSS(s)"
-        )
-    else:
-        logging.info("No Sigenergy plants found during auto-discovery.")
+        networks = _local_networks(include_networks)
+        if not networks:
+            logging.warning("No networks found to be scanned for auto-discovery! Scanning localhost only.")
+            networks["127.0.0.1"] = ipaddress.IPv4Network("127.0.0.1/255.255.255.255", strict=False)
 
-    return results
+        candidate_ips: list[str] = [str(host) for subnet in networks.values() for host in subnet.hosts()]
+
+        logging.info(f"Scanning for active devices across {len(candidate_ips)} candidate IPs…")
+        ping_results = await ping_scan(candidate_ips, concurrent=ping_concurrency, timeout=ping_timeout, port=port)
+
+        # Sort by ascending latency.
+        active_ips: list[str] = sorted((ip for ip in ping_results), key=lambda ip: ping_results[ip])
+
+        logging.info(f"Found {len(active_ips)} active Modbus device(s), starting detailed scan…")
+
+        results: list[dict] = []
+        sem = asyncio.Semaphore(host_concurrency)
+
+        async def scan_with_sem(ip: str) -> None:
+            _check_interrupted()
+            async with sem:
+                await scan_host(ip, port, results, timeout=modbus_timeout, retries=modbus_retries, max_reconnect_attempts=max_reconnect_attempts, exclude_devices=exclude_devices or [])
+
+        try:
+            await asyncio.gather(
+                *[scan_with_sem(ip) for ip in active_ips],
+                return_exceptions=False,
+            )
+        except DiscoveryInterruptedError:
+            raise KeyboardInterrupt("Auto-discovery interrupted by signal")
+        except Exception as exc:
+            logging.debug(f"Scan failed: {exc}")
+
+        elapsed = time.perf_counter() - started
+
+        # Summary of findings
+        logging.info(f"Scan completed in {elapsed:.2f}s")
+        if results:
+            logging.info(
+                f"Found {len(results)} Sigenergy plant(s) with "
+                f"{sum(len(r.get('inverters', [])) for r in results)} inverter(s), "
+                f"{sum(len(r.get('dc-chargers', [])) for r in results)} DC charger(s), "
+                f"{sum(len(r.get('ac-chargers', [])) for r in results)} AC charger(s), "
+                f"{sum(len(r.get('pid', [])) for r in results)} PID(s), "
+                f"{sum(len(r.get('pss', [])) for r in results)} PSS(s)"
+            )
+        else:
+            logging.info("No Sigenergy plants found during auto-discovery.")
+
+        return results
+    finally:
+        pymodbus_logger.setLevel(pymodbus_original_level)
 
 
 # ---------------------------------------------------------------------------
