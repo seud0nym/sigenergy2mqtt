@@ -100,7 +100,7 @@ async def main():
 
 
 if __name__ == "__main__":
-    logging.getLogger("pymodbus").setLevel(logging.CRITICAL)
+    logging.getLogger("pymodbus.logging").setLevel(logging.CRITICAL)
     loop = asyncio.new_event_loop()
     loop.run_until_complete(main())
     loop.close()

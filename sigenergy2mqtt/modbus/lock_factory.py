@@ -6,8 +6,9 @@ from .lock import ModbusLock
 
 class ModbusLockFactory:
     """Singleton-style cache for per-client :class:`ModbusLock` instances."""
+
     _locks: dict[ModbusClient, ModbusLock] = {}
-    _logger = logging.getLogger("pymodbus")
+    _logger = logging.getLogger("pymodbus.logging")
 
     @classmethod
     def clear(cls):

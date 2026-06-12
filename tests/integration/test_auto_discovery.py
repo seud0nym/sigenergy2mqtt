@@ -44,7 +44,7 @@ async def mock_modbus_server():
     logging.basicConfig(level=logging.DEBUG)
     logging.getLogger("tests.utils.modbus_test_server").setLevel(logging.DEBUG)
     logging.getLogger("sigenergy2mqtt.config.auto_discovery").setLevel(logging.DEBUG)
-    logging.getLogger("pymodbus").setLevel(logging.INFO)  # Keep pymodbus less chatty unless needed
+    logging.getLogger("pymodbus.logging").setLevel(logging.INFO)  # Keep pymodbus less chatty unless needed
 
     mqtt_client = MockMqttClient()
     server_task = asyncio.create_task(run_async_server(mqtt_client, modbus_client=None, use_simplified_topics=False, host="127.0.0.1", port=port, log_level=logging.DEBUG))

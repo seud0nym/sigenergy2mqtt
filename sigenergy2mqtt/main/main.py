@@ -70,7 +70,7 @@ def configure_logging() -> None:
 
     _configure_logger("paho.mqtt", active_config.mqtt.log_level)
     _configure_logger("pvoutput", active_config.pvoutput.log_level)
-    _configure_logger("pymodbus", active_config.get_modbus_log_level(), propagate=False)
+    _configure_logger("pymodbus.logging", active_config.get_modbus_log_level(), propagate=False)
     _configure_logger("sigenergy2mqtt.mqtt.client", active_config.mqtt.log_level)
 
 

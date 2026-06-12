@@ -1021,7 +1021,7 @@ async def run_async_server(
 
     _logger.info(f"Starting ASYNC Modbus TCP Testing Server (build date: {BUILD_DATE})...")
     if log_level <= logging.INFO:
-        logging.getLogger("pymodbus").setLevel(logging.INFO)
+        logging.getLogger("pymodbus.logging").setLevel(logging.INFO)
     try:
         # ModbusTcpServer is instantiated (not started) first so that we can hand
         # a reference to each CustomDataBlock before serve_forever() is called.
