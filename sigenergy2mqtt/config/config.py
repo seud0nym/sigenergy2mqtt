@@ -499,7 +499,7 @@ class Config:
             logging.debug("Auto-discovery disabled")
             return None
         if auto_discovery == "once" and auto_discovery_cache.is_file():
-            logging.info(f"Auto-discovery already completed, using cached results from {auto_discovery_cache}")
+            logging.info(f"Auto-discovery cached results found in {auto_discovery_cache}")
             return auto_discovery_cache
         if not auto_discovery_cache.is_file():
             return None
