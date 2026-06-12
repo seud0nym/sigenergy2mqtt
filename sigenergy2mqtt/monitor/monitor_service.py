@@ -26,7 +26,7 @@ class MonitorService(Device):
         devices: Devices whose readable/publishable sensors should be monitored.
     """
 
-    def __init__(self, devices: list[Device]) -> "MonitorService":
+    def __init__(self, devices: list[Device]):
         """Initialize the monitor service and internal topic registry.
 
         Args:
