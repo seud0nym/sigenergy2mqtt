@@ -14,6 +14,7 @@ from .config import Config, ConfigurationError, _swap_active_config, active_conf
 from .settings import Settings
 
 __all__ = [
+    "active_config",
     "Config",
     "ConfigurationError",
     "configure_root_logging",
