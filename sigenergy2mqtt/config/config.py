@@ -427,21 +427,20 @@ class Config:
 
     def _validate_hosts_after_discovery(self) -> None:
         """Ensure all Modbus devices have a host after auto-discovery finishes."""
-        for device in self._settings.modbus:
+        for device in self._settings.modbus if self._settings is not None else []:
             if not device.host:
                 raise ConfigurationError("modbus entry must have a host")
 
     def _perform_auto_discovery(self, skip_auto_discovery: bool) -> Path | None:
         """Synchronous auto-discovery logic."""
-        auto_discovery, auto_discovery_cache, auto_settings = self._prepare_auto_discovery(skip_auto_discovery)
+        auto_discovery, auto_discovery_cache, auto_settings, auto_discovery_should_run = self._prepare_auto_discovery(skip_auto_discovery)
 
-        if not skip_auto_discovery and self._should_run_discovery(auto_discovery, auto_discovery_cache):
+        if not skip_auto_discovery and auto_discovery_should_run:
             if auto_discovery != "force":
                 self._restore_discovery_from_mqtt_sync(auto_discovery_cache)
 
             if auto_discovery == "force" or not auto_discovery_cache.is_file():
                 include_networks = self._build_include_networks(auto_settings.modbus_auto_discovery_networks)
-                logging.info(f"Auto-discovery required ({auto_discovery}), scanning for Sigenergy devices...")
                 auto_discovered = self._run_auto_discovery(
                     auto_settings.modbus_port,
                     auto_settings.modbus_auto_discovery_ping_timeout,
@@ -453,19 +452,18 @@ class Config:
                 if auto_discovered:
                     self._save_discovery_results_sync(auto_discovery_cache, auto_discovered)
 
-        return self._get_final_cache_path(auto_discovery, auto_discovery_cache, skip_auto_discovery)
+        return self._get_final_cache_path(auto_discovery, auto_discovery_cache, skip_auto_discovery, auto_discovery_should_run)
 
     async def _perform_auto_discovery_async(self, skip_auto_discovery: bool) -> Path | None:
         """Asynchronous auto-discovery logic."""
-        auto_discovery, auto_discovery_cache, auto_settings = self._prepare_auto_discovery(skip_auto_discovery)
+        auto_discovery, auto_discovery_cache, auto_settings, auto_discovery_should_run = self._prepare_auto_discovery(skip_auto_discovery)
 
-        if not skip_auto_discovery and self._should_run_discovery(auto_discovery, auto_discovery_cache):
-            if auto_discovery != "force" and active_config.persistence.mqtt_redundancy:
+        if not skip_auto_discovery and auto_discovery_should_run:
+            if auto_discovery != "force":
                 await self._restore_discovery_from_mqtt_async(auto_discovery_cache)
 
             if auto_discovery == "force" or not auto_discovery_cache.is_file():
                 include_networks = self._build_include_networks(auto_settings.modbus_auto_discovery_networks)
-                logging.info(f"Auto-discovery required ({auto_discovery}), scanning for Sigenergy devices (async)...")
                 auto_discovered = await self._run_auto_discovery_async(
                     auto_settings.modbus_port,
                     auto_settings.modbus_auto_discovery_ping_timeout,
@@ -477,9 +475,9 @@ class Config:
                 if auto_discovered:
                     await self._save_discovery_results_async(auto_discovery_cache, auto_discovered)
 
-        return self._get_final_cache_path(auto_discovery, auto_discovery_cache, skip_auto_discovery)
+        return self._get_final_cache_path(auto_discovery, auto_discovery_cache, skip_auto_discovery, auto_discovery_should_run)
 
-    def _prepare_auto_discovery(self, skip_auto_discovery: bool):
+    def _prepare_auto_discovery(self, skip_auto_discovery: bool) -> tuple[str | None, Path, AutoDiscoverySettings, bool]:
         auto_discovery = os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY)
         auto_discovery_cache = Path(self.persistent_state_path, "auto-discovery.yaml")
         auto_settings = self._load_auto_discovery_settings()
@@ -487,18 +485,28 @@ class Config:
         if auto_settings.modbus_auto_discovery:
             auto_discovery = auto_settings.modbus_auto_discovery
 
-        return auto_discovery, auto_discovery_cache, auto_settings
+        auto_discovery_should_run = not skip_auto_discovery and self._should_run_discovery(auto_discovery, auto_discovery_cache)
+
+        return auto_discovery, auto_discovery_cache, auto_settings, auto_discovery_should_run
 
     def _should_run_discovery(self, auto_discovery, auto_discovery_cache) -> bool:
-        return auto_discovery == "force" or (auto_discovery == "once" and not auto_discovery_cache.is_file())
+        if auto_discovery == "force":
+            logging.info("Auto-discovery required (FORCED)")
+            return True
+        if auto_discovery == "once" and not auto_discovery_cache.is_file():
+            logging.info(f"Auto-discovery required (ONCE: {auto_discovery_cache} not found)")
+            return True
+        if auto_discovery not in ("force", "once"):
+            modbus = self._settings.modbus if self._settings is not None else []
+            if not modbus or any(bool(d.host == "" or d.host is None) for d in modbus):
+                logging.info("Auto-discovery required (No Modus host configured)")
+                return True
+        return False
 
-    def _get_final_cache_path(self, auto_discovery, auto_discovery_cache, skip_auto_discovery: bool = False) -> Path | None:
-        if skip_auto_discovery:
+    def _get_final_cache_path(self, auto_discovery: str | None, auto_discovery_cache: Path, skip_auto_discovery: bool, auto_discovery_should_run: bool) -> Path | None:
+        if skip_auto_discovery or not auto_discovery_should_run:
             return None
-        if auto_discovery not in ("once", "force"):
-            logging.debug("Auto-discovery disabled")
-            return None
-        if auto_discovery == "once" and auto_discovery_cache.is_file():
+        if auto_discovery != "force" and auto_discovery_cache.is_file():
             logging.info(f"Auto-discovery cached results found in {auto_discovery_cache}")
             return auto_discovery_cache
         if not auto_discovery_cache.is_file():
@@ -506,28 +514,30 @@ class Config:
         return auto_discovery_cache
 
     def _restore_discovery_from_mqtt_sync(self, auto_discovery_cache: Path):
-        try:
-            from sigenergy2mqtt.persistence import state_store
+        if active_config.persistence.mqtt_redundancy:
+            try:
+                from sigenergy2mqtt.persistence import state_store
 
-            if state_store.is_initialised:
-                cached = state_store.load_sync(Category.CONFIG, "auto-discovery")
-                if cached:
-                    auto_discovery_cache.write_text(cached)
-                    logging.info("Auto-discovery cache restored from MQTT")
-        except Exception:
-            logging.debug("StateStore not available for auto-discovery restore")
+                if state_store.is_initialised:
+                    cached = state_store.load_sync(Category.CONFIG, "auto-discovery")
+                    if cached:
+                        auto_discovery_cache.write_text(cached)
+                        logging.info("Auto-discovery cache restored from MQTT")
+            except Exception:
+                logging.debug("StateStore not available for auto-discovery restore")
 
     async def _restore_discovery_from_mqtt_async(self, auto_discovery_cache: Path):
-        try:
-            from sigenergy2mqtt.persistence import state_store
+        if active_config.persistence.mqtt_redundancy:
+            try:
+                from sigenergy2mqtt.persistence import state_store
 
-            if state_store.is_initialised:
-                cached = await state_store.load(Category.CONFIG, "auto-discovery")
-                if cached:
-                    auto_discovery_cache.write_text(cached)
-                    logging.info("Auto-discovery cache restored from MQTT")
-        except Exception:
-            logging.debug("StateStore not available for auto-discovery restore")
+                if state_store.is_initialised:
+                    cached = await state_store.load(Category.CONFIG, "auto-discovery")
+                    if cached:
+                        auto_discovery_cache.write_text(cached)
+                        logging.info("Auto-discovery cache restored from MQTT")
+            except Exception:
+                logging.debug("StateStore not available for auto-discovery restore")
 
     def _save_discovery_results_sync(self, auto_discovery_cache: Path, auto_discovered: list):
         yaml_content = self._serialize_discovery(auto_discovered)
