@@ -77,7 +77,10 @@ def _promote_cli_to_env(args) -> None:
         if arg in skip:
             continue
 
-        if not _is_arg_explicitly_set(value):  # not explicitly set, skipping
+        if arg == const.SIGENERGY2MQTT_PERSISTENCE_MQTT_REDUNDANCY:  # uses store_false, where as all other boolean flags use store_true
+            if value is True:
+                continue
+        elif not _is_arg_explicitly_set(value):  # not explicitly set, skipping
             continue
 
         if os.getenv(arg):  # superseded by environment variable, skipping

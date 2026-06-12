@@ -768,7 +768,7 @@ def get_parser() -> argparse.ArgumentParser:
     # region Persistence Configuration
     parser.add_argument(
         "--no-persistence-mqtt-redundancy",
-        action="store_true",
+        action="store_false",
         dest=const.SIGENERGY2MQTT_PERSISTENCE_MQTT_REDUNDANCY,
         help="Disable MQTT retained message redundancy for state persistence. When set, state is only persisted to disk.",
     )
