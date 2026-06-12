@@ -287,7 +287,7 @@ async def _probe_device_id(modbus: AsyncModbusTcpClient, device_id: int, device:
 
 async def scan_host(ip: str, port: int, results: list, timeout: float = 0.25, retries: int = 0, max_reconnect_attempts: int = 3, exclude_devices: list[str] = []) -> None:
     """Connect to a single host, enumerate its Sigenergy devices, and append to results."""
-    modbus = AsyncModbusTcpClient(host=ip, port=port, framer=FramerType.SOCKET, timeout=timeout, retries=retries)
+    modbus = AsyncModbusTcpClient(host=ip, port=port, framer=FramerType.SOCKET, reconnect_delay=0, timeout=timeout, retries=retries)
     try:
         await modbus.connect()
         if not modbus.connected:
