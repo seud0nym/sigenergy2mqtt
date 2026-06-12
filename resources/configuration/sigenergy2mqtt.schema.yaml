@@ -10,7 +10,7 @@ properties:
       - type: string
         enum: [DEBUG, INFO, WARNING, ERROR, CRITICAL]
       - type: integer
-    default: WARNING
+    default: INFO
   log-fmt:
     description: "Set the log format."
     type: [string, "null"]

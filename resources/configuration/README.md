@@ -56,6 +56,8 @@ The sigenergy2mqtt default logging level. Must be one of:
 - `ERROR`
 - `CRITICAL`
 
+The default is `INFO`.
+
 <a id="opt_log_fmt"></a>
 ### Log Format
 - CLI: `--log-fmt`

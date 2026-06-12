@@ -6,10 +6,10 @@
 # release number are only applicable to future releases and should be ignored.  #
 #################################################################################
 # log-level
-#   default: WARNING
+#   default: INFO
 #   description:  The sigenergy2mqtt default logging level. Must be one of:
 #                 DEBUG, INFO, WARNING, ERROR, or CRITICAL
-log-level: WARNING
+log-level: INFO
 # log-fmt
 #   added: 2026.5.31
 #   description: Set the log format. The default depends on the runtime environment.
