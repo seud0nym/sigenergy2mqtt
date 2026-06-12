@@ -3,9 +3,6 @@
 import logging
 from datetime import time
 
-import pytest
-from pydantic import ValidationError
-
 from sigenergy2mqtt.common.consumption_source import ConsumptionSource
 from sigenergy2mqtt.common.tariff_type import TariffType
 from sigenergy2mqtt.common.voltage_source import VoltageSource
@@ -227,6 +224,7 @@ class TestModbusConfig:
         assert config.port == 502
         assert config.retries == 3
         assert config.timeout == 1.0
+        assert config.log_skipped is False
 
     def test_basic_fields(self):
         config = ModbusConfig(
@@ -236,6 +234,7 @@ class TestModbusConfig:
             timeout=2.0,
             disable_chunking=True,
             log_level="INFO",
+            log_skipped=False,
         )
         assert config.host == "192.168.1.50"
         assert config.port == 503
@@ -243,6 +242,7 @@ class TestModbusConfig:
         assert config.timeout == 2.0
         assert config.disable_chunking is True
         assert config.log_level == logging.INFO
+        assert config.log_skipped is False
 
     def test_registers_and_intervals(self):
         config = ModbusConfig(

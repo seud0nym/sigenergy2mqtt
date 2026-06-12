@@ -628,6 +628,16 @@ The Modbus interface logging level. Must be one of:
 
 The default is `WARNING` (warnings, errors and critical failures).
 
+<a id="opt_modbus_log_skipped"></a>
+### Log Skipped
+- CLI: `--modbus-log-skipped`
+- ENV: `SIGENERGY2MQTT_MODBUS_LOG_SKIPPED`
+- Config key: `modbus[].host.log-skipped`
+
+If `false`, Modbus errors like "ERROR: request ask for transaction_id=x but got id=y, Skipping" and "ERROR: request ask for id=x but got id=y, Skipping" will **NOT** be logged. 
+
+The default is `false`.
+
 <a id="opt_modbus_no_remote_ems"></a>
 ### No Remote EMS
 - CLI: `--modbus-no-remote-ems`

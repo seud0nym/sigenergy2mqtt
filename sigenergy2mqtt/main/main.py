@@ -17,7 +17,7 @@ from sigenergy2mqtt.common import Constants, ConsumptionMethod, FirmwareVersion,
 from sigenergy2mqtt.config import active_config, configure_root_logging, initialize_with_persistence
 from sigenergy2mqtt.devices import PID, PSS, ACCharger, DCCharger, Device, Inverter, PowerPlant, bind_cross_device_sensors
 from sigenergy2mqtt.influxdb import get_influxdb_services
-from sigenergy2mqtt.metrics.metrics_service import MetricsService
+from sigenergy2mqtt.metrics.metrics_service import Metrics, MetricsService
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.monitor import MonitorService
 from sigenergy2mqtt.mqtt import mqtt_health_registry
@@ -68,10 +68,25 @@ def configure_logging() -> None:
     # with configure_root_logging() performed at import time.
     configure_root_logging(active_config.log_level, active_config.log_fmt)
 
+    modbus_log_level = active_config.get_modbus_log_level()
+
     _configure_logger("paho.mqtt", active_config.mqtt.log_level)
     _configure_logger("pvoutput", active_config.pvoutput.log_level)
-    _configure_logger("pymodbus.logging", active_config.get_modbus_log_level(), propagate=False)
+    _configure_logger("pymodbus.logging", modbus_log_level, propagate=False)
     _configure_logger("sigenergy2mqtt.mqtt.client", active_config.mqtt.log_level)
+
+    if modbus_log_level <= logging.ERROR and any(device.log_skipped for device in active_config.modbus):
+
+        class NoSkippedFilter(logging.Filter):
+            # Filter out "ERROR: request ask for ... Skipping." messages
+            def filter(self, record):
+                msg = record.getMessage()
+                if msg.startswith("ERROR: request ask for") and msg.endswith("Skipping."):
+                    Metrics.modbus_skipped_error()
+                    return False
+                return True
+
+        logging.getLogger("pymodbus.logging").addFilter(NoSkippedFilter())
 
 
 def _configure_logger(name: str, level: int, *, propagate: bool = True) -> None:

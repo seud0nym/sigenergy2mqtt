@@ -394,6 +394,12 @@ def get_parser() -> argparse.ArgumentParser:
         default=os.getenv(const.SIGENERGY2MQTT_MODBUS_LOG_LEVEL, None),
         help="Set the pymodbus log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)",
     )
+    parser.add_argument(
+        "--modbus-log-skipped",
+        action="store_true",
+        dest=const.SIGENERGY2MQTT_MODBUS_LOG_SKIPPED,
+        help="Log skipped Modbus requests.",
+    )
     # endregion
 
     # region Scan Interval Configuration

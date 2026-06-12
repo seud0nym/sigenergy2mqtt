@@ -1230,6 +1230,8 @@ class:
     name: Modbus読み取り最小
   ModbusReadsPerSecond:
     name: Modbus読み取り/秒
+  ModbusSkippedErrors:
+    name: Modbus スキップエラー
   ModbusWriteErrors:
     name: Modbus書き込みエラー
   ModbusWriteMax:
@@ -2834,6 +2836,8 @@ cli:
     help: 'SigenergyインバーターModbusデバイスID。カンマで区切って複数のデバイスIDを指定できます。'
   SIGENERGY2MQTT_MODBUS_LOG_LEVEL:
     help: pymodbusログレベルを設定。
+  SIGENERGY2MQTT_MODBUS_LOG_SKIPPED:
+    help: スキップされた Modbus リクエストをログに記録します。
   SIGENERGY2MQTT_MODBUS_NO_REMOTE_EMS:
     help: 'リモートEMS統合用の読み書きセンサーを公開しない。'
   SIGENERGY2MQTT_MODBUS_PID_DEVICE_ID:

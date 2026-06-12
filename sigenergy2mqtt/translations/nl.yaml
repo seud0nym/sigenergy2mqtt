@@ -1230,6 +1230,8 @@ class:
     name: Modbus Lezen Min
   ModbusReadsPerSecond:
     name: Modbus Lezingen/seconde
+  ModbusSkippedErrors:
+    name: Modbus overgeslagen fouten
   ModbusWriteErrors:
     name: Modbus Schrijffouten
   ModbusWriteMax:
@@ -2834,6 +2836,8 @@ cli:
     help: 'De Sigenergy Omvormer Modbus Apparaat-ID. Er kunnen meerdere apparaat-IDs worden opgegeven, gescheiden door komma''s.'
   SIGENERGY2MQTT_MODBUS_LOG_LEVEL:
     help: 'Stel het pymodbus-logniveau in.'
+  SIGENERGY2MQTT_MODBUS_LOG_SKIPPED:
+    help: Registreer overgeslagen Modbus-verzoeken.
   SIGENERGY2MQTT_MODBUS_NO_REMOTE_EMS:
     help: 'Publiceer geen lees-schrijf sensoren voor remote EMS-integratie.'
   SIGENERGY2MQTT_MODBUS_PID_DEVICE_ID:

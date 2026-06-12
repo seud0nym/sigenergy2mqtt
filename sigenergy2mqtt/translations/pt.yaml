@@ -1230,6 +1230,8 @@ class:
     name: Leitura Modbus Mín
   ModbusReadsPerSecond:
     name: Leituras Modbus/segundo
+  ModbusSkippedErrors:
+    name: Erros Modbus ignorados
   ModbusWriteErrors:
     name: Erros de Escrita Modbus
   ModbusWriteMax:
@@ -2834,6 +2836,8 @@ cli:
     help: 'O ID de dispositivo Modbus do Inversor Sigenergy. Vários IDs de dispositivo podem ser especificados, separados por vírgulas.'
   SIGENERGY2MQTT_MODBUS_LOG_LEVEL:
     help: 'Definir nível de log pymodbus.'
+  SIGENERGY2MQTT_MODBUS_LOG_SKIPPED:
+    help: Log de solicitações Modbus ignoradas.
   SIGENERGY2MQTT_MODBUS_NO_REMOTE_EMS:
     help: 'Não publicar sensores leitura-escrita para integração EMS remoto.'
   SIGENERGY2MQTT_MODBUS_PID_DEVICE_ID:

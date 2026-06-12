@@ -43,6 +43,7 @@ class ModbusConfig(BaseModel):
     pss: list[int] = Field(default_factory=list, alias="pss")
     pid: list[int] = Field(default_factory=list, alias="pid")
     log_level: int = Field(logging.WARNING, alias="log-level")
+    log_skipped: bool = Field(False, alias="log-skipped")
     _validate_log_level = field_validator("log_level", mode="before")(validate_log_level)
     registers: RegisterAccess = Field(default_factory=RegisterAccess, alias="registers")  # type: ignore[reportCallIssue]
     scan_interval: ScanInterval = Field(default_factory=ScanInterval, alias="scan-interval")  # type: ignore[reportCallIssue]

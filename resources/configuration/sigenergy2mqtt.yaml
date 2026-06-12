@@ -159,6 +159,14 @@ modbus:
     #   description:  The Modbus interface logging level. Must be one of:
     #                 DEBUG, INFO, WARNING, ERROR, or CRITICAL
     log-level: WARNING
+    # log-skipped
+    #   default: false
+    #   added: 2026.6.12
+    #   description:  If false, Modbus errors like "ERROR: request ask for
+    #                 transaction_id=x but got id=y, Skipping" and "ERROR: 
+    #                 request ask for id=x but got id=y, Skipping" will NOT
+    #                 be logged. The default is false.
+    log-skipped: false
     # read-only
     #   default: true
     #   description:  If true, all read-only entities will be published to

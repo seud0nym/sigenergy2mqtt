@@ -72,6 +72,9 @@ class Metrics:
     sigenergy2mqtt_modbus_physical_read_percentage: float = 0.0
     """Percentage of modbus reads that resulted in a physical bus read."""
 
+    sigenergy2mqtt_modbus_skipped_errors: int = 0
+    """Number of modbus skipped read errors."""
+
     # ------------------------------------------------------------------
     # MQTT publish metrics
     # ------------------------------------------------------------------
@@ -417,6 +420,18 @@ class Metrics:
                 cls.sigenergy2mqtt_modbus_read_errors += 1
 
             cls._update_with_lock(_operation, "modbus read error metrics collection")
+
+        cls._submit(_update)
+
+    @classmethod
+    def modbus_skipped_error(cls) -> None:
+        """Increment the modbus skipped read counter."""
+
+        def _update() -> None:
+            def _operation() -> None:
+                cls.sigenergy2mqtt_modbus_skipped_errors += 1
+
+            cls._update_with_lock(_operation, "modbus skipped read metrics collection")
 
         cls._submit(_update)
 

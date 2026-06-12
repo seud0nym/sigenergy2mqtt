@@ -51,6 +51,7 @@ class MetricsService(Device):
         self._add_sensor(sensors.ModbusReadMax())
         self._add_sensor(sensors.ModbusReadMean())
         self._add_sensor(sensors.ModbusReadMin())
+        self._add_sensor(sensors.ModbusSkippedErrors())
         self._add_sensor(sensors.ModbusWriteErrors())
         self._add_sensor(sensors.ModbusWriteMax())
         self._add_sensor(sensors.ModbusWriteMean())

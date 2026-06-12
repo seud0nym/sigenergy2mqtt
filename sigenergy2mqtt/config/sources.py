@@ -188,6 +188,7 @@ class EnvSettingsSource(PydanticBaseSettingsSource):
         _set(modbus, "retries", _int(g(const.SIGENERGY2MQTT_MODBUS_RETRIES)))
         _set(modbus, "disable_chunking", _bool(g(const.SIGENERGY2MQTT_MODBUS_DISABLE_CHUNKING)))
         _set(modbus, "log_level", g(const.SIGENERGY2MQTT_MODBUS_LOG_LEVEL))
+        _set(modbus, "log_skipped", _bool(g(const.SIGENERGY2MQTT_MODBUS_LOG_SKIPPED)))
         _set(modbus, "read_only", _bool(g(const.SIGENERGY2MQTT_MODBUS_READ_ONLY)))
         _set(modbus, "read_write", _bool(g(const.SIGENERGY2MQTT_MODBUS_READ_WRITE)))
         _set(modbus, "write_only", _bool(g(const.SIGENERGY2MQTT_MODBUS_WRITE_ONLY)))

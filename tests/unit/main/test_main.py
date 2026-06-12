@@ -203,6 +203,40 @@ class TestConfigureLogging:
             main_mod._configure_logger("test_logger", logging.DEBUG)
             assert mock_log.called
 
+    def test_configure_logging_adds_noskippedfilter(self):
+        """Test that configure_logging adds NoSkippedFilter when appropriate."""
+        # Create a mock device to put in active_config.modbus
+        mock_device = MagicMock()
+
+        with (
+            patch.object(active_config, "log_level", logging.DEBUG),
+            patch.object(active_config, "get_modbus_log_level", return_value=logging.ERROR),
+            patch.object(active_config.mqtt, "log_level", logging.WARNING),
+            patch.object(active_config.pvoutput, "log_level", logging.ERROR),
+            patch.object(active_config, "modbus", [mock_device]),
+        ):
+            # Reset loggers to known state
+            logger = logging.getLogger("pymodbus.logging")
+            logger.filters = []
+
+            # With log_skipped = False, filter should NOT be added
+            mock_device.log_skipped = False
+            main_mod.configure_logging()
+            assert not any(f.__class__.__name__ == "NoSkippedFilter" for f in logger.filters)
+
+            # With log_skipped = True, filter SHOULD be added
+            mock_device.log_skipped = True
+            main_mod.configure_logging()
+
+            filter_obj = next(f for f in logger.filters if f.__class__.__name__ == "NoSkippedFilter")
+            assert filter_obj is not None
+
+            record1 = logging.LogRecord("name", logging.ERROR, "pathname", 1, "ERROR: request ask for transaction_id=2560 but got id=2559, Skipping.", None, None)
+            assert filter_obj.filter(record1) is False
+
+            record2 = logging.LogRecord("name", logging.ERROR, "pathname", 1, "Some other error", None, None)
+            assert filter_obj.filter(record2) is True
+
 
 class TestGetState:
     """Tests for the get_state helper function and related sensor behaviors."""

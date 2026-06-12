@@ -1230,6 +1230,8 @@ class:
     name: Modbus 읽기 최소
   ModbusReadsPerSecond:
     name: Modbus 읽기/초
+  ModbusSkippedErrors:
+    name: Modbus 건너뛴 오류
   ModbusWriteErrors:
     name: Modbus 쓰기 오류
   ModbusWriteMax:
@@ -2834,6 +2836,8 @@ cli:
     help: 'Sigenergy 인버터 Modbus 장치 및 ID. 여러 ID는 쉼표로 구분하여 지정할 수 있습니다.'
   SIGENERGY2MQTT_MODBUS_LOG_LEVEL:
     help: pymodbus 로그 레벨 설정.
+  SIGENERGY2MQTT_MODBUS_LOG_SKIPPED:
+    help: 건너뛴 Modbus 요청을 기록합니다.
   SIGENERGY2MQTT_MODBUS_NO_REMOTE_EMS:
     help: '원격 EMS 통합용 읽기-쓰기 센서 게시 안 함.'
   SIGENERGY2MQTT_MODBUS_PID_DEVICE_ID:

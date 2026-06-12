@@ -142,6 +142,19 @@ def test_promote_cli_to_env_read_only_branch():
         assert os.environ[const.SIGENERGY2MQTT_MODBUS_WRITE_ONLY] == "false"
 
 
+def test_promote_cli_to_env_modbus_log_skipped_branch():
+    args = SimpleNamespace(
+        clean=False,
+        discovery_only=False,
+        validate_only=False,
+        show_version=False,
+        **{const.SIGENERGY2MQTT_MODBUS_LOG_SKIPPED: False},
+    )
+    with patch.dict(os.environ, {}, clear=True):
+        _promote_cli_to_env(args)
+        assert const.SIGENERGY2MQTT_MODBUS_LOG_SKIPPED not in os.environ
+
+
 def test_initialize_show_version_returns_false():
     fake_args = SimpleNamespace(show_version=True)
     with patch("sigenergy2mqtt.config.cli.parse_args", return_value=fake_args):

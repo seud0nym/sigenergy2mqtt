@@ -1230,6 +1230,8 @@ class:
     name: Modbus 读取最小值
   ModbusReadsPerSecond:
     name: Modbus 读取次数/秒
+  ModbusSkippedErrors:
+    name: Modbus 跳过错误
   ModbusWriteErrors:
     name: Modbus 写入错误
   ModbusWriteMax:
@@ -2834,6 +2836,8 @@ cli:
     help: 'Sigenergy 逆变器 Modbus 设备 ID。可以指定多个设备 ID，用逗号分隔。'
   SIGENERGY2MQTT_MODBUS_LOG_LEVEL:
     help: '设置pymodbus日志级别。'
+  SIGENERGY2MQTT_MODBUS_LOG_SKIPPED:
+    help: 记录跳过的 Modbus 请求。
   SIGENERGY2MQTT_MODBUS_NO_REMOTE_EMS:
     help: '不发布远程EMS集成的读写传感器。'
   SIGENERGY2MQTT_MODBUS_PID_DEVICE_ID:

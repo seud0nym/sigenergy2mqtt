@@ -269,6 +269,24 @@ class ModbusReadMin(MetricsSensor):
         return True
 
 
+class ModbusSkippedErrors(MetricsSensor):
+    """Cumulative count of modbus skipped errors."""
+
+    def __init__(self):
+        super().__init__(
+            name="Modbus Skipped Errors",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_modbus_skipped_errors",
+            object_id="sigenergy2mqtt_modbus_skipped_reads",
+            icon="mdi:counter",
+            precision=0,
+        )
+
+    async def _update_internal_state(self, **kwargs) -> bool:
+        new_state = Metrics.sigenergy2mqtt_modbus_skipped_errors
+        self.set_latest_state(new_state)
+        return True
+
+
 class ModbusWriteErrors(MetricsSensor):
     """Cumulative count of modbus write errors."""
 

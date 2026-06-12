@@ -1230,6 +1230,8 @@ class:
     name: Modbus-Lesen Min
   ModbusReadsPerSecond:
     name: Modbus-Lesevorgänge/Sekunde
+  ModbusSkippedErrors:
+    name: Modbus-übersprungene Fehler
   ModbusWriteErrors:
     name: Modbus-Schreibfehler
   ModbusWriteMax:
@@ -2834,6 +2836,8 @@ cli:
     help: Die Sigenergy-Wechselrichter-Modbus-Geräte-ID. Mehrere Geräte-IDs können durch Kommas getrennt angegeben werden.
   SIGENERGY2MQTT_MODBUS_LOG_LEVEL:
     help: 'pymodbus-Protokollebene festlegen. Gültige Werte sind: DEBUG, INFO, WARNING, ERROR oder CRITICAL. Standard ist WARNING (Warnungen, Fehler und kritische Ausfälle)'
+  SIGENERGY2MQTT_MODBUS_LOG_SKIPPED:
+    help: Übersprungene Modbus-Anfragen protokollieren.
   SIGENERGY2MQTT_MODBUS_NO_REMOTE_EMS:
     help: Keine Lese-/Schreib-Sensoren für die Fern-Energiemanagementsystem (EMS)-Integration an MQTT veröffentlichen. Wird ignoriert, wenn --modbus-read-only angegeben ist.
   SIGENERGY2MQTT_MODBUS_PID_DEVICE_ID:

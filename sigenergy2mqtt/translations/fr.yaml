@@ -1230,6 +1230,8 @@ class:
     name: Lecture Modbus Min
   ModbusReadsPerSecond:
     name: Lectures Modbus/seconde
+  ModbusSkippedErrors:
+    name: Erreurs Modbus ignorées
   ModbusWriteErrors:
     name: Erreurs d'Écriture Modbus
   ModbusWriteMax:
@@ -2834,6 +2836,8 @@ cli:
     help: L'ID de dispositif Modbus de l'Onduleur Sigenergy. Plusieurs IDs peuvent être spécifiés, séparés par des virgules.
   SIGENERGY2MQTT_MODBUS_LOG_LEVEL:
     help: 'Définir le niveau de journalisation pymodbus. Valeurs valides: DEBUG, INFO, WARNING, ERROR ou CRITICAL. Par défaut: WARNING (avertissements, erreurs et défaillances critiques)'
+  SIGENERGY2MQTT_MODBUS_LOG_SKIPPED:
+    help: Le journal a ignoré les requêtes Modbus.
   SIGENERGY2MQTT_MODBUS_NO_REMOTE_EMS:
     help: Ne pas publier les capteurs lecture-écriture pour l'intégration du Système de Gestion d'Énergie (EMS) distant vers MQTT. Ignoré si --modbus-read-only est spécifié.
   SIGENERGY2MQTT_MODBUS_PID_DEVICE_ID:

@@ -105,6 +105,9 @@ properties:
               enum: [DEBUG, INFO, WARNING, ERROR, CRITICAL]
             - type: integer
           default: WARNING
+        log-skipped:
+          type: boolean
+          default: false
         read-only:
           type: boolean
           default: true
