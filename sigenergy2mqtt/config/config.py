@@ -45,6 +45,8 @@ from .auto_discovery_settings import AutoDiscoverySettings
 from .settings import Settings
 from .sources import RuamelYamlSettingsSource, _auto_discovery_env_values
 
+AUTODISCOVERY_DEFAULT_TIMEOUT = 600.0
+
 
 class ConfigurationError(Exception):
     """Raised when the configuration is invalid or cannot be loaded."""
@@ -693,7 +695,7 @@ class Config:
         ping_timeout: float,
         modbus_timeout: float,
         modbus_retries: int,
-        timeout: float = 120.0,
+        timeout: float = AUTODISCOVERY_DEFAULT_TIMEOUT,
         include_networks: list[str] | None = None,
         exclude_devices: list[str] | None = None,
     ) -> list:
@@ -716,7 +718,7 @@ class Config:
         ping_timeout: float,
         modbus_timeout: float,
         modbus_retries: int,
-        timeout: float = 120.0,
+        timeout: float = AUTODISCOVERY_DEFAULT_TIMEOUT,
         include_networks: list[str] | None = None,
         exclude_devices: list[str] | None = None,
     ) -> list:
