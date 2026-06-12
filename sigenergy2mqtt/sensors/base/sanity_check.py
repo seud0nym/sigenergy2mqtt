@@ -32,6 +32,7 @@ class SanityCheck:
     _gain: float | None = None
     _precision: int | None = None
     _unit: str | None = None
+    _state_class: StateClass | None = None
 
     def __init__(
         self,
@@ -50,6 +51,7 @@ class SanityCheck:
         self._gain = gain
         self._precision = precision
         self._unit = unit
+        self._state_class = state_class
         if delta is None:
             if state_class == StateClass.TOTAL_INCREASING:
                 self.delta = True
@@ -116,9 +118,11 @@ class SanityCheck:
         if state is None or not isinstance(state, (float, int)) or (self.min_raw is None and self.max_raw is None) or (self.delta and len(previous_states) == 0):
             return True
         if self.delta:
+            if state == 0 and self._state_class == StateClass.TOTAL_INCREASING:  # Assume daily reset
+                return True
             if len(previous_states) > 0 and isinstance(previous_states[-1][1], (float, int)):
                 previous_value = previous_states[-1][1]
-                value = state - previous_value  # pyrefly: ignore
+                value = state - previous_value
             else:
                 return True
         else:
