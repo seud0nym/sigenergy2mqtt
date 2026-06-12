@@ -458,7 +458,7 @@ class Config:
         auto_discovery, auto_discovery_cache, auto_settings = self._prepare_auto_discovery(skip_auto_discovery)
 
         if not skip_auto_discovery and self._should_run_discovery(auto_discovery, auto_discovery_cache):
-            if auto_discovery != "force":
+            if auto_discovery != "force" and active_config.persistence.mqtt_redundancy:
                 await self._restore_discovery_from_mqtt_async(auto_discovery_cache)
 
             if auto_discovery == "force" or not auto_discovery_cache.is_file():
