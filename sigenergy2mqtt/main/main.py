@@ -837,14 +837,17 @@ async def _validate_modbus_connections() -> None:
     socket. No register reads or writes are performed.
     """
     for index, modbus in enumerate(active_config.modbus):
-        client = ModbusClient(modbus.host, port=modbus.port, timeout=modbus.timeout, retries=modbus.retries)
-        try:
-            await client.connect()
-            if not client.connected:
-                raise ConnectionError(f"Unable to connect to modbus://{modbus.host}:{modbus.port}")
-            logging.info(f"Validated Modbus connection to modbus://{modbus.host}:{modbus.port} (device #{index})")
-        finally:
-            client.close()
+        if not modbus.host:
+            logging.warning(f"Unable to validate Modbus connection for device #{index}, host is not set")
+        else:
+            client = ModbusClient(modbus.host, port=modbus.port, timeout=modbus.timeout, retries=modbus.retries)
+            try:
+                await client.connect()
+                if not client.connected:
+                    raise ConnectionError(f"Unable to connect to modbus://{modbus.host}:{modbus.port}")
+                logging.info(f"Validated Modbus connection to modbus://{modbus.host}:{modbus.port} (device #{index})")
+            finally:
+                client.close()
 
 
 def _validate_mqtt_connection(show_credentials: bool) -> None:
