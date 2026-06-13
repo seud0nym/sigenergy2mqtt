@@ -21,7 +21,7 @@ In addition, `sigenergy2mqtt` has several optional features:
 
 ## Pre-requisites
 
-- Sigenergy ESS or PV Inverter, with Modbus-TCP enabled by your installer
+- Sigenergy ESS or PV Inverter, with Modbus-TCP enabled by your installer or through the mySigen app
 - MQTT broker such as [Mosquitto](https://mosquitto.org/), either standalone or installed as an app to Home Assistant
 
 ## Installation
