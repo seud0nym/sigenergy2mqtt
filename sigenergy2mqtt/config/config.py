@@ -46,7 +46,7 @@ from .auto_discovery_settings import AutoDiscoverySettings
 from .settings import Settings
 from .sources import RuamelYamlSettingsSource, _auto_discovery_env_values
 
-AUTODISCOVERY_DEFAULT_TIMEOUT = 600.0
+AUTODISCOVERY_DEFAULT_TIMEOUT = 300.0
 
 
 class ConfigurationError(Exception):
@@ -629,16 +629,14 @@ class Config:
         """Parse only the pre-discovery settings using YAML + env source layering."""
         payload: dict[str, Any] = {}
         yaml_payload = RuamelYamlSettingsSource(AutoDiscoverySettings, self._source)()
-        payload.update(
-            {
-                "modbus_port": yaml_payload.get("modbus-port"),
-                "modbus_auto_discovery": yaml_payload.get("modbus-auto-discovery"),
-                "modbus_auto_discovery_timeout": yaml_payload.get("modbus-auto-discovery-timeout"),
-                "modbus_auto_discovery_ping_timeout": yaml_payload.get("modbus-auto-discovery-ping-timeout"),
-                "modbus_auto_discovery_retries": yaml_payload.get("modbus-auto-discovery-retries"),
-                "modbus_auto_discovery_networks": yaml_payload.get("modbus-auto-discovery-networks"),
-            }
-        )
+        payload.update({
+            "modbus_port": yaml_payload.get("modbus-port"),
+            "modbus_auto_discovery": yaml_payload.get("modbus-auto-discovery"),
+            "modbus_auto_discovery_timeout": yaml_payload.get("modbus-auto-discovery-timeout"),
+            "modbus_auto_discovery_ping_timeout": yaml_payload.get("modbus-auto-discovery-ping-timeout"),
+            "modbus_auto_discovery_retries": yaml_payload.get("modbus-auto-discovery-retries"),
+            "modbus_auto_discovery_networks": yaml_payload.get("modbus-auto-discovery-networks"),
+        })
         payload.update(_auto_discovery_env_values(os.getenv, include_modbus_port=True))
         payload = {k: v for k, v in payload.items() if v is not None}
         return AutoDiscoverySettings(**payload)
