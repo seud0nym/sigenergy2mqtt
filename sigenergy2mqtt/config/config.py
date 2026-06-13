@@ -744,7 +744,15 @@ class Config:
         """Asynchronous execution of auto-discovery scan."""
         try:
             return await asyncio.wait_for(
-                auto_discovery_scan(include_networks, exclude_devices, port, ping_timeout, modbus_timeout, modbus_retries, max_device_id),
+                auto_discovery_scan(
+                    include_networks=include_networks,
+                    exclude_devices=exclude_devices,
+                    port=port,
+                    ping_timeout=ping_timeout,
+                    modbus_timeout=modbus_timeout,
+                    modbus_retries=modbus_retries,
+                    max_device_id=max_device_id,
+                ),
                 timeout=timeout,
             )
         except asyncio.TimeoutError:
