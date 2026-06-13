@@ -216,26 +216,30 @@ class TestConfigureLogging:
             patch.object(active_config, "modbus", [mock_device]),
         ):
             # Reset loggers to known state
-            logger = logging.getLogger("pymodbus.logging")
-            logger.filters = []
+            for name in ("pymodbus", "pymodbus.logging", "pymodbus_internal"):
+                logger = logging.getLogger(name)
+                logger.filters = []
 
-            # With log_skipped = False, filter should NOT be added
-            mock_device.log_skipped = False
+            # With log_skipped = True, filter should NOT be added
+            mock_device.log_skipped = True
             main_mod.configure_logging()
             assert not any(f.__class__.__name__ == "NoSkippedFilter" for f in logger.filters)
 
-            # With log_skipped = True, filter SHOULD be added
-            mock_device.log_skipped = True
-            main_mod.configure_logging()
+            for name in ("pymodbus", "pymodbus.logging", "pymodbus_internal"):
+                logger = logging.getLogger(name)
 
-            filter_obj = next(f for f in logger.filters if f.__class__.__name__ == "NoSkippedFilter")
-            assert filter_obj is not None
+                # With log_skipped = False, filter SHOULD be added
+                mock_device.log_skipped = False
+                main_mod.configure_logging()
 
-            record1 = logging.LogRecord("name", logging.ERROR, "pathname", 1, "ERROR: request ask for transaction_id=2560 but got id=2559, Skipping.", None, None)
-            assert filter_obj.filter(record1) is False
+                filter_obj = next(f for f in logger.filters if f.__class__.__name__ == "NoSkippedFilter")
+                assert filter_obj is not None
 
-            record2 = logging.LogRecord("name", logging.ERROR, "pathname", 1, "Some other error", None, None)
-            assert filter_obj.filter(record2) is True
+                record1 = logging.LogRecord("name", logging.ERROR, "pathname", 1, "ERROR: request ask for transaction_id=2560 but got id=2559, Skipping.", None, None)
+                assert filter_obj.filter(record1) is False
+
+                record2 = logging.LogRecord("name", logging.ERROR, "pathname", 1, "Some other error", None, None)
+                assert filter_obj.filter(record2) is True
 
 
 class TestGetState:
