@@ -2818,6 +2818,8 @@ cli:
     help: Automatische Erkennung von Sigenergy Modbus-Hosts und Geräte-IDs versuchen. Bei 'once' erfolgt die Auto-Erkennung nur, wenn keine vorhandenen Ergebnisse gefunden werden. Bei 'force' werden zuvor erkannte Modbus-Hosts und Geräte-IDs überschrieben. Ohne Angabe ist die Auto-Erkennung deaktiviert.
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_EXCLUDE:
     help: Eine durch Kommas getrennte Liste von Geräteklassennamen, die von der automatischen Erkennung ausgeschlossen werden sollen. Die Standardeinstellung ist „PID,PSS“.
+  SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_MAX_DEVICE_ID:
+    help: Die maximale Geräte-ID, die bei der automatischen Erkennung von Sigenergy-Geräten im Netzwerk verwendet werden soll. Der Standardwert ist 10 und muss zwischen 1 und 246 (einschließlich) liegen.
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_NETWORKS:
     help: Eine durch Kommas getrennte Liste von IPv4-Netzwerken in CIDR-Notation, die bei der automatischen Erkennung gescannt werden sollen (z. B. '192.168.1.0/24,10.0.0.0/24'). Verwenden Sie dies, um Netzwerke zu scannen, die über Routing zugänglich sind, aber nicht direkt an eine Netzwerkschnittstelle angeschlossen sind.
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_PING_TIMEOUT:

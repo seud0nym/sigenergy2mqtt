@@ -532,6 +532,16 @@ modbus-auto-discovery-networks:
 > [!NOTE]
 > Any configured modbus hosts are automatically prepended to this list as `/32` networks. You do not need to add them here explicitly.
 
+<a id="opt_modbus_auto_discovery_max_device_id"></a>
+### Modbus Auto Discovery Max Device ID
+- CLI: `--modbus-auto-discovery-max-device-id`
+- ENV: `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_MAX_DEVICE_ID`
+- Config key: `n/a`
+
+The maximum device ID to use when performing auto-discovery of Sigenergy devices on the network. The default is `10`, and it must be between 1 and 246 (inclusive).
+
+This option can significantly speed up auto-discovery, at the risk of not finding devices that have been configured with a higher Device ID than the maximum allowed by this setting.
+
 <a id="opt_modbus_auto_discovery_ping_timeout"></a>
 ### Modbus Auto Discovery Ping Timeout
 - CLI: `--modbus-auto-discovery-ping-timeout`

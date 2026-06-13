@@ -2818,6 +2818,8 @@ cli:
     help: 'Sigenergy Modbus 호스트 및 장치 ID 자동 검색을 시도합니다. ''once''를 지정하면 기존 자동 검색 결과가 없는 경우에만 자동 검색이 수행됩니다. ''force''인 경우 이전에 검색된 Modbus 호스트 및 장치 ID를 덮어씁니다. 지정하지 않으면 자동 검색이 비활성화됩니다.'
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_EXCLUDE:
     help: 자동 검색에서 제외할 장치 클래스 이름의 쉼표로 구분된 목록입니다. 기본값은 'PID,PSS'입니다.
+  SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_MAX_DEVICE_ID:
+    help: 네트워크에서 Sigenergy 장치의 자동 검색을 수행할 때 사용할 최대 장치 ID입니다. 기본값은 10이고 1에서 246(포함) 사이여야 합니다.
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_NETWORKS:
     help: "자동 검색 중에 스캔할 CIDR 표기법의 쉼표로 구분된 IPv4 네트워크 목록입니다 (예: '192.168.1.0/24,10.0.0.0/24'). 라우팅을 통해 액세스할 수 있지만 네트워크 인터페이스에 직접 연결되지 않은 네트워크를 스캔하려면 이 옵션을 사용하십시오."
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_PING_TIMEOUT:

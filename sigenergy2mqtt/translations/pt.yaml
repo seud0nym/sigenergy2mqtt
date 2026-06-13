@@ -2818,6 +2818,8 @@ cli:
     help: 'Tentar a auto-descoberta de hosts Modbus Sigenergy e IDs de dispositivo. Se ''once'' for especificado, a auto-descoberta só ocorrerá se nenhum resultado de auto-descoberta existente for encontrado. Se ''force'', a auto-descoberta substituirá quaisquer hosts Modbus e IDs de dispositivo descobertos anteriormente. Se não for especificado, a auto-descoberta é desativada.'
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_EXCLUDE:
     help: Uma lista separada por vírgulas de nomes de classes de dispositivos a serem excluídos da descoberta automática. O padrão é 'PID,PSS'.
+  SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_MAX_DEVICE_ID:
+    help: O ID máximo do dispositivo a ser usado ao realizar a descoberta automática de dispositivos Sigenergy na rede. O padrão é 10 e deve estar entre 1 e 246 (inclusive).
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_NETWORKS:
     help: Uma lista separada por vírgulas de redes IPv4 em notação CIDR para verificar durante a descoberta automática (por exemplo, '192.168.1.0/24,10.0.0.0/24'). Use isso para verificar redes que são acessíveis por meio de roteamento, mas não estão diretamente conectadas a uma interface de rede.
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_PING_TIMEOUT:

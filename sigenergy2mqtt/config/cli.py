@@ -293,6 +293,15 @@ def get_parser() -> argparse.ArgumentParser:
         help="A comma-separated list of IPv4 networks in CIDR notation to scan during auto-discovery (e.g. '192.168.1.0/24,10.0.0.0/24'). Use this to scan networks that are accessible via routing but not directly attached to a network interface.",
     )
     parser.add_argument(
+        "--modbus-auto-discovery-max-device-id",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_MAX_DEVICE_ID,
+        type=int,
+        default=os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_MAX_DEVICE_ID, None),
+        help="The maximum device ID to use when performing auto-discovery of Sigenergy devices on the network. The default is 10, and it must be between 1 and 246 (inclusive).",
+    )
+    parser.add_argument(
         "-m",
         "--modbus-host",
         nargs="?",

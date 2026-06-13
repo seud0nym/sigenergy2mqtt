@@ -23,6 +23,7 @@ class AutoDiscoverySettings(BaseSettings):
     modbus_auto_discovery_retries: int = Field(0, alias="modbus-auto-discovery-retries")
     modbus_auto_discovery_networks: list[str] = Field(default_factory=list, alias="modbus-auto-discovery-networks")
     modbus_auto_discovery_exclude: list[str] = Field(default_factory=lambda: ["PID", "PSS"], alias="modbus-auto-discovery-exclude")
+    modbus_auto_discovery_max_device_id: int = Field(10, alias="modbus-auto-discovery-max-device-id")
 
     @field_validator("modbus_auto_discovery_networks", mode="before")
     @classmethod
@@ -56,3 +57,18 @@ class AutoDiscoverySettings(BaseSettings):
             else:
                 raise ValueError(f"Invalid Device class name '{entry}'")
         return validated
+
+    @field_validator("modbus_auto_discovery_max_device_id", mode="before")
+    @classmethod
+    def validate_max_device_id(cls, v: int | str | None) -> int:
+        """Validate that the max device ID is a positive integer."""
+        if isinstance(v, str):
+            try:
+                v = int(v)
+            except ValueError:
+                raise ValueError("modbus-auto-discovery-max-device-id must be a positive integer")
+        if not isinstance(v, int) or isinstance(v, bool) or v <= 0:
+            raise ValueError("modbus-auto-discovery-max-device-id must be a positive integer")
+        if v > 246:
+            raise ValueError("modbus-auto-discovery-max-device-id must be less than or equal to 246")
+        return v

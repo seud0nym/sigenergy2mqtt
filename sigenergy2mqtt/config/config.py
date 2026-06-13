@@ -27,6 +27,7 @@ import logging
 import os
 import socket
 import sys
+import threading
 import time
 from contextlib import contextmanager
 from copy import deepcopy
@@ -45,7 +46,7 @@ from .auto_discovery_settings import AutoDiscoverySettings
 from .settings import Settings
 from .sources import RuamelYamlSettingsSource, _auto_discovery_env_values
 
-AUTODISCOVERY_DEFAULT_TIMEOUT = 600.0
+AUTODISCOVERY_DEFAULT_TIMEOUT = 300.0
 
 
 class ConfigurationError(Exception):
@@ -427,59 +428,59 @@ class Config:
 
     def _validate_hosts_after_discovery(self) -> None:
         """Ensure all Modbus devices have a host after auto-discovery finishes."""
-        for device in self._settings.modbus:
+        for device in self._settings.modbus if self._settings is not None else []:
             if not device.host:
                 raise ConfigurationError("modbus entry must have a host")
 
     def _perform_auto_discovery(self, skip_auto_discovery: bool) -> Path | None:
         """Synchronous auto-discovery logic."""
-        auto_discovery, auto_discovery_cache, auto_settings = self._prepare_auto_discovery(skip_auto_discovery)
+        auto_discovery, auto_discovery_cache, auto_settings, auto_discovery_should_run = self._prepare_auto_discovery(skip_auto_discovery)
 
-        if not skip_auto_discovery and self._should_run_discovery(auto_discovery, auto_discovery_cache):
+        if not skip_auto_discovery and auto_discovery_should_run:
             if auto_discovery != "force":
                 self._restore_discovery_from_mqtt_sync(auto_discovery_cache)
 
             if auto_discovery == "force" or not auto_discovery_cache.is_file():
                 include_networks = self._build_include_networks(auto_settings.modbus_auto_discovery_networks)
-                logging.info(f"Auto-discovery required ({auto_discovery}), scanning for Sigenergy devices...")
                 auto_discovered = self._run_auto_discovery(
-                    auto_settings.modbus_port,
-                    auto_settings.modbus_auto_discovery_ping_timeout,
-                    auto_settings.modbus_auto_discovery_timeout,
-                    auto_settings.modbus_auto_discovery_retries,
+                    port=auto_settings.modbus_port,
+                    ping_timeout=auto_settings.modbus_auto_discovery_ping_timeout,
+                    modbus_timeout=auto_settings.modbus_auto_discovery_timeout,
+                    modbus_retries=auto_settings.modbus_auto_discovery_retries,
+                    max_device_id=auto_settings.modbus_auto_discovery_max_device_id,
                     include_networks=include_networks,
                     exclude_devices=auto_settings.modbus_auto_discovery_exclude,
                 )
                 if auto_discovered:
                     self._save_discovery_results_sync(auto_discovery_cache, auto_discovered)
 
-        return self._get_final_cache_path(auto_discovery, auto_discovery_cache, skip_auto_discovery)
+        return self._get_final_cache_path(auto_discovery, auto_discovery_cache, skip_auto_discovery, auto_discovery_should_run)
 
     async def _perform_auto_discovery_async(self, skip_auto_discovery: bool) -> Path | None:
         """Asynchronous auto-discovery logic."""
-        auto_discovery, auto_discovery_cache, auto_settings = self._prepare_auto_discovery(skip_auto_discovery)
+        auto_discovery, auto_discovery_cache, auto_settings, auto_discovery_should_run = self._prepare_auto_discovery(skip_auto_discovery)
 
-        if not skip_auto_discovery and self._should_run_discovery(auto_discovery, auto_discovery_cache):
-            if auto_discovery != "force" and active_config.persistence.mqtt_redundancy:
+        if not skip_auto_discovery and auto_discovery_should_run:
+            if auto_discovery != "force":
                 await self._restore_discovery_from_mqtt_async(auto_discovery_cache)
 
             if auto_discovery == "force" or not auto_discovery_cache.is_file():
                 include_networks = self._build_include_networks(auto_settings.modbus_auto_discovery_networks)
-                logging.info(f"Auto-discovery required ({auto_discovery}), scanning for Sigenergy devices (async)...")
                 auto_discovered = await self._run_auto_discovery_async(
-                    auto_settings.modbus_port,
-                    auto_settings.modbus_auto_discovery_ping_timeout,
-                    auto_settings.modbus_auto_discovery_timeout,
-                    auto_settings.modbus_auto_discovery_retries,
+                    port=auto_settings.modbus_port,
+                    ping_timeout=auto_settings.modbus_auto_discovery_ping_timeout,
+                    modbus_timeout=auto_settings.modbus_auto_discovery_timeout,
+                    modbus_retries=auto_settings.modbus_auto_discovery_retries,
+                    max_device_id=auto_settings.modbus_auto_discovery_max_device_id,
                     include_networks=include_networks,
                     exclude_devices=auto_settings.modbus_auto_discovery_exclude,
                 )
                 if auto_discovered:
                     await self._save_discovery_results_async(auto_discovery_cache, auto_discovered)
 
-        return self._get_final_cache_path(auto_discovery, auto_discovery_cache, skip_auto_discovery)
+        return self._get_final_cache_path(auto_discovery, auto_discovery_cache, skip_auto_discovery, auto_discovery_should_run)
 
-    def _prepare_auto_discovery(self, skip_auto_discovery: bool):
+    def _prepare_auto_discovery(self, skip_auto_discovery: bool) -> tuple[str | None, Path, AutoDiscoverySettings, bool]:
         auto_discovery = os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY)
         auto_discovery_cache = Path(self.persistent_state_path, "auto-discovery.yaml")
         auto_settings = self._load_auto_discovery_settings()
@@ -487,47 +488,87 @@ class Config:
         if auto_settings.modbus_auto_discovery:
             auto_discovery = auto_settings.modbus_auto_discovery
 
-        return auto_discovery, auto_discovery_cache, auto_settings
+        auto_discovery_should_run = not skip_auto_discovery and self._should_run_discovery(auto_discovery, auto_discovery_cache)
+
+        return auto_discovery, auto_discovery_cache, auto_settings, auto_discovery_should_run
 
     def _should_run_discovery(self, auto_discovery, auto_discovery_cache) -> bool:
-        return auto_discovery == "force" or (auto_discovery == "once" and not auto_discovery_cache.is_file())
+        if auto_discovery == "force":
+            logging.info("Auto-discovery required (FORCED)")
+            return True
+        if auto_discovery == "once" and not auto_discovery_cache.is_file():
+            logging.info(f"Auto-discovery required (ONCE: {auto_discovery_cache} not found)")
+            return True
+        if auto_discovery not in ("force", "once"):
+            modbus = self._settings.modbus if self._settings is not None else []
+            if not modbus or any(bool(d.host == "" or d.host is None) for d in modbus):
+                logging.info("Auto-discovery required (No Modbus host configured)")
+                return True
+        return False
 
-    def _get_final_cache_path(self, auto_discovery, auto_discovery_cache, skip_auto_discovery: bool = False) -> Path | None:
+    def _get_final_cache_path(self, auto_discovery: str | None, auto_discovery_cache: Path, skip_auto_discovery: bool, auto_discovery_should_run: bool) -> Path | None:
+        # Never consult the cache when auto-discovery is completely disabled for
+        # this call (e.g. the initial preflight reload or an explicit skip).
         if skip_auto_discovery:
             return None
-        if auto_discovery not in ("once", "force"):
-            logging.debug("Auto-discovery disabled")
+
+        # "force" always re-runs discovery; the freshly-written cache (if any) is
+        # returned below via the is_file() check.
+        if auto_discovery == "force":
+            return auto_discovery_cache if auto_discovery_cache.is_file() else None
+
+        # "once" mode: discovery only runs when the cache is absent.  If it was
+        # already present (auto_discovery_should_run=False) the cache is still
+        # valid and must be returned so that _finalize_reload sees the devices.
+        if auto_discovery == "once":
+            if auto_discovery_cache.is_file():
+                logging.info(f"Auto-discovery cached results found in {auto_discovery_cache}")
+                return auto_discovery_cache
             return None
-        if auto_discovery == "once" and auto_discovery_cache.is_file():
-            logging.info(f"Auto-discovery cached results found in {auto_discovery_cache}")
-            return auto_discovery_cache
-        if not auto_discovery_cache.is_file():
+
+        # Continuous / env-driven discovery: scan ran (or was skipped because
+        # hosts are already configured).  Only pass the cache when one exists.
+        if not auto_discovery_should_run:
             return None
-        return auto_discovery_cache
+        return auto_discovery_cache if auto_discovery_cache.is_file() else None
 
     def _restore_discovery_from_mqtt_sync(self, auto_discovery_cache: Path):
         try:
-            from sigenergy2mqtt.persistence import state_store
+            # Configuration may not be fully loaded
+            redundancy = active_config.persistence.mqtt_redundancy
+        except AttributeError:
+            redundancy = False
 
-            if state_store.is_initialised:
-                cached = state_store.load_sync(Category.CONFIG, "auto-discovery")
-                if cached:
-                    auto_discovery_cache.write_text(cached)
-                    logging.info("Auto-discovery cache restored from MQTT")
-        except Exception:
-            logging.debug("StateStore not available for auto-discovery restore")
+        if redundancy:
+            try:
+                from sigenergy2mqtt.persistence import state_store
+
+                if state_store.is_initialised:
+                    cached = state_store.load_sync(Category.CONFIG, "auto-discovery")
+                    if cached:
+                        auto_discovery_cache.write_text(cached)
+                        logging.info("Auto-discovery cache restored from MQTT")
+            except Exception:
+                logging.debug("StateStore not available for auto-discovery restore")
 
     async def _restore_discovery_from_mqtt_async(self, auto_discovery_cache: Path):
         try:
-            from sigenergy2mqtt.persistence import state_store
+            # Configuration may not be fully loaded
+            redundancy = active_config.persistence.mqtt_redundancy
+        except AttributeError:
+            redundancy = False
 
-            if state_store.is_initialised:
-                cached = await state_store.load(Category.CONFIG, "auto-discovery")
-                if cached:
-                    auto_discovery_cache.write_text(cached)
-                    logging.info("Auto-discovery cache restored from MQTT")
-        except Exception:
-            logging.debug("StateStore not available for auto-discovery restore")
+        if redundancy:
+            try:
+                from sigenergy2mqtt.persistence import state_store
+
+                if state_store.is_initialised:
+                    cached = await state_store.load(Category.CONFIG, "auto-discovery")
+                    if cached:
+                        auto_discovery_cache.write_text(cached)
+                        logging.info("Auto-discovery cache restored from MQTT")
+            except Exception:
+                logging.debug("StateStore not available for auto-discovery restore")
 
     def _save_discovery_results_sync(self, auto_discovery_cache: Path, auto_discovered: list):
         yaml_content = self._serialize_discovery(auto_discovered)
@@ -588,16 +629,14 @@ class Config:
         """Parse only the pre-discovery settings using YAML + env source layering."""
         payload: dict[str, Any] = {}
         yaml_payload = RuamelYamlSettingsSource(AutoDiscoverySettings, self._source)()
-        payload.update(
-            {
-                "modbus_port": yaml_payload.get("modbus-port"),
-                "modbus_auto_discovery": yaml_payload.get("modbus-auto-discovery"),
-                "modbus_auto_discovery_timeout": yaml_payload.get("modbus-auto-discovery-timeout"),
-                "modbus_auto_discovery_ping_timeout": yaml_payload.get("modbus-auto-discovery-ping-timeout"),
-                "modbus_auto_discovery_retries": yaml_payload.get("modbus-auto-discovery-retries"),
-                "modbus_auto_discovery_networks": yaml_payload.get("modbus-auto-discovery-networks"),
-            }
-        )
+        payload.update({
+            "modbus_port": yaml_payload.get("modbus-port"),
+            "modbus_auto_discovery": yaml_payload.get("modbus-auto-discovery"),
+            "modbus_auto_discovery_timeout": yaml_payload.get("modbus-auto-discovery-timeout"),
+            "modbus_auto_discovery_ping_timeout": yaml_payload.get("modbus-auto-discovery-ping-timeout"),
+            "modbus_auto_discovery_retries": yaml_payload.get("modbus-auto-discovery-retries"),
+            "modbus_auto_discovery_networks": yaml_payload.get("modbus-auto-discovery-networks"),
+        })
         payload.update(_auto_discovery_env_values(os.getenv, include_modbus_port=True))
         payload = {k: v for k, v in payload.items() if v is not None}
         return AutoDiscoverySettings(**payload)
@@ -695,6 +734,7 @@ class Config:
         ping_timeout: float,
         modbus_timeout: float,
         modbus_retries: int,
+        max_device_id: int,
         timeout: float = AUTODISCOVERY_DEFAULT_TIMEOUT,
         include_networks: list[str] | None = None,
         exclude_devices: list[str] | None = None,
@@ -702,7 +742,15 @@ class Config:
         """Asynchronous execution of auto-discovery scan."""
         try:
             return await asyncio.wait_for(
-                auto_discovery_scan(include_networks, exclude_devices, port, ping_timeout, modbus_timeout, modbus_retries),
+                auto_discovery_scan(
+                    include_networks=include_networks,
+                    exclude_devices=exclude_devices,
+                    port=port,
+                    ping_timeout=ping_timeout,
+                    modbus_timeout=modbus_timeout,
+                    modbus_retries=modbus_retries,
+                    max_device_id=max_device_id,
+                ),
                 timeout=timeout,
             )
         except asyncio.TimeoutError:
@@ -718,45 +766,78 @@ class Config:
         ping_timeout: float,
         modbus_timeout: float,
         modbus_retries: int,
+        max_device_id: int = 246,
         timeout: float = AUTODISCOVERY_DEFAULT_TIMEOUT,
         include_networks: list[str] | None = None,
         exclude_devices: list[str] | None = None,
     ) -> list:
-        """Synchronous execution of auto-discovery scan (wraps async version)."""
+        """Synchronous execution of auto-discovery scan."""
         try:
             loop = asyncio.get_running_loop()
         except RuntimeError:
             loop = None
 
-        coro = auto_discovery_scan(include_networks, exclude_devices, port, ping_timeout, modbus_timeout, modbus_retries)
         if loop is None:
+
+            async def _bounded():
+                return await asyncio.wait_for(
+                    auto_discovery_scan(
+                        include_networks=include_networks,
+                        exclude_devices=exclude_devices,
+                        port=port,
+                        ping_timeout=ping_timeout,
+                        modbus_timeout=modbus_timeout,
+                        modbus_retries=modbus_retries,
+                        max_device_id=max_device_id,
+                    ),
+                    timeout=timeout,
+                )
+
             try:
-                return asyncio.run(coro)
+                return asyncio.run(_bounded())
+            except asyncio.TimeoutError:
+                logging.error(f"Auto-discovery timed out after {timeout:.1f}s")
+                return []
             except Exception:
                 logging.exception("Auto-discovery failed")
                 return []
 
-        # Fallback: if we are in a loop but must be sync, use a thread to avoid deadlock.
-        import threading
-
+        # Running inside an existing event loop — use a thread to avoid deadlock.
         result: list = []
-        exception: Exception | None = None
+        exception: BaseException | None = None
 
         def worker():
             nonlocal result, exception
+
+            async def _bounded():
+                return await asyncio.wait_for(
+                    auto_discovery_scan(
+                        include_networks=include_networks,
+                        exclude_devices=exclude_devices,
+                        port=port,
+                        ping_timeout=ping_timeout,
+                        modbus_timeout=modbus_timeout,
+                        modbus_retries=modbus_retries,
+                        max_device_id=max_device_id,
+                    ),
+                    timeout=timeout,
+                )
+
             try:
-                result = asyncio.run(coro)
+                result = asyncio.run(_bounded())
+            except asyncio.TimeoutError:
+                pass  # handled by join check below
             except Exception as e:
                 exception = e
 
         thread = threading.Thread(target=worker, name="AutoDiscoveryWorker", daemon=True)
         thread.start()
-        thread.join(timeout=timeout)
+        thread.join(timeout=timeout + 1)  # slight margin; asyncio.wait_for fires first
         if thread.is_alive():
             logging.error(f"Auto-discovery timed out after {timeout:.1f}s")
             return []
         if exception:
-            logging.error(f"Auto-discovery failed: {exception}")
+            logging.exception("Auto-discovery failed", exc_info=exception)
             return []
         return result
 

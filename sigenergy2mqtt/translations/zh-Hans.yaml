@@ -2818,6 +2818,8 @@ cli:
     help: '尝试自动发现 Sigenergy Modbus 主机和设备 ID。如果指定了 ''once''，则仅在未找到现有自动发现结果时进行自动发现。如果为 ''force''，则自动发现将覆盖任何先前发现的 Modbus 主机和设备 ID。如果未指定，则禁用自动发现。'
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_EXCLUDE:
     help: 要从自动发现中排除的设备类名称的逗号分隔列表。默认值为“PID，PSS”。
+  SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_MAX_DEVICE_ID:
+    help: 在网络上执行 Sigenergy 设备自动发现时要使用的最大设备 ID。默认值为 10，并且必须介于 1 到 246（含）之间。
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_NETWORKS:
     help: 以CIDR格式表示的、以逗号分隔的IPv4网络列表，用于在自动发现期间进行扫描（例如 '192.168.1.0/24,10.0.0.0/24'）。可用于扫描可通过路由访问但未直接连接到网络接口的网络。
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_PING_TIMEOUT:

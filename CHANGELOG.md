@@ -6,9 +6,12 @@
 
 - Added Inverter and Plant estimated self-consumed power and daily energy sensors (thanks to @swainstm https://whrl.pl/RgV4Rd)
 - Added health check for Docker to MonitorService and also published it to MQTT for other potential monitoring services
+- Added default suppression of Modbus "ERROR: request ask for ... Skipping." log messages and added count of skipped messages to Metrics
+- Added `SIGENERGY2MQTT_MODBUS_LOG_SKIPPED` configuration setting so that Modbus "ERROR: request ask for ... Skipping." log messages can be logged if required
 - Added `SIGENERGY2MQTT_LOG_FMT` configuration setting and CLI argument to allow override of the log message format
 - Added `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_NETWORKS` configuration setting and CLI argument to allow scanning of specific CIDR networks during auto-discovery
-- Added `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_EXCLUDE` to exclude devices from auto-discovery
+- Added `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_EXCLUDE` configuration setting to exclude devices from auto-discovery
+- Added `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_MAX_DEVICE_ID` configuration setting to limit the number of device IDs (default=10) that auto-discovery will scan
 - Added new sensors defined in Modbus Protocol V2.9 (sensors may not be available depending on device/firmware):
   - New PSS and PID devices, and configuration/auto-discovery changes to support them (these are commercial/enterprise products, not residential)
   - DC Charger:
@@ -35,6 +38,7 @@
 - Auto-discovery now prioritizes statically configured Modbus hosts and unions newly discovered Modbus device IDs with existing configurations (fixes #191)
 - Improved Modbus auto-discovery with detailed per-host device ID logging and fixed stale serial number tracking during re-scans
 - Improved Modbus auto-discovery with quiet connection handling and sequential device scanning
+- Increased Modbus auto-discovery timeout to 5 minutes
 - Reimplemented Modbus test server using Pymodbus SimDevice and custom latency tracking to support device communication failures simulation
 - Removed legacy add-sensor helpers and migrated to declared derived sources
 - Created `AccumulationSensor` base class and refactored `ResettableAccumulationSensor` to inherit from it
@@ -52,6 +56,8 @@
 - Simplified PlantConsumedPower when using calculated consumption method to use new CrossDeviceDerivedSensor logic rather than relying on MQTT notifications
 - Modified early detection of Modbus 0x02 ILLEGAL_DATA_ADDRESS exceptions to use a pre-scan approach rather than hard-coding known problematic registers
 - SystemTime, StartupTime and ShutdownTime sensors now return correct date/time adjusted to the SystemTimeZone
+- Default logging level is now INFO instead or WARNING
+- MonitorService now longer starts if only doing a --clean execution
 - As of Modbus Protocol V2.9, power dispatch sensors require Remote EMS to be enabled and the EMS to be in PCS Remote Control Mode for them to take effect. The affected sensors are:
   - Active Power Fixed Adjustment Target Value
   - Reactive Power Fixed Adjustment Target Value
@@ -68,13 +74,18 @@
 
 - Fixed incorrect popping of aliased device ID keys during discovery merge which led to device config loss
 - Fixed the Phase Current and Phase Voltage sensors object_id when the inverter is a single-phase inverter
-- Resolved `RuntimeWarning: coroutine was never awaited` warnings during testing
+- Fixed `RuntimeWarning: coroutine was never awaited` warnings during testing
 - Fixed `grid_status_initial_state` lacking a default value when configured via environment variable in Modbus test server
-- Corrected the implementation of the `DerivedSensor` pattern
+- Fixed the implementation of the `DerivedSensor` pattern
 - Fixed various type errors and test failures related to `latest_raw_state` assignments and `set_source_values` refactoring
 - Fixed deadlock when running auto-discovery (#177)
 - Fixed min/max for Active/Reactive Power Fixed Adjustment Target Value sensors to use total Rated Active Power of attached inverters as the base for calculation
 - Fixed invalid state when a TimestampSensor had a raw value of 0
+- Fixed pymodbus logging namespace
+- Fixed issue where auto-discovery would attempt to restore its cache from MQTT even if MQTT persistence was disabled
+- Fixed handling of missing Modbus hosts during validation
+- Fixed logic for store_false MQTT persistence redundancy flag in configuration parser
+- Fixed sanity check errors on daily counter resets for TOTAL_INCREASING sensors
 
 ### Removed
 
