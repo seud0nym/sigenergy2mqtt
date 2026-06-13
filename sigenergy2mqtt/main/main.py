@@ -86,6 +86,7 @@ def configure_logging() -> None:
                     return False
                 return True
 
+        logging.getLogger().addFilter(NoSkippedFilter())
         logging.getLogger("pymodbus").addFilter(NoSkippedFilter())
         logging.getLogger("pymodbus.logging").addFilter(NoSkippedFilter())
         logging.getLogger("pymodbus_internal").addFilter(NoSkippedFilter())
