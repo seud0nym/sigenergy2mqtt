@@ -526,11 +526,15 @@ class Config:
                 return auto_discovery_cache
             return None
 
-        # Continuous / env-driven discovery: scan ran (or was skipped because
-        # hosts are already configured).  Only pass the cache when one exists.
         if not auto_discovery_should_run:
             return None
-        return auto_discovery_cache if auto_discovery_cache.is_file() else None
+
+        # Continuous / env-driven discovery: scan ran (or was skipped because
+        # hosts are already configured).  Only pass the cache when one exists.
+        if auto_discovery_cache.is_file():
+            logging.info(f"Auto-discovery cached results found in {auto_discovery_cache}")
+            return auto_discovery_cache
+        return None
 
     def _restore_discovery_from_mqtt_sync(self, auto_discovery_cache: Path):
         try:
