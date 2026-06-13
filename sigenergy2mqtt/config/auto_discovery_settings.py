@@ -60,9 +60,14 @@ class AutoDiscoverySettings(BaseSettings):
 
     @field_validator("modbus_auto_discovery_max_device_id", mode="before")
     @classmethod
-    def validate_max_device_id(cls, v: int) -> int:
+    def validate_max_device_id(cls, v: int | str | None) -> int:
         """Validate that the max device ID is a positive integer."""
-        if not isinstance(v, int) or v <= 0:
+        if isinstance(v, str):
+            try:
+                v = int(v)
+            except ValueError:
+                raise ValueError("modbus-auto-discovery-max-device-id must be a positive integer")
+        if not isinstance(v, int) or isinstance(v, bool) or v <= 0:
             raise ValueError("modbus-auto-discovery-max-device-id must be a positive integer")
         if v > 246:
             raise ValueError("modbus-auto-discovery-max-device-id must be less than or equal to 246")
