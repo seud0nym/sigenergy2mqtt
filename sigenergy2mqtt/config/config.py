@@ -502,7 +502,7 @@ class Config:
         if auto_discovery not in ("force", "once"):
             modbus = self._settings.modbus if self._settings is not None else []
             if not modbus or any(bool(d.host == "" or d.host is None) for d in modbus):
-                logging.info("Auto-discovery required (No Modus host configured)")
+                logging.info("Auto-discovery required (No Modbus host configured)")
                 return True
         return False
 
