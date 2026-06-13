@@ -27,6 +27,7 @@ import logging
 import os
 import socket
 import sys
+import threading
 import time
 from contextlib import contextmanager
 from copy import deepcopy
@@ -442,10 +443,11 @@ class Config:
             if auto_discovery == "force" or not auto_discovery_cache.is_file():
                 include_networks = self._build_include_networks(auto_settings.modbus_auto_discovery_networks)
                 auto_discovered = self._run_auto_discovery(
-                    auto_settings.modbus_port,
-                    auto_settings.modbus_auto_discovery_ping_timeout,
-                    auto_settings.modbus_auto_discovery_timeout,
-                    auto_settings.modbus_auto_discovery_retries,
+                    port=auto_settings.modbus_port,
+                    ping_timeout=auto_settings.modbus_auto_discovery_ping_timeout,
+                    modbus_timeout=auto_settings.modbus_auto_discovery_timeout,
+                    modbus_retries=auto_settings.modbus_auto_discovery_retries,
+                    max_device_id=auto_settings.modbus_auto_discovery_max_device_id,
                     include_networks=include_networks,
                     exclude_devices=auto_settings.modbus_auto_discovery_exclude,
                 )
@@ -465,10 +467,11 @@ class Config:
             if auto_discovery == "force" or not auto_discovery_cache.is_file():
                 include_networks = self._build_include_networks(auto_settings.modbus_auto_discovery_networks)
                 auto_discovered = await self._run_auto_discovery_async(
-                    auto_settings.modbus_port,
-                    auto_settings.modbus_auto_discovery_ping_timeout,
-                    auto_settings.modbus_auto_discovery_timeout,
-                    auto_settings.modbus_auto_discovery_retries,
+                    port=auto_settings.modbus_port,
+                    ping_timeout=auto_settings.modbus_auto_discovery_ping_timeout,
+                    modbus_timeout=auto_settings.modbus_auto_discovery_timeout,
+                    modbus_retries=auto_settings.modbus_auto_discovery_retries,
+                    max_device_id=auto_settings.modbus_auto_discovery_max_device_id,
                     include_networks=include_networks,
                     exclude_devices=auto_settings.modbus_auto_discovery_exclude,
                 )
@@ -514,7 +517,13 @@ class Config:
         return auto_discovery_cache
 
     def _restore_discovery_from_mqtt_sync(self, auto_discovery_cache: Path):
-        if active_config.persistence.mqtt_redundancy:
+        try:
+            # Configuration may not be fully loaded
+            redundancy = active_config.persistence.mqtt_redundancy
+        except AttributeError:
+            redundancy = False
+
+        if redundancy:
             try:
                 from sigenergy2mqtt.persistence import state_store
 
@@ -527,7 +536,13 @@ class Config:
                 logging.debug("StateStore not available for auto-discovery restore")
 
     async def _restore_discovery_from_mqtt_async(self, auto_discovery_cache: Path):
-        if active_config.persistence.mqtt_redundancy:
+        try:
+            # Configuration may not be fully loaded
+            redundancy = active_config.persistence.mqtt_redundancy
+        except AttributeError:
+            redundancy = False
+
+        if redundancy:
             try:
                 from sigenergy2mqtt.persistence import state_store
 
@@ -705,6 +720,7 @@ class Config:
         ping_timeout: float,
         modbus_timeout: float,
         modbus_retries: int,
+        max_device_id: int,
         timeout: float = AUTODISCOVERY_DEFAULT_TIMEOUT,
         include_networks: list[str] | None = None,
         exclude_devices: list[str] | None = None,
@@ -712,7 +728,7 @@ class Config:
         """Asynchronous execution of auto-discovery scan."""
         try:
             return await asyncio.wait_for(
-                auto_discovery_scan(include_networks, exclude_devices, port, ping_timeout, modbus_timeout, modbus_retries),
+                auto_discovery_scan(include_networks, exclude_devices, port, ping_timeout, modbus_timeout, modbus_retries, max_device_id),
                 timeout=timeout,
             )
         except asyncio.TimeoutError:
@@ -728,45 +744,62 @@ class Config:
         ping_timeout: float,
         modbus_timeout: float,
         modbus_retries: int,
+        max_device_id: int = 246,
         timeout: float = AUTODISCOVERY_DEFAULT_TIMEOUT,
         include_networks: list[str] | None = None,
         exclude_devices: list[str] | None = None,
     ) -> list:
-        """Synchronous execution of auto-discovery scan (wraps async version)."""
+        """Synchronous execution of auto-discovery scan."""
         try:
             loop = asyncio.get_running_loop()
         except RuntimeError:
             loop = None
 
-        coro = auto_discovery_scan(include_networks, exclude_devices, port, ping_timeout, modbus_timeout, modbus_retries)
         if loop is None:
+
+            async def _bounded():
+                return await asyncio.wait_for(
+                    auto_discovery_scan(include_networks, exclude_devices, port, ping_timeout, modbus_timeout, modbus_retries, max_device_id),
+                    timeout=timeout,
+                )
+
             try:
-                return asyncio.run(coro)
+                return asyncio.run(_bounded())
+            except asyncio.TimeoutError:
+                logging.error(f"Auto-discovery timed out after {timeout:.1f}s")
+                return []
             except Exception:
                 logging.exception("Auto-discovery failed")
                 return []
 
-        # Fallback: if we are in a loop but must be sync, use a thread to avoid deadlock.
-        import threading
-
+        # Running inside an existing event loop — use a thread to avoid deadlock.
         result: list = []
-        exception: Exception | None = None
+        exception: BaseException | None = None
 
         def worker():
             nonlocal result, exception
+
+            async def _bounded():
+                return await asyncio.wait_for(
+                    auto_discovery_scan(include_networks, exclude_devices, port, ping_timeout, modbus_timeout, modbus_retries, max_device_id),
+                    timeout=timeout,
+                )
+
             try:
-                result = asyncio.run(coro)
+                result = asyncio.run(_bounded())
+            except asyncio.TimeoutError:
+                pass  # handled by join check below
             except Exception as e:
                 exception = e
 
         thread = threading.Thread(target=worker, name="AutoDiscoveryWorker", daemon=True)
         thread.start()
-        thread.join(timeout=timeout)
+        thread.join(timeout=timeout + 1)  # slight margin; asyncio.wait_for fires first
         if thread.is_alive():
             logging.error(f"Auto-discovery timed out after {timeout:.1f}s")
             return []
         if exception:
-            logging.error(f"Auto-discovery failed: {exception}")
+            logging.exception("Auto-discovery failed", exc_info=exception)
             return []
         return result
 

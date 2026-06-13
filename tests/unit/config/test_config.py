@@ -488,7 +488,12 @@ class TestConfigCoverageAugmentation:
             mock_thread.is_alive.return_value = False
             mock_thread_class.return_value = mock_thread
 
-            with patch("sigenergy2mqtt.config.config.asyncio.run", side_effect=Exception("Generic")):
+            def mock_run_side_effect(coro, **kwargs):
+                if hasattr(coro, "close"):
+                    coro.close()
+                raise Exception("Generic")
+
+            with patch("sigenergy2mqtt.config.config.asyncio.run", side_effect=mock_run_side_effect):
                 coros = []
 
                 async def mock_scan_side_effect(*args, **kwargs):

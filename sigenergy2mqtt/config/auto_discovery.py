@@ -285,7 +285,16 @@ async def _probe_device_id(modbus: AsyncModbusTcpClient, device_id: int, device:
                 logging.info(f" -> IGNORED PID {device_id} at {host}:{port} - serial number {serial} already discovered")
 
 
-async def scan_host(ip: str, port: int, results: list, timeout: float = 0.25, retries: int = 0, max_reconnect_attempts: int = 3, exclude_devices: list[str] = []) -> None:
+async def scan_host(
+    ip: str,
+    port: int,
+    results: list,
+    timeout: float = 0.25,
+    retries: int = 0,
+    max_reconnect_attempts: int = 3,
+    max_device_id: int = 246,
+    exclude_devices: list[str] = [],
+) -> None:
     """Connect to a single host, enumerate its Sigenergy devices, and append to results."""
     modbus = AsyncModbusTcpClient(host=ip, port=port, framer=FramerType.SOCKET, reconnect_delay=0, timeout=timeout, retries=retries)
     try:
@@ -300,26 +309,28 @@ async def scan_host(ip: str, port: int, results: list, timeout: float = 0.25, re
             logging.info(f" -> Ignored Modbus device at {ip}: No Plant running state found")
             return
 
-        logging.info(f" -> Found Sigenergy Plant at {ip}:{port}")
+        logging.info(f" -> Found Sigenergy Plant at {ip}:{port} - Scanning {'first' if max_device_id < 246 else 'all'} {max_device_id} device ID{'s' if max_device_id > 1 else ''}...")
         device = DiscoveredDevice(host=ip, port=port)
 
-        # Sequential probing of all 246 device IDs
+        # Sequential probing of up to max_device_id
         # Each probe respects the modbus_timeout, and _check_interrupted() allows
         # keyboard interrupt handling between each device scan.
-        total_device_ids = 246
         last_progress_log = 0
+        log_progress_every = max(1, max_device_id // 10)
 
-        for device_id in range(1, total_device_ids + 1):
+        for device_id in range(1, max_device_id + 1):
             _check_interrupted()
             await _probe_device_id(modbus, device_id, device, max_reconnect_attempts, exclude_devices)
 
             # Log progress every 25 device IDs scanned
-            if device_id - last_progress_log >= 25:
-                logging.info(f" -> Scanned {device_id}/{total_device_ids} device IDs on {ip}:{port}")
+            if device_id - last_progress_log >= log_progress_every:
+                logging.info(f" -> Scanned {device_id}/{max_device_id} device IDs on {ip}:{port}")
                 last_progress_log = device_id
 
         if not device.has_devices():
-            logging.info(f" -> Ignored Modbus device at {ip}:{port}: No new inverters or chargers found")
+            logging.info(f" -> Ignored Modbus device at {ip}:{port}: No new inverters or chargers found with device IDs up to {max_device_id}")
+            if max_device_id < 246:
+                logging.warning(f" -> If you have device IDs above {max_device_id} on this host, you should consider increasing --max-device-id and re-scan")
         else:
             results.append(device.to_dict())
             logging.info(
@@ -412,6 +423,7 @@ async def scan(
     ping_concurrency: int = 100,
     host_concurrency: int = 10,
     max_reconnect_attempts: int = 3,
+    max_device_id: int = 246,
 ) -> list[dict]:
     """Discover all Sigenergy plants reachable from local network interfaces.
 
@@ -458,7 +470,16 @@ async def scan(
         async def scan_with_sem(ip: str) -> None:
             _check_interrupted()
             async with sem:
-                await scan_host(ip, port, results, timeout=modbus_timeout, retries=modbus_retries, max_reconnect_attempts=max_reconnect_attempts, exclude_devices=exclude_devices or [])
+                await scan_host(
+                    ip=ip,
+                    port=port,
+                    results=results,
+                    timeout=modbus_timeout,
+                    retries=modbus_retries,
+                    max_reconnect_attempts=max_reconnect_attempts,
+                    max_device_id=max_device_id,
+                    exclude_devices=exclude_devices or [],
+                )
 
         try:
             await asyncio.gather(
@@ -528,7 +549,7 @@ if __name__ == "__main__":
         # Scan with improved connection stability (modbus_retries=3 by default)
         # Set modbus_retries higher if you see frequent reconnections,
         # or lower if you want to fail faster on unresponsive servers
-        scan_task = asyncio.ensure_future(scan(include_networks=["10.10.20.75/32"]))
+        scan_task = asyncio.ensure_future(scan(include_networks=["10.10.20.75/32"], max_device_id=10))
         done, _ = await asyncio.wait([scan_task, asyncio.ensure_future(stop_event.wait())], return_when=asyncio.FIRST_COMPLETED)
 
         if stop_event.is_set():
