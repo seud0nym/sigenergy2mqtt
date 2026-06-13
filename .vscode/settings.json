@@ -157,4 +157,5 @@
     "cSpell.maxDuplicateProblems": 1,
     "cSpell.unknownWords": "report-all",
     "cSpell.spellCheckOnlyWorkspaceFiles": true,
+    "ruff.format.preview": true,
 }
