@@ -330,7 +330,7 @@ async def scan_host(
         if not device.has_devices():
             logging.info(f" -> Ignored Modbus device at {ip}:{port}: No new inverters or chargers found with device IDs up to {max_device_id}")
             if max_device_id < 246:
-                logging.warning(f" -> If you have device IDs above {max_device_id} on this host, you should consider increasing --max-device-id and re-scan")
+                logging.warning(f" -> If you have device IDs above {max_device_id} on this host, you should consider increasing SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_MAX_DEVICE_ID and re-scan")
         else:
             results.append(device.to_dict())
             logging.info(
