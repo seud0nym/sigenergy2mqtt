@@ -40,11 +40,3 @@ updates:
       interval: "weekly"
       time: "06:00"
       timezone: "Australia/Melbourne"
-
-  # Monitor Docker base image (modbus-test-server)
-  - package-ecosystem: "docker"
-    directory: "/tests/utils"
-    schedule:
-      interval: "weekly"
-      time: "06:00"
-      timezone: "Australia/Melbourne"
