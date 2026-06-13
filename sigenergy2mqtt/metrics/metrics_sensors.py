@@ -280,6 +280,7 @@ class ModbusSkippedErrors(MetricsSensor):
             icon="mdi:counter",
             precision=0,
         )
+        self.publishable = any(device.log_skipped is False for device in active_config.modbus)
 
     async def _update_internal_state(self, **kwargs) -> bool:
         new_state = Metrics.sigenergy2mqtt_modbus_skipped_errors

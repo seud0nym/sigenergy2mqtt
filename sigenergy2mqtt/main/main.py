@@ -75,7 +75,7 @@ def configure_logging() -> None:
     _configure_logger("pymodbus.logging", modbus_log_level, propagate=False)
     _configure_logger("sigenergy2mqtt.mqtt.client", active_config.mqtt.log_level)
 
-    if modbus_log_level <= logging.ERROR and any(device.log_skipped for device in active_config.modbus):
+    if modbus_log_level <= logging.ERROR and any(device.log_skipped is False for device in active_config.modbus):
 
         class NoSkippedFilter(logging.Filter):
             # Filter out "ERROR: request ask for ... Skipping." messages
@@ -86,7 +86,9 @@ def configure_logging() -> None:
                     return False
                 return True
 
+        logging.getLogger("pymodbus").addFilter(NoSkippedFilter())
         logging.getLogger("pymodbus.logging").addFilter(NoSkippedFilter())
+        logging.getLogger("pymodbus_internal").addFilter(NoSkippedFilter())
 
 
 def _configure_logger(name: str, level: int, *, propagate: bool = True) -> None:
