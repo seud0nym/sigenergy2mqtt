@@ -507,14 +507,30 @@ class Config:
         return False
 
     def _get_final_cache_path(self, auto_discovery: str | None, auto_discovery_cache: Path, skip_auto_discovery: bool, auto_discovery_should_run: bool) -> Path | None:
-        if skip_auto_discovery or not auto_discovery_should_run:
+        # Never consult the cache when auto-discovery is completely disabled for
+        # this call (e.g. the initial preflight reload or an explicit skip).
+        if skip_auto_discovery:
             return None
-        if auto_discovery != "force" and auto_discovery_cache.is_file():
-            logging.info(f"Auto-discovery cached results found in {auto_discovery_cache}")
-            return auto_discovery_cache
-        if not auto_discovery_cache.is_file():
+
+        # "force" always re-runs discovery; the freshly-written cache (if any) is
+        # returned below via the is_file() check.
+        if auto_discovery == "force":
+            return auto_discovery_cache if auto_discovery_cache.is_file() else None
+
+        # "once" mode: discovery only runs when the cache is absent.  If it was
+        # already present (auto_discovery_should_run=False) the cache is still
+        # valid and must be returned so that _finalize_reload sees the devices.
+        if auto_discovery == "once":
+            if auto_discovery_cache.is_file():
+                logging.info(f"Auto-discovery cached results found in {auto_discovery_cache}")
+                return auto_discovery_cache
             return None
-        return auto_discovery_cache
+
+        # Continuous / env-driven discovery: scan ran (or was skipped because
+        # hosts are already configured).  Only pass the cache when one exists.
+        if not auto_discovery_should_run:
+            return None
+        return auto_discovery_cache if auto_discovery_cache.is_file() else None
 
     def _restore_discovery_from_mqtt_sync(self, auto_discovery_cache: Path):
         try:

@@ -264,6 +264,36 @@ class TestConfigReload:
                 assert cfg.modbus[0].host == "2.3.4.5"
             mock_run_auto_discovery.assert_called_once()
 
+    def test_reload_once_uses_existing_cache_without_rescanning(self, tmp_path):
+        """Regression: second restart with once+cache must load cached devices, not pass None to _finalize_reload.
+
+        When mode is "once" and the cache file already exists from a prior run,
+        _should_run_discovery returns False (no re-scan needed).  Before the fix,
+        _get_final_cache_path short-circuited on `not auto_discovery_should_run`
+        and returned None, so _finalize_reload received None and silently ignored
+        the cached device list on every subsequent restart.
+        """
+        config_file = tmp_path / "config.yaml"
+        config_file.write_text("modbus-auto-discovery: once\n")
+
+        # Pre-populate the cache exactly as a first-run would have written it
+        cache_file = tmp_path / "auto-discovery.yaml"
+        cache_file.write_text("- host: 9.8.7.6\n  port: 502\n")
+
+        with _swap_active_config(Config()) as cfg:
+            cfg._source = str(config_file)
+            cfg.persistent_state_path = tmp_path
+            with patch.dict("os.environ", {}, clear=True):
+                # Patch _run_auto_discovery so any accidental call is loud
+                with patch.object(cfg, "_run_auto_discovery", wraps=cfg._run_auto_discovery) as mock_scan:
+                    cfg.reload()
+                    # Discovery must NOT run again; cache existed
+                    mock_scan.assert_not_called()
+                # The cached host must be present in the loaded configuration
+                assert any(m.host == "9.8.7.6" for m in cfg.modbus), (
+                    "Cached device was not loaded — _finalize_reload likely received None"
+                )
+
     @patch("sigenergy2mqtt.config.config.Config._run_auto_discovery", return_value=[])
     def test_reload_does_not_toggle_skip_validation_env_var(self, mock_run_auto_discovery):
         """reload must not set internal SKIP_MODBUS_VALIDATION environment variable."""
@@ -368,7 +398,113 @@ class TestConfigPvOutput:
         assert hasattr(active_config.pvoutput, "enabled")
 
 
+class TestGetFinalCachePath:
+    """Unit tests for Config._get_final_cache_path — all decision branches."""
+
+    def _make_cfg(self) -> "Config":
+        """Return a bare Config without triggering any reload side-effects."""
+        cfg = Config.__new__(Config)
+        cfg._source = None
+        cfg._settings = None
+        return cfg
+
+    def test_skip_auto_discovery_always_returns_none(self, tmp_path):
+        """skip_auto_discovery=True must return None regardless of other flags."""
+        cache = tmp_path / "auto-discovery.yaml"
+        cache.write_text("- host: 1.2.3.4\n  port: 502\n")
+        cfg = self._make_cfg()
+        result = cfg._get_final_cache_path("once", cache, skip_auto_discovery=True, auto_discovery_should_run=True)
+        assert result is None
+
+    def test_skip_auto_discovery_returns_none_even_when_cache_missing(self, tmp_path):
+        cache = tmp_path / "auto-discovery.yaml"  # does not exist
+        cfg = self._make_cfg()
+        result = cfg._get_final_cache_path("once", cache, skip_auto_discovery=True, auto_discovery_should_run=False)
+        assert result is None
+
+    # ------------------------------------------------------------------ #
+    # "force" mode                                                         #
+    # ------------------------------------------------------------------ #
+
+    def test_force_returns_cache_when_file_exists(self, tmp_path):
+        """force mode: after scan writes cache, the path must be returned."""
+        cache = tmp_path / "auto-discovery.yaml"
+        cache.write_text("- host: 5.6.7.8\n  port: 502\n")
+        cfg = self._make_cfg()
+        result = cfg._get_final_cache_path("force", cache, skip_auto_discovery=False, auto_discovery_should_run=True)
+        assert result == cache
+
+    def test_force_returns_none_when_cache_absent(self, tmp_path):
+        """force mode: if scan produced nothing (cache not written), return None."""
+        cache = tmp_path / "auto-discovery.yaml"  # does not exist
+        cfg = self._make_cfg()
+        result = cfg._get_final_cache_path("force", cache, skip_auto_discovery=False, auto_discovery_should_run=True)
+        assert result is None
+
+    # ------------------------------------------------------------------ #
+    # "once" mode                                                          #
+    # ------------------------------------------------------------------ #
+
+    def test_once_cache_exists_returns_cache(self, tmp_path):
+        """Regression: once+cache-exists must return the cache, not None.
+
+        This is the exact scenario that caused the regression: on second and
+        subsequent restarts, the cache file exists so _should_run_discovery
+        returns False (auto_discovery_should_run=False).  The previous
+        implementation returned None here, silently losing all cached devices.
+        """
+        cache = tmp_path / "auto-discovery.yaml"
+        cache.write_text("- host: 9.8.7.6\n  port: 502\n")
+        cfg = self._make_cfg()
+        # auto_discovery_should_run is False because cache already existed
+        result = cfg._get_final_cache_path("once", cache, skip_auto_discovery=False, auto_discovery_should_run=False)
+        assert result == cache
+
+    def test_once_cache_exists_should_run_true_also_returns_cache(self, tmp_path):
+        """once+cache-exists must return cache regardless of auto_discovery_should_run value."""
+        cache = tmp_path / "auto-discovery.yaml"
+        cache.write_text("- host: 9.8.7.6\n  port: 502\n")
+        cfg = self._make_cfg()
+        result = cfg._get_final_cache_path("once", cache, skip_auto_discovery=False, auto_discovery_should_run=True)
+        assert result == cache
+
+    def test_once_cache_absent_returns_none(self, tmp_path):
+        """once mode with no cache (scan produced no results) must return None."""
+        cache = tmp_path / "auto-discovery.yaml"  # does not exist
+        cfg = self._make_cfg()
+        result = cfg._get_final_cache_path("once", cache, skip_auto_discovery=False, auto_discovery_should_run=True)
+        assert result is None
+
+    # ------------------------------------------------------------------ #
+    # Continuous / env-driven mode                                         #
+    # ------------------------------------------------------------------ #
+
+    def test_continuous_scan_ran_cache_exists_returns_cache(self, tmp_path):
+        """Continuous discovery: scan ran and cache was written — return it."""
+        cache = tmp_path / "auto-discovery.yaml"
+        cache.write_text("- host: 10.0.0.1\n  port: 502\n")
+        cfg = self._make_cfg()
+        result = cfg._get_final_cache_path(None, cache, skip_auto_discovery=False, auto_discovery_should_run=True)
+        assert result == cache
+
+    def test_continuous_scan_ran_cache_absent_returns_none(self, tmp_path):
+        """Continuous discovery: scan ran but produced nothing — cache absent, return None."""
+        cache = tmp_path / "auto-discovery.yaml"  # does not exist
+        cfg = self._make_cfg()
+        result = cfg._get_final_cache_path(None, cache, skip_auto_discovery=False, auto_discovery_should_run=True)
+        assert result is None
+
+    def test_continuous_no_scan_needed_returns_none(self, tmp_path):
+        """Continuous mode: hosts already configured (auto_discovery_should_run=False) — return None."""
+        cache = tmp_path / "auto-discovery.yaml"
+        cache.write_text("- host: 10.0.0.1\n  port: 502\n")
+        cfg = self._make_cfg()
+        result = cfg._get_final_cache_path(None, cache, skip_auto_discovery=False, auto_discovery_should_run=False)
+        assert result is None
+
+
 class TestConfigCoverageAugmentation:
+
     def test_init_persistent_state_exception(self):
         with patch("sigenergy2mqtt.config.config._create_persistent_state_path", side_effect=Exception("mocked error")):
             cfg = Config()

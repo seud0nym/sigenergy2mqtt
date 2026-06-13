@@ -138,7 +138,7 @@
     "evenBetterToml.formatter.reorderKeys": true,
     "python.analysis.diagnosticMode": "workspace",
     "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
-    "python.languageServer": "Pylance",
+    "python.languageServer": "Default",
     "python.terminal.activateEnvironment": true,
     "python.testing.pytestArgs": [
         "tests",
