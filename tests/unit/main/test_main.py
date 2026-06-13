@@ -216,30 +216,26 @@ class TestConfigureLogging:
             patch.object(active_config, "modbus", [mock_device]),
         ):
             # Reset loggers to known state
-            for name in ("pymodbus", "pymodbus.logging", "pymodbus_internal"):
-                logger = logging.getLogger(name)
-                logger.filters = []
+            logger = logging.getLogger("pymodbus.logging")
+            logger.filters = []
 
             # With log_skipped = True, filter should NOT be added
             mock_device.log_skipped = True
             main_mod.configure_logging()
-            assert not any(f.__class__.__name__ == "NoSkippedFilter" for f in logger.filters)
+            assert not any(f.__class__.__name__ == "_FramerSkipFilter" for f in logger.filters)
 
-            for name in ("pymodbus", "pymodbus.logging", "pymodbus_internal"):
-                logger = logging.getLogger(name)
+            # With log_skipped = False, filter SHOULD be added
+            mock_device.log_skipped = False
+            main_mod.configure_logging()
 
-                # With log_skipped = False, filter SHOULD be added
-                mock_device.log_skipped = False
-                main_mod.configure_logging()
+            filter_obj = next(f for f in logger.filters if f.__class__.__name__ == "_FramerSkipFilter")
+            assert filter_obj is not None
 
-                filter_obj = next(f for f in logger.filters if f.__class__.__name__ == "NoSkippedFilter")
-                assert filter_obj is not None
+            record1 = logging.LogRecord("name", logging.ERROR, "pathname", 1, "ERROR: request ask for transaction_id=2560 but got id=2559, Skipping.", None, None)
+            assert filter_obj.filter(record1) is False
 
-                record1 = logging.LogRecord("name", logging.ERROR, "pathname", 1, "ERROR: request ask for transaction_id=2560 but got id=2559, Skipping.", None, None)
-                assert filter_obj.filter(record1) is False
-
-                record2 = logging.LogRecord("name", logging.ERROR, "pathname", 1, "Some other error", None, None)
-                assert filter_obj.filter(record2) is True
+            record2 = logging.LogRecord("name", logging.ERROR, "pathname", 1, "Some other error", None, None)
+            assert filter_obj.filter(record2) is True
 
 
 class TestGetState:

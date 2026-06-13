@@ -77,19 +77,29 @@ def configure_logging() -> None:
 
     if modbus_log_level <= logging.ERROR and any(device.log_skipped is False for device in active_config.modbus):
 
-        class NoSkippedFilter(logging.Filter):
-            # Filter out "ERROR: request ask for ... Skipping." messages
-            def filter(self, record):
+        class _FramerSkipFilter(logging.Filter):
+            """Suppress dev-id / transaction-id mismatch noise from pymodbus framer."""
+
+            def filter(self, record: logging.LogRecord) -> bool:
                 msg = record.getMessage()
-                if msg.startswith("ERROR: request ask for") and msg.endswith("Skipping."):
+                if msg.startswith("ERROR: request ask for") and "Skipping." in msg:
                     Metrics.modbus_skipped_error()
                     return False
                 return True
 
-        logging.getLogger().addFilter(NoSkippedFilter())
-        logging.getLogger("pymodbus").addFilter(NoSkippedFilter())
-        logging.getLogger("pymodbus.logging").addFilter(NoSkippedFilter())
-        logging.getLogger("pymodbus_internal").addFilter(NoSkippedFilter())
+        _framer_skip_filter = _FramerSkipFilter()
+
+        # Attach to the exact logger pymodbus.Log uses, AND to each of its handlers.
+        _pymodbus_logging_logger = logging.getLogger("pymodbus.logging")
+        _pymodbus_logging_logger.addFilter(_framer_skip_filter)
+        for handler in _pymodbus_logging_logger.handlers:
+            handler.addFilter(_framer_skip_filter)
+
+        # Also cover the case where records propagate to the root before your
+        # propagate=False takes effect (e.g. if configure_logging() is called
+        # before pymodbus is fully initialised).
+        for handler in logging.getLogger().handlers:
+            handler.addFilter(_framer_skip_filter)
 
 
 def _configure_logger(name: str, level: int, *, propagate: bool = True) -> None:
