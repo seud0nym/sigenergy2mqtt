@@ -1741,7 +1741,6 @@ class PlantPVTotalGenerationToday(ReadOnlySensor, HybridInverter, PVInverter):
             precision=2,
             protocol_version=Protocol.V2_9,
         )
-        self["enabled_by_default"] = True
 
 
 class PlantPVTotalGenerationYesterday(ReadOnlySensor, HybridInverter, PVInverter):
@@ -1766,7 +1765,6 @@ class PlantPVTotalGenerationYesterday(ReadOnlySensor, HybridInverter, PVInverter
             precision=2,
             protocol_version=Protocol.V2_9,
         )
-        self["enabled_by_default"] = True
 
 
 class GridCodeRatedFrequency(ReadOnlySensor, HybridInverter, PVInverter):

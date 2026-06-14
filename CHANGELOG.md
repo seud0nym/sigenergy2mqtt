@@ -1,10 +1,11 @@
 # Changelog
 
-## [Unreleased] - 2026-06-15
+## [Unreleased]
 
 ### Fixed
 
-- PV Total Generation Today and PV Total Generation Yesterday were incorrectly classified as State class TOTAL_INCREASING, which could cause a persistent sanity check error when they reset at midnight
+- PV Total Generation Today and PV Total Generation Yesterday were incorrectly classified as State class TOTAL_INCREASING, which could cause a persistent sanity check error when they reset at midnight (#200)
+- PV Total Generation Today and PV Total Generation Yesterday were incorrectly marked as enabled by default in Home Assistant
 
 ---
 
