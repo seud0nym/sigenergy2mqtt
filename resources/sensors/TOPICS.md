@@ -1380,7 +1380,7 @@ The attributes payload currently includes:
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_pv_total_generation_today/state</td></tr>
 <tr><td>Source</td><td>Modbus Registers 30272-30273</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.9</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The delta of the value compared to the previous value must be a minimum of 0.0 kWh (raw value ≧ 0)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The delta of the value compared to the previous value must be between 0.0 kWh and 5000.0 kWh (0 ≦ raw value ≦ 500000)</td></tr>
 </table>
 <h5><a id='sigen_0_247_30274'>PV Total Generation Yesterday</a></h5>
 <table>
@@ -1393,7 +1393,7 @@ The attributes payload currently includes:
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_pv_total_generation_yesterday/state</td></tr>
 <tr><td>Source</td><td>Modbus Registers 30274-30275</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.9</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The delta of the value compared to the previous value must be a minimum of 0.0 kWh (raw value ≧ 0)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The delta of the value compared to the previous value must be between 0.0 kWh and 5000.0 kWh (0 ≦ raw value ≦ 500000)</td></tr>
 </table>
 <h5><a id='sigen_0_247_30015'>Phase A Active Power</a></h5>
 <table>
