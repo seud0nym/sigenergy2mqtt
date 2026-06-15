@@ -11,6 +11,7 @@ if [[ -z "$VIRTUAL_ENV" ]]; then
 fi
 
 git restore sigenergy2mqtt/config/version.py
+git pull
 
 echo -e "${GREEN}>>> Checking dependencies...${NC}"
 scripts/dependencies --no-upgrade
