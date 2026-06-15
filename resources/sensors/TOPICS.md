@@ -706,7 +706,7 @@ The attributes payload currently includes:
 <tr><td>Source</td><td>Modbus Registers 30064-30065</td></tr>
 <tr><td>Comment</td><td>Count only the running inverters</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 kWh and 5000.0 kWh (0 ≦ raw value ≦ 500000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -5000.0 kWh and 5000.0 kWh (-500000 ≦ raw value ≦ 500000)</td></tr>
 </table>
 <h5><a id='sigen_0_247_30047'>Available Max Charging Power</a></h5>
 <table>
@@ -734,7 +734,7 @@ The attributes payload currently includes:
 <tr><td>Source</td><td>Modbus Registers 30066-30067</td></tr>
 <tr><td>Comment</td><td>Count only the running inverters</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 kWh and 5000.0 kWh (0 ≦ raw value ≦ 500000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -5000.0 kWh and 5000.0 kWh (-500000 ≦ raw value ≦ 500000)</td></tr>
 </table>
 <h5><a id='sigen_0_247_30049'>Available Max Discharging Power</a></h5>
 <table>
@@ -1380,7 +1380,7 @@ The attributes payload currently includes:
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_pv_total_generation_today/state</td></tr>
 <tr><td>Source</td><td>Modbus Registers 30272-30273</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.9</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The delta of the value compared to the previous value must be between 0.0 kWh and 5000.0 kWh (0 ≦ raw value ≦ 500000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The delta of the value compared to the previous value must be between -5000.0 kWh and 5000.0 kWh (-500000 ≦ raw value ≦ 500000)</td></tr>
 </table>
 <h5><a id='sigen_0_247_30274'>PV Total Generation Yesterday</a></h5>
 <table>
@@ -1393,7 +1393,7 @@ The attributes payload currently includes:
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_pv_total_generation_yesterday/state</td></tr>
 <tr><td>Source</td><td>Modbus Registers 30274-30275</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.9</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The delta of the value compared to the previous value must be between 0.0 kWh and 5000.0 kWh (0 ≦ raw value ≦ 500000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The delta of the value compared to the previous value must be between -5000.0 kWh and 5000.0 kWh (-500000 ≦ raw value ≦ 500000)</td></tr>
 </table>
 <h5><a id='sigen_0_247_30015'>Phase A Active Power</a></h5>
 <table>
@@ -1715,7 +1715,7 @@ The attributes payload currently includes:
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_rated_energy_capacity/state</td></tr>
 <tr><td>Source</td><td>Modbus Registers 30083-30084</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.5</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 kWh and 5000.0 kWh (0 ≦ raw value ≦ 500000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -5000.0 kWh and 5000.0 kWh (-500000 ≦ raw value ≦ 500000)</td></tr>
 </table>
 <h5><a id='sigen_0_247_30033'>Reactive Power</a></h5>
 <table>
@@ -3572,7 +3572,7 @@ The attributes payload currently includes:
 <tr><td>Source</td><td>Modbus Registers 30595-30596</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 kWh and 5000.0 kWh (0 ≦ raw value ≦ 500000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -5000.0 kWh and 5000.0 kWh (-500000 ≦ raw value ≦ 500000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_30597'>Available Discharge Energy</a></h5>
 <table>
@@ -3586,7 +3586,7 @@ The attributes payload currently includes:
 <tr><td>Source</td><td>Modbus Registers 30597-30598</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 kWh and 5000.0 kWh (0 ≦ raw value ≦ 500000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -5000.0 kWh and 5000.0 kWh (-500000 ≦ raw value ≦ 500000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_30603'>Average Cell Temperature</a></h5>
 <table>
@@ -3831,7 +3831,7 @@ The attributes payload currently includes:
 <tr><td>Source</td><td>Modbus Registers 30548-30549</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter only</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 kWh and 5000.0 kWh (0 ≦ raw value ≦ 500000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -5000.0 kWh and 5000.0 kWh (-500000 ≦ raw value ≦ 500000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_30550'>Rated Charging Power</a></h5>
 <table>
@@ -6382,7 +6382,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Modbus Registers 31505-31506</td></tr>
 <tr><td>Comment</td><td>Single time</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The delta of the value compared to the previous value must be between 0.0 kWh and 5000.0 kWh (0 ≦ raw value ≦ 500000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The delta of the value compared to the previous value must be between -5000.0 kWh and 5000.0 kWh (-500000 ≦ raw value ≦ 500000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_31507'>Current Charging Duration</a></h5>
 <table>
@@ -6410,7 +6410,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Modbus Registers 31515-31516</td></tr>
 <tr><td>Comment</td><td>Single time</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.9</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The delta of the value compared to the previous value must be between 0.0 kWh and 5000.0 kWh (0 ≦ raw value ≦ 500000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The delta of the value compared to the previous value must be between -5000.0 kWh and 5000.0 kWh (-500000 ≦ raw value ≦ 500000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_31517'>Current Discharging Duration</a></h5>
 <table>
@@ -6529,7 +6529,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_dc_charger_1_total_charging_capacity/state</td></tr>
 <tr><td>Source</td><td>Modbus Registers 31519-31520</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.9</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The delta of the value compared to the previous value must be between 0.0 kWh and 5000.0 kWh (0 ≦ raw value ≦ 500000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The delta of the value compared to the previous value must be between -5000.0 kWh and 5000.0 kWh (-500000 ≦ raw value ≦ 500000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_31521'>Total Discharging Capacity</a></h5>
 <table>
@@ -6542,7 +6542,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_dc_charger_1_total_discharging_capacity/state</td></tr>
 <tr><td>Source</td><td>Modbus Registers 31521-31522</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.9</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The delta of the value compared to the previous value must be between 0.0 kWh and 5000.0 kWh (0 ≦ raw value ≦ 500000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The delta of the value compared to the previous value must be between -5000.0 kWh and 5000.0 kWh (-500000 ≦ raw value ≦ 500000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_31500'>Vehicle Battery Voltage</a></h5>
 <table>
