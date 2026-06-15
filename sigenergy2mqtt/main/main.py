@@ -395,8 +395,12 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
 
     for plant_index, device in enumerate(devices):
         if not (device.registers.read_only or device.registers.read_write or device.registers.write_only):
-            logging.info(f"Ignored Modbus host {device.host} (device index {plant_index}): all registers are disabled (read-only=false read-write=false write-only=false)")
+            logging.info(f"Ignored configured host modbus://{device.host}:{device.port} (Plant Index = {plant_index}): All registers are disabled (read-only=false read-write=false write-only=false)")
             continue
+
+        logging.info(
+            f"Creating devices from configured host modbus://{device.host}:{device.port} (Plant: {plant_index}, Device IDs: Inverter={device.inverters} AC Charger={device.ac_chargers} DC Charger={device.dc_chargers} PSS={device.pss} PID={device.pid})"
+        )
 
         config: ThreadConfig = ThreadConfig.create(device.host, device.port, device.timeout, device.retries)
         modbus = ModbusClient(device.host, port=device.port, timeout=device.timeout, retries=device.retries)

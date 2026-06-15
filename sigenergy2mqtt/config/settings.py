@@ -282,22 +282,11 @@ class Settings(BaseSettings):
             elif is_discovery:
                 source = "auto-discovery YAML"
             elif is_file_env:
-                source = "other sources (file/env/cli)"
+                source = "file/env/cli"
             else:
-                source = "other sources (file/env/cli)"
+                source = "file/env/cli"
 
-            msg = f"Configuring modbus://{hp} from {source}"
-            ids_info = []
-            if device.inverters:
-                ids_info.append(f"inverters: {device.inverters}")
-            if device.dc_chargers:
-                ids_info.append(f"dc-chargers: {device.dc_chargers}")
-            if device.ac_chargers:
-                ids_info.append(f"ac-chargers: {device.ac_chargers}")
-            if ids_info:
-                msg += f" with {', '.join(ids_info)}"
-
-            logging.info(msg)
+            logging.debug(f"Configuration for modbus://{hp} derived from {source}")
 
     # ── Source customisation ──────────────────────────────────────────────────
 

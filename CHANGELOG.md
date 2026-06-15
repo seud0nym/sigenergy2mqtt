@@ -2,10 +2,15 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Reduced log noise by demoting config sourcing to debug and improving device discovery log details
+
 ### Fixed
 
 - PV Total Generation Today and PV Total Generation Yesterday were incorrectly classified as State class TOTAL_INCREASING, which could cause a persistent sanity check error when they reset at midnight (#200)
 - PV Total Generation Today and PV Total Generation Yesterday were incorrectly marked as enabled by default in Home Assistant
+- Set negative delta range limits for unsigned integer types in sanity checks, because a delta can be less than zero
 
 ---
 
