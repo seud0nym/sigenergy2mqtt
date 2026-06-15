@@ -75,19 +75,19 @@ class SanityCheck:
                 self.min_raw = -32768
                 self.max_raw = 32767
             case ModbusDataType.UINT16:
-                self.min_raw = 0 if not self.delta else 65535
+                self.min_raw = 0 if not self.delta else -65535
                 self.max_raw = 65535
             case ModbusDataType.INT32:
                 self.min_raw = -2147483648
                 self.max_raw = 2147483647
             case ModbusDataType.UINT32:
-                self.min_raw = 0 if not self.delta else 4294967295
+                self.min_raw = 0 if not self.delta else -4294967295
                 self.max_raw = 4294967295
             case ModbusDataType.INT64:
                 self.min_raw = -9223372036854775808
                 self.max_raw = 9223372036854775807
             case ModbusDataType.UINT64:
-                self.min_raw = 0 if not self.delta else 18446744073709551615
+                self.min_raw = 0 if not self.delta else -18446744073709551615
                 self.max_raw = 18446744073709551615
             case _:
                 # Unknown data types - no default ranges
