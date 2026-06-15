@@ -22,11 +22,15 @@ class TestSanityCheck:
 
         sc = SanityCheck(unit="kWh", state_class=None, data_type=ModbusClient.DATATYPE.UINT32, device_class=DeviceClass.ENERGY)
         assert sc.delta is True
-        assert sc.min_raw == 0
+        assert sc.min_raw == -500000.0
 
     def test_check_value_in_range(self):
         sc = SanityCheck(min_raw=0, max_raw=100, delta=False)
         assert sc.is_sane(50, []) is True
+
+    def test_check_negative_value_in_range(self):
+        sc = SanityCheck(min_raw=-100, max_raw=0, delta=False)
+        assert sc.is_sane(-50, []) is True
 
     def test_check_value_out_of_range(self):
         sc = SanityCheck(min_raw=0, max_raw=100, delta=False)
@@ -47,27 +51,49 @@ class TestSanityCheck:
         with pytest.raises(SanityCheckException):
             sc.is_sane(120, [(0, 100)])
 
+    def test_check_delta_uint_valid(self):
+        sc = SanityCheck(delta=True, data_type=ModbusClient.DATATYPE.UINT32)
+        # Previous state: 100, Current state: 110. Delta = -10. Valid.
+        # Note: previous_states is list[tuple[timestamp, value]]
+        assert sc.is_sane(100, [(0, 110)]) is True
+
     def test_init_all_datatypes(self):
         from sigenergy2mqtt.modbus import ModbusDataType
 
         # Note: SanityCheck.min_raw is capped at max_raw * -1 for signed types
-        assert SanityCheck(data_type=ModbusDataType.INT16).min_raw == -32767
-        assert SanityCheck(data_type=ModbusDataType.INT16).max_raw == 32767
+        assert SanityCheck(data_type=ModbusDataType.INT16, delta=False).min_raw == -32767
+        assert SanityCheck(data_type=ModbusDataType.INT16, delta=False).max_raw == 32767
 
-        sc = SanityCheck(data_type=ModbusDataType.INT32)
+        sc = SanityCheck(data_type=ModbusDataType.INT32, delta=False)
         assert sc.min_raw == -2147483647
         assert sc.max_raw == 2147483647
 
-        sc = SanityCheck(data_type=ModbusDataType.UINT32)
-        assert sc.min_raw == 0
-        assert sc.max_raw == 4294967295
-
-        sc = SanityCheck(data_type=ModbusDataType.INT64)
+        sc = SanityCheck(data_type=ModbusDataType.INT64, delta=False)
         assert sc.min_raw == -9223372036854775807
         assert sc.max_raw == 9223372036854775807
 
-        sc = SanityCheck(data_type=ModbusDataType.UINT64)
+        sc = SanityCheck(data_type=ModbusDataType.UINT16, delta=False)
         assert sc.min_raw == 0
+        assert sc.max_raw == 65535
+
+        sc = SanityCheck(data_type=ModbusDataType.UINT32, delta=False)
+        assert sc.min_raw == 0
+        assert sc.max_raw == 4294967295
+
+        sc = SanityCheck(data_type=ModbusDataType.UINT64, delta=False)
+        assert sc.min_raw == 0
+        assert sc.max_raw == 18446744073709551615
+
+        sc = SanityCheck(data_type=ModbusDataType.UINT16, delta=True)
+        assert sc.min_raw == -65535
+        assert sc.max_raw == 65535
+
+        sc = SanityCheck(data_type=ModbusDataType.UINT32, delta=True)
+        assert sc.min_raw == -4294967295
+        assert sc.max_raw == 4294967295
+
+        sc = SanityCheck(data_type=ModbusDataType.UINT64, delta=True)
+        assert sc.min_raw == -18446744073709551615
         assert sc.max_raw == 18446744073709551615
 
     def test_init_percentage(self):

@@ -745,9 +745,15 @@ class CustomDataBlock:
             return (randint(lo, hi), "min_max")
         if sensor.sanity_check.min_raw is not None and sensor.sanity_check.max_raw is not None:
             if sensor.sanity_check.delta:
-                raw = sensor.sanity_check.min_raw + randint(0, int(sensor.sanity_check.max_raw - sensor.sanity_check.min_raw) // sensor.sanity_check.delta) * sensor.sanity_check.delta
+                if sensor.data_type in (ModbusClientMixin.DATATYPE.UINT16, ModbusClientMixin.DATATYPE.UINT32, ModbusClientMixin.DATATYPE.UINT64):
+                    raw = randint(0, int(sensor.sanity_check.max_raw))
+                else:
+                    raw = sensor.sanity_check.min_raw + randint(0, int(sensor.sanity_check.max_raw - sensor.sanity_check.min_raw) // sensor.sanity_check.delta) * sensor.sanity_check.delta
             else:
-                raw = randint(int(sensor.sanity_check.min_raw), int(sensor.sanity_check.max_raw))
+                raw = randint(
+                    0 if sensor.data_type in (ModbusClientMixin.DATATYPE.UINT16, ModbusClientMixin.DATATYPE.UINT32, ModbusClientMixin.DATATYPE.UINT64) else int(sensor.sanity_check.min_raw),
+                    int(sensor.sanity_check.max_raw),
+                )
             return (raw / sensor.gain, "sanity_check")
 
         # Fall back to the full range of the sensor's data type.
