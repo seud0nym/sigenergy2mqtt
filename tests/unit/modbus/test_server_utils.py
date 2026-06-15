@@ -166,8 +166,8 @@ def test_get_initial_value_covers_primary_branches(monkeypatch):
     with_options = FakeSensor(device_class=DeviceClass.ENUM)
     assert block._get_initial_value(with_options) == (0, "options")
 
-    with_sanity_delta = FakeSensor()
-    with_sanity_delta.sanity_check = SimpleNamespace(min_raw=10, max_raw=20, delta=2)
+    with_sanity_delta = FakeSensor(data_type=ModbusClientMixin.DATATYPE.INT16)
+    with_sanity_delta.sanity_check = SimpleNamespace(min_raw=10, max_raw=20, delta=True)
     assert block._get_initial_value(with_sanity_delta) == (10, "sanity_check")
 
 
