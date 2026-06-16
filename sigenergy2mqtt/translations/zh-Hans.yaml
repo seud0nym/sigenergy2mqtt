@@ -2918,6 +2918,8 @@ cli:
     help: PVOutput系统ID
   SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC:
     help: "发送到 PVOutput 的当前温度来源。你可以指定直接 MQTT 主题（或 mqtt:<topic>），或 Home Assistant 传感器实体 ID（sensor.<id> 或 ha:sensor.<id>，仅限 app）。如果未指定，则不会向 PVOutput 发送温度。"
+  SIGENERGY2MQTT_PVOUTPUT_UPLOAD_LOG_LEVEL:
+    help: '设置 PVOutput 上传日志消息的日志级别。有效值为：DEBUG、INFO、WARNING、ERROR 或 CRITICAL。默认为信息'
   SIGENERGY2MQTT_PVOUTPUT_VOLTAGE:
     help: PVOutput电压值来源。默认：'l/n-avg'。
   SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL:

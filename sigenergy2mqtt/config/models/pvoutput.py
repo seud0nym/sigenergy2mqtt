@@ -48,6 +48,8 @@ class PvOutputConfig(BaseModel):
     )
     log_level: int = Field(logging.CRITICAL, alias="log-level")
     _validate_log_level = field_validator("log_level", mode="before")(validate_log_level)
+    upload_log_level: int = Field(logging.INFO, alias="upload-log-level")
+    _validate_upload_log_level = field_validator("upload_log_level", mode="before")(validate_log_level)
     calc_debug_logging: bool = Field(False, alias="calc-debug-logging")
     update_debug_logging: bool = Field(False, alias="update-debug-logging")
     tariffs: list[Any] = Field(default_factory=list, alias="time-periods")

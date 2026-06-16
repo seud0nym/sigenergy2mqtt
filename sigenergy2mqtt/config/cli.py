@@ -575,6 +575,14 @@ def get_parser() -> argparse.ArgumentParser:
         default=os.getenv(const.SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL, None),
         help="Set the PVOutput log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)",
     )
+    parser.add_argument(
+        "--pvoutput-upload-log-level",
+        action="store",
+        dest=const.SIGENERGY2MQTT_PVOUTPUT_UPLOAD_LOG_LEVEL,
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        default=os.getenv(const.SIGENERGY2MQTT_PVOUTPUT_UPLOAD_LOG_LEVEL, None),
+        help="Set the log level for PVOutput upload log messages. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is INFO",
+    )
     # endregion
 
     # region InfluxDB Configuration

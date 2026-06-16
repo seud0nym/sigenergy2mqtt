@@ -139,6 +139,7 @@ def yaml_to_env(yaml_data):
         set_env(const.SIGENERGY2MQTT_PVOUTPUT_EXT_V11, pvo.get("v11"))
         set_env(const.SIGENERGY2MQTT_PVOUTPUT_EXT_V12, pvo.get("v12"))
         set_env(const.SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL, pvo.get("log-level"))
+        set_env(const.SIGENERGY2MQTT_PVOUTPUT_UPLOAD_LOG_LEVEL, pvo.get("upload-log-level"))
         set_env(const.SIGENERGY2MQTT_PVOUTPUT_CALC_DEBUG_LOGGING, pvo.get("calc-debug-logging"))
         set_env(const.SIGENERGY2MQTT_PVOUTPUT_UPDATE_DEBUG_LOGGING, pvo.get("update-debug-logging"))
         set_env(const.SIGENERGY2MQTT_PVOUTPUT_PERIODS_JSON, pvo.get("time-periods"))

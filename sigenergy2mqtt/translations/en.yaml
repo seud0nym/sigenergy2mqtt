@@ -2918,6 +2918,8 @@ cli:
     help: The PVOutput System ID
   SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC:
     help: A source for the current temperature sent to PVOutput. You can specify a direct MQTT topic (or mqtt:<topic>), or a Home Assistant sensor entity id (sensor.<id> or ha:sensor.<id>, app only). If not specified, the temperature will not be sent to PVOutput.
+  SIGENERGY2MQTT_PVOUTPUT_UPLOAD_LOG_LEVEL:
+    help: 'Set the log level for PVOutput upload log messages. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is INFO'
   SIGENERGY2MQTT_PVOUTPUT_VOLTAGE:
     help: "The source of the voltage value to be sent to PVOutput. Valid values are: phase-a, phase-b, phase-c, l/n-avg (line to neutral average), l/l-avg (line to line average) or pv (average across PV strings). If not specified, defaults to 'l/n-avg'."
   SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL:
