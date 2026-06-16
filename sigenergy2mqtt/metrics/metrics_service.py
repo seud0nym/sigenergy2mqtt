@@ -23,9 +23,9 @@ class MetricsService(Device):
     """
     Virtual device that exposes sigenergy2mqtt runtime metrics as Home Assistant sensors.
 
-    All sensor entities are registered in ``__init__``. InfluxDB sensors are
-    only added when InfluxDB is enabled in the active configuration. The
-    service publishes ``sigenergy2mqtt/status online`` on commencement and
+    All sensor entities are registered in ``__init__``.
+
+    The service publishes ``sigenergy2mqtt/status online`` on commencement and
     ``offline`` on completion so that all metrics sensors reflect availability
     correctly via their shared availability topic.
     """
