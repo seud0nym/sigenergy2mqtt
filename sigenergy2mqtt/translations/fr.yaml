@@ -2190,6 +2190,18 @@ class:
     name: Ajouter Service de Sortie PVOutput
   PVOutputStatusService:
     name: Ajouter Service de Statut PVOutput
+  PVOutputUploadErrors:
+    name: Erreurs de téléchargement PVOutput
+  PVOutputUploadMax:
+    name: PVSortie Téléchargement Max.
+  PVOutputUploadMean:
+    name: Moyenne de téléchargement PVOutput
+  PVOutputUploadMin:
+    name: PVSortie Téléchargement Min.
+  PVOutputUploadSkipped:
+    name: Téléchargement PVOutput ignoré
+  PVOutputUploads:
+    name: Téléchargements PVOutput
   PVString:
     name: '{model_id} {serial_number} Chaîne PV {string_number}'
   PVStringCount:

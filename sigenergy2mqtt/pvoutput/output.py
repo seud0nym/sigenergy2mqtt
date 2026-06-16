@@ -17,6 +17,7 @@ import requests
 
 from sigenergy2mqtt.common.output_field import OutputField
 from sigenergy2mqtt.config import active_config
+from sigenergy2mqtt.metrics import Metrics
 from sigenergy2mqtt.mqtt import MqttHandler
 
 from .service import Service
@@ -218,14 +219,16 @@ class PVOutputOutputService(Service):
         uploaded: bool = False
         changed: bool = self._is_payload_changed(payload)
         matches: bool = False
+        skipped: bool = False
         attempt: int = 0
         for i in range(1, upload_retries + 1, 1):
             attempt = i
             if changed:
                 uploaded = await self.upload_payload("https://pvoutput.org/service/r2/addoutput.jsp", payload)
+                skipped = False
             else:
                 uploaded = False
-                self.logger.log(active_config.pvoutput.upload_log_level, f"{self.log_identity} Skipped uploading unchanged {payload=}")
+                skipped = True
             if last_upload_of_day:
                 matches = await self._verify(payload, force=last_upload_of_day)
                 if matches:
@@ -236,6 +239,9 @@ class PVOutputOutputService(Service):
                         break
             elif uploaded:
                 break
+        if skipped:
+            await Metrics.pvoutput_upload_skipped()
+            self.logger.log(active_config.pvoutput.upload_log_level, f"{self.log_identity} Skipped uploading unchanged {payload=}")
         self.logger.debug(f"{self.log_identity} Upload completed for {payload=}: {changed=} {uploaded=} attempts={attempt} verified={matches} ({last_upload_of_day=})")
         if changed and active_config.pvoutput.output_hour == -1:
             self._previous_payload = payload

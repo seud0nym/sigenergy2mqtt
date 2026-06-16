@@ -2190,6 +2190,18 @@ class:
     name: Adicionar Serviço de Saída PVOutput
   PVOutputStatusService:
     name: Adicionar Serviço de Estado PVOutput
+  PVOutputUploadErrors:
+    name: Erros de upload de PVOutput
+  PVOutputUploadMax:
+    name: Máximo de upload de saída PV
+  PVOutputUploadMean:
+    name: Média de upload de PVOutput
+  PVOutputUploadMin:
+    name: Mínimo de upload de saída PV
+  PVOutputUploadSkipped:
+    name: Carregamento de PVOutput ignorado
+  PVOutputUploads:
+    name: Carregamentos de saída PV
   PVString:
     name: '{model_id} {serial_number} String PV {string_number}'
   PVStringCount:

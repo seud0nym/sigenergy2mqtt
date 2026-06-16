@@ -796,6 +796,128 @@ class StateStoreDeleteErrors(MetricsSensor):
 
 
 # =============================================================================
+# PVOutput Metrics Sensors
+# =============================================================================
+
+
+class PVOutputUploads(MetricsSensor):
+    """Cumulative count of PVOutput upload operations."""
+
+    def __init__(self):
+        super().__init__(
+            name="PVOutput Uploads",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_pvoutput_uploads",
+            object_id="sigenergy2mqtt_pvoutput_uploads",
+            icon="mdi:cloud-upload",
+            precision=0,
+        )
+        self.publishable = active_config.pvoutput.enabled
+
+    async def _update_internal_state(self, **kwargs) -> bool:
+        self.set_latest_state(Metrics.sigenergy2mqtt_pvoutput_uploads)
+        return True
+
+
+class PVOutputUploadErrors(MetricsSensor):
+    """Cumulative count of PVOutput upload errors."""
+
+    def __init__(self):
+        super().__init__(
+            name="PVOutput Upload Errors",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_pvoutput_upload_errors",
+            object_id="sigenergy2mqtt_pvoutput_upload_errors",
+            icon="mdi:cloud-alert",
+            precision=0,
+        )
+        self.publishable = active_config.pvoutput.enabled
+
+    async def _update_internal_state(self, **kwargs) -> bool:
+        self.set_latest_state(Metrics.sigenergy2mqtt_pvoutput_upload_errors)
+        return True
+
+
+class PVOutputUploadSkipped(MetricsSensor):
+    """Cumulative count of skipped PVOutput uploads."""
+
+    def __init__(self):
+        super().__init__(
+            name="PVOutput Upload Skipped",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_pvoutput_upload_skipped",
+            object_id="sigenergy2mqtt_pvoutput_upload_skipped",
+            icon="mdi:cloud-off-outline",
+            precision=0,
+        )
+        self.publishable = active_config.pvoutput.enabled
+
+    async def _update_internal_state(self, **kwargs) -> bool:
+        self.set_latest_state(Metrics.sigenergy2mqtt_pvoutput_upload_skipped)
+        return True
+
+
+class PVOutputUploadMax(MetricsSensor):
+    """Maximum single PVOutput upload duration in milliseconds."""
+
+    def __init__(self):
+        super().__init__(
+            name="PVOutput Upload Max",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_pvoutput_upload_max",
+            object_id="sigenergy2mqtt_pvoutput_upload_max",
+            unit="ms",
+            icon="mdi:timer-plus-outline",
+            precision=2,
+        )
+        self.publishable = active_config.pvoutput.enabled
+
+    async def _update_internal_state(self, **kwargs) -> bool:
+        value = Metrics.sigenergy2mqtt_pvoutput_upload_max
+        if value == float("inf"):
+            value = 0.0
+        self.set_latest_state(value)
+        return True
+
+
+class PVOutputUploadMean(MetricsSensor):
+    """Mean PVOutput upload duration per upload call, in milliseconds."""
+
+    def __init__(self):
+        super().__init__(
+            name="PVOutput Upload Mean",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_pvoutput_upload_mean",
+            object_id="sigenergy2mqtt_pvoutput_upload_mean",
+            unit="ms",
+            icon="mdi:timer-outline",
+            precision=2,
+        )
+        self.publishable = active_config.pvoutput.enabled
+
+    async def _update_internal_state(self, **kwargs) -> bool:
+        self.set_latest_state(Metrics.sigenergy2mqtt_pvoutput_upload_mean)
+        return True
+
+
+class PVOutputUploadMin(MetricsSensor):
+    """Minimum single PVOutput upload duration in milliseconds."""
+
+    def __init__(self):
+        super().__init__(
+            name="PVOutput Upload Min",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_pvoutput_upload_min",
+            object_id="sigenergy2mqtt_pvoutput_upload_min",
+            unit="ms",
+            icon="mdi:timer-minus-outline",
+            precision=2,
+        )
+        self.publishable = active_config.pvoutput.enabled
+
+    async def _update_internal_state(self, **kwargs) -> bool:
+        value = Metrics.sigenergy2mqtt_pvoutput_upload_min
+        if value == float("inf"):
+            value = 0.0
+        self.set_latest_state(value)
+        return True
+
+
+# =============================================================================
 # Reset control
 # =============================================================================
 

@@ -2190,6 +2190,18 @@ class:
     name: PVOutput 출력 서비스 추가
   PVOutputStatusService:
     name: PVOutput 상태 서비스 추가
+  PVOutputUploadErrors:
+    name: PVOutput 업로드 오류
+  PVOutputUploadMax:
+    name: PVOutput 업로드 최대
+  PVOutputUploadMean:
+    name: PVOutput 업로드 평균
+  PVOutputUploadMin:
+    name: PVOutput 업로드 최소
+  PVOutputUploadSkipped:
+    name: PVOutput 업로드를 건너뛰었습니다.
+  PVOutputUploads:
+    name: PV출력 업로드
   PVString:
     name: '{model_id} {serial_number} PV 스트링 {string_number}'
   PVStringCount:

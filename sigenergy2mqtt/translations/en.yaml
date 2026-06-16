@@ -2190,6 +2190,18 @@ class:
     name: PVOutput Add Output Service
   PVOutputStatusService:
     name: PVOutput Add Status Service
+  PVOutputUploadErrors:
+    name: PVOutput Upload Errors
+  PVOutputUploadMax:
+    name: PVOutput Upload Max
+  PVOutputUploadMean:
+    name: PVOutput Upload Mean
+  PVOutputUploadMin:
+    name: PVOutput Upload Min
+  PVOutputUploadSkipped:
+    name: PVOutput Upload Skipped
+  PVOutputUploads:
+    name: PVOutput Uploads
   PVString:
     name: '{model_id} {serial_number} PV String {string_number}'
   PVStringCount:
