@@ -26,6 +26,7 @@ from .topic import Topic
 
 class PVOutputOutputService(Service):
     """Upload daily PVOutput output records from aggregated MQTT topic state."""
+
     def __init__(self, logger: logging.Logger, topics: dict[OutputField, list[Topic]]):
         """Build output field aggregators and register configured MQTT topics.
 
@@ -224,7 +225,7 @@ class PVOutputOutputService(Service):
                 uploaded = await self.upload_payload("https://pvoutput.org/service/r2/addoutput.jsp", payload)
             else:
                 uploaded = False
-                self.logger.info(f"{self.log_identity} Skipped uploading unchanged {payload=}")
+                self.logger.log(active_config.pvoutput.upload_log_level, f"{self.log_identity} Skipped uploading unchanged {payload=}")
             if last_upload_of_day:
                 matches = await self._verify(payload, force=last_upload_of_day)
                 if matches:
@@ -246,6 +247,7 @@ class PVOutputOutputService(Service):
             modbus_client: Modbus client reference (unused).
             mqtt_client: MQTT client reference (unused).
         """
+
         async def publish_updates(modbus_client: Any, mqtt_client: Any, *sensors: Any) -> None:
             minute: int = randint(56, 59)
             next: float = await self._next_output_upload(minute)
