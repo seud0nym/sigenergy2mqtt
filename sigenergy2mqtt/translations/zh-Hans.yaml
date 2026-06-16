@@ -2190,6 +2190,18 @@ class:
     name: 添加PVOutput输出服务
   PVOutputStatusService:
     name: 添加PVOutput状态服务
+  PVOutputUploadErrors:
+    name: PVOutput 上传错误
+  PVOutputUploadMax:
+    name: PV输出上传最大值
+  PVOutputUploadMean:
+    name: PV输出上传平均值
+  PVOutputUploadMin:
+    name: PV输出上传最小值
+  PVOutputUploadSkipped:
+    name: PVOutput 上传已跳过
+  PVOutputUploads:
+    name: PV输出上传
   PVString:
     name: '{model_id} {serial_number} 光伏组串 {string_number}'
   PVStringCount:

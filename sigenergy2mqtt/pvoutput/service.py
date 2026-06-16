@@ -15,6 +15,7 @@ from requests.structures import CaseInsensitiveDict
 from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import Device
+from sigenergy2mqtt.metrics import Metrics
 
 
 class Service(Device):
@@ -170,6 +171,7 @@ class Service(Device):
         attempts: int = 0
         for i in range(1, 4, 1):
             attempts = i
+            attempt_start_time = time.monotonic()
             try:
                 if active_config.pvoutput.testing:
                     uploaded = True
@@ -185,14 +187,17 @@ class Service(Device):
                     limit, remaining, at, reset = self.get_response_headers(response)
                     if response.status_code == 200:
                         uploaded = True
+                        await Metrics.pvoutput_upload(time.monotonic() - attempt_start_time)
                         self.logger.debug(
                             f"{self.log_identity} Attempt #{i} OKAY status_code={response.status_code} {limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))} ({reset}s)"
                         )
                         break
                     else:
+                        await Metrics.pvoutput_upload_error()
                         response.raise_for_status()
                         break
             except requests.exceptions.HTTPError as exc:
+                await Metrics.pvoutput_upload_error()
                 response = exc.response
                 limit, remaining, at, reset = self.get_response_headers(response)
                 if response.status_code == 400:
@@ -201,10 +206,13 @@ class Service(Device):
                 else:
                     self.logger.error(f"{self.log_identity} Attempt #{i} HTTP Error: {exc} ({limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))})")
             except requests.exceptions.ConnectionError as exc:
+                await Metrics.pvoutput_upload_error()
                 self.logger.error(f"{self.log_identity} Attempt #{i} Error Connecting: {exc}")
             except requests.exceptions.Timeout as exc:
+                await Metrics.pvoutput_upload_error()
                 self.logger.error(f"{self.log_identity} Attempt #{i} Timeout Error: {exc}")
             except Exception as exc:
+                await Metrics.pvoutput_upload_error()
                 self.logger.error(f"{self.log_identity} {exc}")
             if (
                 response.status_code is not None

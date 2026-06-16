@@ -2190,6 +2190,18 @@ class:
     name: PVOutput Ausgabe-Service hinzufügen
   PVOutputStatusService:
     name: PVOutput Status-Service hinzufügen
+  PVOutputUploadErrors:
+    name: PVOutput-Upload-Fehler
+  PVOutputUploadMax:
+    name: PVOutput Hochladen Max
+  PVOutputUploadMean:
+    name: PVOutput-Upload-Mittelwert
+  PVOutputUploadMin:
+    name: PVOutput-Upload Min
+  PVOutputUploadSkipped:
+    name: PVOutput-Upload übersprungen
+  PVOutputUploads:
+    name: PVOutput-Uploads
   PVString:
     name: '{model_id} {serial_number} PV String {string_number}' # verify:ignore
   PVStringCount:

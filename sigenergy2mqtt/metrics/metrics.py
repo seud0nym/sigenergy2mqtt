@@ -191,6 +191,31 @@ class Metrics:
     """Number of StateStore delete errors."""
 
     # ------------------------------------------------------------------
+    # PVOutput metrics
+    # ------------------------------------------------------------------
+
+    sigenergy2mqtt_pvoutput_uploads: int = 0
+    """Total number of PVOutput upload operations."""
+
+    sigenergy2mqtt_pvoutput_upload_errors: int = 0
+    """Number of PVOutput upload errors."""
+
+    sigenergy2mqtt_pvoutput_upload_skipped: int = 0
+    """Number of skipped PVOutput uploads."""
+
+    sigenergy2mqtt_pvoutput_upload_total: float = 0.0
+    """Cumulative elapsed time of all PVOutput uploads, in milliseconds."""
+
+    sigenergy2mqtt_pvoutput_upload_max: float = 0.0
+    """Maximum single PVOutput upload duration, in milliseconds."""
+
+    sigenergy2mqtt_pvoutput_upload_mean: float = 0.0
+    """Mean PVOutput upload duration per upload call, in milliseconds."""
+
+    sigenergy2mqtt_pvoutput_upload_min: float = float("inf")
+    """Minimum single PVOutput upload duration, in milliseconds."""
+
+    # ------------------------------------------------------------------
     # Service identity
     # ------------------------------------------------------------------
 
@@ -679,6 +704,52 @@ class Metrics:
                 cls.sigenergy2mqtt_state_store_delete_errors += 1
 
             cls._update_with_lock(_operation, "state store delete error metrics collection")
+
+        cls._submit(_update)
+
+    @classmethod
+    async def pvoutput_upload(cls, seconds: float) -> None:
+        """
+        Record a completed PVOutput upload operation.
+
+        Args:
+            seconds: Wall-clock duration of the operation in seconds.
+        """
+
+        def _update() -> None:
+            def _operation() -> None:
+                elapsed = seconds * 1000.0
+                cls.sigenergy2mqtt_pvoutput_uploads += 1
+                cls.sigenergy2mqtt_pvoutput_upload_total += elapsed
+                cls.sigenergy2mqtt_pvoutput_upload_max = max(cls.sigenergy2mqtt_pvoutput_upload_max, elapsed)
+                cls.sigenergy2mqtt_pvoutput_upload_min = min(cls.sigenergy2mqtt_pvoutput_upload_min, elapsed)
+                cls.sigenergy2mqtt_pvoutput_upload_mean = cls.sigenergy2mqtt_pvoutput_upload_total / cls.sigenergy2mqtt_pvoutput_uploads if cls.sigenergy2mqtt_pvoutput_uploads > 0 else 0.0
+
+            cls._update_with_lock(_operation, "pvoutput upload metrics collection")
+
+        cls._submit(_update)
+
+    @classmethod
+    async def pvoutput_upload_error(cls) -> None:
+        """Increment the PVOutput upload error counter."""
+
+        def _update() -> None:
+            def _operation() -> None:
+                cls.sigenergy2mqtt_pvoutput_upload_errors += 1
+
+            cls._update_with_lock(_operation, "pvoutput upload error metrics collection")
+
+        cls._submit(_update)
+
+    @classmethod
+    async def pvoutput_upload_skipped(cls) -> None:
+        """Increment the PVOutput upload skipped counter."""
+
+        def _update() -> None:
+            def _operation() -> None:
+                cls.sigenergy2mqtt_pvoutput_upload_skipped += 1
+
+            cls._update_with_lock(_operation, "pvoutput upload skipped metrics collection")
 
         cls._submit(_update)
 

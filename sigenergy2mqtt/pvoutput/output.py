@@ -224,6 +224,9 @@ class PVOutputOutputService(Service):
             if changed:
                 uploaded = await self.upload_payload("https://pvoutput.org/service/r2/addoutput.jsp", payload)
             else:
+                from sigenergy2mqtt.metrics import Metrics
+
+                await Metrics.pvoutput_upload_skipped()
                 uploaded = False
                 self.logger.log(active_config.pvoutput.upload_log_level, f"{self.log_identity} Skipped uploading unchanged {payload=}")
             if last_upload_of_day:

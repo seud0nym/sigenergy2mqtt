@@ -60,6 +60,13 @@ class MetricsService(Device):
         self._add_sensor(sensors.MQTTPublishFailures())
         self._add_sensor(sensors.MQTTPhysicalPublishes())
 
+        self._add_sensor(sensors.PVOutputUploads())
+        self._add_sensor(sensors.PVOutputUploadErrors())
+        self._add_sensor(sensors.PVOutputUploadSkipped())
+        self._add_sensor(sensors.PVOutputUploadMax())
+        self._add_sensor(sensors.PVOutputUploadMean())
+        self._add_sensor(sensors.PVOutputUploadMin())
+
         self._add_sensor(sensors.StateStoreSaves())
         self._add_sensor(sensors.StateStoreSaveErrors())
         self._add_sensor(sensors.StateStoreSaveMax())
