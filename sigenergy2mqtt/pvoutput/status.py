@@ -15,6 +15,7 @@ import requests  # pyrefly: ignore
 from sigenergy2mqtt.common.status_field import StatusField
 from sigenergy2mqtt.common.voltage_source import VoltageSource
 from sigenergy2mqtt.config import active_config
+from sigenergy2mqtt.metrics import Metrics
 
 from .service import Service
 from .service_topics import Calculation, ServiceTopics
@@ -200,8 +201,6 @@ class PVOutputStatusService(Service):
                                             if st in snapshot and topic.topic in snapshot[st]:
                                                 topic.previous_state, topic.previous_timestamp = snapshot[st][topic.topic]
                         else:
-                            from sigenergy2mqtt.metrics import Metrics
-
                             await Metrics.pvoutput_upload_skipped()
                             self.logger.warning(f"{self.log_identity} No generation{' or consumption data' if active_config.pvoutput.consumption_enabled else ''} to upload, skipping... ({payload=})")
                         wait, _ = await self.seconds_until_status_upload()
