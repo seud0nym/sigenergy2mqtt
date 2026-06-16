@@ -225,6 +225,7 @@ class PVOutputOutputService(Service):
             attempt = i
             if changed:
                 uploaded = await self.upload_payload("https://pvoutput.org/service/r2/addoutput.jsp", payload)
+                skipped = False
             else:
                 uploaded = False
                 skipped = True
