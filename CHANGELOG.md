@@ -5,6 +5,7 @@
 ### Added
 
 - Added `SIGENERGY2MQTT_PVOUTPUT_UPLOAD_LOG_LEVEL` configuration setting to allow override of the log level for PVOutput upload messages
+- Added metrics for PVOutput uploads, errors, and skips
 
 ### Changed
 
