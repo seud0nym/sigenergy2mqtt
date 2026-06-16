@@ -976,6 +976,25 @@ The PVOutput interface logging level. Must be one of:
 
 The default is `WARNING` (warnings, errors and critical failures).
 
+<a id="opt_pvoutput_upload_log_level"></a>
+### Upload Log Level
+- CLI: `--pvoutput-upload-log-level`
+- ENV: `SIGENERGY2MQTT_PVOUTPUT_UPLOAD_LOG_LEVEL`
+- Config key: `pvoutput.upload-log-level`
+
+The PVOutput upload payload logging level. Must be one of: 
+
+- `DEBUG`
+- `INFO`
+- `WARNING`
+- `ERROR`
+- `CRITICAL`
+
+The default is `INFO`.
+
+If the overall [PVOutput Log Level](#opt_pvoutput_log_level) is set to a value higher than the value specified for this option (e.g. this option set to INFO and [PVOutput Log Level](#opt_pvoutput_log_level) set to WARNING), then the upload log messages will be suppressed.
+
+
 <a id="opt_pvoutput_output_hour"></a>
 ### Output Hour
 - CLI: `--pvoutput-output-hour`

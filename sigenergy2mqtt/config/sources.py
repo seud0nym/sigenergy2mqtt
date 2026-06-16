@@ -224,6 +224,7 @@ class EnvSettingsSource(PydanticBaseSettingsSource):
         _set(pvo, "v11", g(const.SIGENERGY2MQTT_PVOUTPUT_EXT_V11))
         _set(pvo, "v12", g(const.SIGENERGY2MQTT_PVOUTPUT_EXT_V12))
         _set(pvo, "log_level", g(const.SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL))
+        _set(pvo, "upload_log_level", g(const.SIGENERGY2MQTT_PVOUTPUT_UPLOAD_LOG_LEVEL))
         _set(pvo, "calc_debug_logging", _bool(g(const.SIGENERGY2MQTT_PVOUTPUT_CALC_DEBUG_LOGGING)))
         _set(pvo, "update_debug_logging", _bool(g(const.SIGENERGY2MQTT_PVOUTPUT_UPDATE_DEBUG_LOGGING)))
         periods_json = g(const.SIGENERGY2MQTT_PVOUTPUT_PERIODS_JSON)

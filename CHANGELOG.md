@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Added `SIGENERGY2MQTT_PVOUTPUT_UPLOAD_LOG_LEVEL` configuration setting to allow override of the log level for PVOutput upload messages
+
 ### Changed
 
 - Reduced log noise by demoting config sourcing to debug and improving device discovery log details

@@ -364,6 +364,12 @@ properties:
             enum: [DEBUG, INFO, WARNING, ERROR, CRITICAL]
           - type: integer
         default: CRITICAL
+      upload-log-level:
+        oneOf:
+          - type: string
+            enum: [DEBUG, INFO, WARNING, ERROR, CRITICAL]
+          - type: integer
+        default: INFO
       calc-debug-logging:
         type: boolean
         default: false

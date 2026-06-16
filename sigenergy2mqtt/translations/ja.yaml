@@ -2918,6 +2918,8 @@ cli:
     help: PVOutputシステムID
   SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC:
     help: "PVOutput に送信する現在温度のソースです。直接 MQTT トピック（または mqtt:<topic>）、または Home Assistant センサーのエンティティ ID（sensor.<id> または ha:sensor.<id>、アドオン実行時のみ）を指定できます。未指定の場合、温度は PVOutput に送信されません。"
+  SIGENERGY2MQTT_PVOUTPUT_UPLOAD_LOG_LEVEL:
+    help: 'PVOutput アップロード ログ メッセージのログ レベルを設定します。有効な値は、DEBUG、INFO、WARNING、ERROR、または CRITICAL です。デフォルトはINFOです'
   SIGENERGY2MQTT_PVOUTPUT_VOLTAGE:
     help: "PVOutput用電圧値のソース。デフォルト: 'l/n-avg'。"
   SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL:

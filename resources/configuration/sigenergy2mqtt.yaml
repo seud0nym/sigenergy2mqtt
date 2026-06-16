@@ -630,6 +630,13 @@ pvoutput:
   #   description:  The PVOutput interface logging level. Must be one of:
   #                 DEBUG, INFO, WARNING, ERROR, or CRITICAL
   log-level: CRITICAL
+  # upload-log-level
+  #   added: 2026.6.16
+  #   default: INFO
+  #   description:  The log level for the message emitted when uploading data
+  #                 to PVOutput. Must be one of: DEBUG, INFO, WARNING, ERROR,
+  #                 or CRITICAL. The default is INFO.
+  upload-log-level: INFO
   # calc-debug-logging
   #   added: 2025.11.11
   #   default: false

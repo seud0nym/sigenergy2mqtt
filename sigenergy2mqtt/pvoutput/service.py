@@ -19,6 +19,7 @@ from sigenergy2mqtt.devices import Device
 
 class Service(Device):
     """Common PVOutput device behavior for API timing and uploads."""
+
     _donator: bool = False
     _interval: int = 5  # Interval in minutes for PVOutput status updates
     _interval_updated: float | None = None
@@ -122,9 +123,7 @@ class Service(Device):
                     Service._interval = 5
                     Service._interval_updated = current_time
                     Service._donator = True
-                    self.logger.info(
-                        f"{self.log_identity} Testing mode, not sending request to {url=} - using default/previous interval of {Service._interval} minutes and donator status {Service._donator}"
-                    )
+                    self.logger.info(f"{self.log_identity} Testing mode, not sending request to {url=} - using default/previous interval of {Service._interval} minutes and donator status {Service._donator}")
                 else:
                     self.logger.debug(f"{self.log_identity} Acquiring System Information from PVOutput ({url=})")
                     try:
@@ -165,7 +164,7 @@ class Service(Device):
             url: PVOutput endpoint URL.
             payload: Form payload to submit.
         """
-        self.logger.info(f"{self.log_identity} Uploading {payload=}")
+        self.logger.log(active_config.pvoutput.upload_log_level, f"{self.log_identity} Uploading {payload=}")
         uploaded: bool = False
         response: requests.Response = requests.Response()
         attempts: int = 0
