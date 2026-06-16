@@ -992,7 +992,7 @@ The PVOutput upload payload logging level. Must be one of:
 
 The default is `INFO`.
 
-This setting is independent of the overall [PVOutput Log Level](#opt_pvoutput_log_level).
+If the overall [PVOutput Log Level](#opt_pvoutput_log_level) is set to a value higher than the value specified for this option (e.g. this option set to INFO and [PVOutput Log Level](#opt_pvoutput_log_level) set to WARNING), then the upload log messages will be suppressed.
 
 
 <a id="opt_pvoutput_output_hour"></a>

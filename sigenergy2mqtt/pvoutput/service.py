@@ -164,7 +164,7 @@ class Service(Device):
             url: PVOutput endpoint URL.
             payload: Form payload to submit.
         """
-        logging.log(active_config.pvoutput.upload_log_level, f"{self.log_identity} Uploading {payload=}")
+        self.logger.log(active_config.pvoutput.upload_log_level, f"{self.log_identity} Uploading {payload=}")
         uploaded: bool = False
         response: requests.Response = requests.Response()
         attempts: int = 0
