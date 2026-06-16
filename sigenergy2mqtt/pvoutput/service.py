@@ -192,8 +192,13 @@ class Service(Device):
                             f"{self.log_identity} Attempt #{i} OKAY status_code={response.status_code} {limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))} ({reset}s)"
                         )
                         break
-                    else:
+                    elif response.status_code < 400 or response.status_code >= 600:  # response.raise_for_status() handles 400 <= status_code < 600 and raises HTTPError
                         await Metrics.pvoutput_upload_error()
+                        self.logger.error(
+                            f"{self.log_identity} Attempt #{i} FAILED status_code={response.status_code} reason={response.reason} text={response.text} ({limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))})"
+                        )
+                    else:
+                        # Metrics.pvoutput_upload_error() will be handled by requests.exceptions.HTTPError below
                         response.raise_for_status()
                         break
             except requests.exceptions.HTTPError as exc:
