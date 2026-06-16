@@ -553,6 +553,12 @@ The attributes payload currently includes:
 <a href='#sigen_modbus_write_max'>Modbus Write Max</a><br>
 <a href='#sigen_modbus_write_mean'>Modbus Write Mean</a><br>
 <a href='#sigen_modbus_write_min'>Modbus Write Min</a><br>
+<a href='#sigen_pvoutput_upload_errors'>PVOutput Upload Errors</a><br>
+<a href='#sigen_pvoutput_upload_max'>PVOutput Upload Max</a><br>
+<a href='#sigen_pvoutput_upload_mean'>PVOutput Upload Mean</a><br>
+<a href='#sigen_pvoutput_upload_min'>PVOutput Upload Min</a><br>
+<a href='#sigen_pvoutput_upload_skipped'>PVOutput Upload Skipped</a><br>
+<a href='#sigen_pvoutput_uploads'>PVOutput Uploads</a><br>
 <a href='#sigen_modbus_protocol_published'>Protocol Published</a><br>
 <a href='#sigen_modbus_protocol'>Protocol Version</a><br>
 <a href='#sigen_metrics_reset'>Reset Metrics</a><br>
@@ -619,7 +625,7 @@ The attributes payload currently includes:
 <a href='#sigen_0_001_41000_set'>DC Charger Stop/Start</a><br>
 <a href='#sigen_0_001_41002_set'>Max Charging Power Limit</a><br>
 <a href='#sigen_0_001_41004_set'>Max Discharging Power Limit</a><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></td></tr>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></td></tr>
 </table>
 
 ## Published Topics
@@ -6615,6 +6621,12 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 | <a id='sigen_modbus_write_max'>Modbus Write Max</a> | 1 | ms | sigenergy2mqtt/metrics/modbus_write_max ||
 | <a id='sigen_modbus_write_mean'>Modbus Write Mean</a> | 1 | ms | sigenergy2mqtt/metrics/modbus_write_mean ||
 | <a id='sigen_modbus_write_min'>Modbus Write Min</a> | 1 | ms | sigenergy2mqtt/metrics/modbus_write_min ||
+| <a id='sigen_pvoutput_upload_errors'>PVOutput Upload Errors</a> | 1 |  | sigenergy2mqtt/metrics/pvoutput_upload_errors ||
+| <a id='sigen_pvoutput_upload_max'>PVOutput Upload Max</a> | 1 | ms | sigenergy2mqtt/metrics/pvoutput_upload_max ||
+| <a id='sigen_pvoutput_upload_mean'>PVOutput Upload Mean</a> | 1 | ms | sigenergy2mqtt/metrics/pvoutput_upload_mean ||
+| <a id='sigen_pvoutput_upload_min'>PVOutput Upload Min</a> | 1 | ms | sigenergy2mqtt/metrics/pvoutput_upload_min ||
+| <a id='sigen_pvoutput_upload_skipped'>PVOutput Upload Skipped</a> | 1 |  | sigenergy2mqtt/metrics/pvoutput_upload_skipped ||
+| <a id='sigen_pvoutput_uploads'>PVOutput Uploads</a> | 1 |  | sigenergy2mqtt/metrics/pvoutput_uploads ||
 | <a id='sigen_modbus_protocol_published'>Protocol Published</a> | 1 |  | sigenergy2mqtt/metrics/modbus_protocol_published ||
 | <a id='sigen_modbus_protocol'>Protocol Version</a> | 1 |  | sigenergy2mqtt/metrics/modbus_protocol ||
 | <a id='sigen_metrics_reset'>Reset Metrics</a> |||| sigenergy2mqtt/metrics/metrics_reset/set |
