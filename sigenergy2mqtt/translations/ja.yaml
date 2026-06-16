@@ -2777,7 +2777,7 @@ cli:
   SIGENERGY2MQTT_INFLUX_INCLUDE:
     help: 含めるセンサー識別子のリスト（スペース区切り）
   SIGENERGY2MQTT_INFLUX_LOAD_HASS_HISTORY:
-    help: Home Assistant InfluxDBデータベースから履歴データをロードするように指定します。これは、sigenergy2mqttがHome Assistantと同じ認証INFOで同じInfluxDBサーバーを使用するように構成されている場合にのみ機能します。
+    help: Home Assistant InfluxDBデータベースから履歴データをロードするように指定します。これは、sigenergy2mqttがHome Assistantと同じ認証情報で同じInfluxDBサーバーを使用するように構成されている場合にのみ機能します。
   SIGENERGY2MQTT_INFLUX_LOG_LEVEL:
     help: 'InfluxDB サブシステムのログレベル。有効な値は、DEBUG、INFO、WARNING、ERROR、CRITICAL です。デフォルトは WARNING（警告、エラー、致命的な障害）です。'
   SIGENERGY2MQTT_INFLUX_MAX_RETRIES:
@@ -2941,4 +2941,4 @@ cli:
   show_version:
     help: バージョン番号を表示して終了。
   validate_only:
-    help: '設定を検証し、構成された接続/認証設定をテストしてから直ちに終了します。オプションモード: --validate=show_credentials を指定すると、接続先へのテストで実際に使用する認証INFOをログに出力します。'
+    help: '設定を検証し、構成された接続/認証設定をテストしてから直ちに終了します。オプションモード: --validate=show_credentials を指定すると、接続先へのテストで実際に使用する認証情報をログに出力します。'
