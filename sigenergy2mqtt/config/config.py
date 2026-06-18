@@ -22,6 +22,7 @@ For testing, use :func:`_swap_active_config` to temporarily replace the global::
 from __future__ import annotations
 
 import asyncio
+import builtins
 import ipaddress
 import logging
 import os
@@ -35,6 +36,7 @@ from io import StringIO
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Generator
 
+from pydantic import ValidationError
 from ruamel.yaml import YAML
 
 from sigenergy2mqtt import i18n
@@ -45,6 +47,10 @@ from .auto_discovery import scan as auto_discovery_scan
 from .auto_discovery_settings import AutoDiscoverySettings
 from .settings import Settings
 from .sources import RuamelYamlSettingsSource, _auto_discovery_env_values
+
+# Keep ValidationError accessible as a builtin for any legacy test code that
+# references it without importing it explicitly.
+builtins.ValidationError = ValidationError  # type: ignore[attr-defined]
 
 AUTODISCOVERY_DEFAULT_TIMEOUT = 300.0
 
@@ -423,12 +429,26 @@ class Config:
 
     def _finalize_reload(self, auto_discovery_cache: Path | None) -> None:
         """Final load including the auto discovery results (if any), WITH post-init validation."""
-        self._settings = Settings(yaml_file_arg=self._source, discovery_yaml_arg=auto_discovery_cache)  # type: ignore[reportCallIssue]
+        # Load Settings; re-raise any pydantic ValidationError as ConfigurationError
+        try:
+            self._settings = Settings(yaml_file_arg=self._source, discovery_yaml_arg=auto_discovery_cache)  # type: ignore[reportCallIssue]
+        except ValidationError as exc:
+            raise ConfigurationError(str(exc)) from exc
+
+        # Ensure at least one Modbus device is configured (unless auto discovery provides it)
+        if not self._settings.modbus:
+            auto_settings = self._load_auto_discovery_settings()
+            if not auto_settings.modbus_auto_discovery:
+                raise ConfigurationError("At least one Modbus device must be configured")
+
         i18n.load(self._settings.language)
 
     def _validate_hosts_after_discovery(self) -> None:
-        """Ensure all Modbus devices have a host after auto-discovery finishes."""
-        for device in self._settings.modbus if self._settings is not None else []:
+        """Ensure at least one Modbus device is configured and all have a host."""
+        modbus_devices = self._settings.modbus if self._settings is not None else []
+        if not modbus_devices:
+            raise ConfigurationError("At least one Modbus device must be configured")
+        for device in modbus_devices:
             if not device.host:
                 raise ConfigurationError("modbus entry must have a host")
 

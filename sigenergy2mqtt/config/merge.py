@@ -198,7 +198,10 @@ def apply_modbus_env_override(
     target_host = override.get("host")
 
     if not modbus_list:
-        return [ModbusConfig(**override)]
+        if target_host:
+            return [ModbusConfig(**override)]
+        else:
+            return modbus_list
 
     idx = 0
     if target_host:

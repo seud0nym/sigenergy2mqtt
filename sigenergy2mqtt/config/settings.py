@@ -256,9 +256,6 @@ class Settings(BaseSettings):
         logging.getLogger().setLevel(self.log_level)
 
         # Cross-model validation
-        if not self.modbus:
-            raise ValueError("At least one Modbus device must be configured")
-
         if not self.ems_mode_check:
             for device in self.modbus:
                 if device.registers.no_remote_ems:
