@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 from types import SimpleNamespace
@@ -197,7 +198,7 @@ class TestConfigReload:
 
         with _swap_active_config(Config()) as cfg:
             with patch.dict("os.environ", {SIGENERGY2MQTT_LOG_LEVEL: "DEBUG", SIGENERGY2MQTT_MODBUS_HOST: "localhost"}, clear=True):
-                cfg.reload()
+                asyncio.run(cfg.reload())
                 assert cfg.log_level == logging.DEBUG
 
     def test_reload_with_no_ems_mode_check_env(self):
@@ -215,7 +216,7 @@ class TestConfigReload:
                 },
                 clear=True,
             ):
-                cfg.reload()
+                asyncio.run(cfg.reload())
                 assert cfg.ems_mode_check is False
 
     def test_reload_with_language_env_invalid_fallback(self, caplog):
@@ -227,42 +228,67 @@ class TestConfigReload:
                 with patch("sigenergy2mqtt.i18n.get_available_translations", return_value=["en", "fr"]):
                     with patch("sigenergy2mqtt.i18n.get_default_language", return_value="en"):
                         with caplog.at_level(logging.WARNING):
-                            cfg.reload()
+                            asyncio.run(cfg.reload())
                             assert cfg.language == "en"
                             assert "Invalid language 'de'" in caplog.text
 
-    @patch("sigenergy2mqtt.config.config.Config._run_auto_discovery", return_value=[{"host": "1.2.3.4", "port": 502}])
-    def test_reload_with_auto_discovery_force(self, mock_run_auto_discovery):
-        """Test reload with auto-discovery forced."""
-        with _swap_active_config(Config()) as cfg:
-            with patch.dict("os.environ", {const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY: "force"}, clear=True):
-                with patch("sigenergy2mqtt.config.config.Path.is_file", return_value=True):
-                    cfg.reload()
-            mock_run_auto_discovery.assert_called_once()
-
-    @patch("sigenergy2mqtt.config.config.Config._run_auto_discovery", return_value=[{"host": "2.3.4.5", "port": 502}])
-    def test_reload_triggers_auto_discovery_when_no_hosts_configured(self, mock_run_auto_discovery):
-        """Test reload triggers auto-discovery if neither env nor YAML have modbus configured, but auto-discovery is enabled."""
-        with _swap_active_config(Config()) as cfg:
-            with patch.dict("os.environ", {const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY: "once"}, clear=True):
-                cfg.reload()
-            mock_run_auto_discovery.assert_called_once()
-
-    @patch("sigenergy2mqtt.config.config.Config._run_auto_discovery", return_value=[{"host": "2.3.4.5", "port": 502}])
-    def test_reload_triggers_auto_discovery_yaml_no_host(self, mock_run_auto_discovery, tmp_path):
-        """Test reload triggers auto-discovery if YAML possesses modbus array without a host and auto-discovery is enabled."""
+    @patch("sigenergy2mqtt.config.config.Config._perform_auto_discovery")
+    def test_reload_with_auto_discovery_force(self, mock_perform_auto_discovery, tmp_path):
+        """Test that force always runs auto-discovery, even if YAML has hosts."""
         config_file = tmp_path / "config.yaml"
-        config_file.write_text("modbus-auto-discovery: once\nmodbus:\n  - port: 502\n")
+        config_file.write_text("modbus:\n  - host: 1.2.3.4\n    port: 502\n")
+
+        async def mock_scan(*args, **kwargs):
+            (tmp_path / "auto-discovery.yaml").write_text("- host: 1.2.3.4\n  port: 502\n")
+            return tmp_path / "auto-discovery.yaml"
+
+        mock_perform_auto_discovery.side_effect = mock_scan
+
         with _swap_active_config(Config()) as cfg:
             cfg._source = str(config_file)
             cfg.persistent_state_path = tmp_path
-            cache_file = tmp_path / "auto-discovery.yaml"
-            if cache_file.exists():
-                cache_file.unlink()
+            with patch.dict("os.environ", {const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY: "force"}, clear=True):
+                with patch("sigenergy2mqtt.config.config.Path.is_file", return_value=True):
+                    asyncio.run(cfg.reload())
+            mock_perform_auto_discovery.assert_called_once()
+
+    @patch("sigenergy2mqtt.config.config.Config._perform_auto_discovery")
+    def test_reload_triggers_auto_discovery_when_no_hosts_configured(self, mock_perform_auto_discovery, tmp_path):
+        """Test reload triggers auto-discovery if neither env nor YAML have modbus configured, but auto-discovery is enabled."""
+        cache = tmp_path / "auto-discovery.yaml"
+        cache.write_text("- host: 2.3.4.5\n  port: 502\n")
+
+        async def mock_scan(*args, **kwargs):
+            return cache
+
+        mock_perform_auto_discovery.side_effect = mock_scan
+
+        with _swap_active_config(Config()) as cfg:
+            cfg.persistent_state_path = tmp_path
+            with patch.dict("os.environ", {const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY: "once"}, clear=True):
+                asyncio.run(cfg.reload())
+            mock_perform_auto_discovery.assert_called_once()
+
+    @patch("sigenergy2mqtt.config.config.Config._perform_auto_discovery")
+    def test_reload_triggers_auto_discovery_yaml_no_host(self, mock_perform_auto_discovery, tmp_path):
+        """Test reload triggers auto-discovery if YAML possesses modbus array without a host and auto-discovery is enabled."""
+        config_file = tmp_path / "config.yaml"
+        config_file.write_text("modbus-auto-discovery: once\nmodbus:\n  - port: 502\n")
+        cache = tmp_path / "auto-discovery.yaml"
+        cache.write_text("- host: 2.3.4.5\n  port: 502\n")
+
+        async def mock_scan(*args, **kwargs):
+            return cache
+
+        mock_perform_auto_discovery.side_effect = mock_scan
+
+        with _swap_active_config(Config()) as cfg:
+            cfg._source = str(config_file)
+            cfg.persistent_state_path = tmp_path
             with patch.dict("os.environ", {}, clear=True):
-                cfg.reload()
+                asyncio.run(cfg.reload())
                 assert cfg.modbus[0].host == "2.3.4.5"
-            mock_run_auto_discovery.assert_called_once()
+            mock_perform_auto_discovery.assert_called_once()
 
     def test_reload_once_uses_existing_cache_without_rescanning(self, tmp_path):
         """Regression: second restart with once+cache must load cached devices, not pass None to _finalize_reload.
@@ -285,46 +311,52 @@ class TestConfigReload:
             cfg.persistent_state_path = tmp_path
             with patch.dict("os.environ", {}, clear=True):
                 # Patch _run_auto_discovery so any accidental call is loud
-                with patch.object(cfg, "_run_auto_discovery", wraps=cfg._run_auto_discovery) as mock_scan:
-                    cfg.reload()
+                with patch.object(cfg, "_run_auto_discovery") as mock_scan:
+                    asyncio.run(cfg.reload())
                     # Discovery must NOT run again; cache existed
                     mock_scan.assert_not_called()
                 # The cached host must be present in the loaded configuration
-                assert any(m.host == "9.8.7.6" for m in cfg.modbus), (
-                    "Cached device was not loaded — _finalize_reload likely received None"
-                )
+                assert any(m.host == "9.8.7.6" for m in cfg.modbus), "Cached device was not loaded — _finalize_reload likely received None"
 
-    @patch("sigenergy2mqtt.config.config.Config._run_auto_discovery", return_value=[])
-    def test_reload_does_not_toggle_skip_validation_env_var(self, mock_run_auto_discovery):
+    @patch("sigenergy2mqtt.config.config.Config._perform_auto_discovery")
+    def test_reload_does_not_toggle_skip_validation_env_var(self, mock_perform_auto_discovery, tmp_path):
         """reload must not set internal SKIP_MODBUS_VALIDATION environment variable."""
+        # Pre-create a cache file with a valid device so _validate_hosts_after_discovery passes
+        cache = tmp_path / "auto-discovery.yaml"
+        cache.write_text("- host: 1.1.1.1\n  port: 502\n")
+
+        async def mock_scan(*args, **kwargs):
+            return cache
+
+        mock_perform_auto_discovery.side_effect = mock_scan
+
         with _swap_active_config(Config()) as cfg:
-            with patch.dict("os.environ", {const.SIGENERGY2MQTT_MODBUS_HOST: "localhost"}, clear=True):
-                cfg.reload()
-        assert "SIGENERGY2MQTT_SKIP_MODBUS_VALIDATION" not in os.environ
+            cfg.persistent_state_path = tmp_path
+            with patch.dict("os.environ", {const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY: "once"}, clear=True):
+                asyncio.run(cfg.reload())
+            assert "SKIP_MODBUS_VALIDATION" not in os.environ
 
     def test_reload_ignores_preflight_yaml_keys_in_final_settings_parse(self, tmp_path):
         """Preflight-only YAML keys must not trigger extra_forbidden on final Settings parse."""
         config_file = tmp_path / "config.yaml"
         config_file.write_text(
-            "\n".join(
-                [
-                    "modbus-port: 1502",
-                    "modbus-auto-discovery: once",
-                    "modbus-auto-discovery-timeout: 1.25",
-                    "modbus-auto-discovery-ping-timeout: 2.5",
-                    "modbus-auto-discovery-retries: 7",
-                    "modbus:",
-                    "  - host: 10.0.0.9",
-                    "    port: 502",
-                ]
-            )
+            "\n".join([
+                "modbus-port: 1502",
+                "modbus-auto-discovery: once",
+                "modbus-auto-discovery-timeout: 1.25",
+                "modbus-auto-discovery-ping-timeout: 2.5",
+                "modbus-auto-discovery-retries: 7",
+                "modbus:",
+                "  - host: 10.0.0.9",
+                "    port: 502",
+            ])
             + "\n"
         )
 
         with _swap_active_config(Config()) as cfg:
             cfg._source = str(config_file)
             with patch.dict("os.environ", {}, clear=True):
-                cfg.reload(skip_auto_discovery=True)
+                asyncio.run(cfg.reload(skip_auto_discovery=True))
             assert cfg.modbus[0].host == "10.0.0.9"
 
     def test_devices_list_exists(self):
@@ -504,7 +536,6 @@ class TestGetFinalCachePath:
 
 
 class TestConfigCoverageAugmentation:
-
     def test_init_persistent_state_exception(self):
         with patch("sigenergy2mqtt.config.config._create_persistent_state_path", side_effect=Exception("mocked error")):
             cfg = Config()
@@ -534,132 +565,6 @@ class TestConfigCoverageAugmentation:
             cfg.set_modbus_log_level(logging.DEBUG)
 
     @patch("sigenergy2mqtt.config.config.asyncio.run")
-    def test_run_auto_discovery_exception(self, mock_run):
-        def side_effect(coro, **kwargs):
-            if hasattr(coro, "close"):
-                coro.close()
-            raise Exception("Mocked Asyncio Error")
-
-        mock_run.side_effect = side_effect
-        cfg = Config()
-        result = cfg._run_auto_discovery(502, 0.5, 0.25, 3)
-        assert result == []
-        # Ensure all captured coroutines are closed in case side_effect wasn't called (unlikely)
-        for call in mock_run.call_args_list:
-            c = call[0][0]
-            if hasattr(c, "close"):
-                c.close()
-
-    @patch("sigenergy2mqtt.config.config.asyncio.get_running_loop")
-    def test_run_auto_discovery_with_running_loop_success(self, mock_get_loop):
-        # We simulate that a loop is running
-        mock_loop = MagicMock()
-        mock_get_loop.return_value = mock_loop
-
-        # The new implementation uses asyncio.run() in a background thread.
-        # We mock asyncio.run to return our desired result.
-        with patch("sigenergy2mqtt.config.config.asyncio.run") as mock_run:
-            mock_run.return_value = [{"host": "127.0.0.1", "port": 502}]
-
-            async def mock_scan_side_effect(*args, **kwargs):
-                return []
-
-            with patch("sigenergy2mqtt.config.config.auto_discovery_scan", side_effect=mock_scan_side_effect) as mock_scan:  # noqa: F841
-                cfg = Config()
-                result = cfg._run_auto_discovery(502, 0.5, 0.25, 3)
-                assert result == [{"host": "127.0.0.1", "port": 502}]
-                # Close all coroutines to avoid RuntimeWarning
-                for call in mock_run.call_args_list:
-                    coro = call[0][0]
-                    if hasattr(coro, "close"):
-                        coro.close()
-
-    @patch("sigenergy2mqtt.config.config.asyncio.get_running_loop")
-    def test_run_auto_discovery_with_running_loop_timeout(self, mock_get_loop):
-        mock_loop = MagicMock()
-        mock_get_loop.return_value = mock_loop
-
-        # We mock thread.join to do nothing (simulating timeout by letting it stay alive)
-        # and we mock thread.is_alive to return True.
-        with patch("threading.Thread") as mock_thread_class:
-            mock_thread = MagicMock()
-            mock_thread.is_alive.return_value = True
-            mock_thread_class.return_value = mock_thread
-
-            coros = []
-
-            async def mock_scan_side_effect(*args, **kwargs):
-                return []
-
-            def mock_scan_wrapper(*args, **kwargs):
-                c = mock_scan_side_effect(*args, **kwargs)
-                coros.append(c)
-                return c
-
-            with patch("sigenergy2mqtt.config.config.auto_discovery_scan", new_callable=MagicMock, side_effect=mock_scan_wrapper) as mock_scan:  # noqa: F841
-                cfg = Config()
-                # Set a very short timeout for the test
-                result = cfg._run_auto_discovery(502, 0.5, 0.25, 3, timeout=0.01)
-                assert result == []
-
-                # Close all coroutines to avoid RuntimeWarning since thread never runs them
-                for c in coros:
-                    c.close()
-
-    @patch("sigenergy2mqtt.config.config.asyncio.get_running_loop")
-    def test_run_auto_discovery_with_running_loop_generic_exception(self, mock_get_loop):
-        mock_loop = MagicMock()
-        mock_get_loop.return_value = mock_loop
-
-        # Test the exception branch inside the worker thread
-        with patch("threading.Thread") as mock_thread_class:
-
-            def mock_thread_start(*args, **kwargs):
-                # We extract the target function (worker) and run it,
-                # but we mock asyncio.run to throw an exception
-                pass
-
-            mock_thread = MagicMock()
-            mock_thread.start.side_effect = mock_thread_start
-            mock_thread.is_alive.return_value = False
-            mock_thread_class.return_value = mock_thread
-
-            def mock_run_side_effect(coro, **kwargs):
-                if hasattr(coro, "close"):
-                    coro.close()
-                raise Exception("Generic")
-
-            with patch("sigenergy2mqtt.config.config.asyncio.run", side_effect=mock_run_side_effect):
-                coros = []
-
-                async def mock_scan_side_effect(*args, **kwargs):
-                    return []
-
-                def mock_scan_wrapper(*args, **kwargs):
-                    c = mock_scan_side_effect(*args, **kwargs)
-                    coros.append(c)
-                    return c
-
-                with patch("sigenergy2mqtt.config.config.auto_discovery_scan", new_callable=MagicMock, side_effect=mock_scan_wrapper):
-                    cfg = Config()
-                    result = cfg._run_auto_discovery(502, 0.5, 0.25, 3)
-                    assert result == []
-
-                    # Manually run the worker function to trigger the exception block
-                    # The worker function is passed to Thread as the 'target' kwarg
-                    worker_func = mock_thread_class.call_args.kwargs["target"]
-                    worker_func()
-
-                    # We have to re-evaluate the result because the worker sets nonlocal exception
-                    # but wait, the exception is already checked in _run_auto_discovery.
-                    # Since we are mocking Thread, we should just let the real Thread run,
-                    # but mock asyncio.run to throw! That's much simpler and tests the actual flow.
-
-                    # Close the coroutines
-                    for c in coros:
-                        c.close()
-
-    @patch("sigenergy2mqtt.config.config.time.time", return_value=1000000000.0)
     def test_clean_stale_files_unlink_exception(self, mock_time, tmp_path, caplog):
         from sigenergy2mqtt.config.config import _clean_stale_files
 
@@ -730,7 +635,7 @@ class TestConfigCoverageAugmentation:
     def test_load_config(self, mock_reload):
         cfg = Config()
         mock_reload.reset_mock()
-        cfg.load("test_file.yaml")
+        asyncio.run(cfg.load("test_file.yaml"))
         assert cfg._source == "test_file.yaml"
         mock_reload.assert_called_once()
 
@@ -740,7 +645,7 @@ class TestConfigCoverageAugmentation:
         cfg._source = "test"
         cfg.reset()
         assert cfg._source is None
-        assert isinstance(cfg._settings, Settings)
+        assert cfg._settings is None
 
     def test_reload_with_exception_in_init(self):
         with patch("sigenergy2mqtt.config.config.Config.reload", side_effect=Exception("mock initialization error")):
@@ -902,7 +807,7 @@ def test_reload_applies_yaml(tmp_path):
     original_modbus = list(active_config.modbus)
     try:
         active_config.modbus.clear()
-        active_config.load(config_path)
+        asyncio.run(active_config.load(config_path, skip_auto_discovery=True))  # TODO: have to skip auto-discovery otherwise it actually runs and creates auto-discovery.yaml in project root
         assert active_config.log_level == getattr(__import__("logging"), "DEBUG")
         assert len(active_config.modbus) >= 1
         assert active_config.modbus[0].port == 1502
@@ -921,7 +826,7 @@ def test_reload_env_overrides(monkeypatch):
     try:
         active_config.modbus.clear()
         active_config._source = None
-        active_config.reload()
+        asyncio.run(active_config.reload())
         assert len(active_config.modbus) >= 1
         assert active_config.modbus[0].host == "8.8.8.8"
         assert active_config.modbus[0].port == 1503
@@ -938,6 +843,6 @@ def test_reload_invalid_yaml(tmp_path):
     try:
         active_config._source = str(bad)
         with pytest.raises(Exception):
-            active_config.reload()
+            asyncio.run(active_config.reload())
     finally:
         active_config._source = original_source

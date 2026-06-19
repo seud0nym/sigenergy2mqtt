@@ -11,9 +11,13 @@ import signal
 import sys
 
 import sigenergy2mqtt.config.auto_discovery as auto_discovery
-from sigenergy2mqtt.config import ConfigurationError, active_config, initialize
+from sigenergy2mqtt.config import ConfigurationError, active_config, initialize, initialize_async
 from sigenergy2mqtt.main import async_main, validate_connections
 from sigenergy2mqtt.metrics.metrics import Metrics
+
+async def _validate_main(show_credentials: bool) -> None:
+    await initialize_async()
+    await validate_connections(show_credentials=show_credentials)
 
 
 def _make_early_signal_handler():
@@ -95,7 +99,7 @@ def main():
             signal.signal(signal.SIGINT, signal.default_int_handler)
             logging.info("Configuration is valid; testing configured connection and authentication settings")
             logging.info(f"Validation configuration:\n{active_config}")
-            asyncio.run(validate_connections(show_credentials=getattr(active_config, "validate_show_credentials", False)))
+            asyncio.run(_validate_main(show_credentials=getattr(active_config, "validate_show_credentials", False)))
             logging.info("Validation checks completed successfully")
             sys.exit(0)
     except ConfigurationError as e:

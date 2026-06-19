@@ -1025,7 +1025,15 @@ class TestSignals:
         with patch("signal.signal") as mock_sig, patch.object(active_config, "reload") as mock_reload, patch.object(restart_controller, "request") as mock_request:
             main_mod.setup_signals([MagicMock()])
             handler = [call.args[1] for call in mock_sig.call_args_list if call.args[0] == signal.SIGHUP][0]
-            handler(signal.SIGHUP, None)
+            with patch("asyncio.get_running_loop") as mock_get_loop:
+                mock_loop = MagicMock()
+                mock_get_loop.return_value = mock_loop
+
+                def mock_create_task(coro):
+                    coro.close()
+
+                mock_loop.create_task.side_effect = mock_create_task
+                handler(signal.SIGHUP, None)
             mock_reload.assert_called_once()
             mock_request.assert_called_once()
 
@@ -1195,7 +1203,7 @@ async def test_async_main_sighup_reload_suppresses_ha_during_restart(clean_confi
     mock_plant.sensors = {f"{active_config.home_assistant.unique_id_prefix}_0_247_40029": MagicMock()}
     mock_inverter = MagicMock(unique_id="i_uid", device_address=1, name="Inverter")
     monkeypatch.setattr(main_mod, "make_plant_and_inverter", AsyncMock(return_value=(mock_inverter, mock_plant)))
-    monkeypatch.setattr(main_mod, "initialize_with_persistence", AsyncMock())
+    monkeypatch.setattr(main_mod, "initialize_async", AsyncMock())
 
     active_config.home_assistant.enabled = True
     await main_mod.async_main()

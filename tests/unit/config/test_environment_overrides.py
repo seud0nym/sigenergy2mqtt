@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 from unittest.mock import patch
@@ -16,10 +17,10 @@ class TestConfigEnvironmentOverrides:
         monkeypatch.setenv(const.SIGENERGY2MQTT_MQTT_USERNAME, "user")
         monkeypatch.setenv(const.SIGENERGY2MQTT_MQTT_PASSWORD, "pass")
 
-        with patch("sigenergy2mqtt.config.config.Config._run_auto_discovery", return_value=[]):
+        with patch("sigenergy2mqtt.config.config.Config._perform_auto_discovery", return_value=None):
             with _swap_active_config(Config()) as cfg:
                 cfg.persistent_state_path = tmp_path
-                cfg.reload()
+                asyncio.run(cfg.reload())
                 assert cfg.log_level == logging.DEBUG
                 assert cfg.log_fmt == "{message}"
                 assert len(cfg.modbus) >= 1
@@ -31,48 +32,48 @@ class TestConfigEnvironmentOverrides:
     def test_unknown_env_var(self, monkeypatch, tmp_path):
         monkeypatch.setenv("SIGENERGY2MQTT_UNKNOWN_VAR", "foo")
         # Should just ignore unknown SIGENERGY2MQTT vars without error
-        with patch("sigenergy2mqtt.config.config.Config._run_auto_discovery", return_value=[]):
+        with patch("sigenergy2mqtt.config.config.Config._perform_auto_discovery", return_value=None):
             with _swap_active_config(Config()) as cfg:
                 cfg.persistent_state_path = tmp_path
-                cfg.reload()
+                asyncio.run(cfg.reload())
 
     def test_invalid_env_var(self, monkeypatch, tmp_path):
         monkeypatch.setenv(const.SIGENERGY2MQTT_MODBUS_PORT, "not-a-port")
-        with patch("sigenergy2mqtt.config.config.Config._run_auto_discovery", return_value=[]):
+        with patch("sigenergy2mqtt.config.config.Config._perform_auto_discovery", return_value=None):
             with _swap_active_config(Config()) as cfg:
                 cfg.persistent_state_path = tmp_path
                 with pytest.raises(Exception):
-                    cfg.reload()
+                    asyncio.run(cfg.reload())
 
 
 class TestConfigSensorOverrides:
     def test_sensor_overrides_yaml(self, tmp_path):
         config_file = tmp_path / "config.yaml"
         config_file.write_text("sensor-overrides:\n  BatteryPower:\n    precision: 2\n    icon: mdi:battery\n")
-        with patch("sigenergy2mqtt.config.config.Config._run_auto_discovery", return_value=[]):
+        with patch("sigenergy2mqtt.config.config.Config._perform_auto_discovery", return_value=None):
             with _swap_active_config(Config()) as cfg:
                 cfg.persistent_state_path = tmp_path
-                cfg.load(str(config_file))
+                asyncio.run(cfg.load(str(config_file)))
                 assert cfg.sensor_overrides["BatteryPower"]["precision"] == 2
                 assert cfg.sensor_overrides["BatteryPower"]["icon"] == "mdi:battery"
 
     def test_invalid_sensor_override_key(self, tmp_path):
         config_file = tmp_path / "invalid.yaml"
         config_file.write_text("sensor-overrides:\n  BatteryPower:\n    unknown: foo\n")
-        with patch("sigenergy2mqtt.config.config.Config._run_auto_discovery", return_value=[]):
+        with patch("sigenergy2mqtt.config.config.Config._perform_auto_discovery", return_value=None):
             with _swap_active_config(Config()) as cfg:
                 cfg.persistent_state_path = tmp_path
                 with pytest.raises(ConfigurationError, match="property is not known"):
-                    cfg.load(str(config_file))
+                    asyncio.run(cfg.load(str(config_file)))
 
     def test_invalid_sensor_override_structure(self, tmp_path):
         config_file = tmp_path / "invalid_struct.yaml"
         config_file.write_text("sensor-overrides: not-a-dict\n")
-        with patch("sigenergy2mqtt.config.config.Config._run_auto_discovery", return_value=[]):
+        with patch("sigenergy2mqtt.config.config.Config._perform_auto_discovery", return_value=None):
             with _swap_active_config(Config()) as cfg:
                 cfg.persistent_state_path = tmp_path
                 with pytest.raises(ConfigurationError):
-                    cfg.load(str(config_file))
+                    asyncio.run(cfg.load(str(config_file)))
 
 
 class TestConfigAutoDiscovery:
@@ -84,7 +85,7 @@ class TestConfigAutoDiscovery:
                 monkeypatch.setenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY, "force")
                 monkeypatch.setenv(const.SIGENERGY2MQTT_MODBUS_HOST, "192.168.1.1")
                 cfg.persistent_state_path = tmp_path
-                cfg.reload()
+                asyncio.run(cfg.reload())
                 mock_scan.assert_called_once()
                 # It should have written to cache in tmp_path
                 cache_file = tmp_path / "auto-discovery.yaml"
@@ -103,7 +104,7 @@ class TestConfigAutoDiscovery:
                 monkeypatch.setenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY, "once")
                 monkeypatch.setenv(const.SIGENERGY2MQTT_MODBUS_HOST, "192.168.1.1")
                 cfg.persistent_state_path = tmp_path
-                cfg.reload()
+                asyncio.run(cfg.reload())
                 mock_scan.assert_not_called()
                 # Should load from cache and merge env. Env morphs host at idx 0.
                 assert len(cfg.modbus) == 1
@@ -121,10 +122,10 @@ class TestConfigFileLoading:
             del os.environ[k]
 
         try:
-            with patch("sigenergy2mqtt.config.config.Config._run_auto_discovery", return_value=[]):
+            with patch("sigenergy2mqtt.config.config.Config._perform_auto_discovery", return_value=None):
                 with _swap_active_config(Config()) as cfg:
                     cfg.persistent_state_path = tmp_path
-                    cfg.load(str(config_file))
+                    asyncio.run(cfg.load(str(config_file)))
                     assert cfg._source == str(config_file)
                     assert len(cfg.modbus) >= 1
                     assert cfg.modbus[0].host == "192.168.1.50"
@@ -138,13 +139,13 @@ class TestConfigFileLoading:
         for k in original_env:
             del os.environ[k]
         try:
-            with patch("sigenergy2mqtt.config.config.Config._run_auto_discovery", return_value=[]):
+            with patch("sigenergy2mqtt.config.config.Config._perform_auto_discovery", return_value=None):
                 with _swap_active_config(Config()) as cfg:
                     cfg.persistent_state_path = tmp_path
                     with caplog.at_level(logging.WARNING):
                         from sigenergy2mqtt.config import ConfigurationError
 
                         with pytest.raises(ConfigurationError):
-                            cfg.load(str(config_file))
+                            asyncio.run(cfg.load(str(config_file)))
         finally:
             os.environ.update(original_env)

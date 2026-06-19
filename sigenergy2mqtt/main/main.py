@@ -14,7 +14,7 @@ from pymodbus import pymodbus_apply_logging_config
 from pymodbus.pdu import ModbusPDU
 
 from sigenergy2mqtt.common import Constants, ConsumptionMethod, FirmwareVersion, HybridInverter, InputType, Protocol, ProtocolApplies, PVInverter
-from sigenergy2mqtt.config import active_config, configure_root_logging, initialize_with_persistence
+from sigenergy2mqtt.config import active_config, configure_root_logging, initialize_async
 from sigenergy2mqtt.devices import PID, PSS, ACCharger, DCCharger, Device, Inverter, PowerPlant, bind_cross_device_sensors
 from sigenergy2mqtt.influxdb import get_influxdb_services
 from sigenergy2mqtt.metrics.metrics_service import Metrics, MetricsService
@@ -586,8 +586,12 @@ def setup_signals(configs: list[ThreadConfig]) -> None:
     def reload_on_signal(caught=None, frame=None):
         """Handle SIGHUP by reloading config/logging and requesting restart."""
         logging.info("Signal SIGHUP received - Reloading configuration")
+        loop = asyncio.get_running_loop()
+        future = asyncio.run_coroutine_threadsafe(
+            active_config.reload(skip_auto_discovery=True), loop
+        )
         try:
-            active_config.reload()
+            future.result(timeout=30)
         except Exception as e:
             logging.error(f"SIGHUP reload failed: {e}")
 
@@ -1196,7 +1200,7 @@ async def async_main() -> None:
             )
 
         # Phase 2 config load — StateStore now available for auto-discovery fallback
-        await initialize_with_persistence()
+        await initialize_async()
 
         seen_serial_numbers: set[str] = set()
         configs, protocol_version = await setup_devices(seen_serial_numbers)
@@ -1213,6 +1217,6 @@ async def async_main() -> None:
             logging.info(f"Shutdown of Release {active_config.version} completed")
             return
         else:
-            await active_config.reload_async()
+            await active_config.reload()
 
         logging.info("Restarting runtime")

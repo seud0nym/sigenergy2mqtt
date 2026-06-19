@@ -27,7 +27,6 @@ import logging
 import os
 import socket
 import sys
-import threading
 import time
 from contextlib import contextmanager
 from copy import deepcopy
@@ -89,17 +88,15 @@ class Config:
 
     def __init__(self):
         self._source = None
-        self._settings = None
-
+        self.persistent_state_path = Path(".")
+        # Perform a minimal env-only Settings load so that attribute access works
+        # immediately after construction (e.g. in tests that do ``cfg = Config()``
+        # without calling reload()).  A full reload() replaces this with the
+        # complete YAML + auto-discovery configuration.
         try:
-            self.persistent_state_path = _create_persistent_state_path()
+            self._settings = Settings()  # type: ignore[reportCallIssue]
         except Exception:
-            self.persistent_state_path = Path(".")
-
-        try:
-            self.reload(skip_auto_discovery=True)
-        except Exception:
-            pass
+            self._settings = None
 
     @property
     def log_level(self) -> int:
@@ -113,20 +110,6 @@ class Config:
 
     @log_level.deleter
     def log_level(self):
-        pass
-
-    @property
-    def log_fmt(self) -> str | None:
-        return self._settings.log_fmt if self._settings else None
-
-    @log_fmt.setter
-    def log_fmt(self, value: str | None):
-        if not self._settings:
-            raise AttributeError("settings not initialised")
-        self._settings.log_fmt = value
-
-    @log_fmt.deleter
-    def log_fmt(self):
         pass
 
     @property
@@ -160,90 +143,6 @@ class Config:
         pass
 
     @property
-    def repeated_state_publish_interval(self) -> int:
-        return self._settings.repeated_state_publish_interval if self._settings else 0
-
-    @repeated_state_publish_interval.setter
-    def repeated_state_publish_interval(self, value: int):
-        if not self._settings:
-            raise AttributeError("settings not initialised")
-        self._settings.repeated_state_publish_interval = value
-
-    @repeated_state_publish_interval.deleter
-    def repeated_state_publish_interval(self):
-        pass
-
-    @property
-    def sanity_check_default_kw(self) -> float:
-        return self._settings.sanity_check_default_kw if self._settings else 500.0
-
-    @sanity_check_default_kw.setter
-    def sanity_check_default_kw(self, value: float):
-        if not self._settings:
-            raise AttributeError("settings not initialised")
-        self._settings.sanity_check_default_kw = value
-
-    @sanity_check_default_kw.deleter
-    def sanity_check_default_kw(self):
-        pass
-
-    @property
-    def sanity_check_failures_increment(self) -> bool:
-        return self._settings.sanity_check_failures_increment if self._settings else False
-
-    @sanity_check_failures_increment.setter
-    def sanity_check_failures_increment(self, value: bool):
-        if not self._settings:
-            raise AttributeError("settings not initialised")
-        self._settings.sanity_check_failures_increment = value
-
-    @sanity_check_failures_increment.deleter
-    def sanity_check_failures_increment(self):
-        pass
-
-    @property
-    def ems_mode_check(self) -> bool:
-        return self._settings.ems_mode_check if self._settings else True
-
-    @ems_mode_check.setter
-    def ems_mode_check(self, value: bool):
-        if not self._settings:
-            raise AttributeError("settings not initialised")
-        self._settings.ems_mode_check = value
-
-    @ems_mode_check.deleter
-    def ems_mode_check(self):
-        pass
-
-    @property
-    def metrics_enabled(self) -> bool:
-        return self._settings.metrics_enabled if self._settings else True
-
-    @metrics_enabled.setter
-    def metrics_enabled(self, value: bool):
-        if not self._settings:
-            raise AttributeError("settings not initialised")
-        self._settings.metrics_enabled = value
-
-    @metrics_enabled.deleter
-    def metrics_enabled(self):
-        pass
-
-    @property
-    def sensor_debug_logging(self) -> bool:
-        return self._settings.sensor_debug_logging if self._settings else False
-
-    @sensor_debug_logging.setter
-    def sensor_debug_logging(self, value: bool):
-        if not self._settings:
-            raise AttributeError("settings not initialised")
-        self._settings.sensor_debug_logging = value
-
-    @sensor_debug_logging.deleter
-    def sensor_debug_logging(self):
-        pass
-
-    @property
     def persistence_debug(self) -> bool:
         return self._settings.persistence.debug if self._settings else False
 
@@ -255,86 +154,6 @@ class Config:
 
     @persistence_debug.deleter
     def persistence_debug(self):
-        pass
-
-    @property
-    def home_assistant(self) -> HomeAssistantConfig:
-        if not self._settings:
-            raise AttributeError("settings not initialised")
-        return self._settings.home_assistant
-
-    @home_assistant.setter
-    def home_assistant(self, value: HomeAssistantConfig):
-        if not self._settings:
-            raise AttributeError("settings not initialised")
-        self._settings.home_assistant = value
-
-    @home_assistant.deleter
-    def home_assistant(self):
-        pass
-
-    @property
-    def mqtt(self) -> MqttConfig:
-        if not self._settings:
-            raise AttributeError("settings not initialised")
-        return self._settings.mqtt
-
-    @mqtt.setter
-    def mqtt(self, value: MqttConfig):
-        if not self._settings:
-            raise AttributeError("settings not initialised")
-        self._settings.mqtt = value
-
-    @mqtt.deleter
-    def mqtt(self):
-        pass
-
-    @property
-    def persistence(self) -> PersistenceConfig:
-        if not self._settings:
-            raise AttributeError("settings not initialised")
-        return self._settings.persistence
-
-    @persistence.setter
-    def persistence(self, value: PersistenceConfig):
-        if not self._settings:
-            raise AttributeError("settings not initialised")
-        self._settings.persistence = value
-
-    @persistence.deleter
-    def persistence(self):
-        pass
-
-    @property
-    def pvoutput(self) -> PvOutputConfig:
-        if not self._settings:
-            raise AttributeError("settings not initialised")
-        return self._settings.pvoutput
-
-    @pvoutput.setter
-    def pvoutput(self, value: PvOutputConfig):
-        if not self._settings:
-            raise AttributeError("settings not initialised")
-        self._settings.pvoutput = value
-
-    @pvoutput.deleter
-    def pvoutput(self):
-        pass
-
-    @property
-    def influxdb(self) -> InfluxDbConfig:
-        if not self._settings:
-            raise AttributeError("settings not initialised")
-        return self._settings.influxdb
-
-    @influxdb.setter
-    def influxdb(self, value: InfluxDbConfig):
-        if not self._settings:
-            raise AttributeError("settings not initialised")
-        self._settings.influxdb = value
-
-    @influxdb.deleter
-    def influxdb(self):
         pass
 
     @property
@@ -392,7 +211,7 @@ class Config:
         for device in self._settings.modbus:
             device.log_level = level
 
-    def load(self, filename: str, skip_auto_discovery: bool = False) -> None:
+    async def load(self, filename: str, skip_auto_discovery: bool = False) -> None:
         """Load configuration from a file.
 
         Records *filename* as the configuration source and delegates to :meth:`reload`.
@@ -400,24 +219,11 @@ class Config:
         """
         logging.info(f"Loading configuration from {filename}...")
         self._source = filename
-        self.reload(skip_auto_discovery=skip_auto_discovery)
+        await self.reload(skip_auto_discovery=skip_auto_discovery)
 
-    async def load_async(self, filename: str, skip_auto_discovery: bool = False) -> None:
-        """Async version of :meth:`load`."""
-        logging.info(f"Loading configuration from {filename} (async)...")
-        self._source = filename
-        await self.reload_async(skip_auto_discovery=skip_auto_discovery)
-
-    def reload(self, skip_auto_discovery: bool = False) -> None:
+    async def reload(self, skip_auto_discovery: bool = False) -> None:
         """Reload configuration from the YAML source file and re-apply all overrides."""
-        auto_discovery_cache = self._perform_auto_discovery(skip_auto_discovery)
-        self._finalize_reload(auto_discovery_cache)
-        if not skip_auto_discovery:
-            self._validate_hosts_after_discovery()
-
-    async def reload_async(self, skip_auto_discovery: bool = False) -> None:
-        """Async version of :meth:`reload`."""
-        auto_discovery_cache = await self._perform_auto_discovery_async(skip_auto_discovery)
+        auto_discovery_cache = await self._perform_auto_discovery(skip_auto_discovery)
         self._finalize_reload(auto_discovery_cache)
         if not skip_auto_discovery:
             self._validate_hosts_after_discovery()
@@ -447,41 +253,17 @@ class Config:
             if not device.host:
                 raise ConfigurationError("modbus entry must have a host")
 
-    def _perform_auto_discovery(self, skip_auto_discovery: bool) -> Path | None:
-        """Synchronous auto-discovery logic."""
-        auto_discovery, auto_discovery_cache, auto_settings, auto_discovery_should_run = self._prepare_auto_discovery(skip_auto_discovery)
-
-        if not skip_auto_discovery and auto_discovery_should_run:
-            if auto_discovery != "force":
-                self._restore_discovery_from_mqtt_sync(auto_discovery_cache)
-
-            if auto_discovery == "force" or not auto_discovery_cache.is_file():
-                include_networks = self._build_include_networks(auto_settings.modbus_auto_discovery_networks)
-                auto_discovered = self._run_auto_discovery(
-                    port=auto_settings.modbus_port,
-                    ping_timeout=auto_settings.modbus_auto_discovery_ping_timeout,
-                    modbus_timeout=auto_settings.modbus_auto_discovery_timeout,
-                    modbus_retries=auto_settings.modbus_auto_discovery_retries,
-                    max_device_id=auto_settings.modbus_auto_discovery_max_device_id,
-                    include_networks=include_networks,
-                    exclude_devices=auto_settings.modbus_auto_discovery_exclude,
-                )
-                if auto_discovered:
-                    self._save_discovery_results_sync(auto_discovery_cache, auto_discovered)
-
-        return self._get_final_cache_path(auto_discovery, auto_discovery_cache, skip_auto_discovery, auto_discovery_should_run)
-
-    async def _perform_auto_discovery_async(self, skip_auto_discovery: bool) -> Path | None:
+    async def _perform_auto_discovery(self, skip_auto_discovery: bool) -> Path | None:
         """Asynchronous auto-discovery logic."""
         auto_discovery, auto_discovery_cache, auto_settings, auto_discovery_should_run = self._prepare_auto_discovery(skip_auto_discovery)
 
         if not skip_auto_discovery and auto_discovery_should_run:
             if auto_discovery != "force":
-                await self._restore_discovery_from_mqtt_async(auto_discovery_cache)
+                await self._restore_discovery_from_mqtt(auto_discovery_cache)
 
             if auto_discovery == "force" or not auto_discovery_cache.is_file():
                 include_networks = self._build_include_networks(auto_settings.modbus_auto_discovery_networks)
-                auto_discovered = await self._run_auto_discovery_async(
+                auto_discovered = await self._run_auto_discovery(
                     port=auto_settings.modbus_port,
                     ping_timeout=auto_settings.modbus_auto_discovery_ping_timeout,
                     modbus_timeout=auto_settings.modbus_auto_discovery_timeout,
@@ -491,7 +273,7 @@ class Config:
                     exclude_devices=auto_settings.modbus_auto_discovery_exclude,
                 )
                 if auto_discovered:
-                    await self._save_discovery_results_async(auto_discovery_cache, auto_discovered)
+                    await self._save_discovery_results(auto_discovery_cache, auto_discovered)
 
         return self._get_final_cache_path(auto_discovery, auto_discovery_cache, skip_auto_discovery, auto_discovery_should_run)
 
@@ -551,26 +333,7 @@ class Config:
             return auto_discovery_cache
         return None
 
-    def _restore_discovery_from_mqtt_sync(self, auto_discovery_cache: Path):
-        try:
-            # Configuration may not be fully loaded
-            redundancy = active_config.persistence.mqtt_redundancy
-        except AttributeError:
-            redundancy = False
-
-        if redundancy:
-            try:
-                from sigenergy2mqtt.persistence import state_store
-
-                if state_store.is_initialised:
-                    cached = state_store.load_sync(Category.CONFIG, "auto-discovery")
-                    if cached:
-                        auto_discovery_cache.write_text(cached)
-                        logging.info("Auto-discovery cache restored from MQTT")
-            except Exception:
-                logging.debug("StateStore not available for auto-discovery restore")
-
-    async def _restore_discovery_from_mqtt_async(self, auto_discovery_cache: Path):
+    async def _restore_discovery_from_mqtt(self, auto_discovery_cache: Path):
         try:
             # Configuration may not be fully loaded
             redundancy = active_config.persistence.mqtt_redundancy
@@ -589,18 +352,7 @@ class Config:
             except Exception:
                 logging.debug("StateStore not available for auto-discovery restore")
 
-    def _save_discovery_results_sync(self, auto_discovery_cache: Path, auto_discovered: list):
-        yaml_content = self._serialize_discovery(auto_discovered)
-        auto_discovery_cache.write_text(yaml_content)
-        try:
-            from sigenergy2mqtt.persistence import state_store
-
-            if state_store.is_initialised:
-                state_store.save_sync(Category.CONFIG, "auto-discovery", yaml_content)
-        except Exception:
-            pass
-
-    async def _save_discovery_results_async(self, auto_discovery_cache: Path, auto_discovered: list):
+    async def _save_discovery_results(self, auto_discovery_cache: Path, auto_discovered: list):
         yaml_content = self._serialize_discovery(auto_discovered)
         auto_discovery_cache.write_text(yaml_content)
         try:
@@ -667,7 +419,7 @@ class Config:
         that share a config object across multiple cases.
         """
         self._source = None
-        self._settings = Settings()  # type: ignore[reportCallIssue]
+        self._settings = None
 
     def _build_include_networks(self, user_networks: list[str]) -> list[str] | None:
         """Build the include_networks list for auto-discovery scanning.
@@ -747,7 +499,7 @@ class Config:
             logging.warning(f"Failed to resolve modbus host '{host}' for auto-discovery: {e}")
             return []
 
-    async def _run_auto_discovery_async(
+    async def _run_auto_discovery(
         self,
         port: int,
         ping_timeout: float,
@@ -779,87 +531,6 @@ class Config:
             logging.exception("Auto-discovery failed")
             return []
 
-    def _run_auto_discovery(
-        self,
-        port: int,
-        ping_timeout: float,
-        modbus_timeout: float,
-        modbus_retries: int,
-        max_device_id: int = 246,
-        timeout: float = AUTODISCOVERY_DEFAULT_TIMEOUT,
-        include_networks: list[str] | None = None,
-        exclude_devices: list[str] | None = None,
-    ) -> list:
-        """Synchronous execution of auto-discovery scan."""
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            loop = None
-
-        if loop is None:
-
-            async def _bounded():
-                return await asyncio.wait_for(
-                    auto_discovery_scan(
-                        include_networks=include_networks,
-                        exclude_devices=exclude_devices,
-                        port=port,
-                        ping_timeout=ping_timeout,
-                        modbus_timeout=modbus_timeout,
-                        modbus_retries=modbus_retries,
-                        max_device_id=max_device_id,
-                    ),
-                    timeout=timeout,
-                )
-
-            try:
-                return asyncio.run(_bounded())
-            except asyncio.TimeoutError:
-                logging.error(f"Auto-discovery timed out after {timeout:.1f}s")
-                return []
-            except Exception:
-                logging.exception("Auto-discovery failed")
-                return []
-
-        # Running inside an existing event loop — use a thread to avoid deadlock.
-        result: list = []
-        exception: BaseException | None = None
-
-        def worker():
-            nonlocal result, exception
-
-            async def _bounded():
-                return await asyncio.wait_for(
-                    auto_discovery_scan(
-                        include_networks=include_networks,
-                        exclude_devices=exclude_devices,
-                        port=port,
-                        ping_timeout=ping_timeout,
-                        modbus_timeout=modbus_timeout,
-                        modbus_retries=modbus_retries,
-                        max_device_id=max_device_id,
-                    ),
-                    timeout=timeout,
-                )
-
-            try:
-                result = asyncio.run(_bounded())
-            except asyncio.TimeoutError:
-                pass  # handled by join check below
-            except Exception as e:
-                exception = e
-
-        thread = threading.Thread(target=worker, name="AutoDiscoveryWorker", daemon=True)
-        thread.start()
-        thread.join(timeout=timeout + 1)  # slight margin; asyncio.wait_for fires first
-        if thread.is_alive():
-            logging.error(f"Auto-discovery timed out after {timeout:.1f}s")
-            return []
-        if exception:
-            logging.exception("Auto-discovery failed", exc_info=exception)
-            return []
-        return result
-
     def __getattr__(self, name: str) -> Any:
         if name == "_settings":
             raise AttributeError("_settings not initialised")
@@ -881,6 +552,22 @@ class Config:
             setattr(self._settings, name, value)
         else:
             super().__setattr__(name, value)
+
+    def __delattr__(self, name: str) -> None:
+        if name.startswith("_") or name in ("persistent_state_path", "clean", "validate_only_mode", "validate_show_credentials"):
+            super().__delattr__(name)
+            return
+
+        if self._settings and name in type(self._settings).model_fields:
+            try:
+                delattr(self._settings, name)
+            except AttributeError:
+                pass
+        else:
+            try:
+                super().__delattr__(name)
+            except AttributeError:
+                pass
 
     def __str__(self) -> str:
         """Return the current configuration as nicely formatted YAML.

@@ -1,3 +1,4 @@
+import asyncio
 import collections
 import logging
 import os
@@ -112,19 +113,19 @@ def test_logging_branches_exhaustive_v3():
 def test_reload_exhaustive_v7(tmp_path):
     conf_file = tmp_path / "c.yaml"
     conf_file.write_text("log-level: debug")
-    active_config.load(str(conf_file))
+    asyncio.run(active_config.load(str(conf_file)))
     empty_file = tmp_path / "e.yaml"
     empty_file.write_text("")
     with patch.object(active_config, "_source", str(empty_file)):
-        active_config.reload()
+        asyncio.run(active_config.reload())
     cache = tmp_path / "auto-discovery.yaml"
     YAML().dump([], cache)
     with patch.object(active_config, "persistent_state_path", tmp_path):
         with patch.dict(os.environ, {const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY: "once"}):
-            active_config.reload()
+            asyncio.run(active_config.reload())
         with patch.dict(os.environ, {const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY: "force"}):
             with patch("sigenergy2mqtt.config.config.auto_discovery_scan", return_value=[{"host": "h"}]):
-                active_config.reload()
+                asyncio.run(active_config.reload())
 
 
 def test_promote_cli_to_env_read_only_branch():
@@ -176,7 +177,7 @@ def test_initialize_log_level_from_env():
     with (
         patch("sigenergy2mqtt.config.cli.parse_args", return_value=fake_args),
         patch.dict(os.environ, {const.SIGENERGY2MQTT_LOG_LEVEL: "DEBUG"}),
-        patch("sigenergy2mqtt.config.config.Config._run_auto_discovery", return_value=[]),
+        patch("sigenergy2mqtt.config.config.Config._perform_auto_discovery", return_value=None),
     ):
         _system_initialize()
         assert logger.level == logging.DEBUG
@@ -195,10 +196,13 @@ def test_initialize_log_level_invalid_raises():
     with (
         patch("sigenergy2mqtt.config.cli.parse_args", return_value=fake_args),
         patch.dict(os.environ, {const.SIGENERGY2MQTT_LOG_LEVEL: "BOGUS_LEVEL"}),
-        patch("sigenergy2mqtt.config.config.Config._run_auto_discovery", return_value=[]),
+        patch("sigenergy2mqtt.config.config.Config._perform_auto_discovery", return_value=None),
     ):
         with pytest.raises(ConfigurationError, match="invalid log level"):
             initialize()
+            from sigenergy2mqtt.config import initialize_async
+            import asyncio
+            asyncio.run(initialize_async())
 
 
 def test_initialize_validate_only_returns_false():
@@ -211,11 +215,14 @@ def test_initialize_validate_only_returns_false():
     with (
         patch("sigenergy2mqtt.config.cli.parse_args", return_value=fake_args),
         patch.dict(os.environ, {}, clear=True),
-        patch("sigenergy2mqtt.config.config.Config._run_auto_discovery", return_value=[]),
+        patch("sigenergy2mqtt.config.config.Config._perform_auto_discovery", return_value=None),
     ):
         with patch.object(active_config, "persistent_state_path", Path("/tmp/nonexistent_test_path")):
             with pytest.raises(ConfigurationError, match="At least one Modbus device must be configured"):
                 initialize()
+                from sigenergy2mqtt.config import initialize_async
+                import asyncio
+                asyncio.run(initialize_async())
 
 
 def test_coerce_bool_none():
