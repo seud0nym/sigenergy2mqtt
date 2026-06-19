@@ -22,7 +22,6 @@ For testing, use :func:`_swap_active_config` to temporarily replace the global::
 from __future__ import annotations
 
 import asyncio
-import builtins
 import ipaddress
 import logging
 import os
@@ -47,10 +46,6 @@ from .auto_discovery import scan as auto_discovery_scan
 from .auto_discovery_settings import AutoDiscoverySettings
 from .settings import Settings
 from .sources import RuamelYamlSettingsSource, _auto_discovery_env_values
-
-# Keep ValidationError accessible as a builtin for any legacy test code that
-# references it without importing it explicitly.
-builtins.ValidationError = ValidationError  # type: ignore[attr-defined]
 
 AUTODISCOVERY_DEFAULT_TIMEOUT = 300.0
 
