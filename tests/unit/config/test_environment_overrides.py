@@ -3,9 +3,8 @@ import os
 from unittest.mock import patch
 
 import pytest
-from pydantic import ValidationError
 
-from sigenergy2mqtt.config import Config, _swap_active_config, const
+from sigenergy2mqtt.config import Config, ConfigurationError, _swap_active_config, const
 
 
 class TestConfigEnvironmentOverrides:
@@ -63,7 +62,7 @@ class TestConfigSensorOverrides:
         with patch("sigenergy2mqtt.config.config.Config._run_auto_discovery", return_value=[]):
             with _swap_active_config(Config()) as cfg:
                 cfg.persistent_state_path = tmp_path
-                with pytest.raises(ValidationError, match="property is not known"):
+                with pytest.raises(ConfigurationError, match="property is not known"):
                     cfg.load(str(config_file))
 
     def test_invalid_sensor_override_structure(self, tmp_path):
@@ -72,7 +71,7 @@ class TestConfigSensorOverrides:
         with patch("sigenergy2mqtt.config.config.Config._run_auto_discovery", return_value=[]):
             with _swap_active_config(Config()) as cfg:
                 cfg.persistent_state_path = tmp_path
-                with pytest.raises(ValidationError):
+                with pytest.raises(ConfigurationError):
                     cfg.load(str(config_file))
 
 
@@ -143,9 +142,9 @@ class TestConfigFileLoading:
                 with _swap_active_config(Config()) as cfg:
                     cfg.persistent_state_path = tmp_path
                     with caplog.at_level(logging.WARNING):
-                        from pydantic import ValidationError
+                        from sigenergy2mqtt.config import ConfigurationError
 
-                        with pytest.raises(ValidationError):
+                        with pytest.raises(ConfigurationError):
                             cfg.load(str(config_file))
         finally:
             os.environ.update(original_env)

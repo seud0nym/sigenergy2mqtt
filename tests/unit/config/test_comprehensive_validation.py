@@ -3,12 +3,12 @@
 import pytest
 from pydantic import ValidationError
 
+from sigenergy2mqtt.config import ConfigurationError
 from sigenergy2mqtt.config.settings import (
     HomeAssistantConfig,
     ModbusConfig,
     MqttConfig,
     PvOutputConfig,
-    Settings,
 )
 
 
@@ -79,5 +79,7 @@ class TestConfigComprehensiveValidation:
         from unittest.mock import patch
 
         with patch.dict(os.environ, {}, clear=True):
-            with pytest.raises(ValidationError, match="At least one Modbus device must be configured"):
-                Settings(modbus=[])
+            with pytest.raises(ConfigurationError, match="At least one Modbus device must be configured"):
+                from sigenergy2mqtt.config.config import Config
+
+                Config()._finalize_reload(None)

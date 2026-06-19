@@ -35,6 +35,7 @@ from io import StringIO
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Generator
 
+from pydantic import ValidationError
 from ruamel.yaml import YAML
 
 from sigenergy2mqtt import i18n
@@ -423,12 +424,26 @@ class Config:
 
     def _finalize_reload(self, auto_discovery_cache: Path | None) -> None:
         """Final load including the auto discovery results (if any), WITH post-init validation."""
-        self._settings = Settings(yaml_file_arg=self._source, discovery_yaml_arg=auto_discovery_cache)  # type: ignore[reportCallIssue]
+        # Load Settings; re-raise any pydantic ValidationError as ConfigurationError
+        try:
+            self._settings = Settings(yaml_file_arg=self._source, discovery_yaml_arg=auto_discovery_cache)  # type: ignore[reportCallIssue]
+        except ValidationError as exc:
+            raise ConfigurationError(str(exc)) from exc
+
+        # Ensure at least one Modbus device is configured (unless auto discovery provides it)
+        if not self._settings.modbus:
+            auto_settings = self._load_auto_discovery_settings()
+            if not auto_settings.modbus_auto_discovery:
+                raise ConfigurationError("At least one Modbus device must be configured")
+
         i18n.load(self._settings.language)
 
     def _validate_hosts_after_discovery(self) -> None:
-        """Ensure all Modbus devices have a host after auto-discovery finishes."""
-        for device in self._settings.modbus if self._settings is not None else []:
+        """Ensure at least one Modbus device is configured and all have a host."""
+        modbus_devices = self._settings.modbus if self._settings is not None else []
+        if not modbus_devices:
+            raise ConfigurationError("At least one Modbus device must be configured")
+        for device in modbus_devices:
             if not device.host:
                 raise ConfigurationError("modbus entry must have a host")
 
