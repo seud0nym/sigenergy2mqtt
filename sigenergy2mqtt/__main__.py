@@ -15,6 +15,7 @@ from sigenergy2mqtt.config import ConfigurationError, active_config, initialize,
 from sigenergy2mqtt.main import async_main, validate_connections
 from sigenergy2mqtt.metrics.metrics import Metrics
 
+
 async def _validate_main(show_credentials: bool) -> None:
     await initialize_async()
     await validate_connections(show_credentials=show_credentials)

@@ -20,7 +20,7 @@ from sigenergy2mqtt.influxdb import get_influxdb_services
 from sigenergy2mqtt.metrics.metrics_service import Metrics, MetricsService
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.monitor import MonitorService
-from sigenergy2mqtt.mqtt import mqtt_health_registry
+from sigenergy2mqtt.mqtt import interrupt_mqtt_reconnection, mqtt_health_registry
 from sigenergy2mqtt.persistence import Category, state_store
 from sigenergy2mqtt.pvoutput import get_pvoutput_services
 from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, ModbusSensorMixin, WriteOnlySensor
@@ -579,6 +579,7 @@ def setup_signals(configs: list[ThreadConfig]) -> None:
     def exit_on_signal(caught, frame):
         """Handle termination signals by setting all active thread configs to offline."""
         logging.info(f"Signal {caught} received - Shutdown commenced")
+        interrupt_mqtt_reconnection()
         logging.getLogger("asyncio").setLevel(logging.ERROR)
         for config in configs:
             config.offline()
@@ -587,9 +588,7 @@ def setup_signals(configs: list[ThreadConfig]) -> None:
         """Handle SIGHUP by reloading config/logging and requesting restart."""
         logging.info("Signal SIGHUP received - Reloading configuration")
         loop = asyncio.get_running_loop()
-        future = asyncio.run_coroutine_threadsafe(
-            active_config.reload(skip_auto_discovery=True), loop
-        )
+        future = asyncio.run_coroutine_threadsafe(active_config.reload(skip_auto_discovery=True), loop)
         try:
             future.result(timeout=30)
         except Exception as e:
