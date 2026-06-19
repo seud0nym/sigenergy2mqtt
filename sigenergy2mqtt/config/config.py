@@ -727,6 +727,12 @@ def configure_root_logging(level: int | None = None, fmt: str | None = None) -> 
     # Determine the initial log level: explicit argument -> env -> INFO
     if level is None:
         env_level_name = os.getenv(const.SIGENERGY2MQTT_LOG_LEVEL)
+        if not env_level_name:
+            args = sys.argv[1:]
+            for arg in args:
+                if arg.startswith("--log-level="):
+                    env_level_name = arg.split("=")[1]
+                    break
         if env_level_name:
             env_level = getattr(logging, env_level_name, None)
             initial_level = env_level if env_level else logging.INFO
@@ -747,7 +753,7 @@ def _system_initialize():
     1. Configures the root logger with an appropriate format (TTY, Docker, or
         plain syslog-style) via :func:`_setup_logging`.
     2. Logs the application and Python version.
-    3. Enforces the minimum Python version requirement (3.12+).
+    3. Enforces the minimum Python version requirement.
 
     Raises:
         ConfigurationError: If the Python version requirement is not met, or if no
