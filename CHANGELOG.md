@@ -10,6 +10,7 @@
 ### Changed
 
 - Reduced log noise by demoting config sourcing to debug and improving device discovery log details
+- Updated Dockerfile base image use python:3.14-alpine3.24
 
 ### Fixed
 
