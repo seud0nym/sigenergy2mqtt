@@ -20,6 +20,7 @@
 - PV Total Generation Today and PV Total Generation Yesterday were incorrectly marked as enabled by default in Home Assistant
 - Set negative delta range limits for unsigned integer types in sanity checks, because a delta can be less than zero
 - Fixed ConfigurationError raised for valid Modbus configurations with auto-discovery cache (fixes #203)
+- Handle time zone retrieval failure and set default to UTC
 
 ---
 

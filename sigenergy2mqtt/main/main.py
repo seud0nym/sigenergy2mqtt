@@ -316,7 +316,12 @@ async def make_plant_and_inverter(plant_index: int, modbus_client: ModbusClient,
 
     device_type.has_independent_phase_power_control_interface = await probe_optional_interface(modbus_client, IndependentPhasePowerControl.ADDRESS, "Independent Phase Control Interface")
     device_type.has_grid_code_interface = await probe_optional_interface(modbus_client, GridCodeLVRT.ADDRESS, "Grid Code Interface")
-    tz = timezone(timedelta(minutes=cast(int, await get_state(SystemTimeZone(plant_index), modbus_client, "plant", raw=True))))
+
+    try:
+        tz = timezone(timedelta(minutes=cast(int, await get_state(SystemTimeZone(plant_index), modbus_client, "plant", raw=True))))
+    except Exception as e:
+        logging.error(f"Failed to get timezone for plant {plant_index}: {e} - defaulting to UTC")
+        tz = timezone.utc
 
     if plant is None:
         firmware = FirmwareVersion(cast(str, await get_state(InverterFirmwareVersion(plant_index, device_address), modbus_client, "plant/inverter")))
