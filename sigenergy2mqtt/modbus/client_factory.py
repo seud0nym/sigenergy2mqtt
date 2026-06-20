@@ -70,10 +70,17 @@ class ModbusClientFactory:
             del cls._clients[key]
             if client in cls._hosts:
                 del cls._hosts[client]
+            host = key[0]
+            port = key[1]
+        else:
+            try:
+                host = client.comm_params.host
+                port = client.comm_params.port
+            except Exception:
+                host = "[undetermined]"
+                port = 502
 
         # Always attempt to close the client.
-        host = client.comm_params.host
-        port = client.comm_params.port
         try:
             logging.info(f"Disconnecting from modbus://{host}:{port}")
             client.close()

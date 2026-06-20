@@ -14,6 +14,7 @@ class DummyMQTTClient:
     def __init__(self):
         self.loop_stopped = False
         self.disconnected = False
+        self.client_id_str = "DummyMQTTClient"
 
     def loop_stop(self):
         self.loop_stopped = True
