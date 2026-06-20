@@ -152,7 +152,9 @@ python3 -m twine check dist/* || exit
 
 if [[ $skip_extras = n ]]; then
     echo -e "${GREEN}>>> Testing Docker build...${NC}"
-    docker buildx build . || exit
+    docker buildx build . -t test-sigenergy2mqtt || exit
+    echo -e "${GREEN}>>> Checking Docker vulnerabilities...${NC}"
+    snyk container test test-sigenergy2mqtt --file=Dockerfile || exit
 fi
 
 if [[ -e ../home-assistant-addons/sigenergy2mqtt/config.yaml ]]; then
