@@ -5,6 +5,7 @@ from .client import ModbusClient
 
 class ModbusClientFactory:
     """Connection pool and lifecycle manager for Modbus TCP clients."""
+
     _clients: dict[tuple[str, int], ModbusClient] = {}
     _hosts: dict[ModbusClient, str] = {}
 
@@ -71,7 +72,10 @@ class ModbusClientFactory:
                 del cls._hosts[client]
 
         # Always attempt to close the client.
+        host = client.comm_params.host
+        port = client.comm_params.port
         try:
+            logging.info(f"Disconnecting from modbus://{host}:{port}")
             client.close()
-        except Exception:
-            pass
+        except Exception as e:
+            logging.warning(f"Error while disconnecting from modbus://{host}:{port}: {e}")

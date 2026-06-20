@@ -45,6 +45,7 @@ class MqttClient(mqtt.Client):
         tls: bool = False,
         tls_insecure: bool = False,
     ):
+        self.client_id_str = client_id
         super().__init__(
             CallbackAPIVersion.VERSION2,
             client_id=client_id,
