@@ -318,9 +318,13 @@ async def make_plant_and_inverter(plant_index: int, modbus_client: ModbusClient,
     device_type.has_grid_code_interface = await probe_optional_interface(modbus_client, GridCodeLVRT.ADDRESS, "Grid Code Interface")
 
     try:
-        tz = timezone(timedelta(minutes=cast(int, await get_state(SystemTimeZone(plant_index), modbus_client, "plant", raw=True))))
+        sys_tz_offset = await get_state(SystemTimeZone(plant_index), modbus_client, "plant", raw=True)
+        if sys_tz_offset is None:
+            logging.warning(f"Plant {plant_index} System Timezone offset not available - defaulting to UTC")
+            sys_tz_offset = 0
+        tz = timezone(timedelta(minutes=cast(int, sys_tz_offset)))
     except Exception as e:
-        logging.error(f"Failed to get timezone for plant {plant_index}: {e} - defaulting to UTC")
+        logging.error(f"Plant {plant_index} System Timezone offset read failed - defaulting to UTC ({e})")
         tz = timezone.utc
 
     if plant is None:
@@ -402,10 +406,14 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
         if not (device.registers.read_only or device.registers.read_write or device.registers.write_only):
             logging.info(f"Ignored configured host modbus://{device.host}:{device.port} (Plant Index = {plant_index}): All registers are disabled (read-only=false read-write=false write-only=false)")
             continue
-
-        logging.info(
-            f"Creating devices from configured host modbus://{device.host}:{device.port} (Plant: {plant_index}, Device IDs: Inverter={device.inverters} AC Charger={device.ac_chargers} DC Charger={device.dc_chargers} PSS={device.pss} PID={device.pid})"
-        )
+        if device.pss or device.pid:
+            logging.info(
+                f"Creating devices from configured host modbus://{device.host}:{device.port} (Plant: {plant_index}, Device IDs: Inverter={device.inverters} AC Charger={device.ac_chargers} DC Charger={device.dc_chargers} PSS={device.pss} PID={device.pid})"
+            )
+        else:
+            logging.info(
+                f"Creating devices from configured host modbus://{device.host}:{device.port} (Plant: {plant_index}, Device IDs: Inverter={device.inverters} AC Charger={device.ac_chargers} DC Charger={device.dc_chargers})"
+            )
 
         config: ThreadConfig = ThreadConfig.create(device.host, device.port, device.timeout, device.retries)
         modbus = ModbusClient(device.host, port=device.port, timeout=device.timeout, retries=device.retries)
