@@ -2430,7 +2430,7 @@ The attributes payload currently includes:
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_system_time/state</td></tr>
 <tr><td>Source</td><td>Modbus Registers 30000-30001</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0  and 4294967295  (0 ≦ raw value ≦ 4294967295)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 1640995200  and 4294967295  (1640995200 ≦ raw value ≦ 4294967295)</td></tr>
 </table>
 <h5><a id='sigen_0_247_30002'>System Time Zone</a></h5>
 <table>
@@ -2441,7 +2441,7 @@ The attributes payload currently includes:
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_system_time_zone/state</td></tr>
 <tr><td>Source</td><td>Modbus Register 30002</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -32767  and 32767  (-32767 ≦ raw value ≦ 32767)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -1440  and 1440  (-1440 ≦ raw value ≦ 1440)</td></tr>
 </table>
 <h5><a id='sigen_0_247_30194'>Third-Party PV Power</a></h5>
 <table>
@@ -3883,7 +3883,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Modbus Register 31028</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 A and 50.0 A (0 ≦ raw value ≦ 5000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -0.1 A and 50.0 A (-10 ≦ raw value ≦ 5000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_31030'>PV String 2 Current</a></h5>
 <table>
@@ -3897,7 +3897,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Modbus Register 31030</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 A and 50.0 A (0 ≦ raw value ≦ 5000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -0.1 A and 50.0 A (-10 ≦ raw value ≦ 5000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_31032'>PV String 3 Current</a></h5>
 <table>
@@ -3911,7 +3911,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Modbus Register 31032</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 A and 50.0 A (0 ≦ raw value ≦ 5000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -0.1 A and 50.0 A (-10 ≦ raw value ≦ 5000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_31034'>PV String 4 Current</a></h5>
 <table>
@@ -3925,7 +3925,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Modbus Register 31034</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 A and 50.0 A (0 ≦ raw value ≦ 5000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -0.1 A and 50.0 A (-10 ≦ raw value ≦ 5000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_31043'>PV String 5 Current</a></h5>
 <table>
@@ -3939,7 +3939,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Modbus Register 31043</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 A and 50.0 A (0 ≦ raw value ≦ 5000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -0.1 A and 50.0 A (-10 ≦ raw value ≦ 5000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_31045'>PV String 6 Current</a></h5>
 <table>
@@ -3953,7 +3953,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Modbus Register 31045</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 A and 50.0 A (0 ≦ raw value ≦ 5000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -0.1 A and 50.0 A (-10 ≦ raw value ≦ 5000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_31047'>PV String 7 Current</a></h5>
 <table>
@@ -3967,7 +3967,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Modbus Register 31047</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 A and 50.0 A (0 ≦ raw value ≦ 5000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -0.1 A and 50.0 A (-10 ≦ raw value ≦ 5000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_31049'>PV String 8 Current</a></h5>
 <table>
@@ -3981,7 +3981,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Modbus Register 31049</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 A and 50.0 A (0 ≦ raw value ≦ 5000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -0.1 A and 50.0 A (-10 ≦ raw value ≦ 5000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_31051'>PV String 9 Current</a></h5>
 <table>
@@ -3995,7 +3995,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Modbus Register 31051</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 A and 50.0 A (0 ≦ raw value ≦ 5000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -0.1 A and 50.0 A (-10 ≦ raw value ≦ 5000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_31053'>PV String 10 Current</a></h5>
 <table>
@@ -4009,7 +4009,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Modbus Register 31053</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 A and 50.0 A (0 ≦ raw value ≦ 5000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -0.1 A and 50.0 A (-10 ≦ raw value ≦ 5000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_31055'>PV String 11 Current</a></h5>
 <table>
@@ -4023,7 +4023,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Modbus Register 31055</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 A and 50.0 A (0 ≦ raw value ≦ 5000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -0.1 A and 50.0 A (-10 ≦ raw value ≦ 5000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_31057'>PV String 12 Current</a></h5>
 <table>
@@ -4037,7 +4037,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Modbus Register 31057</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 A and 50.0 A (0 ≦ raw value ≦ 5000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -0.1 A and 50.0 A (-10 ≦ raw value ≦ 5000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_31059'>PV String 13 Current</a></h5>
 <table>
@@ -4051,7 +4051,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Modbus Register 31059</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 A and 50.0 A (0 ≦ raw value ≦ 5000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -0.1 A and 50.0 A (-10 ≦ raw value ≦ 5000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_31061'>PV String 14 Current</a></h5>
 <table>
@@ -4065,7 +4065,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Modbus Register 31061</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 A and 50.0 A (0 ≦ raw value ≦ 5000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -0.1 A and 50.0 A (-10 ≦ raw value ≦ 5000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_31063'>PV String 15 Current</a></h5>
 <table>
@@ -4079,7 +4079,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Modbus Register 31063</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 A and 50.0 A (0 ≦ raw value ≦ 5000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -0.1 A and 50.0 A (-10 ≦ raw value ≦ 5000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_31065'>PV String 16 Current</a></h5>
 <table>
@@ -4093,7 +4093,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Modbus Register 31065</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 A and 50.0 A (0 ≦ raw value ≦ 5000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -0.1 A and 50.0 A (-10 ≦ raw value ≦ 5000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_31067'>PV String 17 Current</a></h5>
 <table>
@@ -4107,7 +4107,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Modbus Register 31067</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 A and 50.0 A (0 ≦ raw value ≦ 5000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -0.1 A and 50.0 A (-10 ≦ raw value ≦ 5000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_31069'>PV String 18 Current</a></h5>
 <table>
@@ -4121,7 +4121,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Modbus Register 31069</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 A and 50.0 A (0 ≦ raw value ≦ 5000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -0.1 A and 50.0 A (-10 ≦ raw value ≦ 5000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_31071'>PV String 19 Current</a></h5>
 <table>
@@ -4135,7 +4135,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Modbus Register 31071</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 A and 50.0 A (0 ≦ raw value ≦ 5000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -0.1 A and 50.0 A (-10 ≦ raw value ≦ 5000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_31073'>PV String 20 Current</a></h5>
 <table>
@@ -4149,7 +4149,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Modbus Register 31073</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 A and 50.0 A (0 ≦ raw value ≦ 5000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -0.1 A and 50.0 A (-10 ≦ raw value ≦ 5000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_31075'>PV String 21 Current</a></h5>
 <table>
@@ -4163,7 +4163,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Modbus Register 31075</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 A and 50.0 A (0 ≦ raw value ≦ 5000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -0.1 A and 50.0 A (-10 ≦ raw value ≦ 5000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_31077'>PV String 22 Current</a></h5>
 <table>
@@ -4177,7 +4177,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Modbus Register 31077</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 A and 50.0 A (0 ≦ raw value ≦ 5000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -0.1 A and 50.0 A (-10 ≦ raw value ≦ 5000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_31079'>PV String 23 Current</a></h5>
 <table>
@@ -4191,7 +4191,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Modbus Register 31079</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 A and 50.0 A (0 ≦ raw value ≦ 5000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -0.1 A and 50.0 A (-10 ≦ raw value ≦ 5000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_31081'>PV String 24 Current</a></h5>
 <table>
@@ -4205,7 +4205,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Modbus Register 31081</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 A and 50.0 A (0 ≦ raw value ≦ 5000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -0.1 A and 50.0 A (-10 ≦ raw value ≦ 5000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_31083'>PV String 25 Current</a></h5>
 <table>
@@ -4219,7 +4219,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Modbus Register 31083</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 A and 50.0 A (0 ≦ raw value ≦ 5000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -0.1 A and 50.0 A (-10 ≦ raw value ≦ 5000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_31085'>PV String 26 Current</a></h5>
 <table>
@@ -4233,7 +4233,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Modbus Register 31085</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 A and 50.0 A (0 ≦ raw value ≦ 5000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -0.1 A and 50.0 A (-10 ≦ raw value ≦ 5000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_31087'>PV String 27 Current</a></h5>
 <table>
@@ -4247,7 +4247,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Modbus Register 31087</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 A and 50.0 A (0 ≦ raw value ≦ 5000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -0.1 A and 50.0 A (-10 ≦ raw value ≦ 5000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_31089'>PV String 28 Current</a></h5>
 <table>
@@ -4261,7 +4261,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Modbus Register 31089</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 A and 50.0 A (0 ≦ raw value ≦ 5000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -0.1 A and 50.0 A (-10 ≦ raw value ≦ 5000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_31091'>PV String 29 Current</a></h5>
 <table>
@@ -4275,7 +4275,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Modbus Register 31091</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 A and 50.0 A (0 ≦ raw value ≦ 5000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -0.1 A and 50.0 A (-10 ≦ raw value ≦ 5000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_31093'>PV String 30 Current</a></h5>
 <table>
@@ -4289,7 +4289,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Modbus Register 31093</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 A and 50.0 A (0 ≦ raw value ≦ 5000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -0.1 A and 50.0 A (-10 ≦ raw value ≦ 5000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_31095'>PV String 31 Current</a></h5>
 <table>
@@ -4303,7 +4303,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Modbus Register 31095</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 A and 50.0 A (0 ≦ raw value ≦ 5000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -0.1 A and 50.0 A (-10 ≦ raw value ≦ 5000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_31097'>PV String 32 Current</a></h5>
 <table>
@@ -4317,7 +4317,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Modbus Register 31097</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 A and 50.0 A (0 ≦ raw value ≦ 5000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -0.1 A and 50.0 A (-10 ≦ raw value ≦ 5000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_31099'>PV String 33 Current</a></h5>
 <table>
@@ -4331,7 +4331,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Modbus Register 31099</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 A and 50.0 A (0 ≦ raw value ≦ 5000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -0.1 A and 50.0 A (-10 ≦ raw value ≦ 5000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_31101'>PV String 34 Current</a></h5>
 <table>
@@ -4345,7 +4345,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Modbus Register 31101</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 A and 50.0 A (0 ≦ raw value ≦ 5000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -0.1 A and 50.0 A (-10 ≦ raw value ≦ 5000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_31103'>PV String 35 Current</a></h5>
 <table>
@@ -4359,7 +4359,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Modbus Register 31103</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 A and 50.0 A (0 ≦ raw value ≦ 5000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -0.1 A and 50.0 A (-10 ≦ raw value ≦ 5000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_31105'>PV String 36 Current</a></h5>
 <table>
@@ -4373,7 +4373,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Modbus Register 31105</td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 A and 50.0 A (0 ≦ raw value ≦ 5000)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -0.1 A and 50.0 A (-10 ≦ raw value ≦ 5000)</td></tr>
 </table>
 <h5><a id='sigen_0_inverter_1_pv1_daily_energy'>PV String 1 Daily Production</a></h5>
 <table>
