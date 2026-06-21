@@ -203,13 +203,16 @@ class Service(Device):
                         break
             except requests.exceptions.HTTPError as exc:
                 await Metrics.pvoutput_upload_error()
-                response = exc.response
-                limit, remaining, at, reset = self.get_response_headers(response)
-                if response.status_code == 400:
-                    self.logger.error(f"{self.log_identity} Attempt #{i} Bad Request 400: {response.text} ({limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))})")
-                    break
+                if exc.response is None:
+                    self.logger.error(f"{self.log_identity} Attempt #{i} HTTP Error: {exc}")
                 else:
-                    self.logger.error(f"{self.log_identity} Attempt #{i} HTTP Error: {exc} ({limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))})")
+                    response = exc.response
+                    limit, remaining, at, reset = self.get_response_headers(response)
+                    if response.status_code == 400:
+                        self.logger.error(f"{self.log_identity} Attempt #{i} Bad Request 400: {response.text} ({limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))})")
+                        break
+                    else:
+                        self.logger.error(f"{self.log_identity} Attempt #{i} HTTP Error: {exc} ({limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))})")
             except requests.exceptions.ConnectionError as exc:
                 await Metrics.pvoutput_upload_error()
                 self.logger.error(f"{self.log_identity} Attempt #{i} Error Connecting: {exc}")
