@@ -1020,7 +1020,7 @@ async def run_async_server(
                     registers = ModbusClientMixin.convert_to_registers(value, sensor.data_type)
                     forced_values[sensor.device_address][sensor.address] = registers
                     sensor.debug_logging = True
-                    _logger.info(f"Forcing sensor {sensor.name} at address {sensor.address} to {value} ({registers}) on device {sensor.device_address} and debugging enabled")
+                    _logger.debug(f"Forcing sensor {sensor.name} at address {sensor.address} to {value} ({registers}) on device {sensor.device_address} and debugging enabled")
 
     _logger.info("Data blocks created:")
     for device_address, data_block in context.items():
