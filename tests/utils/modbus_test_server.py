@@ -18,6 +18,7 @@ automated test fixtures.
 """
 
 import asyncio
+import json
 import logging
 import os
 import secrets
@@ -86,6 +87,8 @@ class TestConfig:
     grid_outage_repeated: bool = True
     simulate_firmware_upgrade: bool = False
     simulate_power_factor_errors: bool = False
+
+    force_sensor_values: dict[str, Any] = {}  # key: sensor class pattern, value: sensor value
 
 
 class CustomMqttHandler:
@@ -1002,6 +1005,7 @@ async def run_async_server(
     _logger.info("Creating data blocks...")
     latency_budget = LatencyBudget()
     inverter_device_address: list[int] = []
+    forced_values: dict[int, dict[int, Any]] = {}
     for sensor in sorted_sensors:
         if hasattr(sensor, "device_address"):
             if sensor.device_address not in context:
@@ -1009,6 +1013,15 @@ async def run_async_server(
             if sensor.address == InverterFirmwareVersion.ADDRESS:
                 inverter_device_address.append(sensor.device_address)
             context[sensor.device_address].add_sensor(sensor)
+            for sensor_class_name, value in TestConfig.force_sensor_values.items():
+                if sensor.__class__.__name__ == sensor_class_name:
+                    if sensor.device_address not in forced_values:
+                        forced_values[sensor.device_address] = {}
+                    registers = ModbusClientMixin.convert_to_registers(value, sensor.data_type)
+                    forced_values[sensor.device_address][sensor.address] = registers
+                    sensor.debug_logging = True
+                    _logger.info(f"Forcing sensor {sensor.name} at address {sensor.address} to {value} ({registers}) on device {sensor.device_address} and debugging enabled")
+
     _logger.info("Data blocks created:")
     for device_address, data_block in context.items():
         _logger.info(f"  Device {device_address:>3}: {devices[device_address]} ({len(data_block.addresses)} addresses)")
@@ -1066,6 +1079,10 @@ async def run_async_server(
             else:
                 _logger.info(f"Setting initial grid status to {initial_grid_status_map[TestConfig.grid_status_initial_state]}")
                 await context[Constants.PLANT_DEVICE_ADDRESS].force_set_registers(GridStatus.ADDRESS, [TestConfig.grid_status_initial_state])
+
+        for device_address, device_forced_values in forced_values.items():
+            for address, registers in device_forced_values.items():
+                await context[device_address].force_set_registers(address, registers)
 
         tasks = [server.serve_forever()]
         if TestConfig.simulate_grid_outages:
@@ -1191,6 +1208,12 @@ async def async_helper() -> None:
             return default
         return value.lower() in ("1", "true", "yes", "on")
 
+    def _env_json(name: str) -> dict[str, Any]:
+        value = _env(name)
+        if value is None:
+            return {}
+        return json.loads(value)
+
     def _env_int(name: str, default: int) -> int:
         value = _env(name)
         if value is None:
@@ -1260,6 +1283,7 @@ async def async_helper() -> None:
     TestConfig.grid_outage_repeated = _env_bool("MODBUS_TEST_SERVER_GRID_OUTAGE_REPEATED", True)
     TestConfig.simulate_firmware_upgrade = _env_bool("MODBUS_TEST_SERVER_SIMULATE_FIRMWARE_UPGRADE", False)
     TestConfig.simulate_power_factor_errors = _env_bool("MODBUS_TEST_SERVER_SIMULATE_POWER_FACTOR_ERRORS", False)
+    TestConfig.force_sensor_values = _env_json("MODBUS_TEST_SERVER_FORCE_SENSOR_VALUES_JSON")
 
     server_host = _env("MODBUS_TEST_SERVER_HOST") or "0.0.0.0"
     server_port = _env_int("MODBUS_TEST_SERVER_PORT", 502)
