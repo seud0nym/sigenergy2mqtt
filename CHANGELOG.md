@@ -1,6 +1,18 @@
 <!-- git log [since tag]..HEAD --oneline -->
 # Changelog 
 
+## [Unreleased]
+
+### Added
+
+- Added support for forcing sensor values in Modbus test server
+
+### Fixed
+
+- Fixed sequencing of pymodbus logging configuration for suppression of Modbus "ERROR: request ask for ... Skipping." log messages
+
+---
+
 ## [2026.6.21] - 2026-06-21
 
 ### Added
