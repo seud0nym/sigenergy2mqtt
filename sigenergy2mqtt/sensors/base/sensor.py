@@ -617,7 +617,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
 
     def _log_configured_topics(self) -> None:
         """Log the configured MQTT topics for debugging."""
-        logging.debug(f"{self.log_identity} Configured MQTT topics (enabled={active_config.home_assistant.enabled} simplified={active_config.home_assistant.use_simplified_topics})")
+        logging.debug(f"{self.log_identity} Configured MQTT topics (HA={active_config.home_assistant.enabled} simplified={active_config.home_assistant.use_simplified_topics})")
         for key in (DiscoveryKeys.STATE_TOPIC, DiscoveryKeys.RAW_STATE_TOPIC, DiscoveryKeys.JSON_ATTRIBUTES_TOPIC, DiscoveryKeys.AVAILABILITY):
             if key in self:
                 logging.debug(f"{self.log_identity} >>> {key}={self[key]})")
@@ -1249,6 +1249,19 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
     def __hash__(self) -> int:  # pyright: ignore[reportIncompatibleVariableOverride]
         """Hash based on unique_id."""
         return hash(self[DiscoveryKeys.UNIQUE_ID])
+
+    # =========================================================================
+    # String Representations
+    # =========================================================================
+
+    def __str__(self) -> str:
+        """Return a human-readable string representation for logging."""
+        state_str = f" (state={self.latest_raw_state})" if self._states else " (state=None)"
+        return f"{self.log_identity}{state_str}"
+
+    def __repr__(self) -> str:
+        """Return a concise, unambiguous debug representation of the sensor."""
+        return f"<{self.__class__.__name__} unique_id='{self.unique_id}' publishable={self.publishable} {self.sanity_check}>"
 
 
 # =============================================================================
