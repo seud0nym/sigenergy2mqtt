@@ -7,7 +7,7 @@ import pytest
 from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.devices import Device, DeviceRegistry
-from sigenergy2mqtt.sensors.base import DerivedSensor, ReadableSensorMixin
+from sigenergy2mqtt.sensors.base import DerivedSensor, ReadableSensorMixin, SanityCheck
 
 
 @pytest.fixture(autouse=True)
@@ -43,6 +43,9 @@ class DummyDerived(DerivedSensor):
         object.__setattr__(self, "protocol_version", protocol_version)
         object.__setattr__(self, "debug_logging", True)
         object.__setattr__(self, "derived_sensors", {})
+        object.__setattr__(self, "_log_identity", unique_id)
+        object.__setattr__(self, "sanity_check", SanityCheck())
+        object.__setattr__(self, "_publishable", True)
 
     def add_derived_sensor(self, sensor):
         pass

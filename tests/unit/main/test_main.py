@@ -514,11 +514,11 @@ class TestFactories:
             patch("sigenergy2mqtt.sensors.inverter_read_only.PVStringCount.get_state", AsyncMock(return_value=1)),
             patch("sigenergy2mqtt.sensors.inverter_read_only.InverterSerialNumber.get_state", AsyncMock(return_value="SN1")),
             patch("sigenergy2mqtt.sensors.inverter_read_only.OutputType.get_state", AsyncMock(return_value=1)),
-            patch("sigenergy2mqtt.main.main.logging.info") as mock_info,
+            patch("sigenergy2mqtt.main.main.logging.debug") as mock_debug,
         ):
             await main_mod.make_plant_and_inverter(0, mock_client, 1, None, seen)
             assert clean_config.ems_mode_check is False
-            assert any("Remote EMS Mode check disabled" in str(call) for call in mock_info.call_args_list)
+            assert any("Remote EMS Mode check disabled" in str(call) for call in mock_debug.call_args_list)
 
     @pytest.mark.asyncio
     async def test_make_plant_and_inverter_spc112_keeps_ems_mode_check_config(self, clean_config):
