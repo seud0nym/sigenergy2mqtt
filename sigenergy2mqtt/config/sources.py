@@ -149,7 +149,13 @@ class EnvSettingsSource(PydanticBaseSettingsSource):
         overrides_json = g(const.SIGENERGY2MQTT_SENSOR_OVERRIDES_JSON)
         if overrides_json:
             o = json.loads(overrides_json)
-            result["sensor_overrides"] = {**result.get("sensor_overrides", {}), **o}
+            merged = result.get("sensor_overrides", {})
+            for sensor, settings in o.items():
+                if sensor in merged:
+                    merged[sensor] = {**merged[sensor], **settings}
+                else:
+                    merged[sensor] = settings
+            result["sensor_overrides"] = merged
 
         # ── Home Assistant ───────────────────────────────────────────────────
         hass: dict[str, Any] = {}
