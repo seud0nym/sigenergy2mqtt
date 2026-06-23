@@ -68,6 +68,8 @@ DELAY_AVG: int = 15
 DELAY_MIN: int = 5
 DELAY_MAX: int = 50
 
+UNSIGNED_DATA_TYPES = (ModbusClientMixin.DATATYPE.UINT16, ModbusClientMixin.DATATYPE.UINT32, ModbusClientMixin.DATATYPE.UINT64)
+
 
 class TestConfig:
     log_level: int = logging.INFO
@@ -748,13 +750,13 @@ class CustomDataBlock:
             return (randint(lo, hi), "min_max")
         if sensor.sanity_check.min_raw is not None and sensor.sanity_check.max_raw is not None:
             if sensor.sanity_check.delta:
-                if sensor.data_type in (ModbusClientMixin.DATATYPE.UINT16, ModbusClientMixin.DATATYPE.UINT32, ModbusClientMixin.DATATYPE.UINT64):
+                if sensor.data_type in UNSIGNED_DATA_TYPES:
                     raw = randint(0, int(sensor.sanity_check.max_raw))
                 else:
                     raw = sensor.sanity_check.min_raw + randint(0, int(sensor.sanity_check.max_raw - sensor.sanity_check.min_raw) // sensor.sanity_check.delta) * sensor.sanity_check.delta
             else:
                 raw = randint(
-                    0 if sensor.data_type in (ModbusClientMixin.DATATYPE.UINT16, ModbusClientMixin.DATATYPE.UINT32, ModbusClientMixin.DATATYPE.UINT64) else int(sensor.sanity_check.min_raw),
+                    0 if sensor.data_type in UNSIGNED_DATA_TYPES else int(sensor.sanity_check.min_raw),
                     int(sensor.sanity_check.max_raw),
                 )
             return (raw / sensor.gain, "sanity_check")
