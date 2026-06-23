@@ -111,6 +111,31 @@ class SanityCheck:
         return f"{raw} {self._unit if self._unit else ''}"
 
     @property
+    def description(self) -> str:
+        if self.min_raw is None and self.max_raw is None:
+            return "Disabled"
+        min_val_str: str | None = self._raw2value(self.min_raw)
+        max_val_str: str | None = self._raw2value(self.max_raw)
+        min_raw_str: str = f" (raw value ≧ {int(cast(float, self.min_raw))})" if self.min_raw is not None and f"{self.min_raw}{self._unit}" != min_val_str else ""
+        max_raw_str: str = f" (raw value ≦ {int(cast(float, self.max_raw))})" if self.max_raw is not None and f"{self.max_raw}{self._unit}" != max_val_str else ""
+        range_str = (
+            (f" ({int(cast(float, self.min_raw))} ≦ raw value ≦ {int(cast(float, self.max_raw))})" if f"{self.min_raw}{self._unit}" != min_val_str or f"{self.max_raw}{self._unit}" != max_val_str else "")
+            if self.min_raw is not None and self.max_raw is not None
+            else ""
+        )
+        if self.delta:
+            if self.min_raw is None:
+                return f"The delta of the value compared to the previous value must be a maximum of {max_val_str}{max_raw_str}"
+            if self.max_raw is None:
+                return f"The delta of the value compared to the previous value must be a minimum of {min_val_str}{min_raw_str}"
+            return f"The delta of the value compared to the previous value must be between {min_val_str} and {max_val_str}{range_str}"
+        if self.min_raw is None:
+            return f"The value must be a maximum of {max_val_str}{max_raw_str}"
+        if self.max_raw is None:
+            return f"The value must be a minimum of {min_val_str}{min_raw_str}"
+        return f"The value must be between {min_val_str} and {max_val_str}{range_str}"
+
+    @property
     def is_enabled(self) -> bool:
         return self.min_raw is not None or self.max_raw is not None
 
@@ -137,26 +162,18 @@ class SanityCheck:
             raise SanityCheckException(f"Raw {'delta' if self.delta else 'value'} {value} is not within sanity check range {self.min_raw} to {self.max_raw} ({state=} {previous_states=})")
         return True
 
-    def __repr__(self):
-        if self.min_raw is None and self.max_raw is None:
-            return "Disabled"
-        min_val_str: str | None = self._raw2value(self.min_raw)
-        max_val_str: str | None = self._raw2value(self.max_raw)
-        min_raw_str: str = f" (raw value ≧ {int(cast(float, self.min_raw))})" if self.min_raw is not None and f"{self.min_raw}{self._unit}" != min_val_str else ""
-        max_raw_str: str = f" (raw value ≦ {int(cast(float, self.max_raw))})" if self.max_raw is not None and f"{self.max_raw}{self._unit}" != max_val_str else ""
-        range_str = (
-            (f" ({int(cast(float, self.min_raw))} ≦ raw value ≦ {int(cast(float, self.max_raw))})" if f"{self.min_raw}{self._unit}" != min_val_str or f"{self.max_raw}{self._unit}" != max_val_str else "")
-            if self.min_raw is not None and self.max_raw is not None
-            else ""
-        )
-        if self.delta:
-            if self.min_raw is None:
-                return f"The delta of the value compared to the previous value must be a maximum of {max_val_str}{max_raw_str}"
-            if self.max_raw is None:
-                return f"The delta of the value compared to the previous value must be a minimum of {min_val_str}{min_raw_str}"
-            return f"The delta of the value compared to the previous value must be between {min_val_str} and {max_val_str}{range_str}"
-        if self.min_raw is None:
-            return f"The value must be a maximum of {max_val_str}{max_raw_str}"
-        if self.max_raw is None:
-            return f"The value must be a minimum of {min_val_str}{min_raw_str}"
-        return f"The value must be between {min_val_str} and {max_val_str}{range_str}"
+    # =========================================================================
+    # String Representations
+    # =========================================================================
+
+    def __str__(self) -> str:
+        """Return a concise summary of the sanity check parameters."""
+        if not self.is_enabled:
+            return "SanityCheck (Disabled)"
+
+        mode = "Delta" if self.delta else "Absolute"
+        return f"SanityCheck ({mode}: min_raw={self.min_raw}, max_raw={self.max_raw})"
+
+    def __repr__(self) -> str:
+        """Return an unambiguous, structural debug representation."""
+        return f"<{self.__class__.__name__} enabled={self.is_enabled} delta={self.delta} min_raw={self.min_raw} max_raw={self.max_raw}>"
