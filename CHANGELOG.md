@@ -1,11 +1,16 @@
 <!-- git log [since tag]..HEAD --oneline -->
 # Changelog 
 
-## [Unreleased]
+## [2026.6.23a1] - 2026.06.23
 
 ### Added
 
 - Added support for forcing sensor values in Modbus test server
+
+### Changed
+
+- Adjusted minimum sanity check value to PV Current/Voltage sensors to allow for small negative values (#207)
+- Adjusted some more logging messages to reduce noise
 
 ### Fixed
 
