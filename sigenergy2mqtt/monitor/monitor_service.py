@@ -222,14 +222,18 @@ class MonitorService(Device):
         try:
             client_id = f"{active_config.mqtt.client_id_prefix}_Monitor"
             client, handler = await mqtt_setup(client_id, None, asyncio.get_running_loop())
-            for topic in (service._health_state_topic, service._health_attributes_topic):
-                logging.debug(f"MonitorService.clean() Removing topic {topic}")
-                info = client.publish(topic, b"", qos=2, retain=True)
-                if info.rc == mqtt.MQTT_ERR_SUCCESS:
-                    info.wait_for_publish(timeout=5.0)
-                else:
-                    logging.error(f"MonitorService.clean() Failed to remove topic {topic}")
-            await mqtt_teardown(client, handler)
+            try:
+                for topic in (service._health_state_topic, service._health_attributes_topic):
+                    logging.debug(f"MonitorService: Removing topic {topic}")
+                    info = client.publish(topic, b"", qos=2, retain=True)
+                    if info.rc == mqtt.MQTT_ERR_SUCCESS:
+                        info.wait_for_publish(timeout=5.0)
+                    else:
+                        logging.error(f"MonitorService: Failed to clean topic {topic}")
+            except Exception as exc:
+                logging.warning(f"MonitorService: Failed to clean topics: {exc}")
+            finally:
+                await mqtt_teardown(client, handler)
         except Exception as exc:
             logging.warning(f"MonitorService: MQTT connection failed ({exc}) — cleaned disk only")
             return
