@@ -81,6 +81,7 @@ class DummyWriteOnly(WriteOnlySensor):
         object.__setattr__(self, "input_type", "holding")
         object.__setattr__(self, "protocol_version", Protocol.V1_8)
         object.__setattr__(self, "debug_logging", False)
+        object.__setattr__(self, "_publishable", True)
         self._values = {"off": 0, "on": 1}
 
     async def set_value(self, client, userdata, message):

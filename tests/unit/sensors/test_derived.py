@@ -70,10 +70,10 @@ class TestBatteryDerivedPower:
 
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             sensor = BatteryChargingPower(0, proxy_battery)
-            sensor.set_source_values(proxy_battery)
+            sensor.update_from_source_sensor(proxy_battery)
             assert sensor.latest_raw_state == 1000.5
             proxy_battery.latest_raw_state = -500.0
-            sensor.set_source_values(proxy_battery)
+            sensor.update_from_source_sensor(proxy_battery)
             assert sensor.latest_raw_state == 0
 
     def test_battery_discharging_power(self):
@@ -85,10 +85,10 @@ class TestBatteryDerivedPower:
 
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             sensor = BatteryDischargingPower(0, proxy_battery)
-            sensor.set_source_values(proxy_battery)
+            sensor.update_from_source_sensor(proxy_battery)
             assert sensor.latest_raw_state == 0
             proxy_battery.latest_raw_state = -500.5
-            sensor.set_source_values(proxy_battery)
+            sensor.update_from_source_sensor(proxy_battery)
             assert sensor.latest_raw_state == 500.5
 
 
@@ -103,7 +103,7 @@ class TestGridDerivedPower:
 
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             sensor = GridSensorExportPower(0, proxy_grid)
-            sensor.set_source_values(proxy_grid)
+            sensor.update_from_source_sensor(proxy_grid)
             assert sensor.latest_raw_state == 100.2
 
     def test_grid_import_power(self):
@@ -116,10 +116,10 @@ class TestGridDerivedPower:
 
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             sensor = GridSensorImportPower(0, proxy_grid)
-            sensor.set_source_values(proxy_grid)
+            sensor.update_from_source_sensor(proxy_grid)
             assert sensor.latest_raw_state == 100.2
             proxy_grid.latest_raw_state = -50.0
-            sensor.set_source_values(proxy_grid)
+            sensor.update_from_source_sensor(proxy_grid)
             assert sensor.latest_raw_state == 0
 
 
@@ -149,9 +149,9 @@ class TestPlantConsumedPower:
             ppv = MagicMock(spec=PlantPVPower)
             ppv.latest_raw_state = 1000.0
 
-            sensor.set_source_values(b)
-            sensor.set_source_values(g)
-            sensor.set_source_values(ppv)
+            sensor.update_from_source_sensor(b)
+            sensor.update_from_source_sensor(g)
+            sensor.update_from_source_sensor(ppv)
 
             mock_mqtt = AsyncMock()
             mock_modbus = AsyncMock()
@@ -173,14 +173,14 @@ class TestPlantConsumedPower:
             s = MagicMock(spec=GridStatus)
             s.latest_raw_state = 0
 
-            sensor.set_source_values(b)
-            sensor.set_source_values(g)
-            sensor.set_source_values(s)
+            sensor.update_from_source_sensor(b)
+            sensor.update_from_source_sensor(g)
+            sensor.update_from_source_sensor(s)
 
             ppv = MagicMock(spec=PlantPVPower)
             ppv.latest_raw_state = 1000.0
 
-            sensor.set_source_values(ppv)
+            sensor.update_from_source_sensor(ppv)
             assert sensor.latest_raw_state == 1700.0
 
             # Test TotalLoadPower and GeneralLoadPower branches
@@ -190,14 +190,14 @@ class TestPlantConsumedPower:
             tlp.unique_id = "tlp"
             tlp.latest_raw_state = 2000.0
             sensor._sources[ConsumptionMethod.TOTAL.value] = PlantConsumedPower.Value()
-            sensor.set_source_values(tlp)
+            sensor.update_from_source_sensor(tlp)
             assert sensor._sources[ConsumptionMethod.TOTAL.value].state == 2000.0
 
             glp = MagicMock(spec=GeneralLoadPower)
             glp.unique_id = "glp"
             glp.latest_raw_state = 1500.0
             sensor._sources[ConsumptionMethod.GENERAL.value] = PlantConsumedPower.Value()
-            sensor.set_source_values(glp)
+            sensor.update_from_source_sensor(glp)
             assert sensor._sources[ConsumptionMethod.GENERAL.value].state == 1500.0
 
 
@@ -224,7 +224,7 @@ class TestTotalPVPower:
 
             with patch("sigenergy2mqtt.sensors.plant_derived.DerivedSensor.publish", new_callable=AsyncMock) as mock_pub:
                 s1.latest_raw_state = 600.0
-                sensor.set_source_values(s1)
+                sensor.update_from_source_sensor(s1)
                 assert sensor.latest_raw_state == 600.0
                 await sensor.publish(AsyncMock(), AsyncMock())
                 mock_pub.assert_called_once()
@@ -244,8 +244,8 @@ class TestTotalPVPower:
             s1 = MockPV("PV1", "sigen_pv1")
             sensor = TotalPVPower(0, s1)
 
-            # Test direct set_source_values
-            sensor.set_source_values(s1)
+            # Test direct update_from_source_sensor
+            sensor.update_from_source_sensor(s1)
             assert sensor.latest_raw_state == 500.0
 
 
@@ -265,10 +265,10 @@ class TestTotalLifetimePVEnergy:
             tp.latest_raw_state = 500.0
 
             # Set first source
-            assert sensor.set_source_values(gen) is False
+            assert sensor.update_from_source_sensor(gen) is False
             assert sensor.plant_lifetime_pv_energy == 1000.0
 
             # Set second source
-            assert sensor.set_source_values(tp) is True
+            assert sensor.update_from_source_sensor(tp) is True
             assert sensor.plant_3rd_party_lifetime_pv_energy == 500.0
             assert sensor.latest_raw_state == 1500.0

@@ -43,7 +43,7 @@ class TestAccumulationLogic:
             # First reading (needs at least 2 for trapezoidal rule)
             source.latest_interval = None
             source.state_count = 1
-            sensor.set_source_values(source)
+            sensor.update_from_source_sensor(source)
             assert sensor._current_total == 0.0
 
             # Second reading
@@ -63,7 +63,7 @@ class TestAccumulationLogic:
 
             # Mock persistence to avoid background thread issues
             with patch.object(sensor, "run_persistence_coroutine", side_effect=lambda coro: coro.close()):
-                result = sensor.set_source_values(source)
+                result = sensor.update_from_source_sensor(source)
                 assert result is True
                 # 0.5 * (10 + 20) * 1.0 = 15.0
                 assert sensor._current_total == 15.0
@@ -96,7 +96,7 @@ class TestAccumulationLogic:
             source.latest_raw_state = -20.0
 
             with patch.object(sensor, "run_persistence_coroutine", side_effect=lambda coro: coro.close()):
-                sensor.set_source_values(source)
+                sensor.update_from_source_sensor(source)
                 # 0.5 * (0 + 0) * 1.0 = 0.0
                 assert sensor._current_total == 0.0
 
@@ -167,7 +167,7 @@ class TestAccumulationLogic:
         """Test get_discovery_components adds reset component."""
         source = MagicMock(spec=Sensor)
         source.unique_id = "source_uid"
-        
+
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             sensor = ResettableAccumulationSensor(
                 name="Accumulator",
@@ -182,7 +182,7 @@ class TestAccumulationLogic:
                 gain=1.0,
                 precision=2,
             )
-            
+
             components = sensor.get_discovery_components()
             assert "sigen_accumulator_uid_reset" in components
             reset_comp = components["sigen_accumulator_uid_reset"]
@@ -251,9 +251,10 @@ class TestAccumulationSensor:
             source.latest_raw_state = 20.0
 
             with patch.object(sensor, "run_persistence_coroutine", side_effect=lambda coro: coro.close()):
-                sensor.set_source_values(source)
+                sensor.update_from_source_sensor(source)
                 assert sensor._current_total == 15.0
                 assert sensor.latest_raw_state == 15.0
+
 
 class TestSimpleEnergyDailyAccumulationSensor:
     @pytest.mark.asyncio
@@ -261,17 +262,17 @@ class TestSimpleEnergyDailyAccumulationSensor:
         """Test default values on initialization."""
         source = MagicMock(spec=Sensor)
         source.unique_id = "source_uid"
-        
+
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             from sigenergy2mqtt.sensors.base.accumulation import SimpleEnergyDailyAccumulationSensor
-            
+
             sensor = SimpleEnergyDailyAccumulationSensor(
                 name="Daily Energy",
                 unique_id="sigen_daily_uid",
                 object_id="sigen_daily_oid",
                 source=source,
             )
-            
+
             assert sensor.data_type == ModbusDataType.UINT32
             assert sensor.unit == "kWh"
             assert sensor.device_class == DeviceClass.ENERGY
@@ -283,37 +284,34 @@ class TestSimpleEnergyDailyAccumulationSensor:
         """Test accumulation across a day change resets value."""
         source = MagicMock(spec=Sensor)
         source.unique_id = "source_uid"
-        
+
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             from sigenergy2mqtt.sensors.base.accumulation import SimpleEnergyDailyAccumulationSensor
-            
+
             sensor = SimpleEnergyDailyAccumulationSensor(
                 name="Daily Energy",
                 unique_id="sigen_daily_uid",
                 object_id="sigen_daily_oid",
                 source=source,
             )
-            
+
             source.latest_interval = 3600.0
             source.state_count = 2
             source.previous_raw_state = 10.0
             source.latest_raw_state = 20.0
             source.latest_time = 1715560000.0
-            
+
             import time
-            with patch("time.localtime", return_value=time.struct_time((2026, 5, 13, 10, 0, 0, 2, 133, 0))), \
-                 patch.object(sensor, "run_persistence_coroutine", side_effect=lambda coro: coro.close()):
-                
+
+            with patch("time.localtime", return_value=time.struct_time((2026, 5, 13, 10, 0, 0, 2, 133, 0))), patch.object(sensor, "run_persistence_coroutine", side_effect=lambda coro: coro.close()):
                 # First call sets _last_day_tuple and accumulates
-                sensor.set_source_values(source)
+                sensor.update_from_source_sensor(source)
                 assert sensor._last_day_tuple == (2026, 5, 13)
                 assert sensor._current_total == 15.0  # 0.5 * (10 + 20) * 1h
-            
+
             # Change day to 14th
-            with patch("time.localtime", return_value=time.struct_time((2026, 5, 14, 10, 0, 0, 3, 134, 0))), \
-                 patch.object(sensor, "run_persistence_coroutine", side_effect=lambda coro: coro.close()):
-                
-                sensor.set_source_values(source)
+            with patch("time.localtime", return_value=time.struct_time((2026, 5, 14, 10, 0, 0, 3, 134, 0))), patch.object(sensor, "run_persistence_coroutine", side_effect=lambda coro: coro.close()):
+                sensor.update_from_source_sensor(source)
                 assert sensor._last_day_tuple == (2026, 5, 14)
                 # Resets, then accumulates new value
                 assert sensor._current_total == 15.0
@@ -322,22 +320,21 @@ class TestSimpleEnergyDailyAccumulationSensor:
         """Test ignoring invalid source updates."""
         source = MagicMock(spec=Sensor)
         source.unique_id = "source_uid"
-        
+
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             from sigenergy2mqtt.sensors.base.accumulation import SimpleEnergyDailyAccumulationSensor
-            
+
             sensor = SimpleEnergyDailyAccumulationSensor(
                 name="Daily Energy",
                 unique_id="sigen_daily_uid",
                 object_id="sigen_daily_oid",
                 source=source,
             )
-            
+
             # Wrong sensor
-            assert sensor.set_source_values(MagicMock(spec=Sensor)) is False
+            assert sensor.update_from_source_sensor(MagicMock(spec=Sensor)) is False
             assert "Attempt to call" in caplog.text
-            
+
             # None raw state
             source.latest_raw_state = None
-            assert sensor.set_source_values(source) is False
-
+            assert sensor.update_from_source_sensor(source) is False

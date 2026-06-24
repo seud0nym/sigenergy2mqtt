@@ -386,7 +386,7 @@ class TestEnergyAccumulationSensors:
 
                 sensor._persist_current_total = _noop
                 with patch("asyncio.run_coroutine_threadsafe", side_effect=lambda coro, loop: coro.close()):
-                    result = sensor.set_source_values(source)
+                    result = sensor.update_from_source_sensor(source)
                     assert result is True
                     assert pytest.approx(sensor._current_total) == 100.4166666
 
@@ -425,7 +425,7 @@ class TestEnergyAccumulationSensors:
 
                 with patch("sigenergy2mqtt.sensors.base.time.localtime", side_effect=mock_localtime):
                     with patch("asyncio.run_coroutine_threadsafe", side_effect=mock_run_coro):
-                        sensor.set_source_values(source)
+                        sensor.update_from_source_sensor(source)
 
     @pytest.mark.asyncio
     async def test_readonly_update_internal_state_unknown_type(self):

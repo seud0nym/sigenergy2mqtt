@@ -42,7 +42,7 @@ class InverterBatteryChargingPower(DerivedSensor, HybridInverter):
 
     def update_from_source_sensor(self, sensor: Sensor) -> bool:
         if not isinstance(sensor, ChargeDischargePower):
-            logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
+            logging.warning(f"{self.log_identity} Attempt to call update_from_source_sensor from {sensor.log_identity}")
             return False
         if sensor.latest_raw_state is None:
             return False
@@ -78,7 +78,7 @@ class InverterBatteryDischargingPower(DerivedSensor, HybridInverter):
 
     def update_from_source_sensor(self, sensor: Sensor) -> bool:
         if not isinstance(sensor, ChargeDischargePower):
-            logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
+            logging.warning(f"{self.log_identity} Attempt to call update_from_source_sensor from {sensor.log_identity}")
             return False
         if sensor.latest_raw_state is None:
             return False
@@ -160,7 +160,7 @@ class PVStringPower(DerivedSensor, HybridInverter, PVInverter):
         elif isinstance(sensor, PVCurrentSensor):
             self.amperes.apply(sensor)
         else:
-            logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
+            logging.warning(f"{self.log_identity} Attempt to call update_from_source_sensor from {sensor.log_identity}")
             return False
         if self.volts.value is None or self.amperes.value is None:
             return False  # until all values populated, can't do calculation
@@ -268,7 +268,7 @@ class InverterSelfConsumedPower(DerivedSensor, HybridInverter, PVInverter):
         elif isinstance(sensor, PVStringPower):
             self.pv_string_power[sensor.string_number] = int(sensor.latest_raw_state)
         else:
-            logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
+            logging.warning(f"{self.log_identity} Attempt to call update_from_source_sensor from {sensor.log_identity}")
             return False
         if self.active_power is None or self.battery_power is None or any(p is None for p in self.pv_string_power.values()):
             if self.debug_logging:

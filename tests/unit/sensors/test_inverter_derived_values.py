@@ -55,7 +55,7 @@ class TestBatteryDerivedPowerCoverage:
             sensor = InverterBatteryChargingPower(0, 1, cdp)
 
             # Wrong sensor type
-            assert sensor.set_source_values(MagicMock(spec=Sensor)) is False
+            assert sensor.update_from_source_sensor(MagicMock(spec=Sensor)) is False
             assert "Attempt to call" in caplog.text
 
     def test_get_attributes_discharging(self):
@@ -76,7 +76,7 @@ class TestBatteryDerivedPowerCoverage:
             sensor = InverterBatteryDischargingPower(0, 1, cdp)
 
             # Wrong sensor type
-            assert sensor.set_source_values(MagicMock(spec=Sensor)) is False
+            assert sensor.update_from_source_sensor(MagicMock(spec=Sensor)) is False
             assert "Attempt to call" in caplog.text
 
 
@@ -129,7 +129,7 @@ class TestPVStringPowerCoverage:
             sensor = PVStringPower(0, 1, 1, v, c)
 
             # Wrong sensor type
-            assert sensor.set_source_values(MagicMock(spec=Sensor)) is False
+            assert sensor.update_from_source_sensor(MagicMock(spec=Sensor)) is False
             assert "Attempt to call" in caplog.text
 
 
@@ -159,8 +159,8 @@ class TestPVStringEnergyCoverage:
 
 class TestInverterSelfConsumedPowerCoverage:
     def test_get_attributes(self):
-        from sigenergy2mqtt.sensors.inverter_read_only import ActivePower, ChargeDischargePower
         from sigenergy2mqtt.sensors.inverter_derived import InverterSelfConsumedPower, PVStringPower
+        from sigenergy2mqtt.sensors.inverter_read_only import ActivePower, ChargeDischargePower
 
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             ap = MagicMock(spec=ActivePower)
@@ -170,15 +170,16 @@ class TestInverterSelfConsumedPowerCoverage:
             pv1 = MagicMock(spec=PVStringPower)
             pv1.string_number = 1
             pv1.protocol_version = Protocol.V2_4
-            
+
             sensor = InverterSelfConsumedPower(0, 1, ap, bp, pv1)
             assert "ActivePower − ChargeDischargePower" in sensor.get_attributes()["source"]
 
     @pytest.mark.asyncio
     async def test_publish_skipped_and_ready(self, caplog):
         import logging
-        from sigenergy2mqtt.sensors.inverter_read_only import ActivePower, ChargeDischargePower
+
         from sigenergy2mqtt.sensors.inverter_derived import InverterSelfConsumedPower, PVStringPower
+        from sigenergy2mqtt.sensors.inverter_read_only import ActivePower, ChargeDischargePower
 
         caplog.set_level(logging.DEBUG)
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
@@ -189,7 +190,7 @@ class TestInverterSelfConsumedPowerCoverage:
             pv1 = MagicMock(spec=PVStringPower)
             pv1.string_number = 1
             pv1.protocol_version = Protocol.V2_4
-            
+
             sensor = InverterSelfConsumedPower(0, 1, ap, bp, pv1)
             sensor.debug_logging = True
 
@@ -209,8 +210,8 @@ class TestInverterSelfConsumedPowerCoverage:
                 assert sensor.pv_string_power[1] is None
 
     def test_set_source_values_error_and_calculation(self, caplog):
-        from sigenergy2mqtt.sensors.inverter_read_only import ActivePower, ChargeDischargePower
         from sigenergy2mqtt.sensors.inverter_derived import InverterSelfConsumedPower, PVStringPower
+        from sigenergy2mqtt.sensors.inverter_read_only import ActivePower, ChargeDischargePower
 
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             ap = MagicMock(spec=ActivePower)
@@ -220,27 +221,26 @@ class TestInverterSelfConsumedPowerCoverage:
             pv1 = MagicMock(spec=PVStringPower)
             pv1.string_number = 1
             pv1.protocol_version = Protocol.V2_4
-            
+
             sensor = InverterSelfConsumedPower(0, 1, ap, bp, pv1)
             sensor.debug_logging = True
 
             # Wrong sensor type
-            assert sensor.set_source_values(MagicMock(spec=Sensor)) is False
+            assert sensor.update_from_source_sensor(MagicMock(spec=Sensor)) is False
             assert "Attempt to call" in caplog.text
 
             # Populate partial
             ap.latest_raw_state = 100
-            sensor.set_source_values(ap)
+            sensor.update_from_source_sensor(ap)
             assert sensor.active_power == 100
 
             bp.latest_raw_state = -50
-            sensor.set_source_values(bp)
+            sensor.update_from_source_sensor(bp)
             assert sensor.battery_power == -50
 
             # Last one triggers calc
             pv1.latest_raw_state = 500
-            sensor.set_source_values(pv1)
-            
+            sensor.update_from_source_sensor(pv1)
+
             # total_pv_power (500) - active_power (100) - battery_power (-50) = 450
             assert sensor.latest_raw_state == 450
-
