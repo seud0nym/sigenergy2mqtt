@@ -166,12 +166,8 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         self._log_identity: str = ""
         self.refresh_log_identity()
 
-        self.apply_sensor_overrides()
-
         # Sanity checking
         self.sanity_check: SanityCheck = SanityCheck(
-            sensor_log_identity=self.log_identity,
-            sensor_debug_logging=self.debug_logging,
             unit=unit,
             device_class=device_class,
             state_class=state_class,
@@ -180,6 +176,11 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
             data_type=getattr(self, "data_type", None),
             delta=None,
         )
+
+        # Have to apply sensor overrides AFTER sanity check because overrides can apply to it
+        self.apply_sensor_overrides()
+        if self.debug_logging:
+            logging.debug(f"{self.log_identity} {self.sanity_check}")
 
         if device_class is not None and not DeviceClass.is_valid_unit(device_class, unit):
             logging.error(f"{self.log_identity} unit '{unit}' is not valid for device class {device_class.name}")
