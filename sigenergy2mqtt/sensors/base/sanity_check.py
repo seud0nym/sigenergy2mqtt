@@ -33,7 +33,6 @@ class SanityCheck:
     _precision: int | None = None
     _unit: str | None = None
     _state_class: StateClass | None = None
-    _log_identity: str | None = None
     _default_kw_applied: bool = False
 
     def __init__(
