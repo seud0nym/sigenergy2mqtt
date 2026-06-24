@@ -785,19 +785,23 @@ class StateStore:
         """Clear all state from both backends; called from the ThreadPoolExecutor."""
         assert self._disk is not None
         disk_keys = self._disk.all_keys()
-        logging.debug(f"StateStore: clean removing {len(disk_keys)} disk entries")
+        logging.debug(f"StateStore: Removing {len(disk_keys)} disk entries")
         for category, key in disk_keys:
             self._disk.delete(category, key)
+        logging.info(f"StateStore: Cleaned {len(disk_keys)} disk entries")
 
         if self._mqtt_enabled and self._client is not None:
             # Clear any keys known from the MQTT cache (may include entries with
             # no matching disk file on this host, e.g. restored from another machine).
             mqtt_keys = self._mqtt.all_known_keys()
-            logging.debug(f"StateStore: clean removing {len(mqtt_keys)} MQTT entries")
+            logging.debug(f"StateStore: Removing {len(mqtt_keys)} MQTT entries")
+            removed: int = 0
             for category, key in mqtt_keys:
                 try:
                     self._mqtt.publish_delete(self._client, category, key)
+                    removed += 1
                 except Exception as exc:
                     logging.warning(f"StateStore: MQTT clean failed for {category}/{key}: {exc}")
+            logging.info(f"StateStore: Cleaned {removed} MQTT entries")
         else:
             logging.info("StateStore: MQTT not enabled, skipping MQTT clean")
