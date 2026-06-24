@@ -9,7 +9,7 @@
 
 ### Changed
 
-- Reverted minimum sanity check value to PV Current/Voltage sensors to allow for small negative values
+- Reverted minimum sanity check value to PV Current/Voltage sensors
 - Adjusted some more logging messages to reduce noise
 - Refactored application of sensor overrides to enhance debug logging
 

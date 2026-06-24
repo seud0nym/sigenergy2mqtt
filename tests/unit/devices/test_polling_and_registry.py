@@ -87,7 +87,6 @@ class DummyWritable(WritableSensorMixin, Sensor):
         object.__setattr__(self, "protocol_version", Protocol.V1_8)
         object.__setattr__(self, "parent_device", None)
         object.__setattr__(self, "_derived_sensors", {})
-        object.__setattr__(self, "publishable", True)
         object.__setattr__(self, "_publishable", True)
 
     async def set_value(self, client, userdata, message):
