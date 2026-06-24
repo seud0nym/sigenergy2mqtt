@@ -126,7 +126,7 @@ class AccumulationSensor(DerivedSensor):
             except Exception as e:
                 logging.error(f"{self.log_identity} Unexpected error persisting state for {self._state_persistence_key}: {e}")
 
-    def set_source_values(self, sensor: Sensor) -> bool:
+    def update_from_source_sensor(self, sensor: Sensor) -> bool:
         if sensor.latest_raw_state is None:
             return False
         """Update accumulated value from source sensor.
@@ -483,7 +483,7 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
 
         return await super().publish(mqtt_client, modbus_client, republish)
 
-    def set_source_values(self, sensor: Sensor) -> bool:
+    def update_from_source_sensor(self, sensor: Sensor) -> bool:
         """Update daily accumulation from source values.
 
         Args:
@@ -570,7 +570,7 @@ class SimpleEnergyDailyAccumulationSensor(AccumulationSensor):
         # Track the last day we saw to detect day changes
         self._last_day_tuple: tuple[int, int, int] | None = None
 
-    def set_source_values(self, sensor: Sensor) -> bool:
+    def update_from_source_sensor(self, sensor: Sensor) -> bool:
         """Update daily accumulation from source values.
 
         Accumulates values throughout the day and resets the total at midnight.
@@ -604,4 +604,4 @@ class SimpleEnergyDailyAccumulationSensor(AccumulationSensor):
             self._last_day_tuple = current_day
 
         # Perform normal accumulation using parent's logic
-        return super().set_source_values(sensor)
+        return super().update_from_source_sensor(sensor)

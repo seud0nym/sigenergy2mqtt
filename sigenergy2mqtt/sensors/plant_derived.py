@@ -55,7 +55,7 @@ class BatteryChargingPower(DerivedSensor, HybridInverter):
         attributes["source"] = "BatteryPower > 0"
         return attributes
 
-    def set_source_values(self, sensor: Sensor) -> bool:
+    def update_from_source_sensor(self, sensor: Sensor) -> bool:
         if not isinstance(sensor, BatteryPower):
             logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
             return False
@@ -93,7 +93,7 @@ class BatteryDischargingPower(DerivedSensor, HybridInverter):
         attributes["source"] = "BatteryPower < 0 × -1"
         return attributes
 
-    def set_source_values(self, sensor: Sensor) -> bool:
+    def update_from_source_sensor(self, sensor: Sensor) -> bool:
         if not isinstance(sensor, BatteryPower):
             logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
             return False
@@ -130,7 +130,7 @@ class GridSensorExportPower(DerivedSensor, HybridInverter, PVInverter):
         attributes["source"] = "GridSensorActivePower < 0 × -1"
         return attributes
 
-    def set_source_values(self, sensor: Sensor) -> bool:
+    def update_from_source_sensor(self, sensor: Sensor) -> bool:
         if not isinstance(sensor, GridSensorActivePower):
             logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
             return False
@@ -167,7 +167,7 @@ class GridSensorImportPower(DerivedSensor, HybridInverter, PVInverter):
         attributes["source"] = "GridSensorActivePower > 0"
         return attributes
 
-    def set_source_values(self, sensor: Sensor) -> bool:
+    def update_from_source_sensor(self, sensor: Sensor) -> bool:
         if not isinstance(sensor, GridSensorActivePower):
             logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
             return False
@@ -225,7 +225,7 @@ class TotalPVPower(DerivedSensor, HybridInverter, PVInverter):
                 value.state = None
         return True
 
-    def set_source_values(self, sensor: Sensor) -> bool:
+    def update_from_source_sensor(self, sensor: Sensor) -> bool:
         source = sensor.unique_id
         if not isinstance(sensor, PVPowerSensor):
             logging.warning(f"{self.log_identity} IGNORED attempt to call set_source_values from {sensor.log_identity} - not PVPowerSensor instance")
@@ -365,7 +365,7 @@ class PlantConsumedPower(CrossDeviceDerivedSensor, HybridInverter, PVInverter):
             value.state = None
         return True
 
-    def set_source_values(self, sensor: Sensor) -> bool:
+    def update_from_source_sensor(self, sensor: Sensor) -> bool:
         if sensor.latest_raw_state is None:
             return False
         raw = float(sensor.latest_raw_state)
@@ -473,7 +473,7 @@ class TotalLifetimePVEnergy(UnpublishResetSensorMixin, DerivedSensor, HybridInve
         self.plant_3rd_party_lifetime_pv_energy = None
         return True
 
-    def set_source_values(self, sensor: Sensor) -> bool:
+    def update_from_source_sensor(self, sensor: Sensor) -> bool:
         if sensor.latest_raw_state is None:
             return False
         if isinstance(sensor, PlantPVTotalGeneration):
@@ -624,7 +624,7 @@ class PlantSelfConsumedPower(CrossDeviceDerivedSensor, HybridInverter):
             self._values[k] = None
         return True
 
-    def set_source_values(self, sensor: Sensor) -> bool:
+    def update_from_source_sensor(self, sensor: Sensor) -> bool:
         if sensor.latest_raw_state is None:
             return False
         if isinstance(sensor, InverterSelfConsumedPower):

@@ -1036,9 +1036,9 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         if self._states:
             for sensor in self.derived_sensors.values():
                 if self.debug_logging:
-                    logging.debug(f"{self.log_identity} Setting derived sensor {sensor.log_identity} source values (states={self._states})")
+                    logging.debug(f"{self.log_identity} Setting derived sensor {sensor.log_identity} source values (latest_raw_state={self.latest_raw_state})")
                 try:
-                    sensor.set_source_values(self)
+                    sensor.update_from_source_sensor(self)
                 except Exception as error:
                     logging.warning(f"{self.log_identity} Failed to update derived sensor {sensor.log_identity} source values: {repr(error)}")
 

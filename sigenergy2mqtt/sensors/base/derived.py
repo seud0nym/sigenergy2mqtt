@@ -118,7 +118,7 @@ class DerivedSensor(TypedSensorMixin, Sensor):
             coro.close()
 
     @abc.abstractmethod
-    def set_source_values(self, sensor: Sensor) -> bool:
+    def update_from_source_sensor(self, sensor: Sensor) -> bool:
         """Apply values from source sensor to this derived sensor.
 
         Args:
