@@ -66,6 +66,8 @@ class DerivedSensor(TypedSensorMixin, Sensor):
             self.bound_source_sensors = []
         if sensor not in self.bound_source_sensors:
             self.bound_source_sensors.append(sensor)
+        if sensor.debug_logging:
+            self.debug_logging = True
 
     async def _update_internal_state(self, **kwargs) -> bool | Exception | ExceptionResponse:
         """Derived sensors don't update from Modbus."""
