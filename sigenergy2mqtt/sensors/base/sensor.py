@@ -166,8 +166,12 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         self._log_identity: str = ""
         self.refresh_log_identity()
 
+        self.apply_sensor_overrides()
+
         # Sanity checking
         self.sanity_check: SanityCheck = SanityCheck(
+            sensor_log_identity=self.log_identity,
+            sensor_debug_logging=self.debug_logging,
             unit=unit,
             device_class=device_class,
             state_class=state_class,
@@ -396,7 +400,50 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
 
         self.derived_sensors[sensor.__class__.__name__] = sensor
 
-    def apply_sensor_overrides(self, registers: RegisterAccess | None):
+    def apply_device_overrides(self, registers: RegisterAccess | None) -> None:
+        """Apply device-level publishable overrides.
+
+        Args:
+            registers: Register access configuration for this device
+        """
+        if not self.publishable:
+            if self.debug_logging:
+                logging.debug(f"{self.log_identity} Device overrides not applied (publishable={self.publishable})")
+        elif registers:
+            # Lazy imports to avoid circular dependencies
+            from .derived import DerivedSensor
+            from .mixins import ReadableSensorMixin, WritableSensorMixin
+            from .writable import WriteOnlySensor
+
+            # Check for remote EMS override
+            if registers.no_remote_ems and (getattr(self, "_remote_ems", None) is not None or getattr(self, "address", None) == 40029):
+                if self.debug_logging:
+                    logging.debug(f"{self.log_identity} Applying device 'no-remote-ems' override ({registers.no_remote_ems})")
+                self.publishable = False
+                return
+
+            # Check read/write permissions
+            if isinstance(self, WritableSensorMixin) and not isinstance(self, WriteOnlySensor):
+                if not registers.read_write:
+                    if self.debug_logging:
+                        logging.debug(f"{self.log_identity} Applying device 'read-write' override ({registers.read_write})")
+                    self.publishable = registers.read_write
+            elif isinstance(self, (ReadableSensorMixin, DerivedSensor)):
+                if not registers.read_only:
+                    if self.debug_logging:
+                        logging.debug(f"{self.log_identity} Applying device 'read-only' override ({registers.read_only})")
+                    self.publishable = registers.read_only
+            elif isinstance(self, WriteOnlySensor):
+                if not registers.write_only:
+                    if self.debug_logging:
+                        logging.debug(f"{self.log_identity} Applying device 'write-only' override ({registers.write_only})")
+                    self.publishable = registers.write_only
+            else:
+                logging.warning(f"{self.log_identity} Failed to determine superclass to apply device publishable overrides")
+        elif self.debug_logging:
+            logging.debug(f"{self.log_identity} Device overrides not applied (RegisterAccess=None)")
+
+    def apply_sensor_overrides(self):
         """Apply configuration overrides from config file.
 
         Args:
@@ -408,10 +455,6 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         for identifier, pattern in identifier_patterns.items():
             if self._matches_override_pattern(pattern):
                 self._apply_override(identifier, active_config.sensor_overrides[identifier])
-
-        # Apply device-level overrides
-        if self.publishable and registers:
-            self._apply_device_overrides(registers)
 
     def _matches_override_pattern(self, pattern: re.Pattern) -> bool:
         """Check if this sensor matches an override pattern.
@@ -543,39 +586,6 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         if self[DiscoveryKeys.NAME] != value:
             logging.debug(f"{self.log_identity} Applying {identifier} 'name' override ({value})")
             self[DiscoveryKeys.NAME] = value
-
-    def _apply_device_overrides(self, registers: RegisterAccess) -> None:
-        """Apply device-level publishable overrides.
-
-        Args:
-            registers: Register access configuration for this device
-        """
-        # Lazy imports to avoid circular dependencies
-        from .derived import DerivedSensor
-        from .mixins import ReadableSensorMixin, WritableSensorMixin
-        from .writable import WriteOnlySensor
-
-        # Check for remote EMS override
-        if registers.no_remote_ems and (getattr(self, "_remote_ems", None) is not None or getattr(self, "address", None) == 40029):
-            logging.debug(f"{self.log_identity} Applying device 'no-remote-ems' override ({registers.no_remote_ems})")
-            self.publishable = False
-            return
-
-        # Check read/write permissions
-        if isinstance(self, WritableSensorMixin) and not isinstance(self, WriteOnlySensor):
-            if not registers.read_write:
-                logging.debug(f"{self.log_identity} Applying device 'read-write' override ({registers.read_write})")
-                self.publishable = registers.read_write
-        elif isinstance(self, (ReadableSensorMixin, DerivedSensor)):
-            if not registers.read_only:
-                logging.debug(f"{self.log_identity} Applying device 'read-only' override ({registers.read_only})")
-                self.publishable = registers.read_only
-        elif isinstance(self, WriteOnlySensor):
-            if not registers.write_only:
-                logging.debug(f"{self.log_identity} Applying device 'write-only' override ({registers.write_only})")
-                self.publishable = registers.write_only
-        else:
-            logging.warning(f"{self.log_identity} Failed to determine superclass to apply device publishable overrides")
 
     def configure_mqtt_topics(self, device_id: str) -> str:
         """Configure MQTT topics for this sensor.

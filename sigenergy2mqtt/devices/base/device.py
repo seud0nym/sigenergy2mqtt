@@ -342,7 +342,7 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
         """
         if not self.get_sensor(sensor.unique_id, search_children=True):
             sensor.parent_device = self
-            sensor.apply_sensor_overrides(self.registers)
+            sensor.apply_device_overrides(self.registers)
             sensor.configure_mqtt_topics(self.unique_id)
             sensor.on_added_to_device()
             self.all_sensors[sensor.unique_id] = sensor

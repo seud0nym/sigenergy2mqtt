@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from typing import cast
 
@@ -33,9 +34,13 @@ class SanityCheck:
     _precision: int | None = None
     _unit: str | None = None
     _state_class: StateClass | None = None
+    _log_identity: str | None = None
+    _debug_logging: bool = False
 
     def __init__(
         self,
+        sensor_log_identity: str,
+        sensor_debug_logging: bool,
         unit: str | None = None,
         device_class: DeviceClass | None = None,
         state_class: StateClass | None = None,
@@ -52,6 +57,8 @@ class SanityCheck:
         self._precision = precision
         self._unit = unit
         self._state_class = state_class
+        self._log_identity = sensor_log_identity
+        self._debug_logging = sensor_debug_logging
         if delta is None:
             if state_class == StateClass.TOTAL_INCREASING:
                 self.delta = True
@@ -64,12 +71,17 @@ class SanityCheck:
             self.delta = delta
 
         if self.min_raw is not None or self.max_raw is not None:
+            if self._debug_logging:
+                logging.debug(f"{self._log_identity} {self}")
             # Already initialized via parameters
             return
 
         match data_type:
             case ModbusDataType.STRING:
-                # STRING data type doesn't have numeric ranges
+                self.min_raw = None
+                self.max_raw = None
+                if self._debug_logging:
+                    logging.debug(f"{self._log_identity} {self} (string data type)")
                 return
             case ModbusDataType.INT16:
                 self.min_raw = -32768
@@ -93,11 +105,15 @@ class SanityCheck:
                 # Unknown data types - no default ranges
                 pass
         if unit in (UnitOfPower.WATT, UnitOfEnergy.WATT_HOUR, UnitOfPower.KILO_WATT, UnitOfEnergy.KILO_WATT_HOUR):
+            if self._debug_logging:
+                logging.debug(f"{self._log_identity} SanityCheck set from sanity_check_default_kw configuration ({active_config.sanity_check_default_kw} kW)")
             self.max_raw = active_config.sanity_check_default_kw * 1000 if not self.max_raw else min(active_config.sanity_check_default_kw * 1000, self.max_raw)
         elif unit == PERCENTAGE:
             self.max_raw = 100 * (gain if gain else 1)
         if self.min_raw is not None and self.max_raw is not None:
             self.min_raw = max(self.max_raw * -1, self.min_raw)
+        if self._debug_logging:
+            logging.debug(f"{self._log_identity} {self})")
 
     def _raw2value(self, raw: float | int | None) -> str | None:
         if raw is None:
