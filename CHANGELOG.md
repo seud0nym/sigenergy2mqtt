@@ -6,6 +6,7 @@
 ### Added
 
 - Added support for forcing sensor values in Modbus test server
+- Implemented StateStore and MonitorService clean functionality
 
 ### Changed
 

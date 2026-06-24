@@ -1218,6 +1218,10 @@ async def async_main() -> None:
 
         await start(configs)
 
+        if active_config.clean:
+            await state_store.clean()
+            await MonitorService.clean()
+
         # Shutdown StateStore
         state_store.shutdown()
 

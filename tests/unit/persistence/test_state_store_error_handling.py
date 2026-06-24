@@ -58,8 +58,8 @@ async def test_statestore_uninitialised():
     await store.delete("sensor", "k")
     await store.delete(Category.SENSOR, "k")
 
-    # clean_all before init
-    await store.clean_all()
+    # clean before init
+    await store.clean()
 
 
 @pytest.mark.asyncio
@@ -111,6 +111,6 @@ async def test_mqtt_sync_exceptions(temp_state_dir, mock_persistence_config):
         with patch.object(store._mqtt, "publish_delete", side_effect=Exception("mqtt fail")):
             await store.delete("test", "key")
 
-            # and clean_all mqtt path
+            # and clean mqtt path
             store._mqtt._cache[("test", "key")] = ("val", 123)
-            await store.clean_all()
+            await store.clean()

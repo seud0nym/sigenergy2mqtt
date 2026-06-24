@@ -13,7 +13,7 @@ from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.modbus import ModbusClientFactory
-from sigenergy2mqtt.mqtt import MqttHandler, mqtt_health_registry
+from sigenergy2mqtt.mqtt import MqttHandler, mqtt_health_registry, mqtt_setup, mqtt_teardown
 from sigenergy2mqtt.sensors.base import ReadableSensorMixin
 
 from .monitored_sensor import MonitoredSensor
@@ -210,6 +210,29 @@ class MonitorService(Device):
         else:
             logging.warning(f"{self.log_identity} updated from  topic {source}, but topic is not registered !!!")
         return False
+
+    @classmethod
+    async def clean(cls) -> None:
+        """Clean up the monitor service."""
+        service = cls([])
+
+        logging.debug(f"MonitorService: Removing health file {service._health_file}")
+        service._health_file.unlink(missing_ok=True)
+
+        try:
+            client_id = f"{active_config.mqtt.client_id_prefix}_Monitor"
+            client, handler = await mqtt_setup(client_id, None, asyncio.get_running_loop())
+            for topic in (service._health_state_topic, service._health_attributes_topic):
+                logging.debug(f"MonitorService.clean() Removing topic {topic}")
+                info = client.publish(topic, b"", qos=2, retain=True)
+                if info.rc == mqtt.MQTT_ERR_SUCCESS:
+                    info.wait_for_publish(timeout=5.0)
+                else:
+                    logging.error(f"MonitorService.clean() Failed to remove topic {topic}")
+            await mqtt_teardown(client, handler)
+        except Exception as exc:
+            logging.warning(f"MonitorService: MQTT connection failed ({exc}) — cleaned disk only")
+            return
 
     def on_commencement(self, modbus_client: Any | None, mqtt_client: mqtt.Client) -> None:
         """Log when the monitor service has started.
