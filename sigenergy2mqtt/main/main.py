@@ -1201,11 +1201,10 @@ async def async_main() -> None:
         mqtt_health_registry.clear()
 
         # Initialise StateStore with dedicated MQTT connection + sentinel-based warming
-        if active_config.persistence.mqtt_redundancy or not active_config.clean:
-            await state_store.initialise(
-                active_config.persistent_state_path,
-                active_config.persistence,
-            )
+        await state_store.initialise(
+            active_config.persistent_state_path,
+            active_config.persistence,
+        )
 
         # Phase 2 config load — StateStore now available for auto-discovery fallback
         await initialize_with_persistence()
@@ -1217,6 +1216,10 @@ async def async_main() -> None:
         setup_signals(configs)
 
         await start(configs)
+
+        if active_config.clean:
+            await state_store.clean()
+            await MonitorService.clean()
 
         # Shutdown StateStore
         state_store.shutdown()

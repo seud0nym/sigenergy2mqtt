@@ -72,13 +72,11 @@ class Category(StrEnum):
 
 def _make_envelope(value: str, version: str) -> str:
     """Return a JSON-encoded persistence envelope for *value*."""
-    return json.dumps(
-        {
-            _PAYLOAD_VALUE_KEY: value,
-            _PAYLOAD_TS_KEY: int(time.time()),
-            _PAYLOAD_VER_KEY: version,
-        }
-    )
+    return json.dumps({
+        _PAYLOAD_VALUE_KEY: value,
+        _PAYLOAD_TS_KEY: int(time.time()),
+        _PAYLOAD_VER_KEY: version,
+    })
 
 
 def _parse_envelope(raw: str, *, fallback_ts: int | None = None) -> tuple[str, int, bool] | None:
@@ -169,9 +167,9 @@ class _DiskBackend:
         try:
             path.unlink(missing_ok=True)
             if active_config.persistence_debug:
-                logging.debug(f"DiskBackend.delete {category}/{key}")
+                logging.debug(f"DiskBackend.delete {category}/{key} successful")
         except OSError as exc:
-            logging.warning(f"DiskBackend.delete failed for {category}/{key}: {exc}")
+            logging.error(f"DiskBackend.delete failed for {category}/{key}: {exc}")
 
         # Also remove from the legacy root state directory if present
         root_path = self._state_path / key
@@ -337,7 +335,11 @@ class _MqttBackend:
             info = client.publish(topic, b"", qos=2, retain=True)
             if info.rc != mqtt.MQTT_ERR_SUCCESS:
                 raise RuntimeError(info.rc)
-        except RuntimeError:
+            info.wait_for_publish(timeout=5.0)
+            if active_config.persistence_debug:
+                logging.debug(f"MqttBackend.publish_delete {topic} successful")
+        except RuntimeError as error:
+            logging.error(f"MqttBackend.publish_delete {topic} rescheduled after failing on attempt {_attempt}: {error}")
             self._schedule_retry(_attempt, self.publish_delete, category, key)
             return
 
@@ -453,6 +455,7 @@ class StateStore:
         self._mqtt.configure(prefix, self._version)
 
         # Build a dedicated MQTT client for persistence traffic.
+        # (Lazy import to prevent circular references)
         from sigenergy2mqtt.config import active_config
         from sigenergy2mqtt.mqtt import mqtt_setup
 
@@ -579,7 +582,7 @@ class StateStore:
         loop = asyncio.get_running_loop()
         await loop.run_in_executor(self._executor, self._delete_sync_impl, category, key)
 
-    async def clean_all(self) -> None:
+    async def clean(self) -> None:
         """Clear all persisted state from both backends.
 
         Called when ``active_config.clean`` is ``True``.  Removes every disk
@@ -782,17 +785,23 @@ class StateStore:
         """Clear all state from both backends; called from the ThreadPoolExecutor."""
         assert self._disk is not None
         disk_keys = self._disk.all_keys()
+        logging.debug(f"StateStore: Removing {len(disk_keys)} disk entries")
         for category, key in disk_keys:
             self._disk.delete(category, key)
+        logging.info(f"StateStore: Cleaned {len(disk_keys)} disk entries")
 
         if self._mqtt_enabled and self._client is not None:
             # Clear any keys known from the MQTT cache (may include entries with
             # no matching disk file on this host, e.g. restored from another machine).
             mqtt_keys = self._mqtt.all_known_keys()
+            logging.debug(f"StateStore: Removing {len(mqtt_keys)} MQTT entries")
+            removed: int = 0
             for category, key in mqtt_keys:
                 try:
                     self._mqtt.publish_delete(self._client, category, key)
+                    removed += 1
                 except Exception as exc:
                     logging.warning(f"StateStore: MQTT clean failed for {category}/{key}: {exc}")
-
-        logging.info(f"StateStore: clean_all removed {len(disk_keys)} disk entries and cleared MQTT retained state")
+            logging.info(f"StateStore: Cleaned {removed} MQTT entries")
+        else:
+            logging.info("StateStore: MQTT not enabled, skipping MQTT clean")
