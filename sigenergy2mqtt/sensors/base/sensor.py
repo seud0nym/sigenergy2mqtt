@@ -445,11 +445,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
             logging.debug(f"{self.log_identity} Device overrides not applied (RegisterAccess=None)")
 
     def apply_sensor_overrides(self):
-        """Apply configuration overrides from config file.
-
-        Args:
-            registers: Register access configuration for this device
-        """
+        """Apply configuration overrides"""
         # Pre-compile regex patterns for efficiency
         identifier_patterns = {identifier: re.compile(identifier) for identifier in active_config.sensor_overrides.keys()}  # type: ignore[reportGeneralTypeIssues]
 
