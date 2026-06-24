@@ -138,13 +138,13 @@ class PVStringPower(DerivedSensor, HybridInverter, PVInverter):
     async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool = False) -> bool:
         if self.volts.value is None or self.amperes.value is None:
             if self.debug_logging:
-                logging.debug(f"{self.log_identity} Publishing SKIPPED - string={self.string_number} current={self.amperes.value} voltage={self.volts.value}")
+                logging.debug(f"{self.log_identity} Publishing SKIPPED - current={self.amperes.value} voltage={self.volts.value}")
             return False  # until all values populated, can't do calculation
         gap = abs(self.volts.timestamp - self.amperes.timestamp)
         if self.debug_logging:
-            logging.debug(f"{self.log_identity} Publishing READY   - string={self.string_number} current={self.amperes.value} voltage={self.volts.value} gap={gap:.2f}s")
+            logging.debug(f"{self.log_identity} Publishing READY   - current={self.amperes.value} voltage={self.volts.value} gap={gap:.2f}s")
             if gap > _MAX_PV_STRING_POWER_GAP_WARNING_SECONDS:
-                logging.debug(f"{self.log_identity} Publishing WARNING - string={self.string_number} gap between acquiring current and voltage was {gap:.2f}s")
+                logging.debug(f"{self.log_identity} Publishing WARNING - gap between acquiring current and voltage was {gap:.2f}s")
         await super().publish(mqtt_client, modbus_client, republish=republish)  # Publish even if gap exceeds warning threshold
         if not republish:
             # reset internal values to missing for next calculation
