@@ -11,10 +11,12 @@
 
 - Adjusted minimum sanity check value to PV Current/Voltage sensors to allow for small negative values (#207)
 - Adjusted some more logging messages to reduce noise
+- Refactored application of sensor overrides to enhance debug logging
 
 ### Fixed
 
 - Fixed sequencing of pymodbus logging configuration for suppression of Modbus "ERROR: request ask for ... Skipping." log messages
+- Fixed merging of sensor overrides to prevent over-writing
 
 ---
 

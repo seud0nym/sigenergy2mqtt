@@ -33,6 +33,7 @@ class SanityCheck:
     _precision: int | None = None
     _unit: str | None = None
     _state_class: StateClass | None = None
+    _default_kw_applied: bool = False
 
     def __init__(
         self,
@@ -69,7 +70,8 @@ class SanityCheck:
 
         match data_type:
             case ModbusDataType.STRING:
-                # STRING data type doesn't have numeric ranges
+                self.min_raw = None
+                self.max_raw = None
                 return
             case ModbusDataType.INT16:
                 self.min_raw = -32768
@@ -94,6 +96,7 @@ class SanityCheck:
                 pass
         if unit in (UnitOfPower.WATT, UnitOfEnergy.WATT_HOUR, UnitOfPower.KILO_WATT, UnitOfEnergy.KILO_WATT_HOUR):
             self.max_raw = active_config.sanity_check_default_kw * 1000 if not self.max_raw else min(active_config.sanity_check_default_kw * 1000, self.max_raw)
+            self._default_kw_applied = True
         elif unit == PERCENTAGE:
             self.max_raw = 100 * (gain if gain else 1)
         if self.min_raw is not None and self.max_raw is not None:
@@ -172,8 +175,8 @@ class SanityCheck:
             return "SanityCheck (Disabled)"
 
         mode = "Delta" if self.delta else "Absolute"
-        return f"SanityCheck ({mode}: min_raw={self.min_raw}, max_raw={self.max_raw})"
+        return f"SanityCheck ({mode}: min_raw={self.min_raw}, max_raw={self.max_raw}, default_kw_applied={self._default_kw_applied})"
 
     def __repr__(self) -> str:
         """Return an unambiguous, structural debug representation."""
-        return f"<{self.__class__.__name__} enabled={self.is_enabled} delta={self.delta} min_raw={self.min_raw} max_raw={self.max_raw}>"
+        return f"<{self.__class__.__name__} enabled={self.is_enabled} delta={self.delta} min_raw={self.min_raw} max_raw={self.max_raw} default_kw_applied={self._default_kw_applied}>"
