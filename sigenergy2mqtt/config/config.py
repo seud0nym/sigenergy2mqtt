@@ -210,7 +210,7 @@ class Config:
         for device in self._settings.modbus:
             device.log_level = level
 
-    async def load(self, filename: str, skip_auto_discovery: bool = False) -> None:
+    async def load(self, filename: str) -> None:
         """Load configuration from a file.
 
         Records *filename* as the configuration source and delegates to :meth:`reload`.
@@ -218,19 +218,18 @@ class Config:
         """
         logging.info(f"Loading configuration from {filename}...")
         self._source = filename
-        await self.reload(skip_auto_discovery=skip_auto_discovery)
+        await self.reload()
 
-    async def reload(self, skip_auto_discovery: bool = False) -> None:
+    async def reload(self) -> None:
         """Reload configuration from the YAML source file and re-apply all overrides."""
         try:
             self._settings = Settings(yaml_file_arg=self._source)  # type: ignore[reportCallIssue]
         except ValidationError as exc:
             raise ConfigurationError(str(exc)) from exc
 
-        auto_discovery_cache = await self._perform_auto_discovery(skip_auto_discovery)
+        auto_discovery_cache = await self._perform_auto_discovery()
         self._finalize_reload(auto_discovery_cache)
-        if not skip_auto_discovery:
-            self._validate_hosts_after_discovery()
+        self._validate_hosts_after_discovery()
 
     def _finalize_reload(self, auto_discovery_cache: Path | None) -> None:
         """Final load including the auto discovery results (if any), WITH post-init validation."""
@@ -263,11 +262,11 @@ class Config:
             if not device.host:
                 raise ConfigurationError("modbus entry must have a host")
 
-    async def _perform_auto_discovery(self, skip_auto_discovery: bool) -> Path | None:
-        """Asynchronous auto-discovery logic."""
-        auto_discovery, auto_discovery_cache, auto_discovery_should_run = self._prepare_auto_discovery(skip_auto_discovery)
+    async def _perform_auto_discovery(self) -> Path | None:
+        """Run Modbus auto-discovery if required, and return the cache file path."""
+        auto_discovery, auto_discovery_cache, auto_discovery_should_run = self._prepare_auto_discovery()
 
-        if not skip_auto_discovery and auto_discovery_should_run and self._settings is not None:
+        if auto_discovery_should_run and self._settings is not None:
             if auto_discovery != "force":
                 await self._restore_discovery_from_mqtt(auto_discovery_cache)
 
@@ -285,16 +284,16 @@ class Config:
                 if auto_discovered:
                     await self._save_discovery_results(auto_discovery_cache, auto_discovered)
 
-        return self._get_final_cache_path(auto_discovery, auto_discovery_cache, skip_auto_discovery, auto_discovery_should_run)
+        return self._get_final_cache_path(auto_discovery, auto_discovery_cache, auto_discovery_should_run)
 
-    def _prepare_auto_discovery(self, skip_auto_discovery: bool) -> tuple[str | None, Path, bool]:
+    def _prepare_auto_discovery(self) -> tuple[str | None, Path, bool]:
         auto_discovery_cache = Path(self.persistent_state_path, "auto-discovery.yaml")
 
         auto_discovery = self._settings.modbus_auto_discovery if self._settings else None
         if not auto_discovery:
             auto_discovery = os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY)
 
-        auto_discovery_should_run = not skip_auto_discovery and self._should_run_discovery(auto_discovery, auto_discovery_cache)
+        auto_discovery_should_run = self._should_run_discovery(auto_discovery, auto_discovery_cache)
 
         return auto_discovery, auto_discovery_cache, auto_discovery_should_run
 
@@ -311,12 +310,7 @@ class Config:
                 return True
         return False
 
-    def _get_final_cache_path(self, auto_discovery: str | None, auto_discovery_cache: Path, skip_auto_discovery: bool, auto_discovery_should_run: bool) -> Path | None:
-        # Never consult the cache when auto-discovery is completely disabled for
-        # this call (e.g. the initial preflight reload or an explicit skip).
-        if skip_auto_discovery:
-            return None
-
+    def _get_final_cache_path(self, auto_discovery: str | None, auto_discovery_cache: Path, auto_discovery_should_run: bool) -> Path | None:
         # "force" always re-runs discovery; the freshly-written cache (if any) is
         # the definitive truth.
         if auto_discovery == "force":

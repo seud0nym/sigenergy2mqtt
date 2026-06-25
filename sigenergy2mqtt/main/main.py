@@ -606,7 +606,7 @@ def setup_signals(configs: list[ThreadConfig]) -> None:
 
         async def _reload_and_restart():
             try:
-                await active_config.reload(skip_auto_discovery=True)
+                await active_config.reload()
             except Exception as e:
                 logging.error(f"SIGHUP reload failed: {e}")
             finally:

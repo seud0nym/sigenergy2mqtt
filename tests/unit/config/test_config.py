@@ -356,7 +356,7 @@ class TestConfigReload:
         with _swap_active_config(Config()) as cfg:
             cfg._source = str(config_file)
             with patch.dict("os.environ", {}, clear=True):
-                asyncio.run(cfg.reload(skip_auto_discovery=True))
+                asyncio.run(cfg.reload())
             assert cfg.modbus[0].host == "10.0.0.9"
 
     def test_devices_list_exists(self):
@@ -440,19 +440,7 @@ class TestGetFinalCachePath:
         cfg._settings = None
         return cfg
 
-    def test_skip_auto_discovery_always_returns_none(self, tmp_path):
-        """skip_auto_discovery=True must return None regardless of other flags."""
-        cache = tmp_path / "auto-discovery.yaml"
-        cache.write_text("- host: 1.2.3.4\n  port: 502\n")
-        cfg = self._make_cfg()
-        result = cfg._get_final_cache_path("once", cache, skip_auto_discovery=True, auto_discovery_should_run=True)
-        assert result is None
 
-    def test_skip_auto_discovery_returns_none_even_when_cache_missing(self, tmp_path):
-        cache = tmp_path / "auto-discovery.yaml"  # does not exist
-        cfg = self._make_cfg()
-        result = cfg._get_final_cache_path("once", cache, skip_auto_discovery=True, auto_discovery_should_run=False)
-        assert result is None
 
     # ------------------------------------------------------------------ #
     # "force" mode                                                         #
@@ -463,14 +451,14 @@ class TestGetFinalCachePath:
         cache = tmp_path / "auto-discovery.yaml"
         cache.write_text("- host: 5.6.7.8\n  port: 502\n")
         cfg = self._make_cfg()
-        result = cfg._get_final_cache_path("force", cache, skip_auto_discovery=False, auto_discovery_should_run=True)
+        result = cfg._get_final_cache_path("force", cache, auto_discovery_should_run=True)
         assert result == cache
 
     def test_force_returns_none_when_cache_absent(self, tmp_path):
         """force mode: if scan produced nothing (cache not written), return None."""
         cache = tmp_path / "auto-discovery.yaml"  # does not exist
         cfg = self._make_cfg()
-        result = cfg._get_final_cache_path("force", cache, skip_auto_discovery=False, auto_discovery_should_run=True)
+        result = cfg._get_final_cache_path("force", cache, auto_discovery_should_run=True)
         assert result is None
 
     # ------------------------------------------------------------------ #
@@ -489,7 +477,7 @@ class TestGetFinalCachePath:
         cache.write_text("- host: 9.8.7.6\n  port: 502\n")
         cfg = self._make_cfg()
         # auto_discovery_should_run is False because cache already existed
-        result = cfg._get_final_cache_path("once", cache, skip_auto_discovery=False, auto_discovery_should_run=False)
+        result = cfg._get_final_cache_path("once", cache, auto_discovery_should_run=False)
         assert result == cache
 
     def test_once_cache_exists_should_run_true_also_returns_cache(self, tmp_path):
@@ -497,14 +485,14 @@ class TestGetFinalCachePath:
         cache = tmp_path / "auto-discovery.yaml"
         cache.write_text("- host: 9.8.7.6\n  port: 502\n")
         cfg = self._make_cfg()
-        result = cfg._get_final_cache_path("once", cache, skip_auto_discovery=False, auto_discovery_should_run=True)
+        result = cfg._get_final_cache_path("once", cache, auto_discovery_should_run=True)
         assert result == cache
 
     def test_once_cache_absent_returns_none(self, tmp_path):
         """once mode with no cache (scan produced no results) must return None."""
         cache = tmp_path / "auto-discovery.yaml"  # does not exist
         cfg = self._make_cfg()
-        result = cfg._get_final_cache_path("once", cache, skip_auto_discovery=False, auto_discovery_should_run=True)
+        result = cfg._get_final_cache_path("once", cache, auto_discovery_should_run=True)
         assert result is None
 
     # ------------------------------------------------------------------ #
@@ -516,14 +504,14 @@ class TestGetFinalCachePath:
         cache = tmp_path / "auto-discovery.yaml"
         cache.write_text("- host: 10.0.0.1\n  port: 502\n")
         cfg = self._make_cfg()
-        result = cfg._get_final_cache_path(None, cache, skip_auto_discovery=False, auto_discovery_should_run=True)
+        result = cfg._get_final_cache_path(None, cache, auto_discovery_should_run=True)
         assert result == cache
 
     def test_continuous_scan_ran_cache_absent_returns_none(self, tmp_path):
         """Continuous discovery: scan ran but produced nothing — cache absent, return None."""
         cache = tmp_path / "auto-discovery.yaml"  # does not exist
         cfg = self._make_cfg()
-        result = cfg._get_final_cache_path(None, cache, skip_auto_discovery=False, auto_discovery_should_run=True)
+        result = cfg._get_final_cache_path(None, cache, auto_discovery_should_run=True)
         assert result is None
 
     def test_continuous_no_scan_needed_returns_none(self, tmp_path):
@@ -531,7 +519,7 @@ class TestGetFinalCachePath:
         cache = tmp_path / "auto-discovery.yaml"
         cache.write_text("- host: 10.0.0.1\n  port: 502\n")
         cfg = self._make_cfg()
-        result = cfg._get_final_cache_path(None, cache, skip_auto_discovery=False, auto_discovery_should_run=False)
+        result = cfg._get_final_cache_path(None, cache, auto_discovery_should_run=False)
         assert result is None
 
 
@@ -807,7 +795,7 @@ def test_reload_applies_yaml(tmp_path):
     original_modbus = list(active_config.modbus)
     try:
         active_config.modbus.clear()
-        asyncio.run(active_config.load(config_path, skip_auto_discovery=True))  # TODO: have to skip auto-discovery otherwise it actually runs and creates auto-discovery.yaml in project root
+        asyncio.run(active_config.load(config_path))
         assert active_config.log_level == getattr(__import__("logging"), "DEBUG")
         assert len(active_config.modbus) >= 1
         assert active_config.modbus[0].port == 1502
