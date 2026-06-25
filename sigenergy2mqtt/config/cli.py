@@ -265,7 +265,7 @@ def get_parser() -> argparse.ArgumentParser:
         dest=const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_TIMEOUT,
         type=float,
         default=os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_TIMEOUT, None),
-        help="The Modbus timeout, in seconds, to use when performing auto-discovery of Sigenergy devices on the network. The default is 0.25 seconds.",
+        help="The Modbus timeout, in seconds, to use when performing auto-discovery of Sigenergy devices on the network. The default is 0.5 seconds.",
     )
     parser.add_argument(
         "--modbus-auto-discovery-retries",

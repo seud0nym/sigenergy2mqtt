@@ -2839,7 +2839,7 @@ cli:
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_RETRIES:
     help: Die maximale Anzahl von Modbus-Wiederholungsversuchen für die automatische Erkennung von Sigenergy-Geräten im Netzwerk. Standard ist 0.
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_TIMEOUT:
-    help: Der Modbus-Timeout in Sekunden für die automatische Erkennung von Sigenergy-Geräten im Netzwerk. Standard ist 0,25 Sekunden.
+    help: Der Modbus-Timeout in Sekunden für die automatische Erkennung von Sigenergy-Geräten im Netzwerk. Standard ist 0,5 Sekunden.
   SIGENERGY2MQTT_MODBUS_DCCHARGER_DEVICE_ID:
     help: Die Sigenergy-DC-Ladegerät-Modbus-Geräte-ID. Mehrere Geräte-IDs können durch Kommas getrennt angegeben werden.
   SIGENERGY2MQTT_MODBUS_DISABLE_CHUNKING:

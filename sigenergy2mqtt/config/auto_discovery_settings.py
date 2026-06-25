@@ -18,7 +18,7 @@ class AutoDiscoverySettings(BaseSettings):
 
     modbus_port: int = Field(502, alias="modbus-port")
     modbus_auto_discovery: Optional[str] = Field(None, alias="modbus-auto-discovery")
-    modbus_auto_discovery_timeout: float = Field(0.25, alias="modbus-auto-discovery-timeout")
+    modbus_auto_discovery_timeout: float = Field(0.5, alias="modbus-auto-discovery-timeout")
     modbus_auto_discovery_ping_timeout: float = Field(0.5, alias="modbus-auto-discovery-ping-timeout")
     modbus_auto_discovery_retries: int = Field(0, alias="modbus-auto-discovery-retries")
     modbus_auto_discovery_networks: list[str] = Field(default_factory=list, alias="modbus-auto-discovery-networks")

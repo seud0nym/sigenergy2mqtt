@@ -564,7 +564,7 @@ The Modbus maximum retry count to use when performing auto-discovery of Sigenerg
 - ENV: `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_TIMEOUT`
 - Config key: `n/a`
 
-The Modbus timeout, in seconds, to use when performing auto-discovery of Sigenergy devices on the network. The default is `0.25` seconds.
+The Modbus timeout, in seconds, to use when performing auto-discovery of Sigenergy devices on the network. The default is `0.5` seconds.
 
 <a id="opt_modbus_inverter_device_id"></a>
 ### Inverter Device Id

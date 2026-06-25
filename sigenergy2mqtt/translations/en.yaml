@@ -2839,7 +2839,7 @@ cli:
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_RETRIES:
     help: The Modbus maximum retry count to use when performing auto-discovery of Sigenergy devices on the network. The default is 0.
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_TIMEOUT:
-    help: The Modbus timeout, in seconds, to use when performing auto-discovery of Sigenergy devices on the network. The default is 0.25 seconds.
+    help: The Modbus timeout, in seconds, to use when performing auto-discovery of Sigenergy devices on the network. The default is 0.5 seconds.
   SIGENERGY2MQTT_MODBUS_DCCHARGER_DEVICE_ID:
     help: The Sigenergy DC Charger Modbus Device ID. Multiple device IDS may be specified, separated by commas.
   SIGENERGY2MQTT_MODBUS_DISABLE_CHUNKING:

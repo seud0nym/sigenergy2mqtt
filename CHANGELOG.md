@@ -6,6 +6,7 @@
 ### Added
 
 - Added support for forcing sensor values in Modbus test server
+- Added exception handling for derived sensor updates
 - Implemented StateStore and MonitorService clean functionality
 
 ### Changed
@@ -13,6 +14,7 @@
 - Reverted minimum sanity check value to PV Current/Voltage sensors
 - Adjusted some more logging messages to reduce noise
 - Refactored application of sensor overrides to enhance debug logging
+- Increased default modbus auto-discovery timeout from 0.25 to 0.5 seconds
 
 ### Fixed
 
