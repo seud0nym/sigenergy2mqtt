@@ -16,11 +16,6 @@ from sigenergy2mqtt.main import async_main, validate_connections
 from sigenergy2mqtt.metrics.metrics import Metrics
 
 
-async def _validate_main(show_credentials: bool) -> None:
-    await initialize_async()
-    await validate_connections(show_credentials=show_credentials)
-
-
 def _make_early_signal_handler():
     """Return a signal handler for use during the synchronous initialisation phase.
 
@@ -62,6 +57,14 @@ def _make_early_signal_handler():
     return _handler
 
 
+async def _validate_main(show_credentials: bool) -> None:
+    await initialize_async()
+    logging.info("Configuration is valid; testing configured connection and authentication settings")
+    logging.info(f"Validation configuration:\n{active_config}")
+    await validate_connections(show_credentials=show_credentials)
+    logging.info("Validation checks completed successfully")
+
+
 def main():
     """Configure and run the application.
 
@@ -98,10 +101,7 @@ def main():
             # Restore default Ctrl-C behaviour for validation mode so a single
             # SIGINT raises KeyboardInterrupt during network checks.
             signal.signal(signal.SIGINT, signal.default_int_handler)
-            logging.info("Configuration is valid; testing configured connection and authentication settings")
-            logging.info(f"Validation configuration:\n{active_config}")
             asyncio.run(_validate_main(show_credentials=getattr(active_config, "validate_show_credentials", False)))
-            logging.info("Validation checks completed successfully")
             sys.exit(0)
     except ConfigurationError as e:
         logging.critical(f"Configuration error: {e}")
