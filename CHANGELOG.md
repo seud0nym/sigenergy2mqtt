@@ -16,6 +16,7 @@
 - Adjusted some more logging messages to reduce noise
 - Refactored application of sensor overrides to enhance debug logging
 - Increased default modbus auto-discovery timeout from 0.25 to 0.5 seconds
+- Simplified initialisation and removed multiple redundant configuration reads
 
 ### Fixed
 
