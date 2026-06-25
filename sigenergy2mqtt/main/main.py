@@ -1193,8 +1193,6 @@ async def async_main() -> None:
     """
     while True:
         configure_logging()
-        # Configure logging before pymodbus so basicConfig wins the handler race.
-        pymodbus_apply_logging_config(active_config.get_modbus_log_level())
 
         restart_controller.reset()
         thread_config_registry.clear()
