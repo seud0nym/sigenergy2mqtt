@@ -2839,7 +2839,7 @@ cli:
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_RETRIES:
     help: 'A contagem máxima de novas tentativas do Modbus a ser usada ao realizar a auto-descoberta de dispositivos Sigenergy na rede. O padrão é 0.'
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_TIMEOUT:
-    help: 'O tempo de limite de Modbus, em segundos, a ser usado ao realizar a auto-descoberta de dispositivos Sigenergy na rede. O padrão é 0,25 segundos.'
+    help: 'O tempo de limite de Modbus, em segundos, a ser usado ao realizar a auto-descoberta de dispositivos Sigenergy na rede. O padrão é 0,5 segundos.'
   SIGENERGY2MQTT_MODBUS_DCCHARGER_DEVICE_ID:
     help: 'O ID do dispositivo Modbus do Carregador CC Sigenergy. Vários IDs de dispositivo podem ser especificados, separados por vírgulas.'
   SIGENERGY2MQTT_MODBUS_DISABLE_CHUNKING:

@@ -2839,7 +2839,7 @@ cli:
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_RETRIES:
     help: 执行网络上 Sigenergy 设备的自动发现时使用的 Modbus 最大重试次数。默认值为 0。
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_TIMEOUT:
-    help: 执行网络上 Sigenergy 设备的自动发现时使用的 Modbus 超时（秒）。默认值为 0.25 秒。
+    help: 执行网络上 Sigenergy 设备的自动发现时使用的 Modbus 超时（秒）。默认值为 0.5 秒。
   SIGENERGY2MQTT_MODBUS_DCCHARGER_DEVICE_ID:
     help: 'Sigenergy 直流充电器 Modbus 设备 ID。可以指定多个设备 ID，用逗号分隔。'
   SIGENERGY2MQTT_MODBUS_DISABLE_CHUNKING:

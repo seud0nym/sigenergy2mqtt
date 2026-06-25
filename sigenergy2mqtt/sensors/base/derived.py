@@ -66,6 +66,11 @@ class DerivedSensor(TypedSensorMixin, Sensor):
             self.bound_source_sensors = []
         if sensor not in self.bound_source_sensors:
             self.bound_source_sensors.append(sensor)
+        if sensor.debug_logging:
+            # Force debug logging on derived sensors when source is being debugged
+            self.debug_logging = True
+            # Re-apply sensor overrides so that an explicit debug-logging=False override will be respected
+            self.apply_sensor_overrides()
 
     async def _update_internal_state(self, **kwargs) -> bool | Exception | ExceptionResponse:
         """Derived sensors don't update from Modbus."""
@@ -113,7 +118,7 @@ class DerivedSensor(TypedSensorMixin, Sensor):
             coro.close()
 
     @abc.abstractmethod
-    def set_source_values(self, sensor: Sensor) -> bool:
+    def update_from_source_sensor(self, sensor: Sensor) -> bool:
         """Apply values from source sensor to this derived sensor.
 
         Args:

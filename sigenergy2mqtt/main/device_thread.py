@@ -15,7 +15,7 @@ from typing import Any, Awaitable
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.modbus import ModbusClient, ModbusClientFactory
-from sigenergy2mqtt.mqtt import mqtt_setup
+from sigenergy2mqtt.mqtt import mqtt_setup, mqtt_teardown
 
 from .thread_config import ThreadConfig
 
@@ -52,7 +52,7 @@ async def read_and_publish_device_sensors(
 
     # Human-readable label used in log messages — fall back to description
     # when host is absent (e.g. clean/discovery-only runs).
-    url_label = config.url if config.host is not None else config.description
+    log_label = config.url if config.host is not None else config.description
 
     modbus_client: ModbusClient | None = None
     tasks: list[Awaitable[Any]] = []
@@ -89,7 +89,7 @@ async def read_and_publish_device_sensors(
 
         if tasks:
             task_word = "task" if len(tasks) == 1 else "tasks"
-            logging.info(f"{url_label} scheduled tasks commenced ({len(tasks)} asyncio {task_word} scheduled)")
+            logging.info(f"{log_label} scheduled tasks commenced ({len(tasks)} asyncio {task_word} scheduled)")
 
             gathered_tasks = asyncio.gather(*tasks, return_exceptions=True)
             config.online(gathered_tasks)
@@ -103,7 +103,7 @@ async def read_and_publish_device_sensors(
             try:
                 results = await gathered_tasks
             except asyncio.CancelledError:
-                logging.info(f"{url_label} scheduled tasks interrupted")
+                logging.info(f"{log_label} scheduled tasks interrupted")
                 results = []
 
             # asyncio.gather(..., return_exceptions=True) never raises; instead
@@ -112,7 +112,7 @@ async def read_and_publish_device_sensors(
             for result in results:
                 if isinstance(result, BaseException):
                     logging.exception(
-                        f"{url_label} a scheduled task raised an exception",
+                        f"{log_label} a scheduled task raised an exception",
                         exc_info=result,
                     )
 
@@ -126,15 +126,9 @@ async def read_and_publish_device_sensors(
 
     finally:
         if modbus_client is not None:
-            logging.info(f"Closing Modbus connection to {url_label}")
             ModbusClientFactory.remove(modbus_client)
 
-        logging.info(f"Deregistering and unsubscribing MQTT handlers for Client ID {mqtt_client_id} to mqtt://{active_config.mqtt.broker}:{active_config.mqtt.port}")
-        mqtt_handler.deregister_all(mqtt_client)
-        logging.info(f"Closing MQTT connection for Client ID {mqtt_client_id} to mqtt://{active_config.mqtt.broker}:{active_config.mqtt.port}")
-        mqtt_client.loop_stop()
-        mqtt_client.disconnect()
-        await mqtt_handler.close()
+        await mqtt_teardown(mqtt_client, mqtt_handler)
 
 
 def run_modbus_event_loop(

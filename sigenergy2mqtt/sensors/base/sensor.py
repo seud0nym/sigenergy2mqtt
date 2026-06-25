@@ -177,6 +177,11 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
             delta=None,
         )
 
+        # Have to apply sensor overrides AFTER sanity check because overrides can apply to it
+        self.apply_sensor_overrides()
+        if self.debug_logging:
+            logging.debug(f"{self.log_identity} {self.sanity_check}")
+
         if device_class is not None and not DeviceClass.is_valid_unit(device_class, unit):
             logging.error(f"{self.log_identity} unit '{unit}' is not valid for device class {device_class.name}")
 
@@ -396,22 +401,57 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
 
         self.derived_sensors[sensor.__class__.__name__] = sensor
 
-    def apply_sensor_overrides(self, registers: RegisterAccess | None):
-        """Apply configuration overrides from config file.
+    def apply_device_overrides(self, registers: RegisterAccess | None) -> None:
+        """Apply device-level publishable overrides.
 
         Args:
             registers: Register access configuration for this device
         """
+        if not self.publishable:
+            if self.debug_logging:
+                logging.debug(f"{self.log_identity} Device overrides not applied (publishable={self.publishable})")
+        elif registers:
+            # Lazy imports to avoid circular dependencies
+            from .derived import DerivedSensor
+            from .mixins import ReadableSensorMixin, WritableSensorMixin
+            from .writable import WriteOnlySensor
+
+            # Check for remote EMS override
+            if registers.no_remote_ems and (getattr(self, "_remote_ems", None) is not None or getattr(self, "address", None) == 40029):
+                if self.debug_logging:
+                    logging.debug(f"{self.log_identity} Applying device 'no-remote-ems' override ({registers.no_remote_ems})")
+                self.publishable = False
+                return
+
+            # Check read/write permissions
+            if isinstance(self, WritableSensorMixin) and not isinstance(self, WriteOnlySensor):
+                if not registers.read_write:
+                    if self.debug_logging:
+                        logging.debug(f"{self.log_identity} Applying device 'read-write' override ({registers.read_write})")
+                    self.publishable = registers.read_write
+            elif isinstance(self, (ReadableSensorMixin, DerivedSensor)):
+                if not registers.read_only:
+                    if self.debug_logging:
+                        logging.debug(f"{self.log_identity} Applying device 'read-only' override ({registers.read_only})")
+                    self.publishable = registers.read_only
+            elif isinstance(self, WriteOnlySensor):
+                if not registers.write_only:
+                    if self.debug_logging:
+                        logging.debug(f"{self.log_identity} Applying device 'write-only' override ({registers.write_only})")
+                    self.publishable = registers.write_only
+            else:
+                logging.warning(f"{self.log_identity} Failed to determine superclass to apply device publishable overrides")
+        elif self.debug_logging:
+            logging.debug(f"{self.log_identity} Device overrides not applied (RegisterAccess=None)")
+
+    def apply_sensor_overrides(self):
+        """Apply configuration overrides"""
         # Pre-compile regex patterns for efficiency
         identifier_patterns = {identifier: re.compile(identifier) for identifier in active_config.sensor_overrides.keys()}  # type: ignore[reportGeneralTypeIssues]
 
         for identifier, pattern in identifier_patterns.items():
             if self._matches_override_pattern(pattern):
                 self._apply_override(identifier, active_config.sensor_overrides[identifier])
-
-        # Apply device-level overrides
-        if self.publishable and registers:
-            self._apply_device_overrides(registers)
 
     def _matches_override_pattern(self, pattern: re.Pattern) -> bool:
         """Check if this sensor matches an override pattern.
@@ -544,39 +584,6 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
             logging.debug(f"{self.log_identity} Applying {identifier} 'name' override ({value})")
             self[DiscoveryKeys.NAME] = value
 
-    def _apply_device_overrides(self, registers: RegisterAccess) -> None:
-        """Apply device-level publishable overrides.
-
-        Args:
-            registers: Register access configuration for this device
-        """
-        # Lazy imports to avoid circular dependencies
-        from .derived import DerivedSensor
-        from .mixins import ReadableSensorMixin, WritableSensorMixin
-        from .writable import WriteOnlySensor
-
-        # Check for remote EMS override
-        if registers.no_remote_ems and (getattr(self, "_remote_ems", None) is not None or getattr(self, "address", None) == 40029):
-            logging.debug(f"{self.log_identity} Applying device 'no-remote-ems' override ({registers.no_remote_ems})")
-            self.publishable = False
-            return
-
-        # Check read/write permissions
-        if isinstance(self, WritableSensorMixin) and not isinstance(self, WriteOnlySensor):
-            if not registers.read_write:
-                logging.debug(f"{self.log_identity} Applying device 'read-write' override ({registers.read_write})")
-                self.publishable = registers.read_write
-        elif isinstance(self, (ReadableSensorMixin, DerivedSensor)):
-            if not registers.read_only:
-                logging.debug(f"{self.log_identity} Applying device 'read-only' override ({registers.read_only})")
-                self.publishable = registers.read_only
-        elif isinstance(self, WriteOnlySensor):
-            if not registers.write_only:
-                logging.debug(f"{self.log_identity} Applying device 'write-only' override ({registers.write_only})")
-                self.publishable = registers.write_only
-        else:
-            logging.warning(f"{self.log_identity} Failed to determine superclass to apply device publishable overrides")
-
     def configure_mqtt_topics(self, device_id: str) -> str:
         """Configure MQTT topics for this sensor.
 
@@ -617,7 +624,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
 
     def _log_configured_topics(self) -> None:
         """Log the configured MQTT topics for debugging."""
-        logging.debug(f"{self.log_identity} Configured MQTT topics (enabled={active_config.home_assistant.enabled} simplified={active_config.home_assistant.use_simplified_topics})")
+        logging.debug(f"{self.log_identity} Configured MQTT topics (HA={active_config.home_assistant.enabled} simplified={active_config.home_assistant.use_simplified_topics})")
         for key in (DiscoveryKeys.STATE_TOPIC, DiscoveryKeys.RAW_STATE_TOPIC, DiscoveryKeys.JSON_ATTRIBUTES_TOPIC, DiscoveryKeys.AVAILABILITY):
             if key in self:
                 logging.debug(f"{self.log_identity} >>> {key}={self[key]})")
@@ -1029,8 +1036,11 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         if self._states:
             for sensor in self.derived_sensors.values():
                 if self.debug_logging:
-                    logging.debug(f"{self.log_identity} Setting derived sensor {sensor.log_identity} source values (states={self._states})")
-                sensor.set_source_values(self)
+                    logging.debug(f"{self.log_identity} Setting derived sensor {sensor.log_identity} source values (latest_raw_state={self.latest_raw_state})")
+                try:
+                    sensor.update_from_source_sensor(self)
+                except Exception as error:
+                    logging.warning(f"{self.log_identity} Failed to update derived sensor {sensor.log_identity} source values: {repr(error)}")
 
     def set_latest_state(self, state: int | float | str | list[bool] | list[int] | list[float]) -> bool:
         """Update latest state and propagate to derived sensors.
@@ -1249,6 +1259,19 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
     def __hash__(self) -> int:  # pyright: ignore[reportIncompatibleVariableOverride]
         """Hash based on unique_id."""
         return hash(self[DiscoveryKeys.UNIQUE_ID])
+
+    # =========================================================================
+    # String Representations
+    # =========================================================================
+
+    def __str__(self) -> str:
+        """Return a human-readable string representation for logging."""
+        state_str = f" (state={self.latest_raw_state})" if self._states else " (state=None)"
+        return f"{self.log_identity}{state_str}"
+
+    def __repr__(self) -> str:
+        """Return a concise, unambiguous debug representation of the sensor."""
+        return f"<{self.__class__.__name__} unique_id='{self.unique_id}' publishable={self.publishable} {self.sanity_check}>"
 
 
 # =============================================================================

@@ -2839,7 +2839,7 @@ cli:
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_RETRIES:
     help: 'Maximum aantal Modbus-herhalingen voor auto-discovery. Standaard: 0.'
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_TIMEOUT:
-    help: 'Modbus-timeout in seconden voor auto-discovery. Standaard: 0,25 seconden.'
+    help: 'Modbus-timeout in seconden voor auto-discovery. Standaard: 0,5 seconden.'
   SIGENERGY2MQTT_MODBUS_DCCHARGER_DEVICE_ID:
     help: 'De Sigenergy DC-lader Modbus Apparaat-ID. Er kunnen meerdere apparaat-IDs worden opgegeven, gescheiden door komma''s.'
   SIGENERGY2MQTT_MODBUS_DISABLE_CHUNKING:

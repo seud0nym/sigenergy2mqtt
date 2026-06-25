@@ -102,30 +102,30 @@ class TestSanityCheck:
         sc = SanityCheck(unit=PERCENTAGE, gain=10)
         assert sc.max_raw == 1000
 
-    def test_repr(self):
+    def test_description(self):
         from sigenergy2mqtt.common import PERCENTAGE
 
         sc = SanityCheck(min_raw=0, max_raw=100, unit=PERCENTAGE)
-        r = repr(sc)
+        r = sc.description
         assert "between 0 % and 100 %" in r
 
         sc = SanityCheck()
-        assert repr(sc) == "Disabled"
+        assert sc.description == "Disabled"
 
         # Delta repr
         sc = SanityCheck(min_raw=0, max_raw=10, delta=True, unit="V")
-        r = repr(sc)
+        r = sc.description
         assert "delta of the value" in r
         assert "between 0 V and 10 V" in r
 
         # Only max
         sc = SanityCheck(max_raw=100)
-        r = repr(sc)
+        r = sc.description
         assert "maximum of 100" in r
 
         # Only min
         sc = SanityCheck(min_raw=10)
-        r = repr(sc)
+        r = sc.description
         assert "minimum of 10" in r
 
     def test_raw2value(self):

@@ -10,6 +10,7 @@ from typing import Any, cast
 from pymodbus.pdu import ExceptionResponse
 
 from sigenergy2mqtt.common import DeviceClass, InputType, Protocol, StateClass
+from sigenergy2mqtt.config.models import RegisterAccess
 from sigenergy2mqtt.i18n import _t
 from sigenergy2mqtt.metrics import Metrics
 from sigenergy2mqtt.modbus import ModbusClient, ModbusDataType
@@ -290,7 +291,11 @@ class ReservedSensor(ReadOnlySensor):
         if value:
             raise ValueError("Cannot set publishable=True for ReservedSensor")
 
-    def apply_sensor_overrides(self, registers):
+    def apply_device_overrides(self, registers: RegisterAccess | None):
+        """Reserved sensors ignore overrides."""
+        pass
+
+    def apply_sensor_overrides(self):
         """Reserved sensors ignore overrides."""
         pass
 

@@ -63,13 +63,17 @@ def test_threadconfig_properties_and_methods(monkeypatch):
     called = {}
 
     class FakeSensor:
-        def apply_sensor_overrides(self, registers):
-            called["ok"] = registers
+        def apply_device_overrides(self, registers):
+            called["device"] = registers
+
+        def apply_sensor_overrides(self):
+            called["sensor"] = True
 
     dev.all_sensors = {"s1": FakeSensor()}
     dev.registers = {"r": 1}
     tc.reapply_sensor_overrides()
-    assert called.get("ok") == dev.registers
+    assert called.get("sensor") is True
+    assert called.get("device") == dev.registers
 
 
 def test_threadconfig_requires_host_or_name() -> None:

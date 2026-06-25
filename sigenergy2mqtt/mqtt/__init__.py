@@ -9,7 +9,7 @@ from .client import MqttClient
 from .handler import MqttHandler
 from .registry import MqttHealthRegistry
 
-__all__ = ["MqttHandler", "mqtt_setup", "mqtt_health_registry", "interrupt_mqtt_reconnection"]
+__all__ = ["MqttHandler", "mqtt_health_registry", "mqtt_setup", "mqtt_teardown", "interrupt_mqtt_reconnection"]
 
 _MAX_CONNECT_ATTEMPTS: int = 3
 
@@ -81,11 +81,7 @@ async def _connect_with_retry(mqtt_client: MqttClient, client_id: str) -> None:
                 raise
 
 
-async def mqtt_setup(
-    mqtt_client_id: str,
-    modbus_client: ModbusClient | None,
-    loop: asyncio.AbstractEventLoop,
-) -> tuple[MqttClient, MqttHandler]:
+async def mqtt_setup(mqtt_client_id: str, modbus_client: ModbusClient | None, loop: asyncio.AbstractEventLoop) -> tuple[MqttClient, MqttHandler]:
     """Create, configure, and connect an MQTT client/handler pair.
 
     Instantiates an :class:`MqttHandler` and :class:`MqttClient`, applies
@@ -138,3 +134,23 @@ async def mqtt_setup(
     await _connect_with_retry(mqtt_client, mqtt_client_id)
 
     return mqtt_client, mqtt_handler
+
+
+async def mqtt_teardown(mqtt_client: MqttClient, mqtt_handler: MqttHandler) -> None:
+    """Clean up MQTT client and handler.
+
+    Args:
+        mqtt_client: The :class:`MqttClient` instance to clean up.
+        mqtt_handler: The :class:`MqttHandler` instance to clean up.
+    """
+    mqtt_client_id = mqtt_client.client_id_str
+    broker_url = _build_broker_url()
+
+    logging.debug(f"Deregistering and unsubscribing MQTT handlers for Client ID {mqtt_client_id} to {broker_url}")
+    mqtt_handler.deregister_all(mqtt_client)
+
+    logging.info(f"Closing MQTT connection for Client ID {mqtt_client_id} to {broker_url}")
+    mqtt_client.loop_stop()
+    mqtt_client.disconnect()
+
+    await mqtt_handler.close()

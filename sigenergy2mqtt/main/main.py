@@ -62,39 +62,38 @@ _GRID_RESTORE_WATCH_TASKS: set[tuple[str, int, int]] = set()
 # ---------------------------------------------------------------------------
 
 
+class _FramerSkipFilter(logging.Filter):
+    """Suppress dev-id / transaction-id mismatch noise from pymodbus framer."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        msg = record.getMessage()
+        if "request ask for " in msg and "Skipping." in msg:
+            Metrics.modbus_skipped_error()
+            return False
+        return True
+
+
 def configure_logging() -> None:
     """Configure the root logger with a format appropriate to the runtime environment."""
     # Configure root logger format/level via shared helper so logic is unified
     # with configure_root_logging() performed at import time.
     configure_root_logging(active_config.log_level, active_config.log_fmt)
 
-    modbus_log_level = active_config.get_modbus_log_level()
-
     _configure_logger("paho.mqtt", active_config.mqtt.log_level)
     _configure_logger("pvoutput", active_config.pvoutput.log_level)
-    _configure_logger("pymodbus.logging", modbus_log_level, propagate=False)
     _configure_logger("sigenergy2mqtt.mqtt.client", active_config.mqtt.log_level)
 
+    # We have to configure root logging before pymodbus so basicConfig wins the handler race
+    modbus_log_level = active_config.get_modbus_log_level()
+    pymodbus_apply_logging_config(modbus_log_level)
+
     if modbus_log_level <= logging.ERROR and any(device.log_skipped is False for device in active_config.modbus):
-
-        class _FramerSkipFilter(logging.Filter):
-            """Suppress dev-id / transaction-id mismatch noise from pymodbus framer."""
-
-            def filter(self, record: logging.LogRecord) -> bool:
-                msg = record.getMessage()
-                if msg.startswith("ERROR: request ask for") and "Skipping." in msg:
-                    Metrics.modbus_skipped_error()
-                    return False
-                return True
-
         _framer_skip_filter = _FramerSkipFilter()
-
         # Attach to the exact logger pymodbus.Log uses, AND to each of its handlers.
         _pymodbus_logging_logger = logging.getLogger("pymodbus.logging")
         _pymodbus_logging_logger.addFilter(_framer_skip_filter)
         for handler in _pymodbus_logging_logger.handlers:
             handler.addFilter(_framer_skip_filter)
-
         # Also cover the case where records propagate to the root before your
         # propagate=False takes effect (e.g. if configure_logging() is called
         # before pymodbus is fully initialised).
@@ -316,7 +315,16 @@ async def make_plant_and_inverter(plant_index: int, modbus_client: ModbusClient,
 
     device_type.has_independent_phase_power_control_interface = await probe_optional_interface(modbus_client, IndependentPhasePowerControl.ADDRESS, "Independent Phase Control Interface")
     device_type.has_grid_code_interface = await probe_optional_interface(modbus_client, GridCodeLVRT.ADDRESS, "Grid Code Interface")
-    tz = timezone(timedelta(minutes=cast(int, await get_state(SystemTimeZone(plant_index), modbus_client, "plant", raw=True))))
+
+    try:
+        sys_tz_offset = await get_state(SystemTimeZone(plant_index), modbus_client, "plant", raw=True)
+        if sys_tz_offset is None:
+            logging.warning(f"Plant {plant_index} System Timezone offset not available - defaulting to UTC")
+            sys_tz_offset = 0
+        tz = timezone(timedelta(minutes=cast(int, sys_tz_offset)))
+    except Exception as e:
+        logging.error(f"Plant {plant_index} System Timezone offset read failed - defaulting to UTC ({e})")
+        tz = timezone.utc
 
     if plant is None:
         firmware = FirmwareVersion(cast(str, await get_state(InverterFirmwareVersion(plant_index, device_address), modbus_client, "plant/inverter")))
@@ -393,14 +401,22 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
     pid_sequence = 0
     pss_sequence = 0
 
+    if devices and devices[0].registers.read_only is True and devices[0].registers.read_write is False and devices[0].registers.write_only is False:
+        # registers is a single entity that is propagated to all devices (sigenergy2mqtt.config.merge.propagate_to_all_devices), so we only need to check the first device
+        logging.warning("Read-only mode enabled: No write operations can be performed.")
+
     for plant_index, device in enumerate(devices):
         if not (device.registers.read_only or device.registers.read_write or device.registers.write_only):
             logging.info(f"Ignored configured host modbus://{device.host}:{device.port} (Plant Index = {plant_index}): All registers are disabled (read-only=false read-write=false write-only=false)")
             continue
-
-        logging.info(
-            f"Creating devices from configured host modbus://{device.host}:{device.port} (Plant: {plant_index}, Device IDs: Inverter={device.inverters} AC Charger={device.ac_chargers} DC Charger={device.dc_chargers} PSS={device.pss} PID={device.pid})"
-        )
+        if device.pss or device.pid:
+            logging.info(
+                f"Creating devices from configured host modbus://{device.host}:{device.port} (Plant: {plant_index}, Device IDs: Inverter={device.inverters} AC Charger={device.ac_chargers} DC Charger={device.dc_chargers} PSS={device.pss} PID={device.pid})"
+            )
+        else:
+            logging.info(
+                f"Creating devices from configured host modbus://{device.host}:{device.port} (Plant: {plant_index}, Device IDs: Inverter={device.inverters} AC Charger={device.ac_chargers} DC Charger={device.dc_chargers})"
+            )
 
         config: ThreadConfig = ThreadConfig.create(device.host, device.port, device.timeout, device.retries)
         modbus = ModbusClient(device.host, port=device.port, timeout=device.timeout, retries=device.retries)
@@ -554,7 +570,7 @@ def setup_services(configs: list[ThreadConfig], protocol_version: Protocol | Non
     if svc_thread_cfg.has_devices:
         configs.append(svc_thread_cfg)
     else:
-        logging.info("No services configured - skipping service thread")
+        logging.debug("No services configured - skipping service thread")
 
     return configs
 
@@ -1061,7 +1077,7 @@ def _validation_sensor_lookup(device: Device) -> dict[str, Any]:
 
 
 def _log_illegal_data_address(sensor: Any) -> None:
-    logging.info(f"{sensor.log_identity} not supported on this device/firmware: ILLEGAL DATA ADDRESS {sensor.address} (count={sensor.count} type={sensor.input_type} protocol=V{sensor.protocol_version.value})")
+    logging.debug(f"{sensor.log_identity} not supported on this device/firmware: ILLEGAL DATA ADDRESS {sensor.address} (count={sensor.count} type={sensor.input_type} protocol=V{sensor.protocol_version.value})")
 
 
 def _is_valid_validation_cache_payload(value: str) -> bool:
@@ -1183,20 +1199,17 @@ async def async_main() -> None:
     - Reloads runtime configuration after restart requests.
     """
     while True:
-        # Configure logging before pymodbus so basicConfig wins the handler race.
         configure_logging()
-        pymodbus_apply_logging_config(active_config.get_modbus_log_level())
 
         restart_controller.reset()
         thread_config_registry.clear()
         mqtt_health_registry.clear()
 
         # Initialise StateStore with dedicated MQTT connection + sentinel-based warming
-        if active_config.persistence.mqtt_redundancy or not active_config.clean:
-            await state_store.initialise(
-                active_config.persistent_state_path,
-                active_config.persistence,
-            )
+        await state_store.initialise(
+            active_config.persistent_state_path,
+            active_config.persistence,
+        )
 
         # Phase 2 config load — StateStore now available for auto-discovery fallback
         await initialize_async()
@@ -1208,6 +1221,10 @@ async def async_main() -> None:
         setup_signals(configs)
 
         await start(configs)
+
+        if active_config.clean:
+            await state_store.clean()
+            await MonitorService.clean()
 
         # Shutdown StateStore
         state_store.shutdown()

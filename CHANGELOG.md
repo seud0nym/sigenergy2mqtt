@@ -1,22 +1,74 @@
-# Changelog
+<!-- git log [since tag]..HEAD --oneline -->
+# Changelog 
 
-## [Unreleased]
+## [2026.6.25b1] - 2026.06.25
 
 ### Added
 
-- Added `SIGENERGY2MQTT_PVOUTPUT_UPLOAD_LOG_LEVEL` configuration setting to allow override of the log level for PVOutput upload messages
-- Added metrics for PVOutput uploads, errors, and skips
+- Added support for forcing sensor values in Modbus test server
+- Added exception handling for derived sensor updates
+- Added warning log message for read-only mode
+- Implemented StateStore and MonitorService clean functionality
 
 ### Changed
 
-- Reduced log noise by demoting config sourcing to debug and improving device discovery log details
+- Adjusted minimum sanity check value to PV Current/Voltage sensors to allow for small negative values (#207)
+- Adjusted some more logging messages to reduce noise
+- Refactored application of sensor overrides to enhance debug logging
+- Increased default modbus auto-discovery timeout from 0.25 to 0.5 seconds
 
 ### Fixed
 
-- PV Total Generation Today and PV Total Generation Yesterday were incorrectly classified as State class TOTAL_INCREASING, which could cause a persistent sanity check error when they reset at midnight (#200)
+- Fixed sequencing of pymodbus logging configuration for suppression of Modbus "ERROR: request ask for ... Skipping." log messages
+- Fixed merging of sensor overrides to prevent over-writing
+
+---
+
+## [2026.6.21] - 2026-06-21
+
+### Added
+
+- Added metrics tracking for PVOutput uploads, errors, and skipped uploads, including localized metric labels
+- Added configurable log level control for PVOutput upload payload logging
+- Added support for publishing Docker images for alpha releases, including tag validation logic
+- Added Docker image vulnerability scanning to the CI pipeline
+- Added sanity-check limits for SystemTime and SystemTimeZone Modbus entities
+- Added client identifiers to connection and disconnection logging for improved diagnostics
+
+### Changed
+
+- Standardized client disconnection handling across all client types
+- Centralized Modbus validation logic and replaced Pydantic ValidationError usage with a custom ConfigurationError
+- Upgraded Docker base image to Python 3.14 on Alpine 3.24
+- Upgraded `pydantic-settings` from 2.14.1 to 2.14.2
+- Upgraded `pymodbus` from 3.13.0 to 3.13.1
+- Reduced application log verbosity and general log noise
+- Improved device discovery logging detail
+- Deferred PVOutput metrics reporting and skipped-upload logging until processing completion
+- Standardized default log level naming to the technical value INFO across translations
+- Updated release workflow to pull the latest changes before dependency checks
+- Updated checkout action from v6 to v7
+
+### Fixed
+
+- Fixed PV generation sensor state_class values to prevent sanity-check validation issues (#200)
+- Fixed ConfigurationError raised for valid Modbus configurations with auto-discovery cache (#203)
 - PV Total Generation Today and PV Total Generation Yesterday were incorrectly marked as enabled by default in Home Assistant
-- Set negative delta range limits for unsigned integer types in sanity checks, because a delta can be less than zero
-- Fixed ConfigurationError raised for valid Modbus configurations with auto-discovery cache (fixes #203)
+- Corrected unsigned integer sanity-check range validation logic
+- Corrected minimum delta validation for unsigned integer values
+- Improved Modbus test server unsigned integer boundary handling
+- Fixed double-counting of PVOutput upload errors on HTTP failures
+- Reset PVOutput skipped status when payload changes are detected
+- Corrected Japanese translations affected by an unintended replacement of the term "情報"
+- Improved handling of timezone retrieval failures by defaulting to UTC
+- Added handling for missing timezone offset values
+- Refined timezone-related logging and error reporting
+- Adjusted PVCurrentSensor minimum sane value to allow for measurement errors (or potential wiring issues?) (#203)
+
+### Documentation
+
+- Removed an incorrect reference to InfluxDB sensor registration from the MetricsService documentation
+- Clarified PVOutput upload log level behaviour in the documentation
 
 ---
 

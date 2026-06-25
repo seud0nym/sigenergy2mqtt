@@ -341,15 +341,15 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
             sensor: The sensor to register.
         """
         if not self.get_sensor(sensor.unique_id, search_children=True):
-            if sensor.debug_logging:
-                logging.debug(f"{self.log_identity} adding sensor {sensor.unique_id} ({sensor.__class__.__name__})")
             sensor.parent_device = self
-            sensor.apply_sensor_overrides(self.registers)
+            sensor.apply_device_overrides(self.registers)
             sensor.configure_mqtt_topics(self.unique_id)
             sensor.on_added_to_device()
             self.all_sensors[sensor.unique_id] = sensor
+            if sensor.debug_logging:
+                logging.debug(f"{sensor.log_identity} added to {self.log_identity}: {repr(sensor)}")
         elif sensor.debug_logging:
-            logging.debug(f"{self.log_identity} skipped adding sensor {sensor.unique_id} ({sensor.__class__.__name__}) - already exists")
+            logging.debug(f"{sensor.log_identity} NOT added to {self.log_identity} - already exists")
 
     def _add_sensor(self, sensor: Sensor, group: str | None = None, search_children: bool = True) -> bool:
         """Register any sensor type and handle type-specific wiring."""

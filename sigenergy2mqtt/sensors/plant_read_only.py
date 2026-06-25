@@ -56,6 +56,7 @@ class SystemTime(TimestampSensor, HybridInverter, PVInverter):
             protocol_version=Protocol.V1_8,
             tz=tz,
         )
+        self.sanity_check.min_raw = 1640995200  # 1 January 2022 at 00:00:00 UTC
 
 
 class SystemTimeZone(ReadOnlySensor, HybridInverter, PVInverter):
@@ -81,6 +82,8 @@ class SystemTimeZone(ReadOnlySensor, HybridInverter, PVInverter):
             protocol_version=Protocol.V1_8,
         )
         self["entity_category"] = "diagnostic"
+        self.sanity_check.min_raw = -1440  # -24 hours
+        self.sanity_check.max_raw = 1440  # +24 hours
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)

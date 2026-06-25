@@ -157,7 +157,8 @@ class ThreadConfig:
         """
         for device in self._devices:
             for sensor in device.sensors.values():
-                sensor.apply_sensor_overrides(device.registers)
+                sensor.apply_sensor_overrides()
+                sensor.apply_device_overrides(device.registers)
 
     @staticmethod
     def _make_name(host: str, port: int) -> str:

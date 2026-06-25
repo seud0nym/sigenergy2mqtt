@@ -265,7 +265,7 @@ async def test_clean_all(temp_state_dir, mock_persistence_config):
         await store.save("cat1", "key1", "val1")
         await store.save("cat2", "key2", "val2")
 
-        await store.clean_all()
+        await store.clean()
 
         # Check disk files removed
         assert not (temp_state_dir / "cat1" / "key1").exists()

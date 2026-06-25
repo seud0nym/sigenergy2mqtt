@@ -68,7 +68,7 @@ class Inverter(ModbusDevice):
         try:
             parsed_firmware = FirmwareVersion(cast(str, firmware))
             if active_config.ems_mode_check and parsed_firmware.service_pack >= 113:
-                logging.info(f"{inverter.log_identity} ({serial}): Remote EMS Mode check disabled in firmware after SPC113 ({firmware})")
+                logging.debug(f"{inverter.log_identity} ({serial}): Remote EMS Mode check disabled in firmware after SPC113 ({firmware})")
                 active_config.ems_mode_check = False
         except ValueError:
             logging.warning(f"{inverter.log_identity} ({serial}): Unable to parse firmware version '{firmware}' for ems_mode_check enforcement")

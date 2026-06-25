@@ -127,7 +127,7 @@ class MockDerivedSensor(DerivedSensor):
         kwargs.setdefault("data_type", MODBUS_DATA_TYPE.UINT16)
         super().__init__(**kwargs)
 
-    def set_source_values(self, sensor):
+    def update_from_source_sensor(self, sensor):
         return True
 
 
@@ -151,37 +151,37 @@ class TestSensorPublishableState:
         # Sensor with _remote_ems
         sensor = MockReadableSensor()
         sensor._remote_ems = True
-        sensor.apply_sensor_overrides(reg_access)
+        sensor.apply_device_overrides(reg_access)
         assert sensor.publishable is False
 
         # Sensor with address 40029
         sensor2 = MockReadableSensor()
         sensor2.address = 40029
-        sensor2.apply_sensor_overrides(reg_access)
+        sensor2.apply_device_overrides(reg_access)
         assert sensor2.publishable is False
 
     def test_read_only_override(self):
         # Readable Sensor
         reg_access = RegisterAccess(read_only=False)
         sensor = MockReadableSensor()
-        sensor.apply_sensor_overrides(reg_access)
+        sensor.apply_device_overrides(reg_access)
         assert sensor.publishable is False
 
         # Derived Sensor
         sensor2 = MockDerivedSensor()
-        sensor2.apply_sensor_overrides(reg_access)
+        sensor2.apply_device_overrides(reg_access)
         assert sensor2.publishable is False
 
     def test_read_write_override(self):
         reg_access = RegisterAccess(read_write=False)
         sensor = MockWritableSensor()
-        sensor.apply_sensor_overrides(reg_access)
+        sensor.apply_device_overrides(reg_access)
         assert sensor.publishable is False
 
     def test_write_only_override(self):
         reg_access = RegisterAccess(write_only=False)
         sensor = MockWriteOnlySensor()
-        sensor.apply_sensor_overrides(reg_access)
+        sensor.apply_device_overrides(reg_access)
         assert sensor.publishable is False
 
     def test_publishable_remains_true_if_access_allowed(self):
@@ -189,5 +189,5 @@ class TestSensorPublishableState:
 
         sensors = [MockReadableSensor(), MockWritableSensor(), MockWriteOnlySensor(), MockDerivedSensor()]
         for s in sensors:
-            s.apply_sensor_overrides(reg_access)
+            s.apply_device_overrides(reg_access)
             assert s.publishable is True

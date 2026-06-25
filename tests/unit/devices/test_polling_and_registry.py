@@ -14,6 +14,7 @@ from sigenergy2mqtt.devices import Device, DeviceRegistry, ModbusDevice
 from sigenergy2mqtt.devices.base.poller import SensorGroupPoller
 from sigenergy2mqtt.devices.base.scan_groups import create_sensor_scan_groups
 from sigenergy2mqtt.sensors.base import DerivedSensor, ModbusSensorMixin, ObservableMixin, ReadableSensorMixin, Sensor, WritableSensorMixin, WriteOnlySensor
+from sigenergy2mqtt.sensors.base.sanity_check import SanityCheck
 
 # ---------------------------------------------------------------------------
 # Helper / stub classes (mirror the style of test_device_missing.py)
@@ -39,6 +40,8 @@ class DummyReadable(ReadableSensorMixin, Sensor):
         object.__setattr__(self, "force_publish", False)
         object.__setattr__(self, "latest_raw_state", None)
         object.__setattr__(self, "protocol_version", protocol_version)
+        object.__setattr__(self, "_log_identity", unique_id)
+        object.__setattr__(self, "sanity_check", SanityCheck())
 
     @property
     def publishable(self):
@@ -84,6 +87,7 @@ class DummyWritable(WritableSensorMixin, Sensor):
         object.__setattr__(self, "protocol_version", Protocol.V1_8)
         object.__setattr__(self, "parent_device", None)
         object.__setattr__(self, "_derived_sensors", {})
+        object.__setattr__(self, "_publishable", True)
 
     async def set_value(self, client, userdata, message):
         pass
@@ -111,6 +115,7 @@ class DummyWriteOnly(WriteOnlySensor):
         object.__setattr__(self, "input_type", InputType.HOLDING)
         object.__setattr__(self, "protocol_version", protocol_version)
         object.__setattr__(self, "debug_logging", False)
+        object.__setattr__(self, "_publishable", True)
         self._values = {"off": 0, "on": 1}
 
     async def set_value(self, client, userdata, message):

@@ -146,7 +146,7 @@ class HaPublisherMixin(abc.ABC):
                          or None to clear the retained message).
             qos:         MQTT QoS level. Defaults to 2.
         """
-        logging.info(f"{self.log_identity} publishing {ha_state} availability")
+        logging.debug(f"{self.log_identity} publishing {ha_state} availability")
         mqtt_client.publish(f"{active_config.home_assistant.discovery_prefix}/device/{self.unique_id}/availability", ha_state, qos, True)
         for device in self.children:
             device.publish_availability(mqtt_client, ha_state)

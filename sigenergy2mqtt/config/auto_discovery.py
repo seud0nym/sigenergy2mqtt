@@ -418,7 +418,7 @@ async def scan(
     exclude_devices: list[str] | None = None,
     port: int = 502,
     ping_timeout: float = 0.5,
-    modbus_timeout: float = 0.25,
+    modbus_timeout: float = 0.5,
     modbus_retries: int = 0,
     ping_concurrency: int = 100,
     host_concurrency: int = 10,

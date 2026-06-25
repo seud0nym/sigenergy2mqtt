@@ -155,7 +155,7 @@ class TestApplySensorOverrides:
         cfg = Config()
         cfg.sensor_overrides = {f"sigen_{suffix}": overrides}
         with _swap_active_config(cfg):
-            s.apply_sensor_overrides(None)
+            s.apply_sensor_overrides()
         return s
 
     def test_override_debug_logging(self):
@@ -242,7 +242,7 @@ class TestApplySensorOverrides:
         cfg = Config()
         with _swap_active_config(cfg):
             # DerivedSensor instance check path
-            s.apply_sensor_overrides(registers)
+            s.apply_device_overrides(registers)
 
     def test_override_registers_no_remote_ems(self):
         """Publishable set to False when no_remote_ems is True and sensor has _remote_ems."""
@@ -264,7 +264,7 @@ class TestApplySensorOverrides:
         registers.no_remote_ems = True
         cfg = Config()
         with _swap_active_config(cfg):
-            s.apply_sensor_overrides(registers)
+            s.apply_device_overrides(registers)
         assert s.publishable is False
 
 
@@ -359,12 +359,12 @@ class TestDerivedSensorBranches:
 
 class TestSetLatestState:
     def test_set_latest_state_propagates_to_derived(self):
-        """set_latest_state calls set_source_values on derived sensors."""
+        """set_latest_state calls update_from_source_sensor on derived sensors."""
         s = _make_sensor(uid_suffix="sls_derived")
         derived = MagicMock()
         s.derived_sensors["Mock"] = derived
         s.set_latest_state(100.0)
-        derived.set_source_values.assert_called_once_with(s)
+        derived.update_from_source_sensor.assert_called_once_with(s)
 
     def test_set_state_respects_max_states(self):
         """set_state trims state history to _max_states."""
@@ -429,7 +429,7 @@ class TestReservedSensor:
         s = self._make_reserved("noop")
         registers = MagicMock()
         # Should not raise; it's a no-op
-        s.apply_sensor_overrides(registers)
+        s.apply_device_overrides(registers)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -447,7 +447,7 @@ class TestWritableSensorOverrides:
         registers.no_remote_ems = False
         registers.write_only = False
         with patch.dict("sigenergy2mqtt.sensors.base.active_config.sensor_overrides", {}):
-            wo.apply_sensor_overrides(registers)
+            wo.apply_device_overrides(registers)
         assert wo.publishable is False
 
     def test_write_only_sensor_write_only_false_unpublishable(self):
@@ -458,7 +458,7 @@ class TestWritableSensorOverrides:
         registers.no_remote_ems = False
         registers.write_only = False
         with patch.dict("sigenergy2mqtt.sensors.base.active_config.sensor_overrides", {}):
-            wo.apply_sensor_overrides(registers)
+            wo.apply_device_overrides(registers)
         assert wo.publishable is False
 
 

@@ -123,10 +123,10 @@ class TestResettableAccumulationSensorCoverage:
         now = time.time()
         # Hit 215-216 (wrong sensor)
         other_sensor = MagicMock()
-        sensor.set_source_values(other_sensor)
+        sensor.update_from_source_sensor(other_sensor)
 
         # Hit 218-219 (len < 2)
-        sensor.set_source_values(sensor._source)
+        sensor.update_from_source_sensor(sensor._source)
 
         # Hit 224+
         values = deque([(now - 3600, 100.0), (now, 200.0)])
@@ -135,7 +135,7 @@ class TestResettableAccumulationSensorCoverage:
         sensor._source.latest_time = now
         sensor._source.previous_raw_state = 100.0
         sensor._source.latest_raw_state = 200.0
-        sensor.set_source_values(sensor._source)
+        sensor.update_from_source_sensor(sensor._source)
         assert sensor._current_total > 0
 
         # Negative increase (Line 228-231)
@@ -143,11 +143,11 @@ class TestResettableAccumulationSensorCoverage:
         sensor._source._states = values
         sensor._source.previous_raw_state = 300.0
         sensor._source.latest_raw_state = 200.0
-        sensor.set_source_values(sensor._source)
+        sensor.update_from_source_sensor(sensor._source)
 
         # Negative interval (Line 216)
         sensor._source.latest_interval = -100.0
-        sensor.set_source_values(sensor._source)
+        sensor.update_from_source_sensor(sensor._source)
 
     @pytest.mark.asyncio
     async def test_persist_errors(self, mock_config, caplog):
@@ -175,10 +175,10 @@ class TestResettableAccumulationSensorCoverage:
                 with patch("asyncio.get_running_loop", side_effect=RuntimeError):
                     with patch("asyncio.run_coroutine_threadsafe") as mock_threadsafe:
                         mock_threadsafe.side_effect = lambda coro, loop: (coro.close(), MagicMock())[1]
-                        sensor.set_source_values(sensor._source)
+                        sensor.update_from_source_sensor(sensor._source)
                 # Line 248-249 (run_coroutine_threadsafe exception)
                 with patch("asyncio.run_coroutine_threadsafe", side_effect=Exception):
-                    sensor.set_source_values(sensor._source)
+                    sensor.update_from_source_sensor(sensor._source)
 
 
 class TestEnergyLifetimeAccumulationSensorCoverage:
@@ -321,7 +321,7 @@ class TestEnergyDailyAccumulationSensorCoverageExtended:
         sensor = self._make_sensor()
 
         # Wrong sensor (Line 457-458)
-        sensor.set_source_values(MagicMock())
+        sensor.update_from_source_sensor(MagicMock())
 
         now = time.time()
         # Day change branches (Line 472, 482-483)
@@ -341,7 +341,7 @@ class TestEnergyDailyAccumulationSensorCoverageExtended:
             mock_loop = MagicMock()
             mock_loop.create_task.side_effect = lambda coro: coro.close()
             with patch("asyncio.get_running_loop", return_value=mock_loop):
-                sensor.set_source_values(sensor._source)
+                sensor.update_from_source_sensor(sensor._source)
                 mock_loop.create_task.assert_called()
 
         # Case: Generic Exception in day change (Line 482-483)
@@ -351,7 +351,7 @@ class TestEnergyDailyAccumulationSensorCoverageExtended:
         with patch("time.localtime", side_effect=[yesterday_tm, today_tm]):
             with patch("asyncio.get_running_loop", side_effect=RuntimeError):  # Force bypass to next block
                 with patch("asyncio.get_event_loop", side_effect=Exception):  # Generic exception
-                    sensor.set_source_values(sensor._source)
+                    sensor.update_from_source_sensor(sensor._source)
 
     def test_set_source_values_midnight_init(self, mock_config):
         # Line 489
@@ -362,5 +362,5 @@ class TestEnergyDailyAccumulationSensorCoverageExtended:
         sensor._source.latest_raw_state = 300.0
         sensor._source.previous_time = time.time() - 10
         sensor._source.latest_time = time.time()
-        sensor.set_source_values(sensor._source)
+        sensor.update_from_source_sensor(sensor._source)
         assert sensor._state_at_midnight == 300.0

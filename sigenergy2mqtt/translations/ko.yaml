@@ -2839,7 +2839,7 @@ cli:
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_RETRIES:
     help: '네트워크에서 Sigenergy 장치 자동 검색을 수행할 때 사용할 Modbus 최대 재시도 횟수입니다. 기본값은 0입니다.'
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_TIMEOUT:
-    help: '네트워크에서 Sigenergy 장치 자동 검색을 수행할 때 사용할 Modbus 타임아웃(초)입니다. 기본값은 0.25초입니다.'
+    help: '네트워크에서 Sigenergy 장치 자동 검색을 수행할 때 사용할 Modbus 타임아웃(초)입니다. 기본값은 0.5초입니다.'
   SIGENERGY2MQTT_MODBUS_DCCHARGER_DEVICE_ID:
     help: 'Sigenergy DC 충전기 Modbus 장치 및 ID. 여러 ID는 쉼표로 구분하여 지정할 수 있습니다.'
   SIGENERGY2MQTT_MODBUS_DISABLE_CHUNKING:

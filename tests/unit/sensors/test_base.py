@@ -148,7 +148,7 @@ class TestSensorLogic:
                 source.previous_raw_state = -10.0
                 source.latest_raw_state = -20.0
                 with patch("asyncio.run_coroutine_threadsafe"), patch("asyncio.get_running_loop"):
-                    sensor.set_source_values(source)
+                    sensor.update_from_source_sensor(source)
                     assert sensor._current_total == 100.0
 
     def test_alarm_sensor_binary(self):

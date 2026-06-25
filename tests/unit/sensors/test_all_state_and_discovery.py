@@ -120,9 +120,9 @@ async def run_coverage_on_module(module):
             await sensor.get_state(modbus_client=mock_modbus)
             await sensor.get_state(raw=True, modbus_client=mock_modbus)
 
-            if hasattr(sensor, "set_source_values"):
+            if hasattr(sensor, "update_from_source_sensor"):
                 try:
-                    sensor.set_source_values(1)
+                    sensor.update_from_source_sensor(1)
                 except:
                     pass
 

@@ -180,7 +180,7 @@ class TestEnergyDailyAccumulationSensor:
             source_sensor.latest_time = t2
 
             with patch.object(sensor, "run_persistence_coroutine", side_effect=lambda coro: coro.close()):
-                sensor.set_source_values(source_sensor)
+                sensor.update_from_source_sensor(source_sensor)
 
             assert sensor._state_at_midnight == 100.0
             assert sensor._state_now == 0.0
@@ -197,7 +197,7 @@ class TestEnergyDailyAccumulationSensor:
             # Initially set midnight state
             source_sensor.state_count = 1
             source_sensor.latest_raw_state = 50.0
-            sensor.set_source_values(source_sensor)
+            sensor.update_from_source_sensor(source_sensor)
 
             assert sensor._state_at_midnight == 50.0
             assert sensor._state_now == 0.0
@@ -210,7 +210,7 @@ class TestEnergyDailyAccumulationSensor:
             source_sensor.previous_time = t1
             source_sensor.latest_time = t2
 
-            sensor.set_source_values(source_sensor)
+            sensor.update_from_source_sensor(source_sensor)
 
             assert sensor._state_at_midnight == 50.0
             assert sensor._state_now == 20.0

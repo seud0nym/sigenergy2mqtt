@@ -126,7 +126,7 @@ class AccumulationSensor(DerivedSensor):
             except Exception as e:
                 logging.error(f"{self.log_identity} Unexpected error persisting state for {self._state_persistence_key}: {e}")
 
-    def set_source_values(self, sensor: Sensor) -> bool:
+    def update_from_source_sensor(self, sensor: Sensor) -> bool:
         if sensor.latest_raw_state is None:
             return False
         """Update accumulated value from source sensor.
@@ -138,7 +138,7 @@ class AccumulationSensor(DerivedSensor):
             True if accumulation was updated
         """
         if sensor is not self._source:
-            logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
+            logging.warning(f"{self.log_identity} Attempt to call update_from_source_sensor from {sensor.log_identity}")
             return False
 
         if sensor.state_count < 2:
@@ -483,7 +483,7 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
 
         return await super().publish(mqtt_client, modbus_client, republish)
 
-    def set_source_values(self, sensor: Sensor) -> bool:
+    def update_from_source_sensor(self, sensor: Sensor) -> bool:
         """Update daily accumulation from source values.
 
         Args:
@@ -493,7 +493,7 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
             True if updated
         """
         if sensor is not self._source:
-            logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
+            logging.warning(f"{self.log_identity} Attempt to call update_from_source_sensor from {sensor.log_identity}")
             return False
 
         if sensor.latest_raw_state is None:
@@ -570,7 +570,7 @@ class SimpleEnergyDailyAccumulationSensor(AccumulationSensor):
         # Track the last day we saw to detect day changes
         self._last_day_tuple: tuple[int, int, int] | None = None
 
-    def set_source_values(self, sensor: Sensor) -> bool:
+    def update_from_source_sensor(self, sensor: Sensor) -> bool:
         """Update daily accumulation from source values.
 
         Accumulates values throughout the day and resets the total at midnight.
@@ -582,7 +582,7 @@ class SimpleEnergyDailyAccumulationSensor(AccumulationSensor):
             True if updated
         """
         if sensor is not self._source:
-            logging.warning(f"{self.log_identity} Attempt to call set_source_values from {sensor.log_identity}")
+            logging.warning(f"{self.log_identity} Attempt to call update_from_source_sensor from {sensor.log_identity}")
             return False
 
         if sensor.latest_raw_state is None:
@@ -604,4 +604,4 @@ class SimpleEnergyDailyAccumulationSensor(AccumulationSensor):
             self._last_day_tuple = current_day
 
         # Perform normal accumulation using parent's logic
-        return super().set_source_values(sensor)
+        return super().update_from_source_sensor(sensor)
