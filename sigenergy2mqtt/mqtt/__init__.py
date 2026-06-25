@@ -9,7 +9,7 @@ from .client import MqttClient
 from .handler import MqttHandler
 from .registry import MqttHealthRegistry
 
-__all__ = ["MqttHandler", "mqtt_health_registry", "mqtt_setup", "mqtt_teardown", "interrupt_mqtt_reconnection"]
+__all__ = ["MqttHandler", "mqtt_health_registry", "mqtt_setup", "mqtt_teardown", "interrupt_mqtt_reconnection", "reset_mqtt_reconnection_interrupt"]
 
 _MAX_CONNECT_ATTEMPTS: int = 3
 
@@ -33,9 +33,14 @@ def _check_interrupted(broker_url: str, client_id: str) -> None:
 
 def interrupt_mqtt_reconnection() -> None:
     """Interrupt the MQTT reconnection attempt."""
-    # set _interrupted to True
     global _interrupted
     _interrupted = True
+
+
+def reset_mqtt_reconnection_interrupt() -> None:
+    """Reset the interruption flag to allow future reconnection attempts."""
+    global _interrupted
+    _interrupted = False
 
 
 mqtt_health_registry = MqttHealthRegistry()

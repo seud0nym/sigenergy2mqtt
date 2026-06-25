@@ -20,7 +20,7 @@ from sigenergy2mqtt.influxdb import get_influxdb_services
 from sigenergy2mqtt.metrics.metrics_service import Metrics, MetricsService
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.monitor import MonitorService
-from sigenergy2mqtt.mqtt import interrupt_mqtt_reconnection, mqtt_health_registry
+from sigenergy2mqtt.mqtt import interrupt_mqtt_reconnection, mqtt_health_registry, reset_mqtt_reconnection_interrupt
 from sigenergy2mqtt.persistence import Category, state_store
 from sigenergy2mqtt.pvoutput import get_pvoutput_services
 from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, ModbusSensorMixin, WriteOnlySensor
@@ -1206,6 +1206,7 @@ async def async_main() -> None:
     """
     while True:
         configure_logging()
+        reset_mqtt_reconnection_interrupt()
 
         restart_controller.reset()
         thread_config_registry.clear()
