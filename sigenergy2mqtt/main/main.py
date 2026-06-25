@@ -603,14 +603,20 @@ def setup_signals(configs: list[ThreadConfig]) -> None:
     def reload_on_signal(caught=None, frame=None):
         """Handle SIGHUP by reloading config/logging and requesting restart."""
         logging.info("Signal SIGHUP received - Reloading configuration")
-        loop = asyncio.get_running_loop()
-        future = asyncio.run_coroutine_threadsafe(active_config.reload(skip_auto_discovery=True), loop)
-        try:
-            future.result(timeout=30)
-        except Exception as e:
-            logging.error(f"SIGHUP reload failed: {e}")
 
-        restart_controller.request("signal SIGHUP")
+        async def _reload_and_restart():
+            try:
+                await active_config.reload(skip_auto_discovery=True)
+            except Exception as e:
+                logging.error(f"SIGHUP reload failed: {e}")
+            finally:
+                restart_controller.request("signal SIGHUP")
+
+        try:
+            loop = asyncio.get_running_loop()
+            loop.create_task(_reload_and_restart())
+        except RuntimeError:
+            logging.error("No running event loop to handle SIGHUP reload")
 
     try:
         loop = asyncio.get_running_loop()
