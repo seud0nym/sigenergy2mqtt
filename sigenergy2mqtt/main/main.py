@@ -566,7 +566,7 @@ def setup_services(configs: list[ThreadConfig], protocol_version: Protocol | Non
     if svc_thread_cfg.has_devices:
         configs.append(svc_thread_cfg)
     else:
-        logging.info("No services configured - skipping service thread")
+        logging.debug("No services configured - skipping service thread")
 
     return configs
 
