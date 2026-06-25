@@ -1070,7 +1070,7 @@ def _validation_sensor_lookup(device: Device) -> dict[str, Any]:
 
 
 def _log_illegal_data_address(sensor: Any) -> None:
-    logging.info(f"{sensor.log_identity} not supported on this device/firmware: ILLEGAL DATA ADDRESS {sensor.address} (count={sensor.count} type={sensor.input_type} protocol=V{sensor.protocol_version.value})")
+    logging.debug(f"{sensor.log_identity} not supported on this device/firmware: ILLEGAL DATA ADDRESS {sensor.address} (count={sensor.count} type={sensor.input_type} protocol=V{sensor.protocol_version.value})")
 
 
 def _is_valid_validation_cache_payload(value: str) -> bool:

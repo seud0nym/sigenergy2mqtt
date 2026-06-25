@@ -166,7 +166,6 @@ class PVOutputStatusService(Service):
         """
 
         async def publish_updates(modbus_client: Any, mqtt_client: Any, *sensors: Any) -> None:
-            self.logger.info(f"{self.log_identity} Commenced")
             wait, _ = await self.seconds_until_status_upload()
             while self.online:
                 try:

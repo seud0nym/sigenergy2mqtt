@@ -243,16 +243,6 @@ class MonitorService(Device):
             logging.warning(f"MonitorService: MQTT connection failed ({exc}) — cleaned disk only")
             return
 
-    def on_commencement(self, modbus_client: Any | None, mqtt_client: mqtt.Client) -> None:
-        """Log when the monitor service has started.
-
-        Args:
-            modbus_client: Optional Modbus client instance.
-            mqtt_client: MQTT client instance.
-        """
-
-        logging.info(f"{self.log_identity} Service Commenced")
-
     def on_completion(self, modbus_client: Any | None, mqtt_client: mqtt.Client) -> None:
         """Log when the monitor service has stopped.
 

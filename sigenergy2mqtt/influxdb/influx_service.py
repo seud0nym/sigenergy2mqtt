@@ -79,8 +79,6 @@ class InfluxService(InfluxBase):
                 for interface compatibility).
             mqtt_client: Active MQTT client used for unsubscription on shutdown.
         """
-        self.logger.info(f"{self.log_identity} Commenced")
-
         if not await self.async_init():
             self.logger.error(f"{self.log_identity} Initialisation failed — service will not write to InfluxDB")
             return
@@ -93,7 +91,7 @@ class InfluxService(InfluxBase):
                 self._history_sync.copy_connection_from(self)
                 sync_task = asyncio.create_task(self._history_sync.sync_from_homeassistant(self._topic_cache))
             else:
-                self.logger.info(f"{self.log_identity} Loading history from Home Assistant is disabled")
+                self.logger.debug(f"{self.log_identity} Loading history from Home Assistant is disabled")
 
         while self.online:
             try:
