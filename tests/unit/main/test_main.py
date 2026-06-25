@@ -820,7 +820,7 @@ async def test_validate_publishable_sensors_uses_cache_without_scan(clean_config
     read_registers = AsyncMock(return_value=IllegalAddressResponse())
     monkeypatch.setattr(main_mod, "read_registers", read_registers)
 
-    with caplog.at_level(logging.INFO):
+    with caplog.at_level(logging.DEBUG):
         await main_mod.validate_publishable_sensors(mock_client, device, firmware_versions)
 
     assert sensor.publishable is False
