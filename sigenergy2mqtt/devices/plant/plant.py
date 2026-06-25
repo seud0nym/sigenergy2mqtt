@@ -89,7 +89,7 @@ class PowerPlant(ModbusDevice):
             if pre_heating:
                 self._add_child_device(await ESSPreHeating.create(self.plant_index, self._device_type, cast(float, rcp_value), cast(float, rdp_value), self.protocol_version))
             else:
-                logging.info(f"{self.log_identity} ESS Pre-Heating device not registered because pre-heating sensors not found")
+                logging.debug(f"{self.log_identity} ESS Pre-Heating device not registered because pre-heating sensors not found")
 
     async def _register_sensors(
         self,
