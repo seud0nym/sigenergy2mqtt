@@ -1025,14 +1025,18 @@ class TestSignals:
         with patch("signal.signal") as mock_sig, patch.object(active_config, "reload") as mock_reload, patch.object(restart_controller, "request") as mock_request:
             main_mod.setup_signals([MagicMock()])
             handler = [call.args[1] for call in mock_sig.call_args_list if call.args[0] == signal.SIGHUP][0]
-            with patch("asyncio.get_running_loop") as mock_get_loop:
+            with patch("asyncio.get_running_loop") as mock_get_loop, patch("asyncio.run_coroutine_threadsafe") as mock_run_coro:
                 mock_loop = MagicMock()
                 mock_get_loop.return_value = mock_loop
 
-                def mock_create_task(coro):
+                def mock_run_coroutine_threadsafe(coro, loop):
                     coro.close()
+                    import concurrent.futures
+                    f = concurrent.futures.Future()
+                    f.set_result(None)
+                    return f
 
-                mock_loop.create_task.side_effect = mock_create_task
+                mock_run_coro.side_effect = mock_run_coroutine_threadsafe
                 handler(signal.SIGHUP, None)
             mock_reload.assert_called_once()
             mock_request.assert_called_once()

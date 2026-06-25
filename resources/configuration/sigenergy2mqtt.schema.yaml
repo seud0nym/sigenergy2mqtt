@@ -513,3 +513,5 @@ properties:
     type: [array, "null"]
     items:
       type: string
+  modbus-auto-discovery-max-device-id: {type: [integer, "null"]}
+  modbus-port: {type: [integer, "null"]}

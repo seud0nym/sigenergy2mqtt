@@ -42,9 +42,7 @@ from sigenergy2mqtt.persistence import Category
 
 from . import const, version
 from .auto_discovery import scan as auto_discovery_scan
-from .auto_discovery_settings import AutoDiscoverySettings
 from .settings import Settings
-from .sources import RuamelYamlSettingsSource, _auto_discovery_env_values
 
 AUTODISCOVERY_DEFAULT_TIMEOUT = 300.0
 
@@ -95,6 +93,7 @@ class Config:
         # complete YAML + auto-discovery configuration.
         try:
             self._settings = Settings()  # type: ignore[reportCallIssue]
+            self._settings.finalize_modbus([])
         except Exception:
             self._settings = None
 
@@ -223,6 +222,11 @@ class Config:
 
     async def reload(self, skip_auto_discovery: bool = False) -> None:
         """Reload configuration from the YAML source file and re-apply all overrides."""
+        try:
+            self._settings = Settings(yaml_file_arg=self._source)  # type: ignore[reportCallIssue]
+        except ValidationError as exc:
+            raise ConfigurationError(str(exc)) from exc
+
         auto_discovery_cache = await self._perform_auto_discovery(skip_auto_discovery)
         self._finalize_reload(auto_discovery_cache)
         if not skip_auto_discovery:
@@ -230,19 +234,25 @@ class Config:
 
     def _finalize_reload(self, auto_discovery_cache: Path | None) -> None:
         """Final load including the auto discovery results (if any), WITH post-init validation."""
-        # Load Settings; re-raise any pydantic ValidationError as ConfigurationError
-        try:
-            self._settings = Settings(yaml_file_arg=self._source, discovery_yaml_arg=auto_discovery_cache)  # type: ignore[reportCallIssue]
-        except ValidationError as exc:
-            raise ConfigurationError(str(exc)) from exc
+        discovery_results = []
+        if auto_discovery_cache and auto_discovery_cache.is_file():
+            yaml = YAML(typ="safe", pure=True)
+            with open(auto_discovery_cache, "r") as f:
+                data = yaml.load(f)
+            if isinstance(data, list):
+                discovery_results = data
+            elif isinstance(data, dict) and "modbus" in data:
+                discovery_results = data["modbus"]
 
-        # Ensure at least one Modbus device is configured (unless auto discovery provides it)
-        if not self._settings.modbus:
-            auto_settings = self._load_auto_discovery_settings()
-            if not auto_settings.modbus_auto_discovery:
-                raise ConfigurationError("At least one Modbus device must be configured")
+        if self._settings is not None:
+            self._settings.finalize_modbus(discovery_results)
 
-        i18n.load(self._settings.language)
+            # Ensure at least one Modbus device is configured (unless auto discovery provides it)
+            if not self._settings.modbus:
+                if not self._settings.modbus_auto_discovery:
+                    raise ConfigurationError("At least one Modbus device must be configured")
+
+            i18n.load(self._settings.language)
 
     def _validate_hosts_after_discovery(self) -> None:
         """Ensure at least one Modbus device is configured and all have a host."""
@@ -255,39 +265,38 @@ class Config:
 
     async def _perform_auto_discovery(self, skip_auto_discovery: bool) -> Path | None:
         """Asynchronous auto-discovery logic."""
-        auto_discovery, auto_discovery_cache, auto_settings, auto_discovery_should_run = self._prepare_auto_discovery(skip_auto_discovery)
+        auto_discovery, auto_discovery_cache, auto_discovery_should_run = self._prepare_auto_discovery(skip_auto_discovery)
 
-        if not skip_auto_discovery and auto_discovery_should_run:
+        if not skip_auto_discovery and auto_discovery_should_run and self._settings is not None:
             if auto_discovery != "force":
                 await self._restore_discovery_from_mqtt(auto_discovery_cache)
 
             if auto_discovery == "force" or not auto_discovery_cache.is_file():
-                include_networks = self._build_include_networks(auto_settings.modbus_auto_discovery_networks)
+                include_networks = self._build_include_networks(self._settings.modbus_auto_discovery_networks)
                 auto_discovered = await self._run_auto_discovery(
-                    port=auto_settings.modbus_port,
-                    ping_timeout=auto_settings.modbus_auto_discovery_ping_timeout,
-                    modbus_timeout=auto_settings.modbus_auto_discovery_timeout,
-                    modbus_retries=auto_settings.modbus_auto_discovery_retries,
-                    max_device_id=auto_settings.modbus_auto_discovery_max_device_id,
+                    port=self._settings.modbus_port,
+                    ping_timeout=self._settings.modbus_auto_discovery_ping_timeout,
+                    modbus_timeout=self._settings.modbus_auto_discovery_timeout,
+                    modbus_retries=self._settings.modbus_auto_discovery_retries,
+                    max_device_id=self._settings.modbus_auto_discovery_max_device_id,
                     include_networks=include_networks,
-                    exclude_devices=auto_settings.modbus_auto_discovery_exclude,
+                    exclude_devices=self._settings.modbus_auto_discovery_exclude,
                 )
                 if auto_discovered:
                     await self._save_discovery_results(auto_discovery_cache, auto_discovered)
 
         return self._get_final_cache_path(auto_discovery, auto_discovery_cache, skip_auto_discovery, auto_discovery_should_run)
 
-    def _prepare_auto_discovery(self, skip_auto_discovery: bool) -> tuple[str | None, Path, AutoDiscoverySettings, bool]:
-        auto_discovery = os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY)
+    def _prepare_auto_discovery(self, skip_auto_discovery: bool) -> tuple[str | None, Path, bool]:
         auto_discovery_cache = Path(self.persistent_state_path, "auto-discovery.yaml")
-        auto_settings = self._load_auto_discovery_settings()
 
-        if auto_settings.modbus_auto_discovery:
-            auto_discovery = auto_settings.modbus_auto_discovery
+        auto_discovery = self._settings.modbus_auto_discovery if self._settings else None
+        if not auto_discovery:
+            auto_discovery = os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY)
 
         auto_discovery_should_run = not skip_auto_discovery and self._should_run_discovery(auto_discovery, auto_discovery_cache)
 
-        return auto_discovery, auto_discovery_cache, auto_settings, auto_discovery_should_run
+        return auto_discovery, auto_discovery_cache, auto_discovery_should_run
 
     def _should_run_discovery(self, auto_discovery, auto_discovery_cache) -> bool:
         if auto_discovery == "force":
@@ -297,8 +306,7 @@ class Config:
             logging.info(f"Auto-discovery required (ONCE: {auto_discovery_cache} not found)")
             return True
         if auto_discovery not in ("force", "once"):
-            modbus = self._settings.modbus if self._settings is not None else []
-            if not modbus or any(bool(d.host == "" or d.host is None) for d in modbus):
+            if self._settings is None or not self._settings.has_fully_configured_modbus:
                 logging.info("Auto-discovery required (No Modbus host configured)")
                 return True
         return False
@@ -310,7 +318,7 @@ class Config:
             return None
 
         # "force" always re-runs discovery; the freshly-written cache (if any) is
-        # returned below via the is_file() check.
+        # the definitive truth.
         if auto_discovery == "force":
             return auto_discovery_cache if auto_discovery_cache.is_file() else None
 
@@ -323,6 +331,7 @@ class Config:
                 return auto_discovery_cache
             return None
 
+        # If we didn't determine that we need to run or use discovery, don't return the cache.
         if not auto_discovery_should_run:
             return None
 
@@ -396,21 +405,7 @@ class Config:
         """Only SIGENERGY2MQTT_MODBUS_HOST can bootstrap modbus when YAML has no devices."""
         return bool(os.getenv(const.SIGENERGY2MQTT_MODBUS_HOST))
 
-    def _load_auto_discovery_settings(self) -> AutoDiscoverySettings:
-        """Parse only the pre-discovery settings using YAML + env source layering."""
-        payload: dict[str, Any] = {}
-        yaml_payload = RuamelYamlSettingsSource(AutoDiscoverySettings, self._source)()
-        payload.update({
-            "modbus_port": yaml_payload.get("modbus-port"),
-            "modbus_auto_discovery": yaml_payload.get("modbus-auto-discovery"),
-            "modbus_auto_discovery_timeout": yaml_payload.get("modbus-auto-discovery-timeout"),
-            "modbus_auto_discovery_ping_timeout": yaml_payload.get("modbus-auto-discovery-ping-timeout"),
-            "modbus_auto_discovery_retries": yaml_payload.get("modbus-auto-discovery-retries"),
-            "modbus_auto_discovery_networks": yaml_payload.get("modbus-auto-discovery-networks"),
-        })
-        payload.update(_auto_discovery_env_values(os.getenv, include_modbus_port=True))
-        payload = {k: v for k, v in payload.items() if v is not None}
-        return AutoDiscoverySettings(**payload)
+
 
     def reset(self):
         """Reset all configuration to defaults, discarding any loaded state.

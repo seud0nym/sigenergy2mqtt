@@ -40,11 +40,9 @@ class RuamelYamlSettingsSource(PydanticBaseSettingsSource):
         self,
         settings_cls: type[BaseSettings],
         yaml_file: str | Path | None = None,
-        strip_top_level_keys: set[str] | None = None,
     ):
         super().__init__(settings_cls)
         self._yaml_file = yaml_file
-        self._strip_top_level_keys = strip_top_level_keys or set()
 
     def _resolve_yaml_path(self) -> Path | None:
         path = os.environ.get(const.SIGENERGY2MQTT_CONFIG) or self._yaml_file or "sigenergy2mqtt.yaml"
@@ -64,49 +62,8 @@ class RuamelYamlSettingsSource(PydanticBaseSettingsSource):
         with open(path, "r") as f:
             data = yaml.load(f)
         payload = dict(data) if data else {}
-        if self._strip_top_level_keys:
-            for key in self._strip_top_level_keys:
-                payload.pop(key, None)
         return payload
 
-
-class AutoDiscoveryYamlSettingsSource(PydanticBaseSettingsSource):
-    """
-    Loads the modbus device list produced by auto-discovery.
-
-    The discovery file contains either a bare list or a dict with a 'modbus' key.
-    """
-
-    def __init__(
-        self,
-        settings_cls: type[BaseSettings],
-        discovery_yaml: str | Path | None = None,
-    ):
-        super().__init__(settings_cls)
-        self._discovery_yaml = Path(discovery_yaml) if discovery_yaml else None
-
-    def _load(self) -> list[dict[str, Any]]:
-        if self._discovery_yaml is None or not self._discovery_yaml.exists():
-            return []
-        from ruamel.yaml import YAML
-
-        yaml = YAML()
-        with open(self._discovery_yaml, "r") as f:
-            data = yaml.load(f)
-        if not data:
-            return []
-        if isinstance(data, list):
-            return data
-        if isinstance(data, dict) and "modbus" in data:
-            return data["modbus"]
-        return []
-
-    def get_field_value(self, field: Any, field_name: str) -> tuple[Any, str, bool]:
-        return None, field_name, False
-
-    def __call__(self) -> dict[str, Any]:
-        devices = self._load()
-        return {"discovery_modbus": devices} if devices else {}
 
 
 # ---------------------------------------------------------------------------
@@ -278,6 +235,9 @@ class EnvSettingsSource(PydanticBaseSettingsSource):
         if persist:
             result["persistence"] = persist
 
+        # ── Auto-discovery ───────────────────────────────────────────────────
+        result.update(_auto_discovery_env_values(g, include_modbus_port=True))
+
         return result
 
 
@@ -295,11 +255,3 @@ def _auto_discovery_env_values(getenv: Any, include_modbus_port: bool = False) -
     return result
 
 
-class AutoDiscoveryEnvSettingsSource(PydanticBaseSettingsSource):
-    """Maps only auto-discovery related SIGENERGY2MQTT_* variables."""
-
-    def get_field_value(self, field: Any, field_name: str) -> tuple[Any, str, bool]:
-        return None, field_name, False
-
-    def __call__(self) -> dict[str, Any]:
-        return _auto_discovery_env_values(os.environ.get, include_modbus_port=True)
