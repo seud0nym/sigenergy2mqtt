@@ -401,6 +401,10 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
     pid_sequence = 0
     pss_sequence = 0
 
+    if devices and devices[0].registers.read_only is True and devices[0].registers.read_write is False and devices[0].registers.write_only is False:
+        # registers is a single entity that is propagated to all devices (sigenergy2mqtt.config.merge.propagate_to_all_devices), so we only need to check the first device
+        logging.warning("Read-only mode enabled: No write operations can be performed.")
+
     for plant_index, device in enumerate(devices):
         if not (device.registers.read_only or device.registers.read_write or device.registers.write_only):
             logging.info(f"Ignored configured host modbus://{device.host}:{device.port} (Plant Index = {plant_index}): All registers are disabled (read-only=false read-write=false write-only=false)")

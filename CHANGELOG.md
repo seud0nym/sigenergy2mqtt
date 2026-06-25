@@ -7,6 +7,7 @@
 
 - Added support for forcing sensor values in Modbus test server
 - Added exception handling for derived sensor updates
+- Added warning log message for read-only mode
 - Implemented StateStore and MonitorService clean functionality
 
 ### Changed
