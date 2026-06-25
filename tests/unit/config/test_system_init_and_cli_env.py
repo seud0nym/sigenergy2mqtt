@@ -198,10 +198,10 @@ def test_initialize_log_level_invalid_raises():
         patch.dict(os.environ, {const.SIGENERGY2MQTT_LOG_LEVEL: "BOGUS_LEVEL"}),
         patch("sigenergy2mqtt.config.config.Config._perform_auto_discovery", return_value=None),
     ):
+        initialize()
+        from sigenergy2mqtt.config import initialize_async
+        import asyncio
         with pytest.raises(ConfigurationError, match="invalid log level"):
-            initialize()
-            from sigenergy2mqtt.config import initialize_async
-            import asyncio
             asyncio.run(initialize_async())
 
 
@@ -218,10 +218,10 @@ def test_initialize_validate_only_returns_false():
         patch("sigenergy2mqtt.config.config.Config._perform_auto_discovery", return_value=None),
     ):
         with patch.object(active_config, "persistent_state_path", Path("/tmp/nonexistent_test_path")):
+            initialize()
+            from sigenergy2mqtt.config import initialize_async
+            import asyncio
             with pytest.raises(ConfigurationError, match="At least one Modbus device must be configured"):
-                initialize()
-                from sigenergy2mqtt.config import initialize_async
-                import asyncio
                 asyncio.run(initialize_async())
 
 
