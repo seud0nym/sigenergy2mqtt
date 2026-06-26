@@ -214,15 +214,23 @@ class MonitorService(Device):
     @classmethod
     async def clean(cls) -> None:
         """Clean up the monitor service."""
+        # Remove any health file matching the pattern in /tmp recursively
+        tmp_dir = Path("/tmp")
+        for health_file in tmp_dir.rglob("*health.json*"):
+            try:
+                logging.debug(f"MonitorService: Removing health file {health_file}")
+                health_file.unlink(missing_ok=True)
+                logging.info(f"MonitorService: Health file {health_file} removed successfully")
+            except OSError as exc:
+                logging.error(f"MonitorService: Failed to remove health file {health_file}: {exc}")
+        # Proceed with MQTT topic cleanup as before
         service = cls([])
-
         try:
             logging.debug(f"MonitorService: Removing health file {service._health_file}")
             service._health_file.unlink(missing_ok=True)
             logging.info(f"MonitorService: Health file {service._health_file} removed successfully")
         except OSError as exc:
             logging.error(f"MonitorService: Failed to remove health file {service._health_file}: {exc}")
-
         try:
             client_id = f"{active_config.mqtt.client_id_prefix}_Monitor"
             client, handler = await mqtt_setup(client_id, None, asyncio.get_running_loop())
