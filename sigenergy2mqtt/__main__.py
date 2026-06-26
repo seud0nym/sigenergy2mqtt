@@ -58,9 +58,14 @@ def _make_early_signal_handler():
 
 
 async def _validate_main(show_credentials: bool) -> None:
+    """Validate the configuration.
+
+    Args:
+        show_credentials: Whether to show credentials in the output.
+    """
     await initialize_async()
-    logging.info("Configuration is valid; testing configured connection and authentication settings")
-    logging.info(f"Validation configuration:\n{active_config}")
+    logging.info(f"Configuration:\n{active_config}")
+    logging.info("Configuration is valid; testing configured connection and authentication settings...")
     await validate_connections(show_credentials=show_credentials)
     logging.info("Validation checks completed successfully")
 

@@ -399,8 +399,6 @@ class Config:
         """Only SIGENERGY2MQTT_MODBUS_HOST can bootstrap modbus when YAML has no devices."""
         return bool(os.getenv(const.SIGENERGY2MQTT_MODBUS_HOST))
 
-
-
     def reset(self):
         """Reset all configuration to defaults, discarding any loaded state.
 
@@ -785,7 +783,7 @@ class _ConfigProxy:
             delattr(self._config, name)
 
     def __repr__(self) -> str:
-        return f"<ConfigProxy for {self._config!r}>"
+        return f"{self._config!r}"
 
     def __dir__(self):
         return dir(self._config)
