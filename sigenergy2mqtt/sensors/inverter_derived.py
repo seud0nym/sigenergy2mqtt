@@ -128,7 +128,6 @@ class PVStringPower(DerivedSensor, HybridInverter, PVInverter):
         self.amperes: PVStringPower.Value = PVStringPower.Value(f"{self.log_identity[:-1]},value=amperes]", PVCurrentSensor.raw2amps)
         self.volts: PVStringPower.Value = PVStringPower.Value(f"{self.log_identity[:-1]},value=volts]", PVVoltageSensor.raw2volts)
         self.protocol_version = max(voltage.protocol_version, current.protocol_version)
-        self.sanity_check.min_raw = 0
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -236,7 +235,7 @@ class InverterSelfConsumedPower(DerivedSensor, HybridInverter, PVInverter):
         self.pv_string_power: dict[int, int | None] = {p.string_number: None for p in pv_string_power}
 
         self.sanity_check.min_raw = 0  # Watts
-        self.sanity_check.max_raw = 2000  # Watts
+        self.sanity_check.max_raw = 3000  # Watts
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -276,8 +275,10 @@ class InverterSelfConsumedPower(DerivedSensor, HybridInverter, PVInverter):
             return False  # until all values populated, can't do calculation
         total_pv_power = sum([p for p in self.pv_string_power.values() if p is not None])
         state = total_pv_power - self.active_power - self.battery_power
-        if self.debug_logging:
-            logging.debug(f"{self.log_identity} active_power={self.active_power} battery_power={self.battery_power} total_pv_power={total_pv_power} state={state}")
+        if state < 0:
+            if self.debug_logging:
+                logging.debug(f"{self.log_identity} correcting negative self-consumed power - active_power={self.active_power} battery_power={self.battery_power} total_pv_power={total_pv_power} state={state}")
+            state = 0
         try:
             self.set_latest_state(state)
         except SanityCheckException as e:
