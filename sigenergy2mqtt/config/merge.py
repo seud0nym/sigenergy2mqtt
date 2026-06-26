@@ -12,19 +12,18 @@ from typing import Any, Final
 from sigenergy2mqtt.config.models.modbus import ModbusConfig
 
 # Env-var keys that are propagated to ALL devices (including auto-discovered ones)
-PROPAGATABLE_MODBUS_KEYS: Final = frozenset(
-    {
-        "log_level",
-        "no_remote_ems",
-        "read_only",
-        "read_write",
-        "write_only",
-        "scan_interval_low",
-        "scan_interval_medium",
-        "scan_interval_high",
-        "scan_interval_realtime",
-    }
-)
+PROPAGATABLE_MODBUS_KEYS: Final = frozenset({
+    "log_level",
+    "log_skipped",
+    "no_remote_ems",
+    "read_only",
+    "read_write",
+    "write_only",
+    "scan_interval_low",
+    "scan_interval_medium",
+    "scan_interval_high",
+    "scan_interval_realtime",
+})
 
 
 def _normalize_device_ids(ids: list[int] | int | None) -> list[int]:
@@ -79,15 +78,13 @@ def _validate_device_id_uniqueness(merged: dict[str, Any]) -> None:
         for did in ids:
             if did in all_ids:
                 raise ValueError(
-                    f"Device ID {did} appears in both '{all_ids[did]}' and '{display_key}' "
-                    f"for host {merged.get('host', '?')}:{merged.get('port', 502)}. "
-                    f"Device IDs must be unique across all device types."
+                    f"Device ID {did} appears in both '{all_ids[did]}' and '{display_key}' for host {merged.get('host', '?')}:{merged.get('port', 502)}. Device IDs must be unique across all device types."
                 )
             all_ids[did] = display_key
 
 
 def merge_modbus_by_host_port(
-    base: list[dict[str, Any]],     # discovery devices
+    base: list[dict[str, Any]],  # discovery devices
     overlay: list[dict[str, Any]],  # YAML-configured devices
 ) -> list[dict[str, Any]]:
     """
@@ -143,14 +140,7 @@ def merge_modbus_by_host_port(
                 disc = disc_map.pop(key)
                 merged = dict(disc)
                 # Merge non-device-ID fields from overlay (YAML wins for scalars)
-                merged.update(
-                    {
-                        k: v
-                        for k, v in entry.items()
-                        if k not in (*_DEVICE_ID_KEYS, *_DEVICE_ID_KEYS_SNAKE)
-                        or v
-                    }
-                )
+                merged.update({k: v for k, v in entry.items() if k not in (*_DEVICE_ID_KEYS, *_DEVICE_ID_KEYS_SNAKE) or v})
                 # Union device IDs
                 for dk in _DEVICE_ID_KEYS:
                     sk = dk.replace("-", "_")
@@ -176,7 +166,7 @@ def _flatten_modbus(device: ModbusConfig) -> dict[str, Any]:
     """Dump a ModbusConfig back to a flat dict suitable for re-construction."""
     base = device.model_dump(by_alias=False)
     regs = base.pop("registers", {})
-    si   = base.pop("scan_interval", {})
+    si = base.pop("scan_interval", {})
     base.update({f"no_{k}" if k == "remote_ems" else k: v for k, v in regs.items()})
     base.update({f"scan_interval_{k}": v for k, v in si.items()})
     return base
@@ -211,16 +201,10 @@ def apply_modbus_env_override(
                 break
 
     base = _flatten_modbus(modbus_list[idx])
-    
+
     # Merge non-device-ID fields from override
-    base.update(
-        {
-            k: v
-            for k, v in override.items()
-            if k not in (*_DEVICE_ID_KEYS, *_DEVICE_ID_KEYS_SNAKE)
-        }
-    )
-    
+    base.update({k: v for k, v in override.items() if k not in (*_DEVICE_ID_KEYS, *_DEVICE_ID_KEYS_SNAKE)})
+
     # Union device IDs
     for dk in _DEVICE_ID_KEYS:
         sk = dk.replace("-", "_")
@@ -230,7 +214,7 @@ def apply_modbus_env_override(
             base[dk] = _union_device_ids(base_ids or [], overlay_ids or [])
             if sk != dk:
                 base.pop(sk, None)
-                
+
     result = list(modbus_list)
     result[idx] = ModbusConfig(**base)
     return result

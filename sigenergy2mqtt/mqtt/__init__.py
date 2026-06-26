@@ -9,9 +9,39 @@ from .client import MqttClient
 from .handler import MqttHandler
 from .registry import MqttHealthRegistry
 
-__all__ = ["MqttHandler", "mqtt_health_registry", "mqtt_setup", "mqtt_teardown"]
+__all__ = ["MqttHandler", "mqtt_health_registry", "mqtt_setup", "mqtt_teardown", "interrupt_mqtt_reconnection", "reset_mqtt_reconnection_interrupt"]
 
 _MAX_CONNECT_ATTEMPTS: int = 3
+
+# ---------------------------------------------------------------------------
+# Interruption flag
+#
+# Set to True by an external synchronous signal handler (e.g. _early_exit in
+# main()) *before* the asyncio event loop starts.  _check_interrupted() is
+# called at discrete checkpoints throughout the scan so that a pre-loop signal
+# aborts discovery as soon as the current operation finishes.
+# ---------------------------------------------------------------------------
+_interrupted: bool = False
+
+
+def _check_interrupted(broker_url: str, client_id: str) -> None:
+    """Raise KeyboardInterrupt if a pre-loop signal handler set _interrupted."""
+    if _interrupted:
+        logging.info(f"Reconnection retry to {broker_url} as Client ID '{client_id}' interrupted by signal")
+        raise KeyboardInterrupt("MQTT reconnection interrupted by signal")
+
+
+def interrupt_mqtt_reconnection() -> None:
+    """Interrupt the MQTT reconnection attempt."""
+    global _interrupted
+    _interrupted = True
+
+
+def reset_mqtt_reconnection_interrupt() -> None:
+    """Reset the interruption flag to allow future reconnection attempts."""
+    global _interrupted
+    _interrupted = False
+
 
 mqtt_health_registry = MqttHealthRegistry()
 
@@ -47,10 +77,12 @@ async def _connect_with_retry(mqtt_client: MqttClient, client_id: str) -> None:
             return
         except Exception as e:
             if attempt < _MAX_CONNECT_ATTEMPTS:
-                logging.warning(f"Error connecting to {broker_url}: {repr(e)} (attempt {attempt}/{_MAX_CONNECT_ATTEMPTS}) - Retrying in {active_config.mqtt.retry_delay}s")
-                await sleep(active_config.mqtt.retry_delay)
+                logging.warning(f"Error connecting to {broker_url} as Client ID '{client_id}': {repr(e)} (attempt {attempt}/{_MAX_CONNECT_ATTEMPTS}) - Retrying in {active_config.mqtt.retry_delay}s")
+                for _ in range(active_config.mqtt.retry_delay):
+                    _check_interrupted(broker_url, client_id)
+                    await sleep(1)
             else:
-                logging.critical(f"Failed to connect to {broker_url} after {_MAX_CONNECT_ATTEMPTS} attempts: {repr(e)}")
+                logging.critical(f"Failed to connect to {broker_url} as Client ID '{client_id}' after {_MAX_CONNECT_ATTEMPTS} attempts: {repr(e)}")
                 raise
 
 

@@ -16,14 +16,16 @@ class TestConfigValidation:
         """Test validation passes when ems_mode_check is enabled (default)."""
         device = ModbusConfig(host="1", registers=RegisterAccess())
         # Should not raise
-        Settings(ems_mode_check=True, modbus=[device])
+        settings = Settings(ems_mode_check=True, modbus=[device])
+        settings.finalize_modbus([])
 
     def test_ems_mode_check_disabled_valid_config(self):
         """Test validation passes when ems_mode_check is disabled and config is correct."""
         # valid configuration: no_remote_ems=False, read_write=True
         device = ModbusConfig(host="1", registers=RegisterAccess(no_remote_ems=False, read_write=True))
         # Should not raise
-        Settings(ems_mode_check=False, modbus=[device])
+        settings = Settings(ems_mode_check=False, modbus=[device])
+        settings.finalize_modbus([])
 
     def test_ems_mode_check_disabled_invalid_no_remote_ems(self):
         """Test validation fails when ems_mode_check is disabled and no_remote_ems is True."""
@@ -31,7 +33,8 @@ class TestConfigValidation:
         device = ModbusConfig(host="1", registers=RegisterAccess(no_remote_ems=True, read_write=True))
 
         with pytest.raises(ValueError, match="When ems_mode_check is disabled, no_remote_ems must be False"):
-            Settings(ems_mode_check=False, modbus=[device])
+            settings = Settings(ems_mode_check=False, modbus=[device])
+            settings.finalize_modbus([])
 
     def test_ems_mode_check_disabled_invalid_read_write(self):
         """Test validation fails when ems_mode_check is disabled and read_write is False."""
@@ -39,7 +42,8 @@ class TestConfigValidation:
         device = ModbusConfig(host="1", registers=RegisterAccess(no_remote_ems=False, read_write=False))
 
         with pytest.raises(ValueError, match="When ems_mode_check is disabled, read_write must be True"):
-            Settings(ems_mode_check=False, modbus=[device])
+            settings = Settings(ems_mode_check=False, modbus=[device])
+            settings.finalize_modbus([])
 
     def test_ems_mode_check_disabled_multiple_devices_one_invalid(self):
         """Test validation fails if any device is invalid."""
@@ -47,7 +51,8 @@ class TestConfigValidation:
         device2 = ModbusConfig(host="2", registers=RegisterAccess(no_remote_ems=True, read_write=True))  # Invalid
 
         with pytest.raises(ValueError, match="When ems_mode_check is disabled, no_remote_ems must be False"):
-            Settings(ems_mode_check=False, modbus=[device1, device2])
+            settings = Settings(ems_mode_check=False, modbus=[device1, device2])
+            settings.finalize_modbus([])
 
     def test_check_bool(self):
         assert validation.check_bool(True, "test") is True

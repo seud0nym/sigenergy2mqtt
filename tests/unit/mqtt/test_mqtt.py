@@ -757,7 +757,7 @@ class TestMqttSetup:
                 await mqtt_setup("test_client", modbus, loop)
 
             assert mock_client.connect.call_count == 3
-            assert mock_sleep.call_count == 2
+            assert mock_sleep.call_count == 60
 
         loop.close()
 

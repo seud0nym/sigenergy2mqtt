@@ -10,10 +10,10 @@ Priority (highest → lowest):
 
 from __future__ import annotations
 
+import ipaddress
 import logging
 from datetime import datetime
-from pathlib import Path
-from typing import Any, ClassVar, Optional
+from typing import Any, Optional
 
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, InitSettingsSource, PydanticBaseSettingsSource, SettingsConfigDict
@@ -35,7 +35,6 @@ from sigenergy2mqtt.config.models import (
     PvOutputConfig,
 )
 from sigenergy2mqtt.config.sources import (
-    AutoDiscoveryYamlSettingsSource,
     EnvSettingsSource,
     RuamelYamlSettingsSource,
 )
@@ -100,18 +99,19 @@ class Settings(BaseSettings):
     """
 
     model_config = SettingsConfigDict(populate_by_name=True)
-    preflight_only_yaml_keys: ClassVar[set[str]] = {
-        "modbus-port",
-        "modbus-auto-discovery",
-        "modbus-auto-discovery-timeout",
-        "modbus-auto-discovery-ping-timeout",
-        "modbus-auto-discovery-retries",
-        "modbus-auto-discovery-networks",
-    }
 
     # ── Internal args ────────────────────────────────────────────────────────
     yaml_file_arg: Optional[str] = Field(None, exclude=True)
-    discovery_yaml_arg: Optional[str | Path] = Field(None, exclude=True)
+
+    # ── Auto-Discovery fields ────────────────────────────────────────────────
+    modbus_port: int = Field(502, alias="modbus-port")
+    modbus_auto_discovery: Optional[str] = Field(None, alias="modbus-auto-discovery")
+    modbus_auto_discovery_timeout: float = Field(0.5, alias="modbus-auto-discovery-timeout")
+    modbus_auto_discovery_ping_timeout: float = Field(0.5, alias="modbus-auto-discovery-ping-timeout")
+    modbus_auto_discovery_retries: int = Field(0, alias="modbus-auto-discovery-retries")
+    modbus_auto_discovery_networks: list[str] = Field(default_factory=list, alias="modbus-auto-discovery-networks")
+    modbus_auto_discovery_exclude: list[str] = Field(default_factory=lambda: ["PID", "PSS"], alias="modbus-auto-discovery-exclude")
+    modbus_auto_discovery_max_device_id: int = Field(10, alias="modbus-auto-discovery-max-device-id")
 
     # ── Top-level scalars ────────────────────────────────────────────────────
     log_level: int = Field(logging.INFO, alias="log-level")
@@ -138,7 +138,6 @@ class Settings(BaseSettings):
 
     # ── Private side-channels (set by custom sources, consumed in post_init) ─
     modbus_env_override: dict[str, Any] = Field(default_factory=dict, exclude=True)
-    discovery_modbus: list[dict[str, Any]] = Field(default_factory=list, exclude=True)
 
     @model_validator(mode="before")
     @classmethod
@@ -224,10 +223,70 @@ class Settings(BaseSettings):
             raise ValueError("sensor-overrides must contain a list of class names")
         return validate_sensor_overrides(v)
 
+    @field_validator("modbus_auto_discovery_networks", mode="before")
+    @classmethod
+    def validate_networks(cls, v: list[str] | str | None) -> list[str]:
+        if v is None:
+            return []
+        if isinstance(v, str):
+            v = [x.strip() for x in v.split(",") if x.strip()]
+        validated: list[str] = []
+        for entry in v:
+            try:
+                network = ipaddress.IPv4Network(entry, strict=False)
+                validated.append(str(network))
+            except (ValueError, TypeError) as e:
+                raise ValueError(f"Invalid IPv4 CIDR network '{entry}': {e}")
+        return validated
+
+    @field_validator("modbus_auto_discovery_exclude", mode="before")
+    @classmethod
+    def validate_excludes(cls, v: list[str] | str | None) -> list[str]:
+        if v is None:
+            return ["PID", "PSS"]
+        if isinstance(v, str):
+            v = [x.strip() for x in v.split(",") if x.strip()]
+        validated: list[str] = []
+        for entry in v:
+            if entry in ["ACCharger", "DCCharger", "PID", "PSS"]:
+                validated.append(entry)
+            else:
+                raise ValueError(f"Invalid Device class name '{entry}'")
+        return validated
+
+    @field_validator("modbus_auto_discovery_max_device_id", mode="before")
+    @classmethod
+    def validate_max_device_id(cls, v: int | str | None) -> int:
+        if isinstance(v, str):
+            try:
+                v = int(v)
+            except ValueError:
+                raise ValueError("modbus-auto-discovery-max-device-id must be a positive integer")
+        if not isinstance(v, int) or isinstance(v, bool) or v <= 0:
+            raise ValueError("modbus-auto-discovery-max-device-id must be a positive integer")
+        if v > 246:
+            raise ValueError("modbus-auto-discovery-max-device-id must be less than or equal to 246")
+        return v
+
+    @property
+    def has_fully_configured_modbus(self) -> bool:
+        env_host = self.modbus_env_override.get("host")
+        if not self.modbus:
+            return bool(env_host)
+
+        for i, device in enumerate(self.modbus):
+            host = env_host if (i == 0 and env_host) else device.host
+            if not host:
+                return False
+        return True
+
     # ── Post-init orchestration ───────────────────────────────────────────────
 
     def model_post_init(self, __context: Any) -> None:
-        discovery = self.discovery_modbus
+        # Sync root logger to the resolved log level
+        logging.getLogger().setLevel(self.log_level)
+
+    def finalize_modbus(self, discovery: list[dict[str, Any]]) -> None:
         env_override = self.modbus_env_override
 
         # Identify initially configured hosts (file/env/cli)
@@ -251,9 +310,6 @@ class Settings(BaseSettings):
         # Step 3: propagate broadcast env vars to ALL devices
         if env_override:
             self.modbus = propagate_to_all_devices(self.modbus, env_override)
-
-        # Sync root logger to the resolved log level
-        logging.getLogger().setLevel(self.log_level)
 
         # Cross-model validation
         if not self.ems_mode_check:
@@ -297,14 +353,11 @@ class Settings(BaseSettings):
         file_secret_settings: PydanticBaseSettingsSource,
     ) -> tuple[PydanticBaseSettingsSource, ...]:
         yaml_file = None
-        discovery_yaml = None
         if isinstance(init_settings, InitSettingsSource):
             yaml_file = init_settings.init_kwargs.get("yaml_file_arg")
-            discovery_yaml = init_settings.init_kwargs.get("discovery_yaml_arg")
 
         return (
             EnvSettingsSource(settings_cls),  # 1. env vars
-            RuamelYamlSettingsSource(settings_cls, yaml_file, strip_top_level_keys=cls.preflight_only_yaml_keys),  # 2. config YAML
-            AutoDiscoveryYamlSettingsSource(settings_cls, discovery_yaml),  # 3. discovery YAML
-            init_settings,  # 4. programmatic
+            RuamelYamlSettingsSource(settings_cls, yaml_file),  # 2. config YAML
+            init_settings,  # 3. programmatic
         )

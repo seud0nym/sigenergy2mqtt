@@ -14,13 +14,13 @@ from pymodbus import pymodbus_apply_logging_config
 from pymodbus.pdu import ModbusPDU
 
 from sigenergy2mqtt.common import Constants, ConsumptionMethod, FirmwareVersion, HybridInverter, InputType, Protocol, ProtocolApplies, PVInverter
-from sigenergy2mqtt.config import active_config, configure_root_logging, initialize_with_persistence
+from sigenergy2mqtt.config import active_config, configure_root_logging, initialize_async
 from sigenergy2mqtt.devices import PID, PSS, ACCharger, DCCharger, Device, Inverter, PowerPlant, bind_cross_device_sensors
 from sigenergy2mqtt.influxdb import get_influxdb_services
 from sigenergy2mqtt.metrics.metrics_service import Metrics, MetricsService
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.monitor import MonitorService
-from sigenergy2mqtt.mqtt import mqtt_health_registry
+from sigenergy2mqtt.mqtt import interrupt_mqtt_reconnection, mqtt_health_registry, reset_mqtt_reconnection_interrupt
 from sigenergy2mqtt.persistence import Category, state_store
 from sigenergy2mqtt.pvoutput import get_pvoutput_services
 from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, ModbusSensorMixin, WriteOnlySensor
@@ -63,13 +63,23 @@ _GRID_RESTORE_WATCH_TASKS: set[tuple[str, int, int]] = set()
 
 
 class _FramerSkipFilter(logging.Filter):
-    """Suppress dev-id / transaction-id mismatch noise from pymodbus framer."""
+    """Suppress dev-id / transaction-id mismatch noise from pymodbus framer.
+
+    The check against ``active_config.modbus`` is intentionally deferred to
+    filter-call time (not setup time) so that the correct ``log_skipped``
+    values are used even when this filter is installed before
+    ``initialize_async()`` has finished loading the YAML configuration.
+    """
 
     def filter(self, record: logging.LogRecord) -> bool:
         msg = record.getMessage()
         if "request ask for " in msg and "Skipping." in msg:
-            Metrics.modbus_skipped_error()
-            return False
+            # Suppress unless every configured device has explicitly opted in
+            # to seeing these messages (log_skipped=True).  When no devices are
+            # configured yet (early startup), apply the default suppression.
+            if not active_config.modbus or any(not device.log_skipped for device in active_config.modbus):
+                Metrics.modbus_skipped_error()
+                return False
         return True
 
 
@@ -87,18 +97,19 @@ def configure_logging() -> None:
     modbus_log_level = active_config.get_modbus_log_level()
     pymodbus_apply_logging_config(modbus_log_level)
 
-    if modbus_log_level <= logging.ERROR and any(device.log_skipped is False for device in active_config.modbus):
-        _framer_skip_filter = _FramerSkipFilter()
-        # Attach to the exact logger pymodbus.Log uses, AND to each of its handlers.
-        _pymodbus_logging_logger = logging.getLogger("pymodbus.logging")
-        _pymodbus_logging_logger.addFilter(_framer_skip_filter)
-        for handler in _pymodbus_logging_logger.handlers:
-            handler.addFilter(_framer_skip_filter)
-        # Also cover the case where records propagate to the root before your
-        # propagate=False takes effect (e.g. if configure_logging() is called
-        # before pymodbus is fully initialised).
-        for handler in logging.getLogger().handlers:
-            handler.addFilter(_framer_skip_filter)
+    logging.debug("Applying skipped error logging filter to pymodbus.logging logger (modbus.log_skipped evaluated at message time)")
+    _framer_skip_filter = _FramerSkipFilter()
+    # Attach to the exact logger pymodbus.Log uses, AND to each of its handlers.
+    # The logger-level filter is the primary gate: it prevents callHandlers() from
+    # ever being reached, so no handler — present or future — can emit the record.
+    _pymodbus_logging_logger = logging.getLogger("pymodbus.logging")
+    _pymodbus_logging_logger.addFilter(_framer_skip_filter)
+    for handler in _pymodbus_logging_logger.handlers:
+        handler.addFilter(_framer_skip_filter)
+    # Belt-and-suspenders: also cover root handlers in case propagation fires
+    # before the logger-level filter takes effect on the first call.
+    for handler in logging.getLogger().handlers:
+        handler.addFilter(_framer_skip_filter)
 
 
 def _configure_logger(name: str, level: int, *, propagate: bool = True) -> None:
@@ -595,6 +606,7 @@ def setup_signals(configs: list[ThreadConfig]) -> None:
     def exit_on_signal(caught, frame):
         """Handle termination signals by setting all active thread configs to offline."""
         logging.info(f"Signal {caught} received - Shutdown commenced")
+        interrupt_mqtt_reconnection()
         logging.getLogger("asyncio").setLevel(logging.ERROR)
         for config in configs:
             config.offline()
@@ -602,12 +614,20 @@ def setup_signals(configs: list[ThreadConfig]) -> None:
     def reload_on_signal(caught=None, frame=None):
         """Handle SIGHUP by reloading config/logging and requesting restart."""
         logging.info("Signal SIGHUP received - Reloading configuration")
-        try:
-            active_config.reload()
-        except Exception as e:
-            logging.error(f"SIGHUP reload failed: {e}")
 
-        restart_controller.request("signal SIGHUP")
+        async def _reload_and_restart():
+            try:
+                await active_config.reload()
+            except Exception as e:
+                logging.error(f"SIGHUP reload failed: {e}")
+            finally:
+                restart_controller.request("signal SIGHUP")
+
+        try:
+            loop = asyncio.get_running_loop()
+            loop.create_task(_reload_and_restart())
+        except RuntimeError:
+            logging.error("No running event loop to handle SIGHUP reload")
 
     try:
         loop = asyncio.get_running_loop()
@@ -1197,6 +1217,7 @@ async def async_main() -> None:
     """
     while True:
         configure_logging()
+        reset_mqtt_reconnection_interrupt()
 
         restart_controller.reset()
         thread_config_registry.clear()
@@ -1209,7 +1230,7 @@ async def async_main() -> None:
         )
 
         # Phase 2 config load — StateStore now available for auto-discovery fallback
-        await initialize_with_persistence()
+        await initialize_async()
 
         seen_serial_numbers: set[str] = set()
         configs, protocol_version = await setup_devices(seen_serial_numbers)
@@ -1230,6 +1251,6 @@ async def async_main() -> None:
             logging.info(f"Shutdown of Release {active_config.version} completed")
             return
         else:
-            await active_config.reload_async()
+            await active_config.reload()
 
         logging.info("Restarting runtime")

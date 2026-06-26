@@ -1,3 +1,4 @@
+import asyncio
 import os
 import sys
 from unittest.mock import patch
@@ -89,7 +90,7 @@ def reset_config():
 
     os.environ.update(_BASELINE_ENV)
     active_config._config = Config()
-    active_config.reload()
+    asyncio.run(active_config.reload())
 
     DeviceRegistry.clear()
     ModbusClientFactory.clear()
@@ -115,7 +116,7 @@ def reset_config():
             del active_config.__dict__[key]
 
     active_config._config = Config()
-    active_config.reload()
+    asyncio.run(active_config.reload())
 
     DeviceRegistry.clear()
     ModbusClientFactory.clear()

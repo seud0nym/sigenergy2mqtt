@@ -10,7 +10,7 @@ from sigenergy2mqtt.common.status_field import StatusField
 from sigenergy2mqtt.common.voltage_source import VoltageSource
 
 from . import cli, const
-from .config import Config, ConfigurationError, _swap_active_config, active_config, configure_root_logging
+from .config import Config, ConfigurationError, _create_persistent_state_path, _swap_active_config, active_config, configure_root_logging
 from .settings import Settings
 
 __all__ = [
@@ -20,7 +20,7 @@ __all__ = [
     "configure_root_logging",
     "ConsumptionSource",
     "initialize",
-    "initialize_with_persistence",
+    "initialize_async",
     "OutputField",
     "Settings",
     "StatusField",
@@ -119,26 +119,6 @@ def _discover_config_file() -> str | None:
     return None
 
 
-async def _load_config_async(skip_auto_discovery: bool = False) -> None:
-    """Async version of _load_config."""
-    path = _discover_config_file()
-    if path:
-        await active_config.load_async(path, skip_auto_discovery=skip_auto_discovery)
-    else:
-        logging.debug("No config file found; using environment variables and defaults.")
-        await active_config.reload_async(skip_auto_discovery=skip_auto_discovery)
-
-
-def _load_config(skip_auto_discovery: bool = False) -> None:
-    """Load active_config from a discovered file, or fall back to env-var / defaults."""
-    path = _discover_config_file()
-    if path:
-        active_config.load(path, skip_auto_discovery=skip_auto_discovery)
-    else:
-        logging.debug("No config file found; using environment variables and defaults.")
-        active_config.reload(skip_auto_discovery=skip_auto_discovery)
-
-
 # ---------------------------------------------------------------------------
 # Public entry point
 # ---------------------------------------------------------------------------
@@ -169,9 +149,9 @@ def initialize(args=None) -> bool:
     # 2. CLI → env (ENV already set takes priority, no duplicate processing logic)
     _promote_cli_to_env(parsed_args)
 
-    # 3. Load config but explicitly skip auto-discovery for Phase 1
+    # 3. Set persistent state path early
     try:
-        _load_config(skip_auto_discovery=True)
+        active_config.persistent_state_path = _create_persistent_state_path()
     except ConfigurationError:
         raise
     except Exception as exc:
@@ -194,11 +174,14 @@ def initialize(args=None) -> bool:
     return True
 
 
-async def initialize_with_persistence() -> None:
+async def initialize_async() -> None:
+    """Phase 2 (async): load YAML + env + auto-discovery.
+    Called from async_main() after StateStore is initialised.
+    Also called for --validate mode (before validate_connections).
     """
-    Phase 2: Called from async_main() after StateStore is initialised.
-
-    Re-runs reload() with full auto-discovery. StateStore is now available,
-    so auto-discovery cache can be restored from MQTT if disk is missing.
-    """
-    await _load_config_async(skip_auto_discovery=False)
+    path = _discover_config_file()
+    if path:
+        await active_config.load(path)
+    else:
+        logging.debug("No config file found; using environment variables and defaults.")
+        await active_config.reload()

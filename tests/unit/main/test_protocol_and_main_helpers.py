@@ -56,6 +56,7 @@ def test_main_validate_path_coverage(monkeypatch):
 
     with (
         patch("sigenergy2mqtt.__main__.asyncio.run") as mock_run,
+        patch("sigenergy2mqtt.__main__._validate_main", new_callable=MagicMock),
         patch("sigenergy2mqtt.__main__.validate_connections", new_callable=MagicMock, return_value=None),
         patch("sigenergy2mqtt.__main__.async_main", new_callable=MagicMock, return_value=None),
     ):
@@ -100,6 +101,7 @@ def test_main_validate_reinstalls_default_sigint(monkeypatch):
     with (
         patch("sigenergy2mqtt.__main__.signal.signal") as mock_signal,
         patch("sigenergy2mqtt.__main__.asyncio.run"),
+        patch("sigenergy2mqtt.__main__._validate_main", new_callable=MagicMock),
         patch("sigenergy2mqtt.__main__.validate_connections", new_callable=MagicMock),
     ):
         with pytest.raises(SystemExit) as exc_info:
@@ -129,6 +131,7 @@ def test_main_validate_logs_config_yaml(monkeypatch):
     with (
         patch("sigenergy2mqtt.__main__.logging.info") as mock_info,
         patch("sigenergy2mqtt.__main__.asyncio.run"),
+        patch("sigenergy2mqtt.__main__._validate_main", new_callable=MagicMock),
         patch("sigenergy2mqtt.__main__.validate_connections", new_callable=MagicMock),
     ):
         with pytest.raises(SystemExit):
