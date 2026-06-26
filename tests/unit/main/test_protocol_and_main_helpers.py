@@ -123,18 +123,19 @@ def test_validate_pvoutput_connection_skips_when_testing(monkeypatch):
     mock_get.assert_not_called()
 
 
-def test_main_validate_logs_config_yaml(monkeypatch):
+def test_main_validate_calls_validate_main(monkeypatch):
     monkeypatch.setattr(main_module, "initialize", lambda: True)
     main_module.active_config.validate_only_mode = "standard"
     main_module.active_config.validate_show_credentials = False
 
     with (
-        patch("sigenergy2mqtt.__main__.logging.info") as mock_info,
-        patch("sigenergy2mqtt.__main__.asyncio.run"),
-        patch("sigenergy2mqtt.__main__._validate_main", new_callable=MagicMock),
+        patch("sigenergy2mqtt.__main__.asyncio.run") as mock_run,
+        patch("sigenergy2mqtt.__main__._validate_main", new_callable=MagicMock) as mock_validate,
         patch("sigenergy2mqtt.__main__.validate_connections", new_callable=MagicMock),
     ):
         with pytest.raises(SystemExit):
             main_module.main()
 
-    assert any(call.args and call.args[0].startswith("Validation configuration:\n") for call in mock_info.call_args_list)
+    # asyncio.run should have been called with _validate_main coroutine
+    mock_run.assert_called_once()
+

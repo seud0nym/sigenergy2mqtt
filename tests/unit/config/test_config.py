@@ -601,7 +601,7 @@ class TestConfigCoverageAugmentation:
         del proxy.test_attr
         assert not hasattr(cfg, "test_attr")
 
-        assert repr(proxy).startswith("<ConfigProxy for")
+        assert repr(proxy) == repr(cfg)
         assert "load" in dir(proxy)
 
     def test_swap_active_config_no_proxy(self):

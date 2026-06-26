@@ -176,24 +176,28 @@ class TestConfigureLogging:
         """Test the TTY logging format branch."""
         monkeypatch.setattr(os, "isatty", lambda fd: True)
         monkeypatch.setattr(sys.stdout, "fileno", lambda: 1)
+        monkeypatch.setattr(main_mod.active_config, "log_fmt", "")
 
         with patch("logging.basicConfig") as mock_basic:
             main_mod.configure_logging()
-            args, kwargs = mock_basic.call_args
-            assert "sigenergy2mqtt:" in kwargs["format"]
+            fmt_calls = [call for call in mock_basic.call_args_list if "format" in call.kwargs]
+            assert fmt_calls, "logging.basicConfig was not called with a 'format' kwarg"
+            assert "sigenergy2mqtt:" in fmt_calls[0].kwargs["format"]
 
     def test_configure_logging_docker_format(self, monkeypatch):
         """Test the Docker logging format branch."""
         monkeypatch.setattr(os, "isatty", lambda fd: False)
         monkeypatch.setattr(sys.stdout, "fileno", lambda: 1)
+        monkeypatch.setattr(main_mod.active_config, "log_fmt", "")
         with patch("sigenergy2mqtt.config.config.Path") as mock_path:
             # Mocking /.dockerenv existance
             mock_path.return_value.is_file.return_value = True
             with patch("logging.basicConfig") as mock_basic:
                 main_mod.configure_logging()
-                args, kwargs = mock_basic.call_args
-                assert "{asctime}" in kwargs["format"]
-                assert "sigenergy2mqtt:" not in kwargs["format"]
+                fmt_calls = [call for call in mock_basic.call_args_list if "format" in call.kwargs]
+                assert fmt_calls, "logging.basicConfig was not called with a 'format' kwarg"
+                assert "{asctime}" in fmt_calls[0].kwargs["format"]
+                assert "sigenergy2mqtt:" not in fmt_calls[0].kwargs["format"]
 
     def test_configure_logger_level_change_log(self):
         """Test that _configure_logger logs level changes."""
@@ -219,19 +223,18 @@ class TestConfigureLogging:
             logger = logging.getLogger("pymodbus.logging")
             logger.filters = []
 
-            # With log_skipped = True, filter should NOT be added
-            mock_device.log_skipped = True
             main_mod.configure_logging()
-            assert not any(f.__class__.__name__ == "_FramerSkipFilter" for f in logger.filters)
-
-            # With log_skipped = False, filter SHOULD be added
-            mock_device.log_skipped = False
-            main_mod.configure_logging()
-
-            filter_obj = next(f for f in logger.filters if f.__class__.__name__ == "_FramerSkipFilter")
+            filter_obj = next((f for f in logger.filters if f.__class__.__name__ == "_FramerSkipFilter"), None)
             assert filter_obj is not None
 
             record1 = logging.LogRecord("name", logging.ERROR, "pathname", 1, "ERROR: request ask for transaction_id=2560 but got id=2559, Skipping.", None, None)
+
+            # With log_skipped = True, message should NOT be filtered out (filter returns True)
+            mock_device.log_skipped = True
+            assert filter_obj.filter(record1) is True
+
+            # With log_skipped = False, message SHOULD be filtered out (filter returns False)
+            mock_device.log_skipped = False
             assert filter_obj.filter(record1) is False
 
             record2 = logging.LogRecord("name", logging.ERROR, "pathname", 1, "Some other error", None, None)
