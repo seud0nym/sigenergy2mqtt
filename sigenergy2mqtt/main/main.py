@@ -63,13 +63,23 @@ _GRID_RESTORE_WATCH_TASKS: set[tuple[str, int, int]] = set()
 
 
 class _FramerSkipFilter(logging.Filter):
-    """Suppress dev-id / transaction-id mismatch noise from pymodbus framer."""
+    """Suppress dev-id / transaction-id mismatch noise from pymodbus framer.
+
+    The check against ``active_config.modbus`` is intentionally deferred to
+    filter-call time (not setup time) so that the correct ``log_skipped``
+    values are used even when this filter is installed before
+    ``initialize_async()`` has finished loading the YAML configuration.
+    """
 
     def filter(self, record: logging.LogRecord) -> bool:
         msg = record.getMessage()
         if "request ask for " in msg and "Skipping." in msg:
-            Metrics.modbus_skipped_error()
-            return False
+            # Suppress unless every configured device has explicitly opted in
+            # to seeing these messages (log_skipped=True).  When no devices are
+            # configured yet (early startup), apply the default suppression.
+            if not active_config.modbus or any(not device.log_skipped for device in active_config.modbus):
+                Metrics.modbus_skipped_error()
+                return False
         return True
 
 
@@ -87,18 +97,19 @@ def configure_logging() -> None:
     modbus_log_level = active_config.get_modbus_log_level()
     pymodbus_apply_logging_config(modbus_log_level)
 
-    if modbus_log_level <= logging.ERROR and any(device.log_skipped is False for device in active_config.modbus):
-        _framer_skip_filter = _FramerSkipFilter()
-        # Attach to the exact logger pymodbus.Log uses, AND to each of its handlers.
-        _pymodbus_logging_logger = logging.getLogger("pymodbus.logging")
-        _pymodbus_logging_logger.addFilter(_framer_skip_filter)
-        for handler in _pymodbus_logging_logger.handlers:
-            handler.addFilter(_framer_skip_filter)
-        # Also cover the case where records propagate to the root before your
-        # propagate=False takes effect (e.g. if configure_logging() is called
-        # before pymodbus is fully initialised).
-        for handler in logging.getLogger().handlers:
-            handler.addFilter(_framer_skip_filter)
+    logging.debug("Applying skipped error logging filter to pymodbus.logging logger (modbus.log_skipped evaluated at message time)")
+    _framer_skip_filter = _FramerSkipFilter()
+    # Attach to the exact logger pymodbus.Log uses, AND to each of its handlers.
+    # The logger-level filter is the primary gate: it prevents callHandlers() from
+    # ever being reached, so no handler — present or future — can emit the record.
+    _pymodbus_logging_logger = logging.getLogger("pymodbus.logging")
+    _pymodbus_logging_logger.addFilter(_framer_skip_filter)
+    for handler in _pymodbus_logging_logger.handlers:
+        handler.addFilter(_framer_skip_filter)
+    # Belt-and-suspenders: also cover root handlers in case propagation fires
+    # before the logger-level filter takes effect on the first call.
+    for handler in logging.getLogger().handlers:
+        handler.addFilter(_framer_skip_filter)
 
 
 def _configure_logger(name: str, level: int, *, propagate: bool = True) -> None:
