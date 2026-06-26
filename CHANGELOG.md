@@ -17,6 +17,8 @@
 - Refactored application of sensor overrides to enhance debug logging
 - Increased default modbus auto-discovery timeout from 0.25 to 0.5 seconds
 - Simplified initialisation and removed multiple redundant configuration reads
+- Removed PV power sanity check zero minimum
+- Clamped negative self-consumed power values to zero
 
 ### Fixed
 
