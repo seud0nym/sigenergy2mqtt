@@ -179,3 +179,94 @@ class TestModbusClientFactory:
 
             # Verify host mapping was stored
             assert ModbusClientFactory.get_host(mock_client) == "192.168.1.100:502"
+
+    @pytest.mark.asyncio
+    async def test_clear_closes_all_clients_and_clears_mappings(self):
+        """Test that clear() closes all clients and clears internal dictionaries."""
+        # Setup two mock clients with close methods
+        mock_client1 = MagicMock()
+        mock_client1.close = MagicMock()
+        mock_client2 = MagicMock()
+        mock_client2.close = MagicMock()
+        # Populate factory internal state directly
+        ModbusClientFactory._clients = {
+            ("host1", 502): mock_client1,
+            ("host2", 503): mock_client2,
+        }
+        ModbusClientFactory._hosts = {
+            mock_client1: "host1:502",
+            mock_client2: "host2:503",
+        }
+        # Call clear
+        ModbusClientFactory.clear()
+        # Verify close called on both clients
+        mock_client1.close.assert_called_once()
+        mock_client2.close.assert_called_once()
+        # Verify dictionaries are empty
+        assert ModbusClientFactory._clients == {}
+        assert ModbusClientFactory._hosts == {}
+
+    def test_remove_existing_client_closes_and_removes_entries(self):
+        """Test that remove() removes a client present in the pool and closes it."""
+        mock_client = MagicMock()
+        mock_client.close = MagicMock()
+        # Populate factory with the client
+        ModbusClientFactory._clients = {("host1", 502): mock_client}
+        ModbusClientFactory._hosts = {mock_client: "host1:502"}
+        # Remove the client
+        ModbusClientFactory.remove(mock_client)
+        # Ensure close called
+        mock_client.close.assert_called_once()
+        # Ensure entries removed
+        assert ModbusClientFactory._clients == {}
+        assert ModbusClientFactory._hosts == {}
+
+    def test_remove_unknown_client_with_comm_params(self):
+        """Test remove() for a client not in pool but with comm_params attribute."""
+        mock_client = MagicMock()
+        mock_client.close = MagicMock()
+        # Simulate comm_params with host and port
+        comm = MagicMock()
+        comm.host = "hostX"
+        comm.port = 504
+        mock_client.comm_params = comm
+        # Ensure factory is empty
+        ModbusClientFactory._clients.clear()
+        ModbusClientFactory._hosts.clear()
+        # Call remove
+        ModbusClientFactory.remove(mock_client)
+        # close should be called
+        mock_client.close.assert_called_once()
+        # No entries should be added inadvertently
+        assert ModbusClientFactory._clients == {}
+        assert ModbusClientFactory._hosts == {}
+
+    def test_remove_unknown_client_without_comm_params(self, caplog):
+        """Test remove() for a client lacking comm_params; should fallback host and port and close without error."""
+        mock_client = MagicMock()
+        mock_client.close = MagicMock()
+        # Ensure no comm_params attribute
+        if hasattr(mock_client, "comm_params"):
+            del mock_client.comm_params
+        ModbusClientFactory._clients.clear()
+        ModbusClientFactory._hosts.clear()
+        # Capture logs
+        with caplog.at_level("INFO"):
+            ModbusClientFactory.remove(mock_client)
+        mock_client.close.assert_called_once()
+        # Verify log contains the fallback host info
+        assert any("[undetermined]:502" in record.message for record in caplog.records)
+
+    def test_remove_client_close_exception_is_handled(self):
+        """Ensure that an exception during client.close() does not propagate."""
+        mock_client = MagicMock()
+        mock_client.close = MagicMock(side_effect=Exception("close failed"))
+        # Add client to pool
+        ModbusClientFactory._clients = {("host1", 502): mock_client}
+        ModbusClientFactory._hosts = {mock_client: "host1:502"}
+        # Should not raise
+        ModbusClientFactory.remove(mock_client)
+        mock_client.close.assert_called_once()
+        # State should be cleared despite exception
+        assert ModbusClientFactory._clients == {}
+        assert ModbusClientFactory._hosts == {}
