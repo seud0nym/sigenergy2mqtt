@@ -37,59 +37,44 @@ async def test_validate_main_calls_initialize_and_validate(monkeypatch):
     assert called.get("init") and called.get("validate")
 
 # Test main flow for configuration error handling
-def test_main_configuration_error(monkeypatch, capsys):
-    # Make initialize raise ConfigurationError
+def test_main_configuration_error(monkeypatch, caplog):
+    """ConfigurationError should be logged as CRITICAL and exit with code 1."""
     class DummyError(main_mod.ConfigurationError):
         pass
     monkeypatch.setattr(main_mod, "initialize", lambda: (_ for _ in ()).throw(DummyError("bad")))
-    # Patch sys.exit to capture exit code
-    exit_codes = []
-    monkeypatch.setattr(sys, "exit", lambda code=0: exit_codes.append(code))
-    # Run main (should hit except and call sys.exit(1))
-    main_mod.main()
-    captured = capsys.readouterr()
-    assert "Configuration error" in captured.out
-    assert exit_codes == [1]
+    with pytest.raises(SystemExit) as exc:
+        main_mod.main()
+    assert exc.value.code == 1
+    assert any("Configuration error" in rec.message for rec in caplog.records)
 
 # Test main handling of KeyboardInterrupt during init
-def test_main_keyboard_interrupt(monkeypatch, capsys):
-    # initialize returns True then raise KeyboardInterrupt on second call
-    state = {"called": 0}
-    def fake_initialize():
-        state["called"] += 1
-        if state["called"] == 2:
-            raise KeyboardInterrupt
-        return True
-    monkeypatch.setattr(main_mod, "initialize", fake_initialize)
-    exit_codes = []
-    monkeypatch.setattr(sys, "exit", lambda code=0: exit_codes.append(code))
-    # Patch Metrics.shutdown to avoid side effects
-    monkeypatch.setattr(main_mod.Metrics, "shutdown", lambda timeout=2.0: None)
-    # Run main – should handle KeyboardInterrupt and exit with code 130
-    main_mod.main()
-    captured = capsys.readouterr()
-    assert "Initialization interrupted" in captured.out
-    assert exit_codes == [130]
+def test_main_keyboard_interrupt(monkeypatch, caplog):
+    """KeyboardInterrupt during initialize should log info and exit with code 130."""
+    monkeypatch.setattr(main_mod, "initialize", lambda: (_ for _ in ()).throw(KeyboardInterrupt()))
+    with pytest.raises(SystemExit) as exc:
+        main_mod.main()
+    assert exc.value.code == 130
+    assert any("Initialization interrupted" in rec.message for rec in caplog.records)
 
 # Test that when validate_only_mode is set, main runs _validate_main and exits 0
-def test_main_validate_only_mode(monkeypatch, capsys):
-    # Mock active_config with validate_only_mode flag
-    cfg = SimpleNamespace(validate_only_mode=True, validate_show_credentials=False)
+def test_main_validate_only_mode(monkeypatch):
+    """When validate_only_mode is set, main should run _validate_main and exit with 0."""
+    cfg = SimpleNamespace(
+        validate_only_mode=True,
+        validate_show_credentials=False,
+        log_level=20,  # logging.INFO — needed if execution leaks past sys.exit
+    )
     monkeypatch.setattr(main_mod, "active_config", cfg)
-    # Mock initialize to return True
     monkeypatch.setattr(main_mod, "initialize", lambda: True)
-    # Patch _validate_main to record call
     called = {}
-    async def fake_validate(show_credentials=False):
+    async def fake_validate_main(show_credentials=False):
         called["called"] = True
-    monkeypatch.setattr(main_mod, "_validate_main", fake_validate)
-    # Patch signal handling to default
-    monkeypatch.setattr(main_mod.signal, "default_int_handler", lambda *a, **k: None)
-    # Patch sys.exit to capture
-    exit_codes = []
-    monkeypatch.setattr(sys, "exit", lambda code=0: exit_codes.append(code))
-    # Run main
-    main_mod.main()
-    captured = capsys.readouterr()
+    monkeypatch.setattr(main_mod, "_validate_main", fake_validate_main)
+    # Defensively patch async_main so it never runs if execution somehow leaks past sys.exit
+    async def fake_async_main():
+        pass
+    monkeypatch.setattr(main_mod, "async_main", fake_async_main)
+    with pytest.raises(SystemExit) as exc:
+        main_mod.main()
+    assert exc.value.code == 0
     assert called.get("called")
-    assert exit_codes == [0]
