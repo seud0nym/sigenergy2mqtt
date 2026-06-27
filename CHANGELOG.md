@@ -1,29 +1,61 @@
 <!-- git log [since tag]..HEAD --oneline -->
 # Changelog 
 
-## [2026.6.25b1] - 2026.06.25
+## [2026.6.27a1] - 2026.06.27
 
 ### Added
 
-- Added support for forcing sensor values in Modbus test server
-- Added exception handling for derived sensor updates
-- Added warning log message for read-only mode
-- Implemented StateStore and MonitorService clean functionality
+- Added a `log_skipped` configuration option to selectively suppress noisy pymodbus framer error messages.
+- Added signal-based interruption for MQTT reconnection attempts during shutdown.
+- Added `reset_mqtt_reconnection_interrupt` to enable clean state resets when restarting the main loop.
+- Added a warning log when operating in read-only mode.
+- Added automatic cleanup of stale health files.
+- Added scripts to:
+  - Analyze test coverage.
+  - Generate unit test skeletons from uncovered source lines.
 
 ### Changed
 
-- Adjusted minimum sanity check value to PV Current/Voltage sensors to allow for small negative values (#207)
-- Adjusted some more logging messages to reduce noise
-- Refactored application of sensor overrides to enhance debug logging
-- Increased default modbus auto-discovery timeout from 0.25 to 0.5 seconds
-- Simplified initialisation and removed multiple redundant configuration reads
-- Removed PV power sanity check zero minimum
-- Clamped negative self-consumed power values to zero
+- Simplified application initialization and configuration handling by:
+  - Removing redundant auto-discovery configuration modules and settings.
+  - Removing the unused `skip_auto_discovery` parameter.
+  - Simplifying configuration validation and logging.
+  - Improving `ConfigProxy` string representation and configuration log readability.
+  - Making `Config.reload()` asynchronous.
+- Improved shutdown handling by replacing `run_coroutine_threadsafe()` with `create_task()` for SIGHUP processing.
+- Reduced log verbosity by:
+  - Removing unnecessary startup messages.
+  - Lowering several informational messages to debug level.
+  - Moving validation logging into the validation layer.
+- Increased the default Modbus auto-discovery timeout from **0.25 s** to **0.5 s**.
+- Improved CI by updating badges and enabling multi-threaded pytest execution by default.
 
 ### Fixed
 
-- Fixed sequencing of pymodbus logging configuration for suppression of Modbus "ERROR: request ask for ... Skipping." log messages
-- Fixed merging of sensor overrides to prevent over-writing
+- Removed duplicate pymodbus logging configuration in the main loop.
+- Relaxed PV power sanity checking to allow small negative values and removed the zero minimum restriction. (#207)
+- Clamped negative self-consumed power values to zero.
+- Improved MQTT reconnection state handling during restarts.
+
+### Tests
+
+- Expanded unit test coverage, including:
+  - Main application logic and entry point.
+  - Configuration loading and validation.
+  - Monitoring services and health registry.
+  - Health file cleanup.
+  - Timestamp sensor functionality.
+  - ESS preheating sensors.
+  - PID read-only alarm bit decoding.
+  - `ModbusClientFactory` clear, remove, and fallback behaviour.
+- Consolidated and modernized existing test suites.
+- Fixed and updated tests for:
+  - Logging.
+  - Configuration proxy.
+  - Validation.
+  - Initialization timing.
+  - MQTT connection retry logic.
+  - Publishable sensor validation.
 
 ---
 
