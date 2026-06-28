@@ -650,7 +650,7 @@ def _create_persistent_state_path() -> Path:
             path = Path(base, "sigenergy2mqtt")
             if not path.is_dir():
                 logging.info(f"Persistent state folder '{path}' created")
-                path.mkdir()
+                path.mkdir(parents=True, exist_ok=True) # don't throw an error if another thread/process creates the folder a millisecond before this one does (usually during parallel testing!)
             else:
                 logging.debug(f"Persistent state folder '{path}' found")
                 _clean_stale_files(path)
