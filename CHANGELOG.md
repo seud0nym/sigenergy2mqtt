@@ -37,6 +37,7 @@
 - Clamped negative self-consumed power values to zero.
 - Improved MQTT reconnection state handling during restarts.
 - Implemented defensive futures cancellation and proper async persistence offloading to mitigate StateStore TimeoutErrors (#207)
+- Prevented race conditions when creating persistent state directory by using parents and exist_ok flags
 
 ### Tests
 
