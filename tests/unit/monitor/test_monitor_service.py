@@ -124,7 +124,7 @@ def test_publish_health_writes_file_and_mqtt(monkeypatch, fake_mqtt_client, tmp_
     monkeypatch.setattr(svc, '_check_modbus', lambda: True)
     monkeypatch.setattr(svc, '_check_mqtt', lambda client: True)
     monkeypatch.setattr(svc, '_check_topic_health', AsyncMock(return_value=0))
-    asyncio.run(svc._publish_health(fake_mqtt_client))
+    asyncio.run(svc._publish_health(fake_mqtt_client, is_docker_env=True))
     data = json.loads(health_path.read_text())
     assert data['status'] == 'healthy'
     published_topics = [call[0][0] for call in fake_mqtt_client.publish.call_args_list]

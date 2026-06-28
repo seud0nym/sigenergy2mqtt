@@ -215,7 +215,7 @@ async def test_publish_health_includes_modbus_and_mqtt_connectivity(monkeypatch,
 
     monkeypatch.setattr("sigenergy2mqtt.monitor.monitor_service.mqtt_health_registry.snapshot", lambda: {"fake": MockMqttHealth()})
 
-    await svc._publish_health(mqtt_client)
+    await svc._publish_health(mqtt_client, is_docker_env=False)
 
     assert svc._health_file.exists()
     content = svc._health_file.read_text(encoding="utf-8")
@@ -273,7 +273,7 @@ async def test_publish_health_considers_all_modbus_clients(monkeypatch, tmp_path
 
     monkeypatch.setattr("sigenergy2mqtt.monitor.monitor_service.mqtt_health_registry.snapshot", lambda: {"fake": MockMqttHealth()})
 
-    await svc._publish_health(mqtt_client)
+    await svc._publish_health(mqtt_client, is_docker_env=False)
 
     content = svc._health_file.read_text(encoding="utf-8")
     assert '"modbus_connected": false' in content

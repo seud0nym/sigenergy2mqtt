@@ -98,25 +98,23 @@ def test_schedule_returns_monitor_when_topic_monitoring_active(track_tasks):
 async def test_publish_health_skipped_when_disabled_non_docker(tmp_path):
     """When disabled and not Docker, _publish_health does not write or publish."""
     svc, mqtt_client = _make_svc(tmp_path)
-    with patch("sigenergy2mqtt.monitor.monitor_service.is_docker", return_value=False):
-        with patch("sigenergy2mqtt.config.active_config.health_check") as mock_hc:
-            mock_hc.enabled = False
-            await svc._publish_health(mqtt_client)
-    assert not svc._health_file.exists()
-    assert mqtt_client.publish.call_count == 0
+    with patch("sigenergy2mqtt.config.active_config.health_check") as mock_hc:
+        mock_hc.enabled = False
+        await svc._publish_health(mqtt_client, is_docker_env=False)
+        assert not svc._health_file.exists()
+        assert mqtt_client.publish.call_count == 0
 
 
 @pytest.mark.asyncio
 async def test_publish_health_forced_when_docker_even_if_disabled(tmp_path):
     """When disabled but inside Docker, _publish_health still writes and publishes."""
     svc, mqtt_client = _make_svc(tmp_path)
-    with patch("sigenergy2mqtt.monitor.monitor_service.is_docker", return_value=True):
-        with patch("sigenergy2mqtt.config.active_config.health_check") as mock_hc:
-            mock_hc.enabled = False
-            mock_hc.timeout = 5
-            mock_hc.retries = 3
-            mock_hc.start_period = 45
-            await svc._publish_health(mqtt_client)
+    with patch("sigenergy2mqtt.config.active_config.health_check") as mock_hc:
+        mock_hc.enabled = False
+        mock_hc.timeout = 5
+        mock_hc.retries = 3
+        mock_hc.start_period = 45
+        await svc._publish_health(mqtt_client, is_docker_env=True)
     assert svc._health_file.exists()
     data = json.loads(svc._health_file.read_text())
     assert data["status"] == "healthy"
@@ -132,15 +130,14 @@ async def test_publish_health_forced_when_docker_even_if_disabled(tmp_path):
 async def test_no_restart_when_healthy(tmp_path):
     """restart_controller.request() should NOT be called when health checks pass."""
     svc, mqtt_client = _make_svc(tmp_path)
-    with patch("sigenergy2mqtt.monitor.monitor_service.is_docker", return_value=False):
-        with patch("sigenergy2mqtt.main.restart.restart_controller") as mock_rc:
-            with patch("sigenergy2mqtt.config.active_config.health_check") as mock_hc:
-                mock_hc.enabled = True
-                mock_hc.timeout = 5
-                mock_hc.retries = 3
-                mock_hc.start_period = 0
-                await svc._publish_health(mqtt_client)
-            mock_rc.request.assert_not_called()
+    with patch("sigenergy2mqtt.main.restart.restart_controller") as mock_rc:
+        with patch("sigenergy2mqtt.config.active_config.health_check") as mock_hc:
+            mock_hc.enabled = True
+            mock_hc.timeout = 5
+            mock_hc.retries = 3
+            mock_hc.start_period = 0
+            await svc._publish_health(mqtt_client, is_docker_env=False)
+        mock_rc.request.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -149,16 +146,15 @@ async def test_no_restart_in_docker_even_after_retries(tmp_path):
     svc, mqtt_client = _make_svc(tmp_path)
     svc._check_modbus = MagicMock(return_value=False)
     svc._started = time.monotonic() - 1000  # well past start period
-    with patch("sigenergy2mqtt.monitor.monitor_service.is_docker", return_value=True):
-        with patch("sigenergy2mqtt.main.restart.restart_controller") as mock_rc:
-            with patch("sigenergy2mqtt.config.active_config.health_check") as mock_hc:
-                mock_hc.enabled = True
-                mock_hc.timeout = 5
-                mock_hc.retries = 1
-                mock_hc.start_period = 0
-                for _ in range(3):
-                    await svc._publish_health(mqtt_client)
-            mock_rc.request.assert_not_called()
+    with patch("sigenergy2mqtt.main.restart.restart_controller") as mock_rc:
+        with patch("sigenergy2mqtt.config.active_config.health_check") as mock_hc:
+            mock_hc.enabled = True
+            mock_hc.timeout = 5
+            mock_hc.retries = 1
+            mock_hc.start_period = 0
+            for _ in range(3):
+                await svc._publish_health(mqtt_client, is_docker_env=True)
+        mock_rc.request.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -168,19 +164,18 @@ async def test_restart_triggered_after_retries_exceeded(tmp_path):
     svc._check_modbus = MagicMock(return_value=False)
     svc._started = time.monotonic() - 1000  # well past start_period
 
-    with patch("sigenergy2mqtt.monitor.monitor_service.is_docker", return_value=False):
-        with patch("sigenergy2mqtt.main.restart.restart_controller") as mock_rc:
-            with patch("sigenergy2mqtt.config.active_config.health_check") as mock_hc:
-                mock_hc.enabled = True
-                mock_hc.timeout = 5
-                mock_hc.retries = 2
-                mock_hc.start_period = 0
-                # First failure — not yet at retries threshold
-                await svc._publish_health(mqtt_client)
-                mock_rc.request.assert_not_called()
-                # Second failure — hits retries threshold
-                await svc._publish_health(mqtt_client)
-                mock_rc.request.assert_called_once()
+    with patch("sigenergy2mqtt.main.restart.restart_controller") as mock_rc:
+        with patch("sigenergy2mqtt.config.active_config.health_check") as mock_hc:
+            mock_hc.enabled = True
+            mock_hc.timeout = 5
+            mock_hc.retries = 2
+            mock_hc.start_period = 0
+            # First failure — not yet at retries threshold
+            await svc._publish_health(mqtt_client, is_docker_env=False)
+            mock_rc.request.assert_not_called()
+            # Second failure — hits retries threshold
+            await svc._publish_health(mqtt_client, is_docker_env=False)
+            mock_rc.request.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -190,15 +185,14 @@ async def test_no_restart_during_start_period(tmp_path):
     svc._check_modbus = MagicMock(return_value=False)
     svc._started = time.monotonic()  # just started — within start period
 
-    with patch("sigenergy2mqtt.monitor.monitor_service.is_docker", return_value=False):
-        with patch("sigenergy2mqtt.main.restart.restart_controller") as mock_rc:
-            with patch("sigenergy2mqtt.config.active_config.health_check") as mock_hc:
-                mock_hc.enabled = True
-                mock_hc.timeout = 5
-                mock_hc.retries = 1
-                mock_hc.start_period = 9999  # very long start period
-                await svc._publish_health(mqtt_client)
-            mock_rc.request.assert_not_called()
+    with patch("sigenergy2mqtt.main.restart.restart_controller") as mock_rc:
+        with patch("sigenergy2mqtt.config.active_config.health_check") as mock_hc:
+            mock_hc.enabled = True
+            mock_hc.timeout = 5
+            mock_hc.retries = 1
+            mock_hc.start_period = 9999  # very long start period
+            await svc._publish_health(mqtt_client, is_docker_env=False)
+        mock_rc.request.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -207,23 +201,22 @@ async def test_failure_count_resets_on_healthy(tmp_path):
     svc, mqtt_client = _make_svc(tmp_path)
     svc._started = time.monotonic() - 1000
 
-    with patch("sigenergy2mqtt.monitor.monitor_service.is_docker", return_value=False):
-        with patch("sigenergy2mqtt.main.restart.restart_controller"):
-            with patch("sigenergy2mqtt.config.active_config.health_check") as mock_hc:
-                mock_hc.enabled = True
-                mock_hc.timeout = 5
-                mock_hc.retries = 10
-                mock_hc.start_period = 0
+    with patch("sigenergy2mqtt.main.restart.restart_controller"):
+        with patch("sigenergy2mqtt.config.active_config.health_check") as mock_hc:
+            mock_hc.enabled = True
+            mock_hc.timeout = 5
+            mock_hc.retries = 10
+            mock_hc.start_period = 0
 
-                # Cause a failure
-                svc._check_modbus = MagicMock(return_value=False)
-                await svc._publish_health(mqtt_client)
-                assert svc._health_check_failures == 1
+            # Cause a failure
+            svc._check_modbus = MagicMock(return_value=False)
+            await svc._publish_health(mqtt_client, is_docker_env=False)
+            assert svc._health_check_failures == 1
 
-                # Recover
-                svc._check_modbus = MagicMock(return_value=True)
-                await svc._publish_health(mqtt_client)
-                assert svc._health_check_failures == 0
+            # Recover
+            svc._check_modbus = MagicMock(return_value=True)
+            await svc._publish_health(mqtt_client, is_docker_env=False)
+            assert svc._health_check_failures == 0
 
 
 # ── on_completion() ───────────────────────────────────────────────────────────
@@ -288,12 +281,11 @@ async def test_publish_health_timeout_counts_as_failure(tmp_path):
 
     svc._check_topic_health = slow_check
 
-    with patch("sigenergy2mqtt.monitor.monitor_service.is_docker", return_value=False):
-        with patch("sigenergy2mqtt.main.restart.restart_controller"):
-            with patch("sigenergy2mqtt.config.active_config.health_check") as mock_hc:
-                mock_hc.enabled = True
-                mock_hc.timeout = 0.01  # very short timeout to trigger TimeoutError
-                mock_hc.retries = 10
-                mock_hc.start_period = 0
-                await svc._publish_health(mqtt_client)
-                assert svc._health_check_failures == 1
+    with patch("sigenergy2mqtt.main.restart.restart_controller"):
+        with patch("sigenergy2mqtt.config.active_config.health_check") as mock_hc:
+            mock_hc.enabled = True
+            mock_hc.timeout = 0.01  # very short timeout to trigger TimeoutError
+            mock_hc.retries = 10
+            mock_hc.start_period = 0
+            await svc._publish_health(mqtt_client, is_docker_env=False)
+            assert svc._health_check_failures == 1

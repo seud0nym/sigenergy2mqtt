@@ -68,10 +68,8 @@ class MonitorService(Device):
             self.sleeper_task = None
 
         is_docker_env = is_docker()
-        is_enabled = active_config.health_check.enabled or is_docker_env
-
         while self.online:
-            await self._publish_health(mqtt_client, is_enabled, is_docker_env)
+            await self._publish_health(mqtt_client, is_docker_env)
             try:
                 task = asyncio.create_task(asyncio.sleep(self._health_publish_interval))
                 self.sleeper_task = task
@@ -144,7 +142,14 @@ class MonitorService(Device):
                 logging.warning(f"{self.log_identity} '{sensor.name}' has not been seen for {sensor.overdue}s (scan_interval={sensor.scan_interval}s {topic=})")
         return len(overdue)
 
-    async def _publish_health(self, mqtt_client: mqtt.Client, is_enabled: bool, is_docker_env: bool) -> None:
+    async def _publish_health(self, mqtt_client: mqtt.Client, is_docker_env: bool) -> None:
+        """Publishes the health status to the JSON file and MQTT.
+        
+        Args:
+            mqtt_client: MQTT client instance.
+            is_docker_env: Whether the service is running in a Docker environment.
+        """
+        is_enabled = active_config.health_check.enabled or is_docker_env
         if not is_enabled:
             if self._monitor_topic_updates:
                 await self._check_topic_health()
@@ -159,7 +164,7 @@ class MonitorService(Device):
                 overdue_count = await self._check_topic_health()
         except TimeoutError:
             logging.warning(f"{self.log_identity} Overdue topic health check timed out after {active_config.health_check.timeout}s")
-            overdue_count = 0
+            overdue_count = -1
 
         if overdue_count == 0 and mqtt_connected and modbus_connected:
             status = "healthy"
