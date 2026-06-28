@@ -127,9 +127,12 @@ class TestPVOutputServiceTopics:
             st._service.lock.return_value.__aenter__ = AsyncMock()
             st._service.lock.return_value.__aexit__ = AsyncMock()
 
+            # Mock save as an AsyncMock
+            mock_ss.save = AsyncMock()
+
             await st.handle_update(None, MagicMock(), 100.0, "t/1", MagicMock())
             assert t.state == 100.0
-            mock_ss.save_sync.assert_called()
+            mock_ss.save.assert_called()
 
     def test_restore_state_from_file(self):
         st = make_service_topics(value_key=OutputField.PEAK_POWER)
