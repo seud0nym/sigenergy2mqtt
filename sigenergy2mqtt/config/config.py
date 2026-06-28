@@ -76,6 +76,7 @@ class Config:
     if TYPE_CHECKING:
         from sigenergy2mqtt.common import ConsumptionMethod
         from sigenergy2mqtt.config.settings import (
+            HealthCheckConfig,
             HomeAssistantConfig,
             InfluxDbConfig,
             ModbusConfig,
@@ -658,6 +659,12 @@ def _create_persistent_state_path() -> Path:
     raise ConfigurationError("Unable to create persistent state folder!")
 
 
+def is_docker() -> bool:
+    """Return True if running inside a Docker container."""
+    cgroup = Path("/proc/self/cgroup")
+    return Path("/.dockerenv").is_file() or (cgroup.is_file() and "docker" in cgroup.read_text())
+
+
 def configure_root_logging(level: int | None = None, fmt: str | None = None) -> None:
     """Configure the root logger with a format appropriate to the runtime environment.
 
@@ -701,8 +708,7 @@ def configure_root_logging(level: int | None = None, fmt: str | None = None) -> 
         if os.isatty(sys.stdout.fileno()):
             fmt = "{asctime} {levelname:<8} sigenergy2mqtt:{module:.<15.15}{lineno:04d} {message}"
         else:
-            cgroup = Path("/proc/self/cgroup")
-            in_docker = Path("/.dockerenv").is_file() or (cgroup.is_file() and "docker" in cgroup.read_text())
+            in_docker = is_docker()
             fmt = "{asctime} {levelname:<8} {module:.<15.15}{lineno:04d} {message}" if in_docker else "{levelname:<8} {module:.<15.15}{lineno:04d} {message}"
 
     # basicConfig is a no-op if handlers already exist; remove any pre-existing

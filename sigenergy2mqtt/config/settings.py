@@ -27,6 +27,7 @@ from sigenergy2mqtt.config.merge import (
     propagate_to_all_devices,
 )
 from sigenergy2mqtt.config.models import (
+    HealthCheckConfig,
     HomeAssistantConfig,
     InfluxDbConfig,
     ModbusConfig,
@@ -127,6 +128,7 @@ class Settings(BaseSettings):
     sensor_debug_logging: bool = Field(False, alias="sensor-debug-logging")
 
     # ── Sub-configs ──────────────────────────────────────────────────────────
+    health_check: HealthCheckConfig = Field(default_factory=HealthCheckConfig, alias="health-check")  # type: ignore[reportCallIssue]
     home_assistant: HomeAssistantConfig = Field(default_factory=HomeAssistantConfig, alias="home-assistant")  # type: ignore[reportCallIssue]
     mqtt: MqttConfig = Field(default_factory=MqttConfig)  # type: ignore[reportCallIssue]
     persistence: PersistenceConfig = Field(default_factory=PersistenceConfig, alias="persistence")  # type: ignore[reportCallIssue]

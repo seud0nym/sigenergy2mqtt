@@ -157,3 +157,15 @@ Environment variables override the configuration file, but *not* command line op
 | `SIGENERGY2MQTT_INFLUX_MAX_SYNC_WORKERS` | InfluxDB maximum sync workers (default: `4`) [<sup>(More…)</sup>](README.md#opt_influxdb_max_sync_workers) | 2026.2.5 |
 
 
+## Health Check Configuration Variables
+
+| Name | Description | Since |
+|------|-------------|-------|
+| `SIGENERGY2MQTT_HEALTH_CHECK_ENABLED` | Set to `false` to disable health checks and automatic restarts. Note: If running within Docker, this flag is ignored and treated as true for publishing purposes, but automatic restarts are always disabled. [<sup>(More…)</sup>](README.md#opt_health_check_enabled) | 2026.6.28 |
+| `SIGENERGY2MQTT_HEALTH_CHECK_INTERVAL` | The interval in seconds at which the health check runs. (default: `30`) [<sup>(More…)</sup>](README.md#opt_health_check_interval) | 2026.6.28 |
+| `SIGENERGY2MQTT_HEALTH_CHECK_TIMEOUT` | The timeout in seconds for checking health states. (default: `5`) [<sup>(More…)</sup>](README.md#opt_health_check_timeout) | 2026.6.28 |
+| `SIGENERGY2MQTT_HEALTH_CHECK_START_PERIOD` | Initial start period in seconds during which health check failures do not count towards retries. (default: `45`) [<sup>(More…)</sup>](README.md#opt_health_check_start_period) | 2026.6.28 |
+| `SIGENERGY2MQTT_HEALTH_CHECK_RETRIES` | Number of consecutive health check failures allowed before a restart is requested. (default: `3`) [<sup>(More…)</sup>](README.md#opt_health_check_retries) | 2026.6.28 |
+
+
+
