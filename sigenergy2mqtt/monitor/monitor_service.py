@@ -308,7 +308,7 @@ class MonitorService(Device):
         """
 
         if not self._monitor_topic_updates:
-            logging.info(f"{self.log_identity} Topic-overdue monitoring disabled (repeated_state_publish_interval={active_config.repeated_state_publish_interval}); publishing connectivity health only")
+            logging.debug(f"{self.log_identity} Topic-overdue monitoring disabled (log_level={logging.getLevelName(active_config.log_level)} repeated_state_publish_interval={active_config.repeated_state_publish_interval})")
             return
 
         for d in self._devices:
