@@ -11,6 +11,7 @@ import paho.mqtt.client as mqtt
 
 from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.config import active_config
+from sigenergy2mqtt.config.config import is_docker
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.modbus import ModbusClientFactory
 from sigenergy2mqtt.mqtt import MqttHandler, mqtt_health_registry, mqtt_setup, mqtt_teardown
@@ -44,7 +45,8 @@ class MonitorService(Device):
         self._current_status = "unknown"
         # Health publication should remain reasonably frequent and independent
         # of repeated-state payload cadence so Docker HEALTHCHECKs remain timely.
-        self._health_publish_interval = 30
+        self._health_publish_interval = active_config.health_check.interval
+        self._health_check_failures = 0
         self._started = time.monotonic()
 
     async def _monitor(self, mqtt_client: mqtt.Client) -> None:
@@ -65,8 +67,9 @@ class MonitorService(Device):
         finally:
             self.sleeper_task = None
 
+        is_docker_env = is_docker()
         while self.online:
-            await self._publish_health(mqtt_client)
+            await self._publish_health(mqtt_client, is_docker_env)
             try:
                 task = asyncio.create_task(asyncio.sleep(self._health_publish_interval))
                 self.sleeper_task = task
@@ -139,10 +142,30 @@ class MonitorService(Device):
                 logging.warning(f"{self.log_identity} '{sensor.name}' has not been seen for {sensor.overdue}s (scan_interval={sensor.scan_interval}s {topic=})")
         return len(overdue)
 
-    async def _publish_health(self, mqtt_client: mqtt.Client) -> None:
+    async def _publish_health(self, mqtt_client: mqtt.Client, is_docker_env: bool) -> None:
+        """Publishes the health status to the JSON file and MQTT.
+        
+        Args:
+            mqtt_client: MQTT client instance.
+            is_docker_env: Whether the service is running in a Docker environment.
+        """
+        is_enabled = active_config.health_check.enabled or is_docker_env
+        if not is_enabled:
+            if self._monitor_topic_updates:
+                await self._check_topic_health()
+            return
+
+        # Sync checks: fast lock-protected snapshots, not interruptible by asyncio.timeout
+        # but cannot stall meaningfully, so no executor needed.
         modbus_connected = self._check_modbus()
         mqtt_connected = self._check_mqtt(mqtt_client)
-        overdue_count = await self._check_topic_health()
+        try:
+            async with asyncio.timeout(active_config.health_check.timeout):
+                overdue_count = await self._check_topic_health()
+        except TimeoutError:
+            logging.warning(f"{self.log_identity} Overdue topic health check timed out after {active_config.health_check.timeout}s")
+            overdue_count = -1
+
         if overdue_count == 0 and mqtt_connected and modbus_connected:
             status = "healthy"
             logging.log(logging.INFO if self._current_status != status else logging.DEBUG, f"{self.log_identity} Status is HEALTHY (topic_{overdue_count=} {mqtt_connected=} {modbus_connected=})")
@@ -168,6 +191,18 @@ class MonitorService(Device):
         except Exception as ex:
             logging.warning(f"{self.log_identity} Failed to publish health payload: {ex}")
         self._current_status = status
+
+        if not is_docker_env:
+            if status == "healthy":
+                self._health_check_failures = 0
+            else:
+                if time.monotonic() - self._started > active_config.health_check.start_period:
+                    self._health_check_failures += 1
+                    logging.warning(f"{self.log_identity} Health check failure count: {self._health_check_failures}/{active_config.health_check.retries}")
+                    if self._health_check_failures >= active_config.health_check.retries:
+                        from sigenergy2mqtt.main.restart import restart_controller  # lazy import to avoid circular dependency
+                        restart_controller.request("Health check failed repeatedly")
+                        self._health_check_failures = 0  # reset to suppress repeat calls until restart completes
 
     async def on_ha_state_change(self, modbus_client: Any | None, mqtt_client: mqtt.Client, ha_state: str, source: str, mqtt_handler: MqttHandler) -> bool:
         """Handle Home Assistant state updates.
@@ -252,7 +287,7 @@ class MonitorService(Device):
             return
 
     def on_completion(self, modbus_client: Any | None, mqtt_client: mqtt.Client) -> None:
-        """Log when the monitor service has stopped.
+        """Log when the monitor service has stopped and clear stale health messages.
 
         Args:
             modbus_client: Optional Modbus client instance.
@@ -260,6 +295,13 @@ class MonitorService(Device):
         """
 
         logging.info(f"{self.log_identity} Service Completed: Flagged as offline ({self.online=})")
+        try:
+            if mqtt_client:
+                mqtt_client.publish(self._health_state_topic, b"", qos=1, retain=True)
+                mqtt_client.publish(self._health_attributes_topic, b"", qos=1, retain=True)
+                logging.debug(f"{self.log_identity} Cleared health topics on completion")
+        except Exception as ex:
+            logging.warning(f"{self.log_identity} Failed to clear health payload: {ex}")
 
     def publish_availability(self, mqtt_client: mqtt.Client, ha_state: bytes | str, qos: int = 2) -> None:
         """No-op availability publisher for the monitor service.
@@ -293,19 +335,28 @@ class MonitorService(Device):
             mqtt_client: MQTT client instance.
 
         Returns:
-            A list with a single monitor coroutine, unless repeated-state
-            publishing is disabled for unchanged values.
+            A list with a single monitor coroutine, or an empty list if performing no functions.
         """
-
+        is_enabled = active_config.health_check.enabled or is_docker()
+        if not is_enabled and not self._monitor_topic_updates:
+            return []
         return [self._monitor(mqtt_client)]
 
     def subscribe(self, mqtt_client: mqtt.Client, mqtt_handler: MqttHandler) -> None:
-        """Subscribe to all publishable readable sensor state topics.
+        """Subscribe to all publishable readable sensor state topics and clear health checks if disabled.
 
         Args:
             mqtt_client: MQTT client used for subscriptions.
             mqtt_handler: Helper used to register topic callbacks.
         """
+        is_enabled = active_config.health_check.enabled or is_docker()
+        if not is_enabled:
+            logging.info(f"{self.log_identity} Health check disabled, clearing retained health messages")
+            try:
+                mqtt_client.publish(self._health_state_topic, b"", qos=1, retain=True)
+                mqtt_client.publish(self._health_attributes_topic, b"", qos=1, retain=True)
+            except Exception as ex:
+                logging.warning(f"{self.log_identity} Failed to clear health payload on subscribe: {ex}")
 
         if not self._monitor_topic_updates:
             logging.debug(f"{self.log_identity} Topic-overdue monitoring disabled (log_level={logging.getLevelName(active_config.log_level)} repeated_state_publish_interval={active_config.repeated_state_publish_interval})")

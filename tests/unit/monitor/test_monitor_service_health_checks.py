@@ -133,7 +133,7 @@ async def test_publish_health_exception(monkeypatch, caplog):
     monkeypatch.setattr(svc, '_check_mqtt', MagicMock(return_value=True))
     monkeypatch.setattr(svc, '_check_topic_health', AsyncMock(return_value=0))
     
-    await svc._publish_health(FakeMqttClient())
+    await svc._publish_health(FakeMqttClient(), is_docker_env=True)
     
     assert "Failed to publish health payload: Write failed" in caplog.text
 

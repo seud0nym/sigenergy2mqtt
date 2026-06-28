@@ -840,3 +840,34 @@ influxdb:
   #   default: 4
   #   description: The maximum number of parallel sync operations.
   max-sync-workers: 4
+
+# health-check
+#   added: 2026.6.28
+#   description: Configuration for service health checks and automatic restarts.
+health-check:
+  # enabled
+  #   default: true
+  #   description: Set to false to disable health checks and automatic restarts.
+  #                Note: If running within Docker, this flag is ignored and
+  #                treated as true for publishing purposes, but automatic
+  #                restarts are always disabled.
+  enabled: true
+  # interval
+  #   default: 30
+  #   description: The interval in seconds at which the health check runs.
+  interval: 30
+  # timeout
+  #   default: 5
+  #   description: The timeout in seconds for checking health states.
+  timeout: 5
+  # start-period
+  #   default: 45
+  #   description: Initial start period in seconds during which health check
+  #                failures do not count towards retries.
+  start-period: 45
+  # retries
+  #   default: 3
+  #   description: Number of consecutive health check failures allowed before
+  #                a restart is requested.
+  retries: 3
+

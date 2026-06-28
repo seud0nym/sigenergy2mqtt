@@ -235,6 +235,16 @@ class EnvSettingsSource(PydanticBaseSettingsSource):
         if persist:
             result["persistence"] = persist
 
+        # ── Health Check ─────────────────────────────────────────────────────
+        health_check: dict[str, Any] = {}
+        _set(health_check, "enabled", _bool(g(const.SIGENERGY2MQTT_HEALTH_CHECK_ENABLED)))
+        _set(health_check, "interval", _int(g(const.SIGENERGY2MQTT_HEALTH_CHECK_INTERVAL)))
+        _set(health_check, "timeout", _int(g(const.SIGENERGY2MQTT_HEALTH_CHECK_TIMEOUT)))
+        _set(health_check, "start_period", _int(g(const.SIGENERGY2MQTT_HEALTH_CHECK_START_PERIOD)))
+        _set(health_check, "retries", _int(g(const.SIGENERGY2MQTT_HEALTH_CHECK_RETRIES)))
+        if health_check:
+            result["health_check"] = health_check
+
         # ── Auto-discovery ───────────────────────────────────────────────────
         result.update(_auto_discovery_env_values(g, include_modbus_port=True))
 

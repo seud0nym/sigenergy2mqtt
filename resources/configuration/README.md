@@ -162,6 +162,52 @@ The directory in which to store persistent state files. The defaults are:
 A sub-directory will be created in the specified directory called `sigenergy2mqtt` to store the files.
 
 
+## Health Check
+
+<a id="opt_health_check_enabled"></a>
+### Enabled
+- CLI: `n/a`
+- ENV: `SIGENERGY2MQTT_HEALTH_CHECK_ENABLED`
+- Config key: `health-check.enabled`
+
+Set to false to disable health checks and automatic restarts.
+
+> [!IMPORTANT]
+> If running within Docker, this flag is ignored and treated as true for publishing purposes (so the Docker HEALTHCHECK remains functional), but automatic restarts are always disabled.
+
+<a id="opt_health_check_interval"></a>
+### Interval
+- CLI: `n/a`
+- ENV: `SIGENERGY2MQTT_HEALTH_CHECK_INTERVAL`
+- Config key: `health-check.interval`
+
+The interval in seconds at which the health check runs. Default is `30`.
+
+<a id="opt_health_check_timeout"></a>
+### Timeout
+- CLI: `n/a`
+- ENV: `SIGENERGY2MQTT_HEALTH_CHECK_TIMEOUT`
+- Config key: `health-check.timeout`
+
+The timeout in seconds for checking health states. Default is `5`.
+
+<a id="opt_health_check_start_period"></a>
+### Start Period
+- CLI: `n/a`
+- ENV: `SIGENERGY2MQTT_HEALTH_CHECK_START_PERIOD`
+- Config key: `health-check.start-period`
+
+Initial start period in seconds during which health check failures do not count towards retries. Default is `45`.
+
+<a id="opt_health_check_retries"></a>
+### Retries
+- CLI: `n/a`
+- ENV: `SIGENERGY2MQTT_HEALTH_CHECK_RETRIES`
+- Config key: `health-check.retries`
+
+Number of consecutive health check failures allowed before a restart is requested. Default is `3`.
+
+
 ## Home Assistant
 
 <a id="opt_home_assistant_device_name_prefix"></a>
