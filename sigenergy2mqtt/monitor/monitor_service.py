@@ -196,6 +196,7 @@ class MonitorService(Device):
                     if self._health_check_failures >= active_config.health_check.retries:
                         from sigenergy2mqtt.main.restart import restart_controller  # lazy import to avoid circular dependency
                         restart_controller.request("Health check failed repeatedly")
+                        self._health_check_failures = 0  # reset to suppress repeat calls until restart completes
 
     async def on_ha_state_change(self, modbus_client: Any | None, mqtt_client: mqtt.Client, ha_state: str, source: str, mqtt_handler: MqttHandler) -> bool:
         """Handle Home Assistant state updates.
