@@ -152,11 +152,11 @@ class TestResettableAccumulationSensorCoverage:
     @pytest.mark.asyncio
     async def test_persist_errors(self, mock_config, caplog):
         sensor = self._make_sensor()
-        with patch.object(state_store, "save_sync", side_effect=PermissionError):
+        with patch.object(state_store, "save", side_effect=PermissionError):
             await sensor._persist_current_total(100.0)
             assert "Failed to persist state" in caplog.text
 
-        with patch.object(state_store, "save_sync", side_effect=RuntimeError):
+        with patch.object(state_store, "save", side_effect=RuntimeError):
             await sensor._persist_current_total(100.0)
             assert "Unexpected error persisting state" in caplog.text
 
@@ -288,7 +288,7 @@ class TestEnergyDailyAccumulationSensorCoverageExtended:
     @pytest.mark.asyncio
     async def test_update_midnight_errors(self, mock_config, caplog):
         sensor = self._make_sensor()
-        with patch.object(state_store, "save_sync", side_effect=RuntimeError):
+        with patch.object(state_store, "save", side_effect=RuntimeError):
             await sensor._update_state_at_midnight(100.0)
             assert "Failed to update" in caplog.text
 

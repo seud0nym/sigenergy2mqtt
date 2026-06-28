@@ -614,6 +614,7 @@ class StateStore:
             try:
                 future.result(timeout=self._sync_timeout)
             except Exception as exc:
+                future.cancel()
                 logging.warning(f"StateStore.save_sync failed for {category}/{key}: {repr(exc)}")
         else:
             self._save_sync_impl(category, key, value)
@@ -639,6 +640,7 @@ class StateStore:
             try:
                 return future.result(timeout=self._sync_timeout)
             except Exception as exc:
+                future.cancel()
                 logging.warning(f"StateStore.load_sync failed for {category}/{key}: {repr(exc)}")
                 return None
         else:
@@ -654,6 +656,7 @@ class StateStore:
             try:
                 future.result(timeout=self._sync_timeout)
             except Exception as exc:
+                future.cancel()
                 logging.warning(f"StateStore.delete_sync failed for {category}/{key}: {repr(exc)}")
         else:
             self._delete_sync_impl(category, key)

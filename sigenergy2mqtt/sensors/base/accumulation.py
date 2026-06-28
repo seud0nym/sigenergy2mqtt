@@ -120,7 +120,7 @@ class AccumulationSensor(DerivedSensor):
         """
         async with self._current_total_lock:
             try:
-                state_store.save_sync(Category.SENSOR, self._state_persistence_key, str(new_total))
+                await state_store.save(Category.SENSOR, self._state_persistence_key, str(new_total))
             except PermissionError as e:
                 logging.warning(f"{self.log_identity} Failed to persist state for {self._state_persistence_key}: {e}")
             except Exception as e:
@@ -422,7 +422,7 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
 
         async with self._state_at_midnight_lock:
             try:
-                state_store.save_sync(Category.SENSOR, self._midnight_persistence_key, str(midnight_state))
+                await state_store.save(Category.SENSOR, self._midnight_persistence_key, str(midnight_state))
             except Exception as e:
                 logging.warning(f"{self.log_identity} Failed to update midnight state for {self._midnight_persistence_key}: {e}")
 

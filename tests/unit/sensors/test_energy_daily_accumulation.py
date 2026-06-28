@@ -1,6 +1,6 @@
 import time
 from datetime import timedelta
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -111,9 +111,10 @@ class TestEnergyDailyAccumulationSensor:
                 source=source_sensor,
             )
 
+            mock_state_store.save = AsyncMock()
             await sensor._update_state_at_midnight(150.0)
             assert sensor._state_at_midnight == 150.0
-            mock_state_store.save_sync.assert_called_with(Category.SENSOR, "sigen_test_source_uid.atmidnight", "150.0")
+            mock_state_store.save.assert_called_with(Category.SENSOR, "sigen_test_source_uid.atmidnight", "150.0")
 
     @pytest.mark.asyncio
     async def test_notify(self, source_sensor):
