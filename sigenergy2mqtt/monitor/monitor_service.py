@@ -67,8 +67,11 @@ class MonitorService(Device):
         finally:
             self.sleeper_task = None
 
+        is_docker_env = is_docker()
+        is_enabled = active_config.health_check.enabled or is_docker_env
+
         while self.online:
-            await self._publish_health(mqtt_client)
+            await self._publish_health(mqtt_client, is_enabled, is_docker_env)
             try:
                 task = asyncio.create_task(asyncio.sleep(self._health_publish_interval))
                 self.sleeper_task = task
@@ -141,14 +144,12 @@ class MonitorService(Device):
                 logging.warning(f"{self.log_identity} '{sensor.name}' has not been seen for {sensor.overdue}s (scan_interval={sensor.scan_interval}s {topic=})")
         return len(overdue)
 
-    async def _publish_health(self, mqtt_client: mqtt.Client) -> None:
-        is_enabled = active_config.health_check.enabled or is_docker()
+    async def _publish_health(self, mqtt_client: mqtt.Client, is_enabled: bool, is_docker_env: bool) -> None:
         if not is_enabled:
             if self._monitor_topic_updates:
                 await self._check_topic_health()
             return
 
-        is_docker_env = is_docker()
         try:
             async with asyncio.timeout(active_config.health_check.timeout):
                 modbus_connected = self._check_modbus()
