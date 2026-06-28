@@ -150,15 +150,15 @@ class MonitorService(Device):
                 await self._check_topic_health()
             return
 
+        # Sync checks: fast lock-protected snapshots, not interruptible by asyncio.timeout
+        # but cannot stall meaningfully, so no executor needed.
+        modbus_connected = self._check_modbus()
+        mqtt_connected = self._check_mqtt(mqtt_client)
         try:
             async with asyncio.timeout(active_config.health_check.timeout):
-                modbus_connected = self._check_modbus()
-                mqtt_connected = self._check_mqtt(mqtt_client)
                 overdue_count = await self._check_topic_health()
         except TimeoutError:
-            logging.warning(f"{self.log_identity} Health check timed out after {active_config.health_check.timeout}s")
-            modbus_connected = False
-            mqtt_connected = False
+            logging.warning(f"{self.log_identity} Overdue topic health check timed out after {active_config.health_check.timeout}s")
             overdue_count = 0
 
         if overdue_count == 0 and mqtt_connected and modbus_connected:
