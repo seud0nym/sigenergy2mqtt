@@ -39,6 +39,7 @@
 - Improved MQTT reconnection state handling during restarts
 - Implemented defensive futures cancellation and proper async persistence offloading to mitigate StateStore TimeoutErrors (#207)
 - Prevented race conditions when creating persistent state directory by using parents and exist_ok flags
+- Allow variable warning threshold based on repeated state publish interval when checking if PVOutput state topics have been updated
 
 ### Tests
 

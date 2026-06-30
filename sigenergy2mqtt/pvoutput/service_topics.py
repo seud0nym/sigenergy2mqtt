@@ -314,6 +314,7 @@ class ServiceTopics(dict[str, Topic]):
                     self._logger.debug(f"{self._service.log_identity} Skipping updating check for {self._name} because service just started")
                 return True
             interval_seconds = interval_minutes * 60
+            min_warning_minutes = max(0, round(active_config.repeated_state_publish_interval / 60)) # zero or positive repeated state publish interval in minutes
             updated = 0
             for topic in self.values():
                 scan_interval = topic.scan_interval if topic.scan_interval is not None else interval_seconds
@@ -324,7 +325,7 @@ class ServiceTopics(dict[str, Topic]):
                         if active_config.pvoutput.update_debug_logging:
                             self._logger.debug(f"{self._service.log_identity} Topic {topic.topic} for {self._name} last updated {seconds}s ago ({scan_interval=}s)")
                         updated += 1
-                    elif (self._last_update_warning is None or (now - self._last_update_warning) > 3600) and minutes > 0:
+                    elif (self._last_update_warning is None or (now - self._last_update_warning) > 3600) and minutes > min_warning_minutes:
                         self._logger.warning(f"{self._service.log_identity} Topic {topic.topic} for {self._name} has not been updated for {minutes}m??? ({scan_interval=}s)")
                         self._last_update_warning = now
                 elif not isinstance(self, TimePeriodServiceTopics) and (self._last_update_warning is None or (now - self._last_update_warning) > 3600):
