@@ -273,6 +273,7 @@ class TestPowerFactor:
         reactive_power.latest_raw_state = 1000
 
         sensor = PowerFactor(plant_index=0, device_address=1, active_power=active_power, reactive_power=reactive_power)
+        sensor._first_reading = False
 
         original_error = ValueError("Original error")
         with patch.object(sensor.__class__.__bases__[0], "set_state") as mock_parent_set_state:
