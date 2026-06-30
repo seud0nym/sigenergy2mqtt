@@ -1359,7 +1359,7 @@ class OutputType(ReadOnlySensor, HybridInverter, PVInverter):
             "L1/L2/N",  # 3
         ]
         self.sanity_check.min_raw = 0
-        self.sanity_check.max_raw = len(cast(list[str], self[DiscoveryKeys.OPTIONS])) - 1  # pyrefly: ignore
+        self.sanity_check.max_raw = len(cast(list[str], self[DiscoveryKeys.OPTIONS])) - 1
 
     @classmethod
     def to_phases(cls, output_type: str | float | int | None) -> int:
@@ -1523,6 +1523,7 @@ class PowerFactor(ReadOnlySensor, HybridInverter, PVInverter):
         self._max_failures_retry_interval = 300
         self._active_power = active_power
         self._reactive_power = reactive_power
+        self._first_reading: bool = True
 
     def set_state(self, state: int | float | str | list[bool] | list[int] | list[float]) -> None:
         try:
@@ -1534,12 +1535,16 @@ class PowerFactor(ReadOnlySensor, HybridInverter, PVInverter):
                 apparent_power = math.sqrt(active_power**2 + reactive_power**2)
                 power_factor = round((abs(active_power) / apparent_power) * self.gain) if apparent_power != 0 else 0
                 if self.debug_logging:
-                    active_power_time = cast(float, self._active_power.latest_time)  # pyrefly: ignore
-                    reactive_power_time = cast(float, self._reactive_power.latest_time)  # pyrefly: ignore
+                    active_power_time = cast(float, self._active_power.latest_time)
+                    reactive_power_time = cast(float, self._reactive_power.latest_time)
                     logging.debug(
                         f"{self.log_identity} Using calculated {power_factor=} from active_power={active_power} @ {time.strftime('%H:%M:%S', time.localtime(active_power_time))} reactive_power={reactive_power} @ {time.strftime('%H:%M:%S', time.localtime(reactive_power_time))} -> {apparent_power=} because {e}"
                     )
                 super().set_state(power_factor)
+                self._first_reading = False
+            elif self._first_reading:
+                self._first_reading = False
+                return
             else:
                 raise e
 
@@ -2004,7 +2009,7 @@ class DCChargerRunningState(ReadOnlySensor, HybridInverter):  # Not applicable t
             "Scheduled",  # 5
         ]
         self.sanity_check.min_raw = 0
-        self.sanity_check.max_raw = len(cast(list[str], self[DiscoveryKeys.OPTIONS])) - 1  # pyrefly: ignore
+        self.sanity_check.max_raw = len(cast(list[str], self[DiscoveryKeys.OPTIONS])) - 1
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
