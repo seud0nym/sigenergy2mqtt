@@ -1,7 +1,7 @@
 <!-- git log [since tag]..HEAD --oneline -->
 # Changelog 
 
-## [2026.6.28b1] - 2026.06.28
+## [2026.6.30b1] - 2026.06.30
 
 ### Added
 
