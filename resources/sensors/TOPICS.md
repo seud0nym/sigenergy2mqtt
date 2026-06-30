@@ -6520,9 +6520,9 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_dccharger/sigen_0_dc_charger_1_running_state/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_dc_charger_1_running_state/state</td></tr>
 <tr><td>Source</td><td>Modbus Register 31513</td></tr>
-<tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='0'>Idle</li><li value='1'>Occupied (Charging Gun plugged in but not detected)</li><li value='2'>Preparing (Establishing communication)</li><li value='3'>Charging</li><li value='4'>Fault</li><li value='5'>Scheduled</li></ol></td></tr>
+<tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='0'>Idle</li><li value='1'>Occupied (Charging Gun plugged in but not detected)</li><li value='2'>Preparing (Establishing communication)</li><li value='3'>Charging</li><li value='4'>Fault</li><li value='5'>Scheduled</li><li value='6'>Ended</li><li value='7'>Unavailable (Under maintenance)</li><li value='8'>Discharging</li><li value='9'>Alarm</li><li value='10'>Preparing (Insulation detection in progress)</li></ol></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.8</td></tr>
-<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0  and 5  (0 ≦ raw value ≦ 5)</td></tr>
+<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0  and 10  (0 ≦ raw value ≦ 10)</td></tr>
 </table>
 <h5><a id='sigen_0_001_31519'>Total Charging Capacity</a></h5>
 <table>
