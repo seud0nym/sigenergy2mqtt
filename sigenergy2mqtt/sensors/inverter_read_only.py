@@ -2007,6 +2007,11 @@ class DCChargerRunningState(ReadOnlySensor, HybridInverter):  # Not applicable t
             "Charging",  # 3
             "Fault",  # 4
             "Scheduled",  # 5
+            "Ended",  # 6
+            "Unavailable (Under maintenance)",  # 7
+            "Discharging",  # 8
+            "Alarm",  # 9
+            "Preparing (Insulation detection in progress)",  # 10
         ]
         self.sanity_check.min_raw = 0
         self.sanity_check.max_raw = len(cast(list[str], self[DiscoveryKeys.OPTIONS])) - 1
