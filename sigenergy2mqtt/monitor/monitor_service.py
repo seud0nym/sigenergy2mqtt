@@ -117,7 +117,11 @@ class MonitorService(Device):
             elif health.last_message_at and health.last_publish_ack_at and health.last_publish_ack_at < health.last_message_at and (now - health.last_message_at) > max:
                 logging.warning(f"{self.log_identity} MQTT Client ID {cid} connected but no publish acknowledgement received for {(now - health.last_message_at):0.2f}s")
             else:
-                logging.debug(f"{self.log_identity} MQTT Client ID {cid} healthy (connected {health.connect_count}x)")
+                if logging.getLogger().isEnabledFor(logging.DEBUG):
+                    if health.last_message_at and health.last_publish_ack_at:
+                        logging.debug(f"{self.log_identity} MQTT Client ID {cid} healthy (connected {health.connect_count}x, last message {now - health.last_message_at:0.2f}s ago, last ack {now - health.last_publish_ack_at:0.2f}s ago)")
+                    else:
+                        logging.debug(f"{self.log_identity} MQTT Client ID {cid} healthy (connected {health.connect_count}x)")
                 mqtt_healthy_connections += 1
         return bool(mqtt_healthy_connections == len(mqtt_snapshot))
 
