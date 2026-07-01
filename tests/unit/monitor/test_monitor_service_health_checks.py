@@ -36,7 +36,7 @@ class FakeModbusClient:
 
 @pytest.mark.asyncio
 async def test_monitor_cancelled_error(caplog):
-    """Lines 62-64: Handle asyncio.CancelledError during initial sleep."""
+    """Handle asyncio.CancelledError during initial sleep."""
     import logging
     caplog.set_level(logging.DEBUG)
     svc = MonitorService([])
@@ -49,7 +49,7 @@ async def test_monitor_cancelled_error(caplog):
 
 
 def test_check_modbus_no_reads(monkeypatch, caplog):
-    """Line 93: Modbus connected but no reads."""
+    """Modbus connected but no reads."""
     fake_client = FakeModbusClient()
     # Set last_read_at way in the past so it triggers "no reads for X s"
     fake_client.last_read_at = time.monotonic() - 10000 
@@ -63,7 +63,7 @@ def test_check_modbus_no_reads(monkeypatch, caplog):
 
 
 def test_check_mqtt_disconnected(monkeypatch, caplog):
-    """Line 110: MQTT Client disconnected."""
+    """MQTT Client disconnected."""
     health = MqttClientHealth(
         client_id='test_client',
         connected=False,
@@ -82,7 +82,7 @@ def test_check_mqtt_disconnected(monkeypatch, caplog):
 
 
 def test_check_mqtt_no_ack_no_msg(monkeypatch, caplog):
-    """Lines 115-121: MQTT connected but no ack and/or no msg."""
+    """MQTT connected but no ack and/or no msg."""
     health = MqttClientHealth(
         client_id='other_client',
         connected=True,
@@ -96,11 +96,10 @@ def test_check_mqtt_no_ack_no_msg(monkeypatch, caplog):
     result = svc._check_mqtt(FakeMqttClient())
     
     assert "connected but no publish acknowledgement received" in caplog.text
-    assert "connected but no messages sent" in caplog.text
     assert result is False
 
 def test_check_mqtt_healthy_ack_msg(monkeypatch, caplog):
-    """Lines 123-124: MQTT healthy branch."""
+    """MQTT healthy branch."""
     import logging
     caplog.set_level(logging.DEBUG)
     health = MqttClientHealth(
@@ -115,13 +114,13 @@ def test_check_mqtt_healthy_ack_msg(monkeypatch, caplog):
     svc = MonitorService([])
     result = svc._check_mqtt(FakeMqttClient())
     
-    assert "healthy (connected 3x)" in caplog.text
+    assert "healthy (connected 3x" in caplog.text
     assert result is True
 
 
 @pytest.mark.asyncio
 async def test_publish_health_exception(monkeypatch, caplog):
-    """Lines 168-169: Exception during publish."""
+    """Exception during publish."""
     svc = MonitorService([])
     
     # Mock file write to raise Exception
@@ -140,7 +139,7 @@ async def test_publish_health_exception(monkeypatch, caplog):
 
 @pytest.mark.asyncio
 async def test_on_ha_state_change():
-    """Line 186: on_ha_state_change returns True."""
+    """on_ha_state_change returns True."""
     svc = MonitorService([])
     result = await svc.on_ha_state_change(None, FakeMqttClient(), "payload", "source", None)
     assert result is True
@@ -148,7 +147,7 @@ async def test_on_ha_state_change():
 
 @pytest.mark.asyncio
 async def test_clean_oserror_tmp_dir(monkeypatch, caplog):
-    """Lines 224-225: OSError when deleting from /tmp."""
+    """OSError when deleting from /tmp."""
     mock_path = MagicMock()
     mock_path.unlink.side_effect = OSError("Permission denied")
     
@@ -168,7 +167,7 @@ async def test_clean_oserror_tmp_dir(monkeypatch, caplog):
 
 @pytest.mark.asyncio
 async def test_clean_oserror_health_file(monkeypatch, caplog):
-    """Line 232: OSError when deleting service._health_file."""
+    """OSError when deleting service._health_file."""
     
     class FakeService(MonitorService):
         def __init__(self, *args, **kwargs):

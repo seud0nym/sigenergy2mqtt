@@ -30,6 +30,7 @@
   - Moving validation logging into the validation layer
 - Increased the default Modbus auto-discovery timeout from **0.25 s** to **0.5 s**
 - Improved CI by updating badges and enabling multi-threaded pytest execution by default
+- Simplified MQTT client health checks to prioritize last message timing and improve logging clarity
 
 ### Fixed
 

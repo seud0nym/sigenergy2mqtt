@@ -112,19 +112,13 @@ class MonitorService(Device):
             if not health.connected:
                 logging.warning(f"{self.log_identity} MQTT Client ID {cid} disconnected ({health.disconnect_count}x total)")
             elif is_monitor and (self._started + self._health_publish_interval) > now:
-                logging.debug(f"{self.log_identity} MQTT Client ID {cid} not checked (nothing published yet)")
+                logging.debug(f"{self.log_identity} MQTT Client ID {cid} not checked (first interval)")
                 mqtt_healthy_connections += 1
+            elif health.last_message_at and health.last_publish_ack_at and health.last_publish_ack_at < health.last_message_at and (now - health.last_message_at) > max:
+                logging.warning(f"{self.log_identity} MQTT Client ID {cid} connected but no publish acknowledgement received for {(now - health.last_message_at):0.2f}s")
             else:
-                ack = bool(health.last_publish_ack_at and (now - health.last_publish_ack_at) <= max)
-                msg = bool(health.last_message_at and (now - health.last_message_at) <= max)
-                if not ack and not msg:
-                    if not ack:
-                        logging.warning(f"{self.log_identity} MQTT Client ID {cid} connected but no publish acknowledgement received for {max}s")
-                    if not msg:
-                        logging.warning(f"{self.log_identity} MQTT Client ID {cid} connected but no messages sent for {max}s")
-                else:
-                    logging.debug(f"{self.log_identity} MQTT Client ID {cid} healthy (connected {health.connect_count}x)")
-                    mqtt_healthy_connections += 1
+                logging.debug(f"{self.log_identity} MQTT Client ID {cid} healthy (connected {health.connect_count}x, last message {now - health.last_message_at:0.2f}s ago, last ack {now - health.last_publish_ack_at:0.2f}s ago)")
+                mqtt_healthy_connections += 1
         return bool(mqtt_healthy_connections == len(mqtt_snapshot))
 
     async def _check_topic_health(self) -> int:
