@@ -24,6 +24,7 @@ Usage: scripts/dependencies [--install-only] [--skip-build-deps]
 Options:
   --install-only      Install dependency specs only; do not update pyproject.toml
                       and do not run removal/autoremove logic.
+  --no-upgrade        Do not upgrade existing packages
   --skip-build-deps   Do not install build/test helper dependencies.
   -h, --help          Show this help text.
 USAGE
