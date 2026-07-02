@@ -25,7 +25,7 @@ from sigenergy2mqtt.common import (
 from sigenergy2mqtt.common.firmware_version import FirmwareVersion
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus import ModbusDataType
-from sigenergy2mqtt.sensors.base import DiscoveryKeys, ScanInterval, UnpublishResetSensorMixin
+from sigenergy2mqtt.sensors.base import DiscoveryKeys, SanityCheckException, ScanInterval, UnpublishResetSensorMixin
 
 from .base import (
     Alarm1Sensor,
@@ -1523,30 +1523,44 @@ class PowerFactor(ReadOnlySensor, HybridInverter, PVInverter):
         self._max_failures_retry_interval = 300
         self._active_power = active_power
         self._reactive_power = reactive_power
-        self._first_reading: bool = True
+
+    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
+        try:
+            return await super().get_state(raw, republish, **kwargs)
+        except SanityCheckException as e:
+            if self._active_power.publishable and self._reactive_power.publishable and (self._active_power.latest_raw_state is None or self._reactive_power.latest_raw_state is None):
+                if self.debug_logging:
+                    logging.debug(
+                        f"{self.log_identity} IGNORED {e} and unable to calculate actual power factor because active_power={self._active_power.latest_raw_state} and reactive_power={self._reactive_power.latest_raw_state}"
+                    )
+                return None
+            raise e
 
     def set_state(self, state: int | float | str | list[bool] | list[int] | list[float]) -> None:
         try:
             super().set_state(state)
-        except ValueError as e:
-            active_power = cast(float, self._active_power.latest_raw_state)
-            reactive_power = cast(float, self._reactive_power.latest_raw_state)
-            if active_power is not None and reactive_power is not None:
-                apparent_power = math.sqrt(active_power**2 + reactive_power**2)
-                power_factor = round((abs(active_power) / apparent_power) * self.gain) if apparent_power != 0 else 0
-                if self.debug_logging:
-                    active_power_time = cast(float, self._active_power.latest_time)
-                    reactive_power_time = cast(float, self._reactive_power.latest_time)
-                    logging.debug(
-                        f"{self.log_identity} Using calculated {power_factor=} from active_power={active_power} @ {time.strftime('%H:%M:%S', time.localtime(active_power_time))} reactive_power={reactive_power} @ {time.strftime('%H:%M:%S', time.localtime(reactive_power_time))} -> {apparent_power=} because {e}"
-                    )
-                super().set_state(power_factor)
-                self._first_reading = False
-            elif self._first_reading:
-                self._first_reading = False
-                return
-            else:
-                raise e
+        except SanityCheckException as e:
+            if self._active_power.publishable and self._reactive_power.publishable:
+                active_power = cast(float, self._active_power.latest_raw_state)
+                reactive_power = cast(float, self._reactive_power.latest_raw_state)
+                if active_power is not None and reactive_power is not None:
+                    apparent_power = math.sqrt(active_power**2 + reactive_power**2)
+                    power_factor = round((abs(active_power) / apparent_power) * self.gain) if apparent_power != 0 else 0
+                    if self.debug_logging:
+                        active_power_time = cast(float, self._active_power.latest_time)
+                        reactive_power_time = cast(float, self._reactive_power.latest_time)
+                        logging.debug(
+                            f"{self.log_identity} Using calculated {power_factor=} from active_power={active_power} @ {time.strftime('%H:%M:%S', time.localtime(active_power_time))} reactive_power={reactive_power} @ {time.strftime('%H:%M:%S', time.localtime(reactive_power_time))} -> {apparent_power=} because {e}"
+                        )
+                    super().set_state(power_factor)
+                    return
+                elif self.debug_logging:
+                    logging.debug(f"{self.log_identity} {e} but unable to calculate actual power factor because active_power={active_power} and reactive_power={reactive_power}")
+            elif self.debug_logging:
+                logging.debug(
+                    f"{self.log_identity} {e} but unable to calculate actual power factor because active_power.publishable={self._active_power.publishable} and reactive_power.publishable={self._reactive_power.publishable}"
+                )
+            raise e
 
 
 class PACKBCUCount(ReadOnlySensor, HybridInverter):
