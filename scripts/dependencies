@@ -1,10 +1,14 @@
 #!/bin/bash
 
 cd "$(cd $(dirname $0)/..; pwd)"
+if [[ -z "$VIRTUAL_ENV" ]]; then
+   source .venv/bin/activate
+fi
 
 install_only=0
 install_build_deps=1
 no_upgrade=0
+quiet=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -16,6 +20,9 @@ while [[ $# -gt 0 ]]; do
       ;;
     --skip-build-deps)
       install_build_deps=0
+      ;;
+    -q|--quiet)
+      quiet=">/dev/null 2>&1"
       ;;
     -h|--help)
       cat <<'USAGE'
@@ -46,16 +53,16 @@ check_pkg () {
   local pkg="${spec%%[=(]*}"
 
   if [[ "$install_only" -eq 1 ]]; then
-    pip install "$spec" --root-user-action=ignore --no-cache-dir || exit 1
+    eval pip install "$spec" --root-user-action=ignore --no-cache-dir $quiet || exit 1
     return
   fi
 
-  echo ">>> Checking $pkg..."
+  [ -z "$quiet" ] && echo ">>> Checking $pkg..."
 
   if ! echo "$frozen" | grep -q "^${pkg}=="; then
-    pip install "$spec" --root-user-action=ignore || exit 1
+    eval pip install "$spec" --root-user-action=ignore $quiet || exit 1
   elif [[ $no_upgrade -eq 0 ]]; then
-    pip install "$spec" --upgrade --root-user-action=ignore || exit 1
+    eval pip install "$spec" --upgrade --root-user-action=ignore $quiet || exit 1
   fi
 
   if [[ -n "$add_after" ]]; then
@@ -67,7 +74,7 @@ check_pkg () {
   fi
 }
 
-pip install --upgrade pip
+eval pip install --upgrade pip $quiet
 
 if [[ "$install_build_deps" -eq 1 ]]; then
   for spec in \
