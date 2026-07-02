@@ -1,7 +1,7 @@
 <!-- git log [since tag]..HEAD --oneline -->
 # Changelog 
 
-## [2026.7.2b1] - 2026.07.02
+## [2026.7.3] - 2026.07.03
 
 ### Added
 
@@ -41,7 +41,7 @@
 - Implemented defensive futures cancellation and proper async persistence offloading to mitigate StateStore TimeoutErrors (#207)
 - Prevented race conditions when creating persistent state directory by using parents and exist_ok flags
 - Allow variable warning threshold based on repeated state publish interval when checking if PVOutput state topics have been updated
-- Added first reading initialization to PowerFactor to suppress errors during inverter startup
+- Fixed PowerFactor fallback calculation to correctly handle when active/reactive power are not publishable or not yet acquired
 - Added missing DC-Charger Running State options
 
 ### Tests
