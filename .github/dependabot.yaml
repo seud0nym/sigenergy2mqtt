@@ -40,3 +40,7 @@ updates:
       interval: "weekly"
       time: "06:00"
       timezone: "Australia/Melbourne"
+    groups:
+      docker-images:
+        patterns:
+          - "*"
