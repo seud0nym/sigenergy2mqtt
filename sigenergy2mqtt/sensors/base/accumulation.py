@@ -127,8 +127,6 @@ class AccumulationSensor(DerivedSensor):
                 logging.error(f"{self.log_identity} Unexpected error persisting state for {self._state_persistence_key}: {e}")
 
     def update_from_source_sensor(self, sensor: Sensor) -> bool:
-        if sensor.latest_raw_state is None:
-            return False
         """Update accumulated value from source sensor.
 
         Args:
@@ -141,7 +139,7 @@ class AccumulationSensor(DerivedSensor):
             logging.warning(f"{self.log_identity} Attempt to call update_from_source_sensor from {sensor.log_identity}")
             return False
 
-        if sensor.state_count < 2:
+        if sensor.latest_raw_state is None or sensor.state_count < 2:
             return False  # Need at least two points
 
         # Calculate time difference in hours
