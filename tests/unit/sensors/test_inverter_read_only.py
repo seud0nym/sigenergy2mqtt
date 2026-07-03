@@ -9,6 +9,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from sigenergy2mqtt.config import Config
+from sigenergy2mqtt.sensors.base import SanityCheckException
 from sigenergy2mqtt.sensors.inverter_read_only import (
     DCChargerRunningState,
     InverterFirmwareVersion,
@@ -220,9 +221,9 @@ class TestPowerFactor:
         sensor.gain = 1000
         sensor.debug_logging = False
 
-        # Mock parent set_state to raise ValueError
+        # Mock parent set_state to raise SanityCheckException
         with patch.object(sensor.__class__.__bases__[0], "set_state") as mock_parent_set_state:
-            mock_parent_set_state.side_effect = ValueError("Invalid value")
+            mock_parent_set_state.side_effect = SanityCheckException("Invalid value")
 
             # Second call should succeed (calculation bypass)
             call_count = [0]
@@ -230,7 +231,7 @@ class TestPowerFactor:
             def side_effect(value):
                 call_count[0] += 1
                 if call_count[0] == 1:
-                    raise ValueError("Invalid value")
+                    raise SanityCheckException("Invalid value")
 
             mock_parent_set_state.side_effect = side_effect
 
@@ -256,7 +257,7 @@ class TestPowerFactor:
         sensor.gain = 1000
 
         with patch.object(sensor.__class__.__bases__[0], "set_state") as mock_parent_set_state:
-            mock_parent_set_state.side_effect = [ValueError("Invalid"), None]
+            mock_parent_set_state.side_effect = [SanityCheckException("Invalid"), None]
 
             sensor.set_state(999)
             # When apparent_power == 0, should set power_factor = 0
@@ -299,7 +300,7 @@ class TestPowerFactor:
         sensor.gain = 1000
 
         with patch.object(sensor.__class__.__bases__[0], "set_state") as mock_parent_set_state:
-            mock_parent_set_state.side_effect = [ValueError("Invalid"), None]
+            mock_parent_set_state.side_effect = [SanityCheckException("Invalid"), None]
 
             sensor.set_state(999)
             # abs(-3000) / 5000 * 1000 = 600 (still positive due to abs())
