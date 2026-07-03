@@ -8,18 +8,15 @@ updates:
       time: "06:00"
       timezone: "Australia/Melbourne"
     groups:
-      # This group forces these two to always be updated together
+      # Dependabot evaluates this first
       artifact-actions:
         patterns:
           - "actions/upload-artifact"
           - "actions/download-artifact"
-      # Everything else stays in the general group
+      # Dependabot evaluates this second. Anything caught above is already ignored here.
       all-other-actions:
         patterns:
           - "*"
-        exclude:
-          - "actions/upload-artifact"
-          - "actions/download-artifact"
 
   # Monitor Python dependencies (Hatch/pyproject.toml)
   - package-ecosystem: "pip"
@@ -40,7 +37,3 @@ updates:
       interval: "weekly"
       time: "06:00"
       timezone: "Australia/Melbourne"
-    groups:
-      docker-images:
-        patterns:
-          - "*"
