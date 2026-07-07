@@ -78,6 +78,9 @@ class TestConfigValidation:
     def test_check_float(self):
         assert validation.check_float(10.5, "test") == 10.5
         assert validation.check_float("10.5", "test") == 10.5
+        assert validation.check_float(None, "test", allow_none=True) is None
+        with pytest.raises(ValueError, match="must be a float and not null"):
+            validation.check_float(None, "test")
         with pytest.raises(ValueError):
             validation.check_float("invalid", "test")
         with pytest.raises(ValueError):

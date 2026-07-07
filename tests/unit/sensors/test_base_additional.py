@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from datetime import timezone
 import time
 from unittest.mock import Mock
@@ -238,3 +239,78 @@ def test_pv_power_notify_returns_true():
     res = loop.run_until_complete(p.notify(None, None, 1, "t", Mock()))
     loop.close()
     assert res is True
+
+
+def _derived_sensor(unique_id="sigen_derived_extra", object_id="sigen_derived_extra"):
+    return base.DerivedSensor(
+        name="Derived Extra",
+        unique_id=unique_id,
+        object_id=object_id,
+        data_type=ModbusDataType.UINT16,
+        unit=None,
+        device_class=None,
+        state_class=None,
+        icon="mdi:test",
+        gain=None,
+        precision=None,
+    )
+
+
+def test_bind_source_sensor_initializes_list_and_respects_debug_override():
+    derived = _derived_sensor()
+    del derived.bound_source_sensors
+    source = Mock(debug_logging=True)
+    source.unique_id = "sigen_source_debug"
+
+    derived.apply_sensor_overrides = Mock()
+    derived.bind_source_sensor(source)
+    derived.bind_source_sensor(source)
+
+    assert derived.bound_source_sensors == [source]
+    assert derived.debug_logging is True
+    assert derived.apply_sensor_overrides.call_count == 2
+
+
+@pytest.mark.asyncio
+async def test_derived_update_internal_state_returns_false():
+    derived = _derived_sensor("sigen_derived_update", "sigen_derived_update")
+
+    assert await derived._update_internal_state() is False
+
+
+def test_run_persistence_coroutine_closes_when_event_loop_is_not_running():
+    derived = _derived_sensor("sigen_derived_persist_closed", "sigen_derived_persist_closed")
+    coro = Mock()
+
+    loop = Mock()
+    loop.is_running.return_value = False
+
+    with pytest.MonkeyPatch.context() as monkeypatch:
+        monkeypatch.setattr(asyncio, "get_running_loop", Mock(side_effect=RuntimeError("no running loop")))
+        monkeypatch.setattr(asyncio, "get_event_loop", Mock(return_value=loop))
+        derived.run_persistence_coroutine(coro)
+
+    coro.close.assert_called_once_with()
+
+
+def test_run_persistence_coroutine_logs_and_closes_on_create_task_failure(caplog):
+    derived = _derived_sensor("sigen_derived_persist_error", "sigen_derived_persist_error")
+    coro = Mock()
+
+    class FailingLoop:
+        def create_task(self, _coro):
+            raise ValueError("boom")
+
+    with pytest.MonkeyPatch.context() as monkeypatch:
+        monkeypatch.setattr(asyncio, "get_running_loop", lambda: FailingLoop())
+        with caplog.at_level(logging.WARNING):
+            derived.run_persistence_coroutine(coro)
+
+    assert "Failed to persist state" in caplog.text
+    coro.close.assert_called_once_with()
+
+
+def test_update_from_source_sensor_base_method_is_noop():
+    derived = _derived_sensor("sigen_derived_noop", "sigen_derived_noop")
+
+    assert derived.update_from_source_sensor(Mock()) is None

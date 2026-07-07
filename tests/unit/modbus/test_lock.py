@@ -168,3 +168,16 @@ class TestModbusLock:
 
         lock_with_none.release()
         assert lock_with_none.locked() is False
+
+    @pytest.mark.asyncio
+    async def test_lock_context_manager_raises_when_acquire_returns_false(self, lock_with_none, monkeypatch):
+        """Test lock context manager raises TimeoutError when acquire returns False."""
+
+        async def acquire_returns_false(timeout=None):
+            return False
+
+        monkeypatch.setattr(lock_with_none, "acquire", acquire_returns_false)
+
+        with pytest.raises(TimeoutError, match="Failed to acquire lock"):
+            async with lock_with_none.lock(timeout=0.1):
+                pass
