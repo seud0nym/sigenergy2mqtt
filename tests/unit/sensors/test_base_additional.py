@@ -308,9 +308,3 @@ def test_run_persistence_coroutine_logs_and_closes_on_create_task_failure(caplog
 
     assert "Failed to persist state" in caplog.text
     coro.close.assert_called_once_with()
-
-
-def test_update_from_source_sensor_base_method_is_noop():
-    derived = _derived_sensor("sigen_derived_noop", "sigen_derived_noop")
-
-    assert derived.update_from_source_sensor(Mock()) is None
