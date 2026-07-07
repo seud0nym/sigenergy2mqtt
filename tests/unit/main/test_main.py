@@ -143,6 +143,11 @@ class TestFirmwareVersion:
         assert parsed.build is None
         assert parsed.special_id is None
 
+    def test_repr_includes_all_components(self):
+        parsed = FirmwareVersion("V122R001C00SPC113B717A")
+
+        assert repr(parsed) == "FirmwareVersion(Platform=122, Release=1, Variant=0, SPC=113, Build=717, SpecialID='A')"
+
     def test_raises_for_invalid_firmware_version(self):
         with pytest.raises(ValueError, match="Invalid firmware format"):
             FirmwareVersion("invalid")

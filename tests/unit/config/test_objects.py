@@ -1,5 +1,6 @@
 """Tests for pydantic config sub-model objects."""
 
+import dataclasses
 import logging
 from datetime import time
 
@@ -294,3 +295,19 @@ class TestModbusConfig:
         assert config.registers.read_only is True
         assert config.registers.read_write is True
         assert config.registers.write_only is True
+
+
+def test_modbus_config_accepts_dataclass_scan_interval():
+    @dataclasses.dataclass
+    class LegacyScanInterval:
+        low: int = 11
+        medium: int = 12
+        high: int = 13
+        realtime: int = 14
+
+    config = ModbusConfig(host="localhost", scan_interval=LegacyScanInterval())
+
+    assert config.scan_interval.low == 11
+    assert config.scan_interval.medium == 12
+    assert config.scan_interval.high == 13
+    assert config.scan_interval.realtime == 14
