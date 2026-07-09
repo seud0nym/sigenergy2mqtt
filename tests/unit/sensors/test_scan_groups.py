@@ -32,6 +32,7 @@ class DummyModbusSensor(ModbusSensorMixin, ReadableSensorMixin):
         object.__setattr__(self, "derived_sensors", {})
         object.__setattr__(self, "sleeper_task", None)
         object.__setattr__(self, "debug_logging", False)
+        object.__setattr__(self, "_log_identity", unique_id)
 
     async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None = None, republish: bool = False) -> bool:
         self._states.append((time.time(), 1))

@@ -7,7 +7,6 @@ import pytest
 import requests
 
 from sigenergy2mqtt.config import ConsumptionSource, OutputField, StatusField, active_config
-from sigenergy2mqtt.config.config import active_config
 from sigenergy2mqtt.pvoutput.output import PVOutputOutputService
 from sigenergy2mqtt.pvoutput.service import Service
 from sigenergy2mqtt.pvoutput.status import PVOutputStatusService
@@ -279,6 +278,7 @@ class TestPVOutputService:
 
     @pytest.mark.asyncio
     async def test_upload_payload_cancelled_error(self, monkeypatch, caplog):
+        caplog.set_level(logging.DEBUG)
         svc = make_service()
         with patch.object(active_config.pvoutput, "testing", False):
             # Test standard 10s retry sleep cancellation

@@ -2,7 +2,7 @@
 
 import asyncio
 import logging
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -616,6 +616,7 @@ class TestInfluxServiceMissingCoverage:
         service._writer_type = "mock"
         
         with patch.object(active_config.influxdb, "load_hass_history", False):
+            caplog.set_level(logging.DEBUG)
             service.online = False
             client = MagicMock()
             service._topic_cache["topic1"] = {}
@@ -655,7 +656,8 @@ class TestInfluxServiceMissingCoverage:
                     await asyncio.sleep(0.01)
                     service.online = False
                 
-                service.online = True
+                future = asyncio.get_event_loop().create_future()
+                service.online = future
                 task = asyncio.create_task(sleep_then_stop())
                 await service._keep_running(None, MagicMock())
                 await task
@@ -690,6 +692,7 @@ class TestInfluxServiceMissingCoverage:
         with patch("sigenergy2mqtt.devices.DeviceRegistry.get", return_value=[DummyDevice()]):
             with patch.object(active_config.influxdb, "include", ["o2"]):
                 with patch.object(active_config.influxdb, "exclude", ["o2"]):
+                    caplog.set_level(logging.DEBUG)
                     service.subscribe(MagicMock(), MagicMock())
                     assert "Skipping sensor 'o1': no state_topic" in caplog.text
                     assert "Skipping 't3' because object_id 'o3' is not in include list" in caplog.text
