@@ -589,3 +589,109 @@ class TestHassHistorySyncCoverage:
                     res = await hass_sync.sync_from_homeassistant(topic_cache)
                     assert res == {"W[entity_id=obj1]": 5}
 
+
+class TestInfluxServiceMissingCoverage:
+    def test_matches_filter(self, service):
+        class DummySensor:
+            pass
+        sensor = DummySensor()
+        assert service._matches_filter(sensor, "obj1", "uid1", ["DummySensor"]) is True
+        assert service._matches_filter(sensor, "obj1", "uid1", ["obj1"]) is True
+        assert service._matches_filter(sensor, "obj1", "uid1", ["uid1"]) is True
+        assert service._matches_filter(sensor, "obj1", "uid1", ["nomatch"]) is False
+
+    @pytest.mark.asyncio
+    async def test_keep_running_init_fails(self, service, monkeypatch, caplog):
+        async def fake_init():
+            return False
+        monkeypatch.setattr(service, "async_init", fake_init)
+        await service._keep_running(None, MagicMock())
+        assert "Initialisation failed" in caplog.text
+
+    @pytest.mark.asyncio
+    async def test_keep_running_no_hass_history(self, service, monkeypatch, caplog):
+        async def fake_init():
+            return True
+        monkeypatch.setattr(service, "async_init", fake_init)
+        service._writer_type = "mock"
+        
+        with patch.object(active_config.influxdb, "load_hass_history", False):
+            service.online = False
+            client = MagicMock()
+            service._topic_cache["topic1"] = {}
+            await service._keep_running(None, client)
+            assert "Loading history from Home Assistant is disabled" in caplog.text
+            client.unsubscribe.assert_called_with("topic1")
+            
+    @pytest.mark.asyncio
+    async def test_keep_running_sync_task_cancellation(self, service, monkeypatch, caplog):
+        async def fake_init():
+            return True
+        monkeypatch.setattr(service, "async_init", fake_init)
+        service._writer_type = "mock"
+        
+        with patch.object(active_config.influxdb, "load_hass_history", True):
+            async def fake_sync(*a, **kw):
+                await asyncio.sleep(10)
+            
+            with patch("sigenergy2mqtt.influxdb.hass_history_sync.HassHistorySync.sync_from_homeassistant", fake_sync):
+                service.online = False
+                await service._keep_running(None, MagicMock())
+                assert "Cancelling background sync task" in caplog.text
+
+    @pytest.mark.asyncio
+    async def test_keep_running_sync_task_exception(self, service, monkeypatch, caplog):
+        async def fake_init():
+            return True
+        monkeypatch.setattr(service, "async_init", fake_init)
+        service._writer_type = "mock"
+        
+        with patch.object(active_config.influxdb, "load_hass_history", True):
+            async def fake_sync(*a, **kw):
+                raise Exception("Sync failed")
+            
+            with patch("sigenergy2mqtt.influxdb.hass_history_sync.HassHistorySync.sync_from_homeassistant", fake_sync):
+                async def sleep_then_stop():
+                    await asyncio.sleep(0.01)
+                    service.online = False
+                
+                service.online = True
+                task = asyncio.create_task(sleep_then_stop())
+                await service._keep_running(None, MagicMock())
+                await task
+                assert "Sync task failed" in caplog.text
+
+    @pytest.mark.asyncio
+    async def test_handle_mqtt_debug_logging(self, service, monkeypatch, caplog):
+        caplog.set_level(logging.DEBUG)
+        service._topic_cache["t1"] = {"object_id": "o", "uom": "W", "debug_logging": True}
+        monkeypatch.setattr(service, "write_line", AsyncMock())
+        await service.handle_mqtt(None, None, "10", "t1", None)
+        assert "Writing line protocol:" in caplog.text
+
+    def test_subscribe_missing_tpc_and_filters(self, service, monkeypatch, caplog):
+        class DummySensor(dict):
+            def __init__(self, obj, tpc, pub):
+                self["object_id"] = obj
+                self["unit_of_measurement"] = ""
+                self.unique_id = obj
+                self.state_topic = tpc
+                self.publishable = pub
+                self.debug_logging = False
+
+        class DummyDevice:
+            def get_all_sensors(self):
+                return {
+                    "s1": DummySensor("o1", "", True),
+                    "s2": DummySensor("o2", "t2", True),
+                    "s3": DummySensor("o3", "t3", True),
+                }
+        
+        with patch("sigenergy2mqtt.devices.DeviceRegistry.get", return_value=[DummyDevice()]):
+            with patch.object(active_config.influxdb, "include", ["o2"]):
+                with patch.object(active_config.influxdb, "exclude", ["o2"]):
+                    service.subscribe(MagicMock(), MagicMock())
+                    assert "Skipping sensor 'o1': no state_topic" in caplog.text
+                    assert "Skipping 't3' because object_id 'o3' is not in include list" in caplog.text
+                    assert "Skipping 't2' because object_id 'o2' is excluded" in caplog.text
+
