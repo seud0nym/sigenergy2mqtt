@@ -8,7 +8,16 @@ from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.sensors.base import AvailabilityMixin, DiscoveryKeys, Sensor
 from sigenergy2mqtt.sensors.plant_derived import PlantConsumedPower
 from sigenergy2mqtt.sensors.plant_read_only import EMSWorkMode, SystemTimeZone
-from sigenergy2mqtt.sensors.plant_read_write import ActivePowerFixedAdjustmentTargetValue, IndependentPhasePowerControl, MaxChargingLimit, PlantStatus, RemoteEMSControlMode
+from sigenergy2mqtt.sensors.plant_read_write import (
+    ActivePowerFixedAdjustmentTargetValue,
+    ActivePowerPercentageAdjustmentTargetValue,
+    IndependentPhasePowerControl,
+    MaxChargingLimit,
+    PlantStatus,
+    QSAdjustmentTargetValue,
+    ReactivePowerFixedAdjustmentTargetValue,
+    RemoteEMSControlMode,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -71,6 +80,46 @@ class TestPlantReadWrite:
         remote_ems_mode = MagicMock(spec=RemoteEMSControlMode)
         sensor = ActivePowerFixedAdjustmentTargetValue(plant_index=0, remote_ems=availability, remote_ems_mode=remote_ems_mode)
         assert sensor["unit_of_measurement"] == "kW"
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "sensor_cls",
+        [
+            ActivePowerFixedAdjustmentTargetValue,
+            ReactivePowerFixedAdjustmentTargetValue,
+            ActivePowerPercentageAdjustmentTargetValue,
+            QSAdjustmentTargetValue,
+        ],
+    )
+    async def test_adjustment_target_values_coverage(self, mock_config, sensor_cls, caplog):
+        availability = MagicMock(spec=AvailabilityMixin)
+        availability.state_topic = "test_device/state"
+        availability.publish_raw = False
+        remote_ems_mode = MagicMock(spec=RemoteEMSControlMode)
+        remote_ems_mode.name = "Remote EMS Mode"
+        remote_ems_mode.is_pcs_remote_control_mode_topic = "test_device/is_pcs_remote_control_mode"
+        
+        sensor = sensor_cls(plant_index=0, remote_ems=availability, remote_ems_mode=remote_ems_mode)
+        sensor.configure_mqtt_topics("test_device")
+        
+        # Test get_attributes (lines 93-95, 141-143, 188-190, 235-237)
+        attrs = sensor.get_attributes()
+        assert "comment" in attrs
+        assert "PCS Remote Control Mode" in attrs["comment"]
+        
+        # Test value_is_valid failure path (lines 99-100, 147-148, 194-195, 241-242)
+        remote_ems_mode.latest_raw_state = 0
+        caplog.clear()
+        
+        result = await sensor.value_is_valid(MagicMock(), 50)
+        assert result is False
+        assert "is not in PCS Remote Control Mode" in caplog.text
+        
+        # Test value_is_valid success path
+        remote_ems_mode.latest_raw_state = 1
+        with patch("sigenergy2mqtt.sensors.base.NumericSensor.value_is_valid", return_value=True):
+            result = await sensor.value_is_valid(MagicMock(), 50)
+            assert result is True
 
     def test_max_charging_limit_configure_topics_without_remote_ems_mode(self, mock_config):
         mock_config.ems_mode_check = True
