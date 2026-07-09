@@ -328,8 +328,7 @@ class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
         Returns:
             Display-friendly state value
         """
-        if isinstance(raw_value, str):
-            return raw_value
+        # Early return removed to allow string processing below
 
         # Lazy import to avoid circular dependencies
         from .writable import SwitchSensor, WriteOnlySensor
@@ -361,6 +360,9 @@ class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
             state = self._apply_gain_and_precision(raw_value)
             if state is not None:
                 return state
+
+        if isinstance(raw_value, str):
+            return raw_value
 
         return raw_value
 
