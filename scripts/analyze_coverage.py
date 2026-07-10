@@ -4,8 +4,12 @@ import subprocess
 import sys
 import xml.etree.ElementTree as ET
 
+min_version = (3, 11)  # https://cwe.mitre.org/data/definitions/611.html
+if sys.version_info < min_version:
+    raise Exception(f"Python {min_version[0]}.{min_version[1]} or higher is required!")
+
 # 1. Define the coverage file destination
-coverage_file = 'coverage.xml'
+coverage_file = "coverage.xml"
 
 # 2. Run pytest to generate the coverage.xml file
 print("Running pytest and generating coverage report...")
@@ -29,20 +33,20 @@ tree = ET.parse(coverage_file)
 root = tree.getroot()
 
 files = []
-for cls in root.findall('.//class'):
-    name = cls.get('filename')
-    line_rate = float(cls.get('line-rate', 0))
-    lines = cls.findall('lines/line')
+for cls in root.findall(".//class"):
+    name = cls.get("filename")
+    line_rate = float(cls.get("line-rate", 0))
+    lines = cls.findall("lines/line")
     total = len(lines)
-    covered = sum(1 for l in lines if int(l.get('hits', 0)) > 0)
+    covered = sum(1 for line in lines if int(line.get("hits", 0)) > 0)
     missing = total - covered
-    missing_lines = [l.get('number') for l in lines if int(l.get('hits', 0)) == 0]
+    missing_lines = [line.get("number") for line in lines if int(line.get("hits", 0)) == 0]
     files.append((line_rate, name, total, covered, missing, missing_lines))
 
 files.sort(key=lambda x: (x[0], -x[4]))
 
 print(f"\n{'File':<60} {'Rate':>6} {'Total':>6} {'Missing':>8}")
-print('-' * 85)
+print("-" * 85)
 for rate, name, total, covered, missing, missing_lines in files:
     if rate < 1.0:
         print(f"{name:<60} {rate:>6.1%} {total:>6} {missing:>8}  lines: {','.join(missing_lines[:20])}")
