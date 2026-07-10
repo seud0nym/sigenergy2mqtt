@@ -411,11 +411,6 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
             if self.debug_logging:
                 logging.debug(f"{self.log_identity} Device overrides not applied (publishable={self.publishable})")
         elif registers:
-            # Lazy imports to avoid circular dependencies
-            from .derived import DerivedSensor
-            from .mixins import ReadableSensorMixin, WritableSensorMixin
-            from .writable import WriteOnlySensor
-
             # Check for remote EMS override
             if registers.no_remote_ems and (getattr(self, "_remote_ems", None) is not None or getattr(self, "address", None) == 40029):
                 if self.debug_logging:
@@ -423,18 +418,23 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
                 self.publishable = False
                 return
 
-            # Check read/write permissions
-            if isinstance(self, WritableSensorMixin) and not isinstance(self, WriteOnlySensor):
+            # Check read/write permissions via MRO class names to be robust against reimports and test mocks
+            mro_names = {base.__name__ for base in self.__class__.__mro__}
+            is_writable = "WritableSensorMixin" in mro_names
+            is_readable = "ReadableSensorMixin" in mro_names or "DerivedSensor" in mro_names
+            is_write_only = "WriteOnlySensor" in mro_names
+
+            if is_writable and not is_write_only:
                 if not registers.read_write:
                     if self.debug_logging:
                         logging.debug(f"{self.log_identity} Applying device 'read-write' override ({registers.read_write})")
                     self.publishable = registers.read_write
-            elif isinstance(self, (ReadableSensorMixin, DerivedSensor)):
+            elif is_readable:
                 if not registers.read_only:
                     if self.debug_logging:
                         logging.debug(f"{self.log_identity} Applying device 'read-only' override ({registers.read_only})")
                     self.publishable = registers.read_only
-            elif isinstance(self, WriteOnlySensor):
+            elif is_write_only:
                 if not registers.write_only:
                     if self.debug_logging:
                         logging.debug(f"{self.log_identity} Applying device 'write-only' override ({registers.write_only})")
