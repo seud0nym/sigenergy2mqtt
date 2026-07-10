@@ -305,7 +305,7 @@ def test_run_modbus_event_loop_stop_event_set():
     stop_event = threading.Event()
 
     with (
-        patch("sigenergy2mqtt.main.device_thread.read_and_publish_device_sensors", return_value=None),
+        patch("sigenergy2mqtt.main.device_thread.read_and_publish_device_sensors", new_callable=MagicMock, return_value=None),
         patch("asyncio.set_event_loop")
     ):
         run_modbus_event_loop(config, loop, stop_event)

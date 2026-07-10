@@ -15,6 +15,7 @@ from sigenergy2mqtt.metrics.metrics_sensors import (
     ModbusReadMean,
     ModbusReadMin,
     ModbusReadsPerSecond,
+    ModbusSkippedErrors,
     ModbusWriteErrors,
     ModbusWriteMax,
     ModbusWriteMean,
@@ -22,6 +23,12 @@ from sigenergy2mqtt.metrics.metrics_sensors import (
     ProtocolPublished,
     ProtocolVersion,
     Started,
+    StateStoreLoads,
+    StateStoreSaveErrors,
+    StateStoreSaveMax,
+    StateStoreSaveMean,
+    StateStoreSaveMin,
+    StateStoreSaves,
 )
 
 
@@ -222,3 +229,80 @@ class TestProtocolPublished:
             sensor = ProtocolPublished(Protocol.V1_8)
             await sensor._update_internal_state()
             assert sensor.latest_raw_state == "2024-08-05"
+
+
+class TestModbusSkippedErrors:
+    @pytest.mark.asyncio
+    async def test_update_internal_state(self):
+        sensor = ModbusSkippedErrors()
+        Metrics.sigenergy2mqtt_modbus_skipped_errors = 7
+        await sensor._update_internal_state()
+        assert sensor.latest_raw_state == 7
+
+
+class TestStateStoreSaves:
+    @pytest.mark.asyncio
+    async def test_update_internal_state(self):
+        sensor = StateStoreSaves()
+        Metrics.sigenergy2mqtt_state_store_saves = 42
+        await sensor._update_internal_state()
+        assert sensor.latest_raw_state == 42
+
+
+class TestStateStoreSaveErrors:
+    @pytest.mark.asyncio
+    async def test_update_internal_state(self):
+        sensor = StateStoreSaveErrors()
+        Metrics.sigenergy2mqtt_state_store_save_errors = 3
+        await sensor._update_internal_state()
+        assert sensor.latest_raw_state == 3
+
+
+class TestStateStoreSaveMax:
+    @pytest.mark.asyncio
+    async def test_update_internal_state(self):
+        sensor = StateStoreSaveMax()
+        Metrics.sigenergy2mqtt_state_store_save_max = 150.5
+        await sensor._update_internal_state()
+        assert sensor.latest_raw_state == 150.5
+
+    @pytest.mark.asyncio
+    async def test_update_internal_state_inf(self):
+        sensor = StateStoreSaveMax()
+        Metrics.sigenergy2mqtt_state_store_save_max = float("inf")
+        await sensor._update_internal_state()
+        assert sensor.latest_raw_state == 0.0
+
+
+class TestStateStoreSaveMean:
+    @pytest.mark.asyncio
+    async def test_update_internal_state(self):
+        sensor = StateStoreSaveMean()
+        Metrics.sigenergy2mqtt_state_store_save_mean = 45.0
+        await sensor._update_internal_state()
+        assert sensor.latest_raw_state == 45.0
+
+
+class TestStateStoreSaveMin:
+    @pytest.mark.asyncio
+    async def test_update_internal_state(self):
+        sensor = StateStoreSaveMin()
+        Metrics.sigenergy2mqtt_state_store_save_min = 12.5
+        await sensor._update_internal_state()
+        assert sensor.latest_raw_state == 12.5
+
+    @pytest.mark.asyncio
+    async def test_update_internal_state_inf(self):
+        sensor = StateStoreSaveMin()
+        Metrics.sigenergy2mqtt_state_store_save_min = float("inf")
+        await sensor._update_internal_state()
+        assert sensor.latest_raw_state == 0.0
+
+
+class TestStateStoreLoads:
+    @pytest.mark.asyncio
+    async def test_update_internal_state(self):
+        sensor = StateStoreLoads()
+        Metrics.sigenergy2mqtt_state_store_loads = 100
+        await sensor._update_internal_state()
+        assert sensor.latest_raw_state == 100
