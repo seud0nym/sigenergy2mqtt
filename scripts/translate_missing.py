@@ -42,7 +42,8 @@ from ruamel.yaml.comments import CommentedMap
 # Configuration
 # ---------------------------------------------------------------------------
 
-TRANSLATIONS_DIR = Path(__file__).resolve().parent.parent / "sigenergy2mqtt" / "translations"
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+TRANSLATIONS_DIR = PROJECT_ROOT / "sigenergy2mqtt" / "translations"
 DEFAULT_CACHE_PATH = Path(__file__).resolve().parent / ".translation_cache.json"
 
 # Map YAML filename stem → Google Translate language code
@@ -675,7 +676,17 @@ def main() -> None:
         print("ERROR: No matching languages found.", file=sys.stderr)
         sys.exit(1)
 
-    cache_path = None if args.no_cache else Path(args.cache)
+    cache_path = None
+    if not args.no_cache:
+        try:
+            resolved_cache = Path(args.cache).resolve()
+            if not resolved_cache.is_relative_to(PROJECT_ROOT):
+                print(f"ERROR: Cache path must be within the project directory ({PROJECT_ROOT}).", file=sys.stderr)
+                sys.exit(1)
+            cache_path = resolved_cache
+        except Exception as exc:
+            print(f"ERROR: Invalid cache path: {exc}", file=sys.stderr)
+            sys.exit(1)
     cache = TranslationCache(cache_path)
 
     grand_translated = 0
