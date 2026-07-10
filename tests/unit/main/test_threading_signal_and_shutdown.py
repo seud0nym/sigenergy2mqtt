@@ -196,3 +196,145 @@ async def test_start_logic_keyboard_interrupt_sets_offline_and_reraises():
         # One call from the exception handler to drain the futures.
         assert mock_wait.call_count == 1
         config.offline.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_read_and_publish_device_sensors_on_commencement_exception(caplog):
+    """Cover exception path in on_commencement (lines 100-101)."""
+    config = MagicMock()
+    config.description = "TestCommencementCrash"
+    config.host = None
+    config.url = "None"
+
+    async def fake_task():
+        pass
+
+    device = MagicMock()
+    device.name = "TestDevice"
+    device.publish_discovery = AsyncMock()
+    device.schedule.return_value = [fake_task()]
+    device.on_commencement.side_effect = Exception("commencement failed")
+    config.devices = [device]
+
+    mqtt_handler = MagicMock()
+    mqtt_handler.wait_for = AsyncMock()
+    mqtt_handler.close = AsyncMock()
+
+    with (
+        patch("sigenergy2mqtt.main.device_thread.mqtt_setup", return_value=(MagicMock(), mqtt_handler)),
+        patch.object(active_config.home_assistant, "enabled", True),
+        patch.object(active_config.home_assistant, "discovery_only", False),
+        patch.object(active_config, "clean", False),
+    ):
+        await read_and_publish_device_sensors(config, asyncio.get_event_loop())
+        assert "on commencement failed" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_read_and_publish_device_sensors_on_completion_exception(caplog):
+    """Cover exception path in on_completion (lines 122-123)."""
+    config = MagicMock()
+    config.description = "TestCompletionCrash"
+    config.host = None
+    config.url = "None"
+
+    async def fake_task():
+        pass
+
+    device = MagicMock()
+    device.name = "TestDevice"
+    device.publish_discovery = AsyncMock()
+    device.schedule.return_value = [fake_task()]
+    device.on_completion.side_effect = Exception("completion failed")
+    config.devices = [device]
+
+    mqtt_handler = MagicMock()
+    mqtt_handler.wait_for = AsyncMock()
+    mqtt_handler.close = AsyncMock()
+
+    with (
+        patch("sigenergy2mqtt.main.device_thread.mqtt_setup", return_value=(MagicMock(), mqtt_handler)),
+        patch.object(active_config.home_assistant, "enabled", True),
+        patch.object(active_config.home_assistant, "discovery_only", False),
+        patch.object(active_config, "clean", False),
+    ):
+        await read_and_publish_device_sensors(config, asyncio.get_event_loop())
+        assert "on completion failed" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_read_and_publish_device_sensors_task_exception(caplog):
+    """Cover exception path in task gathering (line 114)."""
+    config = MagicMock()
+    config.description = "TestTaskCrash"
+    config.host = None
+    config.url = "None"
+
+    async def raise_error():
+        raise ValueError("task failed")
+
+    device = MagicMock()
+    device.name = "TestDevice"
+    device.publish_discovery = AsyncMock()
+    device.schedule.return_value = [raise_error()]
+    config.devices = [device]
+
+    mqtt_handler = MagicMock()
+    mqtt_handler.wait_for = AsyncMock()
+    mqtt_handler.close = AsyncMock()
+
+    with (
+        patch("sigenergy2mqtt.main.device_thread.mqtt_setup", return_value=(MagicMock(), mqtt_handler)),
+        patch.object(active_config.home_assistant, "enabled", True),
+        patch.object(active_config.home_assistant, "discovery_only", False),
+        patch.object(active_config, "clean", False),
+    ):
+        await read_and_publish_device_sensors(config, asyncio.get_event_loop())
+        assert "a scheduled task raised an exception" in caplog.text
+
+
+def test_run_modbus_event_loop_stop_event_set():
+    """Cover run_modbus_event_loop exception with stop_event.set() (line 162)."""
+    from sigenergy2mqtt.main.device_thread import run_modbus_event_loop
+    import threading
+
+    config = MagicMock()
+    config.description = "CrashedThreadStopEvent"
+    loop = MagicMock(spec=asyncio.AbstractEventLoop)
+    loop.run_until_complete.side_effect = Exception("loop crash")
+    stop_event = threading.Event()
+
+    with (
+        patch("sigenergy2mqtt.main.device_thread.read_and_publish_device_sensors", return_value=None),
+        patch("asyncio.set_event_loop")
+    ):
+        run_modbus_event_loop(config, loop, stop_event)
+        assert stop_event.is_set()
+
+
+@pytest.mark.asyncio
+async def test_start_logic_sibling_thread_crashed():
+    """Cover start logic when a sibling thread crashed (lines 200-207)."""
+    from sigenergy2mqtt.main.device_thread import start
+    import time
+
+    cfg_crasher = MagicMock()
+    cfg_crasher.description = "crasher"
+    cfg_pending = MagicMock()
+    cfg_pending.description = "pending"
+
+    # We want a real thread pool executor, but we patch run_modbus_event_loop
+    # to control its behavior and stop_event.
+    def fake_run_modbus_event_loop(config, loop, stop_event):
+        loop.close()  # close the loop as run_modbus_event_loop would do in finally
+        if config.description == "crasher":
+            stop_event.set()
+        else:
+            time.sleep(0.5)
+
+    with patch("sigenergy2mqtt.main.device_thread.run_modbus_event_loop", side_effect=fake_run_modbus_event_loop):
+        await start([cfg_crasher, cfg_pending])
+
+    cfg_crasher.offline.assert_called_once()
+    cfg_pending.offline.assert_called_once()
+
