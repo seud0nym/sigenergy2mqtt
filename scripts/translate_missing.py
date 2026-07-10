@@ -679,7 +679,7 @@ def main() -> None:
     cache_path = None
     if not args.no_cache:
         try:
-            resolved_cache = Path(args.cache).resolve()
+            resolved_cache = Path(args.cache).resolve()  # Snyk Code CWE-23 : Following code mitigates Path Traversal vulnerability
             if not resolved_cache.is_relative_to(PROJECT_ROOT):
                 print(f"ERROR: Cache path must be within the project directory ({PROJECT_ROOT}).", file=sys.stderr)
                 sys.exit(1)

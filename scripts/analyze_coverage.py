@@ -4,7 +4,7 @@ import subprocess
 import sys
 import xml.etree.ElementTree as ET
 
-min_version = (3, 11)  # https://cwe.mitre.org/data/definitions/611.html
+min_version = (3, 11)  # SNYK CODE CWE-611 :  XXE and DDOS vulnerabilities in xml.etree.ElementTree.parse mitigated by ensuring min Python 3.11
 if sys.version_info < min_version:
     raise Exception(f"Python {min_version[0]}.{min_version[1]} or higher is required!")
 
@@ -29,7 +29,7 @@ if not os.path.exists(coverage_file):
 
 # 4. Parse and analyze the coverage file
 print("Analysing coverage results...")
-tree = ET.parse(coverage_file)
+tree = ET.parse(coverage_file)  # SNYK CODE CWE-611: Mitigated because script execution is limited to Python 3.11+
 root = tree.getroot()
 
 files = []
