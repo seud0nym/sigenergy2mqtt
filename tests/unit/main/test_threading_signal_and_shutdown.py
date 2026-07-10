@@ -317,6 +317,7 @@ async def test_start_logic_sibling_thread_crashed():
     """Cover start logic when a sibling thread crashed (lines 200-207)."""
     from sigenergy2mqtt.main.device_thread import start
     import time
+    import asyncio
 
     cfg_crasher = MagicMock()
     cfg_crasher.description = "crasher"
@@ -330,10 +331,19 @@ async def test_start_logic_sibling_thread_crashed():
         if config.description == "crasher":
             stop_event.set()
         else:
-            time.sleep(0.5)
+            for _ in range(50):
+                if config.offline.called:
+                    break
+                time.sleep(0.1)
+
+    original_sleep = asyncio.sleep
+    async def fake_sleep(delay):
+        # Yield to the event loop to avoid blocking it completely, but don't actually sleep long
+        await original_sleep(0.001)
 
     with patch("sigenergy2mqtt.main.device_thread.run_modbus_event_loop", side_effect=fake_run_modbus_event_loop):
-        await start([cfg_crasher, cfg_pending])
+        with patch("sigenergy2mqtt.main.device_thread.asyncio.sleep", side_effect=fake_sleep):
+            await start([cfg_crasher, cfg_pending])
 
     cfg_crasher.offline.assert_called_once()
     cfg_pending.offline.assert_called_once()

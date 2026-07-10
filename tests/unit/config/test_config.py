@@ -2,7 +2,7 @@ import asyncio
 import logging
 import os
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
 
 import pytest  # noqa: F401
 from ruamel.yaml import YAML
@@ -551,6 +551,84 @@ class TestConfigCoverageAugmentation:
         cfg._settings = None
         with pytest.raises(AttributeError):
             cfg.set_modbus_log_level(logging.DEBUG)
+
+    def test_property_setters_no_settings(self):
+        cfg = Config()
+        cfg._settings = None
+        with pytest.raises(AttributeError):
+            cfg.log_level = logging.DEBUG
+        with pytest.raises(AttributeError):
+            cfg.language = "fr"
+        with pytest.raises(AttributeError):
+            from sigenergy2mqtt.common import ConsumptionMethod
+            cfg.consumption = ConsumptionMethod.LOAD
+        with pytest.raises(AttributeError):
+            cfg.persistence_debug = True
+        with pytest.raises(AttributeError):
+            cfg.modbus = []
+        with pytest.raises(AttributeError):
+            cfg.sensor_overrides = {}
+
+    def test_finalize_reload_dict_with_modbus(self, tmp_path):
+        cache = tmp_path / "cache.yaml"
+        cache.write_text("modbus:\n  - host: 1.1.1.1\n    port: 502\n")
+        cfg = Config()
+        cfg._settings = MagicMock()
+        cfg._settings.modbus = [MagicMock()]
+        cfg._finalize_reload(cache)
+        cfg._settings.finalize_modbus.assert_called_once()
+        args = cfg._settings.finalize_modbus.call_args[0][0]
+        assert len(args) == 1
+        assert args[0]["host"] == "1.1.1.1"
+
+    def test_validate_hosts_after_discovery_no_devices(self):
+        from sigenergy2mqtt.config.config import ConfigurationError
+        cfg = Config()
+        cfg._settings = MagicMock()
+        cfg._settings.modbus = []
+        with pytest.raises(ConfigurationError, match="At least one Modbus device must be configured"):
+            cfg._validate_hosts_after_discovery()
+
+    def test_validate_hosts_after_discovery_no_host(self):
+        from sigenergy2mqtt.config.config import ConfigurationError
+        cfg = Config()
+        device = MagicMock()
+        device.host = ""
+        cfg._settings = MagicMock()
+        cfg._settings.modbus = [device]
+        with pytest.raises(ConfigurationError, match="modbus entry must have a host"):
+            cfg._validate_hosts_after_discovery()
+
+    def test_should_run_discovery_no_host_configured(self):
+        cfg = Config()
+        cfg._settings = MagicMock()
+        cfg._settings.has_fully_configured_modbus = False
+        cache = MagicMock()
+        assert cfg._should_run_discovery("not_force_or_once", cache) is True
+
+    @patch("sigenergy2mqtt.config.config.active_config")
+    def test_restore_discovery_from_mqtt_attribute_error(self, mock_active_config, tmp_path):
+        # By not setting persistence or setting it to a mock that raises on access
+        del mock_active_config.persistence
+        cfg = Config()
+        asyncio.run(cfg._restore_discovery_from_mqtt(tmp_path / "cache.yaml"))
+        # should not raise and catch AttributeError
+
+    @patch("sigenergy2mqtt.config.config.active_config")
+    @patch("sigenergy2mqtt.persistence.StateStore.is_initialised", new_callable=PropertyMock, return_value=True)
+    @patch("sigenergy2mqtt.persistence.StateStore.load", side_effect=Exception("mock error"))
+    def test_restore_discovery_from_mqtt_exception(self, mock_load, mock_is_initialised, mock_active_config, tmp_path):
+        from unittest.mock import PropertyMock
+        mock_active_config.persistence.mqtt_redundancy = True
+        cfg = Config()
+        asyncio.run(cfg._restore_discovery_from_mqtt(tmp_path / "cache.yaml"))
+
+    @patch("sigenergy2mqtt.persistence.StateStore.is_initialised", new_callable=PropertyMock, return_value=True)
+    @patch("sigenergy2mqtt.persistence.StateStore.save", side_effect=Exception("mock save error"))
+    def test_save_discovery_results_exception(self, mock_save, mock_is_initialised, tmp_path):
+        from unittest.mock import PropertyMock
+        cfg = Config()
+        asyncio.run(cfg._save_discovery_results(tmp_path / "cache.yaml", []))
 
     @patch("sigenergy2mqtt.config.config.asyncio.run")
     def test_clean_stale_files_unlink_exception(self, mock_time, tmp_path, caplog):

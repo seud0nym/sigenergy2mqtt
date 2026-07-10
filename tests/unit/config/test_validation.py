@@ -1,4 +1,5 @@
 from datetime import date, time
+from unittest.mock import patch
 
 import pytest
 
@@ -110,3 +111,54 @@ class TestConfigValidation:
         assert validation.check_time("24:00", "test") == time(23, 59, 59, 999999)
         with pytest.raises(ValueError):
             validation.check_time("invalid", "test")
+
+    def test_settings_handle_negated_flags_not_dict(self):
+        assert Settings.handle_negated_flags(["not a dict"]) == ["not a dict"]
+
+    def test_settings_validate_consumption_invalid(self):
+        with pytest.raises(ValueError, match="consumption must be one of"):
+            Settings.validate_consumption("invalid_consumption")
+
+    def test_settings_invert_no_ems_mode_check_bool(self):
+        assert Settings.invert_no_ems_mode_check(True) is True
+        assert Settings.invert_no_ems_mode_check(False) is False
+
+    def test_settings_invert_no_metrics_bool(self):
+        assert Settings.invert_no_metrics(True) is True
+        assert Settings.invert_no_metrics(False) is False
+
+    def test_settings_validate_networks_str_and_invalid(self):
+        assert Settings.validate_networks("192.168.1.0/24, 10.0.0.0/8") == ["192.168.1.0/24", "10.0.0.0/8"]
+        with pytest.raises(ValueError, match="Invalid IPv4 CIDR network"):
+            Settings.validate_networks(["invalid_network"])
+
+    def test_settings_validate_excludes_str_and_invalid(self):
+        assert Settings.validate_excludes("PID, PSS") == ["PID", "PSS"]
+        with pytest.raises(ValueError, match="Invalid Device class name"):
+            Settings.validate_excludes(["InvalidClass"])
+
+    def test_settings_validate_max_device_id_str_invalid(self):
+        with pytest.raises(ValueError, match="modbus-auto-discovery-max-device-id must be a positive integer"):
+            Settings.validate_max_device_id("invalid_int")
+
+    @patch("sigenergy2mqtt.config.settings.datetime")
+    def test_pvoutput_current_time_period_debug_logging(self, mock_datetime):
+        import logging
+        from datetime import datetime as dt
+
+        from sigenergy2mqtt.config.models import PvOutputConfig
+
+        mock_dt = dt(2023, 1, 2, 12, 0)  # Monday
+        mock_datetime.now.return_value = mock_dt
+
+        # Test branch where time matches
+        pv_config1 = PvOutputConfig(
+            log_level=logging.DEBUG, calc_debug_logging=True, tariffs=[{"plan": "test_plan", "periods": [{"days": ["All"], "start": "10:00", "end": "14:00", "type": "peak"}], "default": "shoulder"}]
+        )
+        export1, import1 = pv_config1.current_time_period
+
+        # Test branch where time doesn't match
+        pv_config2 = PvOutputConfig(
+            log_level=logging.DEBUG, calc_debug_logging=True, tariffs=[{"plan": "test_plan", "periods": [{"days": ["All"], "start": "14:00", "end": "16:00", "type": "peak"}], "default": "shoulder"}]
+        )
+        export2, import2 = pv_config2.current_time_period
