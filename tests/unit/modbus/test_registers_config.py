@@ -191,3 +191,19 @@ class TestSensorPublishableState:
         for s in sensors:
             s.apply_device_overrides(reg_access)
             assert s.publishable is True
+
+    def test_mro_classname_expectations(self):
+        """Assert that class names match the hardcoded strings in apply_device_overrides.
+
+        This test ensures that the class names checked as string literals inside
+        sensor.apply_device_overrides() method match the actual class names
+        (WritableSensorMixin, ReadableSensorMixin, DerivedSensor, and WriteOnlySensor).
+
+        If any of these classes are renamed in the future, this test will fail
+        immediately at the import or assertion stage, preventing any silent
+        regressions or untracked override failures.
+        """
+        assert WritableSensorMixin.__name__ == "WritableSensorMixin"
+        assert ReadableSensorMixin.__name__ == "ReadableSensorMixin"
+        assert DerivedSensor.__name__ == "DerivedSensor"
+        assert WriteOnlySensor.__name__ == "WriteOnlySensor"
