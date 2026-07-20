@@ -290,3 +290,159 @@ class TestPVOutputStatus:
             await svc._refresh_home_assistant_extended_fields()
 
         assert svc._service_topics[StatusField.TEMPERATURE]["__ha_sensor__:sensor.outdoor_temp"].state == 21.5
+
+    def test_extended_data_energy_sets_sum_difference_calculation(self):
+        """Line 90: extended_data[field] == 'energy' forces SUM|DIFFERENCE calculation."""
+        from sigenergy2mqtt.pvoutput.service_topics import Calculation
+
+        t = Topic("v7/topic", gain=1.0)
+        svc = make_status_service(
+            topics={StatusField.V7: [t]},
+            extended={StatusField.V7: "energy"},
+        )
+        calc = svc._service_topics[StatusField.V7].calculation
+        assert Calculation.SUM in calc
+        assert Calculation.DIFFERENCE in calc
+
+    @pytest.mark.asyncio
+    async def test_refresh_ha_no_supervisor_token_emits_warning_once(self, caplog):
+        """Lines 105-108: missing SUPERVISOR_TOKEN emits warning only once."""
+        import logging
+
+        caplog.set_level(logging.WARNING)
+        svc = make_status_service()
+        svc._ha_extended_entities = {StatusField.V7: "sensor.something"}
+
+        with patch.dict("os.environ", {}, clear=True):
+            # Remove SUPERVISOR_TOKEN if present
+            import os
+
+            os.environ.pop("SUPERVISOR_TOKEN", None)
+
+            # First call should emit warning
+            await svc._refresh_home_assistant_extended_fields()
+            assert "SUPERVISOR_TOKEN is not available" in caplog.text
+            assert svc._ha_supervisor_warning_emitted is True
+
+            # Second call should NOT emit another warning (idempotent)
+            caplog.clear()
+            await svc._refresh_home_assistant_extended_fields()
+            assert "SUPERVISOR_TOKEN is not available" not in caplog.text
+
+    @pytest.mark.asyncio
+    async def test_refresh_ha_non_200_response_logs_warning(self, caplog):
+        """Lines 118-119: non-200 HA API response logs a warning and continues."""
+        import logging
+
+        caplog.set_level(logging.WARNING)
+        svc = make_status_service()
+        svc._ha_extended_entities = {StatusField.V7: "sensor.grid_power"}
+
+        class BadResp:
+            status_code = 500
+
+        with patch.dict("os.environ", {"SUPERVISOR_TOKEN": "tok"}, clear=False), patch("requests.get", return_value=BadResp()):
+            await svc._refresh_home_assistant_extended_fields()
+
+        assert "Failed to read Home Assistant sensor" in caplog.text
+        assert "status_code=500" in caplog.text
+
+    @pytest.mark.asyncio
+    async def test_refresh_ha_unavailable_state_is_ignored(self, caplog):
+        """Lines 122-123: 'unavailable' or 'unknown' state is ignored with debug log."""
+        import logging
+
+        caplog.set_level(logging.DEBUG)
+        svc = make_status_service()
+        svc._ha_extended_entities = {StatusField.V7: "sensor.grid_power"}
+
+        for bad_state in ("unavailable", "unknown", None):
+
+            class Resp:
+                status_code = 200
+
+                @staticmethod
+                def json():
+                    return {"state": bad_state}
+
+            caplog.clear()
+            with patch.dict("os.environ", {"SUPERVISOR_TOKEN": "tok"}, clear=False), patch("requests.get", return_value=Resp()):
+                await svc._refresh_home_assistant_extended_fields()
+
+            assert "Ignoring Home Assistant sensor" in caplog.text
+
+    @pytest.mark.asyncio
+    async def test_refresh_ha_non_numeric_state_logs_warning(self, caplog):
+        """Lines 127-128: non-numeric state raises ValueError → logged as warning."""
+        import logging
+
+        caplog.set_level(logging.WARNING)
+        svc = make_status_service()
+        svc._ha_extended_entities = {StatusField.V7: "sensor.grid_power"}
+        svc._service_topics[StatusField.V7].enabled = True
+        svc._service_topics[StatusField.V7].register(Topic("__ha_sensor__:sensor.grid_power", gain=1.0))
+
+        class Resp:
+            status_code = 200
+
+            @staticmethod
+            def json():
+                return {"state": "not-a-number"}
+
+        with patch.dict("os.environ", {"SUPERVISOR_TOKEN": "tok"}, clear=False), patch("requests.get", return_value=Resp()):
+            await svc._refresh_home_assistant_extended_fields()
+
+        assert "non-numeric state" in caplog.text
+
+    @pytest.mark.asyncio
+    async def test_refresh_ha_generic_exception_logs_warning(self, caplog):
+        """Lines 129-130: generic exception from requests.get is caught and logged."""
+        import logging
+
+        caplog.set_level(logging.WARNING)
+        svc = make_status_service()
+        svc._ha_extended_entities = {StatusField.V7: "sensor.grid_power"}
+
+        with patch.dict("os.environ", {"SUPERVISOR_TOKEN": "tok"}, clear=False), patch(
+            "requests.get", side_effect=ConnectionError("network error")
+        ):
+            await svc._refresh_home_assistant_extended_fields()
+
+        assert "Failed reading Home Assistant sensor" in caplog.text
+
+    @pytest.mark.asyncio
+    async def test_schedule_lock_timeout_logs_warning(self, caplog):
+        """Line 218: asyncio.TimeoutError while acquiring lock is caught and logged."""
+        import logging
+        from contextlib import asynccontextmanager
+
+        caplog.set_level(logging.WARNING)
+        svc = make_status_service()
+        svc.online = asyncio.Future()
+
+        call_count = 0
+
+        async def fake_seconds_until(*args, **kwargs):
+            nonlocal call_count
+            call_count += 1
+            if call_count == 1:
+                return 0, 0
+            # Second call: set online=False so the loop exits
+            svc.online = False
+            return 60, 0
+
+        @asynccontextmanager
+        async def raising_lock(*args, **kwargs):
+            svc.online = False
+            raise asyncio.TimeoutError
+            yield  # noqa: unreachable - needed to make this an async generator
+
+        with (
+            patch.object(svc, "seconds_until_status_upload", side_effect=fake_seconds_until),
+            patch.object(svc, "_refresh_home_assistant_extended_fields", return_value=None),
+            patch.object(svc, "lock", raising_lock),
+        ):
+            tasks = svc.schedule(None, None)
+            await tasks[0]
+
+        assert "Failed to acquire lock within timeout" in caplog.text
