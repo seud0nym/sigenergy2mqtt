@@ -216,6 +216,8 @@ class PVOutputStatusService(Service):
                     self.logger.info(f"{self.log_identity} Sleep interrupted")
                 except asyncio.TimeoutError:
                     self.logger.warning(f"{self.log_identity} Failed to acquire lock within timeout")
+                    if wait <= 0:
+                        wait = 60
                 except Exception as e:
                     self.logger.error(f"{self.log_identity} {e}")
                     if wait <= 0:

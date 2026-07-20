@@ -1,6 +1,14 @@
 <!-- git log [since tag]..HEAD --oneline -->
 # Changelog 
 
+## [Unreleased] - Unreleased
+
+### Fixed
+
+- Fixed infinite tight loop in PVOutput status service when lock times out
+
+---
+
 ## [2026.7.4] - 2026.07.04
 
 ### Added
