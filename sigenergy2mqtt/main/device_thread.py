@@ -161,7 +161,19 @@ def run_modbus_event_loop(
         if stop_event is not None:
             stop_event.set()
     finally:
-        loop.close()
+        # Drain any remaining fire-and-forget tasks (e.g. _persist_current_total)
+        # before closing the loop.  Without this, tasks that were scheduled via
+        # loop.create_task() but had not yet completed produce the asyncio
+        # "Task was destroyed but it is pending!" warning when the loop is closed
+        # during a restart (e.g. after a firmware upgrade).
+        try:
+            pending = asyncio.all_tasks(loop)
+            if pending:
+                loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+        except Exception:
+            logging.exception(f"{config.description} error draining pending tasks on shutdown")
+        finally:
+            loop.close()
 
 
 async def start(configs: list[ThreadConfig]) -> None:
