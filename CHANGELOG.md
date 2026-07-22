@@ -1,6 +1,14 @@
 <!-- git log [since tag]..HEAD --oneline -->
 # Changelog 
 
+## [Unreleased] - Unreleased
+
+### Changed
+
+- Upgraded `pymodbus` from 3.13.1 to 3.14.0
+
+---
+
 ## [2026.7.4] - 2026.07.04
 
 ### Added
