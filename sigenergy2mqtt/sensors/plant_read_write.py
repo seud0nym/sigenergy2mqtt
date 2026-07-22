@@ -72,7 +72,6 @@ class ActivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVInv
             scan_interval=ScanInterval.medium(plant_index),
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
-            state_class=None,
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
@@ -84,9 +83,11 @@ class ActivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVInv
     def configure_mqtt_topics(self, device_id: str) -> str:
         base = super().configure_mqtt_topics(device_id)
         if active_config.home_assistant.enabled:
-            cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append(
-                {"topic": self._remote_ems_mode.is_pcs_remote_control_mode_topic, "payload_available": 1, "payload_not_available": 0}
-            )
+            cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append({
+                "topic": self._remote_ems_mode.is_pcs_remote_control_mode_topic,
+                "payload_available": 1,
+                "payload_not_available": 0,
+            })
         return base
 
     def get_attributes(self) -> dict[str, float | int | str]:
@@ -117,8 +118,7 @@ class ReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVI
             data_type=ModbusDataType.INT32,
             scan_interval=ScanInterval.medium(plant_index),
             unit=UnitOfReactivePower.KILO_VOLT_AMPERE_REACTIVE,
-            device_class=None,
-            state_class=None,
+            device_class=DeviceClass.REACTIVE_POWER,
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
@@ -132,9 +132,11 @@ class ReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVI
     def configure_mqtt_topics(self, device_id: str) -> str:
         base = super().configure_mqtt_topics(device_id)
         if active_config.home_assistant.enabled:
-            cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append(
-                {"topic": self._remote_ems_mode.is_pcs_remote_control_mode_topic, "payload_available": 1, "payload_not_available": 0}
-            )
+            cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append({
+                "topic": self._remote_ems_mode.is_pcs_remote_control_mode_topic,
+                "payload_available": 1,
+                "payload_not_available": 0,
+            })
         return base
 
     def get_attributes(self) -> dict[str, float | int | str]:
@@ -165,8 +167,7 @@ class ActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInverter, 
             data_type=ModbusDataType.INT16,
             scan_interval=ScanInterval.medium(plant_index),
             unit=PERCENTAGE,
-            device_class=None,
-            state_class=None,
+            device_class=DeviceClass.POWER_FACTOR,
             icon="mdi:percent",
             gain=100,
             precision=None,
@@ -179,9 +180,11 @@ class ActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInverter, 
     def configure_mqtt_topics(self, device_id: str) -> str:
         base = super().configure_mqtt_topics(device_id)
         if active_config.home_assistant.enabled:
-            cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append(
-                {"topic": self._remote_ems_mode.is_pcs_remote_control_mode_topic, "payload_available": 1, "payload_not_available": 0}
-            )
+            cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append({
+                "topic": self._remote_ems_mode.is_pcs_remote_control_mode_topic,
+                "payload_available": 1,
+                "payload_not_available": 0,
+            })
         return base
 
     def get_attributes(self) -> dict[str, float | int | str]:
@@ -212,8 +215,7 @@ class QSAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
             data_type=ModbusDataType.INT16,
             scan_interval=ScanInterval.medium(plant_index),
             unit=PERCENTAGE,
-            device_class=None,
-            state_class=None,
+            device_class=DeviceClass.BATTERY,
             icon="mdi:lightning-bolt",
             gain=100,
             precision=None,
@@ -226,9 +228,11 @@ class QSAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
     def configure_mqtt_topics(self, device_id: str) -> str:
         base = super().configure_mqtt_topics(device_id)
         if active_config.home_assistant.enabled:
-            cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append(
-                {"topic": self._remote_ems_mode.is_pcs_remote_control_mode_topic, "payload_available": 1, "payload_not_available": 0}
-            )
+            cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append({
+                "topic": self._remote_ems_mode.is_pcs_remote_control_mode_topic,
+                "payload_available": 1,
+                "payload_not_available": 0,
+            })
         return base
 
     def get_attributes(self) -> dict[str, float | int | str]:
@@ -260,8 +264,7 @@ class PowerFactorAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter
             data_type=ModbusDataType.INT16,
             scan_interval=ScanInterval.medium(plant_index),
             unit=None,
-            device_class=None,
-            state_class=None,
+            device_class=DeviceClass.POWER_FACTOR,
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
@@ -274,9 +277,11 @@ class PowerFactorAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter
     def configure_mqtt_topics(self, device_id: str) -> str:
         base = super().configure_mqtt_topics(device_id)
         if active_config.home_assistant.enabled:
-            cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append(
-                {"topic": self._remote_ems_mode.is_pcs_remote_control_mode_topic, "payload_available": 1, "payload_not_available": 0}
-            )
+            cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append({
+                "topic": self._remote_ems_mode.is_pcs_remote_control_mode_topic,
+                "payload_available": 1,
+                "payload_not_available": 0,
+            })
         return base
 
     def get_attributes(self) -> dict[str, float | int | str]:
@@ -315,7 +320,6 @@ class PhaseActivePowerFixedAdjustmentTargetValue(ThreePhaseAdjustmentTargetValue
             scan_interval=ScanInterval.medium(plant_index),
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
-            state_class=None,
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
@@ -329,9 +333,11 @@ class PhaseActivePowerFixedAdjustmentTargetValue(ThreePhaseAdjustmentTargetValue
     def configure_mqtt_topics(self, device_id: str) -> str:
         base = super().configure_mqtt_topics(device_id)
         if active_config.home_assistant.enabled:
-            cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append(
-                {"topic": self._remote_ems_mode.is_pcs_remote_control_mode_topic, "payload_available": 1, "payload_not_available": 0}
-            )
+            cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append({
+                "topic": self._remote_ems_mode.is_pcs_remote_control_mode_topic,
+                "payload_available": 1,
+                "payload_not_available": 0,
+            })
         return base
 
     def get_attributes(self) -> dict[str, float | int | str]:
@@ -369,8 +375,7 @@ class PhaseReactivePowerFixedAdjustmentTargetValue(ThreePhaseAdjustmentTargetVal
             data_type=ModbusDataType.INT32,
             scan_interval=ScanInterval.medium(plant_index),
             unit=UnitOfReactivePower.KILO_VOLT_AMPERE_REACTIVE,
-            device_class=None,
-            state_class=None,
+            device_class=DeviceClass.REACTIVE_POWER,
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
@@ -384,9 +389,11 @@ class PhaseReactivePowerFixedAdjustmentTargetValue(ThreePhaseAdjustmentTargetVal
     def configure_mqtt_topics(self, device_id: str) -> str:
         base = super().configure_mqtt_topics(device_id)
         if active_config.home_assistant.enabled:
-            cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append(
-                {"topic": self._remote_ems_mode.is_pcs_remote_control_mode_topic, "payload_available": 1, "payload_not_available": 0}
-            )
+            cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append({
+                "topic": self._remote_ems_mode.is_pcs_remote_control_mode_topic,
+                "payload_available": 1,
+                "payload_not_available": 0,
+            })
         return base
 
     def get_attributes(self) -> dict[str, float | int | str]:
@@ -424,8 +431,7 @@ class PhaseActivePowerPercentageAdjustmentTargetValue(ThreePhaseAdjustmentTarget
             data_type=ModbusDataType.INT16,
             scan_interval=ScanInterval.medium(plant_index),
             unit=PERCENTAGE,
-            device_class=None,
-            state_class=None,
+            device_class=DeviceClass.POWER_FACTOR,
             icon="mdi:percent",
             gain=100,
             precision=None,
@@ -440,9 +446,11 @@ class PhaseActivePowerPercentageAdjustmentTargetValue(ThreePhaseAdjustmentTarget
     def configure_mqtt_topics(self, device_id: str) -> str:
         base = super().configure_mqtt_topics(device_id)
         if active_config.home_assistant.enabled:
-            cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append(
-                {"topic": self._remote_ems_mode.is_pcs_remote_control_mode_topic, "payload_available": 1, "payload_not_available": 0}
-            )
+            cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append({
+                "topic": self._remote_ems_mode.is_pcs_remote_control_mode_topic,
+                "payload_available": 1,
+                "payload_not_available": 0,
+            })
         return base
 
     def get_attributes(self) -> dict[str, float | int | str]:
@@ -480,8 +488,7 @@ class PhaseQSAdjustmentTargetValue(ThreePhaseAdjustmentTargetValue, HybridInvert
             data_type=ModbusDataType.INT16,
             scan_interval=ScanInterval.medium(plant_index),
             unit=PERCENTAGE,
-            device_class=None,
-            state_class=None,
+            device_class=DeviceClass.POWER_FACTOR,
             icon="mdi:percent",
             gain=100,
             precision=None,
@@ -496,9 +503,11 @@ class PhaseQSAdjustmentTargetValue(ThreePhaseAdjustmentTargetValue, HybridInvert
     def configure_mqtt_topics(self, device_id: str) -> str:
         base = super().configure_mqtt_topics(device_id)
         if active_config.home_assistant.enabled:
-            cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append(
-                {"topic": self._remote_ems_mode.is_pcs_remote_control_mode_topic, "payload_available": 1, "payload_not_available": 0}
-            )
+            cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append({
+                "topic": self._remote_ems_mode.is_pcs_remote_control_mode_topic,
+                "payload_available": 1,
+                "payload_not_available": 0,
+            })
         return base
 
     def get_attributes(self) -> dict[str, float | int | str]:
@@ -689,7 +698,6 @@ class RemoteEMSLimit(NumericSensor, HybridInverter, ABC):
             scan_interval=ScanInterval.high(plant_index),
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
-            state_class=None,
             icon=icon,
             gain=1000,
             precision=2,
@@ -704,9 +712,11 @@ class RemoteEMSLimit(NumericSensor, HybridInverter, ABC):
         base = super().configure_mqtt_topics(device_id)
         if self._remote_ems_mode and active_config.home_assistant.enabled and active_config.ems_mode_check:
             if self._charging and self._discharging:
-                cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append(
-                    {"topic": self._remote_ems_mode.is_charging_discharging_topic, "payload_available": 1, "payload_not_available": 0}
-                )
+                cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append({
+                    "topic": self._remote_ems_mode.is_charging_discharging_topic,
+                    "payload_available": 1,
+                    "payload_not_available": 0,
+                })
             elif self._charging:
                 cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append({"topic": self._remote_ems_mode.is_charging_mode_topic, "payload_available": 1, "payload_not_available": 0})
             elif self._discharging:
@@ -835,7 +845,6 @@ class GridMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
             scan_interval=ScanInterval.high(plant_index),
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
-            state_class=None,
             icon="mdi:transmission-tower-export",
             gain=1000,
             precision=2,
@@ -866,7 +875,6 @@ class GridMaxImportLimit(NumericSensor, HybridInverter, PVInverter):
             scan_interval=ScanInterval.high(plant_index),
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
-            state_class=None,
             icon="mdi:transmission-tower-import",
             gain=1000,
             precision=2,
@@ -899,7 +907,6 @@ class PCSMaxExportLimit(NumericSensor, HybridInverter, PVInverter):
             scan_interval=ScanInterval.high(plant_index),
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
-            state_class=None,
             icon="mdi:battery-negative",
             gain=1000,
             precision=2,
@@ -933,7 +940,6 @@ class PCSMaxImportLimit(NumericSensor, HybridInverter, PVInverter):
             scan_interval=ScanInterval.high(plant_index),
             unit=UnitOfPower.KILO_WATT,
             device_class=DeviceClass.POWER,
-            state_class=None,
             icon="mdi:battery-positive",
             gain=1000,
             precision=2,
@@ -966,8 +972,7 @@ class PCCPowerFactorAdjustmentTargetValueGridImport(NumericSensor, HybridInverte
             data_type=ModbusDataType.INT16,
             scan_interval=ScanInterval.medium(plant_index),
             unit=None,
-            device_class=None,
-            state_class=None,
+            device_class=DeviceClass.POWER_FACTOR,
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
@@ -1000,8 +1005,7 @@ class PCCPowerFactorAdjustmentTargetValueGridExport(NumericSensor, HybridInverte
             data_type=ModbusDataType.INT16,
             scan_interval=ScanInterval.medium(plant_index),
             unit=None,
-            device_class=None,
-            state_class=None,
+            device_class=DeviceClass.POWER_FACTOR,
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
@@ -1037,8 +1041,7 @@ class ESSBackupSOC(NumericSensor, HybridInverter):
             data_type=ModbusDataType.UINT16,
             scan_interval=ScanInterval.medium(plant_index),
             unit=PERCENTAGE,
-            device_class=None,
-            state_class=None,
+            device_class=DeviceClass.BATTERY,
             icon="mdi:percent-box-outline",
             gain=10,
             precision=None,
@@ -1068,8 +1071,7 @@ class ESSChargeCutOffSOC(NumericSensor, HybridInverter):
             data_type=ModbusDataType.UINT16,
             scan_interval=ScanInterval.medium(plant_index),
             unit=PERCENTAGE,
-            device_class=None,
-            state_class=None,
+            device_class=DeviceClass.BATTERY,
             icon="mdi:percent-box-outline",
             gain=10,
             precision=None,
@@ -1099,8 +1101,7 @@ class ESSDischargeCutOffSOC(NumericSensor, HybridInverter):
             data_type=ModbusDataType.UINT16,
             scan_interval=ScanInterval.medium(plant_index),
             unit=PERCENTAGE,
-            device_class=None,
-            state_class=None,
+            device_class=DeviceClass.BATTERY,
             icon="mdi:percent-box-outline",
             gain=10,
             precision=None,
@@ -1131,7 +1132,6 @@ class ActivePowerRegulationGradient(NumericSensor, HybridInverter, PVInverter):
             scan_interval=ScanInterval.medium(plant_index),
             unit="%/s",
             device_class=None,
-            state_class=None,
             icon="mdi:gradient-horizontal",
             gain=1000,
             precision=2,
@@ -1178,8 +1178,7 @@ class GridCodeLVRTReactivePowerCompensationFactor(NumericSensor, HybridInverter)
             data_type=ModbusDataType.UINT16,
             scan_interval=ScanInterval.medium(plant_index),
             unit=None,
-            device_class=None,
-            state_class=None,
+            device_class=DeviceClass.POWER_FACTOR,
             icon="mdi:counter",
             gain=100,
             precision=1,
@@ -1209,8 +1208,7 @@ class GridCodeLVRTNegativeSequenceReactivePowerCompensationFactor(NumericSensor,
             data_type=ModbusDataType.UINT16,
             scan_interval=ScanInterval.medium(plant_index),
             unit=None,
-            device_class=None,
-            state_class=None,
+            device_class=DeviceClass.POWER_FACTOR,
             icon="mdi:counter",
             gain=100,
             precision=1,
@@ -1298,8 +1296,7 @@ class GridCodeHVRTReactivePowerCompensationFactor(NumericSensor, HybridInverter)
             data_type=ModbusDataType.UINT16,
             scan_interval=ScanInterval.medium(plant_index),
             unit=None,
-            device_class=None,
-            state_class=None,
+            device_class=DeviceClass.POWER_FACTOR,
             icon="mdi:counter",
             gain=100,
             precision=1,
@@ -1329,8 +1326,7 @@ class GridCodeHVRTNegativeSequenceReactivePowerCompensationFactor(NumericSensor,
             data_type=ModbusDataType.UINT16,
             scan_interval=ScanInterval.medium(plant_index),
             unit=None,
-            device_class=None,
-            state_class=None,
+            device_class=DeviceClass.POWER_FACTOR,
             icon="mdi:counter",
             gain=100,
             precision=1,
@@ -1418,8 +1414,7 @@ class GridCodeOverFrequencyDeratingPowerRampRate(NumericSensor, HybridInverter):
             data_type=ModbusDataType.UINT16,
             scan_interval=ScanInterval.medium(plant_index),
             unit=PERCENTAGE,
-            device_class=None,
-            state_class=None,
+            device_class=DeviceClass.POWER_FACTOR,
             icon="mdi:percent-box-outline",
             gain=100,
             precision=1,
@@ -1449,7 +1444,6 @@ class GridCodeOverFrequencyDeratingTriggerFrequency(NumericSensor, HybridInverte
             scan_interval=ScanInterval.medium(plant_index),
             unit=UnitOfFrequency.HERTZ,
             device_class=DeviceClass.FREQUENCY,
-            state_class=None,
             icon="mdi:sine-wave",
             gain=100,
             precision=1,
@@ -1481,7 +1475,6 @@ class GridCodeOverFrequencyDeratingCutOffFrequency(NumericSensor, HybridInverter
             scan_interval=ScanInterval.medium(plant_index),
             unit=UnitOfFrequency.HERTZ,
             device_class=DeviceClass.FREQUENCY,
-            state_class=None,
             icon="mdi:sine-wave",
             gain=100,
             precision=1,
@@ -1529,8 +1522,7 @@ class GridCodeUnderFrequencyPowerBoostPowerRampRate(NumericSensor, HybridInverte
             data_type=ModbusDataType.UINT16,
             scan_interval=ScanInterval.medium(plant_index),
             unit=PERCENTAGE,
-            device_class=None,
-            state_class=None,
+            device_class=DeviceClass.POWER_FACTOR,
             icon="mdi:percent-box-outline",
             gain=100,
             precision=1,
@@ -1560,7 +1552,6 @@ class GridCodeUnderFrequencyPowerBoostTriggerFrequency(NumericSensor, HybridInve
             scan_interval=ScanInterval.medium(plant_index),
             unit=UnitOfFrequency.HERTZ,
             device_class=DeviceClass.FREQUENCY,
-            state_class=None,
             icon="mdi:sine-wave",
             gain=100,
             precision=1,
@@ -1592,7 +1583,6 @@ class GridCodeUnderFrequencyPowerBoostCutOffFrequency(NumericSensor, HybridInver
             scan_interval=ScanInterval.medium(plant_index),
             unit=UnitOfFrequency.HERTZ,
             device_class=DeviceClass.FREQUENCY,
-            state_class=None,
             icon="mdi:sine-wave",
             gain=100,
             precision=1,

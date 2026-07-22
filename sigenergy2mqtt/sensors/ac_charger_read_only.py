@@ -131,6 +131,7 @@ class ACChargerRatedPower(ReadOnlySensor):
             precision=2,
             protocol_version=Protocol.V2_0,
         )
+        self["entity_category"] = "diagnostic"
 
 
 class ACChargerRatedCurrent(ReadOnlySensor):
@@ -155,6 +156,7 @@ class ACChargerRatedCurrent(ReadOnlySensor):
             precision=2,
             protocol_version=Protocol.V2_0,
         )
+        self["entity_category"] = "diagnostic"
 
 
 class ACChargerRatedVoltage(ReadOnlySensor):
@@ -179,6 +181,7 @@ class ACChargerRatedVoltage(ReadOnlySensor):
             precision=1,
             protocol_version=Protocol.V2_0,
         )
+        self["entity_category"] = "diagnostic"
 
 
 class ACChargerInputBreaker(ReadOnlySensor):
@@ -203,6 +206,7 @@ class ACChargerInputBreaker(ReadOnlySensor):
             precision=2,
             protocol_version=Protocol.V2_0,
         )
+        self["entity_category"] = "diagnostic"
 
 
 class ACChargerAlarm1(AlarmSensor):

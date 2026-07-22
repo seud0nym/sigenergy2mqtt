@@ -37,13 +37,23 @@ from sigenergy2mqtt.devices import PID, PSS, ACCharger, DCCharger, Device, Inver
 from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerInputBreaker, ACChargerRatedCurrent, ACChargerRunningState
 from sigenergy2mqtt.sensors.ac_charger_read_write import ACChargerStatus
-from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, AlarmSensor, ModbusSensorMixin, ReservedSensor, Sensor
-from sigenergy2mqtt.sensors.inverter_read_only import DCChargerVehicleBatteryVoltage, InverterFirmwareVersion, InverterModel, InverterSerialNumber, OutputType, PACKBCUCount, PVStringCount, RatedGridVoltage
+from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, AlarmSensor, ModbusSensorMixin, NumericSensor, ReservedSensor, Sensor, SwitchSensor, TimestampSensor, WriteOnlySensor
+from sigenergy2mqtt.sensors.inverter_read_only import (
+    DCChargerVehicleBatteryVoltage,
+    InsulationResistance,
+    InverterFirmwareVersion,
+    InverterModel,
+    InverterSerialNumber,
+    OutputType,
+    PACKBCUCount,
+    PVStringCount,
+    RatedGridVoltage,
+)
 from sigenergy2mqtt.sensors.inverter_read_write import DCChargerStatus, InverterStatus, ReservedInverterRemoteEMSDispatch
 from sigenergy2mqtt.sensors.pid_read_only import PIDMachineFirmwareVersion, PIDModelType, PIDSerialNumber
 from sigenergy2mqtt.sensors.pid_read_write import PIDStartStop
-from sigenergy2mqtt.sensors.plant_ess_preheating_read_write import ESSPreHeatingEnable
-from sigenergy2mqtt.sensors.plant_read_only import GridCodeRatedFrequency, PlantRatedChargingPower, PlantRatedDischargingPower, SystemTimeZone
+from sigenergy2mqtt.sensors.plant_ess_preheating_read_write import ESSPreHeatingEnable, ESSPreHeatingTOUTime
+from sigenergy2mqtt.sensors.plant_read_only import CurrentControlCommandValue, GridCodeRatedFrequency, PlantRatedChargingPower, PlantRatedDischargingPower, SystemTimeZone
 from sigenergy2mqtt.sensors.plant_read_write import (
     ActivePowerFixedAdjustmentTargetValue,
     PhaseActivePowerFixedAdjustmentTargetValue,
@@ -303,12 +313,28 @@ async def get_sensor_instances(
         if s.__class__.__name__ not in classes:
             classes[s.__class__.__name__] = 0
         classes[s.__class__.__name__] += 1
-        if not isinstance(s, ReservedSensor):
-            if s.device_class is None:
+        # Check for missing unit of measurement on concrete sensor classes, excluding known exceptions
+        if (
+            s.unit is None
+            and not isinstance(s, (AlarmSensor, AlarmCombinedSensor, TimestampSensor))
+            and (s.device_class is not None and s.device_class not in (DeviceClass.ENUM))
+            and "Factor" not in s.__class__.__name__
+        ):
+            logging.warning(f"{s.__class__.__name__} has no Unit of Measurement")
+        # Check for missing device_class and state_class on concrete sensor classes, excluding known exceptions
+        if (
+            not isinstance(s, (AlarmCombinedSensor, AlarmSensor, CurrentControlCommandValue, ESSPreHeatingTOUTime, InsulationResistance, ReservedSensor, SwitchSensor, WriteOnlySensor))
+            and getattr(s, "data_type", ModbusDataType.STRING) is not ModbusDataType.STRING
+        ):
+            if s.device_class is None and not any(sub in s.__class__.__name__ for sub in ["Count", "Gradient"]):
                 logging.warning(f"{s.__class__.__name__} has no Device Class")
-            if s.state_class is None:
-                if s.device_class not in (DeviceClass.ENUM, DeviceClass.TIMESTAMP) and getattr(s, "data_type", ModbusDataType.STRING) is not ModbusDataType.STRING:
-                    logging.warning(f"{s.__class__.__name__} has no State Class")
+            if (
+                s.state_class is None
+                and s.device_class not in (DeviceClass.ENUM, DeviceClass.TIMESTAMP)
+                and not isinstance(s, (ACChargerInputBreaker, NumericSensor, SwitchSensor, SystemTimeZone))
+                and not any(sub in s.__class__.__name__ for sub in ["Max", "Min", "Available", "Rated", "Adjustment", "Target", "Factor", "Count"])
+            ):
+                logging.warning(f"{s.__class__.__name__} has no State Class")
 
         for d in s.derived_sensors.values():
             add_sensor_instance(d)
