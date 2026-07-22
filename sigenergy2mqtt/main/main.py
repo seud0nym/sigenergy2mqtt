@@ -22,7 +22,7 @@ from sigenergy2mqtt.common import (
     Protocol,
     ProtocolApplies,
     PVInverter,
-    service_health_registry,
+    service_health_registry
 )
 from sigenergy2mqtt.config import active_config, configure_root_logging, initialize_async
 from sigenergy2mqtt.devices import PID, PSS, ACCharger, DCCharger, Device, Inverter, PowerPlant, bind_cross_device_sensors
@@ -1234,14 +1234,19 @@ async def async_main() -> None:
         mqtt_health_registry.clear()
         service_health_registry.clear()
 
+        # Phase 2 config load — must run before StateStore so that the correct
+        # MQTT broker address (and other settings) from the YAML config file are
+        # available when StateStore opens its dedicated MQTT connection.
+        # Note: _restore_discovery_from_mqtt inside initialize_async() already
+        # guards against StateStore not yet being initialised, so ordering here
+        # is safe.
+        await initialize_async()
+
         # Initialise StateStore with dedicated MQTT connection + sentinel-based warming
         await state_store.initialise(
             active_config.persistent_state_path,
             active_config.persistence,
         )
-
-        # Phase 2 config load — StateStore now available for auto-discovery fallback
-        await initialize_async()
 
         seen_serial_numbers: set[str] = set()
         configs, protocol_version = await setup_devices(seen_serial_numbers)
