@@ -16,6 +16,7 @@
 ### Changed
 
 - Health monitoring of topic updates are now enabled by default (previously only enabled during debugging)
+- Upgraded `pymodbus` from 3.13.1 to 3.14.0
 
 ---
 

@@ -474,14 +474,13 @@ class CustomDataBlock:
         """
         sim_data_list: list[SimData] = []
         for address, sensor in self.addresses.items():
-            # DataType.REGISTERS packs each value with struct.pack(">h", v),
-            # i.e. signed int16.  _initial_registers holds raw uint16 values
-            # (0–65535), so values above 32767 must be reinterpreted as their
-            # signed two's-complement equivalent before being passed to SimData.
+            # DataType.REGISTERS packs each value with struct.pack(">H", v),
+            # i.e. unsigned uint16 (0–65535).  _initial_registers already holds
+            # raw uint16 values in that range, so no conversion is needed.
             # count is intentionally omitted (defaults to 1) because it means
             # "repeat the values list N times", not "number of registers" — the
             # values list already contains exactly sensor.count register words.
-            values = [v if v < 32768 else v - 65536 for v in (self._initial_registers.get(address + i, 0) for i in range(sensor.count))]
+            values = [self._initial_registers.get(address + i, 0) for i in range(sensor.count)]
             sim_data_list.append(
                 SimData(
                     address,
