@@ -378,3 +378,37 @@ async def test_publish_health_considers_all_modbus_clients(monkeypatch, tmp_path
     assert '"mqtt_connected": true' in content
     assert any(t[0] == "sigenergy2mqtt/health/state" for t in mqtt_client.published)
     assert any(t[0] == "sigenergy2mqtt/health/attributes" for t in mqtt_client.published)
+
+
+@pytest.mark.asyncio
+async def test_influxdb_init_failure_registers_unhealthy(monkeypatch):
+    """async_init must write health=False when the connection probe raises.
+
+    Without this the ServiceHealthRegistry has no entry for the key and
+    get_health(key, default=True) returns True, making a totally broken
+    InfluxDB service look healthy and preventing the recovery restart.
+    """
+    monkeypatch.setattr(active_config.influxdb, "enabled", True, raising=False)
+    monkeypatch.setattr(active_config.influxdb, "health_monitoring", True, raising=False)
+    monkeypatch.setattr(active_config, "modbus", [MagicMock(host="host0")], raising=False)
+    service_health_registry.clear()
+
+    service = InfluxBase("influx", 0, "unique", "manufacturer", "model", logging.getLogger("test"))
+
+    # Make _init_connection raise unconditionally (simulates a completely
+    # unreachable InfluxDB host).
+    monkeypatch.setattr(service, "_init_connection", lambda: (_ for _ in ()).throw(RuntimeError("connection refused")))
+
+    result = await service.async_init()
+
+    assert result is False
+    # The key must be present and explicitly False — not missing (which would
+    # cause get_health to return the True default and hide the outage).
+    assert service_health_registry.get_health("influxdb_0") is False
+
+    # Confirm the monitor service sees the plant as unhealthy.
+    monitor = MonitorService([])
+    healthy, contributors = monitor._check_service_health()
+    assert healthy is False
+    assert contributors.get("influxdb_0") is False
+

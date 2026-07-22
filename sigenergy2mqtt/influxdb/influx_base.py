@@ -326,6 +326,7 @@ class InfluxBase(Device):
                 return True
             except Exception as e:
                 self.logger.error(f"{self.log_identity} Initialization failed: {e}")
+                service_health_registry.set_health(self.service_health_key, False)
                 return False
         return True
 
