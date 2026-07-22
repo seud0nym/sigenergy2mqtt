@@ -332,7 +332,6 @@ class TestNumericSensor:
                 10,
                 "W",
                 DeviceClass.POWER,
-                StateClass.MEASUREMENT,
                 "mdi:power",
                 1.0,
                 2,

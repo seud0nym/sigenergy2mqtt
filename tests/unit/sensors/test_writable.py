@@ -90,7 +90,7 @@ class TestWritableSensorMixin:
     @pytest.mark.asyncio
     async def test_write_registers_multiple_registers(self, mock_lock_factory, mock_modbus):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            sensor = NumericSensor(None, "Test", "sigen_test", InputType.HOLDING, 0, 1, 30001, 2, ModbusClient.DATATYPE.UINT32, 10, "U", None, None, "mdi:power", 1.0, 2, Protocol.V2_4)
+            sensor = NumericSensor(None, "Test", "sigen_test", InputType.HOLDING, 0, 1, 30001, 2, ModbusClient.DATATYPE.UINT32, 10, "U", None, "mdi:power", 1.0, 2, Protocol.V2_4)
 
             mock_mqtt = MagicMock()
             # Disable side_effect to use return_value
@@ -172,7 +172,7 @@ class TestNumericSensorWritable:
     @pytest.mark.asyncio
     async def test_numeric_sensor_set_value_with_gain(self, mock_lock_factory, mock_modbus):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            sensor = NumericSensor(None, "Test", "sigen_test", InputType.HOLDING, 0, 1, 30100, 1, ModbusClient.DATATYPE.UINT16, 10, "W", None, None, "mdi:power", 10.0, 0, Protocol.V2_4, minimum=0, maximum=1000)
+            sensor = NumericSensor(None, "Test", "sigen_test", InputType.HOLDING, 0, 1, 30100, 1, ModbusClient.DATATYPE.UINT16, 10, "W", None, "mdi:power", 10.0, 0, Protocol.V2_4, minimum=0, maximum=1000)
             sensor.configure_mqtt_topics("test_device")
 
             mock_rr = MagicMock()
@@ -199,7 +199,6 @@ class TestNumericSensorWritable:
                 ModbusClient.DATATYPE.UINT16,
                 10,
                 "W",
-                None,
                 None,
                 "mdi:power",
                 1.0,
@@ -239,7 +238,6 @@ class TestNumericSensorWritable:
                 10,
                 "W",
                 None,
-                None,
                 "mdi:power",
                 10.0,
                 0,
@@ -263,7 +261,7 @@ class TestNumericSensorWritable:
         """When raw=True and value is out-of-range the raw return should NOT include gain."""
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             sensor = NumericSensor(
-                None, "NumRaw", "sigen_numraw", InputType.HOLDING, 0, 1, 30103, 1, ModbusClient.DATATYPE.UINT16, 10, "W", None, None, "mdi:power", 2.0, 1, Protocol.V2_4, minimum=10.0, maximum=100.0
+                None, "NumRaw", "sigen_numraw", InputType.HOLDING, 0, 1, 30103, 1, ModbusClient.DATATYPE.UINT16, 10, "W", None, "mdi:power", 2.0, 1, Protocol.V2_4, minimum=10.0, maximum=100.0
             )
 
             with patch("sigenergy2mqtt.sensors.base.ReadWriteSensor.get_state", new_callable=AsyncMock) as mock_super:
@@ -388,7 +386,7 @@ class TestSelectSensorWritable:
         """NumericSensor should accept decimal strings and (with precision=0) write the integer part."""
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             sensor = NumericSensor(
-                None, "Test", "sigen_num_decimal", InputType.HOLDING, 0, 1, 30104, 1, ModbusClient.DATATYPE.UINT16, 10, "W", None, None, "mdi:power", 1.0, 0, Protocol.V2_4, minimum=0, maximum=1000
+                None, "Test", "sigen_num_decimal", InputType.HOLDING, 0, 1, 30104, 1, ModbusClient.DATATYPE.UINT16, 10, "W", None, "mdi:power", 1.0, 0, Protocol.V2_4, minimum=0, maximum=1000
             )
             sensor.configure_mqtt_topics("test_device")
 
