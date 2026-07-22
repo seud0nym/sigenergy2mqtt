@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import time
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -261,7 +262,7 @@ async def test_pvoutput_upload_failure_marks_health_unhealthy(monkeypatch):
 async def test_influxdb_write_failure_marks_health_unhealthy(monkeypatch):
     monkeypatch.setattr(active_config.influxdb, "enabled", True, raising=False)
     monkeypatch.setattr(active_config.influxdb, "health_monitoring", True, raising=False)
-    service_health_registry.set_health("influxdb", True)
+    service_health_registry.set_health("influxdb_0", True)
 
     service = InfluxBase("influx", 0, "unique", "manufacturer", "model", logging.getLogger("test"))
     loop = asyncio.get_running_loop()
@@ -279,7 +280,47 @@ async def test_influxdb_write_failure_marks_health_unhealthy(monkeypatch):
     result = await service.execute_write(b"state value=1")
 
     assert result is False
-    assert service_health_registry.get_health("influxdb") is False
+    assert service_health_registry.get_health("influxdb_0") is False
+
+
+@pytest.mark.asyncio
+async def test_multi_plant_influxdb_health_isolation(monkeypatch):
+    monkeypatch.setattr(active_config.influxdb, "enabled", True, raising=False)
+    monkeypatch.setattr(active_config.influxdb, "health_monitoring", True, raising=False)
+    monkeypatch.setattr(active_config, "modbus", [MagicMock(host="host1"), MagicMock(host="host2")])
+    service_health_registry.clear()
+
+    plant0_service = InfluxBase("influx0", 0, "unique0", "manufacturer", "model", logging.getLogger("test0"))
+    plant1_service = InfluxBase("influx1", 1, "unique1", "manufacturer", "model", logging.getLogger("test1"))
+
+    loop = asyncio.get_running_loop()
+    plant0_service.online = loop.create_future()
+    plant1_service.online = loop.create_future()
+
+    plant0_service._writer_type = "v1_http"
+    plant0_service._write_url = "https://example.test/write"
+    plant1_service._writer_type = "v1_http"
+    plant1_service._write_url = "https://example.test/write"
+
+    # Plant 0 fails write
+    monkeypatch.setattr(plant0_service._session, "post", lambda *args, **kwargs: MagicMock(status_code=500, text="error"))
+    res0 = await plant0_service.execute_write(b"state value=1")
+    assert res0 is False
+    assert service_health_registry.get_health("influxdb_0") is False
+
+    # Plant 1 succeeds write
+    monkeypatch.setattr(plant1_service._session, "post", lambda *args, **kwargs: MagicMock(status_code=204))
+    res1 = await plant1_service.execute_write(b"state value=1")
+    assert res1 is True
+    assert service_health_registry.get_health("influxdb_1") is True
+
+    # Plant 0 should STILL be unhealthy despite plant 1 succeeding
+    assert service_health_registry.get_health("influxdb_0") is False
+
+    monitor = MonitorService([])
+    healthy, contributors = monitor._check_service_health()
+    assert healthy is False
+    assert contributors == {"influxdb_0": False, "influxdb_1": True}
 
 
 @pytest.mark.asyncio

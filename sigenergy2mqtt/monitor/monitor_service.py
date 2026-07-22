@@ -139,9 +139,17 @@ class MonitorService(Device):
             healthy = healthy and pvoutput_healthy
 
         if active_config.influxdb.enabled and active_config.influxdb.health_monitoring:
-            influxdb_healthy = service_health_registry.get_health("influxdb", True)
-            contributors["influxdb"] = bool(influxdb_healthy)
-            healthy = healthy and influxdb_healthy
+            keys_to_check = []
+            if active_config.modbus:
+                keys_to_check.extend(f"influxdb_{i}" for i in range(len(active_config.modbus)))
+            snapshot = service_health_registry.snapshot()
+            if "influxdb" in snapshot or not keys_to_check:
+                keys_to_check.append("influxdb")
+
+            for key in keys_to_check:
+                plant_healthy = service_health_registry.get_health(key, True)
+                contributors[key] = bool(plant_healthy)
+                healthy = healthy and plant_healthy
 
         self._health_contributors = contributors
         return healthy, contributors

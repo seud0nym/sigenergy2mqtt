@@ -110,6 +110,11 @@ class InfluxBase(Device):
         self._writer_obj_bucket: str | None = None
         self._writer_obj_org: str | None = None
 
+    @property
+    def service_health_key(self) -> str:
+        """Return the service health key for this InfluxDB service instance."""
+        return f"influxdb_{self.plant_index}" if self.plant_index >= 0 else "influxdb"
+
     # ------------------------------------------------------------------
     # Connection initialisation helpers
     # ------------------------------------------------------------------
@@ -510,10 +515,10 @@ class InfluxBase(Device):
                     timeout=active_config.influxdb.write_timeout,
                 )
                 if r.status_code in (204, 200):
-                    service_health_registry.set_health("influxdb", True)
+                    service_health_registry.set_health(self.service_health_key, True)
                     return True
                 self.logger.error(f"InfluxDB v2 HTTP write failed: {r.status_code=} {r.text=} (url={self._write_url})")
-                service_health_registry.set_health("influxdb", False)
+                service_health_registry.set_health(self.service_health_key, False)
                 return False
 
             elif self._writer_type == "v1_http" and self._write_url:
@@ -526,15 +531,15 @@ class InfluxBase(Device):
                     timeout=active_config.influxdb.write_timeout,
                 )
                 if r.status_code in (204, 200):
-                    service_health_registry.set_health("influxdb", True)
+                    service_health_registry.set_health(self.service_health_key, True)
                     return True
                 self.logger.error(f"InfluxDB v1 HTTP write failed: {r.status_code=} {r.text=} (url={self._write_url})")
-                service_health_registry.set_health("influxdb", False)
+                service_health_registry.set_health(self.service_health_key, False)
                 return False
 
         except Exception as e:
             self.logger.error(f"InfluxDB write failed: {e} (type={self._writer_type} url={self._write_url})")
-            service_health_registry.set_health("influxdb", False)
+            service_health_registry.set_health(self.service_health_key, False)
         return False
 
     # ------------------------------------------------------------------
