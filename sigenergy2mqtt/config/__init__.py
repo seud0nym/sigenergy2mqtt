@@ -78,7 +78,13 @@ def _promote_cli_to_env(args) -> None:
         if arg in skip:
             continue
 
-        if arg in (const.SIGENERGY2MQTT_PERSISTENCE_MQTT_REDUNDANCY):  # uses store_false, where as all other boolean flags use store_true
+        store_false_args = (
+            const.SIGENERGY2MQTT_TOPIC_UPDATE_MONITORING,
+            const.SIGENERGY2MQTT_PVOUTPUT_HEALTH_MONITORING,
+            const.SIGENERGY2MQTT_INFLUX_HEALTH_MONITORING,
+            const.SIGENERGY2MQTT_PERSISTENCE_MQTT_REDUNDANCY,
+        )
+        if arg in store_false_args:  # uses store_false, whereas all other boolean flags use store_true
             if value is True:
                 continue
         elif not _is_arg_explicitly_set(value):  # not explicitly set, skipping

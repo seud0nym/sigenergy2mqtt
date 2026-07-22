@@ -115,6 +115,17 @@ class TestConfigValidation:
     def test_settings_handle_negated_flags_not_dict(self):
         assert Settings.handle_negated_flags(["not a dict"]) == ["not a dict"]
 
+    def test_settings_handle_negated_flags_for_monitor_and_service_health(self):
+        data = Settings.handle_negated_flags({
+            "no-topic-update-monitoring": True,
+            "no-pvoutput-health-monitoring": True,
+            "no-influxdb-health-monitoring": True,
+        })
+
+        assert data["monitor_topic_updates"] is False
+        assert data["pvoutput"]["health_monitoring"] is False
+        assert data["influxdb"]["health_monitoring"] is False
+
     def test_settings_validate_consumption_invalid(self):
         with pytest.raises(ValueError, match="consumption must be one of"):
             Settings.validate_consumption("invalid_consumption")

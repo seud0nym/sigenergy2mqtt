@@ -28,6 +28,7 @@ class InfluxDbConfig(BaseModel):
     _validate_log_level = field_validator("log_level", mode="before")(validate_log_level)
     write_timeout: float = Field(30.0, alias="write-timeout", ge=0.1)
     read_timeout: float = Field(120.0, alias="read-timeout", ge=0.1)
+    health_monitoring: bool = Field(True, alias="health-monitoring")
     batch_size: int = Field(100, alias="batch-size", ge=1)
     flush_interval: float = Field(1.0, alias="flush-interval", ge=0.1)
     query_interval: float = Field(0.5, alias="query-interval", ge=0.0)
@@ -48,8 +49,5 @@ class InfluxDbConfig(BaseModel):
         has_v2 = bool(self.token and self.org)
         has_v1 = bool(self.username and self.password)
         if not has_v2 and not has_v1:
-            raise ValueError(
-                "influxdb configuration requires either v2 credentials (token and org) "
-                "or v1 credentials (username and password)"
-            )
+            raise ValueError("influxdb configuration requires either v2 credentials (token and org) or v1 credentials (username and password)")
         return self

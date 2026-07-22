@@ -2784,6 +2784,8 @@ cli:
     help: Liste des identifiants de capteurs à exclure (séparés par un espace)
   SIGENERGY2MQTT_INFLUX_FLUSH_INTERVAL:
     help: 'Intervalle de vidage InfluxDB en secondes (par défaut : 1.0)'
+  SIGENERGY2MQTT_INFLUX_HEALTH_MONITORING:
+    help: Empêchez les échecs d’écriture d’InfluxDB de contribuer à l’état de santé partagé.
   SIGENERGY2MQTT_INFLUX_HOST:
     help: 'Nom d''hôte ou adresse IP d''InfluxDB (par défaut : 127.0.0.1)'
   SIGENERGY2MQTT_INFLUX_INCLUDE:
@@ -2920,6 +2922,8 @@ cli:
     help: "Une source pour renseigner le champ étendu v8 dans PVOutput. Vous pouvez spécifier un nom de classe de capteur, un id d’entité sans le préfixe 'sensor.', un topic MQTT direct (ou mqtt:<topic>) ou un id d’entité de capteur Home Assistant (sensor.<id> ou ha:sensor.<id>, app uniquement). Si non spécifié OU si votre statut de donateur n’est pas à jour, ce champ ne sera pas envoyé à PVOutput."
   SIGENERGY2MQTT_PVOUTPUT_EXT_V9:
     help: "Une source pour renseigner le champ étendu v9 dans PVOutput. Vous pouvez spécifier un nom de classe de capteur, un id d’entité sans le préfixe 'sensor.', un topic MQTT direct (ou mqtt:<topic>) ou un id d’entité de capteur Home Assistant (sensor.<id> ou ha:sensor.<id>, app uniquement). Si non spécifié OU si votre statut de donateur n’est pas à jour, ce champ ne sera pas envoyé à PVOutput."
+  SIGENERGY2MQTT_PVOUTPUT_HEALTH_MONITORING:
+    help: Empêchez les échecs de téléchargement PVOutput de contribuer à l’état de santé partagé.
   SIGENERGY2MQTT_PVOUTPUT_IMPORTS:
     help: Activer l'envoi des données d'importation à PVOutput.
   SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL:
@@ -2946,6 +2950,8 @@ cli:
     help: L'intervalle de scan en secondes pour les registres Modbus à scanner à fréquence moyenne. Par défaut 60 (secondes), valeur minimale 1.
   SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME:
     help: L'intervalle de scan en secondes pour les registres Modbus à scanner en temps quasi réel. Par défaut 5 (secondes), valeur minimale 1.
+  SIGENERGY2MQTT_TOPIC_UPDATE_MONITORING:
+    help: Désactivez la surveillance des mises à jour de sujets MQTT attendues et de la détection des retards. La surveillance des sujets est activée par défaut.
   clean:
     help: Publier une découverte vide pour supprimer les dispositifs existants, puis quitter immédiatement.
   discovery_only:

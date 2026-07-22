@@ -105,6 +105,14 @@ The interval in seconds at which repeated states are published. (Repeated states
 
 The default is 0 (always publish). Setting to a non-zero number can reduce network traffic and the load on the MQTT server.
 
+<a id="opt_monitor_topic_updates"></a>
+### Monitor Topic Updates
+- CLI: `--no-topic-update-monitoring`
+- ENV: `SIGENERGY2MQTT_TOPIC_UPDATE_MONITORING`
+- Config key: `monitor-topic-updates`
+
+If `false`, the monitor service will not track expected MQTT topic updates and raise health warnings when topics are overdue. The default is `true`.
+
 <a id="opt_sanity_check_default_kw"></a>
 ### Sanity Check Default Kw
 - CLI: `--sanity-check-default-kw`
@@ -415,6 +423,14 @@ The InfluxDB interface logging level. Must be one of:
 - Config key: `influxdb.max-retries`
 
 The maximum number of retry attempts for failed operations.
+
+<a id="opt_influxdb_health_monitoring"></a>
+### Health Monitoring
+- CLI: `--no-influxdb-health-monitoring`
+- ENV: `SIGENERGY2MQTT_INFLUX_HEALTH_MONITORING`
+- Config key: `influxdb.health-monitoring`
+
+If `false`, failures while writing to InfluxDB will not affect overall health status. The default is `true`.
 
 <a id="opt_influxdb_max_sync_workers"></a>
 ### Max Sync Workers
@@ -1149,6 +1165,14 @@ When assigning to the environment variable, it must be a valid JSON string and t
 ```json
 SIGENERGY2MQTT_PVOUTPUT_PERIODS_JSON=[{"plan":"Zero Hero","to-date":"2026-05-31","periods":[{"type":"off-peak","start":"11:00","end":"14:00"},{"type":"peak","start":"15:00","end":"21:00"}]},{"plan":"Four Free","from-date":"2026-06-01","default":"peak","periods":[{"type":"off-peak","start":"10:00","end":"14:00"}]}]
 ```
+
+<a id="opt_pvoutput_health_monitoring"></a>
+### Health Monitoring
+- CLI: `--no-pvoutput-health-monitoring`
+- ENV: `SIGENERGY2MQTT_PVOUTPUT_HEALTH_MONITORING`
+- Config key: `pvoutput.health-monitoring`
+
+If `true`, failures while uploading to PVOutput will affect overall health status. The default is `true`.
 
 <a id="opt_pvoutput_update_debug_logging"></a>
 ### Update Debug Logging

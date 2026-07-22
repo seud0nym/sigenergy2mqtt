@@ -81,3 +81,18 @@ def test_cli_parsing_use_sigenergy_local_modbus_naming(clean_argv):
 
     args = cli_mod.parse_args(["--hass-sigenergy-local-modbus-naming"])
     assert getattr(args, const.SIGENERGY2MQTT_HASS_SIGENERGY_LOCAL_MODBUS_NAMING) is True
+
+
+def test_cli_parsing_negated_monitoring_flags(clean_argv):
+    import sigenergy2mqtt.config.cli as cli_mod
+    from sigenergy2mqtt.config import const
+
+    args = cli_mod.parse_args([
+        "--no-topic-update-monitoring",
+        "--no-pvoutput-health-monitoring",
+        "--no-influxdb-health-monitoring",
+    ])
+
+    assert getattr(args, const.SIGENERGY2MQTT_TOPIC_UPDATE_MONITORING) is False
+    assert getattr(args, const.SIGENERGY2MQTT_PVOUTPUT_HEALTH_MONITORING) is False
+    assert getattr(args, const.SIGENERGY2MQTT_INFLUX_HEALTH_MONITORING) is False

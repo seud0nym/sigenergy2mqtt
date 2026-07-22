@@ -2784,6 +2784,8 @@ cli:
     help: Lista de identificadores de sensores a serem excluídos (separados por espaços)
   SIGENERGY2MQTT_INFLUX_FLUSH_INTERVAL:
     help: 'Intervalo de flush do InfluxDB em segundos (padrão: 1.0)'
+  SIGENERGY2MQTT_INFLUX_HEALTH_MONITORING:
+    help: Impedir que falhas de gravação do InfluxDB contribuam para o status de integridade compartilhado.
   SIGENERGY2MQTT_INFLUX_HOST:
     help: 'Nome do host ou endereço IP do InfluxDB (padrão: 127.0.0.1)'
   SIGENERGY2MQTT_INFLUX_INCLUDE:
@@ -2920,6 +2922,8 @@ cli:
     help: "Uma fonte para preencher o campo estendido v8 no PVOutput. Você pode informar um nome de classe de sensor, um id de entidade sem o prefixo 'sensor.', um tópico MQTT direto (ou mqtt:<topic>) ou um id de entidade de sensor do Home Assistant (sensor.<id> ou ha:sensor.<id>, somente app). Se não for especificado OU seu status de doação não estiver em dia, este campo não será enviado ao PVOutput."
   SIGENERGY2MQTT_PVOUTPUT_EXT_V9:
     help: "Uma fonte para preencher o campo estendido v9 no PVOutput. Você pode informar um nome de classe de sensor, um id de entidade sem o prefixo 'sensor.', um tópico MQTT direto (ou mqtt:<topic>) ou um id de entidade de sensor do Home Assistant (sensor.<id> ou ha:sensor.<id>, somente app). Se não for especificado OU seu status de doação não estiver em dia, este campo não será enviado ao PVOutput."
+  SIGENERGY2MQTT_PVOUTPUT_HEALTH_MONITORING:
+    help: Desabilite que falhas de upload de PVOutput contribuam para o status de funcionamento compartilhado.
   SIGENERGY2MQTT_PVOUTPUT_IMPORTS:
     help: Ativar envio de dados de importação para PVOutput.
   SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL:
@@ -2946,6 +2950,8 @@ cli:
     help: 'Intervalo de varredura para registros de frequência média. Padrão: 60.'
   SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME:
     help: 'Intervalo de varredura para registros em tempo real. Padrão: 5.'
+  SIGENERGY2MQTT_TOPIC_UPDATE_MONITORING:
+    help: Desative o monitoramento para atualizações esperadas de tópicos MQTT e detecção atrasada. O monitoramento de tópicos está habilitado por padrão.
   clean:
     help: Publicar discovery vazia para remover dispositivos, depois sair.
   discovery_only:

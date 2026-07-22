@@ -89,6 +89,30 @@ PvOutputConfig._type_to_output_fields = _pvoutput_type_to_output_fields  # type:
 PvOutputConfig.current_time_period = property(_pvoutput_current_time_period)  # type: ignore[attr-defined]
 
 
+def _has_nested_value(data: dict[str, Any], path: str) -> bool:
+    """Check if a dot-separated path exists in a nested dict."""
+    parts = path.split(".")
+    target: Any = data
+    for part in parts:
+        if not isinstance(target, dict) or part not in target:
+            return False
+        target = target[part]
+    return True
+
+
+def _set_nested_value(data: dict[str, Any], path: str, value: Any) -> None:
+    """Set a value by dot-separated path in a nested dict."""
+    parts = path.split(".")
+    target: dict[str, Any] = data
+    for part in parts[:-1]:
+        next_target = target.get(part)
+        if not isinstance(next_target, dict):
+            next_target = {}
+            target[part] = next_target
+        target = next_target
+    target[parts[-1]] = value
+
+
 class Settings(BaseSettings):
     """
     Root configuration.  Instantiate once at startup:
@@ -121,6 +145,7 @@ class Settings(BaseSettings):
     language: str = Field("en", alias="language")
     consumption: ConsumptionMethod = Field(ConsumptionMethod.TOTAL, alias="consumption")
     repeated_state_publish_interval: int = Field(0, alias="repeated-state-publish-interval")
+    monitor_topic_updates: bool = Field(True, alias="monitor-topic-updates")
     sanity_check_default_kw: float = Field(500.0, alias="sanity-check-default-kw", ge=0)
     sanity_check_failures_increment: bool = Field(False, alias="sanity-check-failures-increment")
     ems_mode_check: bool = Field(True, alias="ems-mode-check")
@@ -157,14 +182,22 @@ class Settings(BaseSettings):
             "no_ems_mode_check": "ems_mode_check",
             "no-metrics": "metrics_enabled",
             "no_metrics": "metrics_enabled",
+            "no-topic-update-monitoring": "monitor_topic_updates",
+            "no_topic_update_monitoring": "monitor_topic_updates",
+            "no-pvoutput-health-monitoring": "pvoutput.health_monitoring",
+            "no_pvoutput_health_monitoring": "pvoutput.health_monitoring",
+            "no-influxdb-health-monitoring": "influxdb.health_monitoring",
+            "no_influxdb_health_monitoring": "influxdb.health_monitoring",
+            "no-persistence-mqtt-redundancy": "persistence.mqtt_redundancy",
+            "no_persistence_mqtt_redundancy": "persistence.mqtt_redundancy",
         }
         for negated_key, positive_field in negated_mapping.items():
             if negated_key in data:
                 val = data.pop(negated_key)
                 if val is not None:
-                    if positive_field not in data:
-                        bool_val = _bool(str(val)) if isinstance(val, str) else bool(val)  # pyrefly: ignore
-                        data[positive_field] = not bool_val
+                    bool_val = _bool(str(val)) if isinstance(val, str) else bool(val)
+                    if not _has_nested_value(data, positive_field):
+                        _set_nested_value(data, positive_field, not bool_val)
 
         # 2. Merge YAML/kebab keys into their snake_case field names
         for field_name, field_info in cls.model_fields.items():
