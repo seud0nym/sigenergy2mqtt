@@ -215,7 +215,7 @@ class QSAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
             data_type=ModbusDataType.INT16,
             scan_interval=ScanInterval.medium(plant_index),
             unit=PERCENTAGE,
-            device_class=DeviceClass.BATTERY,
+            device_class=None,
             icon="mdi:lightning-bolt",
             gain=100,
             precision=None,
