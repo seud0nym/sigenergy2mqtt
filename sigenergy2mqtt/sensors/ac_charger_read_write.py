@@ -1,4 +1,4 @@
-from sigenergy2mqtt.common import DeviceClass, InputType, Protocol, StateClass, UnitOfElectricCurrent
+from sigenergy2mqtt.common import DeviceClass, InputType, Protocol, UnitOfElectricCurrent
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus import ModbusDataType
 
@@ -59,7 +59,6 @@ class ACChargerOutputCurrent(NumericSensor):
             scan_interval=ScanInterval.medium(plant_index),
             unit=UnitOfElectricCurrent.AMPERE,
             device_class=DeviceClass.CURRENT,
-            state_class=StateClass.MEASUREMENT,
             icon="mdi:car-electric",
             gain=100,
             precision=2,
