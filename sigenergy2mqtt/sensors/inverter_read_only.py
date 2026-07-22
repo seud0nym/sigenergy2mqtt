@@ -2142,7 +2142,7 @@ class DCChargerTotalChargingCapacity(ReadOnlySensor, HybridInverter):
             scan_interval=ScanInterval.high(plant_index),
             unit=UnitOfEnergy.KILO_WATT_HOUR,
             device_class=DeviceClass.ENERGY,
-            state_class=StateClass.MEASUREMENT,
+            state_class=StateClass.TOTAL,
             icon="mdi:car-electric",
             gain=100,
             precision=2,
@@ -2166,7 +2166,7 @@ class DCChargerTotalDischargingCapacity(ReadOnlySensor, HybridInverter):
             scan_interval=ScanInterval.high(plant_index),
             unit=UnitOfEnergy.KILO_WATT_HOUR,
             device_class=DeviceClass.ENERGY,
-            state_class=StateClass.MEASUREMENT,
+            state_class=StateClass.TOTAL,
             icon="mdi:car-electric",
             gain=100,
             precision=2,
@@ -2196,6 +2196,7 @@ class DCChargerRatedChargingPower(ReadOnlySensor, HybridInverter):
             precision=2,
             protocol_version=Protocol.V2_9,
         )
+        self["entity_category"] = "diagnostic"
 
 
 class DCChargerRatedDischargingPower(ReadOnlySensor, HybridInverter):
@@ -2220,3 +2221,4 @@ class DCChargerRatedDischargingPower(ReadOnlySensor, HybridInverter):
             precision=2,
             protocol_version=Protocol.V2_9,
         )
+        self["entity_category"] = "diagnostic"
