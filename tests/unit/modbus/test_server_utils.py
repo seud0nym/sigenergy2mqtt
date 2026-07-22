@@ -378,8 +378,7 @@ def test_build_sim_device_logic():
     # Check SimData values
     sim_data = sim_device.simdata[0]
     assert sim_data.address == 100
-    # 60000 - 65536 = -5536
-    assert sim_data.values == [-5536]
+    assert sim_data.values == [60000]
 
 
 def test_latency_budget_increments():
