@@ -41,6 +41,12 @@ consumption: total
 #                 If > 0, repeated states are published at the specified
 #                 interval. The default is 0 (always publish).
 repeated-state-publish-interval: 0
+# monitor-topic-updates
+#   added: 2026.7.22
+#   default: true
+#   description:  If true, the monitor service tracks expected MQTT topic
+#                 updates and raises health warnings when topics are overdue.
+monitor-topic-updates: true
 # sanity-check-default-kw
 #   added: 2025.7.9
 #   default: 500.0
@@ -559,6 +565,12 @@ pvoutput:
   #                 If not specified, the temperature will not be sent to
   #                 PVOutput.
   temperature-topic: "homeassistant/weather/temperature"
+  # health-monitoring
+  #   added: 2026.7.23
+  #   default: true
+  #   description:  If false, failures while uploading to PVOutput will not
+  #                 affect overall health status.
+  health-monitoring: true
   # v7
   #   added: 2025.9.16
   #   default: ""
@@ -840,6 +852,12 @@ influxdb:
   #   default: 4
   #   description: The maximum number of parallel sync operations.
   max-sync-workers: 4
+  # health-monitoring
+  #   added: 2026.7.23
+  #   default: true
+  #   description:  If false, failures while writing to InfluxDB will not
+  #                 affect overall health status.
+  health-monitoring: true
 
 # health-check
 #   added: 2026.6.28

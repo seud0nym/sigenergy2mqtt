@@ -20,6 +20,7 @@ Environment variables override the configuration file, but *not* command line op
 | `SIGENERGY2MQTT_NO_EMS_MODE_CHECK` | Set to `true` to turn off the validation that disables ESS Max Charging/Discharging and PV Max Power limits when Remote EMS Control Mode is not Command Charging/Discharging. This setting is ignored for firmware SPC113 and later, because PV Max Power and ESS Charge/Discharge limits are globally available in those versions. [<sup>(More…)</sup>](README.md#opt_no_ems_mode_check) | 2026.1.13 |
 | `SIGENERGY2MQTT_CONSUMPTION` | Set the method of calculating the `Plant Consumed Power` sensor. Valid values are: `calculated`, `total` (use the V2.8 `Total Load Power` register), or `general` (use the V2.8 `General Load Power` register). The default is `total`. This option is _ignored_ on firmware earlier than that supporting Modbus Protocol V2.8. [<sup>(More…)</sup>](README.md#opt_consumption) | 2025.12.23 |
 | `SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL` | Set the interval in seconds at which repeated states are published. (Repeated states occur when the state that is acquired is identical to the previous read.) If < 0, repeated states are never published. If 0, repeated states are always published. If > 0, repeated states are published at the specified interval. The default is 0 (always publish) [<sup>(More…)</sup>](README.md#opt_repeated_state_publish_interval) | 2026.2.19 |
+| `SIGENERGY2MQTT_TOPIC_UPDATE_MONITORING` | Set to `false` to disable monitor-based overdue topic detection. Default is `true`. [<sup>(More…)</sup>](README.md#opt_monitor_topic_updates) | 2026.7.22 |
 
 ## Home Assistant Configuration Variables
 
@@ -99,9 +100,10 @@ Environment variables override the configuration file, but *not* command line op
 <table>
   <thead><tr><th>Name</th><th>Description</th><th>Since</th></tr></thead>
   <tbody>
-    <tr><td><code>SIGENERGY2MQTT_PVOUTPUT_ENABLED</code></td><td>Set to <code>true</code> to enable status updates to PVOutput. <a href="README.md#opt_pvoutput_enabled"><sup>(More…)</sup></a><td>2025.5.12</td><tr>
-    <tr><td><code>SIGENERGY2MQTT_PVOUTPUT_API_KEY</code></td><td>The API Key for PVOutput <a href="README.md#opt_pvoutput_api_key"><sup>(More…)</sup></a><td>2025.5.12</td><tr>
-    <tr><td><code>SIGENERGY2MQTT_PVOUTPUT_SYSTEM_ID</code></td><td>The PVOutput System ID <a href="README.md#opt_pvoutput_system_id"><sup>(More…)</sup></a><td>2025.5.12</td><tr>
+    <tr><td><code>SIGENERGY2MQTT_PVOUTPUT_ENABLED</code></td><td>Set to <code>true</code> to enable status updates to PVOutput. <a href="README.md#opt_pvoutput_enabled"><sup>(More…)</sup></a></td><td>2025.5.12</td></tr>
+    <tr><td><code>SIGENERGY2MQTT_PVOUTPUT_HEALTH_MONITORING</code></td><td>Set to <code>false</code> to exclude PVOutput failures from affecting overall health status. Default is <code>true</code>.  <a href="README.md#opt_pvoutput_health_monitoring"><sup>(More…)</sup></a></td><td>2026.7.22</td></tr>
+    <tr><td><code>SIGENERGY2MQTT_PVOUTPUT_API_KEY</code></td><td>The API Key for PVOutput <a href="README.md#opt_pvoutput_api_key"><sup>(More…)</sup></a></td><td>2025.5.12</td></tr>
+    <tr><td><code>SIGENERGY2MQTT_PVOUTPUT_SYSTEM_ID</code></td><td>The PVOutput System ID <a href="README.md#opt_pvoutput_system_id"><sup>(More…)</sup></a></td><td>2025.5.12</td></tr>
     <tr><td><code>SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION</code></td><td><ul>
       <li>If specified with a value of <code>true</code> or <code>consumption</code>, raw consumption data will be sent to PVOutput.</li>
       <li>If specified with a value of <code>net-of-battery</code>, consumption will be calculated as:<br><i>consumption + battery charge - battery discharge</i>.<br>WARNING: This could cause consumption to go negative (e.g. if exporting to take advantage of time-based Feed-In Tariffs). Negative consumption is not allowed by PVOutput, so it will be uploaded as 0.</li>
@@ -155,6 +157,7 @@ Environment variables override the configuration file, but *not* command line op
 | `SIGENERGY2MQTT_INFLUX_POOL_MAXSIZE` | InfluxDB connection pool max size (default: `100`) [<sup>(More…)</sup>](README.md#opt_influxdb_pool_maxsize) | 2026.2.5 |
 | `SIGENERGY2MQTT_INFLUX_SYNC_CHUNK_SIZE` | InfluxDB sync chunk size (default: `1000`) [<sup>(More…)</sup>](README.md#opt_influxdb_sync_chunk_size) | 2026.2.5 |
 | `SIGENERGY2MQTT_INFLUX_MAX_SYNC_WORKERS` | InfluxDB maximum sync workers (default: `4`) [<sup>(More…)</sup>](README.md#opt_influxdb_max_sync_workers) | 2026.2.5 |
+| `SIGENERGY2MQTT_INFLUX_HEALTH_MONITORING` | Set to `false` to exclude InfluxDB failures from affecting overall health status. Default is `true`. | 2026.7.22 |
 
 
 ## Health Check Configuration Variables

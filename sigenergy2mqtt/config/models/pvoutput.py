@@ -52,6 +52,7 @@ class PvOutputConfig(BaseModel):
     _validate_upload_log_level = field_validator("upload_log_level", mode="before")(validate_log_level)
     calc_debug_logging: bool = Field(False, alias="calc-debug-logging")
     update_debug_logging: bool = Field(False, alias="update-debug-logging")
+    health_monitoring: bool = Field(True, alias="health-monitoring")
     tariffs: list[Any] = Field(default_factory=list, alias="time-periods")
 
     @property

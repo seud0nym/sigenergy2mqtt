@@ -91,6 +91,12 @@ def get_parser() -> argparse.ArgumentParser:
         default=os.getenv(const.SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL, None),
         help="The interval in seconds at which repeated states are published. If < 0, repeated states are never published. If 0, repeated states are always published. If > 0, repeated states are published at the specified interval. The default is 0 (always publish).",
     )
+    parser.add_argument(
+        "--no-topic-update-monitoring",
+        action="store_false",
+        dest=const.SIGENERGY2MQTT_TOPIC_UPDATE_MONITORING,
+        help="Disable monitoring for expected MQTT topic updates and overdue detection. Topic monitoring is enabled by default.",
+    )
     # endregion
 
     # region Home Assistant Configuration
@@ -583,6 +589,12 @@ def get_parser() -> argparse.ArgumentParser:
         default=os.getenv(const.SIGENERGY2MQTT_PVOUTPUT_UPLOAD_LOG_LEVEL, None),
         help="Set the log level for PVOutput upload log messages. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is INFO",
     )
+    parser.add_argument(
+        "--no-pvoutput-health-monitoring",
+        action="store_false",
+        dest=const.SIGENERGY2MQTT_PVOUTPUT_HEALTH_MONITORING,
+        help="Disable PVOutput upload failures from contributing to the shared health status.",
+    )
     # endregion
 
     # region InfluxDB Configuration
@@ -785,6 +797,12 @@ def get_parser() -> argparse.ArgumentParser:
         type=int,
         default=os.getenv(const.SIGENERGY2MQTT_INFLUX_MAX_SYNC_WORKERS, None),
         help="InfluxDB maximum sync workers (default: 4)",
+    )
+    parser.add_argument(
+        "--no-influxdb-health-monitoring",
+        action="store_false",
+        dest=const.SIGENERGY2MQTT_INFLUX_HEALTH_MONITORING,
+        help="Disable InfluxDB write failures from contributing to the shared health status.",
     )
     # endregion
 

@@ -2784,6 +2784,8 @@ cli:
     help: Lista de identificadores de sensores a excluir (separados por espacios)
   SIGENERGY2MQTT_INFLUX_FLUSH_INTERVAL:
     help: 'Intervalo de vaciado de InfluxDB en segundos (por defecto: 1.0)'
+  SIGENERGY2MQTT_INFLUX_HEALTH_MONITORING:
+    help: Deshabilite las fallas de escritura de InfluxDB para que no contribuyan al estado de salud compartido.
   SIGENERGY2MQTT_INFLUX_HOST:
     help: 'Nombre de host o dirección IP de InfluxDB (por defecto: 127.0.0.1)'
   SIGENERGY2MQTT_INFLUX_INCLUDE:
@@ -2920,6 +2922,8 @@ cli:
     help: "Una fuente para completar el campo extendido v8 en PVOutput. Puede especificar un nombre de clase de sensor, un id de entidad sin el prefijo 'sensor.', un tema MQTT directo (o mqtt:<topic>) o un id de entidad de sensor de Home Assistant (sensor.<id> o ha:sensor.<id>, solo app). Si no se especifica O su estado de donación no está vigente, este campo no se enviará a PVOutput."
   SIGENERGY2MQTT_PVOUTPUT_EXT_V9:
     help: "Una fuente para completar el campo extendido v9 en PVOutput. Puede especificar un nombre de clase de sensor, un id de entidad sin el prefijo 'sensor.', un tema MQTT directo (o mqtt:<topic>) o un id de entidad de sensor de Home Assistant (sensor.<id> o ha:sensor.<id>, solo app). Si no se especifica O su estado de donación no está vigente, este campo no se enviará a PVOutput."
+  SIGENERGY2MQTT_PVOUTPUT_HEALTH_MONITORING:
+    help: Deshabilite las fallas de carga de PVOutput para que no contribuyan al estado de salud compartido.
   SIGENERGY2MQTT_PVOUTPUT_IMPORTS:
     help: Habilitar envío de datos de importación a PVOutput.
   SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL:
@@ -2946,6 +2950,8 @@ cli:
     help: El intervalo de escaneo en segundos para registros Modbus que se escanean a frecuencia media. El predeterminado es 60 (segundos), y el valor mínimo es 1.
   SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME:
     help: El intervalo de escaneo en segundos para registros Modbus que se escanean en tiempo casi real. El predeterminado es 5 (segundos), y el valor mínimo es 1.
+  SIGENERGY2MQTT_TOPIC_UPDATE_MONITORING:
+    help: Deshabilite la supervisión de las actualizaciones esperadas de temas MQTT y la detección vencida. La supervisión de temas está habilitada de forma predeterminada.
   clean:
     help: Publicar descubrimiento vacío para eliminar dispositivos existentes, luego sale inmediatamente.
   discovery_only:

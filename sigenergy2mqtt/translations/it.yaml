@@ -2784,6 +2784,8 @@ cli:
     help: Elenco degli identificatori dei sensori da escludere (separati da spazi)
   SIGENERGY2MQTT_INFLUX_FLUSH_INTERVAL:
     help: 'Intervallo di flush InfluxDB in secondi (predefinito: 1.0)'
+  SIGENERGY2MQTT_INFLUX_HEALTH_MONITORING:
+    help: Disabilitare gli errori di scrittura di InfluxDB dal contribuire allo stato di integrità condiviso.
   SIGENERGY2MQTT_INFLUX_HOST:
     help: 'Hostname o indirizzo IP di InfluxDB (predefinito: 127.0.0.1)'
   SIGENERGY2MQTT_INFLUX_INCLUDE:
@@ -2920,6 +2922,8 @@ cli:
     help: "Una sorgente per valorizzare il campo esteso v8 in PVOutput. Puoi specificare un nome classe sensore, un ID entità senza prefisso 'sensor.', un topic MQTT diretto (o mqtt:<topic>) oppure un ID entità sensore di Home Assistant (sensor.<id> o ha:sensor.<id>, solo app). Se non specificato O se il tuo stato donatore non è corrente, questo campo non verrà inviato a PVOutput."
   SIGENERGY2MQTT_PVOUTPUT_EXT_V9:
     help: "Una sorgente per valorizzare il campo esteso v9 in PVOutput. Puoi specificare un nome classe sensore, un ID entità senza prefisso 'sensor.', un topic MQTT diretto (o mqtt:<topic>) oppure un ID entità sensore di Home Assistant (sensor.<id> o ha:sensor.<id>, solo app). Se non specificato O se il tuo stato donatore non è corrente, questo campo non verrà inviato a PVOutput."
+  SIGENERGY2MQTT_PVOUTPUT_HEALTH_MONITORING:
+    help: Disabilita gli errori di caricamento di PVOutput dal contributo allo stato di integrità condiviso.
   SIGENERGY2MQTT_PVOUTPUT_IMPORTS:
     help: Abilita l'invio dei dati di importazione a PVOutput.
   SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL:
@@ -2946,6 +2950,8 @@ cli:
     help: L'intervallo di scansione in secondi per i registri Modbus da scansionare a frequenza media. Predefinito 60 (secondi), valore minimo 1.
   SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME:
     help: L'intervallo di scansione in secondi per i registri Modbus da scansionare in tempo quasi reale. Predefinito 5 (secondi), valore minimo 1.
+  SIGENERGY2MQTT_TOPIC_UPDATE_MONITORING:
+    help: Disabilita il monitoraggio degli aggiornamenti previsti degli argomenti MQTT e del rilevamento scaduto. Il monitoraggio degli argomenti è abilitato per impostazione predefinita.
   clean:
     help: Pubblica discovery vuota per eliminare i dispositivi esistenti, poi esce immediatamente.
   discovery_only:

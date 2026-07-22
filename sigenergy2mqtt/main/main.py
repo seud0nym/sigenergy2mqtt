@@ -13,7 +13,17 @@ from paho.mqtt.enums import CallbackAPIVersion
 from pymodbus import pymodbus_apply_logging_config
 from pymodbus.pdu import ModbusPDU
 
-from sigenergy2mqtt.common import Constants, ConsumptionMethod, FirmwareVersion, HybridInverter, InputType, Protocol, ProtocolApplies, PVInverter
+from sigenergy2mqtt.common import (
+    Constants,
+    ConsumptionMethod,
+    FirmwareVersion,
+    HybridInverter,
+    InputType,
+    Protocol,
+    ProtocolApplies,
+    PVInverter,
+    service_health_registry,
+)
 from sigenergy2mqtt.config import active_config, configure_root_logging, initialize_async
 from sigenergy2mqtt.devices import PID, PSS, ACCharger, DCCharger, Device, Inverter, PowerPlant, bind_cross_device_sensors
 from sigenergy2mqtt.influxdb import get_influxdb_services
@@ -1222,6 +1232,7 @@ async def async_main() -> None:
         restart_controller.reset()
         thread_config_registry.clear()
         mqtt_health_registry.clear()
+        service_health_registry.clear()
 
         # Initialise StateStore with dedicated MQTT connection + sentinel-based warming
         await state_store.initialise(

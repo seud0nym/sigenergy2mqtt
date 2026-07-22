@@ -2784,6 +2784,8 @@ cli:
     help: Lijst van sensor-ID's om uit te sluiten (gescheiden door spaties)
   SIGENERGY2MQTT_INFLUX_FLUSH_INTERVAL:
     help: 'InfluxDB flush-interval in seconden (standaard: 1.0)'
+  SIGENERGY2MQTT_INFLUX_HEALTH_MONITORING:
+    help: Schakel uit dat InfluxDB-schrijffouten bijdragen aan de gedeelde gezondheidsstatus.
   SIGENERGY2MQTT_INFLUX_HOST:
     help: 'Hostnaam of IP-adres van InfluxDB (standaard: 127.0.0.1)'
   SIGENERGY2MQTT_INFLUX_INCLUDE:
@@ -2920,6 +2922,8 @@ cli:
     help: "Een bron om het uitgebreide veld v8 in PVOutput te vullen. Je kunt een sensor-klassenaam opgeven, een entiteits-id zonder het voorvoegsel 'sensor.', een direct MQTT-topic (of mqtt:<topic>), of een Home Assistant sensor-entiteits-id (sensor.<id> of ha:sensor.<id>, alleen app). Als dit niet is opgegeven OF je donatiestatus niet actueel is, wordt dit veld niet naar PVOutput verzonden."
   SIGENERGY2MQTT_PVOUTPUT_EXT_V9:
     help: "Een bron om het uitgebreide veld v9 in PVOutput te vullen. Je kunt een sensor-klassenaam opgeven, een entiteits-id zonder het voorvoegsel 'sensor.', een direct MQTT-topic (of mqtt:<topic>), of een Home Assistant sensor-entiteits-id (sensor.<id> of ha:sensor.<id>, alleen app). Als dit niet is opgegeven OF je donatiestatus niet actueel is, wordt dit veld niet naar PVOutput verzonden."
+  SIGENERGY2MQTT_PVOUTPUT_HEALTH_MONITORING:
+    help: Zorg ervoor dat PVOutput-uploadfouten niet bijdragen aan de gedeelde gezondheidsstatus.
   SIGENERGY2MQTT_PVOUTPUT_IMPORTS:
     help: Schakel verzending van importgegevens naar PVOutput in.
   SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL:
@@ -2946,6 +2950,8 @@ cli:
     help: 'Scaninterval in seconden voor registers met gemiddelde frequentie. Standaard: 60.'
   SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME:
     help: 'Scaninterval in seconden voor real-time registers. Standaard: 5.'
+  SIGENERGY2MQTT_TOPIC_UPDATE_MONITORING:
+    help: Schakel monitoring uit voor verwachte MQTT-onderwerpupdates en achterstallige detectie. Onderwerpbewaking is standaard ingeschakeld.
   clean:
     help: Publiceer lege discovery om bestaande apparaten te verwijderen, sluit dan af.
   discovery_only:

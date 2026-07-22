@@ -2784,6 +2784,8 @@ cli:
     help: Specify sensors to be excluded from InfluxDB updates using either the full or partial entity id or sensor class name (e.g. specifying 'daily' would match all sensors with daily in their entity name), or a regular expression to be matched against the entity id or sensor class name (e.g. '^PowerFactor$' only matches the single class name).
   SIGENERGY2MQTT_INFLUX_FLUSH_INTERVAL:
     help: 'InfluxDB flush interval in seconds (default: 1.0)'
+  SIGENERGY2MQTT_INFLUX_HEALTH_MONITORING:
+    help: Disable InfluxDB write failures from contributing to the shared health status.
   SIGENERGY2MQTT_INFLUX_HOST:
     help: 'InfluxDB hostname or IP address (default: 127.0.0.1)'
   SIGENERGY2MQTT_INFLUX_INCLUDE:
@@ -2920,6 +2922,8 @@ cli:
     help: A source used to populate the v8 extended field in PVOutput. You can specify a sensor class name, an entity id without the 'sensor.' prefix, a direct MQTT topic (or mqtt:<topic>), or a Home Assistant sensor entity id (sensor.<id> or ha:sensor.<id>, app only). If not specified, OR your donation status is not current, this field will not be sent to PVOutput.
   SIGENERGY2MQTT_PVOUTPUT_EXT_V9:
     help: A source used to populate the v9 extended field in PVOutput. You can specify a sensor class name, an entity id without the 'sensor.' prefix, a direct MQTT topic (or mqtt:<topic>), or a Home Assistant sensor entity id (sensor.<id> or ha:sensor.<id>, app only). If not specified, OR your donation status is not current, this field will not be sent to PVOutput.
+  SIGENERGY2MQTT_PVOUTPUT_HEALTH_MONITORING:
+    help: Disable PVOutput upload failures from contributing to the shared health status.
   SIGENERGY2MQTT_PVOUTPUT_IMPORTS:
     help: Enable sending of import data to PVOutput.
   SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL:
@@ -2946,6 +2950,8 @@ cli:
     help: The scan interval in seconds for Modbus registers that are to be scanned at a medium frequency. Default is 60 (seconds), and the minimum value is 1.
   SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME:
     help: The scan interval in seconds for Modbus registers that are to be scanned in near-real time. Default is 5 (seconds), and the minimum value is 1.
+  SIGENERGY2MQTT_TOPIC_UPDATE_MONITORING:
+    help: Disable monitoring for expected MQTT topic updates and overdue detection. Topic monitoring is enabled by default.
   clean:
     help: Publish empty discovery to delete existing devices, then exits immediately.
   discovery_only:

@@ -9,7 +9,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import Protocol, service_health_registry
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.metrics import Metrics
@@ -510,8 +510,10 @@ class InfluxBase(Device):
                     timeout=active_config.influxdb.write_timeout,
                 )
                 if r.status_code in (204, 200):
+                    service_health_registry.set_health("influxdb", True)
                     return True
                 self.logger.error(f"InfluxDB v2 HTTP write failed: {r.status_code=} {r.text=} (url={self._write_url})")
+                service_health_registry.set_health("influxdb", False)
                 return False
 
             elif self._writer_type == "v1_http" and self._write_url:
@@ -524,12 +526,15 @@ class InfluxBase(Device):
                     timeout=active_config.influxdb.write_timeout,
                 )
                 if r.status_code in (204, 200):
+                    service_health_registry.set_health("influxdb", True)
                     return True
                 self.logger.error(f"InfluxDB v1 HTTP write failed: {r.status_code=} {r.text=} (url={self._write_url})")
+                service_health_registry.set_health("influxdb", False)
                 return False
 
         except Exception as e:
             self.logger.error(f"InfluxDB write failed: {e} (type={self._writer_type} url={self._write_url})")
+            service_health_registry.set_health("influxdb", False)
         return False
 
     # ------------------------------------------------------------------

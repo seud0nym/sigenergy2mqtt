@@ -9,7 +9,7 @@ from typing import Any, Awaitable
 
 import paho.mqtt.client as mqtt
 
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import Protocol, service_health_registry
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.config.config import is_docker
 from sigenergy2mqtt.devices import Device
@@ -41,8 +41,9 @@ class MonitorService(Device):
         self._health_state_topic = "sigenergy2mqtt/health/state"
         self._health_attributes_topic = "sigenergy2mqtt/health/attributes"
         self._health_file = Path("/tmp/sigenergy2mqtt-health.json")
-        self._monitor_topic_updates = active_config.log_level == logging.DEBUG and active_config.repeated_state_publish_interval >= 0
+        self._monitor_topic_updates = active_config.monitor_topic_updates
         self._current_status = "unknown"
+        self._health_contributors: dict[str, bool] = {}
         # Health publication should remain reasonably frequent and independent
         # of repeated-state payload cadence so Docker HEALTHCHECKs remain timely.
         self._health_publish_interval = active_config.health_check.interval
@@ -119,11 +120,31 @@ class MonitorService(Device):
             else:
                 if logging.getLogger().isEnabledFor(logging.DEBUG):
                     if health.last_message_at and health.last_publish_ack_at:
-                        logging.debug(f"{self.log_identity} MQTT Client ID {cid} healthy (connected {health.connect_count}x, last message {now - health.last_message_at:0.2f}s ago, last ack {now - health.last_publish_ack_at:0.2f}s ago)")
+                        logging.debug(
+                            f"{self.log_identity} MQTT Client ID {cid} healthy (connected {health.connect_count}x, last message {now - health.last_message_at:0.2f}s ago, last ack {now - health.last_publish_ack_at:0.2f}s ago)"
+                        )
                     else:
                         logging.debug(f"{self.log_identity} MQTT Client ID {cid} healthy (connected {health.connect_count}x)")
                 mqtt_healthy_connections += 1
         return bool(mqtt_healthy_connections == len(mqtt_snapshot))
+
+    def _check_service_health(self) -> tuple[bool, dict[str, bool]]:
+        """Evaluate optional service health contributors."""
+        contributors: dict[str, bool] = {}
+        healthy = True
+
+        if active_config.pvoutput.enabled and active_config.pvoutput.health_monitoring:
+            pvoutput_healthy = service_health_registry.get_health("pvoutput", True)
+            contributors["pvoutput"] = bool(pvoutput_healthy)
+            healthy = healthy and pvoutput_healthy
+
+        if active_config.influxdb.enabled and active_config.influxdb.health_monitoring:
+            influxdb_healthy = service_health_registry.get_health("influxdb", True)
+            contributors["influxdb"] = bool(influxdb_healthy)
+            healthy = healthy and influxdb_healthy
+
+        self._health_contributors = contributors
+        return healthy, contributors
 
     async def _check_topic_health(self) -> int:
         """Checks for overdue topics (sensors that haven't been seen in their scan_interval)"""
@@ -142,7 +163,7 @@ class MonitorService(Device):
 
     async def _publish_health(self, mqtt_client: mqtt.Client, is_docker_env: bool) -> None:
         """Publishes the health status to the JSON file and MQTT.
-        
+
         Args:
             mqtt_client: MQTT client instance.
             is_docker_env: Whether the service is running in a Docker environment.
@@ -157,6 +178,7 @@ class MonitorService(Device):
         # but cannot stall meaningfully, so no executor needed.
         modbus_connected = self._check_modbus()
         mqtt_connected = self._check_mqtt(mqtt_client)
+        services_healthy, service_contributors = self._check_service_health()
         try:
             async with asyncio.timeout(active_config.health_check.timeout):
                 overdue_count = await self._check_topic_health()
@@ -164,12 +186,14 @@ class MonitorService(Device):
             logging.warning(f"{self.log_identity} Overdue topic health check timed out after {active_config.health_check.timeout}s")
             overdue_count = -1
 
-        if overdue_count == 0 and mqtt_connected and modbus_connected:
+        if overdue_count == 0 and mqtt_connected and modbus_connected and services_healthy:
             status = "healthy"
-            logging.log(logging.INFO if self._current_status != status else logging.DEBUG, f"{self.log_identity} Status is HEALTHY (topic_{overdue_count=} {mqtt_connected=} {modbus_connected=})")
+            logging.log(
+                logging.INFO if self._current_status != status else logging.DEBUG, f"{self.log_identity} Status is HEALTHY (topic_{overdue_count=} {mqtt_connected=} {modbus_connected=} {service_contributors=})"
+            )
         else:
             status = "degraded"
-            logging.warning(f"{self.log_identity} Status is DEGRADED (topic_{overdue_count=} {mqtt_connected=} {modbus_connected=})")
+            logging.warning(f"{self.log_identity} Status is DEGRADED (topic_{overdue_count=} {mqtt_connected=} {modbus_connected=} {service_contributors=})")
 
         payload = {
             "status": status,
@@ -177,6 +201,7 @@ class MonitorService(Device):
             "modbus_connected": modbus_connected,
             "overdue_topics": overdue_count,
             "monitored_topics": len(self._topics),
+            "service_health": service_contributors,
             "timestamp": int(time.time()),
         }
         try:
@@ -199,6 +224,7 @@ class MonitorService(Device):
                     logging.warning(f"{self.log_identity} Health check failure count: {self._health_check_failures}/{active_config.health_check.retries}")
                     if self._health_check_failures >= active_config.health_check.retries:
                         from sigenergy2mqtt.main.restart import restart_controller  # lazy import to avoid circular dependency
+
                         restart_controller.request("Health check failed repeatedly")
                         self._health_check_failures = 0  # reset to suppress repeat calls until restart completes
 
@@ -357,7 +383,9 @@ class MonitorService(Device):
                 logging.warning(f"{self.log_identity} Failed to clear health payload on subscribe: {ex}")
 
         if not self._monitor_topic_updates:
-            logging.debug(f"{self.log_identity} Topic-overdue monitoring disabled (log_level={logging.getLevelName(active_config.log_level)} repeated_state_publish_interval={active_config.repeated_state_publish_interval})")
+            logging.debug(
+                f"{self.log_identity} Topic-overdue monitoring disabled (monitor_topic_updates={active_config.monitor_topic_updates} repeated_state_publish_interval={active_config.repeated_state_publish_interval})"
+            )
             return
 
         for d in self._devices:
