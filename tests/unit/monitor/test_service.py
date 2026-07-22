@@ -1,13 +1,17 @@
 import asyncio
 import logging
 import time
+from unittest.mock import MagicMock
 
 import pytest
 
+from sigenergy2mqtt.common import service_health_registry
 from sigenergy2mqtt.config import active_config
+from sigenergy2mqtt.influxdb.influx_base import InfluxBase
 from sigenergy2mqtt.modbus import ModbusClientFactory
 from sigenergy2mqtt.monitor.monitor_service import MonitorService
 from sigenergy2mqtt.monitor.monitored_sensor import MonitoredSensor
+from sigenergy2mqtt.pvoutput.service import Service as PvOutputService
 from sigenergy2mqtt.sensors.base import ReadableSensorMixin
 
 
@@ -69,7 +73,7 @@ def test_subscribe_registers_topics():
     assert ms.sensor_name == "sensor1"
 
 
-def test_subscribe_skips_registration_when_repeated_negative(monkeypatch):
+def test_subscribe_registers_topics_even_when_repeated_negative(monkeypatch):
     monkeypatch.setattr(active_config, "log_level", logging.DEBUG)
     monkeypatch.setattr(active_config, "repeated_state_publish_interval", -1)
     s = DummyReadable(name="sensor1", scan_interval=5, state_topic="topic/1", publishable=True)
@@ -79,8 +83,8 @@ def test_subscribe_skips_registration_when_repeated_negative(monkeypatch):
 
     svc.subscribe(None, handler)
 
-    assert handler.registered == []
-    assert svc._topics == {}
+    assert (None, "topic/1", svc.on_topic_update) in handler.registered
+    assert "topic/1" in svc._topics
 
 
 def test_schedule_returns_monitor_task_when_repeated_negative(monkeypatch):
@@ -226,6 +230,100 @@ async def test_publish_health_includes_modbus_and_mqtt_connectivity(monkeypatch,
 
 
 @pytest.mark.asyncio
+async def test_pvoutput_upload_failure_marks_health_unhealthy(monkeypatch):
+    monkeypatch.setattr(active_config.pvoutput, "enabled", True, raising=False)
+    monkeypatch.setattr(active_config.pvoutput, "health_monitoring", True, raising=False)
+    service_health_registry.set_health("pvoutput", True)
+    monkeypatch.setattr(active_config.pvoutput, "testing", False, raising=False)
+
+    class FakeResponse:
+        status_code = 500
+        reason = "Internal Server Error"
+        text = "failed"
+        headers = {
+            "X-Rate-Limit-Limit": "60",
+            "X-Rate-Limit-Remaining": "59",
+            "X-Rate-Limit-Reset": str(int(time.time()) + 60),
+        }
+
+        def raise_for_status(self):
+            raise Exception("boom")
+
+    monkeypatch.setattr("sigenergy2mqtt.pvoutput.service.requests.post", lambda *args, **kwargs: FakeResponse())
+
+    service = PvOutputService("pvoutput", "pvoutput", "PVOutput", logging.getLogger("test"))
+    uploaded = await service.upload_payload("https://example.test", {"d": "20240101"})
+
+    assert uploaded is False
+    assert service_health_registry.get_health("pvoutput") is False
+
+
+@pytest.mark.asyncio
+async def test_influxdb_write_failure_marks_health_unhealthy(monkeypatch):
+    monkeypatch.setattr(active_config.influxdb, "enabled", True, raising=False)
+    monkeypatch.setattr(active_config.influxdb, "health_monitoring", True, raising=False)
+    service_health_registry.set_health("influxdb_0", True)
+
+    service = InfluxBase("influx", 0, "unique", "manufacturer", "model", logging.getLogger("test"))
+    loop = asyncio.get_running_loop()
+    service.online = loop.create_future()
+    service._writer_type = "v1_http"
+    service._write_url = "https://example.test/write"
+    service._write_auth = None
+
+    class FakeResponse:
+        status_code = 500
+        text = "failed"
+
+    monkeypatch.setattr(service._session, "post", lambda *args, **kwargs: FakeResponse())
+
+    result = await service.execute_write(b"state value=1")
+
+    assert result is False
+    assert service_health_registry.get_health("influxdb_0") is False
+
+
+@pytest.mark.asyncio
+async def test_multi_plant_influxdb_health_isolation(monkeypatch):
+    monkeypatch.setattr(active_config.influxdb, "enabled", True, raising=False)
+    monkeypatch.setattr(active_config.influxdb, "health_monitoring", True, raising=False)
+    monkeypatch.setattr(active_config, "modbus", [MagicMock(host="host1"), MagicMock(host="host2")])
+    service_health_registry.clear()
+
+    plant0_service = InfluxBase("influx0", 0, "unique0", "manufacturer", "model", logging.getLogger("test0"))
+    plant1_service = InfluxBase("influx1", 1, "unique1", "manufacturer", "model", logging.getLogger("test1"))
+
+    loop = asyncio.get_running_loop()
+    plant0_service.online = loop.create_future()
+    plant1_service.online = loop.create_future()
+
+    plant0_service._writer_type = "v1_http"
+    plant0_service._write_url = "https://example.test/write"
+    plant1_service._writer_type = "v1_http"
+    plant1_service._write_url = "https://example.test/write"
+
+    # Plant 0 fails write
+    monkeypatch.setattr(plant0_service._session, "post", lambda *args, **kwargs: MagicMock(status_code=500, text="error"))
+    res0 = await plant0_service.execute_write(b"state value=1")
+    assert res0 is False
+    assert service_health_registry.get_health("influxdb_0") is False
+
+    # Plant 1 succeeds write
+    monkeypatch.setattr(plant1_service._session, "post", lambda *args, **kwargs: MagicMock(status_code=204))
+    res1 = await plant1_service.execute_write(b"state value=1")
+    assert res1 is True
+    assert service_health_registry.get_health("influxdb_1") is True
+
+    # Plant 0 should STILL be unhealthy despite plant 1 succeeding
+    assert service_health_registry.get_health("influxdb_0") is False
+
+    monitor = MonitorService([])
+    healthy, contributors = monitor._check_service_health()
+    assert healthy is False
+    assert contributors == {"influxdb_0": False, "influxdb_1": True}
+
+
+@pytest.mark.asyncio
 async def test_publish_health_considers_all_modbus_clients(monkeypatch, tmp_path):
     svc = MonitorService([])
     svc._health_file = tmp_path / "health.json"
@@ -280,3 +378,37 @@ async def test_publish_health_considers_all_modbus_clients(monkeypatch, tmp_path
     assert '"mqtt_connected": true' in content
     assert any(t[0] == "sigenergy2mqtt/health/state" for t in mqtt_client.published)
     assert any(t[0] == "sigenergy2mqtt/health/attributes" for t in mqtt_client.published)
+
+
+@pytest.mark.asyncio
+async def test_influxdb_init_failure_registers_unhealthy(monkeypatch):
+    """async_init must write health=False when the connection probe raises.
+
+    Without this the ServiceHealthRegistry has no entry for the key and
+    get_health(key, default=True) returns True, making a totally broken
+    InfluxDB service look healthy and preventing the recovery restart.
+    """
+    monkeypatch.setattr(active_config.influxdb, "enabled", True, raising=False)
+    monkeypatch.setattr(active_config.influxdb, "health_monitoring", True, raising=False)
+    monkeypatch.setattr(active_config, "modbus", [MagicMock(host="host0")], raising=False)
+    service_health_registry.clear()
+
+    service = InfluxBase("influx", 0, "unique", "manufacturer", "model", logging.getLogger("test"))
+
+    # Make _init_connection raise unconditionally (simulates a completely
+    # unreachable InfluxDB host).
+    monkeypatch.setattr(service, "_init_connection", lambda: (_ for _ in ()).throw(RuntimeError("connection refused")))
+
+    result = await service.async_init()
+
+    assert result is False
+    # The key must be present and explicitly False — not missing (which would
+    # cause get_health to return the True default and hide the outage).
+    assert service_health_registry.get_health("influxdb_0") is False
+
+    # Confirm the monitor service sees the plant as unhealthy.
+    monitor = MonitorService([])
+    healthy, contributors = monitor._check_service_health()
+    assert healthy is False
+    assert contributors.get("influxdb_0") is False
+

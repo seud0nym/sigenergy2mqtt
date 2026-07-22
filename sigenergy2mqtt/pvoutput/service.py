@@ -12,14 +12,14 @@ import paho.mqtt.client as mqtt
 import requests
 from requests.structures import CaseInsensitiveDict
 
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import Protocol, service_health_registry
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.metrics import Metrics
 
 
 class Service(Device):
-    """Common PVOutput device behavior for API timing and uploads."""
+    """Common PVOutput device behaviour for API timing and uploads."""
 
     _donator: bool = False
     _interval: int = 5  # Interval in minutes for PVOutput status updates
@@ -37,6 +37,11 @@ class Service(Device):
         super().__init__(name, -1, unique_id, "sigenergy2mqtt", model, Protocol.N_A)
         self.logger = logger
         self._lock = asyncio.Lock()
+        self._set_health_status(True)
+
+    def _set_health_status(self, healthy: bool) -> None:
+        """Record the latest PVOutput service health state for the shared monitor."""
+        service_health_registry.set_health("pvoutput", healthy)
 
     @property
     def request_headers(self) -> dict[str, str]:
@@ -187,12 +192,14 @@ class Service(Device):
                     limit, remaining, at, reset = self.get_response_headers(response)
                     if response.status_code == 200:
                         uploaded = True
+                        self._set_health_status(True)
                         await Metrics.pvoutput_upload(time.monotonic() - attempt_start_time)
                         self.logger.debug(
                             f"{self.log_identity} Attempt #{i} OKAY status_code={response.status_code} {limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))} ({reset}s)"
                         )
                         break
                     elif response.status_code < 400 or response.status_code >= 600:  # response.raise_for_status() handles 400 <= status_code < 600 and raises HTTPError
+                        self._set_health_status(False)
                         await Metrics.pvoutput_upload_error()
                         self.logger.error(
                             f"{self.log_identity} Attempt #{i} FAILED status_code={response.status_code} reason={response.reason} text={response.text} ({limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))})"
@@ -202,6 +209,7 @@ class Service(Device):
                         response.raise_for_status()
                         break
             except requests.exceptions.HTTPError as exc:
+                self._set_health_status(False)
                 await Metrics.pvoutput_upload_error()
                 if exc.response is None:
                     self.logger.error(f"{self.log_identity} Attempt #{i} HTTP Error: {exc}")
@@ -214,12 +222,15 @@ class Service(Device):
                     else:
                         self.logger.error(f"{self.log_identity} Attempt #{i} HTTP Error: {exc} ({limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))})")
             except requests.exceptions.ConnectionError as exc:
+                self._set_health_status(False)
                 await Metrics.pvoutput_upload_error()
                 self.logger.error(f"{self.log_identity} Attempt #{i} Error Connecting: {exc}")
             except requests.exceptions.Timeout as exc:
+                self._set_health_status(False)
                 await Metrics.pvoutput_upload_error()
                 self.logger.error(f"{self.log_identity} Attempt #{i} Timeout Error: {exc}")
             except Exception as exc:
+                self._set_health_status(False)
                 await Metrics.pvoutput_upload_error()
                 self.logger.error(f"{self.log_identity} {exc}")
             if (

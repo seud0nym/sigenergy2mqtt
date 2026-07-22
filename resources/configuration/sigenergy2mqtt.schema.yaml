@@ -29,6 +29,10 @@ properties:
     description: "The interval in seconds at which repeated states are published."
     type: integer
     default: 0
+  monitor-topic-updates:
+    description: "Enable topic-overdue monitoring in the health monitor."
+    type: boolean
+    default: true
   sanity-check-default-kw:
     description: "The default value used for sanity checks."
     type: number
@@ -333,6 +337,9 @@ properties:
         default: 23
       temperature-topic:
         type: string
+      health-monitoring:
+        type: boolean
+        default: true
       v7:
         type: string
       v8:
@@ -502,6 +509,9 @@ properties:
       max-sync-workers:
         type: integer
         default: 4
+      health-monitoring:
+        type: boolean
+        default: true
 
   health-check:
     type: object

@@ -2784,6 +2784,8 @@ cli:
     help: 要排除的传感器标识符列表（以空格分隔）
   SIGENERGY2MQTT_INFLUX_FLUSH_INTERVAL:
     help: 'InfluxDB 刷新间隔（秒）（默认：1.0）'
+  SIGENERGY2MQTT_INFLUX_HEALTH_MONITORING:
+    help: 禁止 InfluxDB 写入失败影响共享健康状态。
   SIGENERGY2MQTT_INFLUX_HOST:
     help: 'InfluxDB 主机名或 IP 地址（默认：127.0.0.1）'
   SIGENERGY2MQTT_INFLUX_INCLUDE:
@@ -2920,6 +2922,8 @@ cli:
     help: "用于填充 PVOutput 扩展字段 v8 的来源。你可以指定传感器类名、去掉“sensor.”前缀的实体 ID、直接 MQTT 主题（或 mqtt:<topic>），或 Home Assistant 传感器实体 ID（sensor.<id> 或 ha:sensor.<id>，仅限 app）。如果未指定，或你的捐赠状态不是当前有效，则不会将该字段发送到 PVOutput。"
   SIGENERGY2MQTT_PVOUTPUT_EXT_V9:
     help: "用于填充 PVOutput 扩展字段 v9 的来源。你可以指定传感器类名、去掉“sensor.”前缀的实体 ID、直接 MQTT 主题（或 mqtt:<topic>），或 Home Assistant 传感器实体 ID（sensor.<id> 或 ha:sensor.<id>，仅限 app）。如果未指定，或你的捐赠状态不是当前有效，则不会将该字段发送到 PVOutput。"
+  SIGENERGY2MQTT_PVOUTPUT_HEALTH_MONITORING:
+    help: 禁止 PVOutput 上传失败影响共享运行状况。
   SIGENERGY2MQTT_PVOUTPUT_IMPORTS:
     help: 启用向PVOutput发送进口数据。
   SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL:
@@ -2946,6 +2950,8 @@ cli:
     help: 中频寄存器扫描间隔。默认：60。
   SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME:
     help: 实时寄存器扫描间隔。默认：5。
+  SIGENERGY2MQTT_TOPIC_UPDATE_MONITORING:
+    help: 禁用对预期 MQTT 主题更新和过期检测的监控。主题监控默认启用。
   clean:
     help: 发布空discovery删除现有设备后退出。
   discovery_only:

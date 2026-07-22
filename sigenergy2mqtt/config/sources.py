@@ -65,7 +65,6 @@ class RuamelYamlSettingsSource(PydanticBaseSettingsSource):
         return payload
 
 
-
 # ---------------------------------------------------------------------------
 # Environment variable source
 # ---------------------------------------------------------------------------
@@ -90,6 +89,7 @@ class EnvSettingsSource(PydanticBaseSettingsSource):
         _set(result, "language", g(const.SIGENERGY2MQTT_LANGUAGE))
         _set(result, "consumption", g(const.SIGENERGY2MQTT_CONSUMPTION))
         _set(result, "repeated_state_publish_interval", _int(g(const.SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL)))
+        _set(result, "monitor_topic_updates", _bool(g(const.SIGENERGY2MQTT_TOPIC_UPDATE_MONITORING)))
         _set(result, "sanity_check_default_kw", _float(g(const.SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW)))
         _set(result, "sanity_check_failures_increment", _bool(g(const.SIGENERGY2MQTT_SANITY_CHECK_FAILURES_INCREMENT)))
         _set(result, "ems_mode_check", _invert_bool(g(const.SIGENERGY2MQTT_NO_EMS_MODE_CHECK)))
@@ -190,6 +190,7 @@ class EnvSettingsSource(PydanticBaseSettingsSource):
         _set(pvo, "upload_log_level", g(const.SIGENERGY2MQTT_PVOUTPUT_UPLOAD_LOG_LEVEL))
         _set(pvo, "calc_debug_logging", _bool(g(const.SIGENERGY2MQTT_PVOUTPUT_CALC_DEBUG_LOGGING)))
         _set(pvo, "update_debug_logging", _bool(g(const.SIGENERGY2MQTT_PVOUTPUT_UPDATE_DEBUG_LOGGING)))
+        _set(pvo, "health_monitoring", _bool(g(const.SIGENERGY2MQTT_PVOUTPUT_HEALTH_MONITORING)))
         periods_json = g(const.SIGENERGY2MQTT_PVOUTPUT_PERIODS_JSON)
         if periods_json:
             pvo["time-periods"] = json.loads(periods_json)
@@ -212,6 +213,7 @@ class EnvSettingsSource(PydanticBaseSettingsSource):
         _set(influx, "include", _str_list(g(const.SIGENERGY2MQTT_INFLUX_INCLUDE)))
         _set(influx, "exclude", _str_list(g(const.SIGENERGY2MQTT_INFLUX_EXCLUDE)))
         _set(influx, "log_level", g(const.SIGENERGY2MQTT_INFLUX_LOG_LEVEL))
+        _set(influx, "health_monitoring", _bool(g(const.SIGENERGY2MQTT_INFLUX_HEALTH_MONITORING)))
         _set(influx, "write_timeout", _float(g(const.SIGENERGY2MQTT_INFLUX_WRITE_TIMEOUT)))
         _set(influx, "read_timeout", _float(g(const.SIGENERGY2MQTT_INFLUX_READ_TIMEOUT)))
         _set(influx, "batch_size", _int(g(const.SIGENERGY2MQTT_INFLUX_BATCH_SIZE)))
@@ -263,5 +265,3 @@ def _auto_discovery_env_values(getenv: Any, include_modbus_port: bool = False) -
     if include_modbus_port:
         _set(result, "modbus_port", _int(getenv(const.SIGENERGY2MQTT_MODBUS_PORT)))
     return result
-
-

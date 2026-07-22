@@ -2784,6 +2784,8 @@ cli:
     help: 除外するセンサー識別子のリスト（スペース区切り）
   SIGENERGY2MQTT_INFLUX_FLUSH_INTERVAL:
     help: 'InfluxDBフラッシュ間隔（秒）（デフォルト: 1.0）'
+  SIGENERGY2MQTT_INFLUX_HEALTH_MONITORING:
+    help: InfluxDB の書き込みエラーが共有の健全性ステータスに寄与しないようにします。
   SIGENERGY2MQTT_INFLUX_HOST:
     help: 'InfluxDB ホスト名または IP アドレス（デフォルト: 127.0.0.1）'
   SIGENERGY2MQTT_INFLUX_INCLUDE:
@@ -2920,6 +2922,8 @@ cli:
     help: "PVOutput の拡張フィールド v8 を設定するためのソースです。センサークラス名、'sensor.' プレフィックスなしのエンティティ ID、直接 MQTT トピック（または mqtt:<topic>）、または Home Assistant センサーのエンティティ ID（sensor.<id> または ha:sensor.<id>、アドオン実行時のみ）を指定できます。未指定、または寄付ステータスが有効でない場合、このフィールドは PVOutput に送信されません。"
   SIGENERGY2MQTT_PVOUTPUT_EXT_V9:
     help: "PVOutput の拡張フィールド v9 を設定するためのソースです。センサークラス名、'sensor.' プレフィックスなしのエンティティ ID、直接 MQTT トピック（または mqtt:<topic>）、または Home Assistant センサーのエンティティ ID（sensor.<id> または ha:sensor.<id>、アドオン実行時のみ）を指定できます。未指定、または寄付ステータスが有効でない場合、このフィールドは PVOutput に送信されません。"
+  SIGENERGY2MQTT_PVOUTPUT_HEALTH_MONITORING:
+    help: PVOutput アップロードの失敗が共有健全性ステータスに寄与しないようにします。
   SIGENERGY2MQTT_PVOUTPUT_IMPORTS:
     help: PVOutputへの輸入データ送信を有効にする。
   SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL:
@@ -2946,6 +2950,8 @@ cli:
     help: '中頻度レジスタのスキャン間隔。デフォルト: 60。'
   SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME:
     help: 'リアルタイムレジスタのスキャン間隔。デフォルト: 5。'
+  SIGENERGY2MQTT_TOPIC_UPDATE_MONITORING:
+    help: 予想される MQTT トピックの更新と期限切れの検出の監視を無効にします。トピック監視はデフォルトで有効になっています。
   clean:
     help: 空のdiscoveryを公開して既存機器を削除し、終了。
   discovery_only:

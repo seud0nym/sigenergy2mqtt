@@ -3,8 +3,19 @@
 
 ## [Unreleased] - Unreleased
 
+### Added
+
+- Health monitoring of InfluxDB writes and PVOutput uploads (if these services are enabled)
+
+### Fixed
+
+- Fixed infinite tight loop in PVOutput status service when lock times out
+- Fixed "Task was destroyed but it is pending!" warning during restart after firmware upgrade (or other restart event)
+- Fixed missing device classes and state classes for Home Assistant (#219)
+
 ### Changed
 
+- Health monitoring of topic updates are now enabled by default (previously only enabled during debugging)
 - Upgraded `pymodbus` from 3.13.1 to 3.14.0
 
 ---

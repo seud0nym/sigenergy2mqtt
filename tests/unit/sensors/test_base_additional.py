@@ -128,7 +128,6 @@ def test_numeric_min_max_behavior():
         scan_interval=1,
         unit=PERCENTAGE,
         device_class=DeviceClass.ENERGY,
-        state_class=None,
         icon="mdi:test",
         gain=1,
         precision=0,

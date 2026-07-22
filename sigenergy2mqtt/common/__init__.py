@@ -4,6 +4,7 @@ from .consumption_source import ConsumptionSource
 from .days import WEEKDAYS, WEEKENDS
 from .device_class import DeviceClass
 from .firmware_version import FirmwareVersion
+from .health import ServiceHealthRegistry, service_health_registry
 from .input_type import InputType
 from .output_field import OutputField
 from .protocol import Protocol, ProtocolApplies
@@ -46,6 +47,8 @@ __all__ = [
     "PVInverter",
     "RegisterAccess",
     "ScanIntervalDefault",
+    "ServiceHealthRegistry",
+    "service_health_registry",
     "StateClass",
     "StatusField",
     "Tariff",
