@@ -445,6 +445,12 @@ sensor-overrides:
     #   description:  Specify the display precision (number of decimal 
     #                 places) for this sensor.
     precision: 2
+    # monitorable
+    #   added: 2026.7.23
+    #   default: There is no default
+    #   description:  If false, the sensor will not be registered for overdue
+    #                 health checks in MonitorService.
+    monitorable: false
     # publishable
     #   default: There is no default
     #   description:  If false, the sensor will not be published to MQTT

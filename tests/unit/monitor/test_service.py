@@ -16,13 +16,14 @@ from sigenergy2mqtt.sensors.base import ReadableSensorMixin
 
 
 class DummyReadable(ReadableSensorMixin):
-    def __init__(self, *, name: str, scan_interval: int, state_topic: str, publishable: bool = True):
+    def __init__(self, *, name: str, scan_interval: int, state_topic: str, publishable: bool = True, monitorable: bool = True):
         # Do not call base class __init__ to avoid heavy Sensor setup
         self.name = name
         self._log_identity = name
         self.scan_interval = scan_interval
         self["state_topic"] = state_topic
         self._publishable = publishable
+        self._monitorable = monitorable
 
 
 class DummyDevice:
@@ -411,4 +412,48 @@ async def test_influxdb_init_failure_registers_unhealthy(monkeypatch):
     healthy, contributors = monitor._check_service_health()
     assert healthy is False
     assert contributors.get("influxdb_0") is False
+
+
+def test_sensor_monitorable_default_and_override():
+    from sigenergy2mqtt.sensors.inverter_read_only import ShutdownTime
+    from sigenergy2mqtt.sensors.base import Sensor
+    from datetime import timezone
+
+    # 1. Test ShutdownTime defaults to monitorable = False
+    s_time = ShutdownTime(plant_index=0, device_address=1, tz=timezone.utc)
+    assert s_time.monitorable is False
+
+    class DummySensor(Sensor):
+        pass
+    dummy = DummySensor(
+        "Dummy",
+        "sigen_dummy_uid_unique_123",
+        "sigen_dummy_oid_unique_123",
+        None,  # unit
+        None,  # device_class
+        None,  # state_class
+        None,  # icon
+        None,  # gain
+        None,  # precision
+    )
+    assert dummy.monitorable is True
+
+    # 3. Test override works
+    dummy._apply_override("override", {"monitorable": False})
+    assert dummy.monitorable is False
+
+
+def test_monitor_service_respects_monitorable():
+    s1 = DummyReadable(name="sensor1", scan_interval=5, state_topic="topic/1", publishable=True, monitorable=True)
+    s2 = DummyReadable(name="sensor2", scan_interval=5, state_topic="topic/2", publishable=True, monitorable=False)
+    d = DummyDevice("Device1", {"s1": s1, "s2": s2})
+    handler = FakeMqttHandler()
+    svc = MonitorService([d])
+    svc.subscribe(None, handler)
+
+    # Only s1 (monitorable=True) should be registered, s2 should be ignored
+    registered_topics = [t[1] for t in handler.registered]
+    assert "topic/1" in registered_topics
+    assert "topic/2" not in registered_topics
+
 

@@ -38,8 +38,8 @@ def make_sensor(tz=timezone.utc):
         (1234567890, True, 1234567890),
         # line 73-74: raw=True with None → return None unchanged
         (None, True, None),
-        # line 76-77: value == 0 → return None
-        (0, False, None),
+        # line 76-77: value == 0 → return "unavailable"
+        (0, False, "unavailable"),
         # lines 80-91: normal conversion, UTC epoch → ISO 8601
         (1609459200, False, "2021-01-01T00:00:00+00:00"),
     ],

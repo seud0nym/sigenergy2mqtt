@@ -6,6 +6,8 @@
 ### Added
 
 - Health monitoring of InfluxDB writes and PVOutput uploads (if these services are enabled)
+- Added new monitorable state property to to allow health monitoring to be disabled for specific sensors via sensor overrides
+
 
 ### Fixed
 
@@ -16,6 +18,7 @@
 ### Changed
 
 - Health monitoring of topic updates are now enabled by default (previously only enabled during debugging)
+- Timestamp sensors now return "unavailable" rather than skipping publication when the timestamp read from Modbus returns 0
 - Upgraded `pymodbus` from 3.13.1 to 3.14.0
 
 ---

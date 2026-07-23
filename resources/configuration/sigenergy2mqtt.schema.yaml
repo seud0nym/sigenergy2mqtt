@@ -290,6 +290,8 @@ properties:
             default: 60
           precision:
             type: integer
+          monitorable:
+            type: boolean
           publishable:
             type: boolean
           publish-raw:

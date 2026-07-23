@@ -399,7 +399,7 @@ class MonitorService(Device):
         for d in self._devices:
             device = d.log_identity
             sensors = 0
-            for s in [sensor for sensor in d.get_all_sensors().values() if isinstance(sensor, ReadableSensorMixin) and sensor.publishable]:
+            for s in [sensor for sensor in d.get_all_sensors().values() if isinstance(sensor, ReadableSensorMixin) and sensor.publishable and sensor.monitorable]:
                 sensor = s.log_identity
                 scan_interval = s.scan_interval
                 topic = s.state_topic
