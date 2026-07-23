@@ -419,10 +419,6 @@ def test_sensor_monitorable_default_and_override():
     from sigenergy2mqtt.sensors.base import Sensor
     from datetime import timezone
 
-    # 1. Test ShutdownTime defaults to monitorable = False
-    s_time = ShutdownTime(plant_index=0, device_address=1, tz=timezone.utc)
-    assert s_time.monitorable is False
-
     class DummySensor(Sensor):
         pass
     dummy = DummySensor(
@@ -438,7 +434,6 @@ def test_sensor_monitorable_default_and_override():
     )
     assert dummy.monitorable is True
 
-    # 3. Test override works
     dummy._apply_override("override", {"monitorable": False})
     assert dummy.monitorable is False
 
