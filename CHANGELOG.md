@@ -6,7 +6,7 @@
 ### Added
 
 - Health monitoring of InfluxDB writes and PVOutput uploads (if these services are enabled)
-- Added new monitorable state property to to allow health monitoring to be disabled for specific sensors via sensor overrides
+- Added new monitorable state property to allow health monitoring to be disabled for specific sensors via sensor overrides
 
 
 ### Fixed
