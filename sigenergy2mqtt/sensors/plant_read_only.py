@@ -59,6 +59,12 @@ class SystemTime(TimestampSensor, HybridInverter, PVInverter):
         )
         self.sanity_check.min_raw = 1640995200  # 1 January 2022 at 00:00:00 UTC
 
+    def set_state(self, state: int | float | str | list[bool] | list[int] | list[float]) -> None:
+        if isinstance(state, (int, float)) and state == 0: # Would fail sanity check min_raw validation, so set "unavailable"
+            super().set_state("unavailable")
+        else:
+            super().set_state(state)
+
 
 class SystemTimeZone(ReadOnlySensor, HybridInverter, PVInverter):
     ADDRESS = 30002
