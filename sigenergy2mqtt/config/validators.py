@@ -38,6 +38,7 @@ _SENSOR_OVERRIDE_VALIDATORS: dict[str, Any] = {
     "max-failures": lambda v, ctx: check_int(v, ctx, allow_none=True, min=1),
     "max-failures-retry-interval": lambda v, ctx: check_int(v, ctx, allow_none=False, min=0),
     "precision": lambda v, ctx: check_int(v, ctx, allow_none=False, min=0, max=6),
+    "monitorable": lambda v, ctx: check_bool(v, ctx),
     "publishable": lambda v, ctx: check_bool(v, ctx),
     "publish-raw": lambda v, ctx: check_bool(v, ctx),
     "scan-interval": lambda v, ctx: check_int(v, ctx, allow_none=False, min=1),

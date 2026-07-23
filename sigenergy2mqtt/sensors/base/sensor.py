@@ -133,6 +133,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         self._attributes_published: bool = False
         self._publish_raw: bool = False
         self._publishable: bool = True
+        self._monitorable: bool = True
 
         # Use sanitized unique_id for persistence key
         self._publish_persistence_key: str = f"{_sanitize_path_component(unique_id)}.publishable"
@@ -345,6 +346,24 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
             logging.debug(f"{self.log_identity}.publishable set to {value}")
 
     @property
+    def monitorable(self) -> bool:
+        """Check if this sensor should be registered for overdue health checks."""
+        return self._monitorable
+
+    @monitorable.setter
+    def monitorable(self, value: bool):
+        """Set whether this sensor should be registered for overdue health checks."""
+        if not isinstance(value, bool):
+            raise ValueError(f"{self.log_identity}.monitorable must be a bool")
+
+        if self._monitorable == value:
+            if self.debug_logging:
+                logging.debug(f"{self.log_identity}.monitorable unchanged ({value})")
+        else:
+            self._monitorable = value
+            logging.debug(f"{self.log_identity}.monitorable set to {value}")
+
+    @property
     def publish_raw(self) -> bool:
         """Check if raw values should be published alongside processed values."""
         return self._publish_raw
@@ -478,6 +497,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
             "max-failures": self._override_max_failures,
             "max-failures-retry-interval": self._override_max_failures_retry_interval,
             "precision": self._override_precision,
+            "monitorable": self._override_monitorable,
             "publishable": self._override_publishable,
             "publish-raw": self._override_publish_raw,
             "sanity-check-delta": self._override_sanity_check_delta,
@@ -535,6 +555,12 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         if self.publishable != value:
             logging.debug(f"{self.log_identity} Applying {identifier} 'publishable' override ({value})")
             self.publishable = value
+
+    def _override_monitorable(self, identifier: str, value: bool) -> None:
+        """Apply monitorable override."""
+        if self.monitorable != value:
+            logging.debug(f"{self.log_identity} Applying {identifier} 'monitorable' override ({value})")
+            self.monitorable = value
 
     def _override_publish_raw(self, identifier: str, value: bool) -> None:
         """Apply publish-raw override."""
