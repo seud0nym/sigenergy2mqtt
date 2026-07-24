@@ -103,6 +103,25 @@ DYNAMIC_CLASS_NAMES: dict[str, str] = {
 #: a concrete value.
 _UNRESOLVED_TOKENS: frozenset[str] = frozenset({"{words}", "{name}", "{}"})
 
+#: Known class-level string constants that may appear as subscript keys in
+#: ``self[ClassName.ATTR] = ...`` assignments (e.g. ``DiscoveryKeys.OPTIONS``).
+#: Maps ``"ClassName.ATTR"`` -> string value so the AST extractor can resolve
+#: attribute-style subscripts without importing the actual module.
+_KNOWN_CLASS_CONSTANTS: dict[str, str] = {
+    "DiscoveryKeys.OPTIONS": "options",
+    "DiscoveryKeys.NAME": "name",
+    "DiscoveryKeys.PLATFORM": "platform",
+    "DiscoveryKeys.OBJECT_ID": "object_id",
+    "DiscoveryKeys.UNIQUE_ID": "unique_id",
+    "DiscoveryKeys.DEVICE_CLASS": "device_class",
+    "DiscoveryKeys.ICON": "icon",
+    "DiscoveryKeys.STATE_CLASS": "state_class",
+    "DiscoveryKeys.UNIT_OF_MEASUREMENT": "unit_of_measurement",
+    "DiscoveryKeys.DISPLAY_PRECISION": "display_precision",
+    "DiscoveryKeys.ENABLED_BY_DEFAULT": "enabled_by_default",
+    "DiscoveryKeys.COMMENT": "comment",
+}
+
 # ---------------------------------------------------------------------------
 # Utility helpers
 # ---------------------------------------------------------------------------
@@ -886,10 +905,18 @@ class TranslationExtractor(ast.NodeVisitor):
         subscript_val = target.value
         slice_node = target.slice
 
-        if not isinstance(slice_node, ast.Constant) or not isinstance(slice_node.value, str):
+        if isinstance(slice_node, ast.Constant) and isinstance(slice_node.value, str):
+            slice_key: str = slice_node.value
+        elif isinstance(slice_node, ast.Attribute) and isinstance(slice_node.value, ast.Name):
+            # Resolve ClassName.ATTR references (e.g. DiscoveryKeys.OPTIONS) via the
+            # known-constants table so we don't need to import the actual module.
+            lookup = f"{slice_node.value.id}.{slice_node.attr}"
+            resolved = _KNOWN_CLASS_CONSTANTS.get(lookup)
+            if resolved is None:
+                return
+            slice_key = resolved
+        else:
             return
-
-        slice_key: str = slice_node.value
 
         # self["..."] = ...
         if isinstance(subscript_val, ast.Name) and subscript_val.id == "self":
