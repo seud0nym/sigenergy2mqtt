@@ -82,6 +82,7 @@ The attributes payload currently includes:
 <a href='#sigen_0_247_30037'>Battery Power</a><br>
 <a href='#sigen_0_247_30014'>Battery SoC</a><br>
 <a href='#sigen_0_247_30087'>Battery SoH</a><br>
+<a href='#sigen_0_battery_status'>Battery Status</a><br>
 <a href='#sigen_0_247_30085'>Charge Cut-Off SoC</a><br>
 <a href='#sigen_0_247_40047'>Charge Cut-Off SoC</a><br>
 <a href='#sigen_0_consumed_power'>Consumed Power</a><br>
@@ -625,7 +626,7 @@ The attributes payload currently includes:
 <a href='#sigen_0_001_41000_set'>DC Charger Stop/Start</a><br>
 <a href='#sigen_0_001_41002_set'>Max Charging Power Limit</a><br>
 <a href='#sigen_0_001_41004_set'>Max Discharging Power Limit</a><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></td></tr>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></td></tr>
 </table>
 
 ## Published Topics
@@ -886,6 +887,17 @@ The attributes payload currently includes:
 <tr><td>Comment</td><td>This value is the weighted average of the SOH of all ESS devices in the power plant, with each rated capacity as the weight</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.5</td></tr>
 <tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between 0.0 % and 100.0 % (0 ≦ raw value ≦ 1000)</td></tr>
+</table>
+<h5><a id='sigen_0_battery_status'>Battery Status</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>BatteryStatus</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_battery_status</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_powerplant/sigen_0_battery_status/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_battery_status/state</td></tr>
+<tr><td>Source</td><td>BatteryPower and PlantBatterySoC/ESSBackupSOC/ESSChargeCutOffSOC/ESSDischargeCutOffSOC</td></tr>
+<tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='0'>Full</li><li value='1'>Charging</li><li value='2'>Discharging</li><li value='3'>Empty</li><li value='4'>Unknown</li><li value='5'>Cutoff</li><li value='6'>Idle</li></ol></td></tr>
+<tr><td>Comment</td><td>Indicates the current status of the battery based on its state of charge and power flow. Valid values are 'Charging', 'Discharging', 'Full', 'Empty', 'Cutoff', 'Idle', and 'Unknown'. 'Cutoff' indicates that the battery is in a state where it has reached a configured cutoff SoC (Charge, Discharge or Backup). 'Idle' indicates that the battery is neither charging nor discharging. 'Unknown' indicates not all information is available to assess state.</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.9</td></tr>
 </table>
 <h5><a id='sigen_0_247_30085'>Charge Cut-Off SoC</a></h5>
 <table>
