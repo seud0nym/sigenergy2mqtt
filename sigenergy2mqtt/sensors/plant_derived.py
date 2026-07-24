@@ -123,8 +123,12 @@ class BatteryStatus(DerivedSensor, HybridInverter):
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_battery_status",
             object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_battery_status",
             data_type=ModbusDataType.STRING,
+            unit=None,
             device_class=DeviceClass.ENUM,
+            state_class=None,
             icon="mdi:battery",
+            gain=None,
+            precision=0,
             source_sensors=(backup_soc,battery_power,charge_soc,current_soc,discharge_soc),
         )
         self[DiscoveryKeys.OPTIONS] = [
