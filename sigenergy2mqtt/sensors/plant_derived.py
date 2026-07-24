@@ -129,7 +129,7 @@ class BatteryStatus(DerivedSensor, HybridInverter):
             icon="mdi:battery",
             gain=None,
             precision=0,
-            source_sensors=(backup_soc,battery_power,charge_soc,current_soc,discharge_soc),
+            source_sensors=(backup_soc, battery_power, charge_soc, current_soc, discharge_soc),
         )
         self[DiscoveryKeys.OPTIONS] = [
             "Full",  # 0
@@ -164,21 +164,25 @@ class BatteryStatus(DerivedSensor, HybridInverter):
                 if sensor.latest_raw_state is None:
                     return False
                 raw = float(sensor.latest_raw_state)
+                state: str | None = None
                 if raw > 0:
-                    self.set_latest_state(self._get_option(BatteryStatus.CHARGING))
+                    state = self._get_option(BatteryStatus.CHARGING)
                 elif raw < 0:
-                    self.set_latest_state(self._get_option(BatteryStatus.DISCHARGING))
+                    state = self._get_option(BatteryStatus.DISCHARGING)
                 elif self._current_soc is None or self._backup_soc is None or self._charge_soc is None or self._discharge_soc is None:
-                    self.set_latest_state(self._get_option(BatteryStatus.UNKNOWN))
+                    state = self._get_option(BatteryStatus.UNKNOWN)
                 elif self._current_soc >= 100.0:
-                    self.set_latest_state(self._get_option(BatteryStatus.FULL))
+                    state = self._get_option(BatteryStatus.FULL)
                 elif self._current_soc <= 0.0:
-                    self.set_latest_state(self._get_option(BatteryStatus.EMPTY))
+                    state = self._get_option(BatteryStatus.EMPTY)
                 elif self._current_soc <= self._discharge_soc or self._current_soc <= self._backup_soc or self._current_soc >= self._charge_soc:
-                    self.set_latest_state(self._get_option(BatteryStatus.CUTOFF))
+                    state = self._get_option(BatteryStatus.CUTOFF)
                 else:
-                    self.set_latest_state(self._get_option(BatteryStatus.IDLE))
-                return True
+                    state = self._get_option(BatteryStatus.IDLE)
+                if state is not None:
+                    self.set_latest_state(state)
+                    return True
+                return False
             case PlantBatterySoC():
                 self._current_soc = float(sensor.latest_raw_state) if sensor.latest_raw_state is not None else None
                 return False  # don't update state from SoC, only from BatteryPower
@@ -378,7 +382,7 @@ class PlantConsumedPower(CrossDeviceDerivedSensor, HybridInverter, PVInverter):
 
         self._grid_status: int | None = None
         self.sanity_check.min_raw = 0.0
-        self._sources: dict[str, PlantConsumedPower.Value] = dict()
+        self._sources: dict[str, PlantConsumedPower.Value] = {}
         match self.method:
             case ConsumptionMethod.CALCULATED:
                 self._sources.update({"battery": PlantConsumedPower.Value(negate=True), "grid": PlantConsumedPower.Value(), "pv": PlantConsumedPower.Value()})
@@ -390,7 +394,7 @@ class PlantConsumedPower(CrossDeviceDerivedSensor, HybridInverter, PVInverter):
                 self._sources.update({ConsumptionMethod.TOTAL.value: PlantConsumedPower.Value()})
                 self.protocol_version = Protocol.V2_8
 
-    def finalise_binding(self, plant_index: int, *sources: Sensor) -> bool:  # noqa: ARG002 – sources ignored; this class discovers its own
+    def finalise_binding(self, plant_index: int, *sources: Sensor) -> bool:
         """Discover all publishable ACChargerChargingPower and DCChargerOutputPower sensors
         across the plant and wire them as cross-device sources (pattern 2).
 
@@ -672,7 +676,7 @@ class PlantSelfConsumedPower(CrossDeviceDerivedSensor, HybridInverter):
         # _values is populated in finalise_binding() once inverter sensors are known
         self._values: dict[str, int | None] = {}
 
-    def finalise_binding(self, plant_index: int, *_sources: Sensor) -> bool:  # noqa: ARG002 – _sources ignored; this class discovers its own
+    def finalise_binding(self, plant_index: int, *_sources: Sensor) -> bool:
         """Discover all publishable InverterSelfConsumedPower sensors across inverters
         and wire them as cross-device sources (pattern 2).
 
@@ -710,7 +714,7 @@ class PlantSelfConsumedPower(CrossDeviceDerivedSensor, HybridInverter):
             logging.debug(f"{self.log_identity} Publishing READY   - values={self._values}")
         await super().publish(mqtt_client, modbus_client, republish=republish)
         # reset internal values to missing for next calculation
-        for k in self._values.keys():
+        for k in self._values:
             self._values[k] = None
         return True
 
