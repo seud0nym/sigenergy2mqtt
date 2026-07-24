@@ -322,7 +322,7 @@ class:
     name: Battery Power
   BatteryStatus:
     attributes:
-      comment: Indicates the current status of the battery based on its state of charge and power flow. Valid values are 'Charging', 'Discharging', 'Full', 'Empty', 'Cutoff', and 'Unknown'. 'Cutoff' indicates that the battery is in a state where it has reached a configured cutoff SoC (Charge, Discharge or Backup). 'Unknown' indicates not all information is available to assess state.
+      comment: Indicates the current status of the battery based on its state of charge and power flow. Valid values are 'Charging', 'Discharging', 'Full', 'Empty', 'Cutoff', 'Idle', and 'Unknown'. 'Cutoff' indicates that the battery is in a state where it has reached a configured cutoff SoC (Charge, Discharge or Backup). 'Idle' indicates that the battery is neither charging nor discharging. 'Unknown' indicates not all information is available to assess state.
       source: BatteryPower and PlantBatterySoC/ESSBackupSOC/ESSChargeCutOffSOC/ESSDischargeCutOffSOC
     name: Battery Status
     options:
@@ -332,6 +332,7 @@ class:
       '3': Empty
       '4': Unknown
       '5': Cutoff
+      '6': Idle
   ChargeCutOffSoC:
     attributes:
       source: Modbus Register {address}

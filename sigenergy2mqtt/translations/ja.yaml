@@ -322,7 +322,7 @@ class:
     name: バッテリー電力
   BatteryStatus:
     attributes:
-      comment: 充電状態と電力の流れに基づいて、バッテリーの現在のステータスを示します。有効な値は、「充電中」、「放電中」、「満杯」、「空」、「カットオフ」、および「不明」です。 「カットオフ」は、バッテリーが構成されたカットオフ SoC (充電、放電、またはバックアップ) に達した状態にあることを示します。 「不明」は、状態を評価するためにすべての情報が利用できるわけではないことを示します。
+      comment: 充電状態と電力の流れに基づいて、バッテリーの現在のステータスを示します。有効な値は、「Charging」、「Discharging」、「Full」、「Empty」、「Cutoff」、「Idle」、および「Unknown」です。 「カットオフ」は、バッテリーが構成されたカットオフ SoC (充電、放電、またはバックアップ) に達した状態にあることを示します。 「アイドル」は、バッテリーが充電も放電もしていないことを示します。 「不明」は、状態を評価するためにすべての情報が利用できるわけではないことを示します。
       source: BatteryPower および PlantBatterySoC/ESSBackupSOC/ESSChargeCutOffSOC/ESSDischargeCutOffSOC
     name: バッテリーステータス
     options:
@@ -332,6 +332,7 @@ class:
       '3': 空の
       '4': 未知
       '5': 切り落とす
+      '6': アイドル状態
   ChargeCutOffSoC:
     attributes:
       source: Modbusレジスタ {address}

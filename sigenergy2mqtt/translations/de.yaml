@@ -322,7 +322,7 @@ class:
     name: Batterieleistung
   BatteryStatus:
     attributes:
-      comment: Zeigt den aktuellen Status der Batterie basierend auf ihrem Ladezustand und Stromfluss an. Gültige Werte sind „Laden“, „Entladen“, „Voll“, „Leer“, „Abschaltung“ und „Unbekannt“. „Abschaltung“ zeigt an, dass sich die Batterie in einem Zustand befindet, in dem sie einen konfigurierten Abschalt-SoC (Laden, Entladen oder Backup) erreicht hat. „Unbekannt“ bedeutet, dass nicht alle Informationen zur Beurteilung des Zustands verfügbar sind.
+      comment: Zeigt den aktuellen Status der Batterie basierend auf ihrem Ladezustand und Stromfluss an. Gültige Werte sind „Laden“, „Entladen“, „Voll“, „Leer“, „Abschaltung“, „Leerlauf“ und „Unbekannt“. „Abschaltung“ zeigt an, dass sich die Batterie in einem Zustand befindet, in dem sie einen konfigurierten Abschalt-SoC (Laden, Entladen oder Backup) erreicht hat. „Leerlauf“ zeigt an, dass der Akku weder geladen noch entladen wird. „Unbekannt“ bedeutet, dass nicht alle Informationen zur Beurteilung des Zustands verfügbar sind.
       source: BatterieStrom und AnlageBatterieSoC/ESSBackupSOC/ESSChargeCutOffSOC/ESSDischargeCutOffSOC
     name: Batteriestatus
     options:
@@ -332,6 +332,7 @@ class:
       '3': Leer
       '4': Unbekannt
       '5': Cutoff # verify:ignore
+      '6': Leerlauf
   ChargeCutOffSoC:
     attributes:
       source: Modbus-Register {address}

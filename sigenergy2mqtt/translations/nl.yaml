@@ -322,7 +322,7 @@ class:
     name: Batterijvermogen
   BatteryStatus:
     attributes:
-      comment: Geeft de huidige status van de batterij aan op basis van de laadstatus en stroomstroom. Geldige waarden zijn 'Opladen', 'Ontladen', 'Vol', 'Leeg', 'Cutoff' en 'Onbekend'. 'Cutoff' geeft aan dat de accu zich in een staat bevindt waarin deze een geconfigureerde cutoff SoC heeft bereikt (opladen, ontladen of back-up). 'Onbekend' geeft aan dat niet alle informatie beschikbaar is om de toestand te beoordelen.
+      comment: Geeft de huidige status van de batterij aan op basis van de laadstatus en stroomstroom. Geldige waarden zijn 'Opladen', 'Ontladen', 'Vol', 'Leeg', 'Cutoff', 'Inactief' en 'Onbekend'. 'Cutoff' geeft aan dat de accu zich in een staat bevindt waarin deze een geconfigureerde cutoff SoC heeft bereikt (opladen, ontladen of back-up). 'Inactief' geeft aan dat de batterij niet wordt opgeladen of ontladen. 'Onbekend' geeft aan dat niet alle informatie beschikbaar is om de toestand te beoordelen.
       source: BatterijVoeding en installatieBatterijSoC/ESSBack-upSOC/ESSChargeCutOffSOC/ESSDischargeCutOffSOC
     name: Batterijstatus
     options:
@@ -332,6 +332,7 @@ class:
       '3': Leeg
       '4': Onbekend
       '5': Afsluiting
+      '6': Inactief
   ChargeCutOffSoC:
     attributes:
       source: Modbus-register {address}

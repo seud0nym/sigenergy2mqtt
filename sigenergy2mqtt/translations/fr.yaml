@@ -322,7 +322,7 @@ class:
     name: Puissance Batterie
   BatteryStatus:
     attributes:
-      comment: Indique l'état actuel de la batterie en fonction de son état de charge et de son flux d'énergie. Les valeurs valides sont « Chargement », « Décharge », « Plein », « Vide », « Coupure » et « Inconnu ». « Cutoff » indique que la batterie est dans un état dans lequel elle a atteint une coupure SoC configurée (charge, décharge ou sauvegarde). « Inconnu » indique que toutes les informations ne sont pas disponibles pour évaluer l'état.
+      comment: Indique l'état actuel de la batterie en fonction de son état de charge et de son flux d'énergie. Les valeurs valides sont « Chargement », « Décharge », « Plein », « Vide », « Coupure », « Inactif » et « Inconnu ». « Cutoff » indique que la batterie est dans un état dans lequel elle a atteint une coupure SoC configurée (charge, décharge ou sauvegarde). « Idle » indique que la batterie n'est ni en charge ni en décharge. « Inconnu » indique que toutes les informations ne sont pas disponibles pour évaluer l'état.
       source: BatterieAlimentation et installationBatterySoC/ESSBackupSOC/ESSChargeCutOffSOC/ESSDischargeCutOffSOC
     name: État de la batterie
     options:
@@ -332,6 +332,7 @@ class:
       '3': Vide
       '4': Inconnu
       '5': Couper
+      '6': Inactif
   ChargeCutOffSoC:
     attributes:
       source: Registre Modbus {address}

@@ -322,7 +322,7 @@ class:
     name: Potência da Bateria
   BatteryStatus:
     attributes:
-      comment: Indica o status atual da bateria com base no estado de carga e no fluxo de energia. Os valores válidos são 'Carregando', 'Descarregando', 'Cheio', 'Vazio', 'Corte' e 'Desconhecido'. 'Cutoff' indica que a bateria está em um estado em que atingiu um SoC de corte configurado (Carga, Descarga ou Backup). 'Desconhecido' indica que nem todas as informações estão disponíveis para avaliar o estado.
+      comment: Indica o status atual da bateria com base no estado de carga e no fluxo de energia. Os valores válidos são 'Carregando', 'Descarregando', 'Cheio', 'Vazio', 'Corte', 'Inativo' e 'Desconhecido'. 'Cutoff' indica que a bateria está em um estado em que atingiu um SoC de corte configurado (Carga, Descarga ou Backup). 'Idle' indica que a bateria não está carregando nem descarregando. 'Desconhecido' indica que nem todas as informações estão disponíveis para avaliar o estado.
       source: BateriaEnergia e plantaBateriaSoC/ESSBackupSOC/ESSChargeCutOffSOC/ESSDischargeCutOffSOC
     name: Status da bateria
     options:
@@ -332,6 +332,7 @@ class:
       '3': Vazio
       '4': Desconhecido
       '5': Cortar
+      '6': Parado
   ChargeCutOffSoC:
     attributes:
       source: Registo Modbus {address}

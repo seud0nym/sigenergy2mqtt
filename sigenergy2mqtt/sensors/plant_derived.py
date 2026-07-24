@@ -113,6 +113,7 @@ class BatteryStatus(DerivedSensor, HybridInverter):
     EMPTY = 3
     UNKNOWN = 4
     CUTOFF = 5
+    IDLE = 6
 
     def __init__(self, plant_index: int, battery_power: BatteryPower, current_soc: PlantBatterySoC, backup_soc: ESSBackupSOC, discharge_soc: ESSDischargeCutOffSOC, charge_soc: ESSChargeCutOffSOC):
         # Set properties before super().__init__ so that log_identity is correctly generated
@@ -133,6 +134,7 @@ class BatteryStatus(DerivedSensor, HybridInverter):
             "Empty",  # 3
             "Unknown",  # 4
             "Cutoff",  # 5
+            "Idle",  # 6
         ]
         self.protocol_version = Protocol.V2_9
         self._backup_soc: float | None = None
@@ -145,8 +147,9 @@ class BatteryStatus(DerivedSensor, HybridInverter):
         attributes["source"] = "BatteryPower and PlantBatterySoC/ESSBackupSOC/ESSChargeCutOffSOC/ESSDischargeCutOffSOC"
         attributes["comment"] = (
             "Indicates the current status of the battery based on its state of charge and power flow. "
-            "Valid values are 'Charging', 'Discharging', 'Full', 'Empty', 'Cutoff', and 'Unknown'. "
+            "Valid values are 'Charging', 'Discharging', 'Full', 'Empty', 'Cutoff', 'Idle', and 'Unknown'. "
             "'Cutoff' indicates that the battery is in a state where it has reached a configured cutoff SoC (Charge, Discharge or Backup). "
+            "'Idle' indicates that the battery is neither charging nor discharging. "
             "'Unknown' indicates not all information is available to assess state."
         )
         return attributes
@@ -170,7 +173,7 @@ class BatteryStatus(DerivedSensor, HybridInverter):
                 elif self._current_soc <= self._discharge_soc or self._current_soc <= self._backup_soc or self._current_soc >= self._charge_soc:
                     self.set_latest_state(self._get_option(BatteryStatus.CUTOFF))
                 else:
-                    return False
+                    self.set_latest_state(self._get_option(BatteryStatus.IDLE))
                 return True
             case PlantBatterySoC():
                 self._current_soc = float(sensor.latest_raw_state) if sensor.latest_raw_state is not None else None
