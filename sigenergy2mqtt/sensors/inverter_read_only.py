@@ -1782,6 +1782,7 @@ class ShutdownTime(TimestampSensor, HybridInverter, PVInverter):
             protocol_version=Protocol.V1_8,
             tz=tz,
         )
+        self.monitorable = False # ShutdownTime can regularly return 0 from Modbus which causes the value to not be published but this does not indicate lack of health
 
 
 class DCChargerVehicleBatteryVoltage(ReadOnlySensor, HybridInverter):

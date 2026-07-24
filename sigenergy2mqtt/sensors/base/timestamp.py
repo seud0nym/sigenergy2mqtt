@@ -74,7 +74,7 @@ class TimestampSensor(ReadOnlySensor):
             return value
 
         if value == 0:
-            return "unavailable"
+            return None
 
         # 1. Correct the epoch by subtracting the offset (in seconds)
         correct_epoch = value - self._tz_offset_seconds
@@ -90,7 +90,7 @@ class TimestampSensor(ReadOnlySensor):
 
         return iso8601
 
-    def state2raw(self, state: float | int | str) -> float | int | str | None:
+    def state2raw(self, state: float | str) -> float | int | str | None:
         """Convert ISO 8601 timestamp back to Unix timestamp.
 
         Args:
@@ -102,7 +102,7 @@ class TimestampSensor(ReadOnlySensor):
         if isinstance(state, (float, int)):
             return int(state)
 
-        if state == "--" or state == "unavailable":  # Home Assistant uses "--" to represent unavailable timestamps??
+        if state == "--":  # Home Assistant uses "--" to represent unavailable timestamps??
             return 0
 
         try:
