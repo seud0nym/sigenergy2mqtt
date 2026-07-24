@@ -1,5 +1,3 @@
-"""Writable sensor classes: WriteOnlySensor, ReadWriteSensor, NumericSensor, SelectSensor, SwitchSensor."""
-
 from __future__ import annotations
 
 import logging
@@ -796,13 +794,3 @@ class SwitchSensor(ReadWriteSensor):
             logging.error(f"{self.log_identity} Failed to write value '{raw_value}': Must be either '{self[DiscoveryKeys.PAYLOAD_OFF]}' or '{self[DiscoveryKeys.PAYLOAD_ON]}'")
             return False
         return True
-
-
-"""Continuation of base sensor classes (Part 4 - Final).
-
-This file contains alarm sensors, accumulation sensors, and utility sensors.
-Merge with previous parts for the complete module.
-"""
-
-# =============================================================================
-# Alarm Sensor Base Class

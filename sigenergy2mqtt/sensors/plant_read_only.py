@@ -17,7 +17,6 @@ from sigenergy2mqtt.common import (
     UnitOfPower,
     UnitOfReactivePower,
     UnitOfTemperature,
-    UnitOfTime,
 )
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus import ModbusDataType

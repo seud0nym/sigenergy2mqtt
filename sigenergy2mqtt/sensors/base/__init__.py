@@ -21,6 +21,7 @@ from .accumulation import (  # noqa: F401
     EnergyDailyAccumulationSensor,
     EnergyLifetimeAccumulationSensor,
     ResettableAccumulationSensor,
+    SimpleEnergyDailyAccumulationSensor,
 )
 
 # Alarm sensors
