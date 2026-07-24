@@ -408,11 +408,13 @@ def _set_by_path(node: object, path: str, value: str) -> bool:
     last = parts[-1]
     try:
         if isinstance(current, dict):
-            # Always write under the canonical key form from the English file.
-            # _resolve_key is used only to check existence for traversal;
-            # for the leaf we use `last` directly so the key type matches the
-            # English source (e.g. string '0' rather than integer 0).
-            current[last] = value
+            # Use _resolve_key to find the existing key form in the target dict
+            # (e.g. the quoted string '0' even when _parse_path produced int 0)
+            # so the translation overwrites the existing entry rather than
+            # creating a new integer-keyed duplicate alongside it.
+            resolved_last = _resolve_key(current, last)
+            write_key = resolved_last if resolved_last is not None else last
+            current[write_key] = value
         elif isinstance(current, list):
             current[int(last)] = value
         else:
@@ -573,14 +575,18 @@ def process_language(
             print("  Nothing to translate.")
         return 0, 0
 
+    # Canonical English Modbus patterns that the template shortcut applies to.
+    _EN_SOURCE = "Modbus Register {address}"
+    _EN_SOURCE_RANGE = "Modbus Registers {start}-{end}"
+
     # --- Within-language deduplication ---
     # Build the set of unique English strings that need actual translation
     # (exclude source/source_range entries that use the template shortcut).
     def _needs_api(path: str, en_val: str) -> bool:
         last_key = _parse_path(path)[-1]
-        if last_key == "source" and source_tpl is not None:
+        if last_key == "source" and source_tpl is not None and en_val == _EN_SOURCE:
             return False
-        if last_key == "source_range" and source_range_tpl is not None:
+        if last_key == "source_range" and source_range_tpl is not None and en_val == _EN_SOURCE_RANGE:
             return False
         return True
 
@@ -606,10 +612,10 @@ def process_language(
     for path, en_val in untranslated:
         last_key = _parse_path(path)[-1]
 
-        # ---- source / source_range: use existing template ----
-        if last_key == "source" and source_tpl is not None:
+        # ---- source / source_range: use existing template (only for Modbus entries) ----
+        if last_key == "source" and source_tpl is not None and en_val == _EN_SOURCE:
             new_val = source_tpl
-        elif last_key == "source_range" and source_range_tpl is not None:
+        elif last_key == "source_range" and source_range_tpl is not None and en_val == _EN_SOURCE_RANGE:
             new_val = source_range_tpl
         else:
             new_val = translation_lookup[en_val]
