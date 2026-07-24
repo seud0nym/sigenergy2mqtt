@@ -1,12 +1,12 @@
-import logging
 import asyncio
-from datetime import timezone
+import logging
+from datetime import UTC
 from types import SimpleNamespace
 
 import pytest
 
-from sigenergy2mqtt.sensors.plant_read_only import SystemTime
 from sigenergy2mqtt.sensors.base.readable import ReadOnlySensor
+from sigenergy2mqtt.sensors.plant_read_only import SystemTime
 
 
 @pytest.fixture(autouse=True)
@@ -22,7 +22,7 @@ def patch_active_config(monkeypatch):
     yield
 
 
-def make_sensor(tz=timezone.utc):
+def make_sensor(tz=UTC):
     """Create a SystemTime sensor (concrete subclass of TimestampSensor)."""
     return SystemTime(plant_index=1, tz=tz)
 
@@ -31,6 +31,7 @@ def make_sensor(tz=timezone.utc):
 # get_state tests (lines 73, 74, 76, 77, 85, 86, 88, 89, 91)
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.parametrize(
     "raw_value, raw_flag, expected",
     [
@@ -38,8 +39,8 @@ def make_sensor(tz=timezone.utc):
         (1234567890, True, 1234567890),
         # line 73-74: raw=True with None → return None unchanged
         (None, True, None),
-        # line 76-77: value == 0 → return "unavailable"
-        (0, False, "unavailable"),
+        # line 76-77: value == 0 → return None
+        (0, False, None),
         # lines 80-91: normal conversion, UTC epoch → ISO 8601
         (1609459200, False, "2021-01-01T00:00:00+00:00"),
     ],
@@ -72,6 +73,7 @@ def test_get_state_debug_logging(monkeypatch, caplog):
 # ---------------------------------------------------------------------------
 # state2raw tests (lines 102, 103, 105, 106, 110-118, 119-121)
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.parametrize(
     "state, expected",
