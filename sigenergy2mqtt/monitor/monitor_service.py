@@ -4,8 +4,9 @@ import asyncio
 import json
 import logging
 import time
+from collections.abc import Awaitable
 from pathlib import Path
-from typing import Any, Awaitable
+from typing import Any
 
 import paho.mqtt.client as mqtt
 
@@ -410,5 +411,5 @@ class MonitorService(Device):
                     sensors += 1
                     mqtt_handler.register(mqtt_client, topic, handler=self.on_topic_update)
             if sensors > 0:
-                logging.info(f"{self.log_identity} Monitoring {sensors} topic{'s' if sensors > 1 else ''} for {d.log_identity}")
+                logging.debug(f"{self.log_identity} Monitoring {sensors} topic{'s' if sensors > 1 else ''} for {d.log_identity}")
         logging.info(f"{self.log_identity} Monitoring {len(self._topics)} topics")
