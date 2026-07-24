@@ -320,6 +320,18 @@ class:
       source: Registo Modbus {address}
       source_range: Registos Modbus {start}-{end}
     name: Potência da Bateria
+  BatteryStatus:
+    attributes:
+      comment: Indica o status atual da bateria com base no estado de carga e no fluxo de energia. Os valores válidos são 'Carregando', 'Descarregando', 'Cheio', 'Vazio', 'Corte' e 'Desconhecido'. 'Cutoff' indica que a bateria está em um estado em que atingiu um SoC de corte configurado (Carga, Descarga ou Backup). 'Desconhecido' indica que nem todas as informações estão disponíveis para avaliar o estado.
+      source: BateriaEnergia e plantaBateriaSoC/ESSBackupSOC/ESSChargeCutOffSOC/ESSDischargeCutOffSOC
+    name: Status da bateria
+    options:
+      '0': Completo
+      '1': Carregando
+      '2': Descarregando
+      '3': Vazio
+      '4': Desconhecido
+      '5': Cortar
   ChargeCutOffSoC:
     attributes:
       source: Registo Modbus {address}
@@ -406,6 +418,11 @@ class:
       "3": A carregar
       "4": Falha
       "5": Programado
+      '6': Terminou
+      '7': Indisponível (em manutenção)
+      '8': Descarregando
+      '9': Alarme
+      '10': Preparando (detecção de isolamento em andamento)
   DCChargerStatus:
     attributes:
       comment: 0:Iniciar 1:Parar

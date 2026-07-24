@@ -320,6 +320,18 @@ class:
       source: Registre Modbus {address}
       source_range: Registres Modbus {start}-{end}
     name: Puissance Batterie
+  BatteryStatus:
+    attributes:
+      comment: Indique l'état actuel de la batterie en fonction de son état de charge et de son flux d'énergie. Les valeurs valides sont « Chargement », « Décharge », « Plein », « Vide », « Coupure » et « Inconnu ». « Cutoff » indique que la batterie est dans un état dans lequel elle a atteint une coupure SoC configurée (charge, décharge ou sauvegarde). « Inconnu » indique que toutes les informations ne sont pas disponibles pour évaluer l'état.
+      source: BatterieAlimentation et installationBatterySoC/ESSBackupSOC/ESSChargeCutOffSOC/ESSDischargeCutOffSOC
+    name: État de la batterie
+    options:
+      '0': Complet
+      '1': Chargement
+      '2': Décharge
+      '3': Vide
+      '4': Inconnu
+      '5': Couper
   ChargeCutOffSoC:
     attributes:
       source: Registre Modbus {address}
@@ -406,6 +418,11 @@ class:
       "3": Charge en cours
       "4": Défaut
       "5": Programmé
+      '6': Terminé
+      '7': Indisponible (en maintenance)
+      '8': Décharge
+      '9': Alarme
+      '10': Préparation (Détection d'isolation en cours)
   DCChargerStatus:
     attributes:
       comment: 0:Démarrer 1:Arrêter

@@ -320,6 +320,18 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Battery Power
+  BatteryStatus:
+    attributes:
+      comment: Indicates the current status of the battery based on its state of charge and power flow. Valid values are 'Charging', 'Discharging', 'Full', 'Empty', 'Cutoff', and 'Unknown'. 'Cutoff' indicates that the battery is in a state where it has reached a configured cutoff SoC (Charge, Discharge or Backup). 'Unknown' indicates not all information is available to assess state.
+      source: BatteryPower and PlantBatterySoC/ESSBackupSOC/ESSChargeCutOffSOC/ESSDischargeCutOffSOC
+    name: Battery Status
+    options:
+      '0': Full
+      '1': Charging
+      '2': Discharging
+      '3': Empty
+      '4': Unknown
+      '5': Cutoff
   ChargeCutOffSoC:
     attributes:
       source: Modbus Register {address}
@@ -406,6 +418,11 @@ class:
       '3': Charging
       '4': Fault
       '5': Scheduled
+      '6': Ended
+      '7': Unavailable (Under maintenance)
+      '8': Discharging
+      '9': Alarm
+      '10': Preparing (Insulation detection in progress)
   DCChargerStatus:
     attributes:
       comment: 0:Start 1:Stop

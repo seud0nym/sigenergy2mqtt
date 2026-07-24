@@ -7,7 +7,7 @@
 
 - Health monitoring of InfluxDB writes and PVOutput uploads (if these services are enabled)
 - Added new monitorable state property to allow health monitoring to be disabled for specific sensors via sensor overrides
-
+- Added new derived sensor for battery status ('Charging', 'Discharging', 'Full', 'Empty', 'Cutoff', and 'Unknown')
 
 ### Fixed
 
