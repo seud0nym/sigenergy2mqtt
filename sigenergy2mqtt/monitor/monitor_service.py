@@ -345,8 +345,6 @@ class MonitorService(Device):
             qos: Requested MQTT quality-of-service level.
         """
 
-        pass
-
     def publish_discovery(self, mqtt_client: mqtt.Client, clean: bool = False) -> mqtt.MQTTMessageInfo | None:
         """No-op discovery publisher for the monitor service.
 
@@ -357,8 +355,6 @@ class MonitorService(Device):
         Returns:
             ``None`` because discovery is not published for this service.
         """
-
-        pass
 
     def schedule(self, modbus_client: Any, mqtt_client: mqtt.Client) -> list[Awaitable[None]]:
         """Return the monitor coroutine(s) to schedule for this service.
