@@ -320,6 +320,19 @@ class:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Potenza Batteria
+  BatteryStatus:
+    attributes:
+      comment: Indica lo stato attuale della batteria in base al suo stato di carica e al flusso di potenza. I valori validi sono "In carica", "Scarica", "Pieno", "Vuoto", "Interruzione", "Inattivo" e "Sconosciuto". "Interruzione" indica che la batteria è in uno stato in cui ha raggiunto un SoC di interruzione configurato (carica, scarica o backup). "Inattivo" indica che la batteria non si sta né caricando né scaricando. "Sconosciuto" indica che non tutte le informazioni sono disponibili per valutare lo stato.
+      source: BatteriaAlimentazione e impiantoBatteriaSoC/ESSBackupSOC/ESSCaricaCutOffSOC/ESSDiscaricaCutOffSOC
+    name: Stato della batteria
+    options:
+      '0': Pieno
+      '1': In carica
+      '2': Scaricamento
+      '3': Vuoto
+      '4': Sconosciuto
+      '5': Tagliare
+      '6': Oziare
   ChargeCutOffSoC:
     attributes:
       source: Registro Modbus {address}
@@ -406,6 +419,11 @@ class:
       "3": In carica
       "4": Guasto
       "5": Programmato
+      '6': Finito
+      '7': Non disponibile (in manutenzione)
+      '8': Scaricamento
+      '9': Allarme
+      '10': Preparazione (rilevamento dell'isolamento in corso)
   DCChargerStatus:
     attributes:
       comment: 0:Avvia 1:Ferma

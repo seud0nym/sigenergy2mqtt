@@ -320,6 +320,19 @@ class:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
     name: Batterieleistung
+  BatteryStatus:
+    attributes:
+      comment: Zeigt den aktuellen Status der Batterie basierend auf ihrem Ladezustand und Stromfluss an. Gültige Werte sind „Laden“, „Entladen“, „Voll“, „Leer“, „Abschaltung“, „Leerlauf“ und „Unbekannt“. „Abschaltung“ zeigt an, dass sich die Batterie in einem Zustand befindet, in dem sie einen konfigurierten Abschalt-SoC (Laden, Entladen oder Backup) erreicht hat. „Leerlauf“ zeigt an, dass der Akku weder geladen noch entladen wird. „Unbekannt“ bedeutet, dass nicht alle Informationen zur Beurteilung des Zustands verfügbar sind.
+      source: BatterieStrom und AnlageBatterieSoC/ESSBackupSOC/ESSChargeCutOffSOC/ESSDischargeCutOffSOC
+    name: Batteriestatus
+    options:
+      '0': Voll
+      '1': Aufladen
+      '2': Entladen
+      '3': Leer
+      '4': Unbekannt
+      '5': Cutoff # verify:ignore
+      '6': Leerlauf
   ChargeCutOffSoC:
     attributes:
       source: Modbus-Register {address}
@@ -406,6 +419,11 @@ class:
       "3": Laden
       "4": Fehler
       "5": Geplant
+      '6': Beendet
+      '7': Nicht verfügbar (In Wartung)
+      '8': Entladen
+      '9': Alarm # verify:ignore
+      '10': Vorbereitung (Isolationserkennung läuft)
   DCChargerStatus:
     attributes:
       comment: 0:Start 1:Stopp

@@ -320,6 +320,19 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 电池功率
+  BatteryStatus:
+    attributes:
+      comment: 根据电池的充电状态和功率流指示电池的当前状态。有效值为“充电”、“放电”、“满”、“空”、“截止”、“空闲”和“未知”。 “截止”表示电池处于已达到配置的截止 SoC（充电、放电或备份）的状态。 “空闲”表示电池既不充电也不放电。 “未知”表示并非所有信息都可用于评估状态。
+      source: BatteryPower 和 PlantBatterySoC/ESSBackupSOC/ESSChargeCutOffSOC/ESSDischargeCutOffSOC
+    name: 电池状态
+    options:
+      '0': 满的
+      '1': 收费
+      '2': 放电
+      '3': 空的
+      '4': 未知
+      '5': 隔断
+      '6': 闲置的
   ChargeCutOffSoC:
     attributes:
       source: Modbus 寄存器 {address}
@@ -406,6 +419,11 @@ class:
       "3": 充电中
       "4": 故障
       "5": 已预约
+      '6': 结束
+      '7': 不可用（维护中）
+      '8': 放电
+      '9': 警报
+      '10': 准备中（绝缘检测进行中）
   DCChargerStatus:
     attributes:
       comment: 0:启动 1:停止

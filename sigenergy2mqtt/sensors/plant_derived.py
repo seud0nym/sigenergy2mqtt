@@ -7,13 +7,11 @@ import paho.mqtt.client as mqtt
 from sigenergy2mqtt.common import ConsumptionMethod, DeviceClass, HybridInverter, Protocol, PVInverter, StateClass, UnitOfEnergy, UnitOfPower
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus import ModbusClient, ModbusDataType
-from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerChargingPower
-from sigenergy2mqtt.sensors.base import UnpublishResetSensorMixin
-from sigenergy2mqtt.sensors.base.accumulation import SimpleEnergyDailyAccumulationSensor
-from sigenergy2mqtt.sensors.inverter_derived import InverterSelfConsumedPower
-from sigenergy2mqtt.sensors.inverter_read_only import DCChargerOutputPower
 
-from .base import CrossDeviceDerivedSensor, DerivedSensor, EnergyDailyAccumulationSensor, PVPowerSensor, Sensor
+from .ac_charger_read_only import ACChargerChargingPower
+from .base import CrossDeviceDerivedSensor, DerivedSensor, DiscoveryKeys, EnergyDailyAccumulationSensor, PVPowerSensor, Sensor, SimpleEnergyDailyAccumulationSensor, UnpublishResetSensorMixin
+from .inverter_derived import InverterSelfConsumedPower
+from .inverter_read_only import DCChargerOutputPower
 from .plant_read_only import (
     BatteryPower,
     ESSTotalChargedEnergy,
@@ -21,6 +19,7 @@ from .plant_read_only import (
     GeneralLoadPower,
     GridSensorActivePower,
     GridStatus,
+    PlantBatterySoC,
     PlantPVPower,
     PlantPVTotalGeneration,
     PlantTotalExportedEnergy,
@@ -28,6 +27,7 @@ from .plant_read_only import (
     ThirdPartyLifetimePVEnergy,
     TotalLoadPower,
 )
+from .plant_read_write import ESSBackupSOC, ESSChargeCutOffSOC, ESSDischargeCutOffSOC
 
 
 class BatteryChargingPower(DerivedSensor, HybridInverter):
@@ -104,6 +104,92 @@ class BatteryDischargingPower(DerivedSensor, HybridInverter):
             0 if raw >= 0 else round(raw * -1, self.precision),
         )
         return True
+
+
+class BatteryStatus(DerivedSensor, HybridInverter):
+    FULL = 0
+    CHARGING = 1
+    DISCHARGING = 2
+    EMPTY = 3
+    UNKNOWN = 4
+    CUTOFF = 5
+    IDLE = 6
+
+    def __init__(self, plant_index: int, battery_power: BatteryPower, current_soc: PlantBatterySoC, backup_soc: ESSBackupSOC, discharge_soc: ESSDischargeCutOffSOC, charge_soc: ESSChargeCutOffSOC):
+        # Set properties before super().__init__ so that log_identity is correctly generated
+        self.plant_index = plant_index
+        super().__init__(
+            name="Battery Status",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_battery_status",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_battery_status",
+            data_type=ModbusDataType.STRING,
+            device_class=DeviceClass.ENUM,
+            icon="mdi:battery",
+            source_sensors=(backup_soc,battery_power,charge_soc,current_soc,discharge_soc),
+        )
+        self[DiscoveryKeys.OPTIONS] = [
+            "Full",  # 0
+            "Charging",  # 1
+            "Discharging",  # 2
+            "Empty",  # 3
+            "Unknown",  # 4
+            "Cutoff",  # 5
+            "Idle",  # 6
+        ]
+        self.protocol_version = Protocol.V2_9
+        self._backup_soc: float | None = None
+        self._charge_soc: float | None = None
+        self._current_soc: float | None = None
+        self._discharge_soc: float | None = None
+
+    def get_attributes(self) -> dict[str, float | int | str]:
+        attributes = super().get_attributes()
+        attributes["source"] = "BatteryPower and PlantBatterySoC/ESSBackupSOC/ESSChargeCutOffSOC/ESSDischargeCutOffSOC"
+        attributes["comment"] = (
+            "Indicates the current status of the battery based on its state of charge and power flow. "
+            "Valid values are 'Charging', 'Discharging', 'Full', 'Empty', 'Cutoff', 'Idle', and 'Unknown'. "
+            "'Cutoff' indicates that the battery is in a state where it has reached a configured cutoff SoC (Charge, Discharge or Backup). "
+            "'Idle' indicates that the battery is neither charging nor discharging. "
+            "'Unknown' indicates not all information is available to assess state."
+        )
+        return attributes
+
+    def update_from_source_sensor(self, sensor: Sensor) -> bool:
+        match sensor:
+            case BatteryPower():
+                if sensor.latest_raw_state is None:
+                    return False
+                raw = float(sensor.latest_raw_state)
+                if raw > 0:
+                    self.set_latest_state(self._get_option(BatteryStatus.CHARGING))
+                elif raw < 0:
+                    self.set_latest_state(self._get_option(BatteryStatus.DISCHARGING))
+                elif self._current_soc is None or self._backup_soc is None or self._charge_soc is None or self._discharge_soc is None:
+                    self.set_latest_state(self._get_option(BatteryStatus.UNKNOWN))
+                elif self._current_soc >= 100.0:
+                    self.set_latest_state(self._get_option(BatteryStatus.FULL))
+                elif self._current_soc <= 0.0:
+                    self.set_latest_state(self._get_option(BatteryStatus.EMPTY))
+                elif self._current_soc <= self._discharge_soc or self._current_soc <= self._backup_soc or self._current_soc >= self._charge_soc:
+                    self.set_latest_state(self._get_option(BatteryStatus.CUTOFF))
+                else:
+                    self.set_latest_state(self._get_option(BatteryStatus.IDLE))
+                return True
+            case PlantBatterySoC():
+                self._current_soc = float(sensor.latest_raw_state) if sensor.latest_raw_state is not None else None
+                return False  # don't update state from SoC, only from BatteryPower
+            case ESSBackupSOC():
+                self._backup_soc = float(sensor.latest_raw_state) if sensor.latest_raw_state is not None else None
+                return False  # don't update state from BackupSOC, only from BatteryPower
+            case ESSChargeCutOffSOC():
+                self._charge_soc = float(sensor.latest_raw_state) if sensor.latest_raw_state is not None else None
+                return False  # don't update state from ChargeCutOffSOC, only from BatteryPower
+            case ESSDischargeCutOffSOC():
+                self._discharge_soc = float(sensor.latest_raw_state) if sensor.latest_raw_state is not None else None
+                return False  # don't update state from DischargeCutOffSOC, only from BatteryPower
+            case _:
+                logging.warning(f"{self.log_identity} Attempt to call update_from_source_sensor from {sensor.log_identity}")
+                return False
 
 
 class GridSensorExportPower(DerivedSensor, HybridInverter, PVInverter):

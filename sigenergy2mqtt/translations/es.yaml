@@ -320,6 +320,19 @@ class:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
     name: Potencia de Batería
+  BatteryStatus:
+    attributes:
+      comment: Indica el estado actual de la batería en función de su estado de carga y flujo de energía. Los valores válidos son "Cargando", "Descargando", "Lleno", "Vacío", "Corte", "Inactivo" y "Desconocido". 'Corte' indica que la batería se encuentra en un estado en el que ha alcanzado un SoC de corte configurado (carga, descarga o respaldo). "Inactivo" indica que la batería no se está cargando ni descargando. "Desconocido" indica que no toda la información está disponible para evaluar el estado.
+      source: BateríaEnergía y plantaBateríaSoC/ESSBackupSOC/ESSChargeCutOffSOC/ESSDischargeCutOffSOC
+    name: Estado de la batería
+    options:
+      '0': Lleno
+      '1': Cargando
+      '2': Descarga
+      '3': Vacío
+      '4': Desconocido
+      '5': Cierre
+      '6': Inactivo
   ChargeCutOffSoC:
     attributes:
       source: Registro Modbus {address}
@@ -406,6 +419,11 @@ class:
       "3": Cargando
       "4": Fallo
       "5": Programado
+      '6': Terminado
+      '7': No disponible (en mantenimiento)
+      '8': Descarga
+      '9': Alarma
+      '10': Preparando (detección de aislamiento en curso)
   DCChargerStatus:
     attributes:
       comment: 0:Iniciar 1:Detener
