@@ -39,6 +39,7 @@ class DerivedSensor(TypedSensorMixin, Sensor):
         super().__init__(*args, **kwargs)
         self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
         self.bound_source_sensors: list[Sensor] = []
+        self._pending_update: bool = False
 
         # Initialise source_sensors from the constructor argument.  Subclasses
         # that use deferred / cross-device binding start with an empty list and
@@ -72,26 +73,19 @@ class DerivedSensor(TypedSensorMixin, Sensor):
             # Re-apply sensor overrides so that an explicit debug-logging=False override will be respected
             self.apply_sensor_overrides()
 
+    def set_latest_state(self, state: int | float | str | list[bool] | list[int] | list[float]) -> bool:
+        """Update latest state and track pending updates for publishing."""
+        updated = super().set_latest_state(state)
+        if updated:
+            self._pending_update = True
+        return updated
+
     async def _update_internal_state(self, **kwargs) -> bool | Exception | ExceptionResponse:
-        """Derived sensors don't update from Modbus."""
+        """Derived sensors check if they were updated by source sensors."""
+        if getattr(self, "_pending_update", False):
+            self._pending_update = False
+            return True
         return False
-
-    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
-        """Get derived sensor state.
-
-        Args:
-            raw: If True, return raw unprocessed value
-            republish: If True, return last known state
-            **kwargs: Additional arguments (ignored)
-
-        Returns:
-            Current state value or None if no state available
-        """
-        if len(self._states) == 0:
-            return None
-
-        state = self._states[-1][1]
-        return state if isinstance(state, str) else self._apply_gain_and_precision(state, raw)
 
     def run_persistence_coroutine(self, coro: Coroutine[Any, Any, None]) -> None:
         """Run a coroutine in the background to persist state.
