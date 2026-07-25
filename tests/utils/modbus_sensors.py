@@ -53,7 +53,7 @@ from sigenergy2mqtt.sensors.inverter_read_write import DCChargerStatus, Inverter
 from sigenergy2mqtt.sensors.pid_read_only import PIDMachineFirmwareVersion, PIDModelType, PIDSerialNumber
 from sigenergy2mqtt.sensors.pid_read_write import PIDStartStop
 from sigenergy2mqtt.sensors.plant_ess_preheating_read_write import ESSPreHeatingEnable, ESSPreHeatingTOUTime
-from sigenergy2mqtt.sensors.plant_read_only import CurrentControlCommandValue, GridCodeRatedFrequency, PlantRatedChargingPower, PlantRatedDischargingPower, SystemTimeZone
+from sigenergy2mqtt.sensors.plant_read_only import ChargeCutOffSoC, CurrentControlCommandValue, DischargeCutOffSoC, GridCodeRatedFrequency, PlantRatedChargingPower, PlantRatedDischargingPower, SystemTimeZone
 from sigenergy2mqtt.sensors.plant_read_write import (
     ActivePowerFixedAdjustmentTargetValue,
     PhaseActivePowerFixedAdjustmentTargetValue,
@@ -323,7 +323,7 @@ async def get_sensor_instances(
             logging.warning(f"{s.__class__.__name__} has no Unit of Measurement")
         # Check for missing device_class and state_class on concrete sensor classes, excluding known exceptions
         if (
-            not isinstance(s, (AlarmCombinedSensor, AlarmSensor, CurrentControlCommandValue, ESSPreHeatingTOUTime, InsulationResistance, ReservedSensor, SwitchSensor, WriteOnlySensor))
+            not isinstance(s, (AlarmCombinedSensor, AlarmSensor, CurrentControlCommandValue, ESSPreHeatingTOUTime, InsulationResistance, ReservedSensor, SystemTimeZone, SwitchSensor, WriteOnlySensor))
             and getattr(s, "data_type", ModbusDataType.STRING) is not ModbusDataType.STRING
         ):
             if s.device_class is None and not any(sub in s.__class__.__name__ for sub in ["Count", "Gradient"]):
@@ -331,7 +331,7 @@ async def get_sensor_instances(
             if (
                 s.state_class is None
                 and s.device_class not in (DeviceClass.ENUM, DeviceClass.TIMESTAMP)
-                and not isinstance(s, (ACChargerInputBreaker, NumericSensor, SwitchSensor, SystemTimeZone))
+                and not isinstance(s, (ACChargerInputBreaker, ChargeCutOffSoC, DischargeCutOffSoC, NumericSensor, SwitchSensor, SystemTimeZone))
                 and not any(sub in s.__class__.__name__ for sub in ["Max", "Min", "Available", "Rated", "Adjustment", "Target", "Factor", "Count"])
             ):
                 logging.warning(f"{s.__class__.__name__} has no State Class")
