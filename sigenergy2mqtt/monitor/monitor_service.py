@@ -197,9 +197,10 @@ class MonitorService(Device):
 
         if overdue_count == 0 and mqtt_connected and modbus_connected and services_healthy:
             status = "healthy"
-            logging.log(
-                logging.INFO if self._current_status != status else logging.DEBUG, f"{self.log_identity} Status is HEALTHY (topic_{overdue_count=} {mqtt_connected=} {modbus_connected=} {service_contributors=})"
-            )
+            if self._current_status != status:
+                logging.info(f"{self.log_identity} Status is HEALTHY")
+            else:
+                logging.debug(f"{self.log_identity} Status is HEALTHY (topic_{overdue_count=} {mqtt_connected=} {modbus_connected=} {service_contributors=})")
         else:
             status = "degraded"
             logging.warning(f"{self.log_identity} Status is DEGRADED (topic_{overdue_count=} {mqtt_connected=} {modbus_connected=} {service_contributors=})")
