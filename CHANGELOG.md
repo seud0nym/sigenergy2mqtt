@@ -14,6 +14,7 @@
 - Fixed infinite tight loop in PVOutput status service when lock times out
 - Fixed "Task was destroyed but it is pending!" warning during restart after firmware upgrade (or other restart event)
 - Fixed missing device classes and state classes for Home Assistant (#219)
+- Fixed DerivedSensors did not respect the repeated state publishing interval setting
 
 ### Changed
 
