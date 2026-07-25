@@ -409,4 +409,4 @@ class MonitorService(Device):
                     mqtt_handler.register(mqtt_client, topic, handler=self.on_topic_update)
             if sensors > 0:
                 logging.debug(f"{self.log_identity} Monitoring {sensors} topic{'s' if sensors > 1 else ''} for {d.log_identity}")
-        logging.info(f"{self.log_identity} Monitoring {len(self._topics)} topics")
+        logging.info(f"{self.log_identity} Subscribed to {len(self._topics)} topics")
