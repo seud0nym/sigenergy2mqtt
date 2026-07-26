@@ -263,7 +263,7 @@ class ResettableAccumulationSensor(ObservableMixin, AccumulationSensor):
             attributes[SensorAttributeKeys.RESET_UNIT] = self.unit
         return attributes
 
-    async def notify(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+    async def notify(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
         """Handle reset command from MQTT.
 
         Args:
@@ -426,7 +426,7 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
 
             self._state_at_midnight = midnight_state
 
-    async def notify(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+    async def notify(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
         """Handle reset command.
 
         Args:
@@ -512,7 +512,7 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
                 self._state_at_midnight = now_state
 
         # Initialize midnight state if needed
-        if not self._state_at_midnight:
+        if not self._state_at_midnight or now_state < self._state_at_midnight:
             self._state_at_midnight = now_state
 
         # Calculate today's accumulation
