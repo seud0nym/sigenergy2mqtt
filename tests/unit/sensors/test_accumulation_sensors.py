@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.common import DeviceClass, StateClass
+from sigenergy2mqtt.common import DeviceClass, Protocol, StateClass
 from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.base import ResettableAccumulationSensor, Sensor
 
@@ -255,6 +255,34 @@ class TestAccumulationSensor:
                 assert sensor._current_total == 15.0
                 assert sensor.latest_raw_state == 15.0
 
+    @pytest.mark.asyncio
+    async def test_accumulation_sensor_long_interval(self):
+        """Test skipping logic in the base AccumulationSensor when interval > 2h."""
+        source = MagicMock(spec=Sensor)
+        source.unique_id = "source_uid"
+        source.latest_interval = 2 * 60 * 60.0 + 300.0  # 2 hours and 5 minutes
+        source.state_count = 2
+
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            from sigenergy2mqtt.sensors.base import AccumulationSensor
+
+            sensor = AccumulationSensor(
+                name="Accumulator",
+                unique_id="sigen_accumulator_uid",
+                object_id="sigen_accumulator_oid",
+                source=source,
+                data_type=ModbusDataType.UINT32,
+                unit="kWh",
+                device_class=DeviceClass.ENERGY,
+                state_class=StateClass.TOTAL_INCREASING,
+                icon="mdi:battery",
+                gain=1.0,
+                precision=2,
+            )
+
+            with patch.object(sensor, "run_persistence_coroutine", side_effect=lambda coro: coro.close()):
+                assert sensor.update_from_source_sensor(source) is False
+
 
 class TestSimpleEnergyDailyAccumulationSensor:
     @pytest.mark.asyncio
@@ -338,3 +366,51 @@ class TestSimpleEnergyDailyAccumulationSensor:
             # None raw state
             source.latest_raw_state = None
             assert sensor.update_from_source_sensor(source) is False
+
+
+class TestEnergyDailyAccumulationSensor:
+    @pytest.mark.asyncio
+    async def test_energy_daily_accumulation_sensor(self):
+        """Test accumulation across a day change resets value."""
+        string = MagicMock(spec=Sensor)
+        string.unique_id = "source_uid"
+        string.data_type = ModbusDataType.UINT32
+        string.unit = "kW"
+        string.device_class = DeviceClass.POWER
+        string.state_class = StateClass.MEASUREMENT
+        string.precision = 2
+        string.protocol_version = Protocol.V1_8
+
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            import time
+
+            from sigenergy2mqtt.sensors.base.accumulation import EnergyDailyAccumulationSensor
+            from sigenergy2mqtt.sensors.inverter_derived import PVStringDailyEnergy
+
+            source = PVStringDailyEnergy(plant_index=0, device_address=1, string_number=1, source=string)
+            sensor = EnergyDailyAccumulationSensor(
+                name="Daily Energy",
+                unique_id="sigen_daily_uid",
+                object_id="sigen_daily_oid",
+                source=source,
+            )
+
+            source._states = [(time.time() - 2, 10.0), (time.time(), 20.0)]
+
+            with patch.object(sensor, "run_persistence_coroutine", side_effect=lambda coro: coro.close()):
+                sensor.update_from_source_sensor(source)
+                assert sensor._current_total == 0.0  #  No previous value, so accumulation value at midnight set to now value and therefore daily total is zero
+                assert sensor._state_at_midnight == 20.0
+
+            source.set_state(source.latest_raw_state - 2.0)
+            with patch.object(sensor, "run_persistence_coroutine", side_effect=lambda coro: coro.close()):
+                sensor.update_from_source_sensor(source)
+                assert sensor.latest_raw_state == 0.0  # Value went backwards, so reset accumulation value at midnight to now value
+                assert sensor._state_at_midnight == source.latest_raw_state
+
+            midnight = sensor._state_at_midnight
+            source.set_state(source.latest_raw_state + 4.5)
+            with patch.object(sensor, "run_persistence_coroutine", side_effect=lambda coro: coro.close()):
+                sensor.update_from_source_sensor(source)
+                assert sensor.latest_raw_state == 4.5
+                assert sensor._state_at_midnight == midnight

@@ -15,6 +15,8 @@
 - Fixed "Task was destroyed but it is pending!" warning during restart after firmware upgrade (or other restart event)
 - Fixed missing device classes and state classes for Home Assistant (#219)
 - Fixed DerivedSensors did not respect the repeated state publishing interval setting
+- Ignored accumulation intervals of two hours or longer to avoid clock-jump spikes
+- Reset daily energy sensors when their upstream lifetime counter decreases
 
 ### Changed
 

@@ -148,6 +148,9 @@ class AccumulationSensor(DerivedSensor):
         if interval_hours < 0:
             logging.warning(f"{self.log_identity} negative interval IGNORED (interval={sensor.latest_interval})")
             return False
+        if interval_hours >= 2:
+            logging.warning(f"{self.log_identity} 2+ hour interval IGNORED (interval={sensor.latest_interval})")
+            return False
 
         # Convert negative power to zero
         previous = max(0.0, float(sensor.previous_raw_state if sensor.previous_raw_state is not None else 0.0))
@@ -263,7 +266,7 @@ class ResettableAccumulationSensor(ObservableMixin, AccumulationSensor):
             attributes[SensorAttributeKeys.RESET_UNIT] = self.unit
         return attributes
 
-    async def notify(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+    async def notify(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
         """Handle reset command from MQTT.
 
         Args:
@@ -426,7 +429,7 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
 
             self._state_at_midnight = midnight_state
 
-    async def notify(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+    async def notify(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
         """Handle reset command.
 
         Args:
@@ -507,12 +510,12 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
 
             if was_time.tm_year != now_time.tm_year or was_time.tm_mon != now_time.tm_mon or was_time.tm_mday != now_time.tm_mday:
                 # Day changed - reset midnight state
-                self.run_persistence_coroutine(self._update_state_at_midnight(now_state))
+                self._state_at_midnight = None
                 self._states.clear()
-                self._state_at_midnight = now_state
 
         # Initialize midnight state if needed
-        if not self._state_at_midnight:
+        if self._state_at_midnight is None or now_state < self._state_at_midnight:
+            self.run_persistence_coroutine(self._update_state_at_midnight(now_state))
             self._state_at_midnight = now_state
 
         # Calculate today's accumulation
