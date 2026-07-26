@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 verify_translations.py
 
@@ -103,7 +102,7 @@ def has_ignore_comment(container: object, key: object) -> bool:
     try:
         if not hasattr(container, "ca"):
             return False
-        comment_entry = getattr(container, "ca").items.get(key)
+        comment_entry = getattr(container, "ca").items.get(key)  # noqa: B009
         if not comment_entry:
             return False
         eol_comment = comment_entry[2]  # inline / end-of-line slot only
@@ -219,9 +218,8 @@ def find_issues(
 
     # ---- leaf nodes ----
     else:
-        if check_values and isinstance(en_data, str) and isinstance(other_data, str):
-            if en_data == other_data and not _is_translation_safe(en_data):
-                issues.append(f"Untranslated value at '{path}': '{en_data}'")
+        if check_values and isinstance(en_data, str) and isinstance(other_data, str) and en_data == other_data and not _is_translation_safe(en_data):
+            issues.append(f"Untranslated value at '{path}': '{en_data}'")
 
     return issues
 
