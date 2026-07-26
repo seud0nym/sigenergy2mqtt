@@ -1,5 +1,4 @@
 from enum import StrEnum
-from typing import Optional
 
 from .units import (
     PERCENTAGE,
@@ -440,7 +439,7 @@ class DeviceClass(StrEnum):
     """
 
     @staticmethod
-    def is_valid_unit(device_class: "DeviceClass", unit: Optional[StrEnum] | str) -> bool:
+    def is_valid_unit(device_class: "DeviceClass", unit: StrEnum | str | None) -> bool:
         """Return True if unit is a valid unit of measurement for the given device class.
 
         Args:
@@ -492,35 +491,31 @@ NON_NUMERIC_DEVICE_CLASSES = {
 
 _ENERGY_UNITS: frozenset[str | None] = frozenset(UnitOfEnergy)
 
-_VOLUME_UNITS: frozenset[str | None] = frozenset(
-    {
-        "mL",
-        "L",
-        "m³",
-        "ft³",
-        "CCF",
-        "MCF",
-        "fl. oz.",
-        "gal",
-    }
-)
+_VOLUME_UNITS: frozenset[str | None] = frozenset({
+    "mL",
+    "L",
+    "m³",
+    "ft³",
+    "CCF",
+    "MCF",
+    "fl. oz.",
+    "gal",
+})
 
-_SPEED_UNITS: frozenset[str | None] = frozenset(
-    {
-        "mm/d",
-        "mm/h",
-        "m/s",
-        "km/h",
-        "mm/s",  # SI / metric
-        "in/d",
-        "in/h",
-        "in/s",
-        "ft/s",
-        "mph",  # USCS / imperial
-        "kn",  # Nautical
-        "Beaufort",  # Beaufort scale
-    }
-)
+_SPEED_UNITS: frozenset[str | None] = frozenset({
+    "mm/d",
+    "mm/h",
+    "m/s",
+    "km/h",
+    "mm/s",  # SI / metric
+    "in/d",
+    "in/h",
+    "in/s",
+    "ft/s",
+    "mph",  # USCS / imperial
+    "kn",  # Nautical
+    "Beaufort",  # Beaufort scale
+})
 
 _DEVICE_CLASS_UNITS: dict[DeviceClass, frozenset[str | None] | None] = {
     # --- Non-numerical (unit is always None) ---
@@ -533,34 +528,30 @@ _DEVICE_CLASS_UNITS: dict[DeviceClass, frozenset[str | None] | None] = {
     DeviceClass.APPARENT_POWER: frozenset(UnitOfApparentPower) | frozenset({"mVA"}),
     DeviceClass.AQI: frozenset({None}),
     # No UnitOfArea in units.py yet — hardcoded strings.
-    DeviceClass.AREA: frozenset(
-        {
-            "m²",
-            "cm²",
-            "km²",
-            "in²",
-            "ft²",
-            "yd²",
-            "mi²",
-            "ac",
-            "ha",
-        }
-    ),
+    DeviceClass.AREA: frozenset({
+        "m²",
+        "cm²",
+        "km²",
+        "in²",
+        "ft²",
+        "yd²",
+        "mi²",
+        "ac",
+        "ha",
+    }),
     # No UnitOfPressure in units.py yet — hardcoded strings.
-    DeviceClass.ATMOSPHERIC_PRESSURE: frozenset(
-        {
-            "mbar",
-            "cbar",
-            "bar",
-            "mPa",
-            "Pa",
-            "hPa",
-            "kPa",
-            "inHg",
-            "psi",
-            "inH₂O",
-        }
-    ),
+    DeviceClass.ATMOSPHERIC_PRESSURE: frozenset({
+        "mbar",
+        "cbar",
+        "bar",
+        "mPa",
+        "Pa",
+        "hPa",
+        "kPa",
+        "inHg",
+        "psi",
+        "inH₂O",
+    }),
     DeviceClass.BATTERY: frozenset({PERCENTAGE}),
     DeviceClass.BLOOD_GLUCOSE_CONCENTRATION: frozenset({"mg/dL", "mmol/L"}),
     DeviceClass.CO: frozenset({"ppb", "ppm", "mg/m³", "μg/m³"}),
@@ -568,48 +559,42 @@ _DEVICE_CLASS_UNITS: dict[DeviceClass, frozenset[str | None] | None] = {
     DeviceClass.CONDUCTIVITY: frozenset({"S/cm", "mS/cm", "μS/cm"}),
     DeviceClass.CURRENT: frozenset(UnitOfElectricCurrent),
     # No UnitOfDataRate in units.py yet — hardcoded strings.
-    DeviceClass.DATA_RATE: frozenset(
-        {
-            "bit/s",
-            "kbit/s",
-            "Mbit/s",
-            "Gbit/s",
-            "B/s",
-            "kB/s",
-            "MB/s",
-            "GB/s",
-        }
-    ),
+    DeviceClass.DATA_RATE: frozenset({
+        "bit/s",
+        "kbit/s",
+        "Mbit/s",
+        "Gbit/s",
+        "B/s",
+        "kB/s",
+        "MB/s",
+        "GB/s",
+    }),
     # No UnitOfInformation in units.py yet — hardcoded strings.
-    DeviceClass.DATA_SIZE: frozenset(
-        {
-            "bit",
-            "kbit",
-            "Mbit",
-            "Gbit",
-            "B",
-            "kB",
-            "MB",
-            "GB",
-            "TB",
-            "PB",
-            "EB",
-            "ZB",
-            "YB",
-        }
-    ),
-    DeviceClass.DISTANCE: frozenset(
-        {
-            "mm",
-            "cm",
-            "m",
-            "km",  # SI / metric
-            "in",
-            "ft",
-            "yd",
-            "mi",  # USCS / imperial
-        }
-    ),
+    DeviceClass.DATA_SIZE: frozenset({
+        "bit",
+        "kbit",
+        "Mbit",
+        "Gbit",
+        "B",
+        "kB",
+        "MB",
+        "GB",
+        "TB",
+        "PB",
+        "EB",
+        "ZB",
+        "YB",
+    }),
+    DeviceClass.DISTANCE: frozenset({
+        "mm",
+        "cm",
+        "m",
+        "km",  # SI / metric
+        "in",
+        "ft",
+        "yd",
+        "mi",  # USCS / imperial
+    }),
     DeviceClass.DURATION: frozenset(UnitOfTime),
     DeviceClass.ENERGY: _ENERGY_UNITS,
     DeviceClass.ENERGY_DISTANCE: frozenset({"kWh/100km", "Wh/km", "mi/kWh", "km/kWh"}),
@@ -636,20 +621,18 @@ _DEVICE_CLASS_UNITS: dict[DeviceClass, frozenset[str | None] | None] = {
     DeviceClass.PRECIPITATION: frozenset({"cm", "mm", "in"}),
     DeviceClass.PRECIPITATION_INTENSITY: frozenset({"mm/d", "mm/h", "in/d", "in/h"}),
     # No UnitOfPressure in units.py yet — hardcoded strings.
-    DeviceClass.PRESSURE: frozenset(
-        {
-            "mbar",
-            "cbar",
-            "bar",
-            "mPa",
-            "Pa",
-            "hPa",
-            "kPa",
-            "inHg",
-            "psi",
-            "inH₂O",
-        }
-    ),
+    DeviceClass.PRESSURE: frozenset({
+        "mbar",
+        "cbar",
+        "bar",
+        "mPa",
+        "Pa",
+        "hPa",
+        "kPa",
+        "inHg",
+        "psi",
+        "inH₂O",
+    }),
     # No UnitOfReactiveEnergy in units.py yet — hardcoded strings.
     DeviceClass.REACTIVE_ENERGY: frozenset({"varh", "kvarh"}),
     # mvar is not yet in UnitOfReactivePower — supplemented manually.
@@ -666,40 +649,34 @@ _DEVICE_CLASS_UNITS: dict[DeviceClass, frozenset[str | None] | None] = {
     DeviceClass.VOLUME: _VOLUME_UNITS,
     DeviceClass.VOLUME_STORAGE: _VOLUME_UNITS,
     # No UnitOfVolumeFlowRate in units.py yet — hardcoded strings.
-    DeviceClass.VOLUME_FLOW_RATE: frozenset(
-        {
-            "m³/h",
-            "m³/min",
-            "m³/s",
-            "L/h",
-            "L/min",
-            "L/s",
-            "mL/s",
-            "ft³/min",
-            "gal/min",
-            "gal/d",
-        }
-    ),
+    DeviceClass.VOLUME_FLOW_RATE: frozenset({
+        "m³/h",
+        "m³/min",
+        "m³/s",
+        "L/h",
+        "L/min",
+        "L/s",
+        "mL/s",
+        "ft³/min",
+        "gal/min",
+        "gal/d",
+    }),
     DeviceClass.WATER: frozenset({"m³", "L", "ft³", "CCF", "MCF", "gal"}),
-    DeviceClass.WEIGHT: frozenset(
-        {
-            "μg",
-            "mg",
-            "g",
-            "kg",  # SI / metric
-            "oz",
-            "lb",  # USCS / imperial
-        }
-    ),
+    DeviceClass.WEIGHT: frozenset({
+        "μg",
+        "mg",
+        "g",
+        "kg",  # SI / metric
+        "oz",
+        "lb",  # USCS / imperial
+    }),
     DeviceClass.WIND_DIRECTION: frozenset({"°"}),
-    DeviceClass.WIND_SPEED: frozenset(
-        {
-            "m/s",
-            "km/h",  # SI / metric
-            "ft/s",
-            "mph",  # USCS / imperial
-            "kn",  # Nautical
-            "Beaufort",  # Beaufort scale
-        }
-    ),
+    DeviceClass.WIND_SPEED: frozenset({
+        "m/s",
+        "km/h",  # SI / metric
+        "ft/s",
+        "mph",  # USCS / imperial
+        "kn",  # Nautical
+        "Beaufort",  # Beaufort scale
+    }),
 }
