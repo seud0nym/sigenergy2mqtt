@@ -148,6 +148,9 @@ class AccumulationSensor(DerivedSensor):
         if interval_hours < 0:
             logging.warning(f"{self.log_identity} negative interval IGNORED (interval={sensor.latest_interval})")
             return False
+        if interval_hours >= 24:
+            logging.warning(f"{self.log_identity} 24+ hour interval IGNORED (interval={sensor.latest_interval})")
+            return False
 
         # Convert negative power to zero
         previous = max(0.0, float(sensor.previous_raw_state if sensor.previous_raw_state is not None else 0.0))
