@@ -1,4 +1,4 @@
-from datetime import datetime
+import time
 from enum import Enum
 
 
@@ -33,4 +33,4 @@ def ProtocolApplies(version: Protocol) -> str:
         case Protocol.V2_9:
             return "2026-05-13"
         case _:
-            return datetime.today().strftime("%Y-%m-%d")
+            return time.strftime("%Y-%m-%d", time.localtime())
