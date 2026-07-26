@@ -510,16 +510,15 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
 
             if was_time.tm_year != now_time.tm_year or was_time.tm_mon != now_time.tm_mon or was_time.tm_mday != now_time.tm_mday:
                 # Day changed - reset midnight state
-                self.run_persistence_coroutine(self._update_state_at_midnight(now_state))
+                self._state_at_midnight = None
                 self._states.clear()
-                self._state_at_midnight = now_state
 
         # Initialize midnight state if needed
-        if not self._state_at_midnight or now_state < self._state_at_midnight:
-            self._state_at_midnight = now_state
+        if self._state_at_midnight is None or now_state < self._state_at_midnight:
+            self.run_persistence_coroutine(self._update_state_at_midnight(now_state))
 
         # Calculate today's accumulation
-        self._state_now = now_state - self._state_at_midnight
+        self._state_now = now_state - self._state_at_midnight  # type: ignore (neither value can be None at this point)
         self.set_latest_state(self._state_now)
 
         return True
