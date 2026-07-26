@@ -356,7 +356,7 @@ class TestEnergyDailyAccumulationSensorCoverageExtended:
     def test_set_source_values_midnight_init(self, mock_config):
         # Line 489
         sensor = self._make_sensor()
-        sensor._state_at_midnight = 0.0  # Force init
+        sensor._state_at_midnight = None  # Force init
         values = deque([(time.time(), 300.0)])
         sensor._source._states = values
         sensor._source.latest_raw_state = 300.0
