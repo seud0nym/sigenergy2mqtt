@@ -283,19 +283,21 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
             f"dev={device_address}",
         ]
 
-        if hasattr(self, "phase"):
-            phase = str(self.phase).strip()
-            if phase:
-                suffix_parts.append(f"phase={phase}")
+        phase = getattr(self, "phase", None)
+        if phase is not None:
+            suffix_parts.append(f"phase={str(phase).strip()}")
 
-        if hasattr(self, "slot"):
-            suffix_parts.append(f"slot={self.slot}")
+        slot = getattr(self, "slot", None)
+        if slot is not None:
+            suffix_parts.append(f"slot={slot}")
 
-        if hasattr(self, "smart_load_index"):
-            suffix_parts.append(f"idx={self.smart_load_index}")
+        sli = getattr(self, "smart_load_index", None)
+        if sli is not None:
+            suffix_parts.append(f"idx={sli}")
 
-        if hasattr(self, "string_number"):
-            suffix_parts.append(f"string={self.string_number}")
+        string = getattr(self, "string_number", None)
+        if string is not None:
+            suffix_parts.append(f"string={string}")
 
         return f"{self.__class__.__name__}[{','.join(suffix_parts)}]"
 
