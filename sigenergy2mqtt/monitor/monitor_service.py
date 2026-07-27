@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 import paho.mqtt.client as mqtt
+from paho.mqtt import MQTTException
 
 from sigenergy2mqtt.common import Protocol, service_health_registry
 from sigenergy2mqtt.config import active_config
@@ -221,7 +222,7 @@ class MonitorService(Device):
                 mqtt_client.publish(self._health_state_topic, status, qos=1, retain=True)
                 mqtt_client.publish(self._health_attributes_topic, json.dumps(payload), qos=1, retain=True)
                 logging.debug(f"{self.log_identity} Published health payload to mqtt://{active_config.mqtt.broker}:{active_config.mqtt.port} {self._health_attributes_topic}")
-        except Exception as ex:
+        except (OSError, UnicodeError, MQTTException, TypeError, ValueError) as ex:
             logging.warning(f"{self.log_identity} Failed to publish health payload: {ex}")
         self._current_status = status
 
@@ -312,11 +313,11 @@ class MonitorService(Device):
                         logging.info(f"MonitorService: Topic {topic} removed successfully")
                     else:
                         logging.error(f"MonitorService: Failed to clean topic {topic}")
-            except Exception as exc:
+            except (OSError, UnicodeError, MQTTException, TypeError, ValueError) as exc:
                 logging.warning(f"MonitorService: Failed to clean topics: {exc}")
             finally:
                 await mqtt_teardown(client, handler)
-        except Exception as exc:
+        except (OSError, UnicodeError, MQTTException, TypeError, ValueError) as exc:
             logging.warning(f"MonitorService: MQTT connection failed ({exc}) — cleaned disk only")
             return
 
@@ -334,7 +335,7 @@ class MonitorService(Device):
                 mqtt_client.publish(self._health_state_topic, b"", qos=1, retain=True)
                 mqtt_client.publish(self._health_attributes_topic, b"", qos=1, retain=True)
                 logging.debug(f"{self.log_identity} Cleared health topics on completion")
-        except Exception as ex:
+        except (OSError, UnicodeError, MQTTException, TypeError, ValueError) as ex:
             logging.warning(f"{self.log_identity} Failed to clear health payload: {ex}")
 
     def publish_availability(self, mqtt_client: mqtt.Client, ha_state: bytes | str, qos: int = 2) -> None:
@@ -385,9 +386,8 @@ class MonitorService(Device):
             try:
                 mqtt_client.publish(self._health_state_topic, b"", qos=1, retain=True)
                 mqtt_client.publish(self._health_attributes_topic, b"", qos=1, retain=True)
-            except Exception as ex:
+            except (OSError, UnicodeError, MQTTException, TypeError, ValueError) as ex:
                 logging.warning(f"{self.log_identity} Failed to clear health payload on subscribe: {ex}")
-
         if not self._monitor_topic_updates:
             logging.debug(
                 f"{self.log_identity} Topic-overdue monitoring disabled (monitor_topic_updates={active_config.monitor_topic_updates} repeated_state_publish_interval={active_config.repeated_state_publish_interval})"

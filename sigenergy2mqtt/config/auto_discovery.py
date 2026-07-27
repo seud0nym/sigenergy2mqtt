@@ -16,8 +16,6 @@ from pymodbus.client import AsyncModbusTcpClient
 class DiscoveryInterruptedError(Exception):
     """Internal exception to signal that auto-discovery was interrupted."""
 
-    pass
-
 
 # ---------------------------------------------------------------------------
 # Interruption flag
@@ -123,7 +121,7 @@ async def ping_scan(ip_list: list[str], concurrent: int = 100, timeout: float = 
             await writer.wait_closed()
             logging.debug(f" -> {ip}:{port} responded in {latency:.3f}s")
             return ip, latency
-        except (asyncio.TimeoutError, OSError, ConnectionRefusedError):
+        except (TimeoutError, OSError, ConnectionRefusedError):
             logging.debug(f" -> {ip}:{port} did not respond within {timeout:.2f}s")
             return ip, None
 
@@ -156,7 +154,7 @@ async def ping_scan(ip_list: list[str], concurrent: int = 100, timeout: float = 
         raise KeyboardInterrupt("Auto-discovery interrupted by signal")
     except asyncio.CancelledError:
         raise
-    except Exception as exc:
+    except (OSError, RuntimeError) as exc:
         logging.debug(f"TCP port scan failed: {exc}")
 
     return found
@@ -191,7 +189,7 @@ async def probe_register(modbus: AsyncModbusTcpClient, address: int, count: int 
         else:
             logging.debug(f" -> Probe failed modbus://{host}:{port} device_id={device_id} register {address}: {exc}")
         await _reconnect(modbus, max_attempts=max_reconnect_attempts)
-    except Exception as exc:
+    except RuntimeError as exc:
         logging.debug(f" -> Probe unexpected error modbus://{host}:{port} device_id={device_id} register {address}: {exc}")
     return False
 
@@ -207,7 +205,7 @@ async def get_serial_number(modbus: AsyncModbusTcpClient, sn_address: int, devic
             return cast(str, modbus.convert_from_registers(rr.registers, AsyncModbusTcpClient.DATATYPE.STRING))
     except ModbusException as exc:
         logging.debug(f" -> Serial number read failed modbus://{host}:{port} device_id={device_id}: {exc}")
-    except Exception as exc:
+    except RuntimeError as exc:
         logging.debug(f" -> Serial number unexpected error modbus://{host}:{port} device_id={device_id}: {exc}")
     return None
 
@@ -227,7 +225,7 @@ async def _reconnect(modbus: AsyncModbusTcpClient, *, max_attempts: int = 3) -> 
         modbus.close()
         try:
             await modbus.connect()
-        except Exception as exc:
+        except ModbusException as exc:
             logging.debug(f"Reconnect attempt {attempt} failed: {exc}")
         if modbus.connected:
             return
@@ -488,9 +486,10 @@ async def scan(
             )
         except DiscoveryInterruptedError:
             raise KeyboardInterrupt("Auto-discovery interrupted by signal")
-        except Exception as exc:
+        except asyncio.CancelledError:
+            raise
+        except (OSError, RuntimeError) as exc:
             logging.debug(f"Scan failed: {exc}")
-
         elapsed = time.perf_counter() - started
 
         # Summary of findings

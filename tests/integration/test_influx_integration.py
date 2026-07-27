@@ -3,7 +3,6 @@ from unittest.mock import MagicMock
 import pytest
 import requests
 
-import sigenergy2mqtt.influxdb.influx_base as base_module
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.influxdb.hass_history_sync import HassHistorySync
 from sigenergy2mqtt.influxdb.influx_service import InfluxService
@@ -193,9 +192,30 @@ def test_try_v1_write_complete_failure(monkeypatch):
     svc = HassHistorySync(logger, plant_index=0)
 
     def fake_post(*args, **kwargs):
-        raise Exception("Network error")
+        raise requests.RequestException("Network error")
+
+    def fake_get(url, headers=None, params=None, timeout=None, auth=None):
+        if "/query" in url or "query" in params:
+            # Return whatever response format query_v1 expects for HA records
+            return FakeResponse(
+                200,
+                json_data={
+                    "results": [
+                        {
+                            "series": [
+                                {
+                                    "columns": ["time", "value"],
+                                    "values": [["2024-01-01T12:00:00Z", 42]],
+                                }
+                            ]
+                        }
+                    ]
+                },
+            )
+        return FakeResponse(404)
 
     monkeypatch.setattr(svc._session, "post", fake_post)
+    monkeypatch.setattr(svc._session, "get", fake_get)
 
     result = svc._try_v1_write("http://localhost:8086", "testdb", None, b"test value=1")
     assert result is False
@@ -268,7 +288,7 @@ def test_try_v2_write_complete_failure(monkeypatch):
     svc = HassHistorySync(logger, plant_index=0)
 
     def fake_post(*args, **kwargs):
-        raise Exception("Network error")
+        raise requests.RequestException("Network error")
 
     monkeypatch.setattr(svc._session, "post", fake_post)
 
@@ -349,7 +369,7 @@ async def testquery_v1_exception(monkeypatch):
     svc._online = True
 
     def fake_get(*args, **kwargs):
-        raise Exception("Network error")
+        raise requests.RequestException("Network error")
 
     monkeypatch.setattr(svc._session, "get", fake_get)
 

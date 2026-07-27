@@ -21,7 +21,7 @@ import re
 import sys
 from pathlib import Path
 
-from ruamel.yaml import YAML
+from ruamel.yaml import YAML, YAMLError
 
 yaml_loader = YAML(typ="rt")
 
@@ -74,7 +74,7 @@ def load_yaml(path: Path) -> object:
     try:
         with open(path, "r", encoding="utf-8") as f:
             return yaml_loader.load(f)
-    except Exception as e:
+    except (YAMLError, OSError) as e:
         raise TranslationLoadError(f"Error loading {path}: {e}") from e
 
 
@@ -109,7 +109,7 @@ def has_ignore_comment(container: object, key: object) -> bool:
         if eol_comment is None:
             return False
         return "verify:ignore" in eol_comment.value
-    except Exception:
+    except (ValueError, TypeError, RuntimeError):
         log.debug(
             "Unexpected error inspecting comment for key %r in %r; assuming no ignore.",
             key,

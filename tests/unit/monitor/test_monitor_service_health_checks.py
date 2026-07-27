@@ -125,7 +125,7 @@ async def test_publish_health_exception(monkeypatch, caplog):
     
     # Mock file write to raise Exception
     mock_file = MagicMock()
-    mock_file.write_text.side_effect = Exception("Write failed")
+    mock_file.write_text.side_effect = OSError("Write failed")
     svc._health_file = mock_file
     
     monkeypatch.setattr(svc, '_check_modbus', MagicMock(return_value=True))

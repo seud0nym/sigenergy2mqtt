@@ -14,18 +14,18 @@ from .config import Config, ConfigurationError, _create_persistent_state_path, _
 from .settings import Settings
 
 __all__ = [
-    "active_config",
     "Config",
     "ConfigurationError",
-    "configure_root_logging",
     "ConsumptionSource",
-    "initialize",
-    "initialize_async",
     "OutputField",
     "Settings",
     "StatusField",
     "VoltageSource",
     "_swap_active_config",
+    "active_config",
+    "configure_root_logging",
+    "initialize",
+    "initialize_async",
 ]
 
 
@@ -160,7 +160,7 @@ def initialize(args=None) -> bool:
         active_config.persistent_state_path = _create_persistent_state_path()
     except ConfigurationError:
         raise
-    except Exception as exc:
+    except (ValueError, TypeError, RuntimeError, OSError) as exc:
         raise ConfigurationError(f"Error processing configuration: {exc}") from exc
 
     # 5. Early-exit flags

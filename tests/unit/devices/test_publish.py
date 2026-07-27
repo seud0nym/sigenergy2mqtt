@@ -591,7 +591,7 @@ async def test_poller_run_handles_generic_exception(monkeypatch, caplog):
 
     async def _mock_publish(mqtt_client, modbus_client=None, republish=False):
         dev._online = False  # Stop loop
-        raise Exception("generic error message")
+        raise RuntimeError("generic error message")
 
     monkeypatch.setattr(s1, "publish", _mock_publish)
     monkeypatch.setattr("sigenergy2mqtt.modbus.lock_factory.ModbusLockFactory.get", lambda modbus: FakeLock())
@@ -604,4 +604,4 @@ async def test_poller_run_handles_generic_exception(monkeypatch, caplog):
     # Should not throw outside
     await asyncio.wait_for(coro, timeout=5)
 
-    assert "encountered an error: Exception('generic error message')" in caplog.text
+    assert "encountered an error: RuntimeError('generic error message')" in caplog.text

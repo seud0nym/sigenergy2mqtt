@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 import paho.mqtt.client as mqtt
 from pymodbus import ModbusException
+from pymodbus.exceptions import ModbusException
 
 from sigenergy2mqtt.common import Constants
 from sigenergy2mqtt.modbus import ModbusClient, ModbusLock, ModbusLockFactory
@@ -233,8 +234,8 @@ class SensorGroupPoller:
             except asyncio.CancelledError:
                 logging.debug(f"{self._device.log_identity} Modbus reconnection cancelled")
                 return False
-            except Exception as e:
-                logging.warning(f"{self._device.log_identity} Modbus reconnection attempt {attempt} failed: {repr(e)}")
+            except ModbusException as e:
+                logging.warning(f"{self._device.log_identity} Modbus reconnection attempt {attempt} failed: {e!r}")
 
             # Exponential backoff with cap
             if attempt < MAX_RECONNECTION_ATTEMPTS and self._device.online:
@@ -337,8 +338,8 @@ class SensorGroupPoller:
                                 reconnected = await self._reconnect_modbus_with_backoff(modbus_client)
                                 if not reconnected and device.online:
                                     logging.error(f"{device.log_identity} failed to reconnect to Modbus, sensor updates paused")
-                except Exception as e:
-                    logging.error(f"{device.log_identity} Sensor Scan Group [{name}] encountered an error: {repr(e)}")
+                except RuntimeError as e:
+                    logging.error(f"{device.log_identity} Sensor Scan Group [{name}] encountered an error: {e!r}")
 
             # Sleep until the next sensor is due (max 1 second to stay responsive to shutdown)
             if next_publish_times:

@@ -8,7 +8,8 @@ import asyncio
 import logging
 import os
 import time
-from typing import Any, Awaitable
+from collections.abc import Awaitable
+from typing import Any
 
 import requests  # pyrefly: ignore
 
@@ -126,7 +127,7 @@ class PVOutputStatusService(Service):
                     await self._service_topics[field].handle_update(None, None, float(state_raw), topic, None)
             except (TypeError, ValueError):
                 self.logger.warning(f"{self.log_identity} Home Assistant sensor '{entity_id}' returned non-numeric state='{state_raw}'")
-            except Exception as exc:
+            except (OSError, requests.RequestException, TimeoutError) as exc:
                 self.logger.warning(f"{self.log_identity} Failed reading Home Assistant sensor '{entity_id}' via Supervisor API: {exc}")
 
     def _create_payload(self, now: time.struct_time) -> tuple[dict[str, Any], dict[str, dict[str, tuple[float | None, time.struct_time | None]]]]:
@@ -214,16 +215,15 @@ class PVOutputStatusService(Service):
                             self.sleeper_task = None
                 except asyncio.CancelledError:
                     self.logger.info(f"{self.log_identity} Sleep interrupted")
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     self.logger.warning(f"{self.log_identity} Failed to acquire lock within timeout")
                     if wait <= 0:
                         wait = 60
-                except Exception as e:
+                except RuntimeError as e:
                     self.logger.error(f"{self.log_identity} {e}")
                     if wait <= 0:
                         wait = 60
             self.logger.info(f"{self.log_identity} Completed: Flagged as offline ({self.online=})")
-            return
 
         tasks: list[Awaitable[None]] = [publish_updates(modbus_client, mqtt_client)]
         return tasks

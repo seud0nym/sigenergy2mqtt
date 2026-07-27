@@ -7,6 +7,7 @@ import logging
 import time
 from typing import Any, cast
 
+from pymodbus.exceptions import ModbusException
 from pymodbus.pdu import ExceptionResponse
 
 from sigenergy2mqtt.common import DeviceClass, InputType, Protocol, StateClass
@@ -96,10 +97,10 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
         except asyncio.CancelledError:
             logging.warning(f"{self.log_identity} Modbus read interrupted")
             return False
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logging.warning(f"{self.log_identity} Modbus read failed to acquire lock within {self.scan_interval}s")
             return False
-        except Exception:
+        except (ModbusException, OSError):
             # Record error in metrics
             await Metrics.modbus_read_error()
             raise
@@ -293,11 +294,9 @@ class ReservedSensor(ReadOnlySensor):
 
     def apply_device_overrides(self, registers: RegisterAccess | None):
         """Reserved sensors ignore overrides."""
-        pass
 
     def apply_sensor_overrides(self):
         """Reserved sensors ignore overrides."""
-        pass
 
 
 # =============================================================================

@@ -2,6 +2,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import paho.mqtt.client as paho_mqtt
 import pytest
+from paho.mqtt import MQTTException
 
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.main.main import (
@@ -77,7 +78,7 @@ def test_validate_mqtt_connection_success(mock_config_main):
         mock_client.loop.return_value = paho_mqtt.MQTT_ERR_SUCCESS
         _validate_mqtt_connection(False)
         # Line 658-659: Exception in disconnect
-        mock_client.disconnect.side_effect = Exception("boom")
+        mock_client.disconnect.side_effect = MQTTException("boom")
         _validate_mqtt_connection(False)
 
 
@@ -147,12 +148,11 @@ def test_validate_pvoutput_connection_testing(mock_config_main):
 
 @pytest.mark.asyncio
 async def test_validate_connections_all(mock_config_main):
-    with patch("sigenergy2mqtt.main.main._validate_modbus_connections") as m1:
-        with patch("sigenergy2mqtt.main.main._validate_mqtt_connection") as m3:
-            with patch("sigenergy2mqtt.main.main._validate_influxdb_connection") as m4:
-                with patch("sigenergy2mqtt.main.main._validate_pvoutput_connection") as m5:
-                    await validate_connections(True)
-                    m1.assert_called()
-                    m3.assert_called()
-                    m4.assert_called()
-                    m5.assert_called()
+    with patch("sigenergy2mqtt.main.main._validate_modbus_connections") as m1, patch("sigenergy2mqtt.main.main._validate_mqtt_connection") as m3:
+        with patch("sigenergy2mqtt.main.main._validate_influxdb_connection") as m4:
+            with patch("sigenergy2mqtt.main.main._validate_pvoutput_connection") as m5:
+                await validate_connections(True)
+                m1.assert_called()
+                m3.assert_called()
+                m4.assert_called()
+                m5.assert_called()

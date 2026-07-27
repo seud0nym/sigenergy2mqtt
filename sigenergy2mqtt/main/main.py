@@ -4,26 +4,19 @@ import json
 import logging
 import signal
 import sys
-from datetime import timedelta, timezone
-from typing import Any, Mapping, Tuple, cast
+from collections.abc import Mapping
+from datetime import UTC, timedelta, timezone
+from typing import Any, cast
 
 import paho.mqtt.client as paho_mqtt
 import requests
+from paho.mqtt import MQTTException
 from paho.mqtt.enums import CallbackAPIVersion
 from pymodbus import pymodbus_apply_logging_config
+from pymodbus.exceptions import ModbusException
 from pymodbus.pdu import ModbusPDU
 
-from sigenergy2mqtt.common import (
-    Constants,
-    ConsumptionMethod,
-    FirmwareVersion,
-    HybridInverter,
-    InputType,
-    Protocol,
-    ProtocolApplies,
-    PVInverter,
-    service_health_registry
-)
+from sigenergy2mqtt.common import Constants, ConsumptionMethod, FirmwareVersion, HybridInverter, InputType, Protocol, ProtocolApplies, PVInverter, service_health_registry
 from sigenergy2mqtt.config import active_config, configure_root_logging, initialize_async
 from sigenergy2mqtt.devices import PID, PSS, ACCharger, DCCharger, Device, Inverter, PowerPlant, bind_cross_device_sensors
 from sigenergy2mqtt.influxdb import get_influxdb_services
@@ -33,7 +26,7 @@ from sigenergy2mqtt.monitor import MonitorService
 from sigenergy2mqtt.mqtt import interrupt_mqtt_reconnection, mqtt_health_registry, reset_mqtt_reconnection_interrupt
 from sigenergy2mqtt.persistence import Category, state_store
 from sigenergy2mqtt.pvoutput import get_pvoutput_services
-from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, ModbusSensorMixin, WriteOnlySensor
+from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, ModbusSensorMixin, SanityCheckException, WriteOnlySensor
 from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, InverterModel, InverterSerialNumber, OutputType, PACKBCUCount, RatedActivePower
 from sigenergy2mqtt.sensors.pid_read_only import PIDSerialNumber
 from sigenergy2mqtt.sensors.plant_ess_preheating_read_write import ESSPreHeatingEnable
@@ -155,7 +148,7 @@ def get_modbus_url(modbus_client: ModbusClient) -> str:
     return "modbus://unknown"
 
 
-async def get_state(sensor: Any, modbus_client: ModbusClient, device: str, default_value: int | float | str | None = None, raw: bool = False) -> int | float | str | None:
+async def get_state(sensor: Any, modbus_client: ModbusClient, device: str, default_value: float | str | None = None, raw: bool = False) -> int | float | str | None:
     """Read a sensor state for bootstrap/probing while tolerating read failures.
 
     Returns the sensor value when successful, otherwise ``default_value``.
@@ -170,7 +163,7 @@ async def get_state(sensor: Any, modbus_client: ModbusClient, device: str, defau
         logging.debug(
             f"READING {get_modbus_url(modbus_client)} acquired {sensor.__class__.__name__} {'raw ' if raw else ''}{state=} to initialise {device} (idx={sensor.plant_index} id={sensor.device_address} addr={sensor.address})"
         )
-    except Exception as e:
+    except (ValueError, TypeError, RuntimeError, OSError, MQTTException, SanityCheckException) as e:
         state = default_value
         logging.debug(
             f"FAILURE {get_modbus_url(modbus_client)} acquiring {sensor.__class__.__name__} to initialise {device} (idx={sensor.plant_index} id={sensor.device_address} addr={sensor.address}) -> {e} (returning {default_value=})"
@@ -222,7 +215,7 @@ async def probe_protocol(modbus_client: ModbusClient) -> Protocol:
             else:
                 logging.debug(f"SUCCESS {get_modbus_url(modbus_client)} {register=} {count=} device_id={Constants.PLANT_DEVICE_ADDRESS} -> OK protocol=V{version.value}")
                 return version
-        except Exception as e:
+        except (ModbusException, TimeoutError, OSError, RuntimeError) as e:
             logging.debug(f"FAILURE {get_modbus_url(modbus_client)} {register=} {count=} device_id={Constants.PLANT_DEVICE_ADDRESS} -> {e}")
 
     logging.debug(f"DEFAULT {get_modbus_url(modbus_client)} to Sigenergy Modbus Protocol V1.8")
@@ -238,7 +231,7 @@ async def probe_optional_interface(modbus_client: ModbusClient, register: int, i
             return False
         logging.debug(f"SUCCESS {get_modbus_url(modbus_client)} {register=} count=1 device_id={Constants.PLANT_DEVICE_ADDRESS} -> HAS {interface_name}")
         return True
-    except Exception as e:
+    except (TimeoutError, ModbusException) as e:
         logging.debug(f"FAILURE {get_modbus_url(modbus_client)} {register=} count=1 device_id={Constants.PLANT_DEVICE_ADDRESS} -> {e} : NO {interface_name}")
         return False
 
@@ -311,7 +304,7 @@ async def make_pid(
     return pid
 
 
-async def make_plant_and_inverter(plant_index: int, modbus_client: ModbusClient, device_address: int, plant: PowerPlant | None, seen_serial_numbers: set[str]) -> Tuple[Inverter | None, PowerPlant | None]:
+async def make_plant_and_inverter(plant_index: int, modbus_client: ModbusClient, device_address: int, plant: PowerPlant | None, seen_serial_numbers: set[str]) -> tuple[Inverter | None, PowerPlant | None]:
     """Create an Inverter and, on first call, a PowerPlant.
 
     ``seen_serial_numbers`` is updated in-place to guard
@@ -343,9 +336,9 @@ async def make_plant_and_inverter(plant_index: int, modbus_client: ModbusClient,
             logging.warning(f"Plant {plant_index} System Timezone offset not available - defaulting to UTC")
             sys_tz_offset = 0
         tz = timezone(timedelta(minutes=cast(int, sys_tz_offset)))
-    except Exception as e:
+    except (ModbusException, TimeoutError, OSError, SanityCheckException) as e:
         logging.error(f"Plant {plant_index} System Timezone offset read failed - defaulting to UTC ({e})")
-        tz = timezone.utc
+        tz = UTC
 
     if plant is None:
         firmware = FirmwareVersion(cast(str, await get_state(InverterFirmwareVersion(plant_index, device_address), modbus_client, "plant/inverter")))
@@ -628,7 +621,7 @@ def setup_signals(configs: list[ThreadConfig]) -> None:
         async def _reload_and_restart():
             try:
                 await active_config.reload()
-            except Exception as e:
+            except (ValueError, OSError, RuntimeError) as e:
                 logging.error(f"SIGHUP reload failed: {e}")
             finally:
                 restart_controller.request("signal SIGHUP")
@@ -696,7 +689,7 @@ async def _setup_ac_chargers(
             )
             config.add_device(charger)
             await validate_publishable_sensors(modbus_client, charger, inverter_firmware_versions)
-        except Exception as exc:
+        except (TimeoutError, ModbusException, ValueError, OSError, RuntimeError) as exc:
             is_outage = await _is_grid_outage(plant_index, modbus_client)
             if is_outage is True:
                 logging.warning(f"AC charger at address {device_address} initialization failed during grid outage; skipping this startup pass so other devices continue: {exc}")
@@ -789,7 +782,7 @@ async def _setup_pid(
             if pid is not None:
                 config.add_device(pid)
                 await validate_publishable_sensors(modbus_client, pid, inverter_firmware_versions)
-        except Exception as exc:
+        except (TimeoutError, ModbusException, ValueError, OSError, RuntimeError) as exc:
             is_outage = await _is_grid_outage(plant_index, modbus_client)
             if is_outage is True:
                 logging.warning(f"PID device at address {device_address} initialization failed during grid outage; skipping this startup pass so other devices continue: {exc}")
@@ -840,7 +833,7 @@ async def _setup_pss(
             if pss is not None:
                 config.add_device(pss)
                 await validate_publishable_sensors(modbus_client, pss, inverter_firmware_versions)
-        except Exception as exc:
+        except (TimeoutError, ModbusException, ValueError, OSError, RuntimeError) as exc:
             is_outage = await _is_grid_outage(plant_index, modbus_client)
             if is_outage is True:
                 logging.warning(f"PSS device at address {device_address} initialization failed during grid outage; skipping this startup pass so other devices continue: {exc}")
@@ -860,7 +853,7 @@ async def _is_grid_outage(plant_index: int, modbus_client: ModbusClient) -> bool
     grid_status = GridStatus(plant_index)
     try:
         raw_status = await grid_status.get_state(raw=True, modbus_client=modbus_client)
-    except Exception as exc:
+    except (TimeoutError, ModbusException) as exc:
         logging.debug(f"Unable to probe GridStatus for outage detection: {exc}")
         return None
 
@@ -887,8 +880,6 @@ async def _watch_grid_restore_and_request_restart(host: str, port: int, timeout:
                         restart_controller.request(f"grid restored for AC charger setup on modbus://{host}:{port} plant {plant_index}")
                         return
             await asyncio.sleep(10)
-    except asyncio.CancelledError:
-        raise
     finally:
         _GRID_RESTORE_WATCH_TASKS.discard(key)
 
@@ -980,8 +971,8 @@ def _validate_mqtt_connection(show_credentials: bool) -> None:
         try:
             client.disconnect()
             client.loop(timeout=0.1)
-        except Exception:
-            pass
+        except (OSError, MQTTException) as exc:
+            logging.warning(f"Error during MQTT disconnect: {exc}")
 
 
 def _validate_influxdb_connection(show_credentials: bool) -> None:
@@ -1188,7 +1179,7 @@ async def validate_publishable_sensors(modbus_client: ModbusClient, device: Devi
                     _log_illegal_data_address(s)
                     s.publishable = False
                     illegal_sensor_unique_ids.append(s.unique_id)
-            except Exception as e:
+            except (ModbusException, TimeoutError, OSError, ConnectionError) as e:
                 scan_completed = False
                 # Log but don't suppress sensor on transient errors (only explicit 0x02)
                 if "0x02 ILLEGAL DATA ADDRESS" in str(e):

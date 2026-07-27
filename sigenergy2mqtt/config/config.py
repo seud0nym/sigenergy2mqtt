@@ -28,14 +28,18 @@ import os
 import socket
 import sys
 import time
+from collections.abc import Generator
 from contextlib import contextmanager
 from copy import deepcopy
 from io import StringIO
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Generator
+from typing import TYPE_CHECKING, Any
 
+from paho.mqtt import MQTTException
 from pydantic import ValidationError
+from pymodbus.exceptions import ModbusException
 from ruamel.yaml import YAML
+from ruamel.yaml.error import YAMLError
 
 from sigenergy2mqtt import i18n
 from sigenergy2mqtt.persistence import Category
@@ -95,7 +99,7 @@ class Config:
         try:
             self._settings = Settings()  # type: ignore[reportCallIssue]
             self._settings.finalize_modbus([])
-        except Exception:
+        except (ValidationError, OSError, YAMLError, ModbusException, ValueError):
             self._settings = None
 
     @property
@@ -353,7 +357,7 @@ class Config:
                     if cached:
                         auto_discovery_cache.write_text(cached)
                         logging.info("Auto-discovery cache restored from MQTT")
-            except Exception:
+            except (OSError, UnicodeError):
                 logging.debug("StateStore not available for auto-discovery restore")
 
     async def _save_discovery_results(self, auto_discovery_cache: Path, auto_discovered: list):
@@ -364,8 +368,8 @@ class Config:
 
             if state_store.is_initialised:
                 await state_store.save(Category.CONFIG, "auto-discovery", yaml_content)
-        except Exception:
-            pass
+        except (OSError, UnicodeError, MQTTException, TypeError, ValueError) as exc:
+            logging.warning(f"Failed to save auto-discovery cache: {exc}")
 
     def _serialize_discovery(self, auto_discovered: list) -> str:
         with StringIO() as stream:
@@ -512,10 +516,10 @@ class Config:
                 ),
                 timeout=timeout,
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logging.error(f"Auto-discovery timed out after {timeout:.1f}s")
             return []
-        except Exception:
+        except ModbusException:
             logging.exception("Auto-discovery failed")
             return []
 
@@ -651,7 +655,7 @@ def _create_persistent_state_path() -> Path:
             path = Path(base, "sigenergy2mqtt")
             if not path.is_dir():
                 logging.info(f"Persistent state folder '{path}' created")
-                path.mkdir(parents=True, exist_ok=True) # don't throw an error if another thread/process creates the folder a millisecond before this one does (usually during parallel testing!)
+                path.mkdir(parents=True, exist_ok=True)  # don't throw an error if another thread/process creates the folder a millisecond before this one does (usually during parallel testing!)
             else:
                 logging.debug(f"Persistent state folder '{path}' found")
                 _clean_stale_files(path)
@@ -698,12 +702,8 @@ def configure_root_logging(level: int | None = None, fmt: str | None = None) -> 
     """
     if not fmt:
         fmt = os.getenv(const.SIGENERGY2MQTT_LOG_FMT)
-    if not fmt:
-        try:
-            if "active_config" in globals() and active_config is not None:
-                fmt = active_config.log_fmt
-        except Exception:
-            pass
+    if not fmt and "active_config" in globals() and active_config is not None:
+        fmt = active_config.log_fmt
     if not fmt:
         if os.isatty(sys.stdout.fileno()):
             fmt = "{asctime} {levelname:<8} sigenergy2mqtt:{module:.<15.15}{lineno:04d} {message}"

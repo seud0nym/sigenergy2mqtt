@@ -10,6 +10,7 @@ import time
 from typing import TYPE_CHECKING, Any, cast
 
 import paho.mqtt.client as mqtt
+from pymodbus.exceptions import ModbusException
 from pymodbus.pdu import ExceptionResponse, ModbusPDU
 
 from sigenergy2mqtt.common import Constants, DeviceClass, InputType
@@ -261,7 +262,7 @@ class ObservableMixin(abc.ABC):
     """Mixin for sensors that can be observed/controlled via MQTT."""
 
     @abc.abstractmethod
-    async def notify(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+    async def notify(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
         """Handle notification of value change.
 
         Args:
@@ -274,7 +275,6 @@ class ObservableMixin(abc.ABC):
         Returns:
             True if notification was handled
         """
-        pass
 
     def observable_topics(self) -> set[str]:
         """Get set of MQTT topics this sensor observes.
@@ -319,7 +319,7 @@ class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
             raise RuntimeError(f"{self.log_identity} command topic is not defined")
         return topic
 
-    def _raw2state(self, raw_value: float | int | str) -> float | int | str:
+    def _raw2state(self, raw_value: float | str) -> float | int | str:
         """Convert raw value to display state.
 
         Args:
@@ -366,7 +366,7 @@ class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
 
         return raw_value
 
-    async def _write_registers(self, modbus_client: ModbusClient, raw_value: float | int | str, mqtt_client: mqtt.Client) -> bool:
+    async def _write_registers(self, modbus_client: ModbusClient, raw_value: float | str, mqtt_client: mqtt.Client) -> bool:
         """Write value to Modbus registers.
 
         Args:
@@ -394,15 +394,15 @@ class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
         except asyncio.CancelledError:
             logging.warning(f"{self.log_identity} Modbus write interrupted")
             return False
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logging.warning(f"{self.log_identity} Modbus write failed to acquire lock within {max_wait}s")
             return False
-        except Exception as e:
-            logging.error(f"{self.log_identity} write_registers: {repr(e)}")
+        except ModbusException as e:
+            logging.error(f"{self.log_identity} write_registers: {e!r}")
             await Metrics.modbus_write_error()
             raise
 
-    def _convert_value_to_registers(self, modbus_client: ModbusClient, raw_value: float | int | str) -> list[int]:
+    def _convert_value_to_registers(self, modbus_client: ModbusClient, raw_value: float | str) -> list[int]:
         """Convert a value to Modbus register format.
 
         Args:
@@ -469,7 +469,7 @@ class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
         self[DiscoveryKeys.COMMAND_TOPIC] = f"{base}/set"
         return base
 
-    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
         """Set sensor value from MQTT command.
 
         Args:
@@ -490,8 +490,8 @@ class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
         try:
             if not await self.value_is_valid(modbus_client, value):
                 return False
-        except Exception as e:
-            logging.error(f"{self.log_identity} value_is_valid check of value '{value if isinstance(value, str) else self._apply_gain_and_precision(value)}' (raw={value}) FAILED: {repr(e)}")
+        except ModbusException as e:
+            logging.error(f"{self.log_identity} value_is_valid check of value '{value if isinstance(value, str) else self._apply_gain_and_precision(value)}' (raw={value}) FAILED: {e!r}")
             raise
 
         if source == self[DiscoveryKeys.COMMAND_TOPIC]:
@@ -500,7 +500,7 @@ class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
             logging.error(f"{self.log_identity} Attempt to set value '{value if isinstance(value, str) else self._apply_gain_and_precision(value)}' (raw={value}) from unknown topic {source}")
             return False
 
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
+    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | str) -> bool:
         """Validate that a value is acceptable for this sensor.
 
         Args:
@@ -528,7 +528,7 @@ class PVPowerSensor(ObservableMixin):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    async def notify(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+    async def notify(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
         """Handle notification (currently no-op).
 
         Args:

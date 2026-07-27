@@ -32,7 +32,8 @@ import logging
 import threading
 import time
 from collections import namedtuple
-from typing import Any, Callable, Coroutine, Optional
+from collections.abc import Callable, Coroutine
+from typing import Any
 
 import paho.mqtt.client as mqtt
 from paho.mqtt.enums import MQTTErrorCode
@@ -88,7 +89,7 @@ class MqttHandler:
         be omitted for testing.
     """
 
-    def __init__(self, client_id: str, modbus_client: ModbusClient | None, loop: asyncio.AbstractEventLoop, health_registry: Optional[MqttHealthRegistry] = None):
+    def __init__(self, client_id: str, modbus_client: ModbusClient | None, loop: asyncio.AbstractEventLoop, health_registry: MqttHealthRegistry | None = None):
         """Initialise internal state; no network I/O is performed here."""
         self._loop = loop
         self._modbus = modbus_client
@@ -111,7 +112,7 @@ class MqttHandler:
 
         self._topics: dict[
             str,
-            list[Callable[[ModbusClient | None, mqtt.Client, str, str, "MqttHandler"], Coroutine[Any, Any, bool]]],
+            list[Callable[[ModbusClient | None, mqtt.Client, str, str, MqttHandler], Coroutine[Any, Any, bool]]],
         ] = {}
 
         self._pending_tasks: set[concurrent.futures.Future] = set()
@@ -310,15 +311,7 @@ class MqttHandler:
     # Public API
     # ------------------------------------------------------------------
 
-    def register(
-        self,
-        client: mqtt.Client,
-        topic: str,
-        handler: Callable[
-            [ModbusClient | None, mqtt.Client, str, str, "MqttHandler"],
-            Coroutine[Any, Any, bool],
-        ],
-    ) -> tuple[MQTTErrorCode, int | None]:
+    def register(self, client: mqtt.Client, topic: str, handler: Callable[[ModbusClient | None, mqtt.Client, str, str, "MqttHandler"], Coroutine[Any, Any, bool]]) -> tuple[MQTTErrorCode, int | None]:
         """Register a handler for *topic* and subscribe to it on the broker.
 
         Multiple handlers may be registered for the same topic; they are

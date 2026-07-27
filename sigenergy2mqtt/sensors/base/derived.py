@@ -5,7 +5,8 @@ from __future__ import annotations
 import abc
 import asyncio
 import logging
-from typing import Any, Coroutine
+from collections.abc import Coroutine
+from typing import Any
 
 from pymodbus.pdu import ExceptionResponse
 
@@ -24,7 +25,7 @@ class DerivedSensor(TypedSensorMixin, Sensor):
     source sensors rather than reading directly from Modbus.
     """
 
-    def __init__(self, *args, source_sensors: tuple["Sensor", ...] = (), **kwargs):
+    def __init__(self, *args, source_sensors: tuple[Sensor, ...] = (), **kwargs):
         """Initialise the derived sensor.
 
         Args:
@@ -44,11 +45,11 @@ class DerivedSensor(TypedSensorMixin, Sensor):
         # Initialise source_sensors from the constructor argument.  Subclasses
         # that use deferred / cross-device binding start with an empty list and
         # populate it later via _declare_source_sensors() / finalise_binding().
-        self.source_sensors: list["Sensor"] = []
+        self.source_sensors: list[Sensor] = []
         if source_sensors:
             self._declare_source_sensors(*source_sensors)
 
-    def _declare_source_sensors(self, *sensors: "Sensor") -> None:
+    def _declare_source_sensors(self, *sensors: Sensor) -> None:
         """Internal helper – update source_sensors after construction.
 
         Ordinary subclasses must NOT call this directly; pass ``source_sensors``
@@ -73,7 +74,7 @@ class DerivedSensor(TypedSensorMixin, Sensor):
             # Re-apply sensor overrides so that an explicit debug-logging=False override will be respected
             self.apply_sensor_overrides()
 
-    def set_latest_state(self, state: int | float | str | list[bool] | list[int] | list[float]) -> bool:
+    def set_latest_state(self, state: float | str | list[bool] | list[int] | list[float]) -> bool:
         """Update latest state and track pending updates for publishing."""
         updated = super().set_latest_state(state)
         if updated:
@@ -94,20 +95,19 @@ class DerivedSensor(TypedSensorMixin, Sensor):
             coro: The coroutine to run
         """
         # This is a fire and forget operation - we don't want to wait for the state to be persisted
+        # 1. Try to get the running loop
         try:
             loop = asyncio.get_running_loop()
-            loop.create_task(coro)
         except RuntimeError:
-            try:
-                loop = asyncio.get_event_loop()
-                if loop.is_running():
-                    asyncio.run_coroutine_threadsafe(coro, loop)
-                else:
-                    coro.close()
-            except Exception as e:
-                logging.warning(f"{self.log_identity} Failed to persist state: {e}")
-                coro.close()
-        except Exception as e:
+            # No running loop in current thread
+            logging.warning(f"{self.log_identity} No running event loop available to persist state.")
+            coro.close()
+            return
+
+        # 2. Try to schedule the task on the running loop
+        try:
+            loop.create_task(coro)
+        except (RuntimeError, TypeError, ValueError) as e:
             logging.warning(f"{self.log_identity} Failed to persist state: {e}")
             coro.close()
 
@@ -121,7 +121,6 @@ class DerivedSensor(TypedSensorMixin, Sensor):
         Returns:
             True if values were applied successfully
         """
-        pass
 
 
 # =============================================================================

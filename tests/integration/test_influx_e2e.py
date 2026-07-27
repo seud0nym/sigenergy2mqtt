@@ -2,13 +2,12 @@
 
 import logging
 import time
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock
 
 import pytest
 
 from sigenergy2mqtt.config import Config, active_config
 from sigenergy2mqtt.influxdb.hass_history_sync import HassHistorySync
-from sigenergy2mqtt.influxdb.influx_service import InfluxService
 
 
 @pytest.fixture
@@ -401,7 +400,7 @@ async def test_copy_records_from_homeassistant_uses_v2_first(service, monkeypatc
 #datatype,string,long
 ,_result,0
 _,_time,_field,_value
-,,2024-01-01T12:00:00Z,value,42"""
+,2024-01-01T12:00:00Z,value,42"""
 
     post_count = [0]
 
@@ -411,9 +410,14 @@ _,_time,_field,_value
             return FakeResponse(200, text=csv_response)
         return FakeResponse(204)  # Write success
 
-    monkeypatch.setattr(service._session, "post", fake_post)
+    # Fail hard if GET is called (prevents accidental fallback to v1)
+    def fake_get(url, **kwargs):
+        pytest.fail("Service unexpectedly fell back to v1 GET query!")
 
-    count = await service.copy_records_from_homeassistant("power", {"entity_id": "sensor.power"})
+    monkeypatch.setattr(service._session, "post", fake_post)
+    monkeypatch.setattr(service._session, "get", fake_get)
+
+    await service.copy_records_from_homeassistant("power", {"entity_id": "sensor.power"})
     # Should have at least attempted query
     assert post_count[0] >= 1
 

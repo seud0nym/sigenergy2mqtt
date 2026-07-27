@@ -3,7 +3,8 @@ from __future__ import annotations
 import abc
 import asyncio
 import logging
-from typing import Awaitable, Literal, cast
+from collections.abc import Awaitable
+from typing import Literal, cast
 
 import paho.mqtt.client as mqtt
 
@@ -307,7 +308,7 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
     def via_device(self, value: str) -> None:
         self["via_device"] = value
 
-    def _add_child_device(self, device: "Device") -> None:
+    def _add_child_device(self, device: Device) -> None:
         """Register another Device as a child of this device.
 
         Child devices appear under this device in the Home Assistant device registry
@@ -347,7 +348,7 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
             sensor.on_added_to_device()
             self.all_sensors[sensor.unique_id] = sensor
             if sensor.debug_logging:
-                logging.debug(f"{sensor.log_identity} added to {self.log_identity}: {repr(sensor)}")
+                logging.debug(f"{sensor.log_identity} added to {self.log_identity}: {sensor!r}")
         elif sensor.debug_logging:
             logging.debug(f"{sensor.log_identity} NOT added to {self.log_identity} - already exists")
 
@@ -488,11 +489,9 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
 
     def on_commencement(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client) -> None:
         """Called when the device is brought online."""
-        pass
 
     def on_completion(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client) -> None:
         """Called when the device is taken offline."""
-        pass
 
     def schedule(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client) -> list[Awaitable[None]]:
         """Build the list of coroutines that drive this device's runtime behaviour.
@@ -546,17 +545,17 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
                 try:
                     result = mqtt_handler.register(mqtt_client, sensor.command_topic, sensor.set_value)
                     if sensor.debug_logging:
-                        logging.debug(f"{sensor.log_identity} subscribed to topic {sensor.command_topic} for writing ({result=})")
-                except Exception as e:
-                    logging.error(f"{sensor.log_identity} failed to subscribe to topic {sensor.command_topic}: {repr(e)}")
+                        logging.debug(f"{sensor.log_identity} subscribed to topic {sensor.command_topic} for writing (result={result!r})")
+                except (ValueError, TypeError, AttributeError, RuntimeError) as e:
+                    logging.error(f"{sensor.log_identity} failed to subscribe to topic {sensor.command_topic}: {e!r}")
             if isinstance(sensor, ObservableMixin):
                 for topic in sensor.observable_topics():
                     try:
                         result = mqtt_handler.register(mqtt_client, topic, sensor.notify)
                         if sensor.debug_logging:
                             logging.debug(f"{sensor.log_identity} subscribed to topic {topic} for notification ({result=})")
-                    except Exception as e:
-                        logging.error(f"{sensor.log_identity} failed to subscribe to topic {topic}: {repr(e)}")
+                    except (ValueError, TypeError, AttributeError, RuntimeError) as e:
+                        logging.error(f"{sensor.log_identity} failed to subscribe to topic {topic}: {e!r}")
         for device in self.children:
             device.subscribe(mqtt_client, mqtt_handler)
 

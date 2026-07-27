@@ -91,7 +91,7 @@ async def test_initialize_async_default_reload(mock_active_config, mock_cli_pars
 
 def test_initialize_exception_handling(mock_active_config, mock_cli_parse, mock_system_init, mock_promote_cli_to_env):
     """Test general exception handling (ConfigurationError)."""
-    mock_system_init.side_effect = Exception("System init failed")
+    mock_system_init.side_effect = OSError("System init failed")
     with patch.dict(os.environ, {}, clear=True), patch("os.path.isfile", return_value=False):
         from sigenergy2mqtt.config import ConfigurationError
 

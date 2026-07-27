@@ -4,6 +4,7 @@ import time
 from unittest.mock import MagicMock
 
 import pytest
+import requests
 
 from sigenergy2mqtt.common import service_health_registry
 from sigenergy2mqtt.config import active_config
@@ -48,7 +49,7 @@ class FakeMqttClient:
     def __init__(self, connected: bool = True):
         self._connected = connected
         self.published = []
-        self._client_id = str("fake").encode("utf-8")
+        self._client_id = b"fake"
 
     def is_connected(self):
         return self._connected
@@ -248,7 +249,7 @@ async def test_pvoutput_upload_failure_marks_health_unhealthy(monkeypatch):
         }
 
         def raise_for_status(self):
-            raise Exception("boom")
+            raise requests.RequestException("boom")
 
     monkeypatch.setattr("sigenergy2mqtt.pvoutput.service.requests.post", lambda *args, **kwargs: FakeResponse())
 
@@ -415,12 +416,12 @@ async def test_influxdb_init_failure_registers_unhealthy(monkeypatch):
 
 
 def test_sensor_monitorable_default_and_override():
-    from sigenergy2mqtt.sensors.inverter_read_only import ShutdownTime
+
     from sigenergy2mqtt.sensors.base import Sensor
-    from datetime import timezone
 
     class DummySensor(Sensor):
         pass
+
     dummy = DummySensor(
         "Dummy",
         "sigen_dummy_uid_unique_123",
@@ -450,5 +451,3 @@ def test_monitor_service_respects_monitorable():
     registered_topics = [t[1] for t in handler.registered]
     assert "topic/1" in registered_topics
     assert "topic/2" not in registered_topics
-
-

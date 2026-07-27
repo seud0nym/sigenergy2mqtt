@@ -14,10 +14,10 @@ import asyncio
 import logging
 import threading
 import time
+from collections.abc import Callable
 from concurrent.futures import Future, ThreadPoolExecutor, wait
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import Callable
 
 from sigenergy2mqtt.config import active_config
 
@@ -337,8 +337,8 @@ class Metrics:
             if not acquired:
                 raise TimeoutError("Failed to acquire Metrics lock within the timeout period.")
             operation()
-        except Exception as exc:
-            logging.warning(f"Error during {warning}: {repr(exc)}")
+        except (ArithmeticError, LookupError, OSError, ReferenceError, RuntimeError, TimeoutError, TypeError, ValueError) as exc:
+            logging.warning(f"Error during {warning}: {exc!r}")
         finally:
             if acquired:
                 cls._lock.release()

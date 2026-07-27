@@ -1,5 +1,7 @@
 import logging
 
+from pymodbus.exceptions import ModbusException
+
 from .client import ModbusClient
 
 
@@ -47,11 +49,13 @@ class ModbusClientFactory:
     @classmethod
     def clear(cls):
         """Close and remove all pooled clients and host mappings."""
-        for client in cls._clients.values():
+        for key, client in cls._clients.items():
             try:
                 client.close()
-            except Exception:
-                pass
+            except (ValueError, TypeError, ModbusException, OSError, RuntimeError) as e:
+                host = key[0]
+                port = key[1]
+                logging.debug(f"Non-critical exception disconnecting from modbus://{host}:{port}: {e}")
         cls._clients.clear()
         cls._hosts.clear()
 
@@ -76,7 +80,7 @@ class ModbusClientFactory:
             try:
                 host = client.comm_params.host
                 port = client.comm_params.port
-            except Exception:
+            except (AttributeError, ValueError, TypeError, RuntimeError):
                 host = "[undetermined]"
                 port = 502
 
@@ -84,5 +88,5 @@ class ModbusClientFactory:
         try:
             logging.info(f"Disconnecting from modbus://{host}:{port}")
             client.close()
-        except Exception as e:
-            logging.warning(f"Error while disconnecting from modbus://{host}:{port}: {e}")
+        except (ModbusException, OSError, RuntimeError) as e:
+            logging.debug(f"Non-critical exception disconnecting from modbus://{host}:{port}: {e}")

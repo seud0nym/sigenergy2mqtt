@@ -16,7 +16,7 @@ import os
 from pathlib import Path
 from typing import Any, Final
 
-from ruamel.yaml import YAML
+from ruamel.yaml import YAML, YAMLError
 
 DEFAULT_LANGUAGE: Final[str] = "en"
 
@@ -134,9 +134,7 @@ class Translator:
         value = self._get_nested(self._translations, parts)
         if value is not None:
             if not isinstance(value, (str, int, float, bool)):
-                logging.warning(
-                    f"Translation key {key!r} resolved to a non-scalar ({type(value).__name__}); falling back to English."
-                )
+                logging.warning(f"Translation key {key!r} resolved to a non-scalar ({type(value).__name__}); falling back to English.")
             else:
                 return str(value), self._language, True
 
@@ -144,9 +142,7 @@ class Translator:
         if value is not None:
             if isinstance(value, (str, int, float, bool)):
                 return str(value), DEFAULT_LANGUAGE, False
-            logging.warning(
-                f"Fallback translation key {key!r} also resolved to a non-scalar ({type(value).__name__})."
-            )
+            logging.warning(f"Fallback translation key {key!r} also resolved to a non-scalar ({type(value).__name__}).")
 
         return default if default is not None else key, DEFAULT_LANGUAGE, False
 
@@ -192,7 +188,7 @@ class Translator:
                 data: dict[str, Any] = self._yaml.load(f) or {}
                 self._cache[language] = data
                 return data
-        except Exception as exc:
+        except (YAMLError, OSError) as exc:
             logging.error(f"Failed to load translation file {file_path}: {exc}")
             return {}
 
@@ -263,7 +259,7 @@ def _t(key: str, default: str | None = None, debugging: bool = False, **kwargs) 
         for k, v in kwargs.items():
             result = result.replace(f"{{{k}}}", str(v))
         return result
-    except Exception as exc:
+    except AttributeError as exc:
         logging.warning(f"Translation formatting failed for key {key!r}: {exc}")
         return translation
 
@@ -313,7 +309,7 @@ def get_default_language() -> str:
             matched = _match(sys_lang.split("_")[0].lower())
             if matched:
                 return matched
-    except Exception:
+    except (ValueError, TypeError, RuntimeError, OSError):
         pass
 
     # 2. LANG environment variable

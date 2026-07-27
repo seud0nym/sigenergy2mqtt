@@ -8,9 +8,10 @@ import asyncio
 import logging
 import re
 import time
+from collections.abc import Awaitable
 from datetime import datetime, timedelta
 from random import randint
-from typing import Any, Awaitable
+from typing import Any
 
 import paho.mqtt.client as mqtt
 import requests
@@ -200,11 +201,11 @@ class PVOutputOutputService(Service):
                         self.logger.error(f"{self.log_identity} Verification FAILED after {validate} attempts for uploaded {payload=}")
             except requests.exceptions.HTTPError as exc:
                 self.logger.error(f"{self.log_identity} HTTP Error: {exc}")
-            except requests.exceptions.ConnectionError as exc:
-                self.logger.error(f"{self.log_identity} Error Connecting: {exc}")
             except requests.exceptions.Timeout as exc:
                 self.logger.error(f"{self.log_identity} Timeout Error: {exc}")
-            except Exception as exc:
+            except requests.RequestException as exc:
+                self.logger.error(f"{self.log_identity} Error Connecting: {exc}")
+            except (OSError, TimeoutError) as exc:
                 self.logger.error(f"{self.log_identity} {exc}")
         return matches
 
@@ -297,13 +298,12 @@ class PVOutputOutputService(Service):
                             self.sleeper_task = None
                 except asyncio.CancelledError:
                     self.logger.info(f"{self.log_identity} Sleep interrupted")
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     self.logger.warning(f"{self.log_identity} Failed to acquire lock within timeout")
-                except Exception as e:
+                except RuntimeError as e:
                     self.logger.error(f"{self.log_identity}  Sleeping for 60s after exception: {e}")
                     await asyncio.sleep(60)
             self.logger.info(f"{self.log_identity} Completed: Flagged as offline ({self.online=})")
-            return
 
         tasks: list[Awaitable[None]] = [publish_updates(modbus_client, mqtt_client)]
         return tasks

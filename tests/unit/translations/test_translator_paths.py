@@ -62,7 +62,7 @@ def test_load_file_exception():
     mock_file.exists.return_value = True
     mock_dir.__truediv__.return_value = mock_file
 
-    with patch("builtins.open", side_effect=Exception("perm error")):
+    with patch("builtins.open", side_effect=OSError("perm error")):
         with patch("sigenergy2mqtt.i18n.logging.error") as mock_error:
             assert t._load_file("en") == {}
             mock_error.assert_called()
@@ -158,7 +158,7 @@ def test_get_default_language_exhaustive():
         with patch("sigenergy2mqtt.i18n.locale.getlocale", return_value=("nl_NL", "UTF-8")):
             assert get_default_language() == "nl"
 
-        with patch("locale.getlocale", side_effect=Exception("fail")):
+        with patch("locale.getlocale", side_effect=OSError("fail")):
             with patch.dict(os.environ, {"LANG": "en_US.UTF-8"}):
                 assert get_default_language() == "en"
 

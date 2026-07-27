@@ -1,10 +1,12 @@
 import asyncio
 import logging
 from _asyncio import Future
-from typing import Any, Generator
+from collections.abc import Generator
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+import requests
 
 from sigenergy2mqtt.influxdb import HassHistorySync
 
@@ -91,7 +93,7 @@ async def test_copy_records_from_homeassistant_no_token(influx: HassHistorySync)
     with patch.object(influx, "copy_records_v2") as mock_copy_v2:
         mock_copy_v2.return_value = 0
         with patch.object(influx, "copy_records_v1") as mock_copy_v1:
-            mock_copy_v1.side_effect = Exception("error")
+            mock_copy_v1.side_effect = requests.RequestException("error")
             result = await influx.copy_records_from_homeassistant(measurement, tags, before_timestamp)
 
     assert result == 0
@@ -132,7 +134,7 @@ async def test_sync_from_homeassistant_error_during_timestamp_query(influx: Hass
     with patch.object(influx, "detect_homeassistant_db") as mock_detect:
         mock_detect.return_value = True
     with patch.object(influx, "get_earliest_timestamp") as mock_get_ts:
-        mock_get_ts.side_effect = Exception("error")
+        mock_get_ts.side_effect = requests.RequestException("error")
         result = await influx.sync_from_homeassistant(topic_cache)
 
     assert result == {}
@@ -146,7 +148,7 @@ async def test_sync_from_homeassistant_error_during_record_copy(influx: HassHist
     with patch.object(influx, "get_earliest_timestamp") as mock_get_ts:
         mock_get_ts.return_value = 1633072800
     with patch.object(influx, "copy_records_from_homeassistant") as mock_copy:
-        mock_copy.side_effect = Exception("error")
+        mock_copy.side_effect = requests.RequestException("error")
         result = await influx.sync_from_homeassistant(topic_cache)
 
     assert result == {}
@@ -185,9 +187,8 @@ async def test_get_earliest_timestamp_exception(influx: HassHistorySync):
     measurement = "sensor"
     tags = {"entity_id": "sensor.test"}
 
-    with patch.object(influx, "get_config_values", side_effect=RuntimeError("boom")):
-        with patch("time.time", return_value=999999):
-            result = await influx.get_earliest_timestamp(measurement, tags)
+    with patch.object(influx, "get_config_values", side_effect=RuntimeError("boom")), patch("time.time", return_value=999999):
+        result = await influx.get_earliest_timestamp(measurement, tags)
 
     assert result == 999999
 
@@ -197,9 +198,7 @@ async def test_get_earliest_timestamp_v1_fallback(influx: HassHistorySync):
     measurement = "sensor"
     tags = {"entity_id": "sensor.test"}
 
-    influx.query_v1 = AsyncMock(
-        return_value=(True, {"results": [{"series": [{"columns": ["time", "value"], "values": [["2023-01-01T00:00:00Z", 42]]}]}]})
-    )
+    influx.query_v1 = AsyncMock(return_value=(True, {"results": [{"series": [{"columns": ["time", "value"], "values": [["2023-01-01T00:00:00Z", 42]]}]}]}))
     with patch.object(influx, "get_config_values") as mock_get_config:
         mock_get_config.return_value = {"base": "http://example.com", "token": None, "org": None, "bucket": "my-bucket", "db": "my-db", "auth": None}
         result = await influx.get_earliest_timestamp(measurement, tags)
@@ -353,9 +352,7 @@ async def test_detect_homeassistant_db_v1_via_db_name(influx: HassHistorySync):
     influx._session.get.return_value = mock_response
 
     # First call (check_v1_databases(config["db"])) finds homeassistant
-    influx.query_v1 = AsyncMock(
-        return_value=(True, {"results": [{"series": [{"values": [["homeassistant", "_internal"]]}]}]})
-    )
+    influx.query_v1 = AsyncMock(return_value=(True, {"results": [{"series": [{"values": [["homeassistant", "_internal"]]}]}]}))
 
     with patch.object(influx, "get_config_values") as mock_cfg:
         mock_cfg.return_value = {
@@ -468,9 +465,7 @@ async def test_probe_homeassistant_v1_empty_results_list(influx: HassHistorySync
 
 async def test_probe_homeassistant_v1_database_not_found_error(influx: HassHistorySync):
     """Lines 137-139: error contains 'database not found' -> False."""
-    await _make_influx_with_v1_session_and_probe(
-        influx, (True, {"results": [{"error": "database not found: homeassistant"}]})
-    )
+    await _make_influx_with_v1_session_and_probe(influx, (True, {"results": [{"error": "database not found: homeassistant"}]}))
 
     with patch.object(influx, "get_config_values") as mock_cfg:
         mock_cfg.return_value = {
@@ -488,9 +483,7 @@ async def test_probe_homeassistant_v1_database_not_found_error(influx: HassHisto
 
 async def test_probe_homeassistant_v1_other_error_db_reachable(influx: HassHistorySync):
     """Lines 137-140: error does NOT contain 'database not found' -> DB reachable -> True."""
-    await _make_influx_with_v1_session_and_probe(
-        influx, (True, {"results": [{"error": "permission denied", "statement_id": 0}]})
-    )
+    await _make_influx_with_v1_session_and_probe(influx, (True, {"results": [{"error": "permission denied", "statement_id": 0}]}))
 
     with patch.object(influx, "get_config_values") as mock_cfg:
         mock_cfg.return_value = {
@@ -508,9 +501,7 @@ async def test_probe_homeassistant_v1_other_error_db_reachable(influx: HassHisto
 
 async def test_probe_homeassistant_v1_series_empty(influx: HassHistorySync):
     """Lines 147-149: first_result has 'series' key but series list is empty -> False."""
-    await _make_influx_with_v1_session_and_probe(
-        influx, (True, {"results": [{"series": []}]})
-    )
+    await _make_influx_with_v1_session_and_probe(influx, (True, {"results": [{"series": []}]}))
 
     with patch.object(influx, "get_config_values") as mock_cfg:
         mock_cfg.return_value = {
@@ -549,9 +540,7 @@ async def test_probe_homeassistant_v1_series_name_mismatch(influx: HassHistorySy
 
 async def test_probe_homeassistant_v1_unrecognised_payload(influx: HassHistorySync):
     """Lines 157-159: first_result has no 'series', 'statement_id', or 'error' -> False."""
-    await _make_influx_with_v1_session_and_probe(
-        influx, (True, {"results": [{"unexpected_key": "value"}]})
-    )
+    await _make_influx_with_v1_session_and_probe(influx, (True, {"results": [{"unexpected_key": "value"}]}))
 
     with patch.object(influx, "get_config_values") as mock_cfg:
         mock_cfg.return_value = {
@@ -569,9 +558,7 @@ async def test_probe_homeassistant_v1_unrecognised_payload(influx: HassHistorySy
 
 async def test_probe_homeassistant_v1_statement_id_present(influx: HassHistorySync):
     """Lines 155-156: first_result has 'statement_id' but no 'series' or 'error' -> True."""
-    await _make_influx_with_v1_session_and_probe(
-        influx, (True, {"results": [{"statement_id": 0}]})
-    )
+    await _make_influx_with_v1_session_and_probe(influx, (True, {"results": [{"statement_id": 0}]}))
 
     with patch.object(influx, "get_config_values") as mock_cfg:
         mock_cfg.return_value = {

@@ -3,6 +3,8 @@ import logging
 import time
 from typing import Any, cast
 
+import requests
+
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.influxdb.influx_base import InfluxConfigValues
 
@@ -71,7 +73,7 @@ class HassHistorySync(InfluxBase):
                                 if bucket.get("name") == "homeassistant":
                                     self.logger.info(f"{self.log_identity} Found 'homeassistant' bucket in InfluxDB v2")
                                     return True
-                except Exception as e:
+                except (requests.RequestException, OSError, RuntimeError, TimeoutError, TypeError, ValueError) as e:
                     self.logger.debug(f"{self.log_identity} v2 bucket detection failed: {e}")
 
             # Try v1 API.  Prefer generic /query call (without db=...) for
@@ -174,7 +176,7 @@ class HassHistorySync(InfluxBase):
             self.logger.debug(f"{self.log_identity} detect_homeassistant_db exhausted all probes")
             return False
 
-        except Exception as e:
+        except (requests.RequestException, OSError, RuntimeError, TimeoutError, TypeError, ValueError) as e:
             self.logger.error(f"{self.log_identity} Error detecting homeassistant database: {e}")
             return False
 
@@ -228,7 +230,7 @@ class HassHistorySync(InfluxBase):
             query = f'SELECT * FROM "{measurement}" {where_clause} ORDER BY time ASC LIMIT 1'
             success, result = await self.query_v1(config["base"], config["db"], config["auth"], query)
             if success and result:
-                if "results" in result and result["results"]:
+                if result.get("results"):
                     series = result["results"][0].get("series", [])
                     if series and "values" in series[0] and series[0]["values"]:
                         time_str = series[0]["values"][0][0]
@@ -238,7 +240,7 @@ class HassHistorySync(InfluxBase):
 
             return int(time.time())
 
-        except Exception as e:
+        except (requests.RequestException, OSError, RuntimeError, TimeoutError, TypeError, ValueError) as e:
             self.logger.error(f"{self.log_identity} Error getting earliest timestamp: {e}")
             return int(time.time())
 
@@ -330,7 +332,7 @@ class HassHistorySync(InfluxBase):
                 fields: dict[str, float | str] = {}
                 try:
                     fields["value"] = float(field_value)
-                except (ValueError, TypeError):
+                except (ValueError, TypeError, RuntimeError):
                     fields["value_str"] = str(field_value)
 
                 line_protocol = self.to_line_protocol(measurement, tags, fields, timestamp)
@@ -391,7 +393,7 @@ class HassHistorySync(InfluxBase):
             chunk_records = 0
             last_timestamp: int | None = None
 
-            if "results" in result and result["results"]:
+            if result.get("results"):
                 series = result["results"][0].get("series", [])
                 for s in series:
                     if "values" not in s or "columns" not in s:
@@ -474,7 +476,7 @@ class HassHistorySync(InfluxBase):
 
             return records_copied
 
-        except Exception as e:
+        except (requests.RequestException, OSError, RuntimeError, TimeoutError, TypeError, ValueError) as e:
             self.logger.error(f"{self.log_identity} Error copying records from homeassistant: {e}")
             return 0
 
@@ -525,7 +527,7 @@ class HassHistorySync(InfluxBase):
                     self.logger.info(f"{self.log_identity} Starting sync for {tags.get('entity_id', 'unknown')} [{measurement}] (earliest existing: {earliest_ts})")
                     count = await self.copy_records_from_homeassistant(measurement, tags, before_timestamp=earliest_ts)
                     return measurement, tags, count
-                except Exception as e:
+                except (ValueError, TypeError, RuntimeError) as e:
                     self.logger.error(f"{self.log_identity} Error syncing {tags.get('entity_id', 'unknown')} [{measurement}]: {e}")
                     return measurement, tags, 0
 

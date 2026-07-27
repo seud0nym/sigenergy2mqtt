@@ -97,7 +97,7 @@ class AccumulationSensor(DerivedSensor):
         """Load accumulated value from persistent storage."""
         try:
             content = state_store.load_sync(Category.SENSOR, self._state_persistence_key)
-        except Exception as e:
+        except (OSError, ValueError, TypeError, RuntimeError) as e:
             if isinstance(e, (OSError, RuntimeError)):
                 logging.warning(f"{self.log_identity} Failed to read state for {self._state_persistence_key}: {e}")
             else:
@@ -123,7 +123,7 @@ class AccumulationSensor(DerivedSensor):
                 await state_store.save(Category.SENSOR, self._state_persistence_key, str(new_total))
             except PermissionError as e:
                 logging.warning(f"{self.log_identity} Failed to persist state for {self._state_persistence_key}: {e}")
-            except Exception as e:
+            except (ValueError, TypeError, RuntimeError) as e:
                 logging.error(f"{self.log_identity} Unexpected error persisting state for {self._state_persistence_key}: {e}")
 
     def update_from_source_sensor(self, sensor: Sensor) -> bool:
@@ -389,7 +389,7 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
         """Load state at midnight if entry is from today."""
         try:
             content = state_store.load_sync(Category.SENSOR, self._midnight_persistence_key, stale_after=timedelta(hours=24))
-        except Exception as e:
+        except (ValueError, TypeError, RuntimeError) as e:
             logging.warning(f"{self.log_identity} Failed to read midnight state for {self._midnight_persistence_key}: {e}")
             state_store.delete_sync(Category.SENSOR, self._midnight_persistence_key)
             return
@@ -424,7 +424,7 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
         async with self._state_at_midnight_lock:
             try:
                 await state_store.save(Category.SENSOR, self._midnight_persistence_key, str(midnight_state))
-            except Exception as e:
+            except (ValueError, TypeError, RuntimeError) as e:
                 logging.warning(f"{self.log_identity} Failed to update midnight state for {self._midnight_persistence_key}: {e}")
 
             self._state_at_midnight = midnight_state

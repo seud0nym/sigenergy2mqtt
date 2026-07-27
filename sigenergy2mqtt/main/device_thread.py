@@ -1,3 +1,6 @@
+from paho.mqtt import MQTTException
+from pymodbus.exceptions import ModbusException
+
 """
 device_thread.py — per-device Modbus polling and MQTT publishing threads.
 
@@ -10,7 +13,8 @@ import asyncio
 import concurrent.futures
 import logging
 import threading
-from typing import Any, Awaitable
+from collections.abc import Awaitable
+from typing import Any
 
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import Device
@@ -97,7 +101,7 @@ async def read_and_publish_device_sensors(
             for device in config.devices:
                 try:
                     device.on_commencement(modbus_client, mqtt_client)
-                except Exception:
+                except (ModbusException, MQTTException):
                     logging.exception(f"{device.log_identity} on commencement failed")
 
             try:
@@ -119,7 +123,7 @@ async def read_and_publish_device_sensors(
             for device in config.devices:
                 try:
                     device.on_completion(modbus_client, mqtt_client)
-                except Exception:
+                except (ModbusException, MQTTException):
                     logging.exception(f"{device.log_identity} on completion failed")
                 if active_config.home_assistant.enabled:
                     device.publish_availability(mqtt_client, "offline")
@@ -156,7 +160,7 @@ def run_modbus_event_loop(
     asyncio.set_event_loop(loop)
     try:
         loop.run_until_complete(read_and_publish_device_sensors(config, loop, stop_event))
-    except Exception:
+    except (ValueError, TypeError, RuntimeError):
         logging.exception(f"{config.description} thread crashed !!!")
         if stop_event is not None:
             stop_event.set()
@@ -175,15 +179,12 @@ def run_modbus_event_loop(
             if pending:
                 done, still_pending = loop.run_until_complete(asyncio.wait(pending, timeout=5.0))
                 if still_pending:
-                    logging.warning(
-                        f"{config.description} {len(still_pending)} background task(s) did not finish within the "
-                        f"shutdown deadline — cancelling to allow the loop to close"
-                    )
+                    logging.warning(f"{config.description} {len(still_pending)} background task(s) did not finish within the shutdown deadline — cancelling to allow the loop to close")
                     for task in still_pending:
                         task.cancel()
                     # Brief await so cancelled tasks can run their CancelledError handlers
                     loop.run_until_complete(asyncio.gather(*still_pending, return_exceptions=True))
-        except Exception:
+        except TimeoutError:
             logging.exception(f"{config.description} error draining pending tasks on shutdown")
         finally:
             loop.close()
@@ -247,5 +248,5 @@ async def start(configs: list[ThreadConfig]) -> None:
         for fut in done:
             try:
                 fut.result()
-            except Exception:
+            except (ValueError, TypeError, RuntimeError):
                 logging.exception("Unhandled exception in device thread")

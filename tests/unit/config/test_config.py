@@ -525,7 +525,7 @@ class TestGetFinalCachePath:
 
 class TestConfigCoverageAugmentation:
     def test_init_persistent_state_exception(self):
-        with patch("sigenergy2mqtt.config.config._create_persistent_state_path", side_effect=Exception("mocked error")):
+        with patch("sigenergy2mqtt.config.config._create_persistent_state_path", side_effect=OSError("mocked error")):
             cfg = Config()
             assert str(cfg.persistent_state_path) == "."
 
@@ -616,7 +616,7 @@ class TestConfigCoverageAugmentation:
 
     @patch("sigenergy2mqtt.config.config.active_config")
     @patch("sigenergy2mqtt.persistence.StateStore.is_initialised", new_callable=PropertyMock, return_value=True)
-    @patch("sigenergy2mqtt.persistence.StateStore.load", side_effect=Exception("mock error"))
+    @patch("sigenergy2mqtt.persistence.StateStore.load", side_effect=OSError("mock error"))
     def test_restore_discovery_from_mqtt_exception(self, mock_load, mock_is_initialised, mock_active_config, tmp_path):
         from unittest.mock import PropertyMock
         mock_active_config.persistence.mqtt_redundancy = True
@@ -624,7 +624,7 @@ class TestConfigCoverageAugmentation:
         asyncio.run(cfg._restore_discovery_from_mqtt(tmp_path / "cache.yaml"))
 
     @patch("sigenergy2mqtt.persistence.StateStore.is_initialised", new_callable=PropertyMock, return_value=True)
-    @patch("sigenergy2mqtt.persistence.StateStore.save", side_effect=Exception("mock save error"))
+    @patch("sigenergy2mqtt.persistence.StateStore.save", side_effect=OSError("mock save error"))
     def test_save_discovery_results_exception(self, mock_save, mock_is_initialised, tmp_path):
         from unittest.mock import PropertyMock
         cfg = Config()
@@ -714,7 +714,7 @@ class TestConfigCoverageAugmentation:
         assert cfg._settings is None
 
     def test_reload_with_exception_in_init(self):
-        with patch("sigenergy2mqtt.config.config.Config.reload", side_effect=Exception("mock initialization error")):
+        with patch("sigenergy2mqtt.config.config.Config.reload", side_effect=OSError("mock initialization error")):
             cfg = Config()
             assert cfg._source is None
 

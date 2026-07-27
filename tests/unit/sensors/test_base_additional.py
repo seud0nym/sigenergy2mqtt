@@ -1,7 +1,7 @@
 import asyncio
 import logging
-from datetime import timezone
 import time
+from datetime import UTC
 from unittest.mock import Mock
 
 import pytest
@@ -83,7 +83,7 @@ async def test_publish_state_calls_mqtt():
 
 
 def test_timestamp_sensor_conversion():
-    ts = base.TimestampSensor(name="t", object_id="sigen_ts", input_type=InputType.INPUT, plant_index=0, device_address=1, address=30010, scan_interval=1, protocol_version=base.Protocol.N_A, tz=timezone.utc)
+    ts = base.TimestampSensor(name="t", object_id="sigen_ts", input_type=InputType.INPUT, plant_index=0, device_address=1, address=30010, scan_interval=1, protocol_version=base.Protocol.N_A, tz=UTC)
     assert ts.state2raw("--") == 0
     now = int(time.time())
     ts.set_latest_state(now)
@@ -298,7 +298,7 @@ def test_run_persistence_coroutine_logs_and_closes_on_create_task_failure(caplog
 
     class FailingLoop:
         def create_task(self, _coro):
-            raise ValueError("boom")
+            raise TypeError("boom")
 
     with pytest.MonkeyPatch.context() as monkeypatch:
         monkeypatch.setattr(asyncio, "get_running_loop", lambda: FailingLoop())

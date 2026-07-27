@@ -3,6 +3,7 @@ import logging
 from unittest.mock import MagicMock, patch
 
 import pytest
+import requests
 
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.influxdb.influx_service import InfluxService
@@ -145,7 +146,7 @@ async def test_init_v1_http_database_creation(logger, influx_config):
 async def test_init_all_fail_returns_false(logger, influx_config):
     # Ensure even with token we fail if network fails
     influx_config.token = "tok"
-    with patch("requests.Session.post", side_effect=Exception("all fail")):
+    with patch("requests.Session.post", side_effect=requests.RequestException("all fail")):
         svc = InfluxService(logger, plant_index=0)
         success = await svc.async_init()
         assert success is False
@@ -172,13 +173,12 @@ async def testwrite_line_http_fail(logger, influx_config):
     svc._write_url = "http://localhost:8086/api/v2/write"
 
     # Mock clean session post failure
-    with patch.object(svc._session, "post", side_effect=Exception("write error")):
-        with patch.object(logger, "error") as mock_logger_error:
-            await svc.write_line("test line")
-            await svc.flush_buffer()  # Force flush to trigger write
-            # Log message contains exception detail and context
-            found = any("InfluxDB write failed: write error" in c.args[0] for c in mock_logger_error.call_args_list)
-            assert found
+    with patch.object(svc._session, "post", side_effect=requests.RequestException("write error")), patch.object(logger, "error") as mock_logger_error:
+        await svc.write_line("test line")
+        await svc.flush_buffer()  # Force flush to trigger write
+        # Log message contains exception detail and context
+        found = any("InfluxDB write failed: write error" in c.args[0] for c in mock_logger_error.call_args_list)
+        assert found
 
 
 @pytest.mark.asyncio
@@ -212,11 +212,10 @@ async def test_handle_mqtt_exception_handling(logger):
     svc = InfluxService(logger, plant_index=0)
     svc._topic_cache["topic1"] = {"uom": "W", "object_id": "obj1", "unique_id": "uid1"}
 
-    with patch.object(svc, "to_line_protocol", side_effect=Exception("format error")):
-        with patch.object(logger, "error") as mock_error:
-            res = await svc.handle_mqtt(None, None, "100", "topic1", None)
-            assert res is False
-            assert "Failed to handle MQTT message" in mock_error.call_args[0][0]
+    with patch.object(svc, "to_line_protocol", side_effect=requests.RequestException("format error")), patch.object(logger, "error") as mock_error:
+        res = await svc.handle_mqtt(None, None, "100", "topic1", None)
+        assert res is False
+        assert "Failed to handle MQTT message" in mock_error.call_args[0][0]
 
 
 def test_subscribe_comprehensive(logger):
@@ -293,7 +292,7 @@ def test_subscribe_edge_cases(logger):
     def raise_err(k):
         if k == "unit_of_measurement":
             return "W"
-        raise Exception("err")
+        raise requests.RequestException("err")
 
     mock_sensor.__getitem__.side_effect = raise_err
     mock_device.get_all_sensors.return_value = {"s_err": mock_sensor}
@@ -342,7 +341,7 @@ async def test_init_v1_fallback_success(logger, influx_config):
         # Side effects for calls:
         # Call 1: v2 check -> fail
         # Call 2: v1 check -> success
-        mock_post.side_effect = [Exception("v2 conn fail"), MockResponse(204)]
+        mock_post.side_effect = [requests.RequestException("v2 conn fail"), MockResponse(204)]
 
         svc = InfluxService(logger, plant_index=0)
         await svc.async_init()

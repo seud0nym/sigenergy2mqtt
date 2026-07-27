@@ -1,19 +1,17 @@
 from __future__ import annotations
 
 import asyncio
-import time
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from pymodbus import ModbusException
 
-from sigenergy2mqtt.common import DeviceClass, Protocol, RegisterAccess, StateClass, UnitOfPower
+from sigenergy2mqtt.common import DeviceClass, Protocol, StateClass, UnitOfPower
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.base import (
-    AlarmSensor,
     ReadOnlySensor,
     Sensor,
-    WriteOnlySensor,
 )
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -36,22 +34,21 @@ def _make_sensor(name="Test", uid_suffix="x", debug=False, **kwargs):
     cfg.home_assistant.unique_id_prefix = "sigen"
     cfg.home_assistant.entity_id_prefix = "sigen"
 
-    with _swap_active_config(cfg):
-        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            s = ConcreteSensor(
-                name=name,
-                unique_id=uid,
-                object_id=oid,
-                unit=UnitOfPower.WATT,
-                device_class=DeviceClass.POWER,
-                state_class=StateClass.MEASUREMENT,
-                icon="mdi:solar-power",
-                gain=1.0,
-                precision=2,
-                protocol_version=Protocol.V2_4,
-                debug_logging=debug,
-                **kwargs,
-            )
+    with _swap_active_config(cfg), patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+        s = ConcreteSensor(
+            name=name,
+            unique_id=uid,
+            object_id=oid,
+            unit=UnitOfPower.WATT,
+            device_class=DeviceClass.POWER,
+            state_class=StateClass.MEASUREMENT,
+            icon="mdi:solar-power",
+            gain=1.0,
+            precision=2,
+            protocol_version=Protocol.V2_4,
+            debug_logging=debug,
+            **kwargs,
+        )
     return s
 
 
@@ -64,7 +61,6 @@ def _mqtt_mock():
 # ─────────────────────────────────────────────────────────────────────────────
 # 1. Debug-logging branches in property setters
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 
 class TestCheckRegisterResponse:
@@ -172,7 +168,6 @@ class TestCheckRegisterResponse:
 # ─────────────────────────────────────────────────────────────────────────────
 
 
-
 class TestReadOnlySensorUpdateInternalState:
     def _make_ro(self, suffix):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
@@ -217,7 +212,7 @@ class TestReadOnlySensorUpdateInternalState:
         """asyncio.TimeoutError results in result=False (lines ~1104+)."""
         s = self._make_ro("ro_timeout")
         modbus = MagicMock()
-        modbus.read_holding_registers = AsyncMock(side_effect=asyncio.TimeoutError())
+        modbus.read_holding_registers = AsyncMock(side_effect=TimeoutError())
 
         mock_metrics = MagicMock()
         mock_metrics.modbus_read = AsyncMock()
@@ -273,7 +268,7 @@ class TestReadOnlySensorUpdateInternalState:
         """Generic exception calls Metrics.modbus_read_error and re-raises."""
         s = self._make_ro("ro_gen_exc")
         modbus = MagicMock()
-        modbus.read_holding_registers = AsyncMock(side_effect=Exception("generic"))
+        modbus.read_holding_registers = AsyncMock(side_effect=ModbusException("generic"))
 
         mock_metrics = MagicMock()
         mock_metrics.modbus_read = AsyncMock()
@@ -310,7 +305,6 @@ class TestReadOnlySensorUpdateInternalState:
 # ─────────────────────────────────────────────────────────────────────────────
 # 12. AlarmSensor / AlarmCombinedSensor branches
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 
 class TestSanityCheckFailureIncrement:
@@ -368,7 +362,6 @@ class TestSanityCheckFailureIncrement:
 # ─────────────────────────────────────────────────────────────────────────────
 # 18. WritableSensorMixin publishable via apply_sensor_overrides
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 
 class TestReadableSensorScanIntervalOverride:

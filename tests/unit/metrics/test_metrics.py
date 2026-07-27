@@ -220,7 +220,7 @@ class TestMetricsReadError:
     async def test_modbus_read_error_exception_handling(self):
         """Test exception handling."""
         with patch.object(Metrics, "_lock") as mock_lock:
-            mock_lock.acquire.side_effect = Exception("Test exception")
+            mock_lock.acquire.side_effect = RuntimeError("Test exception")
 
             with patch("logging.warning") as mock_warning:
                 await Metrics.modbus_read_error()
@@ -332,7 +332,7 @@ class TestMetricsWriteError:
     async def test_modbus_write_error_exception_handling(self):
         """Test exception handling."""
         with patch.object(Metrics, "_lock") as mock_lock:
-            mock_lock.acquire.side_effect = Exception("Test exception")
+            mock_lock.acquire.side_effect = RuntimeError("Test exception")
 
             with patch("logging.warning") as mock_warning:
                 await Metrics.modbus_write_error()

@@ -1,3 +1,4 @@
+from pymodbus.exceptions import ModbusException
 import asyncio
 import logging
 import os
@@ -23,7 +24,7 @@ async def read_registers(client, device_address, register, count, type):
     elif type == "holding":
         rr = await client.read_holding_registers(register, count=count, device_id=device_address, trace=True)
     else:
-        raise Exception(f"invalid {type=}")
+        raise ModbusException(f"invalid {type=}")
     if rr.isError() or isinstance(rr, ExceptionResponse):
         match rr.exception_code:
             case 1:

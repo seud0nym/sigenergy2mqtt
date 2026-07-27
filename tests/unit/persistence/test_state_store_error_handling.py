@@ -67,7 +67,7 @@ async def test_initialise_mqtt_failure_and_timeout(temp_state_dir, mock_persiste
     store = StateStore()
 
     # 1. Connection failure
-    with patch("sigenergy2mqtt.mqtt.mqtt_setup", side_effect=Exception("connection refused")):
+    with patch("sigenergy2mqtt.mqtt.mqtt_setup", side_effect=RuntimeError("connection refused")):
         await store.initialise(temp_state_dir, mock_persistence_config)
         assert store.is_initialised
         assert store._client is None  # disk only
@@ -88,7 +88,7 @@ async def test_initialise_mqtt_failure_and_timeout(temp_state_dir, mock_persiste
 async def test_shutdown_disconnect_error(temp_state_dir, mock_persistence_config):
     store = StateStore()
     mock_client = MagicMock()
-    mock_client.disconnect.side_effect = Exception("boom")
+    mock_client.disconnect.side_effect = RuntimeError("boom")
 
     with patch("sigenergy2mqtt.mqtt.mqtt_setup", return_value=(mock_client, MagicMock())):
         await store.initialise(temp_state_dir, mock_persistence_config)
@@ -105,10 +105,10 @@ async def test_mqtt_sync_exceptions(temp_state_dir, mock_persistence_config):
         await store.initialise(temp_state_dir, mock_persistence_config)
 
         # Force exceptions on mqtt publish
-        with patch.object(store._mqtt, "publish", side_effect=Exception("mqtt fail")):
+        with patch.object(store._mqtt, "publish", side_effect=RuntimeError("mqtt fail")):
             await store.save("test", "key", "val")
 
-        with patch.object(store._mqtt, "publish_delete", side_effect=Exception("mqtt fail")):
+        with patch.object(store._mqtt, "publish_delete", side_effect=RuntimeError("mqtt fail")):
             await store.delete("test", "key")
 
             # and clean mqtt path

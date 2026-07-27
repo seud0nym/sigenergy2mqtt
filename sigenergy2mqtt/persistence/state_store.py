@@ -42,13 +42,15 @@ import logging
 import threading
 import time
 from collections import deque
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 from enum import StrEnum
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
 
 import paho.mqtt.client as mqtt
+from paho.mqtt import MQTTException
 
 if TYPE_CHECKING:
     from sigenergy2mqtt.config.models.persistence import PersistenceConfig
@@ -257,8 +259,9 @@ class _MqttBackend:
             self._retry_queue.popleft()
             try:
                 fn(client, *args, _attempt=attempt)
-            except Exception:
-                pass
+            except (ValueError, TypeError, RuntimeError):
+                arg_desc = "/".join(str(a) for a in args) if args else "unknown"
+                logging.warning("MqttBackend: retry failed for %s on attempt %d", arg_desc, attempt)
 
     def _topic_to_key(self, topic: str) -> tuple[Category | str, str] | None:
         """Convert an MQTT topic to ``(category, key)`` or ``None`` if not ours."""
@@ -277,7 +280,7 @@ class _MqttBackend:
             return category, key
 
     def _key_to_topic(self, category: Category | str, key: str) -> str:
-        return f"{self._prefix}/{str(category)}/{key}"
+        return f"{self._prefix}/{category!s}/{key}"
 
     def on_message(self, client: mqtt.Client, userdata: object, msg: mqtt.MQTTMessage) -> None:
         """Handle an incoming MQTT message — either retained state or the sentinel."""
@@ -420,7 +423,7 @@ class StateStore:
     async def initialise(
         self,
         state_path: Path,
-        persistence_config: "PersistenceConfig",
+        persistence_config: PersistenceConfig,
     ) -> None:
         """Connect the persistence MQTT client, warm the in-memory cache, then return.
 
@@ -463,7 +466,7 @@ class StateStore:
             client_id = f"{active_config.mqtt.client_id_prefix}_persistence"
             client, _ = await mqtt_setup(client_id, None, self._loop)
             client.on_message = self._mqtt.on_message
-        except Exception as exc:
+        except (MQTTException, ValueError, OSError, RuntimeError) as exc:
             logging.warning(f"StateStore: MQTT connection failed ({exc}) — disk only")
             self._initialised = True
             return
@@ -498,7 +501,7 @@ class StateStore:
             try:
                 self._client.loop_stop()
                 self._client.disconnect()
-            except Exception as exc:
+            except RuntimeError as exc:
                 logging.debug(f"StateStore: error during MQTT disconnect: {exc}")
             self._client = None
 
@@ -509,14 +512,7 @@ class StateStore:
     # Core async API
     # ------------------------------------------------------------------
 
-    async def save(
-        self,
-        category: Category | str,
-        key: str,
-        value: str,
-        *,
-        stale_after: timedelta | None = None,
-    ) -> None:
+    async def save(self, category: Category | str, key: str, value: str, *, stale_after: timedelta | None = None) -> None:
         """Persist *value* to both disk and MQTT (fire-and-forget via executor).
 
         Args:
@@ -534,14 +530,7 @@ class StateStore:
         loop = asyncio.get_running_loop()
         await loop.run_in_executor(self._executor, self._save_sync_impl, category, key, value)
 
-    async def load(
-        self,
-        category: Category | str,
-        key: str,
-        *,
-        stale_after: timedelta | None = None,
-        validator: Callable[[str], bool] | None = None,
-    ) -> str | None:
+    async def load(self, category: Category | str, key: str, *, stale_after: timedelta | None = None, validator: Callable[[str], bool] | None = None) -> str | None:
         """Load a persisted value, applying staleness check and optional validator.
 
         Tries disk first (if ``disk_primary`` is True, which is the default),
@@ -613,9 +602,9 @@ class StateStore:
             future = asyncio.run_coroutine_threadsafe(self.save(category, key, value), loop)
             try:
                 future.result(timeout=self._sync_timeout)
-            except Exception as exc:
+            except TimeoutError as exc:
                 future.cancel()
-                logging.warning(f"StateStore.save_sync failed for {category}/{key}: {repr(exc)}")
+                logging.warning(f"StateStore.save_sync failed for {category}/{key}: {exc!r}")
         else:
             self._save_sync_impl(category, key, value)
 
@@ -639,9 +628,9 @@ class StateStore:
             future = asyncio.run_coroutine_threadsafe(self.load(category, key, stale_after=stale_after, validator=validator), loop)
             try:
                 return future.result(timeout=self._sync_timeout)
-            except Exception as exc:
+            except TimeoutError as exc:
                 future.cancel()
-                logging.warning(f"StateStore.load_sync failed for {category}/{key}: {repr(exc)}")
+                logging.warning(f"StateStore.load_sync failed for {category}/{key}: {exc!r}")
                 return None
         else:
             return self._load_sync_impl(category, key, stale_after, validator)
@@ -655,9 +644,9 @@ class StateStore:
             future = asyncio.run_coroutine_threadsafe(self.delete(category, key), loop)
             try:
                 future.result(timeout=self._sync_timeout)
-            except Exception as exc:
+            except TimeoutError as exc:
                 future.cancel()
-                logging.warning(f"StateStore.delete_sync failed for {category}/{key}: {repr(exc)}")
+                logging.warning(f"StateStore.delete_sync failed for {category}/{key}: {exc!r}")
         else:
             self._delete_sync_impl(category, key)
 
@@ -703,7 +692,7 @@ class StateStore:
             if coro_fn is None:
                 return
             asyncio.run_coroutine_threadsafe(coro_fn(*args), loop)
-        except Exception:
+        except (AttributeError, RuntimeError):
             pass
 
     def _save_sync_impl(self, category: Category | str, key: str, value: str) -> None:
@@ -713,14 +702,14 @@ class StateStore:
         error = False
         try:
             self._disk.save(category, key, value)
-        except Exception as exc:
+        except (OSError, ValueError) as exc:
             error = True
             logging.warning(f"StateStore: disk save failed for {category}/{key}: {exc}")
 
         if self._mqtt_enabled and self._client is not None:
             try:
                 self._mqtt.publish(self._client, category, key, value)
-            except Exception as exc:
+            except (RuntimeError, ValueError) as exc:
                 error = True
                 logging.warning(f"StateStore: MQTT publish failed for {category}/{key}: {exc}")
 
@@ -778,7 +767,7 @@ class StateStore:
         if self._mqtt_enabled and self._client is not None:
             try:
                 self._mqtt.publish_delete(self._client, category, key)
-            except Exception as exc:
+            except (RuntimeError, ValueError) as exc:
                 error = True
                 logging.warning(f"StateStore: MQTT delete failed for {category}/{key}: {exc}")
 
@@ -803,7 +792,7 @@ class StateStore:
                 try:
                     self._mqtt.publish_delete(self._client, category, key)
                     removed += 1
-                except Exception as exc:
+                except (RuntimeError, ValueError) as exc:
                     logging.warning(f"StateStore: MQTT clean failed for {category}/{key}: {exc}")
             logging.info(f"StateStore: Cleaned {removed} MQTT entries")
         else:

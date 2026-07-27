@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any, Iterable, cast
+from collections.abc import Iterable
+from typing import TYPE_CHECKING, Any, cast
 
 import paho.mqtt.client as mqtt
 from pymodbus.pdu import ExceptionResponse
@@ -130,7 +131,7 @@ class WriteOnlySensor(WritableSensorMixin, Sensor):
 
         return components
 
-    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
         """Set value, translating payload to actual value.
 
         Args:
@@ -153,7 +154,7 @@ class WriteOnlySensor(WritableSensorMixin, Sensor):
 
         return await super().set_value(modbus_client, mqtt_client, actual_value, source, handler)
 
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
+    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | str) -> bool:
         """Validate that value is either on or off value.
 
         Args:
@@ -499,7 +500,7 @@ class NumericSensor(ReadWriteSensor):
 
         return value
 
-    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
         """Set numeric value with validation.
 
         Args:
@@ -520,13 +521,13 @@ class NumericSensor(ReadWriteSensor):
             state = float(value)
             if self.gain != 1:
                 state = state * self.gain  # Convert to raw value
-        except Exception as e:
-            logging.warning(f"{self.log_identity} Attempt to set value to '{value}' FAILED: {repr(e)}")
+        except (ValueError, TypeError, RuntimeError) as e:
+            logging.warning(f"{self.log_identity} Attempt to set value to '{value}' FAILED: {e!r}")
             return False
 
         return await super().set_value(modbus_client, mqtt_client, state, source, handler)
 
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
+    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | str) -> bool:
         """Validate numeric value is within range.
 
         Args:
@@ -668,7 +669,7 @@ class SelectSensor(ReadWriteSensor):
 
         return f"Unknown Mode: {value}"
 
-    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
         """Set selected option by name or index.
 
         Args:
@@ -690,7 +691,7 @@ class SelectSensor(ReadWriteSensor):
 
         return await super().set_value(modbus_client, mqtt_client, index, source, handler)
 
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
+    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | str) -> bool:
         """Validate that value is a valid option.
 
         Args:
@@ -761,7 +762,7 @@ class SwitchSensor(ReadWriteSensor):
         self.sanity_check.min_raw = 0
         self.sanity_check.max_raw = 1
 
-    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
         """Set switch value.
 
         Args:
@@ -777,10 +778,10 @@ class SwitchSensor(ReadWriteSensor):
         try:
             return await super().set_value(modbus_client, mqtt_client, int(value), source, handler)
         except ValueError as e:
-            logging.error(f"{self.log_identity} value_is_valid check of value '{value}' FAILED: {repr(e)}")
+            logging.error(f"{self.log_identity} value_is_valid check of value '{value}' FAILED: {e!r}")
             raise
 
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
+    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | str) -> bool:
         """Validate switch value is 0 or 1.
 
         Args:

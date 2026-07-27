@@ -62,7 +62,7 @@ class TestPVOutputService:
         Service._donator = None
 
         with patch.object(active_config.pvoutput, "testing", False):
-            monkeypatch.setattr("requests.get", MagicMock(side_effect=requests.exceptions.ConnectionError("Network error")))
+            monkeypatch.setattr("requests.get", MagicMock(side_effect=requests.RequestException("Network error")))
             seconds, next_time = await svc.seconds_until_status_upload()
             assert isinstance(seconds, float)
             assert Service._interval == 5
@@ -76,7 +76,7 @@ class TestPVOutputService:
         Service._donator = True
 
         with patch.object(active_config.pvoutput, "testing", False):
-            mock_get = MagicMock(side_effect=Exception("Should not be called"))
+            mock_get = MagicMock(side_effect=requests.RequestException("Should not be called"))
             monkeypatch.setattr("requests.get", mock_get)
             seconds, next_time = await svc.seconds_until_status_upload()
             assert isinstance(seconds, float)
@@ -195,11 +195,11 @@ class TestPVOutputService:
     @pytest.mark.asyncio
     async def test_service_lock_behaviors(self):
         svc = make_service()
-        
+
         # lock without timeout
         async with svc.lock():
             assert svc._lock.locked()
-            
+
         # lock with timeout TimeoutError
         await svc._lock.acquire()
         with pytest.raises(TimeoutError):
@@ -212,10 +212,12 @@ class TestPVOutputService:
         svc = make_service()
         Service._interval_updated = None
         with patch.object(active_config.pvoutput, "testing", False):
+
             class DummyResp:
                 status_code = 403
                 reason = "Forbidden"
                 headers = {"X-Rate-Limit-Limit": "60", "X-Rate-Limit-Remaining": "59", "X-Rate-Limit-Reset": str(time.time() + 60)}
+
             monkeypatch.setattr("requests.get", lambda *a, **k: DummyResp())
             await svc.seconds_until_status_upload()
             assert "FAILED to acquire System Information" in caplog.text
@@ -224,11 +226,13 @@ class TestPVOutputService:
     async def test_upload_payload_3xx_status(self, monkeypatch, caplog):
         svc = make_service()
         with patch.object(active_config.pvoutput, "testing", False):
+
             class Resp3xx:
                 status_code = 301
                 reason = "Moved Permanently"
                 text = "redirect"
                 headers = {"X-Rate-Limit-Limit": "60", "X-Rate-Limit-Remaining": "59", "X-Rate-Limit-Reset": str(time.time() + 60)}
+
             monkeypatch.setattr(asyncio, "sleep", AsyncMock())
             monkeypatch.setattr("requests.post", lambda *a, **k: Resp3xx())
             await svc.upload_payload("url", {})
@@ -238,11 +242,14 @@ class TestPVOutputService:
     async def test_upload_payload_raise_for_status_mocked(self, monkeypatch):
         svc = make_service()
         with patch.object(active_config.pvoutput, "testing", False):
+
             class RespNoRaise:
                 status_code = 418
                 headers = {"X-Rate-Limit-Limit": "60", "X-Rate-Limit-Remaining": "59", "X-Rate-Limit-Reset": str(time.time() + 60)}
+
                 def raise_for_status(self):
-                    pass # cover break
+                    pass  # cover break
+
             monkeypatch.setattr(asyncio, "sleep", AsyncMock())
             monkeypatch.setattr("requests.post", lambda *a, **k: RespNoRaise())
             await svc.upload_payload("url", {})
@@ -251,8 +258,10 @@ class TestPVOutputService:
     async def test_upload_payload_httperror_no_response(self, monkeypatch, caplog):
         svc = make_service()
         with patch.object(active_config.pvoutput, "testing", False):
+
             def fake_post(*a, **k):
                 raise requests.exceptions.HTTPError("Boom")
+
             monkeypatch.setattr(asyncio, "sleep", AsyncMock())
             monkeypatch.setattr("requests.post", fake_post)
             await svc.upload_payload("url", {})
@@ -263,8 +272,8 @@ class TestPVOutputService:
         svc = make_service()
         with patch.object(active_config.pvoutput, "testing", False):
             monkeypatch.setattr(asyncio, "sleep", AsyncMock())
-            
-            monkeypatch.setattr("requests.post", MagicMock(side_effect=requests.exceptions.ConnectionError("ConnErr")))
+
+            monkeypatch.setattr("requests.post", MagicMock(side_effect=requests.RequestException("ConnErr")))
             await svc.upload_payload("url", {})
             assert "Error Connecting: ConnErr" in caplog.text
 
@@ -272,7 +281,7 @@ class TestPVOutputService:
             await svc.upload_payload("url", {})
             assert "Timeout Error: TimeErr" in caplog.text
 
-            monkeypatch.setattr("requests.post", MagicMock(side_effect=Exception("GenErr")))
+            monkeypatch.setattr("requests.post", MagicMock(side_effect=requests.RequestException("GenErr")))
             await svc.upload_payload("url", {})
             assert "GenErr" in caplog.text
 
@@ -283,10 +292,13 @@ class TestPVOutputService:
         with patch.object(active_config.pvoutput, "testing", False):
             # Test standard 10s retry sleep cancellation
             def fake_post_err(*a, **k):
-                raise Exception("Fail")
+                raise requests.RequestException("Fail")
+
             monkeypatch.setattr("requests.post", fake_post_err)
+
             async def fake_sleep(*a):
                 raise asyncio.CancelledError()
+
             monkeypatch.setattr(asyncio, "sleep", fake_sleep)
             await svc.upload_payload("url", {})
             assert "retry sleep interrupted" in caplog.text
@@ -295,10 +307,12 @@ class TestPVOutputService:
             class RespRateLimit:
                 status_code = 500
                 headers = {"X-Rate-Limit-Limit": "60", "X-Rate-Limit-Remaining": "5", "X-Rate-Limit-Reset": str(time.time() + 60)}
+
                 def raise_for_status(self):
                     err = requests.exceptions.HTTPError("Err")
                     err.response = self
                     raise err
+
             monkeypatch.setattr("requests.post", lambda *a, **k: RespRateLimit())
             await svc.upload_payload("url", {})
             assert "reset sleep interrupted" in caplog.text

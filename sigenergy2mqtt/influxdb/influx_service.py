@@ -2,9 +2,11 @@ import asyncio
 import logging
 import re
 import time
-from typing import Awaitable, cast
+from collections.abc import Awaitable
+from typing import cast
 
 import paho.mqtt.client as mqtt
+import requests
 
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import DeviceRegistry
@@ -178,7 +180,7 @@ class InfluxService(InfluxBase):
                 self.logger.debug(f"{self.log_identity} [{topic}] Writing line protocol: {line}")
             await self.write_line(line)
 
-        except Exception as e:
+        except (requests.RequestException, ValueError, TypeError, RuntimeError) as e:
             self.logger.error(f"{self.log_identity} Failed to handle MQTT message from {topic}: {e}")
             return False
         return True
@@ -260,7 +262,7 @@ class InfluxService(InfluxBase):
                     }
                     mqtt_handler.register(mqtt_client, tpc, self.handle_mqtt)
 
-            except Exception as e:
+            except requests.RequestException as e:
                 self.logger.warning(f"{self.log_identity} Failed to subscribe sensors for device '{device}': {e}")
                 continue
 

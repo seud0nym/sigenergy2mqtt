@@ -2,6 +2,9 @@ import asyncio
 import logging
 from asyncio import sleep
 
+import requests
+from paho.mqtt import MQTTException
+
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus import ModbusClient
 
@@ -9,7 +12,7 @@ from .client import MqttClient
 from .handler import MqttHandler
 from .registry import MqttHealthRegistry
 
-__all__ = ["MqttHandler", "mqtt_health_registry", "mqtt_setup", "mqtt_teardown", "interrupt_mqtt_reconnection", "reset_mqtt_reconnection_interrupt"]
+__all__ = ["MqttHandler", "interrupt_mqtt_reconnection", "mqtt_health_registry", "mqtt_setup", "mqtt_teardown", "reset_mqtt_reconnection_interrupt"]
 
 _MAX_CONNECT_ATTEMPTS: int = 3
 
@@ -75,14 +78,14 @@ async def _connect_with_retry(mqtt_client: MqttClient, client_id: str) -> None:
             mqtt_client.loop_start()
             logging.info(f"Connected to {broker_url} as Client ID '{client_id}' (keepalive={active_config.mqtt.keepalive}s)")
             return
-        except Exception as e:
+        except (MQTTException, OSError, RuntimeError) as e:
             if attempt < _MAX_CONNECT_ATTEMPTS:
-                logging.warning(f"Error connecting to {broker_url} as Client ID '{client_id}': {repr(e)} (attempt {attempt}/{_MAX_CONNECT_ATTEMPTS}) - Retrying in {active_config.mqtt.retry_delay}s")
+                logging.warning(f"Error connecting to {broker_url} as Client ID '{client_id}': {e!r} (attempt {attempt}/{_MAX_CONNECT_ATTEMPTS}) - Retrying in {active_config.mqtt.retry_delay}s")
                 for _ in range(active_config.mqtt.retry_delay):
                     _check_interrupted(broker_url, client_id)
                     await sleep(1)
             else:
-                logging.critical(f"Failed to connect to {broker_url} as Client ID '{client_id}' after {_MAX_CONNECT_ATTEMPTS} attempts: {repr(e)}")
+                logging.critical(f"Failed to connect to {broker_url} as Client ID '{client_id}' after {_MAX_CONNECT_ATTEMPTS} attempts: {e!r}")
                 raise
 
 

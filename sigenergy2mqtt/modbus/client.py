@@ -3,7 +3,6 @@ import logging
 import threading
 import time
 from dataclasses import dataclass
-from typing import Optional
 
 from pymodbus import FramerType
 from pymodbus.client import AsyncModbusTcpClient
@@ -23,9 +22,9 @@ class ModbusClientHealth:
     """Observed health state for a single Modbus client."""
 
     client_id: str
-    last_connected_at: Optional[float] = None
-    last_closed_at: Optional[float] = None
-    last_read_at: Optional[float] = None
+    last_connected_at: float | None = None
+    last_closed_at: float | None = None
+    last_read_at: float | None = None
     connect_count: int = 0
     close_count: int = 0
 
@@ -101,7 +100,7 @@ class ModbusClient(AsyncModbusTcpClient, ModbusClientMixin):
 
         Raises:
             ModbusException: Re-raised after updating error metrics.
-            Exception: Any unexpected exception from transport or parsing logic.
+            TypeError: Invalid input type.
         """
         if use_pre_read:
             self._read_count += 1
@@ -124,7 +123,7 @@ class ModbusClient(AsyncModbusTcpClient, ModbusClientMixin):
             elif input_type == InputType.INPUT:
                 rr = await super().read_input_registers(address, count=count, device_id=device_id, no_response_expected=no_response_expected)
             else:
-                raise Exception(f"Unknown input type '{input_type}'")
+                raise TypeError(f"Unknown input type '{input_type}'")
             elapsed = time.monotonic() - start
             with self._health_lock:
                 self._health.last_read_at = start
@@ -139,7 +138,7 @@ class ModbusClient(AsyncModbusTcpClient, ModbusClientMixin):
         except ModbusException:
             await Metrics.modbus_read_error()
             raise
-        except Exception:
+        except OSError:
             raise
         finally:
             self._trace = False

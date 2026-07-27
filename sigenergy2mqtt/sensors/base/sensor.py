@@ -10,9 +10,10 @@ import logging
 import re
 import time
 from collections import deque
-from typing import TYPE_CHECKING, Any, Deque, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import paho.mqtt.client as mqtt
+from pymodbus.exceptions import ModbusException
 from pymodbus.pdu import ExceptionResponse
 
 from sigenergy2mqtt.common import DeviceClass, Protocol, StateClass
@@ -139,7 +140,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         self._publish_persistence_key: str = f"{_sanitize_path_component(unique_id)}.publishable"
 
         # State history - use deque for efficient bounded collection
-        self._states: Deque[tuple[float, Any]] = deque(maxlen=_DEFAULT_STATE_HISTORY_SIZE)
+        self._states: deque[tuple[float, Any]] = deque(maxlen=_DEFAULT_STATE_HISTORY_SIZE)
 
         # Failure tracking
         self._failures: int = 0
@@ -246,7 +247,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         return None if len(self._states) == 0 else self._states[-1][1]
 
     @latest_raw_state.setter
-    def latest_raw_state(self, value: float | int | str):
+    def latest_raw_state(self, value: float | str):
         """Update the most recent raw state value."""
         if len(self._states) > 0:
             latest = self._states.pop()
@@ -283,18 +284,18 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         ]
 
         if hasattr(self, "phase"):
-            phase = str(getattr(self, "phase")).strip()
+            phase = str(self.phase).strip()
             if phase:
                 suffix_parts.append(f"phase={phase}")
 
         if hasattr(self, "slot"):
-            suffix_parts.append(f"slot={getattr(self, 'slot')}")
+            suffix_parts.append(f"slot={self.slot}")
 
         if hasattr(self, "smart_load_index"):
-            suffix_parts.append(f"idx={getattr(self, 'smart_load_index')}")
+            suffix_parts.append(f"idx={self.smart_load_index}")
 
         if hasattr(self, "string_number"):
-            suffix_parts.append(f"string={getattr(self, 'string_number')}")
+            suffix_parts.append(f"string={self.string_number}")
 
         return f"{self.__class__.__name__}[{','.join(suffix_parts)}]"
 
@@ -405,7 +406,6 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         Returns:
             True if state was updated, False otherwise, or Exception on error.
         """
-        pass
 
     # =========================================================================
     # Public Methods
@@ -821,7 +821,6 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
 
         The default implementation does nothing.
         """
-        pass
 
     async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool = False) -> bool:
         """Publish sensor state to MQTT.
@@ -841,7 +840,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
             published = await self._attempt_publish(mqtt_client, modbus_client, republish)
             await self._publish_derived_sensors(mqtt_client, modbus_client, republish)
             return published
-        except Exception as e:
+        except (ModbusException, SanityCheckException) as e:
             await Metrics.mqtt_publish_attempt(physical_publish=False)
             await Metrics.mqtt_publish_failure()
             return self._handle_publish_error(mqtt_client, modbus_client, e)
@@ -968,7 +967,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         Returns:
             False (publish failed)
         """
-        logging.warning(f"{self.log_identity} Publishing SKIPPED: Failed to get state ({repr(error)})")
+        logging.warning(f"{self.log_identity} Publishing SKIPPED: Failed to get state ({error!r})")
 
         if modbus_client and modbus_client.connected:
             self._update_failure_count(error)
@@ -976,7 +975,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
             raise
 
         if active_config.home_assistant.enabled:
-            self.publish_attributes(mqtt_client, clean=False, failures=self._failures, exception=f"{repr(error)}")
+            self.publish_attributes(mqtt_client, clean=False, failures=self._failures, exception=f"{error!r}")
 
         if self._failures >= self._max_failures:
             self._log_publish_disabled()
@@ -1065,10 +1064,10 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
                     logging.debug(f"{self.log_identity} Setting derived sensor {sensor.log_identity} source values (latest_raw_state={self.latest_raw_state})")
                 try:
                     sensor.update_from_source_sensor(self)
-                except Exception as error:
-                    logging.warning(f"{self.log_identity} Failed to update derived sensor {sensor.log_identity} source values: {repr(error)}")
+                except (ValueError, TypeError, RuntimeError) as error:
+                    logging.warning(f"{self.log_identity} Failed to update derived sensor {sensor.log_identity} source values: {error!r}")
 
-    def set_latest_state(self, state: int | float | str | list[bool] | list[int] | list[float]) -> bool:
+    def set_latest_state(self, state: float | str | list[bool] | list[int] | list[float]) -> bool:
         """Update latest state and propagate to derived sensors.
 
         Args:
@@ -1130,7 +1129,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
             return active_config.sensor_overrides[identifier]
         return None
 
-    def set_state(self, state: int | float | str | list[bool] | list[int] | list[float]) -> None:
+    def set_state(self, state: float | str | list[bool] | list[int] | list[float]) -> None:
         """Update latest state without propagating to derived sensors.
 
         Args:
@@ -1146,7 +1145,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
     # Helper Methods
     # =========================================================================
 
-    def _apply_gain_and_precision(self, state: float | int | None, raw: bool = False) -> float | int | None:
+    def _apply_gain_and_precision(self, state: float | None, raw: bool = False) -> float | int | None:
         """Apply gain and precision transformations to a state value.
 
         Args:
@@ -1201,7 +1200,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
 
         return _t(f"{self.__class__.__name__}.options.{index}", option, self.debug_logging)
 
-    def _get_option_index(self, value: str | int | float) -> int:
+    def _get_option_index(self, value: str | float) -> int:
         """Get option index by value or translated value.
 
         Args:
@@ -1240,7 +1239,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
 
         raise ValueError(f"'{value}' is not a valid option")
 
-    def state2raw(self, state: float | int | str) -> float | int | str | None:
+    def state2raw(self, state: float | str) -> float | int | str | None:
         """Convert processed state back to raw value.
 
         Args:
