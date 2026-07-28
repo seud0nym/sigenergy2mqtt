@@ -335,6 +335,9 @@ async def make_plant_and_inverter(plant_index: int, modbus_client: ModbusClient,
         if sys_tz_offset is None:
             logger.warning(f"Plant {plant_index} System Timezone offset not available - defaulting to UTC")
             sys_tz_offset = 0
+        if sys_tz_offset > 1440 or sys_tz_offset < -1440:
+            logger.warning(f"Plant {plant_index} System Timezone offset {sys_tz_offset} is out of range - defaulting to UTC")
+            sys_tz_offset = 0
         tz = timezone(timedelta(minutes=cast(int, sys_tz_offset)))
     except (ModbusException, TimeoutError, OSError, SanityCheckException) as e:
         logger.error(f"Plant {plant_index} System Timezone offset read failed - defaulting to UTC ({e})")
