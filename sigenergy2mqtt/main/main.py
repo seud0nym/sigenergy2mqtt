@@ -163,7 +163,7 @@ async def get_state(sensor: Any, modbus_client: ModbusClient, device: str, defau
         logger.debug(
             f"READING {get_modbus_url(modbus_client)} acquired {sensor.__class__.__name__} {'raw ' if raw else ''}{state=} to initialise {device} (idx={sensor.plant_index} id={sensor.device_address} addr={sensor.address})"
         )
-    except (ValueError, TypeError, RuntimeError, OSError, MQTTException, SanityCheckException) as e:
+    except (ValueError, TypeError, RuntimeError, OSError, ModbusException, MQTTException, SanityCheckException) as e:
         state = default_value
         logger.debug(
             f"FAILURE {get_modbus_url(modbus_client)} acquiring {sensor.__class__.__name__} to initialise {device} (idx={sensor.plant_index} id={sensor.device_address} addr={sensor.address}) -> {e} (returning {default_value=})"
@@ -332,7 +332,7 @@ async def make_plant_and_inverter(plant_index: int, modbus_client: ModbusClient,
 
     try:
         sys_tz_offset = await get_state(SystemTimeZone(plant_index), modbus_client, "plant", raw=True)
-        if sys_tz_offset is None:
+        if sys_tz_offset is None or not isinstance(sys_tz_offset, int):
             logger.warning(f"Plant {plant_index} System Timezone offset not available - defaulting to UTC")
             sys_tz_offset = 0
         if sys_tz_offset > 1440 or sys_tz_offset < -1440:
