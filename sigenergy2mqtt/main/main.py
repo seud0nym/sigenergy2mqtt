@@ -80,7 +80,7 @@ class _FramerSkipFilter(logging.Filter):
         # Suppress unless every configured device has explicitly opted in
         # to seeing these messages (log_skipped=True).  When no devices are
         # configured yet (early startup), apply the default suppression.
-        if record.name == "pymodbus.logging" and "request ask for " in msg and "Skipping." in msg and (not active_config.modbus or any(not device.log_skipped for device in active_config.modbus)):
+        if "request ask for " in msg and "Skipping." in msg and (not active_config.modbus or any(not device.log_skipped for device in active_config.modbus)):
             Metrics.modbus_skipped_error()
             return False
         return True
