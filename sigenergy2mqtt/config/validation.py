@@ -53,7 +53,7 @@ def check_date(value: str | date, source: str) -> date:
     if isinstance(value, date):
         return value
     try:
-        return date.strptime(value, "%Y-%m-%d")
+        return date.fromisoformat(value)
     except ValueError:
         raise ValueError(f"{source} must be in the format YYYY-MM-DD and not null")
 
