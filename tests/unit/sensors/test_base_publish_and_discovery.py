@@ -77,7 +77,7 @@ class TestPublishMethod:
         s = self._sensor_with_topics("pub_none_dbg", debug=True)
         mqtt = _mqtt_mock()
         cfg = Config()
-        with _swap_active_config(cfg), patch("sigenergy2mqtt.sensors.base.sensor.logging"):
+        with _swap_active_config(cfg), patch("sigenergy2mqtt.sensors.base.sensor.logger"):
             published = await s.publish(mqtt, None)
         assert published is False
 
@@ -162,7 +162,7 @@ class TestPublishMethod:
         with (
             patch.object(s, "_update_internal_state", side_effect=_update),
             _swap_active_config(cfg),
-            patch("sigenergy2mqtt.sensors.base.sensor.logging") as mock_log,
+            patch("sigenergy2mqtt.sensors.base.sensor.logger") as mock_log,
         ):
             await s.publish(mqtt, modbus)
             await s.publish(mqtt, modbus)
@@ -178,7 +178,7 @@ class TestPublishMethod:
         s._max_failures = 10
         s._next_retry = None
         mqtt = _mqtt_mock()
-        with patch("sigenergy2mqtt.sensors.base.sensor.logging") as mock_log:
+        with patch("sigenergy2mqtt.sensors.base.sensor.logger") as mock_log:
             published = await s.publish(mqtt, None)
         assert published is False
         mock_log.debug.assert_called()  # hits the elif debug branch
@@ -268,7 +268,7 @@ class TestPublishAttributes:
         """clean=True with debug_logging=True covers debug branch."""
         s = self._sensor_with_attrs("pa_clean_dbg", debug=True)
         mqtt = _mqtt_mock()
-        with patch("sigenergy2mqtt.sensors.base.sensor.logging") as mock_log:
+        with patch("sigenergy2mqtt.sensors.base.sensor.logger") as mock_log:
             s.publish_attributes(mqtt, clean=True)
         mock_log.debug.assert_called()
 
@@ -354,7 +354,7 @@ class TestConfigureMqttTopics:
         cfg.home_assistant.use_simplified_topics = False
         cfg.home_assistant.discovery_prefix = "homeassistant"
         cfg.home_assistant.enabled_by_default = False
-        with _swap_active_config(cfg), patch("sigenergy2mqtt.sensors.base.sensor.logging") as mock_log:
+        with _swap_active_config(cfg), patch("sigenergy2mqtt.sensors.base.sensor.logger") as mock_log:
             s.configure_mqtt_topics("test_device")
         mock_log.debug.assert_called()
 
@@ -522,7 +522,7 @@ class TestGetStateRepublish:
         """republish debug branch."""
         s = _make_sensor(uid_suffix="gs_repub_dbg", debug=True)
         s._states.append((time.time(), 42.0))
-        with patch("sigenergy2mqtt.sensors.base.sensor.logging") as mock_log:
+        with patch("sigenergy2mqtt.sensors.base.sensor.logger") as mock_log:
             await s.get_state(republish=True)
         mock_log.debug.assert_called()
 

@@ -249,7 +249,7 @@ def device():
 
 def test_device_init_ignores_unknown_kwargs():
     """extra kwargs that are not recognised device attributes are logged and dropped."""
-    with patch("sigenergy2mqtt.devices.base.device.logging") as mock_log:
+    with patch("sigenergy2mqtt.devices.base.device.logger") as mock_log:
         _ = Device("TestDev", 0, "uid_extra", "mf", "model", Protocol.V1_8, unknown_kwarg="ignored")
         # 'unknown_kwarg' is not in the allowed set, so it should be logged as ignored
         mock_log.debug.assert_called()
@@ -298,7 +298,7 @@ async def test_online_getter_returns_true_when_future_not_cancelled(device):
 
 def test_online_setter_raises_on_true(device):
     """setting online=True raises ValueError."""
-    with pytest.raises(ValueError, match="online must be a Future to enable"):
+    with pytest.raises(TypeError, match="online must be a Future to enable"):
         device.online = True
 
 
@@ -313,7 +313,7 @@ async def test_online_setter_accepts_future(device):
 
 def test_online_setter_raises_on_invalid_type(device):
     """Line 122 (else): setting online to non-bool non-Future raises ValueError."""
-    with pytest.raises(ValueError, match="online must be a Future or False"):
+    with pytest.raises(TypeError, match="online must be a Future or False"):
         device.online = "invalid"
 
 
@@ -394,7 +394,7 @@ def test_add_derived_sensor_source_not_found(device):
     src = DummyReadable("nonexistent_src")  # never added to device
     derived = DummyDerived("derived_no_src")
 
-    with patch("sigenergy2mqtt.devices.base.device.logging") as mock_log:
+    with patch("sigenergy2mqtt.devices.base.device.logger") as mock_log:
         derived._declare_source_sensors(src)
         device._add_sensor(derived)
         mock_log.warning.assert_called()
@@ -405,7 +405,7 @@ def test_add_derived_sensor_no_source_sensors_after_none_removal(device):
     derived = DummyDerived("derived_none_src")
     device.protocol_version = Protocol.N_A
 
-    with patch("sigenergy2mqtt.devices.base.device.logging") as mock_log:
+    with patch("sigenergy2mqtt.devices.base.device.logger") as mock_log:
         derived._declare_source_sensors()
         device._add_sensor(derived)  # all None
         mock_log.error.assert_called()
@@ -577,7 +577,7 @@ async def test_publish_updates_generic_exception_logged(device):
         device._online = False
 
     poller = SensorGroupPoller(device)
-    with patch("sigenergy2mqtt.devices.base.poller.logging") as mock_log:
+    with patch("sigenergy2mqtt.devices.base.poller.logger") as mock_log:
         with patch("asyncio.sleep", fake_sleep):
             await poller.run(None, MagicMock(), "grp_generic_err", s)
 
@@ -738,7 +738,7 @@ def test_subscribe_writable_sensor_exception_logged(device):
     # First call registers HA status (must succeed), second raises for writable sensor
     handler.register.side_effect = [MagicMock(), RuntimeError("subscribe failed")]
 
-    with patch("sigenergy2mqtt.devices.base.device.logging") as mock_log:
+    with patch("sigenergy2mqtt.devices.base.device.logger") as mock_log:
         device.subscribe(MagicMock(), handler)
         mock_log.error.assert_called()
 
@@ -752,7 +752,7 @@ def test_subscribe_observable_exception_logged(device):
     # First call (HA status) succeeds; second (observable topic) raises
     handler.register.side_effect = [MagicMock(), RuntimeError("obs fail")]
 
-    with patch("sigenergy2mqtt.devices.base.device.logging") as mock_log:
+    with patch("sigenergy2mqtt.devices.base.device.logger") as mock_log:
         device.subscribe(MagicMock(), handler)
         mock_log.error.assert_called()
 
@@ -864,7 +864,7 @@ def test_add_read_sensor_not_readable(device):
             pass
 
     nr = NotReadable("not_readable")
-    with patch("sigenergy2mqtt.devices.base.device.logging") as mock_log:
+    with patch("sigenergy2mqtt.devices.base.device.logger") as mock_log:
         result = device._add_sensor(nr)
     assert result is False
     mock_log.error.assert_called()
@@ -911,7 +911,7 @@ def test_add_to_all_sensors_debug_logging_enabled(device):
     """debug log emitted when sensor.debug_logging is True."""
     s = DummyReadable("s_debug_log")
     s.debug_logging = True
-    with patch("sigenergy2mqtt.devices.base.device.logging") as mock_log:
+    with patch("sigenergy2mqtt.devices.base.device.logger") as mock_log:
         device._add_to_all_sensors(s)
         mock_log.debug.assert_called()
 

@@ -158,7 +158,7 @@ class TestCheckRegisterResponse:
         rr = MagicMock()
         rr.isError.return_value = True
         rr.exception_code = 2
-        with patch("sigenergy2mqtt.sensors.base.mixins.logging") as mock_log, pytest.raises(Exception):
+        with patch("sigenergy2mqtt.sensors.base.mixins.logger") as mock_log, pytest.raises(Exception):
             s._check_register_response(rr, "read_input_registers")
         mock_log.debug.assert_called()
 
@@ -296,7 +296,7 @@ class TestReadOnlySensorUpdateInternalState:
         mock_metrics = MagicMock()
         mock_metrics.modbus_read = AsyncMock()
 
-        with patch("sigenergy2mqtt.sensors.base.readable.Metrics", mock_metrics), patch("sigenergy2mqtt.sensors.base.readable.logging") as mock_log:
+        with patch("sigenergy2mqtt.sensors.base.readable.Metrics", mock_metrics), patch("sigenergy2mqtt.sensors.base.readable.logger") as mock_log:
             result = await s._update_internal_state(modbus_client=modbus)
         assert result is True
         mock_log.debug.assert_called()
@@ -327,7 +327,7 @@ class TestSanityCheckFailureIncrement:
             patch.object(s, "_update_internal_state", side_effect=_update),
             patch("sigenergy2mqtt.sensors.base.active_config.sanity_check_failures_increment", False),
             patch("sigenergy2mqtt.sensors.base.active_config.home_assistant.enabled", False),
-            patch("sigenergy2mqtt.sensors.base.logging"),
+            patch("sigenergy2mqtt.sensors.base.sensor.logger"),
         ):
             await s.publish(mqtt, modbus)
 
@@ -352,7 +352,7 @@ class TestSanityCheckFailureIncrement:
             patch.object(s, "_update_internal_state", side_effect=_update),
             patch("sigenergy2mqtt.sensors.base.active_config.sanity_check_failures_increment", True),
             patch("sigenergy2mqtt.sensors.base.active_config.home_assistant.enabled", False),
-            patch("sigenergy2mqtt.sensors.base.logging"),
+            patch("sigenergy2mqtt.sensors.base.sensor.logger"),
         ):
             await s.publish(mqtt, modbus)
 

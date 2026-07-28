@@ -141,7 +141,7 @@ class TestProtocolVersionSetter:
 
     def test_protocol_version_string_raises(self):
         s = _make_sensor(uid_suffix="pv_str")
-        with pytest.raises(AssertionError):
+        with pytest.raises(TypeError):
             s.protocol_version = "V2.4"  # type: ignore
 
 

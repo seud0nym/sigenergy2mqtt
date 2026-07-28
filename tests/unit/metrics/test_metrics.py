@@ -96,7 +96,7 @@ class TestMetricsCacheHits:
     @pytest.mark.asyncio
     async def test_modbus_cache_hits_zero_reads(self):
         """Test handling of zero reads (ZeroDivisionError)."""
-        with patch("logging.warning") as mock_warning:
+        with patch("sigenergy2mqtt.metrics.metrics.logger.warning") as mock_warning:
             await Metrics.modbus_cache_hits(reads=0, hits=0)
             await Metrics.drain()
             # Should log warning about exception
@@ -106,7 +106,7 @@ class TestMetricsCacheHits:
     @pytest.mark.asyncio
     async def test_modbus_cache_hits_exception_handling(self):
         """Test exception handling with warning log."""
-        with patch("logging.warning") as mock_warning:
+        with patch("sigenergy2mqtt.metrics.metrics.logger.warning") as mock_warning:
             # Force an exception by passing invalid types
             await Metrics.modbus_cache_hits(reads=None, hits=75)
             await Metrics.drain()
@@ -182,7 +182,7 @@ class TestMetricsRead:
     @pytest.mark.asyncio
     async def test_modbus_read_exception_handling(self):
         """Test exception handling with warning log."""
-        with patch("logging.warning") as mock_warning:
+        with patch("sigenergy2mqtt.metrics.metrics.logger.warning") as mock_warning:
             # Force an exception
             await Metrics.modbus_read(registers=1, seconds=None)
             await Metrics.drain()
@@ -222,7 +222,7 @@ class TestMetricsReadError:
         with patch.object(Metrics, "_lock") as mock_lock:
             mock_lock.acquire.side_effect = RuntimeError("Test exception")
 
-            with patch("logging.warning") as mock_warning:
+            with patch("sigenergy2mqtt.metrics.metrics.logger.warning") as mock_warning:
                 await Metrics.modbus_read_error()
                 await Metrics.drain()
                 assert mock_warning.called
@@ -294,7 +294,7 @@ class TestMetricsWrite:
     @pytest.mark.asyncio
     async def test_modbus_write_exception_handling(self):
         """Test exception handling with warning log."""
-        with patch("logging.warning") as mock_warning:
+        with patch("sigenergy2mqtt.metrics.metrics.logger.warning") as mock_warning:
             # Force an exception
             await Metrics.modbus_write(registers=None, seconds=0.1)
             await Metrics.drain()
@@ -334,7 +334,7 @@ class TestMetricsWriteError:
         with patch.object(Metrics, "_lock") as mock_lock:
             mock_lock.acquire.side_effect = RuntimeError("Test exception")
 
-            with patch("logging.warning") as mock_warning:
+            with patch("sigenergy2mqtt.metrics.metrics.logger.warning") as mock_warning:
                 await Metrics.modbus_write_error()
                 await Metrics.drain()
                 assert mock_warning.called

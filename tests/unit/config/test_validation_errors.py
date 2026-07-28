@@ -56,5 +56,5 @@ def test_check_string_extra():
     with pytest.raises(ValueError, match="must start with 'prefix"):
         validation.check_string("val", "src", starts_with="prefix")
     # Invalid type
-    with pytest.raises(ValueError, match="must be a valid string"):
+    with pytest.raises(TypeError, match="must be a valid string"):
         validation.check_string([], "src")

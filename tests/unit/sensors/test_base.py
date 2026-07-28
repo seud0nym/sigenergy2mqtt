@@ -79,7 +79,7 @@ class TestSensorBase:
 
     def test_properties(self, sensor):
         # publishable
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             sensor.publishable = "yes"  # type: ignore
         sensor.publishable = False
         assert sensor.publishable is False
@@ -87,7 +87,7 @@ class TestSensorBase:
         assert sensor.publishable is True
 
         # publish_raw
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             sensor.publish_raw = 1  # type: ignore
         sensor.publish_raw = True
         assert sensor.publish_raw is True
@@ -100,7 +100,7 @@ class TestSensorBase:
         sensor.protocol_version = float(Protocol.V2_4.value)
         assert sensor.protocol_version == Protocol.V2_4.value
         # Invalid value
-        with pytest.raises(AssertionError):
+        with pytest.raises(TypeError):
             sensor.protocol_version = "invalid"  # type: ignore
 
     def test_latest_properties_and_state_management(self, sensor):

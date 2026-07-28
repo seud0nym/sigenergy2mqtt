@@ -522,7 +522,7 @@ class TestFactories:
             patch("sigenergy2mqtt.sensors.inverter_read_only.PVStringCount.get_state", AsyncMock(return_value=1)),
             patch("sigenergy2mqtt.sensors.inverter_read_only.InverterSerialNumber.get_state", AsyncMock(return_value="SN1")),
             patch("sigenergy2mqtt.sensors.inverter_read_only.OutputType.get_state", AsyncMock(return_value=1)),
-            patch("sigenergy2mqtt.main.main.logging.debug") as mock_debug,
+            patch("sigenergy2mqtt.main.main.logger.debug") as mock_debug,
         ):
             await main_mod.make_plant_and_inverter(0, mock_client, 1, None, seen)
             assert clean_config.ems_mode_check is False
@@ -733,7 +733,7 @@ async def test_coverage_gap_closers(clean_config, monkeypatch):
         patch("sigenergy2mqtt.main.main.probe_optional_interface", AsyncMock(return_value=False)),
         patch("sigenergy2mqtt.devices.PowerPlant.create", AsyncMock(return_value=MagicMock(protocol_version=Protocol.V1_8, unique_id="p1"))),
         patch("sigenergy2mqtt.devices.Inverter.create", AsyncMock(return_value=MagicMock())),
-        patch("sigenergy2mqtt.main.main.logging.warning") as mock_warn,
+        patch("sigenergy2mqtt.main.main.logger.warning") as mock_warn,
     ):
         await main_mod.make_plant_and_inverter(0, mock_client, 1, None, seen)
         assert clean_config.consumption == ConsumptionMethod.CALCULATED
@@ -952,7 +952,7 @@ async def test_setup_dc_chargers_missing_inverter(clean_config):
     mock_modbus_cfg = MagicMock(dc_chargers=[2], host="h", port=502)
     mock_plant = MagicMock()
     mock_config = MagicMock()
-    with patch("sigenergy2mqtt.main.main.logging.warning") as mock_warn:
+    with patch("sigenergy2mqtt.main.main.logger.warning") as mock_warn:
         await main_mod._setup_dc_chargers(0, mock_modbus_cfg, mock_plant, AsyncMock(), {1: "inv1"}, mock_config, 0, 1)
         assert mock_warn.called
 
@@ -963,7 +963,7 @@ async def test_setup_ac_chargers_older_protocol(clean_config):
     mock_modbus_cfg = MagicMock(ac_chargers=[1], host="h", port=502)
     mock_plant = MagicMock()
     mock_config = MagicMock()
-    with patch("sigenergy2mqtt.main.main.logging.warning") as mock_warn:
+    with patch("sigenergy2mqtt.main.main.logger.warning") as mock_warn:
         await main_mod._setup_ac_chargers(0, mock_modbus_cfg, mock_plant, AsyncMock(), mock_config, Protocol.V1_8, 0, 1)
         assert mock_warn.called
 
@@ -988,7 +988,7 @@ async def test_setup_ac_chargers_outage_failure_skips_and_continues(clean_config
     mock_schedule = MagicMock()
     monkeypatch.setattr(main_mod, "_schedule_restart_on_grid_restore", mock_schedule)
 
-    with patch("sigenergy2mqtt.main.main.logging.warning") as mock_warn:
+    with patch("sigenergy2mqtt.main.main.logger.warning") as mock_warn:
         next_seq = await main_mod._setup_ac_chargers(0, mock_modbus_cfg, mock_plant, AsyncMock(), mock_config, Protocol.V2_8, 0, 2)
 
     assert next_seq == 2
@@ -1006,7 +1006,7 @@ async def test_setup_ac_chargers_non_outage_failure_logs_error(clean_config, mon
     monkeypatch.setattr(main_mod, "make_ac_charger", AsyncMock(side_effect=RuntimeError("boom")))
     monkeypatch.setattr(main_mod, "_is_grid_outage", AsyncMock(return_value=False))
 
-    with patch("sigenergy2mqtt.main.main.logging.error") as mock_err:
+    with patch("sigenergy2mqtt.main.main.logger.error") as mock_err:
         next_seq = await main_mod._setup_ac_chargers(0, mock_modbus_cfg, mock_plant, AsyncMock(), mock_config, Protocol.V2_8, 0, 1)
 
     assert next_seq == 1

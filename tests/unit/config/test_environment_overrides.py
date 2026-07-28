@@ -66,7 +66,7 @@ class TestConfigSensorOverrides:
         config_file.write_text("sensor-overrides: not-a-dict\n")
         with patch("sigenergy2mqtt.config.config.Config._perform_auto_discovery", return_value=None), _swap_active_config(Config()) as cfg:
             cfg.persistent_state_path = tmp_path
-            with pytest.raises(ConfigurationError):
+            with pytest.raises(TypeError):
                 asyncio.run(cfg.load(str(config_file)))
 
 
