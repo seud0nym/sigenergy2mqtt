@@ -18,6 +18,8 @@ from sigenergy2mqtt.sensors.base import DiscoveryKeys, ReadableSensorMixin, Writ
 
 from .metrics import Metrics
 
+logger = logging.getLogger("sigenergy2mqtt")
+
 
 class MetricsSensor(ReadableSensorMixin):
     """
@@ -77,12 +79,11 @@ class MetricsSensor(ReadableSensorMixin):
         self[DiscoveryKeys.STATE_TOPIC] = f"{base}/{suffix}"
         self[DiscoveryKeys.AVAILABILITY_TOPIC] = "sigenergy2mqtt/status"
         if self.debug_logging:
-            logging.debug(f"{self.log_identity} Configured MQTT topics >>> state_topic={self[DiscoveryKeys.STATE_TOPIC]})")
+            logger.debug(f"{self.log_identity} Configured MQTT topics >>> state_topic={self[DiscoveryKeys.STATE_TOPIC]})")
         return base
 
     def publish_attributes(self, mqtt_client: Any, clean: bool = False, **kwargs) -> None:
         """Metrics sensors do not publish extra MQTT attributes."""
-        pass
 
 
 # =============================================================================
@@ -962,7 +963,7 @@ class ResetMetrics(WriteOnlySensor):
         self[DiscoveryKeys.COMMAND_TOPIC] = f"{base}/{suffix}/set"
         self[DiscoveryKeys.AVAILABILITY_TOPIC] = "sigenergy2mqtt/status"
         if self.debug_logging:
-            logging.debug(f"{self.log_identity} Configured MQTT topics >>> command_topic={self[DiscoveryKeys.COMMAND_TOPIC]})")
+            logger.debug(f"{self.log_identity} Configured MQTT topics >>> command_topic={self[DiscoveryKeys.COMMAND_TOPIC]})")
         return base
 
     def get_discovery_components(self) -> dict[str, dict[str, Any]]:
@@ -986,24 +987,23 @@ class ResetMetrics(WriteOnlySensor):
         components: dict[str, dict[str, Any]] = {self.unique_id: config}
 
         if self.debug_logging:
-            logging.debug(f"{self.log_identity} Discovered components={components}")
+            logger.debug(f"{self.log_identity} Discovered components={components}")
 
         return components
 
     def publish_attributes(self, mqtt_client: Any, clean: bool = False, **kwargs) -> None:
         """Metrics sensors do not publish extra MQTT attributes."""
-        pass
 
-    async def set_value(self, modbus_client: Any | None, mqtt_client: Any, value: float | int | str, source: str, handler: Any) -> bool:
+    async def set_value(self, modbus_client: Any | None, mqtt_client: Any, value: float | str, source: str, handler: Any) -> bool:
         """Reset metrics without touching Modbus."""
         self.force_publish = True
         if str(value) == self._PAYLOAD_PRESS:
-            logging.info("ResetMetrics: Resetting all metrics counters")
+            logger.info("ResetMetrics: Resetting all metrics counters")
             await Metrics.reset()
             return True
-        logging.warning(f"ResetMetrics: Ignored unexpected payload '{value}'")
+        logger.warning(f"ResetMetrics: Ignored unexpected payload '{value}'")
         return False
 
-    async def value_is_valid(self, modbus_client: Any | None, raw_value: float | int | str) -> bool:
+    async def value_is_valid(self, modbus_client: Any | None, raw_value: float | str) -> bool:
         """Accept the reset payload."""
         return str(raw_value) == self._PAYLOAD_PRESS

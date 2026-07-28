@@ -10,7 +10,8 @@ import logging
 import threading
 import time
 from dataclasses import dataclass
-from typing import Dict, Optional
+
+logger = logging.getLogger("sigenergy2mqtt")
 
 
 @dataclass
@@ -19,10 +20,10 @@ class MqttClientHealth:
 
     client_id: str
     connected: bool = False
-    last_connected_at: Optional[float] = None
-    last_disconnected_at: Optional[float] = None
-    last_message_at: Optional[float] = None
-    last_publish_ack_at: Optional[float] = None
+    last_connected_at: float | None = None
+    last_disconnected_at: float | None = None
+    last_message_at: float | None = None
+    last_publish_ack_at: float | None = None
     connect_count: int = 0
     disconnect_count: int = 0
 
@@ -47,7 +48,7 @@ class MqttHealthRegistry:
 
     def __init__(self) -> None:
         self._lock = threading.RLock()
-        self._clients: Dict[str, MqttClientHealth] = {}
+        self._clients: dict[str, MqttClientHealth] = {}
 
     def clear(self) -> None:
         """Clear the registry."""
@@ -93,7 +94,7 @@ class MqttHealthRegistry:
                 entry.last_message_at = time.monotonic()
                 # if last_message_at is later than last_connected_at, then the client must be connected
                 if not entry.connected and entry.last_message_at and entry.last_connected_at and entry.last_message_at > entry.last_connected_at:
-                    logging.info(f"MQTT client {client_id} currently marked as disconnected but message received so assume it IS connected")
+                    logger.info(f"MQTT client {client_id} currently marked as disconnected but message received so assume it IS connected")
                     entry.connected = True
                     entry.connect_count += 2
 
@@ -104,7 +105,7 @@ class MqttHealthRegistry:
                 entry.last_publish_ack_at = time.monotonic()
                 # if last_publish_ack_at is later than last_connected_at, then the client must be connected
                 if not entry.connected and entry.last_publish_ack_at and entry.last_connected_at and entry.last_publish_ack_at > entry.last_connected_at:
-                    logging.info(f"MQTT client {client_id} currently marked as disconnected but publish ACK received so assume it IS connected")
+                    logger.info(f"MQTT client {client_id} currently marked as disconnected but publish ACK received so assume it IS connected")
                     entry.connected = True
                     entry.connect_count += 2
 
@@ -112,7 +113,7 @@ class MqttHealthRegistry:
     # Read-only interface for external consumers
     # ------------------------------------------------------------------
 
-    def snapshot(self) -> Dict[str, MqttClientHealth]:
+    def snapshot(self) -> dict[str, MqttClientHealth]:
         """Return a shallow copy of all client states.
 
         Safe to iterate without holding any lock.  Each :class:`ClientHealth`
@@ -121,7 +122,7 @@ class MqttHealthRegistry:
         with self._lock:
             return {cid: copy.copy(h) for cid, h in self._clients.items()}
 
-    def is_connected(self, client_id: str) -> Optional[bool]:
+    def is_connected(self, client_id: str) -> bool | None:
         """Return the current connection state, or *None* if unknown."""
         with self._lock:
             entry = self._clients.get(client_id)

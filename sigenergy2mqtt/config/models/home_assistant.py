@@ -6,6 +6,8 @@ from pydantic import BaseModel, Field, model_validator
 
 from sigenergy2mqtt.config.models._base import _SUB
 
+logger = logging.getLogger("sigenergy2mqtt")
+
 
 class HomeAssistantConfig(BaseModel):
     model_config = _SUB
@@ -23,7 +25,7 @@ class HomeAssistantConfig(BaseModel):
     enabled_by_default: bool = Field(False, alias="sensors-enabled-by-default")
 
     @model_validator(mode="after")
-    def check_required_when_enabled(self) -> "HomeAssistantConfig":
+    def check_required_when_enabled(self) -> HomeAssistantConfig:
         if self.enabled:
             if not self.discovery_prefix:
                 raise ValueError("home-assistant.discovery-prefix must be provided")
@@ -34,12 +36,12 @@ class HomeAssistantConfig(BaseModel):
         return self
 
     @model_validator(mode="after")
-    def check_use_sigenergy_local_modbus_naming(self) -> "HomeAssistantConfig":
+    def check_use_sigenergy_local_modbus_naming(self) -> HomeAssistantConfig:
         if self.sigenergy_local_modbus_naming and self.entity_id_prefix != "sigen":
             from sigenergy2mqtt.config.config import ConfigurationError
 
             raise ConfigurationError("home-assistant.entity-id-prefix must be 'sigen' (default) when sigenergy-local-modbus-naming is true")
         if self.sigenergy_local_modbus_naming and self.use_simplified_topics:
-            logging.warning("home-assistant.use-simplified-topics=true is incompatible with sigenergy-local-modbus-naming=true; forcing use-simplified-topics=false")
+            logger.warning("home-assistant.use-simplified-topics=true is incompatible with sigenergy-local-modbus-naming=true; forcing use-simplified-topics=false")
             self.use_simplified_topics = False
         return self

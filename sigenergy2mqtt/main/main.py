@@ -63,6 +63,7 @@ _GRID_RESTORE_WATCH_TASKS: set[tuple[str, int, int]] = set()
 # ---------------------------------------------------------------------------
 # Logging
 # ---------------------------------------------------------------------------
+logger = logging.getLogger("sigenergy2mqtt")
 
 
 class _FramerSkipFilter(logging.Filter):
@@ -76,13 +77,12 @@ class _FramerSkipFilter(logging.Filter):
 
     def filter(self, record: logging.LogRecord) -> bool:
         msg = record.getMessage()
-        if "request ask for " in msg and "Skipping." in msg:
-            # Suppress unless every configured device has explicitly opted in
-            # to seeing these messages (log_skipped=True).  When no devices are
-            # configured yet (early startup), apply the default suppression.
-            if not active_config.modbus or any(not device.log_skipped for device in active_config.modbus):
-                Metrics.modbus_skipped_error()
-                return False
+        # Suppress unless every configured device has explicitly opted in
+        # to seeing these messages (log_skipped=True).  When no devices are
+        # configured yet (early startup), apply the default suppression.
+        if record.name == "pymodbus.logging" and "request ask for " in msg and "Skipping." in msg and (not active_config.modbus or any(not device.log_skipped for device in active_config.modbus)):
+            Metrics.modbus_skipped_error()
+            return False
         return True
 
 
@@ -100,7 +100,7 @@ def configure_logging() -> None:
     modbus_log_level = active_config.get_modbus_log_level()
     pymodbus_apply_logging_config(modbus_log_level)
 
-    logging.debug("Applying skipped error logging filter to pymodbus.logging logger (modbus.log_skipped evaluated at message time)")
+    logger.debug("Applying skipped error logging filter to pymodbus.logging logger (modbus.log_skipped evaluated at message time)")
     _framer_skip_filter = _FramerSkipFilter()
     # Attach to the exact logger pymodbus.Log uses, AND to each of its handlers.
     # The logger-level filter is the primary gate: it prevents callHandlers() from
@@ -160,12 +160,12 @@ async def get_state(sensor: Any, modbus_client: ModbusClient, device: str, defau
     """
     try:
         state = await sensor.get_state(raw=raw, republish=True, modbus_client=modbus_client, skip_failure_logging=True)  # Use republish=True to use last read, if one exists
-        logging.debug(
+        logger.debug(
             f"READING {get_modbus_url(modbus_client)} acquired {sensor.__class__.__name__} {'raw ' if raw else ''}{state=} to initialise {device} (idx={sensor.plant_index} id={sensor.device_address} addr={sensor.address})"
         )
     except (ValueError, TypeError, RuntimeError, OSError, MQTTException, SanityCheckException) as e:
         state = default_value
-        logging.debug(
+        logger.debug(
             f"FAILURE {get_modbus_url(modbus_client)} acquiring {sensor.__class__.__name__} to initialise {device} (idx={sensor.plant_index} id={sensor.device_address} addr={sensor.address}) -> {e} (returning {default_value=})"
         )
     return state
@@ -207,18 +207,18 @@ async def probe_protocol(modbus_client: ModbusClient) -> Protocol:
         (PlantBatterySoH.ADDRESS, 1, Protocol.V2_5),
     ]
     for register, count, version in candidates:
-        logging.debug(f"READING {get_modbus_url(modbus_client)} to probe V{version.value} register {register} ({count=} device_id={Constants.PLANT_DEVICE_ADDRESS})")
+        logger.debug(f"READING {get_modbus_url(modbus_client)} to probe V{version.value} register {register} ({count=} device_id={Constants.PLANT_DEVICE_ADDRESS})")
         try:
             rr = await read_registers(modbus_client, register, count=count, device_id=Constants.PLANT_DEVICE_ADDRESS, input_type=InputType.INPUT)
             if rr.isError():
-                logging.debug(f"FAILURE {get_modbus_url(modbus_client)} {register=} {count=} device_id={Constants.PLANT_DEVICE_ADDRESS} -> {rr.exception_code=}")
+                logger.debug(f"FAILURE {get_modbus_url(modbus_client)} {register=} {count=} device_id={Constants.PLANT_DEVICE_ADDRESS} -> {rr.exception_code=}")
             else:
-                logging.debug(f"SUCCESS {get_modbus_url(modbus_client)} {register=} {count=} device_id={Constants.PLANT_DEVICE_ADDRESS} -> OK protocol=V{version.value}")
+                logger.debug(f"SUCCESS {get_modbus_url(modbus_client)} {register=} {count=} device_id={Constants.PLANT_DEVICE_ADDRESS} -> OK protocol=V{version.value}")
                 return version
         except (ModbusException, TimeoutError, OSError, RuntimeError) as e:
-            logging.debug(f"FAILURE {get_modbus_url(modbus_client)} {register=} {count=} device_id={Constants.PLANT_DEVICE_ADDRESS} -> {e}")
+            logger.debug(f"FAILURE {get_modbus_url(modbus_client)} {register=} {count=} device_id={Constants.PLANT_DEVICE_ADDRESS} -> {e}")
 
-    logging.debug(f"DEFAULT {get_modbus_url(modbus_client)} to Sigenergy Modbus Protocol V1.8")
+    logger.debug(f"DEFAULT {get_modbus_url(modbus_client)} to Sigenergy Modbus Protocol V1.8")
     return Protocol.V1_8
 
 
@@ -227,12 +227,12 @@ async def probe_optional_interface(modbus_client: ModbusClient, register: int, i
     try:
         rr = await read_registers(modbus_client, register, count=1, device_id=Constants.PLANT_DEVICE_ADDRESS, input_type=InputType.HOLDING)
         if rr.isError():
-            logging.debug(f"FAILURE {get_modbus_url(modbus_client)} {register=} count=1 device_id={Constants.PLANT_DEVICE_ADDRESS} -> {rr.exception_code=} : NO {interface_name}")
+            logger.debug(f"FAILURE {get_modbus_url(modbus_client)} {register=} count=1 device_id={Constants.PLANT_DEVICE_ADDRESS} -> {rr.exception_code=} : NO {interface_name}")
             return False
-        logging.debug(f"SUCCESS {get_modbus_url(modbus_client)} {register=} count=1 device_id={Constants.PLANT_DEVICE_ADDRESS} -> HAS {interface_name}")
+        logger.debug(f"SUCCESS {get_modbus_url(modbus_client)} {register=} count=1 device_id={Constants.PLANT_DEVICE_ADDRESS} -> HAS {interface_name}")
         return True
     except (TimeoutError, ModbusException) as e:
-        logging.debug(f"FAILURE {get_modbus_url(modbus_client)} {register=} count=1 device_id={Constants.PLANT_DEVICE_ADDRESS} -> {e} : NO {interface_name}")
+        logger.debug(f"FAILURE {get_modbus_url(modbus_client)} {register=} count=1 device_id={Constants.PLANT_DEVICE_ADDRESS} -> {e} : NO {interface_name}")
         return False
 
 
@@ -297,7 +297,7 @@ async def make_pid(
 
     sn = await get_state(pid.get_sensor(PIDSerialNumber), modbus_client, "PID")
     if sn in seen_serial_numbers:
-        logging.info(f"PID {sn} has already been detected - ignoring (idx={plant_index} id={device_address})")
+        logger.info(f"PID {sn} has already been detected - ignoring (idx={plant_index} id={device_address})")
         return None
     seen_serial_numbers.add(str(sn))
 
@@ -312,7 +312,7 @@ async def make_plant_and_inverter(plant_index: int, modbus_client: ModbusClient,
     """
     sn = await get_state(InverterSerialNumber(plant_index, device_address), modbus_client, "inverter")
     if sn in seen_serial_numbers:
-        logging.info(f"Inverter {sn} has already been detected - ignoring (idx={plant_index} id={device_address})")
+        logger.info(f"Inverter {sn} has already been detected - ignoring (idx={plant_index} id={device_address})")
         return None, None
 
     mdl = await get_state(InverterModel(plant_index, device_address), modbus_client, "inverter")
@@ -322,10 +322,10 @@ async def make_plant_and_inverter(plant_index: int, modbus_client: ModbusClient,
     batteries = cast(int, await get_state(PACKBCUCount(plant_index, device_address), modbus_client, "plant", default_value=0))
     if batteries == 0:
         device_type = PVInverter()
-        logging.debug(f"Inverter {sn} has no batteries - assuming PVInverter (idx={plant_index} id={device_address})")
+        logger.debug(f"Inverter {sn} has no batteries - assuming PVInverter (idx={plant_index} id={device_address})")
     else:
         device_type = HybridInverter()
-        logging.debug(f"Inverter {sn} has {batteries} batter{'y' if batteries == 1 else 'ies'} - assuming HybridInverter (idx={plant_index} id={device_address})")
+        logger.debug(f"Inverter {sn} has {batteries} batter{'y' if batteries == 1 else 'ies'} - assuming HybridInverter (idx={plant_index} id={device_address})")
 
     device_type.has_independent_phase_power_control_interface = await probe_optional_interface(modbus_client, IndependentPhasePowerControl.ADDRESS, "Independent Phase Control Interface")
     device_type.has_grid_code_interface = await probe_optional_interface(modbus_client, GridCodeLVRT.ADDRESS, "Grid Code Interface")
@@ -333,23 +333,23 @@ async def make_plant_and_inverter(plant_index: int, modbus_client: ModbusClient,
     try:
         sys_tz_offset = await get_state(SystemTimeZone(plant_index), modbus_client, "plant", raw=True)
         if sys_tz_offset is None:
-            logging.warning(f"Plant {plant_index} System Timezone offset not available - defaulting to UTC")
+            logger.warning(f"Plant {plant_index} System Timezone offset not available - defaulting to UTC")
             sys_tz_offset = 0
         tz = timezone(timedelta(minutes=cast(int, sys_tz_offset)))
     except (ModbusException, TimeoutError, OSError, SanityCheckException) as e:
-        logging.error(f"Plant {plant_index} System Timezone offset read failed - defaulting to UTC ({e})")
+        logger.error(f"Plant {plant_index} System Timezone offset read failed - defaulting to UTC ({e})")
         tz = UTC
 
     if plant is None:
         firmware = FirmwareVersion(cast(str, await get_state(InverterFirmwareVersion(plant_index, device_address), modbus_client, "plant/inverter")))
         protocol = await probe_protocol(modbus_client)
         if protocol == Protocol.V2_8 and firmware.service_pack >= 114:
-            logging.debug(f"IGNORED {get_modbus_url(modbus_client)} detection of Protocol V{protocol.value} because Firmware {firmware} supports V2.9 features")
+            logger.debug(f"IGNORED {get_modbus_url(modbus_client)} detection of Protocol V{protocol.value} because Firmware {firmware} supports V2.9 features")
             protocol = Protocol.V2_9
-        logging.info(f"Interrogated {get_modbus_url(modbus_client)} and found Sigenergy Modbus Protocol V{protocol.value} ({ProtocolApplies(protocol)})")
+        logger.info(f"Interrogated {get_modbus_url(modbus_client)} and found Sigenergy Modbus Protocol V{protocol.value} ({ProtocolApplies(protocol)})")
 
         if protocol < Protocol.V2_8 and active_config.consumption != ConsumptionMethod.CALCULATED:
-            logging.warning(f"Resetting consumption configuration to {ConsumptionMethod.CALCULATED.name} because {active_config.consumption.name} is not supported on Modbus Protocol V{protocol.value}")
+            logger.warning(f"Resetting consumption configuration to {ConsumptionMethod.CALCULATED.name} because {active_config.consumption.name} is not supported on Modbus Protocol V{protocol.value}")
             active_config.consumption = ConsumptionMethod.CALCULATED
 
         ot = await get_state(OutputType(plant_index, device_address), modbus_client, "plant/inverter", raw=True)
@@ -392,7 +392,7 @@ async def make_pss(
 
     sn = await get_state(pss.get_sensor(PSSSerialNumber), modbus_client, "PSS")
     if sn in seen_serial_numbers:
-        logging.info(f"PSS {sn} has already been detected - ignoring (idx={plant_index} id={device_address})")
+        logger.info(f"PSS {sn} has already been detected - ignoring (idx={plant_index} id={device_address})")
         return None
     seen_serial_numbers.add(str(sn))
 
@@ -417,18 +417,18 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
 
     if devices and devices[0].registers.read_only is True and devices[0].registers.read_write is False and devices[0].registers.write_only is False:
         # registers is a single entity that is propagated to all devices (sigenergy2mqtt.config.merge.propagate_to_all_devices), so we only need to check the first device
-        logging.warning("Read-only mode enabled: No write operations can be performed.")
+        logger.warning("Read-only mode enabled: No write operations can be performed.")
 
     for plant_index, device in enumerate(devices):
         if not (device.registers.read_only or device.registers.read_write or device.registers.write_only):
-            logging.info(f"Ignored configured host modbus://{device.host}:{device.port} (Plant Index = {plant_index}): All registers are disabled (read-only=false read-write=false write-only=false)")
+            logger.info(f"Ignored configured host modbus://{device.host}:{device.port} (Plant Index = {plant_index}): All registers are disabled (read-only=false read-write=false write-only=false)")
             continue
         if device.pss or device.pid:
-            logging.info(
+            logger.info(
                 f"Creating devices from configured host modbus://{device.host}:{device.port} (Plant: {plant_index}, Device IDs: Inverter={device.inverters} AC Charger={device.ac_chargers} DC Charger={device.dc_chargers} PSS={device.pss} PID={device.pid})"
             )
         else:
-            logging.info(
+            logger.info(
                 f"Creating devices from configured host modbus://{device.host}:{device.port} (Plant: {plant_index}, Device IDs: Inverter={device.inverters} AC Charger={device.ac_chargers} DC Charger={device.dc_chargers})"
             )
 
@@ -437,10 +437,10 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
 
         async with modbus:
             if not modbus.connected:
-                logging.fatal(f"Failed to connect to modbus://{device.host}:{device.port}")
+                logger.fatal(f"Failed to connect to modbus://{device.host}:{device.port}")
                 sys.exit(1)
 
-            logging.info(f"Connected to modbus://{device.host}:{device.port} for register probing")
+            logger.info(f"Connected to modbus://{device.host}:{device.port} for register probing")
 
             plant: PowerPlant | None = None
             inverters: dict[int, str] = {}
@@ -459,7 +459,7 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
                         protocol_version = plant.protocol_version if protocol_version is None or protocol_version < plant.protocol_version else protocol_version
 
                     if not plant.has_battery:
-                        logging.debug(f"No battery modules attached to plant {device.host}:{device.port} - disabling charging/discharging statistics interface sensors")
+                        logger.debug(f"No battery modules attached to plant {device.host}:{device.port} - disabling charging/discharging statistics interface sensors")
                         for register in (SITotalChargedEnergy.ADDRESS, SITotalDischargedEnergy.ADDRESS):
                             si_sensor = plant.get_sensor(
                                 f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_{Constants.PLANT_DEVICE_ADDRESS}_{register}",
@@ -535,20 +535,20 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
                     if isinstance(i, Inverter) and i.plant_index == plant_index:
                         sensor = i.get_sensor(RatedActivePower, search_children=True)
                         if sensor is None:
-                            logging.warning(f"{i.log_identity} RatedActivePower sensor not found - cannot set bounds for Active/Reactive Power Fixed Adjustment Target Value sensors")
+                            logger.warning(f"{i.log_identity} RatedActivePower sensor not found - cannot set bounds for Active/Reactive Power Fixed Adjustment Target Value sensors")
                         else:
                             rap = await get_state(sensor, modbus, "inverter", raw=True)
                             if rap is not None:
                                 total_rated_active_power += cast(int, rap)
                             else:
-                                logging.warning(f"{i.log_identity} Failed to acquire RatedActivePower")
+                                logger.warning(f"{i.log_identity} Failed to acquire RatedActivePower")
                 if total_rated_active_power > 0:
                     for sensor in [s for s in plant.sensors.values() if isinstance(s, (ActivePowerFixedAdjustmentTargetValue, PhaseActivePowerFixedAdjustmentTargetValue))]:
                         sensor.apply_min_max(-total_rated_active_power, total_rated_active_power)
                     for sensor in [s for s in plant.sensors.values() if isinstance(s, (ReactivePowerFixedAdjustmentTargetValue, PhaseReactivePowerFixedAdjustmentTargetValue))]:
                         sensor.apply_min_max(-60 * total_rated_active_power, 60 * total_rated_active_power)
 
-            logging.info(f"Disconnecting from modbus://{device.host}:{device.port} - register probing complete")
+            logger.info(f"Disconnecting from modbus://{device.host}:{device.port} - register probing complete")
 
     return thread_config_registry.get_all(), protocol_version
 
@@ -584,7 +584,7 @@ def setup_services(configs: list[ThreadConfig], protocol_version: Protocol | Non
     if svc_thread_cfg.has_devices:
         configs.append(svc_thread_cfg)
     else:
-        logging.debug("No services configured - skipping service thread")
+        logger.debug("No services configured - skipping service thread")
 
     return configs
 
@@ -601,14 +601,14 @@ def setup_signals(configs: list[ThreadConfig]) -> None:
 
     def configure_for_restart(caught, frame):
         """Handle SIGUSR1 by suppressing HA and initiating a graceful shutdown."""
-        logging.info(f"Signal {caught} received - reconfiguring for restart")
+        logger.info(f"Signal {caught} received - reconfiguring for restart")
         # Suppress the HA offline availability message since we intend to restart.
         active_config.home_assistant.enabled = False
         exit_on_signal(caught, frame)
 
     def exit_on_signal(caught, frame):
         """Handle termination signals by setting all active thread configs to offline."""
-        logging.info(f"Signal {caught} received - Shutdown commenced")
+        logger.info(f"Signal {caught} received - Shutdown commenced")
         interrupt_mqtt_reconnection()
         logging.getLogger("asyncio").setLevel(logging.ERROR)
         for config in configs:
@@ -616,13 +616,13 @@ def setup_signals(configs: list[ThreadConfig]) -> None:
 
     def reload_on_signal(caught=None, frame=None):
         """Handle SIGHUP by reloading config/logging and requesting restart."""
-        logging.info("Signal SIGHUP received - Reloading configuration")
+        logger.info("Signal SIGHUP received - Reloading configuration")
 
         async def _reload_and_restart():
             try:
                 await active_config.reload()
             except (ValueError, OSError, RuntimeError) as e:
-                logging.error(f"SIGHUP reload failed: {e}")
+                logger.error(f"SIGHUP reload failed: {e}")
             finally:
                 restart_controller.request("signal SIGHUP")
 
@@ -630,7 +630,7 @@ def setup_signals(configs: list[ThreadConfig]) -> None:
             loop = asyncio.get_running_loop()
             loop.create_task(_reload_and_restart())
         except RuntimeError:
-            logging.error("No running event loop to handle SIGHUP reload")
+            logger.error("No running event loop to handle SIGHUP reload")
 
     try:
         loop = asyncio.get_running_loop()
@@ -661,7 +661,7 @@ async def _setup_ac_chargers(
     inverter_firmware_versions: Mapping[int, str] | None = None,
 ) -> int:
     if not device.ac_chargers:
-        logging.debug(f"No AC chargers defined for plant {device.host}:{device.port} - disabling AC charger statistics interface sensors")
+        logger.debug(f"No AC chargers defined for plant {device.host}:{device.port} - disabling AC charger statistics interface sensors")
         si_sensor = plant.get_sensor(
             f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_247_{SITotalEVACChargedEnergy.ADDRESS}",
             search_children=True,
@@ -671,7 +671,7 @@ async def _setup_ac_chargers(
         return sequence_start
 
     if protocol_version is not None and protocol_version < Protocol.V2_0:
-        logging.warning(f"AC Chargers are not supported on Sigenergy Modbus Protocol V{protocol_version.value} - skipping AC Charger device creation for modbus://{device.host}:{device.port}")
+        logger.warning(f"AC Chargers are not supported on Sigenergy Modbus Protocol V{protocol_version.value} - skipping AC Charger device creation for modbus://{device.host}:{device.port}")
         return sequence_start
 
     sequence_number = sequence_start
@@ -692,11 +692,11 @@ async def _setup_ac_chargers(
         except (TimeoutError, ModbusException, ValueError, OSError, RuntimeError) as exc:
             is_outage = await _is_grid_outage(plant_index, modbus_client)
             if is_outage is True:
-                logging.warning(f"AC charger at address {device_address} initialization failed during grid outage; skipping this startup pass so other devices continue: {exc}")
+                logger.warning(f"AC charger at address {device_address} initialization failed during grid outage; skipping this startup pass so other devices continue: {exc}")
                 skipped_due_to_outage = True
                 continue
 
-            logging.error(f"Failed to initialize AC charger at address {device_address}; skipping: {exc}")
+            logger.error(f"Failed to initialize AC charger at address {device_address}; skipping: {exc}")
 
     if skipped_due_to_outage:
         _schedule_restart_on_grid_restore(device, plant_index)
@@ -716,7 +716,7 @@ async def _setup_dc_chargers(
     inverter_firmware_versions: Mapping[int, str] | None = None,
 ) -> int:
     if not device.dc_chargers:
-        logging.debug(f"No DC chargers defined for plant {device.host}:{device.port} - disabling DC charger statistics interface sensors")
+        logger.debug(f"No DC chargers defined for plant {device.host}:{device.port} - disabling DC charger statistics interface sensors")
         for register in (SITotalEVDCChargedEnergy.ADDRESS, SITotalEVDCDischargedEnergy.ADDRESS):
             si_sensor = plant.get_sensor(
                 f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_{Constants.PLANT_DEVICE_ADDRESS}_{register}",
@@ -729,7 +729,7 @@ async def _setup_dc_chargers(
     sequence_number = sequence_start
     for device_address in device.dc_chargers:  # type: ignore[reportGeneralTypeIssues]
         if device_address not in inverters:
-            logging.warning(f"DC charger at address {device_address} has no associated inverter (inverter may have been skipped as a duplicate) - skipping DC charger")
+            logger.warning(f"DC charger at address {device_address} has no associated inverter (inverter may have been skipped as a duplicate) - skipping DC charger")
             continue
         sequence_number += 1
         charger = await make_dc_charger(
@@ -762,7 +762,7 @@ async def _setup_pid(
         return sequence_start
 
     if protocol_version is not None and protocol_version < Protocol.V2_9:
-        logging.warning(f"PID devices are not supported on Sigenergy Modbus Protocol V{protocol_version.value} - skipping PID device creation for modbus://{device.host}:{device.port}")
+        logger.warning(f"PID devices are not supported on Sigenergy Modbus Protocol V{protocol_version.value} - skipping PID device creation for modbus://{device.host}:{device.port}")
         return sequence_start
 
     sequence_number = sequence_start
@@ -785,11 +785,11 @@ async def _setup_pid(
         except (TimeoutError, ModbusException, ValueError, OSError, RuntimeError) as exc:
             is_outage = await _is_grid_outage(plant_index, modbus_client)
             if is_outage is True:
-                logging.warning(f"PID device at address {device_address} initialization failed during grid outage; skipping this startup pass so other devices continue: {exc}")
+                logger.warning(f"PID device at address {device_address} initialization failed during grid outage; skipping this startup pass so other devices continue: {exc}")
                 skipped_due_to_outage = True
                 continue
 
-            logging.error(f"Failed to initialize PID device at address {device_address}; skipping: {exc}")
+            logger.error(f"Failed to initialize PID device at address {device_address}; skipping: {exc}")
 
     if skipped_due_to_outage:
         _schedule_restart_on_grid_restore(device, plant_index)
@@ -813,7 +813,7 @@ async def _setup_pss(
         return sequence_start
 
     if protocol_version is not None and protocol_version < Protocol.V2_9:
-        logging.warning(f"PSS devices are not supported on Sigenergy Modbus Protocol V{protocol_version.value} - skipping PSS device creation for modbus://{device.host}:{device.port}")
+        logger.warning(f"PSS devices are not supported on Sigenergy Modbus Protocol V{protocol_version.value} - skipping PSS device creation for modbus://{device.host}:{device.port}")
         return sequence_start
 
     sequence_number = sequence_start
@@ -836,11 +836,11 @@ async def _setup_pss(
         except (TimeoutError, ModbusException, ValueError, OSError, RuntimeError) as exc:
             is_outage = await _is_grid_outage(plant_index, modbus_client)
             if is_outage is True:
-                logging.warning(f"PSS device at address {device_address} initialization failed during grid outage; skipping this startup pass so other devices continue: {exc}")
+                logger.warning(f"PSS device at address {device_address} initialization failed during grid outage; skipping this startup pass so other devices continue: {exc}")
                 skipped_due_to_outage = True
                 continue
 
-            logging.error(f"Failed to initialize PSS device at address {device_address}; skipping: {exc}")
+            logger.error(f"Failed to initialize PSS device at address {device_address}; skipping: {exc}")
 
     if skipped_due_to_outage:
         _schedule_restart_on_grid_restore(device, plant_index)
@@ -854,7 +854,7 @@ async def _is_grid_outage(plant_index: int, modbus_client: ModbusClient) -> bool
     try:
         raw_status = await grid_status.get_state(raw=True, modbus_client=modbus_client)
     except (TimeoutError, ModbusException) as exc:
-        logging.debug(f"Unable to probe GridStatus for outage detection: {exc}")
+        logger.debug(f"Unable to probe GridStatus for outage detection: {exc}")
         return None
 
     if raw_status is None:
@@ -863,7 +863,7 @@ async def _is_grid_outage(plant_index: int, modbus_client: ModbusClient) -> bool
     try:
         return int(raw_status) != 0
     except (TypeError, ValueError):
-        logging.debug(f"Unexpected GridStatus raw value for outage detection: {raw_status}")
+        logger.debug(f"Unexpected GridStatus raw value for outage detection: {raw_status}")
         return None
 
 
@@ -889,7 +889,7 @@ def _schedule_restart_on_grid_restore(device, plant_index: int) -> None:
     if key in _GRID_RESTORE_WATCH_TASKS:
         return
     _GRID_RESTORE_WATCH_TASKS.add(key)
-    logging.info(f"Scheduling grid-restore watcher for modbus://{device.host}:{device.port} plant {plant_index} due to outage-time AC charger skip")
+    logger.info(f"Scheduling grid-restore watcher for modbus://{device.host}:{device.port} plant {plant_index} due to outage-time AC charger skip")
     asyncio.create_task(_watch_grid_restore_and_request_restart(device.host, device.port, device.timeout, device.retries, plant_index))
 
 
@@ -907,14 +907,14 @@ async def _validate_modbus_connections() -> None:
     """
     for index, modbus in enumerate(active_config.modbus):
         if not modbus.host:
-            logging.warning(f"Unable to validate Modbus connection for device #{index}, host is not set")
+            logger.warning(f"Unable to validate Modbus connection for device #{index}, host is not set")
         else:
             client = ModbusClient(modbus.host, port=modbus.port, timeout=modbus.timeout, retries=modbus.retries)
             try:
                 await client.connect()
                 if not client.connected:
                     raise ConnectionError(f"Unable to connect to modbus://{modbus.host}:{modbus.port}")
-                logging.info(f"Validated Modbus connection to modbus://{modbus.host}:{modbus.port} (device #{index})")
+                logger.info(f"Validated Modbus connection to modbus://{modbus.host}:{modbus.port} (device #{index})")
             finally:
                 client.close()
 
@@ -944,12 +944,12 @@ def _validate_mqtt_connection(show_credentials: bool) -> None:
     url = f"mqtt://{active_config.mqtt.broker}:{active_config.mqtt.port}"
     try:
         if active_config.mqtt.anonymous:
-            logging.info(f"Validating MQTT connection to {url} anonymously")
+            logger.info(f"Validating MQTT connection to {url} anonymously")
         else:
             if show_credentials:
-                logging.info(f"Validating MQTT connection to {url} with username={active_config.mqtt.username!r} password={active_config.mqtt.password!r}")
+                logger.info(f"Validating MQTT connection to {url} with username={active_config.mqtt.username!r} password={active_config.mqtt.password!r}")
             else:
-                logging.info(f"Validating MQTT connection to {url} with username={active_config.mqtt.username!r} password='[REDACTED]'")
+                logger.info(f"Validating MQTT connection to {url} with username={active_config.mqtt.username!r} password='[REDACTED]'")
             client.username_pw_set(active_config.mqtt.username, active_config.mqtt.password)
 
         client.connect(active_config.mqtt.broker, port=active_config.mqtt.port, keepalive=active_config.mqtt.keepalive)
@@ -966,13 +966,13 @@ def _validate_mqtt_connection(show_credentials: bool) -> None:
         if not connected:
             raise TimeoutError("Timed out waiting for MQTT CONNACK")
 
-        logging.info(f"Validated MQTT connection/authentication to {url}")
+        logger.info(f"Validated MQTT connection/authentication to {url}")
     finally:
         try:
             client.disconnect()
             client.loop(timeout=0.1)
         except (OSError, MQTTException) as exc:
-            logging.warning(f"Error during MQTT disconnect: {exc}")
+            logger.warning(f"Error during MQTT disconnect: {exc}")
 
 
 def _validate_influxdb_connection(show_credentials: bool) -> None:
@@ -995,20 +995,20 @@ def _validate_influxdb_connection(show_credentials: bool) -> None:
     if active_config.influxdb.token and active_config.influxdb.org:
         headers = {"Authorization": f"Token {active_config.influxdb.token}"}
         if show_credentials:
-            logging.info(f"Validating InfluxDB v2 credentials for {base}: token={active_config.influxdb.token!r} org={active_config.influxdb.org!r}")
+            logger.info(f"Validating InfluxDB v2 credentials for {base}: token={active_config.influxdb.token!r} org={active_config.influxdb.org!r}")
         else:
-            logging.info(f"Validating InfluxDB v2 credentials for {base}: token='[REDACTED]' org={active_config.influxdb.org!r}")
+            logger.info(f"Validating InfluxDB v2 credentials for {base}: token='[REDACTED]' org={active_config.influxdb.org!r}")
         response = requests.get(f"{base}/api/v2/buckets", params={"org": active_config.influxdb.org, "limit": 1}, headers=headers, timeout=timeout)
     else:
         auth = (active_config.influxdb.username, active_config.influxdb.password)
         if show_credentials:
-            logging.info(f"Validating InfluxDB v1 credentials for {base}: username={active_config.influxdb.username!r} password={active_config.influxdb.password!r}")
+            logger.info(f"Validating InfluxDB v1 credentials for {base}: username={active_config.influxdb.username!r} password={active_config.influxdb.password!r}")
         else:
-            logging.info(f"Validating InfluxDB v1 credentials for {base}: username={active_config.influxdb.username!r} password='[REDACTED]'")
+            logger.info(f"Validating InfluxDB v1 credentials for {base}: username={active_config.influxdb.username!r} password='[REDACTED]'")
         response = requests.get(f"{base}/query", params={"q": "SHOW DATABASES"}, auth=auth, timeout=timeout)
 
     response.raise_for_status()
-    logging.info(f"Validated InfluxDB connection/authentication to {base}")
+    logger.info(f"Validated InfluxDB connection/authentication to {base}")
 
 
 def _validate_pvoutput_connection(show_credentials: bool) -> None:
@@ -1029,7 +1029,7 @@ def _validate_pvoutput_connection(show_credentials: bool) -> None:
         return
 
     if active_config.pvoutput.testing:
-        logging.info("Skipping PVOutput connection/authentication probe because pvoutput.testing is enabled")
+        logger.info("Skipping PVOutput connection/authentication probe because pvoutput.testing is enabled")
         return
 
     headers = {
@@ -1038,13 +1038,13 @@ def _validate_pvoutput_connection(show_credentials: bool) -> None:
         "X-Rate-Limit": "1",
     }
     if show_credentials:
-        logging.info(f"Validating PVOutput credentials with api_key={active_config.pvoutput.api_key!r} system_id={active_config.pvoutput.system_id!r}")
+        logger.info(f"Validating PVOutput credentials with api_key={active_config.pvoutput.api_key!r} system_id={active_config.pvoutput.system_id!r}")
     else:
-        logging.info(f"Validating PVOutput credentials with api_key='[REDACTED]' system_id={active_config.pvoutput.system_id!r}")
+        logger.info(f"Validating PVOutput credentials with api_key='[REDACTED]' system_id={active_config.pvoutput.system_id!r}")
 
     response = requests.get("https://pvoutput.org/service/r2/getsystem.jsp?donations=1", headers=headers, timeout=10)
     response.raise_for_status()
-    logging.info("Validated PVOutput connection/authentication")
+    logger.info("Validated PVOutput connection/authentication")
 
 
 async def validate_connections(show_credentials: bool = False) -> None:
@@ -1095,7 +1095,7 @@ def _validation_sensor_lookup(device: Device) -> dict[str, Any]:
 
 
 def _log_illegal_data_address(sensor: Any) -> None:
-    logging.debug(f"{sensor.log_identity} not supported on this device/firmware: ILLEGAL DATA ADDRESS {sensor.address} (count={sensor.count} type={sensor.input_type} protocol=V{sensor.protocol_version.value})")
+    logger.debug(f"{sensor.log_identity} not supported on this device/firmware: ILLEGAL DATA ADDRESS {sensor.address} (count={sensor.count} type={sensor.input_type} protocol=V{sensor.protocol_version.value})")
 
 
 def _is_valid_validation_cache_payload(value: str) -> bool:
@@ -1146,13 +1146,13 @@ async def validate_publishable_sensors(modbus_client: ModbusClient, device: Devi
     cache_key = _validation_cache_key(device)
     cached = await state_store.load(Category.CONFIG, cache_key, validator=_is_valid_validation_cache_payload)
     if cached is None:
-        logging.debug(f"{device.log_identity} ILLEGAL DATA ADDRESS errors cache not found ({cache_key=})")
+        logger.debug(f"{device.log_identity} ILLEGAL DATA ADDRESS errors cache not found ({cache_key=})")
     else:
         payload = json.loads(cached)
         if payload["inverter_firmware_hash"] == firmware_hash:
             if payload["modbus_config_hash"] == modbus_config_hash:
                 cached_illegal_sensor_unique_ids = payload["illegal_sensor_unique_ids"]
-                logging.debug(f"{device.log_identity} Applying {len(cached_illegal_sensor_unique_ids)} sensor{'s' if len(cached_illegal_sensor_unique_ids) != 1 else ''} ILLEGAL DATA ADDRESS errors from cache")
+                logger.debug(f"{device.log_identity} Applying {len(cached_illegal_sensor_unique_ids)} sensor{'s' if len(cached_illegal_sensor_unique_ids) != 1 else ''} ILLEGAL DATA ADDRESS errors from cache")
                 sensor_lookup = _validation_sensor_lookup(device)
                 for sensor_unique_id in cached_illegal_sensor_unique_ids:
                     sensor = sensor_lookup.get(sensor_unique_id)
@@ -1161,11 +1161,11 @@ async def validate_publishable_sensors(modbus_client: ModbusClient, device: Devi
                         _log_illegal_data_address(sensor)
                 return
             else:
-                logging.debug(f"{device.log_identity} ILLEGAL DATA ADDRESS errors cache modbus config hash mismatch (cached={payload['modbus_config_hash']} current={modbus_config_hash})")
+                logger.debug(f"{device.log_identity} ILLEGAL DATA ADDRESS errors cache modbus config hash mismatch (cached={payload['modbus_config_hash']} current={modbus_config_hash})")
         else:
-            logging.debug(f"{device.log_identity} ILLEGAL DATA ADDRESS errors cache inverter firmware hash mismatch (cached={payload['inverter_firmware_hash']} current={firmware_hash})")
+            logger.debug(f"{device.log_identity} ILLEGAL DATA ADDRESS errors cache inverter firmware hash mismatch (cached={payload['inverter_firmware_hash']} current={firmware_hash})")
 
-    logging.debug(f"{device.log_identity} Validating {len(sensors_to_test)} sensor{'s' if len(sensors_to_test) != 1 else ''} addresses")
+    logger.debug(f"{device.log_identity} Validating {len(sensors_to_test)} sensor{'s' if len(sensors_to_test) != 1 else ''} addresses")
 
     illegal_sensor_unique_ids: list[str] = []
     scan_completed = True
@@ -1183,12 +1183,12 @@ async def validate_publishable_sensors(modbus_client: ModbusClient, device: Devi
                 scan_completed = False
                 # Log but don't suppress sensor on transient errors (only explicit 0x02)
                 if "0x02 ILLEGAL DATA ADDRESS" in str(e):
-                    logging.debug(f"{s.log_identity}: Validation detected illegal address: {e}")
+                    logger.debug(f"{s.log_identity}: Validation detected illegal address: {e}")
                 else:
-                    logging.debug(f"{s.log_identity}: Validation read failed: {e}")
+                    logger.debug(f"{s.log_identity}: Validation read failed: {e}")
 
     if not scan_completed:
-        logging.debug(f"{device.log_identity} Validation scan not cached because one or more sensor reads failed")
+        logger.debug(f"{device.log_identity} Validation scan not cached because one or more sensor reads failed")
         return
 
     payload = {
@@ -1255,9 +1255,9 @@ async def async_main() -> None:
         state_store.shutdown()
 
         if not restart_controller.requested:
-            logging.info(f"Shutdown of Release {active_config.version} completed")
+            logger.info(f"Shutdown of Release {active_config.version} completed")
             return
         else:
             await active_config.reload()
 
-        logging.info("Restarting runtime")
+        logger.info("Restarting runtime")

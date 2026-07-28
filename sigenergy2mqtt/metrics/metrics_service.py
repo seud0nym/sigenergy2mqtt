@@ -18,6 +18,8 @@ from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.metrics import Metrics
 from sigenergy2mqtt.modbus import ModbusClient
 
+logger = logging.getLogger("sigenergy2mqtt")
+
 
 class MetricsService(Device):
     """
@@ -93,10 +95,10 @@ class MetricsService(Device):
         service start rather than the earlier module-load time.
         """
         Metrics.commence()
-        logging.info(f"{self.log_identity} Commenced")
+        logger.info(f"{self.log_identity} Commenced")
         mqtt_client.publish("sigenergy2mqtt/status", "online", qos=0, retain=True)
 
     def on_completion(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client) -> None:
         """Mark the service offline on shutdown."""
-        logging.info(f"{self.log_identity} Service Completed: Flagged as offline ({self.online=})")
+        logger.info(f"{self.log_identity} Service Completed: Flagged as offline ({self.online=})")
         mqtt_client.publish("sigenergy2mqtt/status", "offline", qos=0, retain=True)

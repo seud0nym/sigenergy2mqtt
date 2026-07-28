@@ -18,6 +18,8 @@ from typing import Any, Final
 
 from ruamel.yaml import YAML, YAMLError
 
+logger = logging.getLogger("sigenergy2mqtt")
+
 DEFAULT_LANGUAGE: Final[str] = "en"
 
 # Languages whose translation files use a script suffix (e.g. zh-Hans.yaml).
@@ -134,7 +136,7 @@ class Translator:
         value = self._get_nested(self._translations, parts)
         if value is not None:
             if not isinstance(value, (str, int, float, bool)):
-                logging.warning(f"Translation key {key!r} resolved to a non-scalar ({type(value).__name__}); falling back to English.")
+                logger.warning(f"Translation key {key!r} resolved to a non-scalar ({type(value).__name__}); falling back to English.")
             else:
                 return str(value), self._language, True
 
@@ -142,7 +144,7 @@ class Translator:
         if value is not None:
             if isinstance(value, (str, int, float, bool)):
                 return str(value), DEFAULT_LANGUAGE, False
-            logging.warning(f"Fallback translation key {key!r} also resolved to a non-scalar ({type(value).__name__}).")
+            logger.warning(f"Fallback translation key {key!r} also resolved to a non-scalar ({type(value).__name__}).")
 
         return default if default is not None else key, DEFAULT_LANGUAGE, False
 
@@ -180,7 +182,7 @@ class Translator:
         file_path = self._translations_dir / f"{resolved}.yaml"
         if not file_path.exists():
             if language != DEFAULT_LANGUAGE:
-                logging.warning(f"Translation file not found: {file_path}")
+                logger.warning(f"Translation file not found: {file_path}")
             return {}
 
         try:
@@ -189,7 +191,7 @@ class Translator:
                 self._cache[language] = data
                 return data
         except (YAMLError, OSError) as exc:
-            logging.error(f"Failed to load translation file {file_path}: {exc}")
+            logger.error(f"Failed to load translation file {file_path}: {exc}")
             return {}
 
     @staticmethod
@@ -248,11 +250,11 @@ def _t(key: str, default: str | None = None, debugging: bool = False, **kwargs) 
 
     if not translated:
         if debugging:
-            logging.debug(f"{key} : default={default!r} translation={translation!r} [{language}]")
+            logger.debug(f"{key} : default={default!r} translation={translation!r} [{language}]")
         if default is None:
             # Only warn when there is no intentional fallback; callers that
             # supply a default are using it as the expected display value.
-            logging.warning(f"No translation found for key {key!r}.")
+            logger.warning(f"No translation found for key {key!r}.")
 
     try:
         result = translation
@@ -260,7 +262,7 @@ def _t(key: str, default: str | None = None, debugging: bool = False, **kwargs) 
             result = result.replace(f"{{{k}}}", str(v))
         return result
     except AttributeError as exc:
-        logging.warning(f"Translation formatting failed for key {key!r}: {exc}")
+        logger.warning(f"Translation formatting failed for key {key!r}: {exc}")
         return translation
 
 

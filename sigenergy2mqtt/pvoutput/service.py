@@ -17,6 +17,8 @@ from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.metrics import Metrics
 
+logger = logging.getLogger("sigenergy2mqtt")
+
 
 class Service(Device):
     """Common PVOutput device behaviour for API timing and uploads."""
@@ -242,14 +244,14 @@ class Service(Device):
                 try:
                     await asyncio.sleep(reset)  # pyright: ignore[reportPossiblyUnboundVariable]  # pyrefly: ignore
                 except asyncio.CancelledError:
-                    logging.debug(f"{self.log_identity} reset sleep interrupted")
+                    logger.debug(f"{self.log_identity} reset sleep interrupted")
                     break
             else:
                 self.logger.info(f"{self.log_identity} Retrying in 10 seconds")
                 try:
                     await asyncio.sleep(10)
                 except asyncio.CancelledError:
-                    logging.debug(f"{self.log_identity} retry sleep interrupted")
+                    logger.debug(f"{self.log_identity} retry sleep interrupted")
                     break
         else:
             self.logger.error(f"{self.log_identity} Failed to upload to {url} after {attempts} attempts")

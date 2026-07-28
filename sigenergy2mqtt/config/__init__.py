@@ -28,6 +28,8 @@ __all__ = [
     "initialize_async",
 ]
 
+logger = logging.getLogger("sigenergy2mqtt")
+
 
 # ---------------------------------------------------------------------------
 # Internal helpers
@@ -39,7 +41,7 @@ def _apply_cli_to_env(variable: str, value: str | list[str]) -> None:
     Set an environment variable from a CLI argument.
     """
     os.environ[variable] = ",".join(x for x in value) if isinstance(value, list) else str(value)
-    logging.debug(f"Environment variable '{variable}' set from CLI: value='{'[REDACTED]' if 'PASSWORD' in os.environ[variable] or 'API_KEY' in os.environ[variable] else os.environ[variable]}'")
+    logger.debug(f"Environment variable '{variable}' set from CLI: value='{'[REDACTED]' if 'PASSWORD' in os.environ[variable] or 'API_KEY' in os.environ[variable] else os.environ[variable]}'")
 
 
 def _is_arg_explicitly_set(value) -> bool:
@@ -50,13 +52,7 @@ def _is_arg_explicitly_set(value) -> bool:
     argparse stores False for unset boolean flags and None for omitted
     optional arguments — neither should override a config value.
     """
-    if value is None:
-        return False
-    if isinstance(value, bool):
-        return value is True
-    if isinstance(value, str) and value.lower() in ("false", ""):
-        return False
-    return True
+    return value is not None and not (value is False or (isinstance(value, str) and value.lower() in ("false", "")))
 
 
 def _promote_cli_to_env(args) -> None:
@@ -189,5 +185,5 @@ async def initialize_async() -> None:
     if path:
         await active_config.load(path)
     else:
-        logging.debug("No config file found; using environment variables and defaults.")
+        logger.debug("No config file found; using environment variables and defaults.")
         await active_config.reload()

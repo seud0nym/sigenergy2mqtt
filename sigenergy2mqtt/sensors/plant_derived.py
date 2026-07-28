@@ -29,6 +29,8 @@ from .plant_read_only import (
 )
 from .plant_read_write import ESSBackupSOC, ESSChargeCutOffSOC, ESSDischargeCutOffSOC
 
+logger = logging.getLogger("sigenergy2mqtt")
+
 
 class BatteryChargingPower(DerivedSensor, HybridInverter):
     def __init__(self, plant_index: int, battery_power: BatteryPower):
@@ -57,7 +59,7 @@ class BatteryChargingPower(DerivedSensor, HybridInverter):
 
     def update_from_source_sensor(self, sensor: Sensor) -> bool:
         if not isinstance(sensor, BatteryPower):
-            logging.warning(f"{self.log_identity} Attempt to call update_from_source_sensor from {sensor.log_identity}")
+            logger.warning(f"{self.log_identity} Attempt to call update_from_source_sensor from {sensor.log_identity}")
             return False
         if sensor.latest_raw_state is None:
             return False
@@ -95,7 +97,7 @@ class BatteryDischargingPower(DerivedSensor, HybridInverter):
 
     def update_from_source_sensor(self, sensor: Sensor) -> bool:
         if not isinstance(sensor, BatteryPower):
-            logging.warning(f"{self.log_identity} Attempt to call update_from_source_sensor from {sensor.log_identity}")
+            logger.warning(f"{self.log_identity} Attempt to call update_from_source_sensor from {sensor.log_identity}")
             return False
         if sensor.latest_raw_state is None:
             return False
@@ -196,7 +198,7 @@ class BatteryStatus(DerivedSensor, HybridInverter):
                 self._discharge_soc = float(sensor.latest_raw_state) if sensor.latest_raw_state is not None else None
                 return False  # don't update state from DischargeCutOffSOC, only from BatteryPower
             case _:
-                logging.warning(f"{self.log_identity} Attempt to call update_from_source_sensor from {sensor.log_identity}")
+                logger.warning(f"{self.log_identity} Attempt to call update_from_source_sensor from {sensor.log_identity}")
                 return False
 
 
@@ -226,7 +228,7 @@ class GridSensorExportPower(DerivedSensor, HybridInverter, PVInverter):
 
     def update_from_source_sensor(self, sensor: Sensor) -> bool:
         if not isinstance(sensor, GridSensorActivePower):
-            logging.warning(f"{self.log_identity} Attempt to call update_from_source_sensor from {sensor.log_identity}")
+            logger.warning(f"{self.log_identity} Attempt to call update_from_source_sensor from {sensor.log_identity}")
             return False
         if sensor.latest_raw_state is None:
             return False
@@ -263,7 +265,7 @@ class GridSensorImportPower(DerivedSensor, HybridInverter, PVInverter):
 
     def update_from_source_sensor(self, sensor: Sensor) -> bool:
         if not isinstance(sensor, GridSensorActivePower):
-            logging.warning(f"{self.log_identity} Attempt to call update_from_source_sensor from {sensor.log_identity}")
+            logger.warning(f"{self.log_identity} Attempt to call update_from_source_sensor from {sensor.log_identity}")
             return False
         if sensor.latest_raw_state is None:
             return False
@@ -308,10 +310,10 @@ class TotalPVPower(DerivedSensor, HybridInverter, PVInverter):
         if not republish:
             if any(value.state is None for value in self._sources.values()):
                 if self.debug_logging:
-                    logging.debug(f"{self.log_identity} Publishing SKIPPED - {self._sources=}")
+                    logger.debug(f"{self.log_identity} Publishing SKIPPED - {self._sources=}")
                 return False  # until all values populated, can't do calculation
             if self.debug_logging:
-                logging.debug(f"{self.log_identity} Publishing READY   - {self._sources=}")
+                logger.debug(f"{self.log_identity} Publishing READY   - {self._sources=}")
         await super().publish(mqtt_client, modbus_client, republish=republish)
         if not republish:
             # reset internal values to missing for next calculation
@@ -322,10 +324,10 @@ class TotalPVPower(DerivedSensor, HybridInverter, PVInverter):
     def update_from_source_sensor(self, sensor: Sensor) -> bool:
         source = sensor.unique_id
         if not isinstance(sensor, PVPowerSensor):
-            logging.warning(f"{self.log_identity} IGNORED attempt to call update_from_source_sensor from {sensor.log_identity} - not PVPowerSensor instance")
+            logger.warning(f"{self.log_identity} IGNORED attempt to call update_from_source_sensor from {sensor.log_identity} - not PVPowerSensor instance")
             return False
         elif source not in self._sources:
-            logging.warning(f"{self.log_identity} IGNORED attempt to call update_from_source_sensor from '{source}' ({sensor.__class__.__name__}) - sensor is not registered")
+            logger.warning(f"{self.log_identity} IGNORED attempt to call update_from_source_sensor from '{source}' ({sensor.__class__.__name__}) - sensor is not registered")
             return False
         raw_state = getattr(sensor, "latest_raw_state", None)
         if raw_state is None:
@@ -333,7 +335,7 @@ class TotalPVPower(DerivedSensor, HybridInverter, PVInverter):
         self._sources[source].state = float(raw_state)
         self._sources[source].last_update = time.time()
         if self.debug_logging:
-            logging.debug(f"{self.log_identity} Updated from source '{source}' - {self._sources=}")
+            logger.debug(f"{self.log_identity} Updated from source '{source}' - {self._sources=}")
         if any(value.state is None for value in self._sources.values()):
             return False  # until all values populated, can't do calculation
         self.set_latest_state(sum([value.state for value in self._sources.values() if value.state is not None]))
@@ -415,7 +417,7 @@ class PlantConsumedPower(CrossDeviceDerivedSensor, HybridInverter, PVInverter):
                         sources_to_bind.append(sensor)
                         self._sources[sensor.unique_id] = PlantConsumedPower.Value(gain=sensor.gain, negate=True, interval=sensor.scan_interval, requires_grid=True)
                         if self.debug_logging:
-                            logging.debug(f"{self.log_identity} Added cross-device sensor {sensor.unique_id} as source")
+                            logger.debug(f"{self.log_identity} Added cross-device sensor {sensor.unique_id} as source")
 
         return super().finalise_binding(plant_index, *sources_to_bind)
 
@@ -424,10 +426,10 @@ class PlantConsumedPower(CrossDeviceDerivedSensor, HybridInverter, PVInverter):
             return False
         consumed_power = sum([value.state for value in self._sources.values() if value.state is not None and (not value.requires_grid or (value.requires_grid and self._grid_status == 0))])
         if consumed_power < 0:
-            logging.debug(f"{self.log_identity} consumed_power ({consumed_power}) is NEGATIVE! {self._sources} Adjusting to zero...")
+            logger.debug(f"{self.log_identity} consumed_power ({consumed_power}) is NEGATIVE! {self._sources} Adjusting to zero...")
             consumed_power = 0
         if self.debug_logging:
-            logging.debug(f"{self.log_identity} Publishing READY   - {self._sources}")
+            logger.debug(f"{self.log_identity} Publishing READY   - {self._sources}")
         self.set_latest_state(consumed_power)
         return True
 
@@ -450,7 +452,7 @@ class PlantConsumedPower(CrossDeviceDerivedSensor, HybridInverter, PVInverter):
         if not republish:
             if not self._set_latest_consumption():
                 if self.debug_logging:
-                    logging.debug(f"{self.log_identity} Publishing SKIPPED - {self._sources}")
+                    logger.debug(f"{self.log_identity} Publishing SKIPPED - {self._sources}")
                 return False  # until all values populated, can't do calculation
             republish = True  # if we got here, we have a valid value to publish
         await super().publish(mqtt_client, modbus_client, republish=republish)
@@ -479,14 +481,14 @@ class PlantConsumedPower(CrossDeviceDerivedSensor, HybridInverter, PVInverter):
                 if grid != self._grid_status:
                     if self._grid_status is not None:
                         if grid == 0:
-                            logging.info(f"{self.log_identity} Grid restored - including AC/DC charger power in consumption calculations")
+                            logger.info(f"{self.log_identity} Grid restored - including AC/DC charger power in consumption calculations")
                         else:
-                            logging.warning(f"{self.log_identity} Off Grid detected - ignoring AC/DC charger power in consumption calculations")
+                            logger.warning(f"{self.log_identity} Off Grid detected - ignoring AC/DC charger power in consumption calculations")
                     self._grid_status = grid
         elif isinstance(sensor, (ACChargerChargingPower, DCChargerOutputPower)):
             self._update_source(sensor.unique_id, raw)
         else:
-            logging.warning(f"{self.log_identity} Attempt to call update_from_source_sensor from {sensor.log_identity}")
+            logger.warning(f"{self.log_identity} Attempt to call update_from_source_sensor from {sensor.log_identity}")
             return False
         return self._set_latest_consumption()
 
@@ -557,10 +559,10 @@ class TotalLifetimePVEnergy(UnpublishResetSensorMixin, DerivedSensor, HybridInve
     async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool = False) -> bool:
         if self.plant_lifetime_pv_energy is None or self.plant_3rd_party_lifetime_pv_energy is None:
             if self.debug_logging:
-                logging.debug(f"{self.log_identity} Publishing SKIPPED - plant_lifetime_pv_energy={self.plant_lifetime_pv_energy} plant_3rd_party_lifetime_pv_energy={self.plant_3rd_party_lifetime_pv_energy}")
+                logger.debug(f"{self.log_identity} Publishing SKIPPED - plant_lifetime_pv_energy={self.plant_lifetime_pv_energy} plant_3rd_party_lifetime_pv_energy={self.plant_3rd_party_lifetime_pv_energy}")
             return False  # until all values populated, can't do calculation
         if self.debug_logging:
-            logging.debug(f"{self.log_identity} Publishing READY   - plant_lifetime_pv_energy={self.plant_lifetime_pv_energy} plant_3rd_party_lifetime_pv_energy={self.plant_3rd_party_lifetime_pv_energy}")
+            logger.debug(f"{self.log_identity} Publishing READY   - plant_lifetime_pv_energy={self.plant_lifetime_pv_energy} plant_3rd_party_lifetime_pv_energy={self.plant_3rd_party_lifetime_pv_energy}")
         await super().publish(mqtt_client, modbus_client, republish=republish)
         # reset internal values to missing for next calculation
         self.plant_lifetime_pv_energy = None
@@ -575,7 +577,7 @@ class TotalLifetimePVEnergy(UnpublishResetSensorMixin, DerivedSensor, HybridInve
         elif isinstance(sensor, ThirdPartyLifetimePVEnergy):
             self.plant_3rd_party_lifetime_pv_energy = float(sensor.latest_raw_state)
         else:
-            logging.warning(f"{self.log_identity} Attempt to call update_from_source_sensor from {sensor.log_identity}")
+            logger.warning(f"{self.log_identity} Attempt to call update_from_source_sensor from {sensor.log_identity}")
             return False
         if self.plant_lifetime_pv_energy is None or self.plant_3rd_party_lifetime_pv_energy is None:
             return False  # until all values populated, can't do calculation
@@ -694,7 +696,7 @@ class PlantSelfConsumedPower(CrossDeviceDerivedSensor, HybridInverter):
                     sources.append(sensor)
 
         if not sources:
-            logging.warning(f"{self.log_identity} no publishable InverterSelfConsumedPower sensors found - PlantSelfConsumedPower will not be published")
+            logger.warning(f"{self.log_identity} no publishable InverterSelfConsumedPower sensors found - PlantSelfConsumedPower will not be published")
             return False
 
         self._values = {s.object_id: None for s in sources}
@@ -708,10 +710,10 @@ class PlantSelfConsumedPower(CrossDeviceDerivedSensor, HybridInverter):
     async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool = False) -> bool:
         if any(v is None for v in self._values.values()):
             if self.debug_logging:
-                logging.debug(f"{self.log_identity} Publishing SKIPPED - values={self._values}")
+                logger.debug(f"{self.log_identity} Publishing SKIPPED - values={self._values}")
             return False  # until all values populated, can't do calculation
         if self.debug_logging:
-            logging.debug(f"{self.log_identity} Publishing READY   - values={self._values}")
+            logger.debug(f"{self.log_identity} Publishing READY   - values={self._values}")
         await super().publish(mqtt_client, modbus_client, republish=republish)
         # reset internal values to missing for next calculation
         for k in self._values:
@@ -724,13 +726,13 @@ class PlantSelfConsumedPower(CrossDeviceDerivedSensor, HybridInverter):
         if isinstance(sensor, InverterSelfConsumedPower):
             self._values[sensor.object_id] = int(sensor.latest_raw_state)
         else:
-            logging.warning(f"{self.log_identity} Attempt to call update_from_source_sensor from {sensor.log_identity}")
+            logger.warning(f"{self.log_identity} Attempt to call update_from_source_sensor from {sensor.log_identity}")
             return False
         if any(v is None for v in self._values.values()):
             return False  # until all values populated, can't do calculation
         state = sum([v for v in self._values.values() if v is not None])
         if self.debug_logging:
-            logging.debug(f"{self.log_identity} values={self._values} state={state}")
+            logger.debug(f"{self.log_identity} values={self._values} state={state}")
         self.set_latest_state(state)
         return True
 

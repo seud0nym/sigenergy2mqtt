@@ -41,7 +41,7 @@ from .base import (
     TimestampSensor,
 )
 
-# 5.3 Hybrid inverter running information address definition (read-only register)
+logger = logging.getLogger("sigenergy2mqtt")
 
 
 class InverterModel(ReadOnlySensor, HybridInverter, PVInverter):
@@ -123,7 +123,7 @@ class InverterFirmwareVersion(ReadOnlySensor, HybridInverter, PVInverter):
         if value is not None:
             device = getattr(self, "parent_device", None)
             if device and device["hw"] != value:
-                logging.info(f"{device.log_identity} firmware change detected: {device['hw']} -> {value}")
+                logger.info(f"{device.log_identity} firmware change detected: {device['hw']} -> {value}")
                 try:
                     previous_version = FirmwareVersion(device["hw"])
                     current_version = FirmwareVersion(cast(str, value))
@@ -132,7 +132,7 @@ class InverterFirmwareVersion(ReadOnlySensor, HybridInverter, PVInverter):
 
                         restart_controller.request(f"firmware service pack change on inverter {device.device_address}")
                 except ValueError:
-                    logging.debug(f"Unable to parse firmware versions for restart decision: old={device['hw']} new={value}")
+                    logger.debug(f"Unable to parse firmware versions for restart decision: old={device['hw']} new={value}")
                 device["hw"] = value
         return value
 
@@ -1362,7 +1362,7 @@ class OutputType(ReadOnlySensor, HybridInverter, PVInverter):
         self.sanity_check.max_raw = len(cast(list[str], self[DiscoveryKeys.OPTIONS])) - 1
 
     @classmethod
-    def to_phases(cls, output_type: str | float | int | None) -> int:
+    def to_phases(cls, output_type: str | float | None) -> int:
         match output_type:
             case 0 | "L/N":
                 return 1
@@ -1530,13 +1530,13 @@ class PowerFactor(ReadOnlySensor, HybridInverter, PVInverter):
         except SanityCheckException as e:
             if self._active_power.publishable and self._reactive_power.publishable and (self._active_power.latest_raw_state is None or self._reactive_power.latest_raw_state is None):
                 if self.debug_logging:
-                    logging.debug(
+                    logger.debug(
                         f"{self.log_identity} IGNORED {e} and unable to calculate actual power factor because active_power={self._active_power.latest_raw_state} and reactive_power={self._reactive_power.latest_raw_state}"
                     )
                 return None
-            raise e
+            raise
 
-    def set_state(self, state: int | float | str | list[bool] | list[int] | list[float]) -> None:
+    def set_state(self, state: float | str | list[bool] | list[int] | list[float]) -> None:
         try:
             super().set_state(state)
         except SanityCheckException as e:
@@ -1549,18 +1549,18 @@ class PowerFactor(ReadOnlySensor, HybridInverter, PVInverter):
                     if self.debug_logging:
                         active_power_time = cast(float, self._active_power.latest_time)
                         reactive_power_time = cast(float, self._reactive_power.latest_time)
-                        logging.debug(
+                        logger.debug(
                             f"{self.log_identity} Using calculated {power_factor=} from active_power={active_power} @ {time.strftime('%H:%M:%S', time.localtime(active_power_time))} reactive_power={reactive_power} @ {time.strftime('%H:%M:%S', time.localtime(reactive_power_time))} -> {apparent_power=} because {e}"
                         )
                     super().set_state(power_factor)
                     return
                 elif self.debug_logging:
-                    logging.debug(f"{self.log_identity} {e} but unable to calculate actual power factor because active_power={active_power} and reactive_power={reactive_power}")
+                    logger.debug(f"{self.log_identity} {e} but unable to calculate actual power factor because active_power={active_power} and reactive_power={reactive_power}")
             elif self.debug_logging:
-                logging.debug(
+                logger.debug(
                     f"{self.log_identity} {e} but unable to calculate actual power factor because active_power.publishable={self._active_power.publishable} and reactive_power.publishable={self._reactive_power.publishable}"
                 )
-            raise e
+            raise
 
 
 class PACKBCUCount(ReadOnlySensor, HybridInverter):
@@ -1782,7 +1782,7 @@ class ShutdownTime(TimestampSensor, HybridInverter, PVInverter):
             protocol_version=Protocol.V1_8,
             tz=tz,
         )
-        self.monitorable = False # ShutdownTime can regularly return 0 from Modbus which causes the value to not be published but this does not indicate lack of health
+        self.monitorable = False  # ShutdownTime can regularly return 0 from Modbus which causes the value to not be published but this does not indicate lack of health
 
 
 class DCChargerVehicleBatteryVoltage(ReadOnlySensor, HybridInverter):

@@ -19,6 +19,8 @@ from .grid_code import GridCode
 from .grid_sensor import GridSensor
 from .statistics import PlantStatistics
 
+logger = logging.getLogger("sigenergy2mqtt")
+
 
 class PowerPlant(ModbusDevice):
     def __init__(
@@ -83,13 +85,13 @@ class PowerPlant(ModbusDevice):
             if self._device_type.has_grid_code_interface:
                 self._add_child_device(await GridCode.create(self.plant_index, self._device_type, self.protocol_version, modbus_client))
             else:
-                logging.info(f"{self.log_identity} GridCode child device not registered because this device type ({self._device_type}) does not support grid code interface")
+                logger.info(f"{self.log_identity} GridCode child device not registered because this device type ({self._device_type}) does not support grid code interface")
 
         if self.protocol_version >= Protocol.V2_9:
             if pre_heating:
                 self._add_child_device(await ESSPreHeating.create(self.plant_index, self._device_type, cast(float, rcp_value), cast(float, rdp_value), self.protocol_version))
             else:
-                logging.debug(f"{self.log_identity} ESS Pre-Heating device not registered because pre-heating sensors not found")
+                logger.debug(f"{self.log_identity} ESS Pre-Heating device not registered because pre-heating sensors not found")
 
     async def _register_sensors(
         self,

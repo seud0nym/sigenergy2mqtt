@@ -16,6 +16,8 @@ from sigenergy2mqtt.metrics import Metrics
 
 from .read_ahead import ReadAhead
 
+logger = logging.getLogger("sigenergy2mqtt")
+
 
 @dataclass
 class ModbusClientHealth:
@@ -59,7 +61,7 @@ class ModbusClient(AsyncModbusTcpClient, ModbusClientMixin):
                 log_text = Log.build_msg("send: {}", data, ":hex")
             else:
                 log_text = Log.build_msg("recv: {}", data, ":hex")
-            logging.debug(log_text)
+            logger.debug(log_text)
         return data
 
     def __init__(self, *args, **kwargs):
@@ -113,7 +115,7 @@ class ModbusClient(AsyncModbusTcpClient, ModbusClientMixin):
                         await Metrics.modbus_cache_hits(self._read_count, self._cache_hits)
                         return rr
                     except IndexError as e:
-                        logging.debug(f"Pre-read failed: {e}")
+                        logger.debug(f"Pre-read failed: {e}")
             await Metrics.modbus_cache_hits(self._read_count, self._cache_hits)
         self._trace = trace
         try:

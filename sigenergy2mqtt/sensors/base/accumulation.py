@@ -25,6 +25,7 @@ from .sensor import Sensor
 if TYPE_CHECKING:
     from sigenergy2mqtt.mqtt import MqttHandler
 
+logger = logging.getLogger("sigenergy2mqtt")
 # =============================================================================
 
 
@@ -99,18 +100,18 @@ class AccumulationSensor(DerivedSensor):
             content = state_store.load_sync(Category.SENSOR, self._state_persistence_key)
         except (OSError, ValueError, TypeError, RuntimeError) as e:
             if isinstance(e, (OSError, RuntimeError)):
-                logging.warning(f"{self.log_identity} Failed to read state for {self._state_persistence_key}: {e}")
+                logger.warning(f"{self.log_identity} Failed to read state for {self._state_persistence_key}: {e}")
             else:
-                logging.error(f"{self.log_identity} Unexpected error reading state for {self._state_persistence_key}: {e}")
+                logger.error(f"{self.log_identity} Unexpected error reading state for {self._state_persistence_key}: {e}")
             return
 
         if content is not None:
             try:
                 self._current_total = float(content)
                 if self.debug_logging:
-                    logging.debug(f"{self.log_identity} Loaded current state for {self._state_persistence_key} ({self._current_total})")
+                    logger.debug(f"{self.log_identity} Loaded current state for {self._state_persistence_key} ({self._current_total})")
             except (ValueError, TypeError) as e:
-                logging.warning(f"{self.log_identity} Failed to parse persisted state for {self._state_persistence_key}: {e}")
+                logger.warning(f"{self.log_identity} Failed to parse persisted state for {self._state_persistence_key}: {e}")
 
     async def _persist_current_total(self, new_total: float) -> None:
         """Persist accumulated value.
@@ -122,9 +123,9 @@ class AccumulationSensor(DerivedSensor):
             try:
                 await state_store.save(Category.SENSOR, self._state_persistence_key, str(new_total))
             except PermissionError as e:
-                logging.warning(f"{self.log_identity} Failed to persist state for {self._state_persistence_key}: {e}")
+                logger.warning(f"{self.log_identity} Failed to persist state for {self._state_persistence_key}: {e}")
             except (ValueError, TypeError, RuntimeError) as e:
-                logging.error(f"{self.log_identity} Unexpected error persisting state for {self._state_persistence_key}: {e}")
+                logger.error(f"{self.log_identity} Unexpected error persisting state for {self._state_persistence_key}: {e}")
 
     def update_from_source_sensor(self, sensor: Sensor) -> bool:
         """Update accumulated value from source sensor.
@@ -136,7 +137,7 @@ class AccumulationSensor(DerivedSensor):
             True if accumulation was updated
         """
         if sensor is not self._source:
-            logging.warning(f"{self.log_identity} Attempt to call update_from_source_sensor from {sensor.log_identity}")
+            logger.warning(f"{self.log_identity} Attempt to call update_from_source_sensor from {sensor.log_identity}")
             return False
 
         if sensor.latest_raw_state is None or sensor.state_count < 2:
@@ -146,10 +147,10 @@ class AccumulationSensor(DerivedSensor):
         interval_hours = sensor.latest_interval / 3600 if sensor.latest_interval else 0
 
         if interval_hours < 0:
-            logging.warning(f"{self.log_identity} negative interval IGNORED (interval={sensor.latest_interval})")
+            logger.warning(f"{self.log_identity} negative interval IGNORED (interval={sensor.latest_interval})")
             return False
         if interval_hours >= 2:
-            logging.warning(f"{self.log_identity} 2+ hour interval IGNORED (interval={sensor.latest_interval})")
+            logger.warning(f"{self.log_identity} 2+ hour interval IGNORED (interval={sensor.latest_interval})")
             return False
 
         # Convert negative power to zero
@@ -162,7 +163,7 @@ class AccumulationSensor(DerivedSensor):
 
         # Check for decreasing total
         if new_total < self._current_total and self.state_class == StateClass.TOTAL_INCREASING:
-            logging.debug(
+            logger.debug(
                 f"{self.log_identity} negative increase IGNORED (current={self._current_total} prev={previous} curr={current} increase={increase} new={new_total} interval={sensor.latest_interval:.2f}s)"
             )
             return False
@@ -284,7 +285,7 @@ class ResettableAccumulationSensor(ObservableMixin, AccumulationSensor):
 
         new_total = (value if isinstance(value, float) else float(value)) * self.gain
 
-        logging.info(f"{self.log_identity} reset to {value} {self.unit} (raw={new_total})")
+        logger.info(f"{self.log_identity} reset to {value} {self.unit} (raw={new_total})")
 
         if new_total != self._current_total:
             await self._persist_current_total(new_total)
@@ -390,7 +391,7 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
         try:
             content = state_store.load_sync(Category.SENSOR, self._midnight_persistence_key, stale_after=timedelta(hours=24))
         except (ValueError, TypeError, RuntimeError) as e:
-            logging.warning(f"{self.log_identity} Failed to read midnight state for {self._midnight_persistence_key}: {e}")
+            logger.warning(f"{self.log_identity} Failed to read midnight state for {self._midnight_persistence_key}: {e}")
             state_store.delete_sync(Category.SENSOR, self._midnight_persistence_key)
             return
 
@@ -402,14 +403,14 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
         try:
             value = float(content)
             if value <= 0.0:
-                logging.debug(f"{self.log_identity} Ignored negative midnight state for {self._midnight_persistence_key} ({value})")
+                logger.debug(f"{self.log_identity} Ignored negative midnight state for {self._midnight_persistence_key} ({value})")
                 state_store.delete_sync(Category.SENSOR, self._midnight_persistence_key)
             else:
                 self._state_at_midnight = value
                 if self.debug_logging:
-                    logging.debug(f"{self.log_identity} Loaded midnight state for {self._midnight_persistence_key} ({self._state_at_midnight})")
+                    logger.debug(f"{self.log_identity} Loaded midnight state for {self._midnight_persistence_key} ({self._state_at_midnight})")
         except (ValueError, TypeError) as e:
-            logging.warning(f"{self.log_identity} Failed to parse midnight state for {self._midnight_persistence_key}: {e}")
+            logger.warning(f"{self.log_identity} Failed to parse midnight state for {self._midnight_persistence_key}: {e}")
             state_store.delete_sync(Category.SENSOR, self._midnight_persistence_key)
 
     async def _update_state_at_midnight(self, midnight_state: float | None) -> None:
@@ -425,7 +426,7 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
             try:
                 await state_store.save(Category.SENSOR, self._midnight_persistence_key, str(midnight_state))
             except (ValueError, TypeError, RuntimeError) as e:
-                logging.warning(f"{self.log_identity} Failed to update midnight state for {self._midnight_persistence_key}: {e}")
+                logger.warning(f"{self.log_identity} Failed to update midnight state for {self._midnight_persistence_key}: {e}")
 
             self._state_at_midnight = midnight_state
 
@@ -446,7 +447,7 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
             return False
 
         if self.debug_logging:
-            logging.debug(f"{self.log_identity} notified of updated state {value} {self.unit}")
+            logger.debug(f"{self.log_identity} notified of updated state {value} {self.unit}")
 
         self._state_now = (value if isinstance(value, float) else float(value)) * self.gain
 
@@ -455,12 +456,12 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
         updated_midnight_state = (float(source_raw) - self._state_now) if isinstance(source_raw, (float, int)) and source_raw else self._state_now
 
         if self.debug_logging:
-            logging.debug(f"{self.log_identity} source_raw={self._source.latest_raw_state} (from {self._source.unique_id}) state_now={self._state_now} midnight_state={updated_midnight_state}")
+            logger.debug(f"{self.log_identity} source_raw={self._source.latest_raw_state} (from {self._source.unique_id}) state_now={self._state_now} midnight_state={updated_midnight_state}")
 
         await self._update_state_at_midnight(updated_midnight_state)
         self.set_latest_state(self._state_now)
 
-        logging.info(f"{self.log_identity} reset to {value} {self.unit} (raw={self._state_now})")
+        logger.info(f"{self.log_identity} reset to {value} {self.unit} (raw={self._state_now})")
 
         self.force_publish = True
         return True
@@ -494,7 +495,7 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
             True if updated
         """
         if sensor is not self._source:
-            logging.warning(f"{self.log_identity} Attempt to call update_from_source_sensor from {sensor.log_identity}")
+            logger.warning(f"{self.log_identity} Attempt to call update_from_source_sensor from {sensor.log_identity}")
             return False
 
         if sensor.latest_raw_state is None:
@@ -583,7 +584,7 @@ class SimpleEnergyDailyAccumulationSensor(AccumulationSensor):
             True if updated
         """
         if sensor is not self._source:
-            logging.warning(f"{self.log_identity} Attempt to call update_from_source_sensor from {sensor.log_identity}")
+            logger.warning(f"{self.log_identity} Attempt to call update_from_source_sensor from {sensor.log_identity}")
             return False
 
         if sensor.latest_raw_state is None:
@@ -597,7 +598,7 @@ class SimpleEnergyDailyAccumulationSensor(AccumulationSensor):
             # Reset if this is a new day
             if self._last_day_tuple is not None and self._last_day_tuple != current_day:
                 if self.debug_logging:
-                    logging.debug(f"{self.log_identity} Day changed from {self._last_day_tuple} to {current_day}, resetting accumulation")
+                    logger.debug(f"{self.log_identity} Day changed from {self._last_day_tuple} to {current_day}, resetting accumulation")
                 self._current_total = 0.0
                 self.run_persistence_coroutine(self._persist_current_total(0.0))
                 self._states.clear()
