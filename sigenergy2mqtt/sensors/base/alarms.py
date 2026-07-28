@@ -18,6 +18,7 @@ from sigenergy2mqtt.modbus import ModbusDataType
 from .constants import DiscoveryKeys
 from .readable import ReadOnlySensor
 
+logger = logging.getLogger("sigenergy2mqtt")
 # =============================================================================
 
 
@@ -71,7 +72,6 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
         Returns:
             Alarm description or None if bit is not used
         """
-        pass
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         """Get alarm state as human-readable string.
@@ -108,7 +108,7 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
         alarms = ", ".join(active_alarms)
         return self._truncate_alarms(alarms, kwargs.get("max_length"))
 
-    def _is_no_alarm(self, value: float | int | str | list | None) -> bool:
+    def _is_no_alarm(self, value: float | str | list | None) -> bool:
         """Check if value represents no alarm condition.
 
         Args:
@@ -125,7 +125,7 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
 
         return False
 
-    def _normalize_alarm_code(self, value: float | int | str) -> int:
+    def _normalize_alarm_code(self, value: float | str) -> int:
         """Normalize alarm value to integer code.
 
         Args:
@@ -135,7 +135,7 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
             Normalized alarm code
         """
         if isinstance(value, list) and len(value) == 2 and value[0] == 0 and value[1] != 0:
-            logging.warning(f"{self.log_identity} Converting '{value}' to {value[1]} for {self.alarm_type} alarm bit decoding")
+            logger.warning(f"{self.log_identity} Converting '{value}' to {value[1]} for {self.alarm_type} alarm bit decoding")
             return int(value[1])
 
         return int(value)
@@ -163,9 +163,9 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
                     else:
                         unknown = _t("AlarmSensor.unknown_alarm", "Unknown (bit{bit}∈{value})", self.debug_logging).format(bit=bit_position, value=original_value)
                         active_alarms.append(unknown)
-                        logging.warning(f"{self.log_identity} Unknown {self.alarm_type} alarm bit {bit_position} set in value {original_value}")
+                        logger.warning(f"{self.log_identity} Unknown {self.alarm_type} alarm bit {bit_position} set in value {original_value}")
         except TypeError as e:
-            logging.warning(f"{self.log_identity} Failed to decode {self.alarm_type} alarm bits from '{original_value}': {e}")
+            logger.warning(f"{self.log_identity} Failed to decode {self.alarm_type} alarm bits from '{original_value}': {e}")
 
         return active_alarms
 
@@ -195,7 +195,7 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
 
         return compressed[: (max_len - 3)] + "..."
 
-    def state2raw(self, state: float | int | str) -> float | int | str | None:
+    def state2raw(self, state: float | str) -> float | int | str | None:
         """Convert alarm description back to code.
 
         Args:
@@ -352,7 +352,7 @@ class AlarmCombinedSensor(ReadOnlySensor, HybridInverter, PVInverter):
         if not alarms:
             raise ValueError(f"{self.__class__.__name__}: At least one alarm sensor required")
 
-        device_addresses = set(a.device_address for a in alarms)
+        device_addresses = {a.device_address for a in alarms}
         if len(device_addresses) != 1:
             raise ValueError(f"{self.__class__.__name__}: All alarms must have same device address (found {device_addresses})")
 
@@ -388,7 +388,7 @@ class AlarmCombinedSensor(ReadOnlySensor, HybridInverter, PVInverter):
             protocol_version=Protocol.N_A,
             input_type=InputType.INPUT,
             plant_index=plant_index,
-            device_address=list(device_addresses)[0],
+            device_address=next(iter(device_addresses)),
             data_type=ModbusDataType.STRING,
             address=first_address,
             count=count,
@@ -402,8 +402,7 @@ class AlarmCombinedSensor(ReadOnlySensor, HybridInverter, PVInverter):
         """Get the highest protocol version from all alarms."""
         protocol = super().protocol_version
         for alarm in self.alarms:
-            if alarm.protocol_version > protocol:
-                protocol = alarm.protocol_version
+            protocol = max(protocol, alarm.protocol_version)
         return protocol
 
     @protocol_version.setter
@@ -480,7 +479,7 @@ class AlarmCombinedSensor(ReadOnlySensor, HybridInverter, PVInverter):
 
         return compressed
 
-    def state2raw(self, state: float | int | str) -> float | int | str | None:
+    def state2raw(self, state: float | str) -> float | int | str | None:
         """Convert alarm state back to code.
 
         Args:

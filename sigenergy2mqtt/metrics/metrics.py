@@ -14,12 +14,15 @@ import asyncio
 import logging
 import threading
 import time
+from collections.abc import Callable
 from concurrent.futures import Future, ThreadPoolExecutor, wait
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import Callable
+from typing import ClassVar
 
 from sigenergy2mqtt.config import active_config
+
+logger = logging.getLogger("sigenergy2mqtt")
 
 
 class Metrics:
@@ -36,7 +39,7 @@ class Metrics:
     _pending_lock: threading.Lock = threading.Lock()
     _executor_lock: threading.Lock = threading.Lock()
     _executor: ThreadPoolExecutor | None = None
-    _pending_updates: list[Future] = []
+    _pending_updates: ClassVar[list[Future]] = []
 
     _started: float = 0.0
     """Monotonic reference timestamp set by :meth:`commence`. Used for rate calculations."""
@@ -226,7 +229,7 @@ class Metrics:
     # Class-level defaults for int/float metrics (used by :meth:`reset`)
     # ------------------------------------------------------------------
 
-    _defaults: dict[str, int | float] = {}
+    _defaults: ClassVar[dict[str, int | float]] = {}
 
     @classmethod
     async def reset(cls) -> None:
@@ -337,8 +340,8 @@ class Metrics:
             if not acquired:
                 raise TimeoutError("Failed to acquire Metrics lock within the timeout period.")
             operation()
-        except Exception as exc:
-            logging.warning(f"Error during {warning}: {repr(exc)}")
+        except (ArithmeticError, LookupError, OSError, ReferenceError, RuntimeError, TimeoutError, TypeError, ValueError) as exc:
+            logger.warning(f"Error during {warning}: {exc!r}")
         finally:
             if acquired:
                 cls._lock.release()
@@ -350,7 +353,7 @@ class Metrics:
             pending = list(cls._pending_updates)
         if not pending:
             return
-        done, not_done = await asyncio.to_thread(wait, pending, timeout=timeout)
+        _, not_done = await asyncio.to_thread(wait, pending, timeout=timeout)
         if not_done:
             raise TimeoutError(f"Timed out waiting for {len(not_done)} metrics updates to finish.")
 
@@ -376,7 +379,7 @@ class Metrics:
         if pending:
             _, not_done = wait(pending, timeout=timeout)
             if not_done:
-                logging.warning(f"Metrics shutdown timed out with {len(not_done)} pending updates")
+                logger.warning(f"Metrics shutdown timed out with {len(not_done)} pending updates")
 
         executor.shutdown(wait=not not_done, cancel_futures=bool(not_done))
 

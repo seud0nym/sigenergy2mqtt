@@ -3,7 +3,6 @@
 from enum import StrEnum
 from typing import Final
 
-
 # Percentage units
 PERCENTAGE: Final = "%"
 

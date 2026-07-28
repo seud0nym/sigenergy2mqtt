@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from sigenergy2mqtt.common import DeviceClass, InputType, Protocol, StateClass, UnitOfPower
+from sigenergy2mqtt.common import DeviceClass, InputType, Protocol, UnitOfPower
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus.client import ModbusClient
 from sigenergy2mqtt.sensors.base import NumericSensor, SanityCheckException, SelectSensor

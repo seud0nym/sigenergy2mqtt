@@ -5,7 +5,8 @@ from __future__ import annotations
 import abc
 import asyncio
 import logging
-from typing import Any, Coroutine
+from collections.abc import Coroutine
+from typing import Any
 
 from pymodbus.pdu import ExceptionResponse
 
@@ -14,6 +15,7 @@ from sigenergy2mqtt.common import Protocol
 from .constants import DiscoveryKeys
 from .sensor import Sensor, TypedSensorMixin
 
+logger = logging.getLogger("sigenergy2mqtt")
 # =============================================================================
 
 
@@ -24,7 +26,7 @@ class DerivedSensor(TypedSensorMixin, Sensor):
     source sensors rather than reading directly from Modbus.
     """
 
-    def __init__(self, *args, source_sensors: tuple["Sensor", ...] = (), **kwargs):
+    def __init__(self, *args, source_sensors: tuple[Sensor, ...] = (), **kwargs):
         """Initialise the derived sensor.
 
         Args:
@@ -44,11 +46,11 @@ class DerivedSensor(TypedSensorMixin, Sensor):
         # Initialise source_sensors from the constructor argument.  Subclasses
         # that use deferred / cross-device binding start with an empty list and
         # populate it later via _declare_source_sensors() / finalise_binding().
-        self.source_sensors: list["Sensor"] = []
+        self.source_sensors: list[Sensor] = []
         if source_sensors:
             self._declare_source_sensors(*source_sensors)
 
-    def _declare_source_sensors(self, *sensors: "Sensor") -> None:
+    def _declare_source_sensors(self, *sensors: Sensor) -> None:
         """Internal helper – update source_sensors after construction.
 
         Ordinary subclasses must NOT call this directly; pass ``source_sensors``
@@ -58,7 +60,7 @@ class DerivedSensor(TypedSensorMixin, Sensor):
         """
         self.source_sensors = [s for s in sensors if s is not None]
         if not self.source_sensors:
-            logging.error(f"{self.log_identity} - no declared source sensors")
+            logger.error(f"{self.log_identity} - no declared source sensors")
         if not hasattr(self, "bound_source_sensors"):
             self.bound_source_sensors = []
 
@@ -73,7 +75,7 @@ class DerivedSensor(TypedSensorMixin, Sensor):
             # Re-apply sensor overrides so that an explicit debug-logging=False override will be respected
             self.apply_sensor_overrides()
 
-    def set_latest_state(self, state: int | float | str | list[bool] | list[int] | list[float]) -> bool:
+    def set_latest_state(self, state: float | str | list[bool] | list[int] | list[float]) -> bool:
         """Update latest state and track pending updates for publishing."""
         updated = super().set_latest_state(state)
         if updated:
@@ -94,21 +96,20 @@ class DerivedSensor(TypedSensorMixin, Sensor):
             coro: The coroutine to run
         """
         # This is a fire and forget operation - we don't want to wait for the state to be persisted
+        # 1. Try to get the running loop
         try:
             loop = asyncio.get_running_loop()
-            loop.create_task(coro)
         except RuntimeError:
-            try:
-                loop = asyncio.get_event_loop()
-                if loop.is_running():
-                    asyncio.run_coroutine_threadsafe(coro, loop)
-                else:
-                    coro.close()
-            except Exception as e:
-                logging.warning(f"{self.log_identity} Failed to persist state: {e}")
-                coro.close()
-        except Exception as e:
-            logging.warning(f"{self.log_identity} Failed to persist state: {e}")
+            # No running loop in current thread
+            logger.warning(f"{self.log_identity} No running event loop available to persist state.")
+            coro.close()
+            return
+
+        # 2. Try to schedule the task on the running loop
+        try:
+            loop.create_task(coro)
+        except (RuntimeError, TypeError, ValueError) as e:
+            logger.warning(f"{self.log_identity} Failed to persist state: {e}")
             coro.close()
 
     @abc.abstractmethod
@@ -121,7 +122,6 @@ class DerivedSensor(TypedSensorMixin, Sensor):
         Returns:
             True if values were applied successfully
         """
-        pass
 
 
 # =============================================================================
@@ -172,7 +172,7 @@ class CrossDeviceDerivedSensor(DerivedSensor):
         self._pending_sources = [s for s in sensors if s is not None]
         if not self._pending_sources:
             log_id = getattr(self, "_log_identity", self.__class__.__name__)
-            logging.error(f"{log_id} - no declared cross-device sources")
+            logger.error(f"{log_id} - no declared cross-device sources")
 
     def finalise_binding(self, plant_index: int, *sources: Sensor) -> bool:
         """Wire up sources from the full device graph after all devices are constructed.
@@ -196,7 +196,6 @@ class CrossDeviceDerivedSensor(DerivedSensor):
         Returns:
             True if at least one source was bound successfully.
         """
-        import logging
 
         from sigenergy2mqtt.devices.base.registry import DeviceRegistry
 
@@ -209,14 +208,14 @@ class CrossDeviceDerivedSensor(DerivedSensor):
         pending_sources = [s for s in sources if s is not None] if sources else self._pending_sources
         if not pending_sources:
             log_id = getattr(self, "_log_identity", self.__class__.__name__)
-            logging.error(f"{log_id} - no pending cross-device sources to bind")
+            logger.error(f"{log_id} - no pending cross-device sources to bind")
             return False
 
         added = False
         for pending in pending_sources:
             # Skip sources that violate the owner device's protocol version
             if owner_device.protocol_version > Protocol.N_A and pending.protocol_version > owner_device.protocol_version:
-                logging.debug(f"{self.log_identity} skipped cross-device binding of {pending.__class__.__name__} - source protocol {pending.protocol_version} > device protocol {owner_device.protocol_version}")
+                logger.debug(f"{self.log_identity} skipped cross-device binding of {pending.__class__.__name__} - source protocol {pending.protocol_version} > device protocol {owner_device.protocol_version}")
                 continue
 
             # Search all devices registered for this plant
@@ -227,7 +226,7 @@ class CrossDeviceDerivedSensor(DerivedSensor):
                     break
 
             if not found:
-                logging.warning(f"{self.log_identity} cannot bind cross-device source {pending.__class__.__name__} ({pending.unique_id}) - not found in plant {plant_index}")
+                logger.warning(f"{self.log_identity} cannot bind cross-device source {pending.__class__.__name__} ({pending.unique_id}) - not found in plant {plant_index}")
                 continue
 
             if found not in self.bound_source_sensors:
@@ -235,7 +234,7 @@ class CrossDeviceDerivedSensor(DerivedSensor):
                 self.bind_source_sensor(found)
                 added = True
                 if self.debug_logging:
-                    logging.debug(f"{self.log_identity} bound cross-device source {found.__class__.__name__} from {getattr(found.parent_device, 'log_identity', 'unknown')}")
+                    logger.debug(f"{self.log_identity} bound cross-device source {found.__class__.__name__} from {getattr(found.parent_device, 'log_identity', 'unknown')}")
 
         # Populate source_sensors from what was actually bound so that the
         # rest of the framework (protocol checks, etc.) can inspect it.

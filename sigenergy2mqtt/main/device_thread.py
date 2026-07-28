@@ -10,7 +10,11 @@ import asyncio
 import concurrent.futures
 import logging
 import threading
-from typing import Any, Awaitable
+from collections.abc import Awaitable
+from typing import Any
+
+from paho.mqtt import MQTTException
+from pymodbus.exceptions import ModbusException
 
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import Device
@@ -18,6 +22,8 @@ from sigenergy2mqtt.modbus import ModbusClient, ModbusClientFactory
 from sigenergy2mqtt.mqtt import mqtt_setup, mqtt_teardown
 
 from .thread_config import ThreadConfig
+
+logger = logging.getLogger("sigenergy2mqtt")
 
 
 async def read_and_publish_device_sensors(
@@ -76,20 +82,20 @@ async def read_and_publish_device_sensors(
             await mqtt_handler.wait_for(5, device.name, method, mqtt_client, clean=active_config.clean)
 
             if active_config.home_assistant.enabled and (active_config.clean or active_config.home_assistant.discovery_only):
-                logging.info(f"{device.log_identity} configured for {'clean' if active_config.clean else 'discovery'} only - shutting down...")
+                logger.info(f"{device.log_identity} configured for {'clean' if active_config.clean else 'discovery'} only - shutting down...")
             else:
-                logging.debug(f"{device.log_identity} registering MQTT subscriptions")
+                logger.debug(f"{device.log_identity} registering MQTT subscriptions")
                 device.subscribe(mqtt_client, mqtt_handler)
 
                 if active_config.home_assistant.enabled:
                     device.publish_availability(mqtt_client, "online")
 
-                logging.debug(f"{device.log_identity} scheduling tasks")
+                logger.debug(f"{device.log_identity} scheduling tasks")
                 tasks.extend(device.schedule(modbus_client, mqtt_client))
 
         if tasks:
             task_word = "task" if len(tasks) == 1 else "tasks"
-            logging.info(f"{log_label} scheduled tasks commenced ({len(tasks)} asyncio {task_word} scheduled)")
+            logger.info(f"{log_label} scheduled tasks commenced ({len(tasks)} asyncio {task_word} scheduled)")
 
             gathered_tasks = asyncio.gather(*tasks, return_exceptions=True)
             config.online(gathered_tasks)
@@ -97,13 +103,13 @@ async def read_and_publish_device_sensors(
             for device in config.devices:
                 try:
                     device.on_commencement(modbus_client, mqtt_client)
-                except Exception:
-                    logging.exception(f"{device.log_identity} on commencement failed")
+                except (ModbusException, MQTTException):
+                    logger.exception(f"{device.log_identity} on commencement failed")
 
             try:
                 results = await gathered_tasks
             except asyncio.CancelledError:
-                logging.info(f"{log_label} scheduled tasks interrupted")
+                logger.info(f"{log_label} scheduled tasks interrupted")
                 results = []
 
             # asyncio.gather(..., return_exceptions=True) never raises; instead
@@ -111,7 +117,7 @@ async def read_and_publish_device_sensors(
             # they are not silently discarded.
             for result in results:
                 if isinstance(result, BaseException):
-                    logging.exception(
+                    logger.exception(
                         f"{log_label} a scheduled task raised an exception",
                         exc_info=result,
                     )
@@ -119,8 +125,8 @@ async def read_and_publish_device_sensors(
             for device in config.devices:
                 try:
                     device.on_completion(modbus_client, mqtt_client)
-                except Exception:
-                    logging.exception(f"{device.log_identity} on completion failed")
+                except (ModbusException, MQTTException):
+                    logger.exception(f"{device.log_identity} on completion failed")
                 if active_config.home_assistant.enabled:
                     device.publish_availability(mqtt_client, "offline")
 
@@ -156,8 +162,8 @@ def run_modbus_event_loop(
     asyncio.set_event_loop(loop)
     try:
         loop.run_until_complete(read_and_publish_device_sensors(config, loop, stop_event))
-    except Exception:
-        logging.exception(f"{config.description} thread crashed !!!")
+    except (ValueError, TypeError, RuntimeError):
+        logger.exception(f"{config.description} thread crashed !!!")
         if stop_event is not None:
             stop_event.set()
     finally:
@@ -173,18 +179,15 @@ def run_modbus_event_loop(
         try:
             pending = asyncio.all_tasks(loop)
             if pending:
-                done, still_pending = loop.run_until_complete(asyncio.wait(pending, timeout=5.0))
+                _, still_pending = loop.run_until_complete(asyncio.wait(pending, timeout=5.0))
                 if still_pending:
-                    logging.warning(
-                        f"{config.description} {len(still_pending)} background task(s) did not finish within the "
-                        f"shutdown deadline — cancelling to allow the loop to close"
-                    )
+                    logger.warning(f"{config.description} {len(still_pending)} background task(s) did not finish within the shutdown deadline — cancelling to allow the loop to close")
                     for task in still_pending:
                         task.cancel()
                     # Brief await so cancelled tasks can run their CancelledError handlers
                     loop.run_until_complete(asyncio.gather(*still_pending, return_exceptions=True))
-        except Exception:
-            logging.exception(f"{config.description} error draining pending tasks on shutdown")
+        except TimeoutError:
+            logger.exception(f"{config.description} error draining pending tasks on shutdown")
         finally:
             loop.close()
 
@@ -222,7 +225,7 @@ async def start(configs: list[ThreadConfig]) -> None:
                 pending = {fut for fut in executions if not fut.done()}
 
                 if stop_event.is_set() and pending:
-                    logging.warning("A thread crashed — cancelling remaining threads")
+                    logger.warning("A thread crashed — cancelling remaining threads")
                     for config in configs:
                         config.offline()
                     # Wait for remaining threads to finish
@@ -236,7 +239,7 @@ async def start(configs: list[ThreadConfig]) -> None:
 
                 await asyncio.sleep(1.0)
         except KeyboardInterrupt:
-            logging.info("Keyboard interrupt received — requesting cooperative shutdown")
+            logger.info("Keyboard interrupt received — requesting cooperative shutdown")
             stop_event.set()
             for config in configs:
                 config.offline()
@@ -247,5 +250,5 @@ async def start(configs: list[ThreadConfig]) -> None:
         for fut in done:
             try:
                 fut.result()
-            except Exception:
-                logging.exception("Unhandled exception in device thread")
+            except (ValueError, TypeError, RuntimeError):
+                logger.exception("Unhandled exception in device thread")

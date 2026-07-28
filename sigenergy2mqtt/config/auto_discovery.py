@@ -12,11 +12,11 @@ import psutil
 from pymodbus import ExceptionResponse, FramerType, ModbusException
 from pymodbus.client import AsyncModbusTcpClient
 
+logger = logging.getLogger("sigenergy2mqtt")
+
 
 class DiscoveryInterruptedError(Exception):
     """Internal exception to signal that auto-discovery was interrupted."""
-
-    pass
 
 
 # ---------------------------------------------------------------------------
@@ -121,10 +121,10 @@ async def ping_scan(ip_list: list[str], concurrent: int = 100, timeout: float = 
             latency = time.perf_counter() - start
             writer.close()
             await writer.wait_closed()
-            logging.debug(f" -> {ip}:{port} responded in {latency:.3f}s")
+            logger.debug(f" -> {ip}:{port} responded in {latency:.3f}s")
             return ip, latency
-        except (asyncio.TimeoutError, OSError, ConnectionRefusedError):
-            logging.debug(f" -> {ip}:{port} did not respond within {timeout:.2f}s")
+        except (TimeoutError, OSError, ConnectionRefusedError):
+            logger.debug(f" -> {ip}:{port} did not respond within {timeout:.2f}s")
             return ip, None
 
     try:
@@ -146,7 +146,7 @@ async def ping_scan(ip_list: list[str], concurrent: int = 100, timeout: float = 
 
             for result in results:
                 if isinstance(result, BaseException):
-                    logging.debug(f"TCP check raised: {result}")
+                    logger.debug(f"TCP check raised: {result}")
                     continue
                 ip, latency = result
                 if latency is not None:
@@ -156,8 +156,8 @@ async def ping_scan(ip_list: list[str], concurrent: int = 100, timeout: float = 
         raise KeyboardInterrupt("Auto-discovery interrupted by signal")
     except asyncio.CancelledError:
         raise
-    except Exception as exc:
-        logging.debug(f"TCP port scan failed: {exc}")
+    except (OSError, RuntimeError) as exc:
+        logger.debug(f"TCP port scan failed: {exc}")
 
     return found
 
@@ -176,23 +176,21 @@ async def probe_register(modbus: AsyncModbusTcpClient, address: int, count: int 
     _check_interrupted()
     host = modbus.comm_params.host
     port = modbus.comm_params.port
-    logging.debug(f" -> Probing modbus://{host}:{port} device_id={device_id} register {address} count={count}")
+    logger.debug(f" -> Probing modbus://{host}:{port} device_id={device_id} register {address} count={count}")
     try:
         result = await modbus.read_input_registers(address=address, count=count, device_id=device_id)
-        if result and not result.isError() and hasattr(result, "registers") and len(result.registers) >= count:
-            return True
-        return False
+        return bool(getattr(result, "registers", None)) and not result.isError() and len(result.registers) >= count
     except ModbusException as exc:
         exc_str = str(exc)
         # Connection closures are expected when scanning many non-existent devices.
         # Log at debug level only; reconnection happens transparently.
         if "CLOSING CONNECTION" in exc_str or "ERROR: No response" in exc_str:
-            logging.debug(" -> Modbus server closed connection (expected during non-existent device scan)")
+            logger.debug(" -> Modbus server closed connection (expected during non-existent device scan)")
         else:
-            logging.debug(f" -> Probe failed modbus://{host}:{port} device_id={device_id} register {address}: {exc}")
+            logger.debug(f" -> Probe failed modbus://{host}:{port} device_id={device_id} register {address}: {exc}")
         await _reconnect(modbus, max_attempts=max_reconnect_attempts)
-    except Exception as exc:
-        logging.debug(f" -> Probe unexpected error modbus://{host}:{port} device_id={device_id} register {address}: {exc}")
+    except RuntimeError as exc:
+        logger.debug(f" -> Probe unexpected error modbus://{host}:{port} device_id={device_id} register {address}: {exc}")
     return False
 
 
@@ -200,15 +198,15 @@ async def get_serial_number(modbus: AsyncModbusTcpClient, sn_address: int, devic
     """Read and decode the serial number string from a device."""
     host = modbus.comm_params.host
     port = modbus.comm_params.port
-    logging.debug(f" -> Reading serial number from modbus://{host}:{port} device_id={device_id} register {sn_address} count={REG_SERIAL_NUMBER_COUNT}")
+    logger.debug(f" -> Reading serial number from modbus://{host}:{port} device_id={device_id} register {sn_address} count={REG_SERIAL_NUMBER_COUNT}")
     try:
         rr = await modbus.read_input_registers(address=sn_address, count=REG_SERIAL_NUMBER_COUNT, device_id=device_id)
         if rr and not rr.isError() and not isinstance(rr, ExceptionResponse) and hasattr(rr, "registers") and len(rr.registers) >= REG_SERIAL_NUMBER_COUNT:
             return cast(str, modbus.convert_from_registers(rr.registers, AsyncModbusTcpClient.DATATYPE.STRING))
     except ModbusException as exc:
-        logging.debug(f" -> Serial number read failed modbus://{host}:{port} device_id={device_id}: {exc}")
-    except Exception as exc:
-        logging.debug(f" -> Serial number unexpected error modbus://{host}:{port} device_id={device_id}: {exc}")
+        logger.debug(f" -> Serial number read failed modbus://{host}:{port} device_id={device_id}: {exc}")
+    except RuntimeError as exc:
+        logger.debug(f" -> Serial number unexpected error modbus://{host}:{port} device_id={device_id}: {exc}")
     return None
 
 
@@ -223,26 +221,29 @@ async def _reconnect(modbus: AsyncModbusTcpClient, *, max_attempts: int = 3) -> 
     for attempt in range(1, max_attempts + 1):
         if modbus.connected:
             return
-        logging.debug(f"Reconnect attempt {attempt}/{max_attempts} to {host}:{port}")
+        logger.debug(f"Reconnect attempt {attempt}/{max_attempts} to {host}:{port}")
         modbus.close()
         try:
             await modbus.connect()
-        except Exception as exc:
-            logging.debug(f"Reconnect attempt {attempt} failed: {exc}")
+        except ModbusException as exc:
+            logger.debug(f"Reconnect attempt {attempt} failed: {exc}")
         if modbus.connected:
             return
     if not modbus.connected:
-        logging.warning(f"Could not reconnect to {host}:{port} after {max_attempts} attempts")
+        logger.warning(f"Could not reconnect to {host}:{port} after {max_attempts} attempts")
 
 
-async def _probe_device_id(modbus: AsyncModbusTcpClient, device_id: int, device: DiscoveredDevice, max_reconnect_attempts: int = 3, exclude_devices: list[str] = []) -> None:
+async def _probe_device_id(modbus: AsyncModbusTcpClient, device_id: int, device: DiscoveredDevice, max_reconnect_attempts: int = 3, exclude_devices: list[str] | None = None) -> None:
     """Attempt to identify a device at this device_id. Appends to device."""
     host = device.host
     port = device.port
 
+    if exclude_devices is None:
+        exclude_devices = []
+
     # DC charger (probe at lowest device_id first, max 4 devices per host)
     if "DCCharger" not in exclude_devices and len(device.dc_chargers) < 4 and await probe_register(modbus, REG_DC_CHARGER_CHARGING_CURRENT, device_id=device_id):
-        logging.info(f" -> Found DC-Charger at {host}:{port}: Device ID={device_id}")
+        logger.info(f" -> Found DC-Charger at {host}:{port}: Device ID={device_id}")
         device.dc_chargers.append(device_id)
 
     # Inverter
@@ -251,15 +252,15 @@ async def _probe_device_id(modbus: AsyncModbusTcpClient, device_id: int, device:
         if serial:
             if serial not in serial_numbers:
                 serial_numbers.append(serial)
-                logging.info(f" -> Found Inverter {device_id} ({serial}) at {host}:{port}: Device ID={device_id}")
+                logger.info(f" -> Found Inverter {device_id} ({serial}) at {host}:{port}: Device ID={device_id}")
                 device.inverters.append(device_id)
             else:
-                logging.info(f" -> IGNORED Inverter {device_id} at {host}:{port} - serial number {serial} already discovered")
+                logger.info(f" -> IGNORED Inverter {device_id} at {host}:{port} - serial number {serial} already discovered")
         return
 
     # AC charger
     if "ACCharger" not in exclude_devices and await probe_register(modbus, REG_AC_CHARGER_SYSTEM_STATE, device_id=device_id):
-        logging.info(f" -> Found AC-Charger at {host}:{port}: Device ID={device_id}")
+        logger.info(f" -> Found AC-Charger at {host}:{port}: Device ID={device_id}")
         device.ac_chargers.append(device_id)
 
     # PSS
@@ -268,10 +269,10 @@ async def _probe_device_id(modbus: AsyncModbusTcpClient, device_id: int, device:
         if serial:
             if serial not in serial_numbers:
                 serial_numbers.append(serial)
-                logging.info(f" -> Found PSS {device_id} ({serial}) at {host}:{port}: Device ID={device_id}")
+                logger.info(f" -> Found PSS {device_id} ({serial}) at {host}:{port}: Device ID={device_id}")
                 device.pss.append(device_id)
             else:
-                logging.info(f" -> IGNORED PSS {device_id} at {host}:{port} - serial number {serial} already discovered")
+                logger.info(f" -> IGNORED PSS {device_id} at {host}:{port} - serial number {serial} already discovered")
 
     # PID
     if "PID" not in exclude_devices and await probe_register(modbus, REG_PID_RUNNING_STATUS, device_id=device_id):
@@ -279,37 +280,31 @@ async def _probe_device_id(modbus: AsyncModbusTcpClient, device_id: int, device:
         if serial:
             if serial not in serial_numbers:
                 serial_numbers.append(serial)
-                logging.info(f" -> Found PID {device_id} ({serial}) at {host}:{port}: Device ID={device_id}")
+                logger.info(f" -> Found PID {device_id} ({serial}) at {host}:{port}: Device ID={device_id}")
                 device.pid.append(device_id)
             else:
-                logging.info(f" -> IGNORED PID {device_id} at {host}:{port} - serial number {serial} already discovered")
+                logger.info(f" -> IGNORED PID {device_id} at {host}:{port} - serial number {serial} already discovered")
 
 
-async def scan_host(
-    ip: str,
-    port: int,
-    results: list,
-    timeout: float = 0.25,
-    retries: int = 0,
-    max_reconnect_attempts: int = 3,
-    max_device_id: int = 246,
-    exclude_devices: list[str] = [],
-) -> None:
+async def scan_host(ip: str, port: int, results: list, timeout: float = 0.25, retries: int = 0, max_reconnect_attempts: int = 3, max_device_id: int = 246, exclude_devices: list[str] | None = None) -> None:
     """Connect to a single host, enumerate its Sigenergy devices, and append to results."""
+    if exclude_devices is None:
+        exclude_devices = []
+
     modbus = AsyncModbusTcpClient(host=ip, port=port, framer=FramerType.SOCKET, reconnect_delay=0, timeout=timeout, retries=retries)
     try:
         await modbus.connect()
         if not modbus.connected:
             return
 
-        logging.info(f"Found Modbus device at {ip}:{port}")
+        logger.info(f"Found Modbus device at {ip}:{port}")
 
         # Verify this is a Sigenergy plant before probing all 246 device IDs.
         if not await probe_register(modbus, REG_PLANT_RUNNING_STATE, device_id=247):
-            logging.info(f" -> Ignored Modbus device at {ip}: No Plant running state found")
+            logger.info(f" -> Ignored Modbus device at {ip}: No Plant running state found")
             return
 
-        logging.info(f" -> Found Sigenergy Plant at {ip}:{port} - Scanning {'first' if max_device_id < 246 else 'all'} {max_device_id} device ID{'s' if max_device_id > 1 else ''}...")
+        logger.info(f" -> Found Sigenergy Plant at {ip}:{port} - Scanning {'first' if max_device_id < 246 else 'all'} {max_device_id} device ID{'s' if max_device_id > 1 else ''}...")
         device = DiscoveredDevice(host=ip, port=port)
 
         # Sequential probing of up to max_device_id
@@ -324,16 +319,16 @@ async def scan_host(
 
             # Log progress every 25 device IDs scanned
             if device_id - last_progress_log >= log_progress_every:
-                logging.info(f" -> Scanned {device_id}/{max_device_id} device IDs on {ip}:{port}")
+                logger.info(f" -> Scanned {device_id}/{max_device_id} device IDs on {ip}:{port}")
                 last_progress_log = device_id
 
         if not device.has_devices():
-            logging.info(f" -> Ignored Modbus device at {ip}:{port}: No new inverters or chargers found with device IDs up to {max_device_id}")
+            logger.info(f" -> Ignored Modbus device at {ip}:{port}: No new inverters or chargers found with device IDs up to {max_device_id}")
             if max_device_id < 246:
-                logging.warning(f" -> If you have device IDs above {max_device_id} on this host, you should consider increasing SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_MAX_DEVICE_ID and re-scan")
+                logger.warning(f" -> If you have device IDs above {max_device_id} on this host, you should consider increasing SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_MAX_DEVICE_ID and re-scan")
         else:
             results.append(device.to_dict())
-            logging.info(
+            logger.info(
                 f" -> Scan complete for {ip}:{port}: Found {len(device.inverters)} inverter(s) {sorted(device.inverters)}, "
                 f"{len(device.dc_chargers)} DC charger(s) {sorted(device.dc_chargers)}, "
                 f"{len(device.ac_chargers)} AC charger(s) {sorted(device.ac_chargers)}, "
@@ -344,7 +339,7 @@ async def scan_host(
     except DiscoveryInterruptedError:
         raise KeyboardInterrupt("Auto-discovery interrupted by signal")
     except ModbusException as exc:
-        logging.debug(f"Modbus connection to {ip}:{port} failed: {exc}")
+        logger.debug(f"Modbus connection to {ip}:{port} failed: {exc}")
     finally:
         modbus.close()
 
@@ -372,14 +367,14 @@ def _local_networks(include_networks: list[str] | None = None) -> dict[str, ipad
             try:
                 include_networks_parsed.add(ipaddress.IPv4Network(network_str, strict=False))
             except ValueError as e:
-                logging.warning(f"Invalid network in include_networks: {network_str} ({e})")
+                logger.warning(f"Invalid network in include_networks: {network_str} ({e})")
 
     # Step 1: Find directly attached networks from network interfaces
     directly_attached: set[ipaddress.IPv4Network] = set()
 
     for iface_name, iface_addrs in psutil.net_if_addrs().items():
         if iface_name in _excluded_names or any(iface_name.startswith(p) for p in _excluded_prefixes):
-            logging.info(f"Excluded network interface '{iface_name}' from auto-discovery")
+            logger.info(f"Excluded network interface '{iface_name}' from auto-discovery")
             continue
         for addr in iface_addrs:
             if addr.family.name == "AF_INET" and addr.address and addr.netmask and not addr.address.startswith("127."):
@@ -387,12 +382,12 @@ def _local_networks(include_networks: list[str] | None = None) -> dict[str, ipad
 
                 # If include_networks is specified, only include matching networks
                 if include_networks_parsed and network not in include_networks_parsed:
-                    logging.info(f"Excluded network interface '{iface_name}' {network} via {addr.address} from auto-discovery (not in specified networks)")
+                    logger.info(f"Excluded network interface '{iface_name}' {network} via {addr.address} from auto-discovery (not in specified networks)")
                     continue
 
                 networks[addr.address] = network
                 directly_attached.add(network)
-                logging.info(f"Included network interface '{iface_name}' {network} via {addr.address} (directly attached)")
+                logger.info(f"Included network interface '{iface_name}' {network} via {addr.address} (directly attached)")
                 break
 
     # Step 2: Add indirectly accessible networks from include_networks
@@ -401,9 +396,9 @@ def _local_networks(include_networks: list[str] | None = None) -> dict[str, ipad
         for network in include_networks_parsed:
             if network not in directly_attached:
                 # Generate a pseudo-IP for indirect networks (use network address + 1)
-                pseudo_ip = str(list(network.hosts())[0]) if list(network.hosts()) else str(network.network_address + 1)
+                pseudo_ip = str(next(iter(network.hosts()))) if list(network.hosts()) else str(network.network_address + 1)
                 networks[pseudo_ip] = network
-                logging.info(f"Included network {network} via routing (indirectly accessible)")
+                logger.info(f"Included network {network} via routing (indirectly accessible)")
 
     return networks
 
@@ -451,18 +446,18 @@ async def scan(
 
         networks = _local_networks(include_networks)
         if not networks:
-            logging.warning("No networks found to be scanned for auto-discovery! Scanning localhost only.")
+            logger.warning("No networks found to be scanned for auto-discovery! Scanning localhost only.")
             networks["127.0.0.1"] = ipaddress.IPv4Network("127.0.0.1/255.255.255.255", strict=False)
 
         candidate_ips: list[str] = [str(host) for subnet in networks.values() for host in subnet.hosts()]
 
-        logging.info(f"Scanning for active devices across {len(candidate_ips)} candidate IPs…")
+        logger.info(f"Scanning for active devices across {len(candidate_ips)} candidate IPs…")
         ping_results = await ping_scan(candidate_ips, concurrent=ping_concurrency, timeout=ping_timeout, port=port)
 
         # Sort by ascending latency.
         active_ips: list[str] = sorted((ip for ip in ping_results), key=lambda ip: ping_results[ip])
 
-        logging.info(f"Found {len(active_ips)} active Modbus device(s), starting detailed scan…")
+        logger.info(f"Found {len(active_ips)} active Modbus device(s), starting detailed scan…")
 
         results: list[dict] = []
         sem = asyncio.Semaphore(host_concurrency)
@@ -488,15 +483,16 @@ async def scan(
             )
         except DiscoveryInterruptedError:
             raise KeyboardInterrupt("Auto-discovery interrupted by signal")
-        except Exception as exc:
-            logging.debug(f"Scan failed: {exc}")
-
+        except asyncio.CancelledError:
+            raise
+        except (OSError, RuntimeError) as exc:
+            logger.debug(f"Scan failed: {exc}")
         elapsed = time.perf_counter() - started
 
         # Summary of findings
-        logging.info(f"Scan completed in {elapsed:.2f}s")
+        logger.info(f"Scan completed in {elapsed:.2f}s")
         if results:
-            logging.info(
+            logger.info(
                 f"Found {len(results)} Sigenergy plant(s) with "
                 f"{sum(len(r.get('inverters', [])) for r in results)} inverter(s), "
                 f"{sum(len(r.get('dc-chargers', [])) for r in results)} DC charger(s), "
@@ -505,7 +501,7 @@ async def scan(
                 f"{sum(len(r.get('pss', [])) for r in results)} PSS(s)"
             )
         else:
-            logging.info("No Sigenergy plants found during auto-discovery.")
+            logger.info("No Sigenergy plants found during auto-discovery.")
 
         return results
     finally:
@@ -519,7 +515,6 @@ async def scan(
 
 def _install_async_signal_handlers(stop_event: asyncio.Event) -> None:
     """Register SIGINT/SIGTERM against a running event loop."""
-    global _interrupted
 
     def signal_handler() -> None:
         """Handle SIGINT/SIGTERM by setting the interrupted flag and stop event."""
@@ -541,6 +536,7 @@ if __name__ == "__main__":
     # Use INFO level for normal operation (shows progress)
     # Use DEBUG level to troubleshoot connection issues
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
+    logger = logging.getLogger(__name__)
 
     async def _async_main() -> None:
         stop_event = asyncio.Event()
@@ -550,16 +546,16 @@ if __name__ == "__main__":
         # Set modbus_retries higher if you see frequent reconnections,
         # or lower if you want to fail faster on unresponsive servers
         scan_task = asyncio.ensure_future(scan(include_networks=["10.10.20.75/32"], max_device_id=10))
-        done, _ = await asyncio.wait([scan_task, asyncio.ensure_future(stop_event.wait())], return_when=asyncio.FIRST_COMPLETED)
+        await asyncio.wait([scan_task, asyncio.ensure_future(stop_event.wait())], return_when=asyncio.FIRST_COMPLETED)
 
         if stop_event.is_set():
-            logging.warning("Scan interrupted by signal")
+            logger.warning("Scan interrupted by signal")
             scan_task.cancel()
             try:
                 await scan_task
             except (asyncio.CancelledError, KeyboardInterrupt):
                 pass
         else:
-            logging.info(f"Auto-discovered: {scan_task.result()}")
+            logger.info(f"Auto-discovered: {scan_task.result()}")
 
     asyncio.run(_async_main())

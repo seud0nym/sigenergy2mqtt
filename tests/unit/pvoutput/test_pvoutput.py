@@ -230,7 +230,7 @@ class TestPvOutputConfig:
 
     def test_current_time_period_weekday_match(self):
         """Line 160: 'Weekdays' in period.days branch."""
-        from datetime import datetime
+        import time
         from unittest.mock import patch as _patch
 
         from sigenergy2mqtt.common.output_field import OutputField
@@ -239,19 +239,18 @@ class TestPvOutputConfig:
             tariffs=[{"plan": "WeekdayPlan", "from-date": "2000-01-01", "to-date": "2099-12-31", "default": "peak", "periods": [{"type": "shoulder", "start": "00:00", "end": "23:59", "days": ["Weekdays"]}]}]
         )
 
-        # Patch datetime.now to return a known Wednesday
-        fake_now = datetime(2026, 2, 18, 12, 0, 0)  # Wednesday
-        with _patch("sigenergy2mqtt.config.settings.datetime") as mock_dt:
-            mock_dt.now.return_value = fake_now
-            mock_dt.min = datetime.min
-            mock_dt.max = datetime.max
+        # Wednesday 2026-02-18 12:00:00
+        fake_lt = time.struct_time((2026, 2, 18, 12, 0, 0, 2, 49, 0))
+        with _patch("sigenergy2mqtt.config.settings.time") as mock_time:
+            mock_time.localtime.return_value = fake_lt
+            mock_time.strftime.return_value = "Wed"
             export_f, import_f = config.current_time_period
         assert export_f == OutputField.EXPORT_SHOULDER
         assert import_f == OutputField.IMPORT_SHOULDER
 
     def test_current_time_period_weekend_match(self):
         """Line 160: 'Weekends' in period.days branch."""
-        from datetime import datetime
+        import time
         from unittest.mock import patch as _patch
 
         from sigenergy2mqtt.common.output_field import OutputField
@@ -260,12 +259,11 @@ class TestPvOutputConfig:
             tariffs=[{"plan": "WeekendPlan", "from-date": "2000-01-01", "to-date": "2099-12-31", "default": "shoulder", "periods": [{"type": "peak", "start": "00:00", "end": "23:59", "days": ["Weekends"]}]}]
         )
 
-        # Patch datetime.now to return a known Saturday
-        fake_now = datetime(2026, 2, 21, 12, 0, 0)  # Saturday
-        with _patch("sigenergy2mqtt.config.settings.datetime") as mock_dt:
-            mock_dt.now.return_value = fake_now
-            mock_dt.min = datetime.min
-            mock_dt.max = datetime.max
+        # Saturday 2026-02-21 12:00:00
+        fake_lt = time.struct_time((2026, 2, 21, 12, 0, 0, 5, 52, 0))
+        with _patch("sigenergy2mqtt.config.settings.time") as mock_time:
+            mock_time.localtime.return_value = fake_lt
+            mock_time.strftime.return_value = "Sat"
             export_f, import_f = config.current_time_period
         assert export_f == OutputField.EXPORT_PEAK
         assert import_f == OutputField.IMPORT_PEAK
@@ -317,9 +315,7 @@ class TestPvOutputConfig:
 
     def test_parse_time_periods_non_dict_entry(self):
         """Lines 222-223: non-dict entry in periods list → ValueError."""
-        from pydantic import ValidationError
-
-        with pytest.raises(ValidationError, match="must be a time period definition"):
+        with pytest.raises(TypeError, match="must be a time period definition"):
             PvOutputConfig(tariffs=[{"periods": ["not-a-dict"]}])
 
     # --- configure ---

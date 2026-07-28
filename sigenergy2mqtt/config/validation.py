@@ -10,7 +10,7 @@ user without additional wrapping.
 """
 
 import re
-from datetime import date, datetime, time
+from datetime import date, time
 from typing import Any, Literal, overload
 
 PATTERN_24H = re.compile(r"^(?:[01]\d|2[0-3]):[0-5]\d$")
@@ -53,18 +53,18 @@ def check_date(value: str | date, source: str) -> date:
     if isinstance(value, date):
         return value
     try:
-        return datetime.strptime(value, "%Y-%m-%d").date()
+        return date.fromisoformat(value)
     except ValueError:
         raise ValueError(f"{source} must be in the format YYYY-MM-DD and not null")
 
 
 @overload
-def check_float(value: str | float | int | None, source: str, min: float | None = None, max: float | None = None, *, allow_none: Literal[False]) -> float: ...
+def check_float(value: str | float | None, source: str, min: float | None = None, max: float | None = None, *, allow_none: Literal[False]) -> float: ...
 @overload
-def check_float(value: str | float | int | None, source: str, min: float | None = None, max: float | None = None, *, allow_none: Literal[True]) -> float | None: ...
+def check_float(value: str | float | None, source: str, min: float | None = None, max: float | None = None, *, allow_none: Literal[True]) -> float | None: ...
 @overload
-def check_float(value: str | float | int | None, source: str, min: float | None = None, max: float | None = None, allow_none: bool = ...) -> float | None: ...
-def check_float(value: str | float | int | None, source: str, min: float | None = None, max: float | None = None, allow_none: bool = False) -> float | None:
+def check_float(value: str | float | None, source: str, min: float | None = None, max: float | None = None, allow_none: bool = ...) -> float | None: ...
+def check_float(value: str | float | None, source: str, min: float | None = None, max: float | None = None, allow_none: bool = False) -> float | None:
     """Validate and coerce *value* to a ``float``.
 
     Accepts native ``float``, ``int``, or a string that can be parsed by ``float()``.
@@ -183,7 +183,7 @@ def check_string(value: Any, source: str, *valid_values: str, allow_none: bool =
             return None
         raise ValueError(f"{source} must be a valid string and not null")
     if not isinstance(value, str):
-        raise ValueError(f"{source} must be a valid string")
+        raise TypeError(f"{source} must be a valid string")
     if not allow_empty and (value == "" or value.isspace()):
         raise ValueError(f"{source} must be a valid string and not empty")
     if hex_chars_only:
@@ -217,6 +217,6 @@ def check_time(value: str | time, source: str) -> time:
     try:
         if value == "24:00":
             return time(23, 59, 59, 999999)
-        return datetime.strptime(value, "%H:%M").time()
+        return time.fromisoformat(value)
     except ValueError:
         raise ValueError(f"{source} must be in the format HH:MM and not null")

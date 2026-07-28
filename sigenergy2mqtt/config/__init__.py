@@ -14,19 +14,21 @@ from .config import Config, ConfigurationError, _create_persistent_state_path, _
 from .settings import Settings
 
 __all__ = [
-    "active_config",
     "Config",
     "ConfigurationError",
-    "configure_root_logging",
     "ConsumptionSource",
-    "initialize",
-    "initialize_async",
     "OutputField",
     "Settings",
     "StatusField",
     "VoltageSource",
     "_swap_active_config",
+    "active_config",
+    "configure_root_logging",
+    "initialize",
+    "initialize_async",
 ]
+
+logger = logging.getLogger("sigenergy2mqtt")
 
 
 # ---------------------------------------------------------------------------
@@ -39,7 +41,7 @@ def _apply_cli_to_env(variable: str, value: str | list[str]) -> None:
     Set an environment variable from a CLI argument.
     """
     os.environ[variable] = ",".join(x for x in value) if isinstance(value, list) else str(value)
-    logging.debug(f"Environment variable '{variable}' set from CLI: value='{'[REDACTED]' if 'PASSWORD' in os.environ[variable] or 'API_KEY' in os.environ[variable] else os.environ[variable]}'")
+    logger.debug(f"Environment variable '{variable}' set from CLI: value='{'[REDACTED]' if 'PASSWORD' in os.environ[variable] or 'API_KEY' in os.environ[variable] else os.environ[variable]}'")
 
 
 def _is_arg_explicitly_set(value) -> bool:
@@ -50,13 +52,7 @@ def _is_arg_explicitly_set(value) -> bool:
     argparse stores False for unset boolean flags and None for omitted
     optional arguments — neither should override a config value.
     """
-    if value is None:
-        return False
-    if isinstance(value, bool):
-        return value is True
-    if isinstance(value, str) and value.lower() in ("false", ""):
-        return False
-    return True
+    return value is not None and not (value is False or (isinstance(value, str) and value.lower() in ("false", "")))
 
 
 def _promote_cli_to_env(args) -> None:
@@ -160,7 +156,7 @@ def initialize(args=None) -> bool:
         active_config.persistent_state_path = _create_persistent_state_path()
     except ConfigurationError:
         raise
-    except Exception as exc:
+    except (ValueError, TypeError, RuntimeError, OSError) as exc:
         raise ConfigurationError(f"Error processing configuration: {exc}") from exc
 
     # 5. Early-exit flags
@@ -189,5 +185,5 @@ async def initialize_async() -> None:
     if path:
         await active_config.load(path)
     else:
-        logging.debug("No config file found; using environment variables and defaults.")
+        logger.debug("No config file found; using environment variables and defaults.")
         await active_config.reload()

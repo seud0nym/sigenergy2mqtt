@@ -8,6 +8,8 @@ from sigenergy2mqtt.sensors.base import ModbusSensorMixin, ReadableSensorMixin, 
 if TYPE_CHECKING:
     from .device import Device
 
+logger = logging.getLogger("sigenergy2mqtt")
+
 
 class ReadableSensorGroup(list[ReadableSensorMixin | ModbusSensorMixin]):
     """A typed list of readable sensors that tracks Modbus address range metadata.
@@ -61,7 +63,7 @@ class ReadableSensorGroup(list[ReadableSensorMixin | ModbusSensorMixin]):
             sensor: The sensor to append. Must be a ReadableSensorMixin instance.
 
         Raises:
-            ValueError: If sensor is not a ReadableSensorMixin.
+            TypeError:  If sensor is not a ReadableSensorMixin.
             ValueError: If sensor is a ModbusSensorMixin with a different device_address
                         than existing Modbus sensors in this group.
             ValueError: If sensor is a ModbusSensorMixin with a different input_type
@@ -70,7 +72,7 @@ class ReadableSensorGroup(list[ReadableSensorMixin | ModbusSensorMixin]):
                         already contains ModbusSensorMixin instances, or vice versa.
         """
         if not isinstance(sensor, ReadableSensorMixin):
-            raise ValueError(f"Only ReadableSensorMixin instances can be added to ReadableSensorGroup, got {type(sensor)}")
+            raise TypeError(f"Only ReadableSensorMixin instances can be added to ReadableSensorGroup, got {type(sensor)}")
         if isinstance(sensor, ModbusSensorMixin):
             if sensor.publishable:
                 if self.first_address == -1 or sensor.address < self.first_address:
@@ -193,6 +195,6 @@ def create_sensor_scan_groups(device: "Device") -> dict[str, list[ReadableSensor
 
     sensors_count = len([s.unique_id for lst in combined_groups.values() for s in lst])
     groups_count = len(combined_groups)
-    logging.debug(f"{device.log_identity} created {groups_count} Sensor Scan Group{'s' if groups_count != 1 else ''} containing {sensors_count} sensor{'s' if sensors_count != 1 else ''}")
+    logger.debug(f"{device.log_identity} created {groups_count} Sensor Scan Group{'s' if groups_count != 1 else ''} containing {sensors_count} sensor{'s' if sensors_count != 1 else ''}")
 
     return combined_groups

@@ -5,6 +5,8 @@ from sigenergy2mqtt.config import active_config
 
 from .thread_config import thread_config_registry
 
+logger = logging.getLogger("sigenergy2mqtt")
+
 
 class RestartController:
     """Coordinates a full runtime restart across threads."""
@@ -43,7 +45,7 @@ class RestartController:
                 should_offline = True
 
         if should_offline:
-            logging.info(f"Restart requested: {reason}")
+            logger.info(f"Restart requested: {reason}")
             for config in thread_config_registry.get_all():
                 config.offline()
 

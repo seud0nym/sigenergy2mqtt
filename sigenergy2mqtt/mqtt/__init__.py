@@ -2,6 +2,8 @@ import asyncio
 import logging
 from asyncio import sleep
 
+from paho.mqtt import MQTTException
+
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus import ModbusClient
 
@@ -9,7 +11,7 @@ from .client import MqttClient
 from .handler import MqttHandler
 from .registry import MqttHealthRegistry
 
-__all__ = ["MqttHandler", "mqtt_health_registry", "mqtt_setup", "mqtt_teardown", "interrupt_mqtt_reconnection", "reset_mqtt_reconnection_interrupt"]
+__all__ = ["MqttHandler", "interrupt_mqtt_reconnection", "mqtt_health_registry", "mqtt_setup", "mqtt_teardown", "reset_mqtt_reconnection_interrupt"]
 
 _MAX_CONNECT_ATTEMPTS: int = 3
 
@@ -23,11 +25,13 @@ _MAX_CONNECT_ATTEMPTS: int = 3
 # ---------------------------------------------------------------------------
 _interrupted: bool = False
 
+logger = logging.getLogger("sigenergy2mqtt")
+
 
 def _check_interrupted(broker_url: str, client_id: str) -> None:
     """Raise KeyboardInterrupt if a pre-loop signal handler set _interrupted."""
     if _interrupted:
-        logging.info(f"Reconnection retry to {broker_url} as Client ID '{client_id}' interrupted by signal")
+        logger.info(f"Reconnection retry to {broker_url} as Client ID '{client_id}' interrupted by signal")
         raise KeyboardInterrupt("MQTT reconnection interrupted by signal")
 
 
@@ -73,16 +77,16 @@ async def _connect_with_retry(mqtt_client: MqttClient, client_id: str) -> None:
                 keepalive=active_config.mqtt.keepalive,
             )
             mqtt_client.loop_start()
-            logging.info(f"Connected to {broker_url} as Client ID '{client_id}' (keepalive={active_config.mqtt.keepalive}s)")
+            logger.info(f"Connected to {broker_url} as Client ID '{client_id}' (keepalive={active_config.mqtt.keepalive}s)")
             return
-        except Exception as e:
+        except (MQTTException, OSError, RuntimeError) as e:
             if attempt < _MAX_CONNECT_ATTEMPTS:
-                logging.warning(f"Error connecting to {broker_url} as Client ID '{client_id}': {repr(e)} (attempt {attempt}/{_MAX_CONNECT_ATTEMPTS}) - Retrying in {active_config.mqtt.retry_delay}s")
+                logger.warning(f"Error connecting to {broker_url} as Client ID '{client_id}': {e!r} (attempt {attempt}/{_MAX_CONNECT_ATTEMPTS}) - Retrying in {active_config.mqtt.retry_delay}s")
                 for _ in range(active_config.mqtt.retry_delay):
                     _check_interrupted(broker_url, client_id)
                     await sleep(1)
             else:
-                logging.critical(f"Failed to connect to {broker_url} as Client ID '{client_id}' after {_MAX_CONNECT_ATTEMPTS} attempts: {repr(e)}")
+                logger.critical(f"Failed to connect to {broker_url} as Client ID '{client_id}' after {_MAX_CONNECT_ATTEMPTS} attempts: {e!r}")
                 raise
 
 
@@ -118,7 +122,7 @@ async def mqtt_setup(mqtt_client_id: str, modbus_client: ModbusClient | None, lo
 
     broker_url = _build_broker_url()
 
-    logging.debug(f"Creating MQTT Client ID {mqtt_client_id} for {broker_url} over {active_config.mqtt.transport}")
+    logger.debug(f"Creating MQTT Client ID {mqtt_client_id} for {broker_url} over {active_config.mqtt.transport}")
 
     mqtt_handler = MqttHandler(mqtt_client_id, modbus_client, loop, mqtt_health_registry)
     mqtt_client = MqttClient(
@@ -131,9 +135,9 @@ async def mqtt_setup(mqtt_client_id: str, modbus_client: ModbusClient | None, lo
     mqtt_health_registry.register(mqtt_client_id)
 
     if active_config.mqtt.anonymous:
-        logging.debug(f"MQTT Client ID {mqtt_client_id} connecting to {broker_url} anonymously")
+        logger.debug(f"MQTT Client ID {mqtt_client_id} connecting to {broker_url} anonymously")
     else:
-        logging.debug(f"MQTT Client ID {mqtt_client_id} connecting to {broker_url} with username {active_config.mqtt.username}")
+        logger.debug(f"MQTT Client ID {mqtt_client_id} connecting to {broker_url} with username {active_config.mqtt.username}")
         mqtt_client.username_pw_set(active_config.mqtt.username, active_config.mqtt.password)
 
     await _connect_with_retry(mqtt_client, mqtt_client_id)
@@ -151,10 +155,10 @@ async def mqtt_teardown(mqtt_client: MqttClient, mqtt_handler: MqttHandler) -> N
     mqtt_client_id = mqtt_client.client_id_str
     broker_url = _build_broker_url()
 
-    logging.debug(f"Deregistering and unsubscribing MQTT handlers for Client ID {mqtt_client_id} to {broker_url}")
+    logger.debug(f"Deregistering and unsubscribing MQTT handlers for Client ID {mqtt_client_id} to {broker_url}")
     mqtt_handler.deregister_all(mqtt_client)
 
-    logging.info(f"Closing MQTT connection for Client ID {mqtt_client_id} to {broker_url}")
+    logger.info(f"Closing MQTT connection for Client ID {mqtt_client_id} to {broker_url}")
     mqtt_client.loop_stop()
     mqtt_client.disconnect()
 

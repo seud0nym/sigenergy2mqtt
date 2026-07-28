@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Final, TypeAlias
+from typing import Any, Final
 
 from sigenergy2mqtt.common import DeviceClass, StateClass
 
@@ -66,10 +66,10 @@ class SensorAttributeKeys:
 
 
 # Type aliases for better readability
-SensorValue: TypeAlias = str | int | bool | float | list[str] | list[dict[str, str]] | tuple[float, ...]
-SensorAttribute: TypeAlias = SensorValue | DeviceClass | StateClass | None
-SensorDict: TypeAlias = dict[str, SensorAttribute]
-StateHistory: TypeAlias = list[tuple[float, Any]]
+type SensorValue = str | int | bool | float | list[str] | list[dict[str, str]] | tuple[float, ...]
+type SensorAttribute = SensorValue | DeviceClass | StateClass | None
+type SensorDict = dict[str, SensorAttribute]
+type StateHistory = list[tuple[float, Any]]
 
 
 # =============================================================================

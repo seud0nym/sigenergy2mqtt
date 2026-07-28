@@ -17,6 +17,8 @@ from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.metrics import Metrics
 
+logger = logging.getLogger("sigenergy2mqtt")
+
 
 class Service(Device):
     """Common PVOutput device behaviour for API timing and uploads."""
@@ -86,7 +88,6 @@ class Service(Device):
             ha_state: Home Assistant availability state (unused).
             qos: MQTT QoS level (unused).
         """
-        pass
 
     def publish_discovery(self, mqtt_client: mqtt.Client, clean=False) -> mqtt.MQTTMessageInfo | None:
         """No-op override: PVOutput services are not Home Assistant entities.
@@ -95,7 +96,6 @@ class Service(Device):
             mqtt_client: MQTT client instance (unused).
             clean: Cleanup mode flag (unused).
         """
-        pass
 
     # endregion
 
@@ -151,7 +151,7 @@ class Service(Device):
                                 Service._donator = donations != 0
                         else:
                             self.logger.warning(f"{self.log_identity} FAILED to acquire System Information status_code={response.status_code} reason={response.reason}")
-                    except Exception as exc:
+                    except (OSError, requests.RequestException, TimeoutError, ValueError, AttributeError) as exc:
                         Service._interval = 5  # Default interval in minutes if not set
                         Service._donator = False  # Default donator status if not set
                         self.logger.warning(
@@ -221,15 +221,15 @@ class Service(Device):
                         break
                     else:
                         self.logger.error(f"{self.log_identity} Attempt #{i} HTTP Error: {exc} ({limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))})")
-            except requests.exceptions.ConnectionError as exc:
-                self._set_health_status(False)
-                await Metrics.pvoutput_upload_error()
-                self.logger.error(f"{self.log_identity} Attempt #{i} Error Connecting: {exc}")
             except requests.exceptions.Timeout as exc:
                 self._set_health_status(False)
                 await Metrics.pvoutput_upload_error()
                 self.logger.error(f"{self.log_identity} Attempt #{i} Timeout Error: {exc}")
-            except Exception as exc:
+            except requests.RequestException as exc:
+                self._set_health_status(False)
+                await Metrics.pvoutput_upload_error()
+                self.logger.error(f"{self.log_identity} Attempt #{i} Error Connecting: {exc}")
+            except (ValueError, OSError, AttributeError) as exc:
                 self._set_health_status(False)
                 await Metrics.pvoutput_upload_error()
                 self.logger.error(f"{self.log_identity} {exc}")
@@ -244,14 +244,14 @@ class Service(Device):
                 try:
                     await asyncio.sleep(reset)  # pyright: ignore[reportPossiblyUnboundVariable]  # pyrefly: ignore
                 except asyncio.CancelledError:
-                    logging.debug(f"{self.log_identity} reset sleep interrupted")
+                    logger.debug(f"{self.log_identity} reset sleep interrupted")
                     break
             else:
                 self.logger.info(f"{self.log_identity} Retrying in 10 seconds")
                 try:
                     await asyncio.sleep(10)
                 except asyncio.CancelledError:
-                    logging.debug(f"{self.log_identity} retry sleep interrupted")
+                    logger.debug(f"{self.log_identity} retry sleep interrupted")
                     break
         else:
             self.logger.error(f"{self.log_identity} Failed to upload to {url} after {attempts} attempts")

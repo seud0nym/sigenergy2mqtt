@@ -12,8 +12,10 @@ from __future__ import annotations
 
 import ipaddress
 import logging
-from datetime import datetime
-from typing import Any, Optional
+import time
+from datetime import date
+from datetime import time as time_obj
+from typing import Any
 
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, InitSettingsSource, PydanticBaseSettingsSource, SettingsConfigDict
@@ -41,13 +43,15 @@ from sigenergy2mqtt.config.sources import (
 )
 from sigenergy2mqtt.config.validators import validate_log_level, validate_sensor_overrides
 
+logger = logging.getLogger("sigenergy2mqtt")
+
 # ---------------------------------------------------------------------------
 # PvOutputConfig methods that use datetime.now() must live here so that
 # tests can patch 'sigenergy2mqtt.config.settings.datetime'.
 # ---------------------------------------------------------------------------
 
 
-def _pvoutput_type_to_output_fields(self: "PvOutputConfig", type: TariffType) -> tuple[OutputField, OutputField]:
+def _pvoutput_type_to_output_fields(self: PvOutputConfig, type: TariffType) -> tuple[OutputField, OutputField]:
     match type:
         case TariffType.OFF_PEAK:
             return OutputField.EXPORT_OFF_PEAK, OutputField.IMPORT_OFF_PEAK
@@ -61,26 +65,28 @@ def _pvoutput_type_to_output_fields(self: "PvOutputConfig", type: TariffType) ->
             raise ValueError(f"Invalid tariff type: {type}")
 
 
-def _pvoutput_current_time_period(self: "PvOutputConfig") -> tuple[OutputField | None, OutputField]:
+def _pvoutput_current_time_period(self: PvOutputConfig) -> tuple[OutputField | None, OutputField]:
     export_type = None
     import_type = OutputField.IMPORT_PEAK
     if self.tariffs:
-        now_date_time = datetime.now()
-        today = now_date_time.date()
-        now = now_date_time.time()
-        dow = now_date_time.strftime("%a")
+        # Get local time struct
+        lt = time.localtime()
+
+        # Extract equivalent values
+        today = date(lt.tm_year, lt.tm_mon, lt.tm_mday)
+        now = time_obj(lt.tm_hour, lt.tm_min, lt.tm_sec)
+        dow = time.strftime("%a", lt)
         for tariff in self.tariffs:
             if (tariff.from_date is None or tariff.from_date <= today) and (tariff.to_date is None or tariff.to_date >= today):
                 for period in tariff.periods:
-                    if "All" in period.days or dow in period.days or ("Weekdays" in period.days and dow in WEEKDAYS) or ("Weekends" in period.days and dow in WEEKENDS):
-                        if period.start <= now < period.end:
-                            if self.log_level <= logging.DEBUG and self.calc_debug_logging:
-                                logging.debug(f"Current date matched '{tariff.plan}' ({tariff.from_date} to {tariff.to_date}) and time matched '{period.type}' ({period.start}-{period.end}) on {dow}")
-                            export_type, import_type = _pvoutput_type_to_output_fields(self, period.type)
-                            break
+                    if ("All" in period.days or dow in period.days or ("Weekdays" in period.days and dow in WEEKDAYS) or ("Weekends" in period.days and dow in WEEKENDS)) and period.start <= now < period.end:
+                        if self.log_level <= logging.DEBUG and self.calc_debug_logging:
+                            logger.debug(f"Current date matched '{tariff.plan}' ({tariff.from_date} to {tariff.to_date}) and time matched '{period.type}' ({period.start}-{period.end}) on {dow}")
+                        export_type, import_type = _pvoutput_type_to_output_fields(self, period.type)
+                        break
                 else:
                     if self.log_level <= logging.DEBUG and self.calc_debug_logging:
-                        logging.debug(f"Current date matched '{tariff.plan}' ({tariff.from_date} to {tariff.to_date}) but no time matched so using default '{tariff.default}'")
+                        logger.debug(f"Current date matched '{tariff.plan}' ({tariff.from_date} to {tariff.to_date}) but no time matched so using default '{tariff.default}'")
                     export_type, import_type = _pvoutput_type_to_output_fields(self, tariff.default)
     return (export_type, import_type)
 
@@ -126,11 +132,11 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(populate_by_name=True)
 
     # ── Internal args ────────────────────────────────────────────────────────
-    yaml_file_arg: Optional[str] = Field(None, exclude=True)
+    yaml_file_arg: str | None = Field(None, exclude=True)
 
     # ── Auto-Discovery fields ────────────────────────────────────────────────
     modbus_port: int = Field(502, alias="modbus-port")
-    modbus_auto_discovery: Optional[str] = Field(None, alias="modbus-auto-discovery")
+    modbus_auto_discovery: str | None = Field(None, alias="modbus-auto-discovery")
     modbus_auto_discovery_timeout: float = Field(0.5, alias="modbus-auto-discovery-timeout")
     modbus_auto_discovery_ping_timeout: float = Field(0.5, alias="modbus-auto-discovery-ping-timeout")
     modbus_auto_discovery_retries: int = Field(0, alias="modbus-auto-discovery-retries")
@@ -141,7 +147,7 @@ class Settings(BaseSettings):
     # ── Top-level scalars ────────────────────────────────────────────────────
     log_level: int = Field(logging.INFO, alias="log-level")
     _validate_log_level = field_validator("log_level", mode="before")(validate_log_level)
-    log_fmt: Optional[str] = Field(None, alias="log-fmt")
+    log_fmt: str | None = Field(None, alias="log-fmt")
     language: str = Field("en", alias="language")
     consumption: ConsumptionMethod = Field(ConsumptionMethod.TOTAL, alias="consumption")
     repeated_state_publish_interval: int = Field(0, alias="repeated-state-publish-interval")
@@ -231,7 +237,7 @@ class Settings(BaseSettings):
             available = i18n.get_available_translations()
             if v not in available:
                 default = i18n.get_default_language()
-                logging.warning(f"Invalid language '{v}', falling back to '{default}'")
+                logger.warning(f"Invalid language '{v}', falling back to '{default}'")
                 return default
         return v
 
@@ -255,7 +261,7 @@ class Settings(BaseSettings):
         if not v:
             return {}
         if not isinstance(v, dict):
-            raise ValueError("sensor-overrides must contain a list of class names")
+            raise TypeError("sensor-overrides must contain a list of class names")
         return validate_sensor_overrides(v)
 
     @field_validator("modbus_auto_discovery_networks", mode="before")
@@ -317,7 +323,7 @@ class Settings(BaseSettings):
 
     # ── Post-init orchestration ───────────────────────────────────────────────
 
-    def model_post_init(self, __context: Any) -> None:
+    def model_post_init(self, __context: Any, /) -> None:
         # Sync root logger to the resolved log level
         logging.getLogger().setLevel(self.log_level)
 
@@ -374,7 +380,7 @@ class Settings(BaseSettings):
             else:
                 source = "file/env/cli"
 
-            logging.debug(f"Configuration for modbus://{hp} derived from {source}")
+            logger.debug(f"Configuration for modbus://{hp} derived from {source}")
 
     # ── Source customisation ──────────────────────────────────────────────────
 

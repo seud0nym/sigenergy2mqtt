@@ -1,15 +1,13 @@
 """Modbus client, locking, and factory primitives used by the application."""
 
-from typing import TypeAlias
+from pymodbus.client.mixin import ModbusClientMixin
 
 from .client import ModbusClient
 from .client_factory import ModbusClientFactory
 from .lock import ModbusLock
 from .lock_factory import ModbusLockFactory
 
-from pymodbus.client.mixin import ModbusClientMixin
-
-ModbusDataType: TypeAlias = ModbusClientMixin.DATATYPE
+ModbusDataType = ModbusClientMixin.DATATYPE
 
 
-__all__ = ["ModbusClientFactory", "ModbusClient", "ModbusLockFactory", "ModbusLock", "ModbusDataType"]
+__all__ = ["ModbusClient", "ModbusClientFactory", "ModbusDataType", "ModbusLock", "ModbusLockFactory"]

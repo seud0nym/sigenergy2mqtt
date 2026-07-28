@@ -39,7 +39,7 @@ class InfluxDbConfig(BaseModel):
     max_sync_workers: int = Field(4, alias="max-sync-workers", ge=1)
 
     @model_validator(mode="after")
-    def check_credentials(self) -> "InfluxDbConfig":
+    def check_credentials(self) -> InfluxDbConfig:
         if not self.enabled:
             return self
         # Lone password with no username → treat as token (v2 API)

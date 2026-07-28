@@ -3,7 +3,8 @@ from __future__ import annotations
 import abc
 import asyncio
 import logging
-from typing import Awaitable, Literal, cast
+from collections.abc import Awaitable
+from typing import Literal, cast
 
 import paho.mqtt.client as mqtt
 
@@ -19,6 +20,8 @@ from .ha_publisher import HaPublisherMixin
 from .poller import SensorGroupPoller
 from .registry import DeviceRegistry
 from .scan_groups import create_sensor_scan_groups
+
+logger = logging.getLogger("sigenergy2mqtt")
 
 
 class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta):
@@ -110,9 +113,9 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
             ]:
                 self[k] = v
             else:
-                logging.debug(f"{self.log_identity} Ignored unknown device attribute: {k} (probably translation placeholder)")
+                logger.debug(f"{self.log_identity} Ignored unknown device attribute: {k} (probably translation placeholder)")
 
-        logging.debug(f"{self.log_identity} Created Device {self}")
+        logger.debug(f"{self.log_identity} Created Device {self}")
         DeviceRegistry.add(self.plant_index, self)
 
     def _build_log_identity(self) -> str:
@@ -197,16 +200,16 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
             value: A Future to bring the device online, or False to take it offline.
 
         Raises:
-            ValueError: If value is True or any type other than bool or asyncio.Future.
+            TypeError: If value is True or any type other than bool or asyncio.Future.
         """
         if isinstance(value, bool):
             if value:  # True
-                raise ValueError("online must be a Future to enable")
+                raise TypeError("online must be a Future to enable")
             else:  # False - Trigger graceful shutdown
                 if self._online is False:
                     return  # Already offline
 
-                logging.debug(f"{self.log_identity} initiating graceful shutdown")
+                logger.debug(f"{self.log_identity} initiating graceful shutdown")
 
                 # Cancel the online future to stop new operations
                 if isinstance(self._online, asyncio.Future):
@@ -231,14 +234,14 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
                 # Mark as offline
                 self._online = False
 
-                logging.debug(f"{self.log_identity} set to offline")
+                logger.debug(f"{self.log_identity} set to offline")
 
         elif isinstance(value, asyncio.Future):
-            logging.debug(f"{self.log_identity} set to online")
+            logger.debug(f"{self.log_identity} set to online")
             self._online = value
             self._shutdown_event.clear()
         else:
-            raise ValueError("online must be a Future or False")
+            raise TypeError("online must be a Future or False")
 
     @property
     def sleeper_task(self) -> asyncio.Task | None:
@@ -266,16 +269,16 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
             value: Boolean flag value.
 
         Raises:
-            ValueError: If value is not a bool.
+            TypeError: If value is not a bool.
         """
         if not isinstance(value, bool):
-            raise ValueError("rediscover must be a boolean")
+            raise TypeError("rediscover must be a boolean")
         self._rediscover = value
         if active_config.home_assistant.enabled:
             if value:
-                logging.info(f"{self.log_identity} set to rediscover")
+                logger.info(f"{self.log_identity} set to rediscover")
             else:
-                logging.debug(f"{self.log_identity} no longer set to rediscover")
+                logger.debug(f"{self.log_identity} no longer set to rediscover")
 
     @property
     def sensors(self) -> dict[str, Sensor]:
@@ -307,7 +310,7 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
     def via_device(self, value: str) -> None:
         self["via_device"] = value
 
-    def _add_child_device(self, device: "Device") -> None:
+    def _add_child_device(self, device: Device) -> None:
         """Register another Device as a child of this device.
 
         Child devices appear under this device in the Home Assistant device registry
@@ -328,7 +331,7 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
             device.via_device = self.unique_id
             self.children.append(device)
         else:
-            logging.debug(f"{self.log_identity} cannot add child device {device.log_identity} - No publishable sensors defined")
+            logger.debug(f"{self.log_identity} cannot add child device {device.log_identity} - No publishable sensors defined")
 
     def _add_to_all_sensors(self, sensor: Sensor) -> None:
         """Register a sensor in all_sensors after applying configuration and MQTT setup.
@@ -347,9 +350,9 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
             sensor.on_added_to_device()
             self.all_sensors[sensor.unique_id] = sensor
             if sensor.debug_logging:
-                logging.debug(f"{sensor.log_identity} added to {self.log_identity}: {repr(sensor)}")
+                logger.debug(f"{sensor.log_identity} added to {self.log_identity}: {sensor!r}")
         elif sensor.debug_logging:
-            logging.debug(f"{sensor.log_identity} NOT added to {self.log_identity} - already exists")
+            logger.debug(f"{sensor.log_identity} NOT added to {self.log_identity} - already exists")
 
     def _add_sensor(self, sensor: Sensor, group: str | None = None, search_children: bool = True) -> bool:
         """Register any sensor type and handle type-specific wiring."""
@@ -362,7 +365,7 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
             sensor_protocol = getattr(sensor, "protocol_version", Protocol.N_A)
             if self.protocol_version > Protocol.N_A and sensor_protocol > self.protocol_version:
                 if sensor.debug_logging:
-                    logging.debug(f"{self.log_identity} skipped adding {sensor.__class__.__name__} - Protocol version {sensor_protocol} > {self.protocol_version}")
+                    logger.debug(f"{self.log_identity} skipped adding {sensor.__class__.__name__} - Protocol version {sensor_protocol} > {self.protocol_version}")
                 return False
             self._add_to_all_sensors(sensor)
             return True
@@ -370,26 +373,26 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
             sensor_protocol = getattr(sensor, "protocol_version", Protocol.N_A)
             if self.protocol_version > Protocol.N_A and sensor_protocol > self.protocol_version:
                 if sensor.debug_logging:
-                    logging.debug(f"{self.log_identity} skipped adding {sensor.__class__.__name__} - Protocol version {sensor_protocol} > {self.protocol_version}")
+                    logger.debug(f"{self.log_identity} skipped adding {sensor.__class__.__name__} - Protocol version {sensor_protocol} > {self.protocol_version}")
                 return False
             source_sensors = getattr(sensor, "source_sensors", [])
             if not source_sensors:
-                logging.error(f"{self.log_identity} cannot add {sensor.__class__.__name__} - no declared source sensors")
+                logger.error(f"{self.log_identity} cannot add {sensor.__class__.__name__} - no declared source sensors")
                 return False
             if self.protocol_version > Protocol.N_A and any(getattr(s, "protocol_version", Protocol.N_A) > self.protocol_version for s in source_sensors):
-                logging.debug(f"{self.log_identity} skipped adding {sensor.__class__.__name__} - one or more source sensors have Protocol version > {self.protocol_version}")
+                logger.debug(f"{self.log_identity} skipped adding {sensor.__class__.__name__} - one or more source sensors have Protocol version > {self.protocol_version}")
                 return False
             added = False
             for source in source_sensors:
                 if self.protocol_version > Protocol.N_A and source.protocol_version > self.protocol_version:
-                    logging.debug(
+                    logger.debug(
                         f"{self.log_identity} skipped binding source {source.__class__.__name__} to {sensor.__class__.__name__} - "
                         f"source protocol {source.protocol_version} > device protocol {self.protocol_version}"
                     )
                     continue
                 found = self.get_sensor(source.unique_id, search_children=search_children)
                 if not found:
-                    logging.warning(f"{self.log_identity} cannot bind source {source.__class__.__name__} to {sensor.__class__.__name__} - source not registered")
+                    logger.warning(f"{self.log_identity} cannot bind source {source.__class__.__name__} to {sensor.__class__.__name__} - source not registered")
                     continue
                 found.add_derived_sensor(sensor)
                 sensor.bind_source_sensor(found)
@@ -402,7 +405,7 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
             self._add_to_all_sensors(sensor)
             return True
         if not isinstance(sensor, ReadableSensorMixin):
-            logging.error(f"{self.log_identity} cannot add {sensor.__class__.__name__} - unsupported sensor type")
+            logger.error(f"{self.log_identity} cannot add {sensor.__class__.__name__} - unsupported sensor type")
             return False
         if group is None:
             self.read_sensors[sensor.unique_id] = sensor
@@ -488,11 +491,9 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
 
     def on_commencement(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client) -> None:
         """Called when the device is brought online."""
-        pass
 
     def on_completion(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client) -> None:
         """Called when the device is taken offline."""
-        pass
 
     def schedule(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client) -> list[Awaitable[None]]:
         """Build the list of coroutines that drive this device's runtime behaviour.
@@ -519,7 +520,7 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
             if any(s.publishable for s in sensors):
                 tasks.append(poller.run(modbus_client, mqtt_client, name, *sensors))
             else:
-                logging.debug(f"{self.log_identity} Sensor Scan Group [{name}] skipped because no sensors are publishable (unique_ids={[s.unique_id for s in sensors]})")
+                logger.debug(f"{self.log_identity} Sensor Scan Group [{name}] skipped because no sensors are publishable (unique_ids={[s.unique_id for s in sensors]})")
         if active_config.home_assistant.enabled and active_config.home_assistant.republish_discovery_interval > 0:
             tasks.append(self.republish_discovery(mqtt_client))
         return tasks
@@ -540,23 +541,23 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
         """
         if active_config.home_assistant.enabled:
             result = mqtt_handler.register(mqtt_client, f"{active_config.home_assistant.discovery_prefix}/status", self.on_ha_state_change)
-            logging.debug(f"{self.log_identity} subscribed to topic {active_config.home_assistant.discovery_prefix}/status for Home Assistant state changes ({result=})")
+            logger.debug(f"{self.log_identity} subscribed to topic {active_config.home_assistant.discovery_prefix}/status for Home Assistant state changes ({result=})")
         for sensor in self.sensors.values():
             if isinstance(sensor, WritableSensorMixin):
                 try:
                     result = mqtt_handler.register(mqtt_client, sensor.command_topic, sensor.set_value)
                     if sensor.debug_logging:
-                        logging.debug(f"{sensor.log_identity} subscribed to topic {sensor.command_topic} for writing ({result=})")
-                except Exception as e:
-                    logging.error(f"{sensor.log_identity} failed to subscribe to topic {sensor.command_topic}: {repr(e)}")
+                        logger.debug(f"{sensor.log_identity} subscribed to topic {sensor.command_topic} for writing (result={result!r})")
+                except (ValueError, TypeError, AttributeError, RuntimeError) as e:
+                    logger.error(f"{sensor.log_identity} failed to subscribe to topic {sensor.command_topic}: {e!r}")
             if isinstance(sensor, ObservableMixin):
                 for topic in sensor.observable_topics():
                     try:
                         result = mqtt_handler.register(mqtt_client, topic, sensor.notify)
                         if sensor.debug_logging:
-                            logging.debug(f"{sensor.log_identity} subscribed to topic {topic} for notification ({result=})")
-                    except Exception as e:
-                        logging.error(f"{sensor.log_identity} failed to subscribe to topic {topic}: {repr(e)}")
+                            logger.debug(f"{sensor.log_identity} subscribed to topic {topic} for notification ({result=})")
+                    except (ValueError, TypeError, AttributeError, RuntimeError) as e:
+                        logger.error(f"{sensor.log_identity} failed to subscribe to topic {topic}: {e!r}")
         for device in self.children:
             device.subscribe(mqtt_client, mqtt_handler)
 
@@ -637,10 +638,10 @@ class ModbusDevice(Device, metaclass=abc.ABCMeta):
             is not a ReadableSensorMixin.
         """
         if self._device_type is not None and isinstance(self._device_type, (HybridInverter, PVInverter)) and not isinstance(sensor, self._device_type.__class__):
-            logging.debug(f"{self.log_identity} skipped adding {sensor.__class__.__name__} - not applicable to a {self._device_type.__class__.__name__}")
+            logger.debug(f"{self.log_identity} skipped adding {sensor.__class__.__name__} - not applicable to a {self._device_type.__class__.__name__}")
             return False
         elif sensor.protocol_version > self.protocol_version:
-            logging.debug(f"{self.log_identity} skipped adding {sensor.__class__.__name__} - Protocol version {sensor.protocol_version} > {self.protocol_version}")
+            logger.debug(f"{self.log_identity} skipped adding {sensor.__class__.__name__} - Protocol version {sensor.protocol_version} > {self.protocol_version}")
             return False
         else:
             return super()._add_sensor(sensor, group=group, search_children=search_children)
@@ -672,12 +673,12 @@ def bind_cross_device_sensors(plant_index: int) -> None:
         for sensor in list(device.get_all_sensors(search_children=True).values()):
             if isinstance(sensor, CrossDeviceDerivedSensor):
                 if sensor.bound_source_sensors:
-                    logging.debug(f"{sensor.log_identity} cross-device sources already bound - skipping")
+                    logger.debug(f"{sensor.log_identity} cross-device sources already bound - skipping")
                     continue
                 ok = sensor.finalise_binding(plant_index)
                 if not ok:
                     sensor.publishable = False
-                    logging.warning(f"{sensor.log_identity} no cross-device sources were bound - publishable=False")
+                    logger.warning(f"{sensor.log_identity} no cross-device sources were bound - publishable=False")
                     for derived in sensor.derived_sensors.values():
                         derived.publishable = False
-                        logging.warning(f"{derived.log_identity} inherited publishable=False from source sensor {sensor.log_identity}")
+                        logger.warning(f"{derived.log_identity} inherited publishable=False from source sensor {sensor.log_identity}")

@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 if TYPE_CHECKING:
     from .device import Device
@@ -17,7 +17,7 @@ class DeviceRegistry:
     # an existence check before appending. clear() reassigns this attribute
     # (rather than calling .clear() on it) to guarantee the type invariant is
     # restored even if external code has replaced it with a plain dict.
-    _devices: dict[int, list["Device"]] = defaultdict(list)
+    _devices: ClassVar[dict[int, list["Device"]]] = defaultdict(list)
 
     @classmethod
     def add(cls, plant_index: int, device: "Device") -> None:

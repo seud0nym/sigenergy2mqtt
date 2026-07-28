@@ -49,7 +49,7 @@ def test_load_file_not_found_warning():
     mock_file.exists.return_value = False
     mock_dir.__truediv__.return_value = mock_file
 
-    with patch("sigenergy2mqtt.i18n.logging.warning") as mock_warn:
+    with patch("sigenergy2mqtt.i18n.logger.warning") as mock_warn:
         t._load_file("nonexistent")
         mock_warn.assert_called()
 
@@ -62,8 +62,8 @@ def test_load_file_exception():
     mock_file.exists.return_value = True
     mock_dir.__truediv__.return_value = mock_file
 
-    with patch("builtins.open", side_effect=Exception("perm error")):
-        with patch("sigenergy2mqtt.i18n.logging.error") as mock_error:
+    with patch("builtins.open", side_effect=OSError("perm error")):
+        with patch("sigenergy2mqtt.i18n.logger.error") as mock_error:
             assert t._load_file("en") == {}
             mock_error.assert_called()
 
@@ -127,8 +127,8 @@ def test_t_no_translate_flag():
 
 def test_t_debugging_and_failure_logs():
     reset()
-    with patch("sigenergy2mqtt.i18n.logging.warning") as mock_warn:
-        with patch("sigenergy2mqtt.i18n.logging.debug") as mock_debug:
+    with patch("sigenergy2mqtt.i18n.logger.warning") as mock_warn:
+        with patch("sigenergy2mqtt.i18n.logger.debug") as mock_debug:
             with patch.object(_translator, "translate", return_value=("key", "en", False)):
                 _t("missing_key", debugging=True)
                 mock_debug.assert_called()
@@ -138,7 +138,7 @@ def test_t_debugging_and_failure_logs():
 def test_t_formatting_exception():
     reset()
     with patch.object(_translator, "translate", return_value=(None, "en", True)):
-        with patch("sigenergy2mqtt.i18n.logging.warning") as mock_warn:
+        with patch("sigenergy2mqtt.i18n.logger.warning") as mock_warn:
             assert _t("class.bad", x=1) is None
             mock_warn.assert_called()
 
@@ -158,7 +158,7 @@ def test_get_default_language_exhaustive():
         with patch("sigenergy2mqtt.i18n.locale.getlocale", return_value=("nl_NL", "UTF-8")):
             assert get_default_language() == "nl"
 
-        with patch("locale.getlocale", side_effect=Exception("fail")):
+        with patch("locale.getlocale", side_effect=OSError("fail")):
             with patch.dict(os.environ, {"LANG": "en_US.UTF-8"}):
                 assert get_default_language() == "en"
 

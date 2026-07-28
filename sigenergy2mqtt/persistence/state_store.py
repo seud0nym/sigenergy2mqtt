@@ -42,13 +42,15 @@ import logging
 import threading
 import time
 from collections import deque
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 from enum import StrEnum
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
 
 import paho.mqtt.client as mqtt
+from paho.mqtt import MQTTException
 
 if TYPE_CHECKING:
     from sigenergy2mqtt.config.models.persistence import PersistenceConfig
@@ -61,6 +63,8 @@ _SENTINEL_SUFFIX = "_sentinel"
 _PAYLOAD_VALUE_KEY = "v"
 _PAYLOAD_TS_KEY = "ts"
 _PAYLOAD_VER_KEY = "ver"
+
+logger = logging.getLogger("sigenergy2mqtt")
 
 
 class Category(StrEnum):
@@ -91,7 +95,7 @@ def _parse_envelope(raw: str, *, fallback_ts: int | None = None) -> tuple[str, i
         if isinstance(obj, dict) and _PAYLOAD_VALUE_KEY in obj and _PAYLOAD_TS_KEY in obj:
             return str(obj[_PAYLOAD_VALUE_KEY]), int(obj[_PAYLOAD_TS_KEY]), False
     except (json.JSONDecodeError, ValueError, TypeError):
-        logging.debug("StateStore: invalid envelope detected, treating as legacy value")
+        logger.debug("StateStore: invalid envelope detected, treating as legacy value")
 
     # Legacy / raw value — treat the whole string as the value.
     ts = fallback_ts if fallback_ts is not None else int(time.time())
@@ -124,7 +128,7 @@ class _DiskBackend:
         envelope = _make_envelope(value, self._version)
         path.write_text(envelope, encoding="utf-8")
         if active_config.persistence_debug:
-            logging.debug(f"DiskBackend.save {category}/{key}")
+            logger.debug(f"DiskBackend.save {category}/{key}")
 
     def load(self, category: Category | str, key: str) -> tuple[str, int, bool, bool] | None:
         """Read and return ``(value, ts, was_legacy, found_in_root)`` from disk, or ``None`` if absent.
@@ -155,7 +159,7 @@ class _DiskBackend:
 
             return value, ts, was_legacy, found_in_root
         except OSError as exc:
-            logging.warning(f"DiskBackend.load failed for {category}/{key}: {exc}")
+            logger.warning(f"DiskBackend.load failed for {category}/{key}: {exc}")
             return None
 
     def delete(self, category: Category | str, key: str) -> None:
@@ -167,9 +171,9 @@ class _DiskBackend:
         try:
             path.unlink(missing_ok=True)
             if active_config.persistence_debug:
-                logging.debug(f"DiskBackend.delete {category}/{key} successful")
+                logger.debug(f"DiskBackend.delete {category}/{key} successful")
         except OSError as exc:
-            logging.error(f"DiskBackend.delete failed for {category}/{key}: {exc}")
+            logger.error(f"DiskBackend.delete failed for {category}/{key}: {exc}")
 
         # Also remove from the legacy root state directory if present
         root_path = self._state_path / key
@@ -177,9 +181,9 @@ class _DiskBackend:
             try:
                 root_path.unlink()
                 if active_config.persistence_debug:
-                    logging.debug(f"DiskBackend.delete legacy root file {key}")
+                    logger.debug(f"DiskBackend.delete legacy root file {key}")
             except OSError as exc:
-                logging.warning(f"DiskBackend.delete failed for legacy root file {key}: {exc}")
+                logger.warning(f"DiskBackend.delete failed for legacy root file {key}: {exc}")
 
     def delete_root_legacy(self, key: str) -> None:
         """Explicitly remove a legacy file from the root state path."""
@@ -243,7 +247,7 @@ class _MqttBackend:
 
     def _schedule_retry(self, attempt, fn, *args) -> None:
         if attempt >= self._max_retries:
-            logging.warning("MqttBackend: dropping message after %d retries", attempt)
+            logger.warning("MqttBackend: dropping message after %d retries", attempt)
             return
         delay = self._base_delay * (2**attempt)
         self._retry_queue.append((time.time() + delay, attempt + 1, fn, args))
@@ -257,8 +261,9 @@ class _MqttBackend:
             self._retry_queue.popleft()
             try:
                 fn(client, *args, _attempt=attempt)
-            except Exception:
-                pass
+            except (ValueError, TypeError, RuntimeError):
+                arg_desc = "/".join(str(a) for a in args) if args else "unknown"
+                logger.warning("MqttBackend: retry failed for %s on attempt %d", arg_desc, attempt)
 
     def _topic_to_key(self, topic: str) -> tuple[Category | str, str] | None:
         """Convert an MQTT topic to ``(category, key)`` or ``None`` if not ours."""
@@ -277,12 +282,12 @@ class _MqttBackend:
             return category, key
 
     def _key_to_topic(self, category: Category | str, key: str) -> str:
-        return f"{self._prefix}/{str(category)}/{key}"
+        return f"{self._prefix}/{category!s}/{key}"
 
     def on_message(self, client: mqtt.Client, userdata: object, msg: mqtt.MQTTMessage) -> None:
         """Handle an incoming MQTT message — either retained state or the sentinel."""
         if msg.topic == self._sentinel_topic:
-            logging.debug("MqttBackend: sentinel received — cache warming complete")
+            logger.debug("MqttBackend: sentinel received — cache warming complete")
             self._sentinel_event.set()
             return
 
@@ -306,7 +311,7 @@ class _MqttBackend:
             from sigenergy2mqtt.config import active_config
 
             if active_config.persistence_debug:
-                logging.debug(f"MqttBackend: cached {category}/{key} (ts={ts})")
+                logger.debug(f"MqttBackend: cached {category}/{key} (ts={ts})")
 
     def publish(self, client: mqtt.Client, category: Category | str, key: str, value: str, _attempt: int = 0) -> None:
         """Publish a retained state message."""
@@ -323,7 +328,7 @@ class _MqttBackend:
             self._schedule_retry(_attempt, self.publish, category, key, value)
             return
         if active_config.persistence_debug:
-            logging.debug(f"MqttBackend.publish {category}/{key}")
+            logger.debug(f"MqttBackend.publish {category}/{key}")
 
     def publish_delete(self, client: mqtt.Client, category: Category | str, key: str, _attempt: int = 0) -> None:
         """Clear a retained message by publishing an empty payload."""
@@ -337,9 +342,9 @@ class _MqttBackend:
                 raise RuntimeError(info.rc)
             info.wait_for_publish(timeout=5.0)
             if active_config.persistence_debug:
-                logging.debug(f"MqttBackend.publish_delete {topic} successful")
+                logger.debug(f"MqttBackend.publish_delete {topic} successful")
         except RuntimeError as error:
-            logging.error(f"MqttBackend.publish_delete {topic} rescheduled after failing on attempt {_attempt}: {error}")
+            logger.error(f"MqttBackend.publish_delete {topic} rescheduled after failing on attempt {_attempt}: {error}")
             self._schedule_retry(_attempt, self.publish_delete, category, key)
             return
 
@@ -347,7 +352,7 @@ class _MqttBackend:
             self._cache.pop((category, key), None)
 
         if active_config.persistence_debug:
-            logging.debug(f"MqttBackend.publish_delete {category}/{key}")
+            logger.debug(f"MqttBackend.publish_delete {category}/{key}")
 
     def load(self, category: Category | str, key: str) -> tuple[str, int] | None:
         """Return cached ``(value, ts)`` or ``None``."""
@@ -363,7 +368,7 @@ class _MqttBackend:
         """Publish the non-retained sentinel to trigger end-of-retained-messages."""
         info = client.publish(self._sentinel_topic, b"1", qos=2, retain=False)
         info.wait_for_publish(timeout=5.0)
-        logging.debug("MqttBackend: sentinel published")
+        logger.debug("MqttBackend: sentinel published")
 
     def wait_for_sentinel(self, timeout: float) -> bool:
         """Block until sentinel received or *timeout* seconds elapse.
@@ -420,7 +425,7 @@ class StateStore:
     async def initialise(
         self,
         state_path: Path,
-        persistence_config: "PersistenceConfig",
+        persistence_config: PersistenceConfig,
     ) -> None:
         """Connect the persistence MQTT client, warm the in-memory cache, then return.
 
@@ -446,7 +451,7 @@ class StateStore:
         self._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="persistence")
 
         if not self._mqtt_enabled:
-            logging.info("StateStore: MQTT redundancy disabled — disk only")
+            logger.info("StateStore: MQTT redundancy disabled — disk only")
             self._initialised = True
             return
 
@@ -463,8 +468,8 @@ class StateStore:
             client_id = f"{active_config.mqtt.client_id_prefix}_persistence"
             client, _ = await mqtt_setup(client_id, None, self._loop)
             client.on_message = self._mqtt.on_message
-        except Exception as exc:
-            logging.warning(f"StateStore: MQTT connection failed ({exc}) — disk only")
+        except (MQTTException, ValueError, OSError, RuntimeError) as exc:
+            logger.warning(f"StateStore: MQTT connection failed ({exc}) — disk only")
             self._initialised = True
             return
 
@@ -475,16 +480,16 @@ class StateStore:
 
         # Publish sentinel and wait for it to come back, guaranteeing all
         # retained messages have been delivered first.
-        logging.debug(f"StateStore: publishing sentinel, waiting up to {timeout:.1f}s for cache warm-up")
+        logger.debug(f"StateStore: publishing sentinel, waiting up to {timeout:.1f}s for cache warm-up")
         self._mqtt.publish_sentinel(client)
 
         # Wait in a thread so as not to block the asyncio event loop.
         received = await self._loop.run_in_executor(None, lambda: self._mqtt.wait_for_sentinel(timeout))
 
         if received:
-            logging.info(f"StateStore: cache warm-up complete ({len(self._mqtt.all_known_keys())} entries)")
+            logger.info(f"StateStore: cache warm-up complete ({len(self._mqtt.all_known_keys())} entries)")
         else:
-            logging.warning(f"StateStore: cache warm-up timed out after {timeout:.1f}s — some MQTT state may be unavailable. Disk fallback will be used where possible.")
+            logger.warning(f"StateStore: cache warm-up timed out after {timeout:.1f}s — some MQTT state may be unavailable. Disk fallback will be used where possible.")
 
         self._initialised = True
 
@@ -498,25 +503,18 @@ class StateStore:
             try:
                 self._client.loop_stop()
                 self._client.disconnect()
-            except Exception as exc:
-                logging.debug(f"StateStore: error during MQTT disconnect: {exc}")
+            except RuntimeError as exc:
+                logger.debug(f"StateStore: error during MQTT disconnect: {exc}")
             self._client = None
 
         self._initialised = False
-        logging.info("StateStore: shutdown complete")
+        logger.info("StateStore: shutdown complete")
 
     # ------------------------------------------------------------------
     # Core async API
     # ------------------------------------------------------------------
 
-    async def save(
-        self,
-        category: Category | str,
-        key: str,
-        value: str,
-        *,
-        stale_after: timedelta | None = None,
-    ) -> None:
+    async def save(self, category: Category | str, key: str, value: str, *, stale_after: timedelta | None = None) -> None:
         """Persist *value* to both disk and MQTT (fire-and-forget via executor).
 
         Args:
@@ -529,19 +527,12 @@ class StateStore:
 
         if not self._initialised or self._executor is None:
             if active_config.persistence_debug:
-                logging.debug(f"StateStore.save called before initialise — skipping {category}/{key}")
+                logger.debug(f"StateStore.save called before initialise — skipping {category}/{key}")
             return
         loop = asyncio.get_running_loop()
         await loop.run_in_executor(self._executor, self._save_sync_impl, category, key, value)
 
-    async def load(
-        self,
-        category: Category | str,
-        key: str,
-        *,
-        stale_after: timedelta | None = None,
-        validator: Callable[[str], bool] | None = None,
-    ) -> str | None:
+    async def load(self, category: Category | str, key: str, *, stale_after: timedelta | None = None, validator: Callable[[str], bool] | None = None) -> str | None:
         """Load a persisted value, applying staleness check and optional validator.
 
         Tries disk first (if ``disk_primary`` is True, which is the default),
@@ -613,9 +604,9 @@ class StateStore:
             future = asyncio.run_coroutine_threadsafe(self.save(category, key, value), loop)
             try:
                 future.result(timeout=self._sync_timeout)
-            except Exception as exc:
+            except TimeoutError as exc:
                 future.cancel()
-                logging.warning(f"StateStore.save_sync failed for {category}/{key}: {repr(exc)}")
+                logger.warning(f"StateStore.save_sync failed for {category}/{key}: {exc!r}")
         else:
             self._save_sync_impl(category, key, value)
 
@@ -639,9 +630,9 @@ class StateStore:
             future = asyncio.run_coroutine_threadsafe(self.load(category, key, stale_after=stale_after, validator=validator), loop)
             try:
                 return future.result(timeout=self._sync_timeout)
-            except Exception as exc:
+            except TimeoutError as exc:
                 future.cancel()
-                logging.warning(f"StateStore.load_sync failed for {category}/{key}: {repr(exc)}")
+                logger.warning(f"StateStore.load_sync failed for {category}/{key}: {exc!r}")
                 return None
         else:
             return self._load_sync_impl(category, key, stale_after, validator)
@@ -655,9 +646,9 @@ class StateStore:
             future = asyncio.run_coroutine_threadsafe(self.delete(category, key), loop)
             try:
                 future.result(timeout=self._sync_timeout)
-            except Exception as exc:
+            except TimeoutError as exc:
                 future.cancel()
-                logging.warning(f"StateStore.delete_sync failed for {category}/{key}: {repr(exc)}")
+                logger.warning(f"StateStore.delete_sync failed for {category}/{key}: {exc!r}")
         else:
             self._delete_sync_impl(category, key)
 
@@ -666,11 +657,11 @@ class StateStore:
 
         if cutoff is not None and ts < cutoff:
             if active_config.persistence_debug:
-                logging.debug(f"StateStore: discarding stale value (ts={ts} cutoff={cutoff})")
+                logger.debug(f"StateStore: discarding stale value (ts={ts} cutoff={cutoff})")
             return False
         if validator is not None and not validator(value):
             if active_config.persistence_debug:
-                logging.debug("StateStore: validator rejected value")
+                logger.debug("StateStore: validator rejected value")
             return False
         return True
 
@@ -703,7 +694,7 @@ class StateStore:
             if coro_fn is None:
                 return
             asyncio.run_coroutine_threadsafe(coro_fn(*args), loop)
-        except Exception:
+        except (AttributeError, RuntimeError):
             pass
 
     def _save_sync_impl(self, category: Category | str, key: str, value: str) -> None:
@@ -713,16 +704,16 @@ class StateStore:
         error = False
         try:
             self._disk.save(category, key, value)
-        except Exception as exc:
+        except (OSError, ValueError) as exc:
             error = True
-            logging.warning(f"StateStore: disk save failed for {category}/{key}: {exc}")
+            logger.warning(f"StateStore: disk save failed for {category}/{key}: {exc}")
 
         if self._mqtt_enabled and self._client is not None:
             try:
                 self._mqtt.publish(self._client, category, key, value)
-            except Exception as exc:
+            except (RuntimeError, ValueError) as exc:
                 error = True
-                logging.warning(f"StateStore: MQTT publish failed for {category}/{key}: {exc}")
+                logger.warning(f"StateStore: MQTT publish failed for {category}/{key}: {exc}")
 
         elapsed = time.perf_counter() - t0
         if error:
@@ -756,13 +747,13 @@ class StateStore:
                 if self._accept(value, ts, cutoff, validator):
                     if was_legacy or found_in_root:
                         if active_config.persistence_debug:
-                            logging.debug(f"StateStore.load migrating legacy file {category}/{key}")
+                            logger.debug(f"StateStore.load migrating legacy file {category}/{key}")
                         self._save_sync_impl(category, key, value)
                         if found_in_root:
                             self._disk.delete_root_legacy(key)
 
                     if active_config.persistence_debug:
-                        logging.debug(f"StateStore.load {category}/{key} from {backend} (ts={ts})")
+                        logger.debug(f"StateStore.load {category}/{key} from {backend} (ts={ts})")
                     self._fire_metric("state_store_load", True)
                     return value
 
@@ -778,9 +769,9 @@ class StateStore:
         if self._mqtt_enabled and self._client is not None:
             try:
                 self._mqtt.publish_delete(self._client, category, key)
-            except Exception as exc:
+            except (RuntimeError, ValueError) as exc:
                 error = True
-                logging.warning(f"StateStore: MQTT delete failed for {category}/{key}: {exc}")
+                logger.warning(f"StateStore: MQTT delete failed for {category}/{key}: {exc}")
 
         self._fire_metric("state_store_delete_error" if error else "state_store_delete")
 
@@ -788,23 +779,23 @@ class StateStore:
         """Clear all state from both backends; called from the ThreadPoolExecutor."""
         assert self._disk is not None
         disk_keys = self._disk.all_keys()
-        logging.debug(f"StateStore: Removing {len(disk_keys)} disk entries")
+        logger.debug(f"StateStore: Removing {len(disk_keys)} disk entries")
         for category, key in disk_keys:
             self._disk.delete(category, key)
-        logging.info(f"StateStore: Cleaned {len(disk_keys)} disk entries")
+        logger.info(f"StateStore: Cleaned {len(disk_keys)} disk entries")
 
         if self._mqtt_enabled and self._client is not None:
             # Clear any keys known from the MQTT cache (may include entries with
             # no matching disk file on this host, e.g. restored from another machine).
             mqtt_keys = self._mqtt.all_known_keys()
-            logging.debug(f"StateStore: Removing {len(mqtt_keys)} MQTT entries")
+            logger.debug(f"StateStore: Removing {len(mqtt_keys)} MQTT entries")
             removed: int = 0
             for category, key in mqtt_keys:
                 try:
                     self._mqtt.publish_delete(self._client, category, key)
                     removed += 1
-                except Exception as exc:
-                    logging.warning(f"StateStore: MQTT clean failed for {category}/{key}: {exc}")
-            logging.info(f"StateStore: Cleaned {removed} MQTT entries")
+                except (RuntimeError, ValueError) as exc:
+                    logger.warning(f"StateStore: MQTT clean failed for {category}/{key}: {exc}")
+            logger.info(f"StateStore: Cleaned {removed} MQTT entries")
         else:
-            logging.info("StateStore: MQTT not enabled, skipping MQTT clean")
+            logger.info("StateStore: MQTT not enabled, skipping MQTT clean")

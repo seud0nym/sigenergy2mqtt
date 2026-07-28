@@ -1,13 +1,18 @@
 import logging
+from typing import ClassVar
+
+from pymodbus.exceptions import ModbusException
 
 from .client import ModbusClient
+
+logger = logging.getLogger("sigenergy2mqtt")
 
 
 class ModbusClientFactory:
     """Connection pool and lifecycle manager for Modbus TCP clients."""
 
-    _clients: dict[tuple[str, int], ModbusClient] = {}
-    _hosts: dict[ModbusClient, str] = {}
+    _clients: ClassVar[dict[tuple[str, int], ModbusClient]] = {}
+    _hosts: ClassVar[dict[ModbusClient, str]] = {}
 
     @classmethod
     async def get_client(cls, host: str, port: int, timeout: float = 1.0, retries: int = 3) -> ModbusClient:
@@ -28,7 +33,7 @@ class ModbusClientFactory:
         """
         key = (host, port)
         if key not in cls._clients:
-            logging.debug(f"Creating Modbus client for {host}:{port} ({timeout=}s {retries=})")
+            logger.debug(f"Creating Modbus client for {host}:{port} ({timeout=}s {retries=})")
             modbus = ModbusClient(host, port=port, timeout=timeout, retries=retries)
             cls._clients[key] = modbus
             cls._hosts[modbus] = f"{host}:{port}"
@@ -36,7 +41,7 @@ class ModbusClientFactory:
         if not client.connected:
             await client.connect()
             assert client.connected
-            logging.info(f"Connected to modbus://{host}:{port} ({timeout=}s {retries=})")
+            logger.info(f"Connected to modbus://{host}:{port} ({timeout=}s {retries=})")
         return client
 
     @classmethod
@@ -47,11 +52,13 @@ class ModbusClientFactory:
     @classmethod
     def clear(cls):
         """Close and remove all pooled clients and host mappings."""
-        for client in cls._clients.values():
+        for key, client in cls._clients.items():
             try:
                 client.close()
-            except Exception:
-                pass
+            except (ValueError, TypeError, ModbusException, OSError, RuntimeError) as e:
+                host = key[0]
+                port = key[1]
+                logger.debug(f"Non-critical exception disconnecting from modbus://{host}:{port}: {e}")
         cls._clients.clear()
         cls._hosts.clear()
 
@@ -76,13 +83,13 @@ class ModbusClientFactory:
             try:
                 host = client.comm_params.host
                 port = client.comm_params.port
-            except Exception:
+            except (AttributeError, ValueError, TypeError, RuntimeError):
                 host = "[undetermined]"
                 port = 502
 
         # Always attempt to close the client.
         try:
-            logging.info(f"Disconnecting from modbus://{host}:{port}")
+            logger.info(f"Disconnecting from modbus://{host}:{port}")
             client.close()
-        except Exception as e:
-            logging.warning(f"Error while disconnecting from modbus://{host}:{port}: {e}")
+        except (ModbusException, OSError, RuntimeError) as e:
+            logger.debug(f"Non-critical exception disconnecting from modbus://{host}:{port}: {e}")

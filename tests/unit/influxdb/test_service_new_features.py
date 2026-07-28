@@ -4,6 +4,7 @@ import time
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+import requests
 
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.config.config import active_config
@@ -78,9 +79,9 @@ class TestInfluxRetry:
         """Test that query succeeds after retries."""
         with patch.object(service._session, "post") as mock_post, patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
             # Fail twice then succeed
-            mock_post.side_effect = [Exception("Fail 1"), Exception("Fail 2"), MockResponse(200, content=b"success")]
+            mock_post.side_effect = [requests.RequestException("Fail 1"), requests.RequestException("Fail 2"), MockResponse(200, content=b"success")]
 
-            success, resp = await service.query_v2("http://base", "org", "tok", "flux")
+            success, _ = await service.query_v2("http://base", "org", "tok", "flux")
 
             assert success is True
             assert mock_post.call_count == 3
@@ -91,9 +92,9 @@ class TestInfluxRetry:
         """Test that query fails after max retries."""
         with patch.object(service._session, "post") as mock_post, patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
             # Fail all times
-            mock_post.side_effect = Exception("Fail")
+            mock_post.side_effect = requests.RequestException("Fail")
 
-            success, resp = await service.query_v2("http://base", "org", "tok", "flux", max_retries=2)
+            success, _ = await service.query_v2("http://base", "org", "tok", "flux", max_retries=2)
 
             assert success is False
             assert mock_post.call_count == 3  # Initial + 2 retries

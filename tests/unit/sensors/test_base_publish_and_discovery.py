@@ -4,6 +4,7 @@ import time
 from unittest.mock import MagicMock, patch
 
 import pytest
+from pymodbus import ModbusException
 
 from sigenergy2mqtt.common import DeviceClass, Protocol, StateClass, UnitOfPower
 from sigenergy2mqtt.config import Config, _swap_active_config
@@ -31,22 +32,21 @@ def _make_sensor(name="Test", uid_suffix="x", debug=False, **kwargs):
     cfg.home_assistant.unique_id_prefix = "sigen"
     cfg.home_assistant.entity_id_prefix = "sigen"
 
-    with _swap_active_config(cfg):
-        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            s = ConcreteSensor(
-                name=name,
-                unique_id=uid,
-                object_id=oid,
-                unit=UnitOfPower.WATT,
-                device_class=DeviceClass.POWER,
-                state_class=StateClass.MEASUREMENT,
-                icon="mdi:solar-power",
-                gain=1.0,
-                precision=2,
-                protocol_version=Protocol.V2_4,
-                debug_logging=debug,
-                **kwargs,
-            )
+    with _swap_active_config(cfg), patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+        s = ConcreteSensor(
+            name=name,
+            unique_id=uid,
+            object_id=oid,
+            unit=UnitOfPower.WATT,
+            device_class=DeviceClass.POWER,
+            state_class=StateClass.MEASUREMENT,
+            icon="mdi:solar-power",
+            gain=1.0,
+            precision=2,
+            protocol_version=Protocol.V2_4,
+            debug_logging=debug,
+            **kwargs,
+        )
     return s
 
 
@@ -77,9 +77,8 @@ class TestPublishMethod:
         s = self._sensor_with_topics("pub_none_dbg", debug=True)
         mqtt = _mqtt_mock()
         cfg = Config()
-        with _swap_active_config(cfg):
-            with patch("sigenergy2mqtt.sensors.base.sensor.logging"):
-                published = await s.publish(mqtt, None)
+        with _swap_active_config(cfg), patch("sigenergy2mqtt.sensors.base.sensor.logger"):
+            published = await s.publish(mqtt, None)
         assert published is False
 
     @pytest.mark.asyncio
@@ -124,7 +123,7 @@ class TestPublishMethod:
         modbus.connected = True
 
         async def _update(**kw):
-            raise RuntimeError("Modbus error")
+            raise ModbusException("Modbus error")
 
         cfg = Config()
         cfg.home_assistant.enabled = False
@@ -143,9 +142,8 @@ class TestPublishMethod:
         async def _update(**kw):
             raise RuntimeError("connection lost")
 
-        with patch.object(s, "_update_internal_state", side_effect=_update):
-            with pytest.raises(RuntimeError):
-                await s.publish(mqtt, modbus)
+        with patch.object(s, "_update_internal_state", side_effect=_update), pytest.raises(RuntimeError):
+            await s.publish(mqtt, modbus)
 
     @pytest.mark.asyncio
     async def test_publish_max_failures_triggers_warning(self):
@@ -157,14 +155,14 @@ class TestPublishMethod:
         modbus.connected = True
 
         async def _update(**kw):
-            raise RuntimeError("error")
+            raise ModbusException("error")
 
         cfg = Config()
         cfg.home_assistant.enabled = False
         with (
             patch.object(s, "_update_internal_state", side_effect=_update),
             _swap_active_config(cfg),
-            patch("sigenergy2mqtt.sensors.base.sensor.logging") as mock_log,
+            patch("sigenergy2mqtt.sensors.base.sensor.logger") as mock_log,
         ):
             await s.publish(mqtt, modbus)
             await s.publish(mqtt, modbus)
@@ -180,7 +178,7 @@ class TestPublishMethod:
         s._max_failures = 10
         s._next_retry = None
         mqtt = _mqtt_mock()
-        with patch("sigenergy2mqtt.sensors.base.sensor.logging") as mock_log:
+        with patch("sigenergy2mqtt.sensors.base.sensor.logger") as mock_log:
             published = await s.publish(mqtt, None)
         assert published is False
         mock_log.debug.assert_called()  # hits the elif debug branch
@@ -214,7 +212,7 @@ class TestPublishMethod:
         modbus.connected = True
 
         async def _update(**kw):
-            raise RuntimeError("ha test error")
+            raise ModbusException("ha test error")
 
         cfg = Config()
         cfg.home_assistant.enabled = True
@@ -237,7 +235,7 @@ class TestPublishMethod:
         modbus.connected = True
 
         async def _update(**kw):
-            raise RuntimeError("retry interval test")
+            raise ModbusException("retry interval test")
 
         cfg = Config()
         cfg.home_assistant.enabled = False
@@ -270,7 +268,7 @@ class TestPublishAttributes:
         """clean=True with debug_logging=True covers debug branch."""
         s = self._sensor_with_attrs("pa_clean_dbg", debug=True)
         mqtt = _mqtt_mock()
-        with patch("sigenergy2mqtt.sensors.base.sensor.logging") as mock_log:
+        with patch("sigenergy2mqtt.sensors.base.sensor.logger") as mock_log:
             s.publish_attributes(mqtt, clean=True)
         mock_log.debug.assert_called()
 
@@ -356,9 +354,8 @@ class TestConfigureMqttTopics:
         cfg.home_assistant.use_simplified_topics = False
         cfg.home_assistant.discovery_prefix = "homeassistant"
         cfg.home_assistant.enabled_by_default = False
-        with _swap_active_config(cfg):
-            with patch("sigenergy2mqtt.sensors.base.sensor.logging") as mock_log:
-                s.configure_mqtt_topics("test_device")
+        with _swap_active_config(cfg), patch("sigenergy2mqtt.sensors.base.sensor.logger") as mock_log:
+            s.configure_mqtt_topics("test_device")
         mock_log.debug.assert_called()
 
 
@@ -525,7 +522,7 @@ class TestGetStateRepublish:
         """republish debug branch."""
         s = _make_sensor(uid_suffix="gs_repub_dbg", debug=True)
         s._states.append((time.time(), 42.0))
-        with patch("sigenergy2mqtt.sensors.base.sensor.logging") as mock_log:
+        with patch("sigenergy2mqtt.sensors.base.sensor.logger") as mock_log:
             await s.get_state(republish=True)
         mock_log.debug.assert_called()
 

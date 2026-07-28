@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 verify_translations.py
 
@@ -22,7 +21,7 @@ import re
 import sys
 from pathlib import Path
 
-from ruamel.yaml import YAML
+from ruamel.yaml import YAML, YAMLError
 
 yaml_loader = YAML(typ="rt")
 
@@ -75,7 +74,7 @@ def load_yaml(path: Path) -> object:
     try:
         with open(path, "r", encoding="utf-8") as f:
             return yaml_loader.load(f)
-    except Exception as e:
+    except (YAMLError, OSError) as e:
         raise TranslationLoadError(f"Error loading {path}: {e}") from e
 
 
@@ -103,14 +102,14 @@ def has_ignore_comment(container: object, key: object) -> bool:
     try:
         if not hasattr(container, "ca"):
             return False
-        comment_entry = getattr(container, "ca").items.get(key)
+        comment_entry = getattr(container, "ca").items.get(key)  # noqa: B009
         if not comment_entry:
             return False
         eol_comment = comment_entry[2]  # inline / end-of-line slot only
         if eol_comment is None:
             return False
         return "verify:ignore" in eol_comment.value
-    except Exception:
+    except (ValueError, TypeError, RuntimeError):
         log.debug(
             "Unexpected error inspecting comment for key %r in %r; assuming no ignore.",
             key,
@@ -219,9 +218,8 @@ def find_issues(
 
     # ---- leaf nodes ----
     else:
-        if check_values and isinstance(en_data, str) and isinstance(other_data, str):
-            if en_data == other_data and not _is_translation_safe(en_data):
-                issues.append(f"Untranslated value at '{path}': '{en_data}'")
+        if check_values and isinstance(en_data, str) and isinstance(other_data, str) and en_data == other_data and not _is_translation_safe(en_data):
+            issues.append(f"Untranslated value at '{path}': '{en_data}'")
 
     return issues
 

@@ -41,7 +41,7 @@ def test_device_rediscover_setter_and_type_check(mock_config):
     assert dev.rediscover is True
     dev.rediscover = False
     assert dev.rediscover is False
-    with pytest.raises(ValueError, match="rediscover must be a bool"):
+    with pytest.raises(TypeError, match="rediscover must be a bool"):
         cast(Any, dev).rediscover = "yes"
 
 

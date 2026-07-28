@@ -72,11 +72,11 @@ def parse_time_periods(value: list, tariff_index: int) -> list[TimePeriod]:
     """Parse a raw list of period dicts into list[TimePeriod]."""
 
     if not isinstance(value, list):
-        raise ValueError("pvoutput time-periods.periods configuration element must contain a list of time period definitions")
+        raise TypeError("pvoutput time-periods.periods configuration element must contain a list of time period definitions")
     periods: list[TimePeriod] = []
     for i, period in enumerate(value):
         if not isinstance(period, dict):
-            raise ValueError(f"pvoutput.time-periods[{tariff_index}].periods[{i}] must be a time period definition")
+            raise TypeError(f"pvoutput.time-periods[{tariff_index}].periods[{i}] must be a time period definition")
         if not all(k in period for k in ("type", "start", "end")):
             raise ValueError(f"pvoutput.time-periods[{tariff_index}].periods[{i}] must contain 'type', 'start', and 'end' elements")
         ptype = TariffType(

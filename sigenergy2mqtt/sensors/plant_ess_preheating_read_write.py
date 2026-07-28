@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from abc import ABC
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, cast
 
 import paho.mqtt.client as mqtt
@@ -16,6 +16,8 @@ if TYPE_CHECKING:
 
 from sigenergy2mqtt.common import PERCENTAGE, DeviceClass, HybridInverter, InputType, UnitOfPower, UnitOfTime
 from sigenergy2mqtt.sensors.base import AvailabilityMixin, DiscoveryKeys, NumericSensor, ScanInterval, SelectSensor, SwitchSensor
+
+logger = logging.getLogger("sigenergy2mqtt")
 
 
 class ESSPreHeatingEnable(SwitchSensor, HybridInverter):
@@ -86,9 +88,9 @@ class ESSPreHeatingAdvanceEnable(SwitchSensor, HybridInverter):
         attributes["comment"] = "0: Disable, 1: Enable. Takes effect when Preheating Mode is Manual."
         return attributes
 
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
+    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | str) -> bool:
         if self._availability_control_sensor is not None and self._availability_control_sensor.latest_raw_state == 0:
-            logging.error(
+            logger.error(
                 f"{self.log_identity} Failed to write value '{raw_value}': {self._availability_control_sensor.name} is set to Automatic mode, so cannot enable Advance. Set Preheating Mode to Manual first."
             )
             return False
@@ -128,9 +130,9 @@ class ESSPreHeatingTOUTime(NumericSensor, HybridInverter, ABC):
         )
         self[DiscoveryKeys.PLATFORM] = "time"
 
-    def _raw2state(self, raw_value: float | int | str) -> float | int | str:
+    def _raw2state(self, raw_value: float | str) -> float | int | str:
         if isinstance(raw_value, (float, int)):
-            return datetime.strftime(datetime.fromtimestamp(raw_value, timezone.utc), "%H:%M:%S")
+            return datetime.strftime(datetime.fromtimestamp(raw_value, UTC), "%H:%M:%S")
         return super()._raw2state(raw_value)
 
     def get_attributes(self) -> dict[str, float | int | str]:
@@ -154,19 +156,19 @@ class ESSPreHeatingTOUTime(NumericSensor, HybridInverter, ABC):
         if raw or value is None:
             return value
 
-        dt = datetime.fromtimestamp(value, timezone.utc)  # Target data type is UINT32, so need to convert to UTC to prevent negative numbers caused by positive timezone offsets
+        dt = datetime.fromtimestamp(value, UTC)  # Target data type is UINT32, so need to convert to UTC to prevent negative numbers caused by positive timezone offsets
         state = dt.strftime("%H:%M:%S")
 
         if self.debug_logging:
-            logging.debug(f"{self.log_identity} get_state raw={value} {dt=} {state=}")
+            logger.debug(f"{self.log_identity} get_state raw={value} {dt=} {state=}")
 
         return state
 
-    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
         epoch = cast(int, self.state2raw(value))
         return await super().set_value(modbus_client, mqtt_client, epoch, source, handler)
 
-    def state2raw(self, state: float | int | str) -> float | int | str | None:
+    def state2raw(self, state: float | str) -> float | int | str | None:
         """Convert time string back to Unix epoch value.
 
         Args:
@@ -185,7 +187,7 @@ class ESSPreHeatingTOUTime(NumericSensor, HybridInverter, ABC):
         ts = dt.timestamp()
         value = int(ts // 60) * 60  # Remove seconds (whole minutes only)
 
-        logging.info(f"{self.log_identity} state2raw {state=} {dt=} {ts=} raw={value=} (seconds removed)")
+        logger.info(f"{self.log_identity} state2raw {state=} {dt=} {ts=} raw={value=} (seconds removed)")
 
         return value
 

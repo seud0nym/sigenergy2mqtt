@@ -721,7 +721,7 @@ class TestMqttSetup:
         mock_client = mock_client_class.return_value
         loop = asyncio.new_event_loop()
         modbus = MagicMock()
-        mock_client.connect.side_effect = [Exception("Fail 1"), Exception("Fail 2"), None]
+        mock_client.connect.side_effect = [OSError("Fail 1"), OSError("Fail 2"), None]
 
         with _swap_active_config(Config()) as cfg:
             cfg.mqtt.broker = "test_broker"
@@ -747,7 +747,7 @@ class TestMqttSetup:
         mock_client = mock_client_class.return_value
         loop = asyncio.new_event_loop()
         modbus = MagicMock()
-        mock_client.connect.side_effect = Exception("Permanent Fail")
+        mock_client.connect.side_effect = OSError("Permanent Fail")
 
         with _swap_active_config(Config()) as cfg:
             cfg.mqtt.broker = "test_broker"
@@ -786,7 +786,7 @@ class TestMqttSetup:
         def fake_connect(self, broker, port=1883, keepalive=60):
             side["calls"] += 1
             if side["calls"] == 1:
-                raise Exception("connect failed")
+                raise OSError("connect failed")
             return 0
 
         def fake_loop_start(self):
@@ -824,7 +824,7 @@ class TestMqttSetup:
         import paho.mqtt.client as paho
 
         def always_fail_connect(self, broker, port=1883, keepalive=60):
-            raise Exception("boom")
+            raise OSError("boom")
 
         monkeypatch.setattr(paho.Client, "connect", always_fail_connect, raising=True)
 

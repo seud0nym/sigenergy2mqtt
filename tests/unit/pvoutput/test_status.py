@@ -1,9 +1,10 @@
 import asyncio
 import logging
 import time
-from unittest.mock import MagicMock, PropertyMock, patch
+from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
 
 import pytest
+import requests
 
 from sigenergy2mqtt.config import StatusField, active_config
 from sigenergy2mqtt.pvoutput.service_topics import Calculation, ServiceTopics
@@ -85,7 +86,7 @@ class TestPVOutputStatus:
             t = Topic("v7/topic", gain=1.0, state=2.0, timestamp=time.localtime(now))
             # pass empty extended to avoid forcing SUM/DIFFERENCE calculation in constructor
             svc = make_status_service(topics={StatusField.V7: [t]}, extended={})
-            payload, snapshot = svc._create_payload(time.localtime(now))
+            payload, _ = svc._create_payload(time.localtime(now))
             assert StatusField.V7.value in payload
 
     @pytest.mark.asyncio
@@ -93,7 +94,7 @@ class TestPVOutputStatus:
         # ensure testing mode returns seconds == 60
         active_config.pvoutput.testing = True
         svc = make_status_service()
-        seconds, next_time = await svc.seconds_until_status_upload(1, 2)
+        seconds, _ = await svc.seconds_until_status_upload(1, 2)
         # in testing mode seconds should be 60 (per Service.seconds_until_status_upload)
         assert seconds == 60 or seconds == 60.0
 
@@ -114,7 +115,6 @@ class TestPVOutputStatus:
 
             async def sleep_se(s):
                 svc.online = False
-                return None
 
             with patch("asyncio.sleep", side_effect=sleep_se):
                 tasks = svc.schedule(None, None)
@@ -132,14 +132,13 @@ class TestPVOutputStatus:
         payload = {StatusField.TEMPERATURE.value: 25}
 
         with (
-            patch.object(svc, "seconds_until_status_upload", side_effect=[(0, time.time())]),
+            patch.object(svc, "seconds_until_status_upload", side_effect=[(0, time.time()), (2, time.time())]),
             patch.object(svc, "_create_payload", return_value=(payload, {})),
             patch.object(svc, "upload_payload") as mock_upload,
         ):
 
             async def sleep_se(s):
                 svc.online = False
-                return None
 
             with patch("asyncio.sleep", side_effect=sleep_se):
                 tasks = svc.schedule(None, None)
@@ -155,9 +154,9 @@ class TestPVOutputStatus:
 
         async def run_c1_test(p_input):
             svc.online = asyncio.Future()
-            mock_upload = MagicMock(return_value=True)
+            mock_upload = AsyncMock(return_value=True)
             with (
-                patch.object(svc, "seconds_until_status_upload", side_effect=[(0, time.time())]),
+                patch.object(svc, "seconds_until_status_upload", side_effect=[(0, time.time()), (2, time.time())]),
                 patch.object(svc, "_create_payload", return_value=(p_input.copy(), {})),
                 patch.object(svc, "upload_payload", mock_upload),
                 patch("asyncio.sleep", side_effect=lambda s: setattr(svc, "online", False)),
@@ -191,7 +190,7 @@ class TestPVOutputStatus:
             mock_ce.return_value = True
 
             with (
-                patch.object(svc, "seconds_until_status_upload", side_effect=[(0, time.time())]),
+                patch.object(svc, "seconds_until_status_upload", side_effect=[(0, time.time()), (2, time.time())]),
                 patch.object(svc, "_create_payload", return_value=(payload, {})),
                 patch.object(svc, "upload_payload", return_value=True) as mock_upload,
                 patch("asyncio.sleep", side_effect=lambda s: setattr(svc, "online", False)),
@@ -221,7 +220,7 @@ class TestPVOutputStatus:
         payload = {StatusField.GENERATION_POWER.value: 500}
 
         with (
-            patch.object(svc, "seconds_until_status_upload", side_effect=[(0, time.time())]),
+            patch.object(svc, "seconds_until_status_upload", side_effect=[(0, time.time()), (2, time.time())]),
             patch.object(svc, "_create_payload", return_value=(payload, snapshot)),
             patch.object(svc, "upload_payload", return_value=False),
             patch("asyncio.sleep", side_effect=lambda s: setattr(svc, "online", False)),
@@ -403,9 +402,7 @@ class TestPVOutputStatus:
         svc = make_status_service()
         svc._ha_extended_entities = {StatusField.V7: "sensor.grid_power"}
 
-        with patch.dict("os.environ", {"SUPERVISOR_TOKEN": "tok"}, clear=False), patch(
-            "requests.get", side_effect=ConnectionError("network error")
-        ):
+        with patch.dict("os.environ", {"SUPERVISOR_TOKEN": "tok"}, clear=False), patch("requests.get", side_effect=requests.RequestException("network error")):
             await svc._refresh_home_assistant_extended_fields()
 
         assert "Failed reading Home Assistant sensor" in caplog.text
@@ -434,7 +431,7 @@ class TestPVOutputStatus:
         @asynccontextmanager
         async def raising_lock(*args, **kwargs):
             svc.online = False
-            raise asyncio.TimeoutError
+            raise TimeoutError
             yield  # noqa: unreachable - needed to make this an async generator
 
         with (

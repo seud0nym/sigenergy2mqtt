@@ -42,7 +42,7 @@ async def test_probe_register_modbus_exception():
 
     modbus.read_input_registers.side_effect = ModbusException("error")
 
-    with patch("logging.debug"):
+    with patch("sigenergy2mqtt.config.auto_discovery.logger.debug"):
         result = await auto_discovery.probe_register(modbus, 30051)
 
     assert result is False
@@ -52,11 +52,11 @@ async def test_probe_register_modbus_exception():
 @pytest.mark.asyncio
 async def test_probe_register_generic_exception():
     modbus = AsyncMock()
-    modbus.read_input_registers.side_effect = Exception("boom")
+    modbus.read_input_registers.side_effect = RuntimeError("boom")
     modbus.comm_params.host = "127.0.0.1"
     modbus.comm_params.port = 502
 
-    with patch("logging.debug") as mock_log:
+    with patch("sigenergy2mqtt.config.auto_discovery.logger.debug") as mock_log:
         result = await auto_discovery.probe_register(modbus, 30051)
         assert result is False
         mock_log.assert_called()
@@ -249,8 +249,8 @@ async def test_ping_scan_timeout():
 
 @pytest.mark.asyncio
 async def test_ping_scan_exception_in_tasks():
-    with patch("sigenergy2mqtt.config.auto_discovery.asyncio.open_connection", side_effect=Exception("TCP fail")):
-        with patch("logging.debug") as mock_log:
+    with patch("sigenergy2mqtt.config.auto_discovery.asyncio.open_connection", side_effect=RuntimeError("TCP fail")):
+        with patch("sigenergy2mqtt.config.auto_discovery.logger.debug") as mock_log:
             results = await auto_discovery.ping_scan(["1.2.3.4"])
             assert results == {}
             assert any("TCP check raised" in str(call) for call in mock_log.call_args_list)
@@ -287,10 +287,10 @@ async def test_ping_scan_gather_cancelled():
 async def test_ping_scan_exception_on_gather_is_logged():
     # Hit 141 and 151
     async def fake_open(host, port):
-        raise Exception("TCP fail")
+        raise RuntimeError("TCP fail")
 
     with patch("sigenergy2mqtt.config.auto_discovery.asyncio.open_connection", side_effect=fake_open):
-        with patch("logging.debug") as mock_log:
+        with patch("sigenergy2mqtt.config.auto_discovery.logger.debug") as mock_log:
             await auto_discovery.ping_scan(["1.2.3.4"])
             assert any("TCP check raised" in str(call) or "TCP port scan failed" in str(call) for call in mock_log.call_args_list)
 
@@ -301,7 +301,7 @@ async def test_ping_scan_top_level_exception():
     # To hit 151, the Exception must happen OUTSIDE of the loop or be one that propagates
     # In this case, if we mock the whole loop or concurrent chunking
     with patch("sigenergy2mqtt.config.auto_discovery.range", side_effect=RuntimeError("loop fail")):
-        with patch("logging.debug") as mock_log:
+        with patch("sigenergy2mqtt.config.auto_discovery.logger.debug") as mock_log:
             await auto_discovery.ping_scan(["1.2.3.4"])
             assert any("TCP port scan failed" in str(call) for call in mock_log.call_args_list)
 
@@ -330,15 +330,15 @@ async def test_reconnect_failure_then_success():
             # 1st call fails, 2nd succeeds
             if not getattr(self, "_connect_called_once", False):
                 self._connect_called_once = True
-                raise Exception("fail")
+                raise ModbusException("fail")
             self._connected = True
 
     modbus = LocalMockModbus()
-    with patch("logging.debug") as mock_debug:
+    with patch("sigenergy2mqtt.config.auto_discovery.logger.debug") as mock_debug:
         await auto_discovery._reconnect(modbus, max_attempts=3)
         assert modbus.connected is True
         # Verify it logged at least once that it failed
-        assert any("failed: fail" in str(call) for call in mock_debug.call_args_list)
+        assert any("failed: Modbus Error: fail" in str(call) for call in mock_debug.call_args_list)
 
 
 @pytest.mark.asyncio
@@ -350,10 +350,10 @@ async def test_reconnect_all_fail():
             self.close = MagicMock()
 
         async def connect(self):
-            raise Exception("fail")
+            raise ModbusException("fail")
 
     modbus = LocalMockModbus()
-    with patch("logging.warning") as mock_warn:
+    with patch("sigenergy2mqtt.config.auto_discovery.logger.warning") as mock_warn:
         await auto_discovery._reconnect(modbus, max_attempts=2)
         assert modbus.connected is False
         mock_warn.assert_called_with("Could not reconnect to 127.0.0.1:502 after 2 attempts")
@@ -374,7 +374,7 @@ async def test_probe_register_modbus_exception_reconnect():
 @pytest.mark.asyncio
 async def test_get_serial_number_generic_exception():
     modbus = AsyncMock()
-    modbus.read_input_registers.side_effect = Exception("boom")
+    modbus.read_input_registers.side_effect = RuntimeError("boom")
     modbus.comm_params.host = "127.0.0.1"
     modbus.comm_params.port = 502
 
@@ -443,7 +443,7 @@ async def test_probe_device_id_ignored_serial_combined():
 
     with patch("sigenergy2mqtt.config.auto_discovery.probe_register", return_value=True):
         with patch("sigenergy2mqtt.config.auto_discovery.get_serial_number", return_value="SN1"):
-            with patch("logging.info") as mock_log:
+            with patch("sigenergy2mqtt.config.auto_discovery.logger.info") as mock_log:
                 await auto_discovery._probe_device_id(modbus, 1, device)
                 assert any("already discovered" in str(call) for call in mock_log.call_args_list)
 
@@ -480,8 +480,8 @@ async def test_scan_generic_exception_logging():
     # and mock ping_scan to return 127.0.0.1 as responsive so scan_host is called.
     with patch("sigenergy2mqtt.config.auto_discovery._local_networks", return_value={}):
         with patch("sigenergy2mqtt.config.auto_discovery.ping_scan", return_value={"127.0.0.1": 0.001}):
-            with patch("sigenergy2mqtt.config.auto_discovery.scan_host", side_effect=Exception("boom")):
-                with patch("logging.debug") as mock_log:
+            with patch("sigenergy2mqtt.config.auto_discovery.scan_host", side_effect=RuntimeError("boom")):
+                with patch("sigenergy2mqtt.config.auto_discovery.logger.debug") as mock_log:
                     await auto_discovery.scan()
                     assert any("Scan failed: boom" in str(call) for call in mock_log.call_args_list)
 

@@ -294,7 +294,7 @@ def test_pvoutput_tariffs():
     from sigenergy2mqtt.config.models.pvoutput import PvOutputConfig
 
     assert PvOutputConfig.parse_time_periods_field("not a list") == []
-    with pytest.raises(ValueError, match="must be a time period definition"):
+    with pytest.raises(TypeError, match="must be a time period definition"):
         PvOutputConfig.parse_time_periods_field(["not-a-dict"])
     with pytest.raises(ValueError, match="contains unknown option"):
         PvOutputConfig.parse_time_periods_field([{"unknown-key": "val"}])

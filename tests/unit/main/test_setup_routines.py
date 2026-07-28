@@ -217,7 +217,7 @@ def test_setup_signals_sighup_reload_exception():
         # Test 1: Active_config.reload throws Exception
         with patch("sigenergy2mqtt.config.active_config.reload", new_callable=AsyncMock) as mock_reload, \
              patch("sigenergy2mqtt.main.main.restart_controller.request") as mock_request:
-            mock_reload.side_effect = Exception("Reload failed")
+            mock_reload.side_effect = RuntimeError("Reload failed")
             
             sighup_handler()
             
@@ -374,7 +374,7 @@ async def test_setup_pid_exception_grid_outage(caplog):
          patch("sigenergy2mqtt.main.main._is_grid_outage", new_callable=AsyncMock) as mock_outage, \
          patch("sigenergy2mqtt.main.main._schedule_restart_on_grid_restore") as mock_schedule:
         
-        mock_make.side_effect = Exception("Outage error")
+        mock_make.side_effect = RuntimeError("Outage error")
         mock_outage.return_value = True
         
         res = await main_mod._setup_pid(
@@ -395,7 +395,7 @@ async def test_setup_pid_exception_normal(caplog):
     with patch("sigenergy2mqtt.main.main.make_pid", new_callable=AsyncMock) as mock_make, \
          patch("sigenergy2mqtt.main.main._is_grid_outage", new_callable=AsyncMock) as mock_outage:
         
-        mock_make.side_effect = Exception("Other error")
+        mock_make.side_effect = RuntimeError("Other error")
         mock_outage.return_value = False
         
         res = await main_mod._setup_pid(

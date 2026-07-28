@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -115,7 +115,7 @@ class TestPVOutputOutput:
     @pytest.mark.asyncio
     async def test_upload_skips_unchanged_and_verifies(self, monkeypatch):
         svc = make_output_service()
-        payload = {"d": datetime.now(timezone.utc).strftime("%Y%m%d"), "g": 1}
+        payload = {"d": datetime.now(UTC).strftime("%Y%m%d"), "g": 1}
         svc._previous_payload = dict(payload)
 
         called = {"upload": False, "verify": False}
@@ -204,7 +204,7 @@ class TestPVOutputOutput:
     @pytest.mark.asyncio
     async def test_verify_connection_error_handling(self, caplog):
         svc = make_output_service()
-        with patch("requests.get", side_effect=requests.exceptions.ConnectionError("ConnErr")):
+        with patch("requests.get", side_effect=requests.RequestException("ConnErr")):
             assert await svc._verify({"d": "20250101"}) is False
             assert "Error Connecting:" in caplog.text
 

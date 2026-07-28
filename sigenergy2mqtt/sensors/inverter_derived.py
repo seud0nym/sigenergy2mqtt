@@ -14,6 +14,8 @@ from sigenergy2mqtt.sensors.inverter_read_only import ActivePower
 from .base import DerivedSensor, EnergyDailyAccumulationSensor, EnergyLifetimeAccumulationSensor, Sensor
 from .inverter_read_only import ChargeDischargePower, PVCurrentSensor, PVVoltageSensor
 
+logger = logging.getLogger("sigenergy2mqtt")
+
 
 class InverterBatteryChargingPower(DerivedSensor, HybridInverter):
     def __init__(self, plant_index: int, device_address: int, battery_power: ChargeDischargePower):
@@ -42,12 +44,12 @@ class InverterBatteryChargingPower(DerivedSensor, HybridInverter):
 
     def update_from_source_sensor(self, sensor: Sensor) -> bool:
         if not isinstance(sensor, ChargeDischargePower):
-            logging.warning(f"{self.log_identity} Attempt to call update_from_source_sensor from {sensor.log_identity}")
+            logger.warning(f"{self.log_identity} Attempt to call update_from_source_sensor from {sensor.log_identity}")
             return False
         if sensor.latest_raw_state is None:
             return False
         raw = float(sensor.latest_raw_state)
-        self.set_latest_state(0 if raw <= 0 else raw)
+        self.set_latest_state(max(0, raw))
         return True
 
 
@@ -78,7 +80,7 @@ class InverterBatteryDischargingPower(DerivedSensor, HybridInverter):
 
     def update_from_source_sensor(self, sensor: Sensor) -> bool:
         if not isinstance(sensor, ChargeDischargePower):
-            logging.warning(f"{self.log_identity} Attempt to call update_from_source_sensor from {sensor.log_identity}")
+            logger.warning(f"{self.log_identity} Attempt to call update_from_source_sensor from {sensor.log_identity}")
             return False
         if sensor.latest_raw_state is None:
             return False
@@ -100,7 +102,7 @@ class PVStringPower(DerivedSensor, HybridInverter, PVInverter):
 
         def apply(self, sensor: Sensor) -> None:
             if self.value is not None:
-                logging.warning(f"{self.name} Overwriting unconsumed value {self.value} (age={(sensor.latest_time - self.timestamp):.2f}s)")
+                logger.warning(f"{self.name} Overwriting unconsumed value {self.value} (age={(sensor.latest_time - self.timestamp):.2f}s)")
             raw = sensor.latest_raw_state
             if raw is None:
                 return
@@ -137,13 +139,13 @@ class PVStringPower(DerivedSensor, HybridInverter, PVInverter):
     async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool = False) -> bool:
         if self.volts.value is None or self.amperes.value is None:
             if self.debug_logging:
-                logging.debug(f"{self.log_identity} Publishing SKIPPED - current={self.amperes.value} voltage={self.volts.value}")
+                logger.debug(f"{self.log_identity} Publishing SKIPPED - current={self.amperes.value} voltage={self.volts.value}")
             return False  # until all values populated, can't do calculation
         gap = abs(self.volts.timestamp - self.amperes.timestamp)
         if self.debug_logging:
-            logging.debug(f"{self.log_identity} Publishing READY   - current={self.amperes.value} voltage={self.volts.value} gap={gap:.2f}s")
+            logger.debug(f"{self.log_identity} Publishing READY   - current={self.amperes.value} voltage={self.volts.value} gap={gap:.2f}s")
             if gap > _MAX_PV_STRING_POWER_GAP_WARNING_SECONDS:
-                logging.debug(f"{self.log_identity} Publishing WARNING - gap between acquiring current and voltage was {gap:.2f}s")
+                logger.debug(f"{self.log_identity} Publishing WARNING - gap between acquiring current and voltage was {gap:.2f}s")
         await super().publish(mqtt_client, modbus_client, republish=republish)  # Publish even if gap exceeds warning threshold
         if not republish:
             # reset internal values to missing for next calculation
@@ -159,13 +161,13 @@ class PVStringPower(DerivedSensor, HybridInverter, PVInverter):
         elif isinstance(sensor, PVCurrentSensor):
             self.amperes.apply(sensor)
         else:
-            logging.warning(f"{self.log_identity} Attempt to call update_from_source_sensor from {sensor.log_identity}")
+            logger.warning(f"{self.log_identity} Attempt to call update_from_source_sensor from {sensor.log_identity}")
             return False
         if self.volts.value is None or self.amperes.value is None:
             return False  # until all values populated, can't do calculation
         state = self.volts.value * self.amperes.value
         if self.debug_logging:
-            logging.debug(f"{self.log_identity} source values populated - setting latest state ({self.amperes.value}A * {self.volts.value}V = {state}W)")
+            logger.debug(f"{self.log_identity} source values populated - setting latest state ({self.amperes.value}A * {self.volts.value}V = {state}W)")
         self.set_latest_state(state)
         return True
 
@@ -245,10 +247,10 @@ class InverterSelfConsumedPower(DerivedSensor, HybridInverter, PVInverter):
     async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool = False) -> bool:
         if self.active_power is None or self.battery_power is None or any(p is None for p in self.pv_string_power.values()):
             if self.debug_logging:
-                logging.debug(f"{self.log_identity} Publishing SKIPPED - active_power={self.active_power} battery_power={self.battery_power} pv_string_power={[p for p in self.pv_string_power.values()]}")
+                logger.debug(f"{self.log_identity} Publishing SKIPPED - active_power={self.active_power} battery_power={self.battery_power} pv_string_power={[p for p in self.pv_string_power.values()]}")
             return False
         if self.debug_logging:
-            logging.debug(f"{self.log_identity} Publishing READY   - active_power={self.active_power} battery_power={self.battery_power} pv_string_power={[p for p in self.pv_string_power.values()]}")
+            logger.debug(f"{self.log_identity} Publishing READY   - active_power={self.active_power} battery_power={self.battery_power} pv_string_power={[p for p in self.pv_string_power.values()]}")
         await super().publish(mqtt_client, modbus_client, republish=republish)  # Publish even if gap exceeds warning threshold
         if not republish:
             # reset internal values to missing for next calculation
@@ -267,21 +269,21 @@ class InverterSelfConsumedPower(DerivedSensor, HybridInverter, PVInverter):
         elif isinstance(sensor, PVStringPower):
             self.pv_string_power[sensor.string_number] = int(sensor.latest_raw_state)
         else:
-            logging.warning(f"{self.log_identity} Attempt to call update_from_source_sensor from {sensor.log_identity}")
+            logger.warning(f"{self.log_identity} Attempt to call update_from_source_sensor from {sensor.log_identity}")
             return False
         if self.active_power is None or self.battery_power is None or any(p is None for p in self.pv_string_power.values()):
             if self.debug_logging:
-                logging.debug(f"{self.log_identity} Publishing SKIPPED - active_power={self.active_power} battery_power={self.battery_power} pv_string_power={[p for p in self.pv_string_power.values()]}")
+                logger.debug(f"{self.log_identity} Publishing SKIPPED - active_power={self.active_power} battery_power={self.battery_power} pv_string_power={[p for p in self.pv_string_power.values()]}")
             return False  # until all values populated, can't do calculation
         total_pv_power = sum([p for p in self.pv_string_power.values() if p is not None])
         state = total_pv_power - self.active_power - self.battery_power
         if state < 0:
             if self.debug_logging:
-                logging.debug(f"{self.log_identity} correcting negative self-consumed power - active_power={self.active_power} battery_power={self.battery_power} total_pv_power={total_pv_power} state={state}")
+                logger.debug(f"{self.log_identity} correcting negative self-consumed power - active_power={self.active_power} battery_power={self.battery_power} total_pv_power={total_pv_power} state={state}")
             state = 0
         try:
             self.set_latest_state(state)
         except SanityCheckException as e:
             if self.debug_logging:
-                logging.debug(f"{self.log_identity} set_latest_state({state}) FAILED - {e}")
+                logger.debug(f"{self.log_identity} set_latest_state({state}) FAILED - {e}")
         return True

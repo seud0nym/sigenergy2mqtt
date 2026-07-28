@@ -14,6 +14,8 @@ from sigenergy2mqtt.sensors.inverter_derived import InverterSelfConsumedPower, P
 from .ess import ESS
 from .pv_string import PVString
 
+logger = logging.getLogger("sigenergy2mqtt")
+
 
 class Inverter(ModbusDevice):
     def __init__(
@@ -68,10 +70,10 @@ class Inverter(ModbusDevice):
         try:
             parsed_firmware = FirmwareVersion(cast(str, firmware))
             if active_config.ems_mode_check and parsed_firmware.service_pack >= 113:
-                logging.debug(f"{inverter.log_identity} ({serial}): Remote EMS Mode check disabled in firmware after SPC113 ({firmware})")
+                logger.debug(f"{inverter.log_identity} ({serial}): Remote EMS Mode check disabled in firmware after SPC113 ({firmware})")
                 active_config.ems_mode_check = False
         except ValueError:
-            logging.warning(f"{inverter.log_identity} ({serial}): Unable to parse firmware version '{firmware}' for ems_mode_check enforcement")
+            logger.warning(f"{inverter.log_identity} ({serial}): Unable to parse firmware version '{firmware}' for ems_mode_check enforcement")
         return inverter
 
     async def _register_child_devices(
@@ -148,7 +150,7 @@ class Inverter(ModbusDevice):
                 )
             )
         else:
-            logging.debug(f"{self.log_identity} Skipped creating ESS device: {battery_count=}")
+            logger.debug(f"{self.log_identity} Skipped creating ESS device: {battery_count=}")
 
     async def _register_sensors(
         self,
@@ -233,9 +235,9 @@ class Inverter(ModbusDevice):
                 if len(pv_string_power) > 0:
                     self._add_sensor(InverterSelfConsumedPower(plant_index, device_address, active_power, battery_power, *pv_string_power))
                 else:
-                    logging.warning(f"{self.log_identity} Skipped creating InverterSelfConsumedPower: No publishable PVStringPower sensors found")
+                    logger.warning(f"{self.log_identity} Skipped creating InverterSelfConsumedPower: No publishable PVStringPower sensors found")
             else:
-                logging.warning(f"{self.log_identity} Skipped creating InverterSelfConsumedPower: No publishable ChargeDischargePower sensor found")
+                logger.warning(f"{self.log_identity} Skipped creating InverterSelfConsumedPower: No publishable ChargeDischargePower sensor found")
 
         # Add the reserved registers to optimise sensor scanning
         self._add_sensor(ro.ReservedDailyExportEnergy(plant_index, device_address))

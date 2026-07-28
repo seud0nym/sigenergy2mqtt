@@ -1,3 +1,4 @@
+from pymodbus.exceptions import ModbusException
 """Unit tests for ModbusClientFactory class."""
 
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -260,7 +261,7 @@ class TestModbusClientFactory:
     def test_remove_client_close_exception_is_handled(self):
         """Ensure that an exception during client.close() does not propagate."""
         mock_client = MagicMock()
-        mock_client.close = MagicMock(side_effect=Exception("close failed"))
+        mock_client.close = MagicMock(side_effect=ModbusException("close failed"))
         # Add client to pool
         ModbusClientFactory._clients = {("host1", 502): mock_client}
         ModbusClientFactory._hosts = {mock_client: "host1:502"}

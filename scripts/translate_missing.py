@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 translate_missing.py
 
@@ -128,12 +127,16 @@ class TranslationCache:
         if path is not None and path.exists():
             try:
                 raw = json.loads(path.read_text(encoding="utf-8"))
-                for composite_key, value in raw.items():
-                    lang, _, en_text = composite_key.partition(":")
-                    if lang and en_text:
-                        self._mem[(lang, en_text)] = value
-                print(f"  [cache] Loaded {len(self._mem)} entries from {path}.")
-            except Exception as exc:
+                # Ensure the parsed JSON is actually a dict before calling .items()
+                if isinstance(raw, dict):
+                    for composite_key, value in raw.items():
+                        lang, _, en_text = composite_key.partition(":")
+                        if lang and en_text:
+                            self._mem[(lang, en_text)] = value
+                    print(f"  [cache] Loaded {len(self._mem)} entries from {path}.")
+                else:
+                    print(f"  [cache] Could not load cache from {path}: Expected JSON object/dict.", file=sys.stderr)
+            except (OSError, json.JSONDecodeError) as exc:
                 print(f"  [cache] Could not load cache from {path}: {exc}", file=sys.stderr)
 
     def get(self, lang_code: str, en_text: str) -> str | None:
@@ -153,7 +156,7 @@ class TranslationCache:
                 encoding="utf-8",
             )
             print(f"  [cache] Saved {len(serialisable)} entries to {self._path}.")
-        except Exception as exc:
+        except (OSError, TypeError, ValueError) as exc:
             print(f"  [cache] Could not save cache to {self._path}: {exc}", file=sys.stderr)
 
 
@@ -164,16 +167,16 @@ class TranslationCache:
 
 def _has_ignore(container: object, key: object) -> bool:
     """Return True if the YAML node carries a ``# verify:ignore`` comment."""
-    try:
-        if not isinstance(container, CommentedMap):
-            return False
-        entry = container.ca.items.get(key)
-        if not entry:
-            return False
-        eol = entry[2]
-        return eol is not None and "verify:ignore" in eol.value
-    except Exception:
+    if not isinstance(container, CommentedMap):
         return False
+
+    entry = container.ca.items.get(key)
+    if entry and len(entry) > 2:
+        eol = entry[2]
+        if eol and hasattr(eol, "value") and eol.value:
+            return "verify:ignore" in eol.value
+
+    return False
 
 
 def _is_safe(value: str) -> bool:
@@ -282,7 +285,7 @@ def _translate_string(
             translated = "".join(part[0] for part in data[0] if part[0])
             time.sleep(_API_DELAY)
             break
-        except Exception as exc:
+        except (requests.RequestException, IndexError, TypeError) as exc:
             print(
                 f"    [WARN] Translation error (attempt {attempt}/{_API_MAX_RETRIES}) for '{text[:60]}': {exc}",
                 file=sys.stderr,
@@ -338,9 +341,8 @@ def _collect_untranslated(
     elif isinstance(en_node, list) and isinstance(other_node, list):
         for i, (en_item, other_item) in enumerate(zip(en_node, other_node)):
             _collect_untranslated(en_item, other_item, f"{path}[{i}]", results, missing, verbose)
-    elif isinstance(en_node, str) and isinstance(other_node, str):
-        if en_node == other_node and not _is_safe(en_node):
-            results.append((path, en_node))
+    elif isinstance(en_node, str) and isinstance(other_node, str) and en_node == other_node and not _is_safe(en_node):
+        results.append((path, en_node))
 
 
 def _parse_path(path: str) -> list[str | int]:
@@ -505,12 +507,7 @@ def _remove_duplicate_keys(en_node: object, other_node: object) -> int:
                 continue
             # Case 1: both int and string keys hold the same translated value
             # → string key is the keeper, drop the int.
-            if v == alt_val:
-                stale.append(k)
-            # Case 2: int key holds a translation, string key still holds
-            # English → drop the int so the next run writes the translation
-            # under the string key.
-            elif alt_val == en_val and v != en_val:
+            if v == alt_val or alt_val == en_val and v != en_val:
                 stale.append(k)
 
         for k in stale:
@@ -584,11 +581,10 @@ def process_language(
     # (exclude source/source_range entries that use the template shortcut).
     def _needs_api(path: str, en_val: str) -> bool:
         last_key = _parse_path(path)[-1]
-        if last_key == "source" and source_tpl is not None and en_val == _EN_SOURCE:
-            return False
-        if last_key == "source_range" and source_range_tpl is not None and en_val == _EN_SOURCE_RANGE:
-            return False
-        return True
+        is_source = last_key == "source" and source_tpl is not None and en_val == _EN_SOURCE
+        is_source_range = last_key == "source_range" and source_range_tpl is not None and en_val == _EN_SOURCE_RANGE
+
+        return not (is_source or is_source_range)
 
     unique_en = {en_val for path, en_val in untranslated if _needs_api(path, en_val)}
     print(f"  Found {len(untranslated)} untranslated value(s) ({len(unique_en)} unique string(s) to translate).")
@@ -690,7 +686,7 @@ def main() -> None:
                 print(f"ERROR: Cache path must be within the project directory ({PROJECT_ROOT}).", file=sys.stderr)
                 sys.exit(1)
             cache_path = resolved_cache
-        except Exception as exc:
+        except (TypeError, ValueError, RuntimeError, OSError) as exc:
             print(f"ERROR: Invalid cache path: {exc}", file=sys.stderr)
             sys.exit(1)
     cache = TranslationCache(cache_path)

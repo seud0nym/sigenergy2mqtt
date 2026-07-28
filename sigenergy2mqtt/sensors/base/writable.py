@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any, Iterable, cast
+from collections.abc import Iterable
+from typing import TYPE_CHECKING, Any, cast
 
 import paho.mqtt.client as mqtt
 from pymodbus.pdu import ExceptionResponse
@@ -21,6 +22,7 @@ from .mixins import WritableSensorMixin
 from .readable import ReadOnlySensor
 from .sensor import AvailabilityMixin, Sensor
 
+logger = logging.getLogger("sigenergy2mqtt")
 # =============================================================================
 
 
@@ -126,11 +128,11 @@ class WriteOnlySensor(WritableSensorMixin, Sensor):
             components[f"{self.unique_id}_{action}"] = config
 
         if self.debug_logging:
-            logging.debug(f"{self.log_identity} Discovered components={components}")
+            logger.debug(f"{self.log_identity} Discovered components={components}")
 
         return components
 
-    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
         """Set value, translating payload to actual value.
 
         Args:
@@ -153,7 +155,7 @@ class WriteOnlySensor(WritableSensorMixin, Sensor):
 
         return await super().set_value(modbus_client, mqtt_client, actual_value, source, handler)
 
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
+    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | str) -> bool:
         """Validate that value is either on or off value.
 
         Args:
@@ -164,7 +166,7 @@ class WriteOnlySensor(WritableSensorMixin, Sensor):
             True if valid
         """
         if raw_value not in (self._values["off"], self._values["on"]):
-            logging.error(f"{self.log_identity} Invalid value '{raw_value}': Must be either '{self._payloads['on']}' or '{self._payloads['off']}'")
+            logger.error(f"{self.log_identity} Invalid value '{raw_value}': Must be either '{self._payloads['on']}' or '{self._payloads['off']}'")
             return False
         return True
 
@@ -202,9 +204,8 @@ class ReadWriteSensor(WritableSensorMixin, ReadOnlySensor):
         **kwargs,
     ):
         # Validate availability control sensor
-        if availability_control_sensor is not None:
-            if not isinstance(availability_control_sensor, AvailabilityMixin):
-                raise ValueError(f"{self.__class__.__name__}: availability_control_sensor must be an instance of AvailabilityMixin")
+        if availability_control_sensor is not None and not isinstance(availability_control_sensor, AvailabilityMixin):
+            raise ValueError(f"{self.__class__.__name__}: availability_control_sensor must be an instance of AvailabilityMixin")
 
         super().__init__(
             name,
@@ -351,7 +352,7 @@ class NumericSensor(ReadWriteSensor):
 
             for mn, mx in zip(minimum, maximum):
                 if not (isinstance(mn, (int, float)) and isinstance(mx, (int, float))):
-                    raise ValueError(f"{self.__class__.__name__}: Invalid tuple values: {mn}/{mx} (must be numeric)")
+                    raise TypeError(f"{self.__class__.__name__}: Invalid tuple values: {mn}/{mx} (must be numeric)")
                 if mn >= mx:
                     raise ValueError(f"{self.__class__.__name__}: Invalid tuple values: {mn}/{mx} (min must be < max)")
             return
@@ -469,29 +470,25 @@ class NumericSensor(ReadWriteSensor):
 
         # Constrain to simple min/max
         if DiscoveryKeys.MIN in self and isinstance(self[DiscoveryKeys.MIN], float):
-            min_val = cast(float, self[DiscoveryKeys.MIN])
-            if value < min_val:
-                value = min_val if not raw else min_val
+            value = max(value, cast(float, self[DiscoveryKeys.MIN]))
 
         if DiscoveryKeys.MAX in self and isinstance(self[DiscoveryKeys.MAX], float):
-            max_val = cast(float, self[DiscoveryKeys.MAX])
-            if value > max_val:
-                value = max_val if not raw else max_val
+            value = min(value, cast(float, self[DiscoveryKeys.MAX]))
 
         # Constrain to negative range (tuple)
         if DiscoveryKeys.MIN in self and isinstance(self[DiscoveryKeys.MIN], tuple) and value < 0:
             min_range = cast(tuple[float, ...], self[DiscoveryKeys.MIN])
             if not (min(min_range) <= value <= max(min_range)):
-                value = min(min_range) if not raw else min(min_range)
+                value = min(min_range)
 
         # Constrain to positive range (tuple)
         if DiscoveryKeys.MAX in self and isinstance(self[DiscoveryKeys.MAX], tuple) and value > 0:
             max_range = cast(tuple[float, ...], self[DiscoveryKeys.MAX])
             if not (min(max_range) <= value <= max(max_range)):
-                value = max(max_range) if not raw else max(max_range)
+                value = max(max_range)
 
         if value != processed and self.debug_logging:
-            logging.debug(f"{self.log_identity} value={state} adjusted to {value}")
+            logger.debug(f"{self.log_identity} value={state} adjusted to {value}")
 
         # Re-apply gain to revert to back to raw value if necessary
         if raw and self.gain and self.gain != 1:
@@ -499,7 +496,7 @@ class NumericSensor(ReadWriteSensor):
 
         return value
 
-    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
         """Set numeric value with validation.
 
         Args:
@@ -513,20 +510,20 @@ class NumericSensor(ReadWriteSensor):
             True if successfully set
         """
         if value is None:
-            logging.warning(f"{self.log_identity} Ignored attempt to set value to *None*")
+            logger.warning(f"{self.log_identity} Ignored attempt to set value to *None*")
             return False
 
         try:
             state = float(value)
             if self.gain != 1:
                 state = state * self.gain  # Convert to raw value
-        except Exception as e:
-            logging.warning(f"{self.log_identity} Attempt to set value to '{value}' FAILED: {repr(e)}")
+        except (ValueError, TypeError, RuntimeError) as e:
+            logger.warning(f"{self.log_identity} Attempt to set value to '{value}' FAILED: {e!r}")
             return False
 
         return await super().set_value(modbus_client, mqtt_client, state, source, handler)
 
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
+    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | str) -> bool:
         """Validate numeric value is within range.
 
         Args:
@@ -543,33 +540,33 @@ class NumericSensor(ReadWriteSensor):
             if isinstance(self.get(DiscoveryKeys.MIN), float):
                 min_val = cast(float, self[DiscoveryKeys.MIN])
                 if value < min_val:
-                    logging.error(f"{self.log_identity} invalid value '{value}' (raw={raw_value}): Less than minimum of {min_val}")
+                    logger.error(f"{self.log_identity} invalid value '{value}' (raw={raw_value}): Less than minimum of {min_val}")
                     return False
 
             # Check simple maximum
             if isinstance(self.get(DiscoveryKeys.MAX), float):
                 max_val = cast(float, self[DiscoveryKeys.MAX])
                 if value > max_val:
-                    logging.error(f"{self.log_identity} invalid value '{value}' (raw={raw_value}): Greater than maximum of {max_val}")
+                    logger.error(f"{self.log_identity} invalid value '{value}' (raw={raw_value}): Greater than maximum of {max_val}")
                     return False
 
             # Check negative range
             if isinstance(self.get(DiscoveryKeys.MIN), tuple) and value < 0:
                 min_range = cast(tuple[float, ...], self[DiscoveryKeys.MIN])
                 if not (min(min_range) <= value <= max(min_range)):
-                    logging.error(f"{self.log_identity} invalid value '{value}' (raw={raw_value}): Not in range {min_range}")
+                    logger.error(f"{self.log_identity} invalid value '{value}' (raw={raw_value}): Not in range {min_range}")
                     return False
 
             # Check positive range
             if isinstance(self.get(DiscoveryKeys.MAX), tuple) and value > 0:
                 max_range = cast(tuple[float, ...], self[DiscoveryKeys.MAX])
                 if not (min(max_range) <= value <= max(max_range)):
-                    logging.error(f"{self.log_identity} invalid value '{value}' (raw={raw_value}): Not in range {max_range}")
+                    logger.error(f"{self.log_identity} invalid value '{value}' (raw={raw_value}): Not in range {max_range}")
                     return False
 
             return True
         except ValueError:
-            logging.error(f"{self.log_identity} invalid value '{raw_value}': Not a number")
+            logger.error(f"{self.log_identity} invalid value '{raw_value}': Not a number")
             return False
 
 
@@ -668,7 +665,7 @@ class SelectSensor(ReadWriteSensor):
 
         return f"Unknown Mode: {value}"
 
-    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
         """Set selected option by name or index.
 
         Args:
@@ -685,12 +682,12 @@ class SelectSensor(ReadWriteSensor):
             index = self._get_option_index(value)
         except ValueError:
             self.force_publish = True
-            logging.error(f"{self.log_identity} invalid value '{value}': Not a valid option or index")
+            logger.error(f"{self.log_identity} invalid value '{value}': Not a valid option or index")
             return False
 
         return await super().set_value(modbus_client, mqtt_client, index, source, handler)
 
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
+    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | str) -> bool:
         """Validate that value is a valid option.
 
         Args:
@@ -704,7 +701,7 @@ class SelectSensor(ReadWriteSensor):
             self._get_option_index(raw_value)
             return True
         except ValueError:
-            logging.error(f"{self.log_identity} invalid value '{raw_value}': Not a valid option or index")
+            logger.error(f"{self.log_identity} invalid value '{raw_value}': Not a valid option or index")
             return False
 
 
@@ -761,7 +758,7 @@ class SwitchSensor(ReadWriteSensor):
         self.sanity_check.min_raw = 0
         self.sanity_check.max_raw = 1
 
-    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
         """Set switch value.
 
         Args:
@@ -777,10 +774,10 @@ class SwitchSensor(ReadWriteSensor):
         try:
             return await super().set_value(modbus_client, mqtt_client, int(value), source, handler)
         except ValueError as e:
-            logging.error(f"{self.log_identity} value_is_valid check of value '{value}' FAILED: {repr(e)}")
+            logger.error(f"{self.log_identity} value_is_valid check of value '{value}' FAILED: {e!r}")
             raise
 
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
+    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | str) -> bool:
         """Validate switch value is 0 or 1.
 
         Args:
@@ -791,6 +788,6 @@ class SwitchSensor(ReadWriteSensor):
             True if 0 or 1
         """
         if raw_value not in (self[DiscoveryKeys.PAYLOAD_OFF], self[DiscoveryKeys.PAYLOAD_ON]):
-            logging.error(f"{self.log_identity} Failed to write value '{raw_value}': Must be either '{self[DiscoveryKeys.PAYLOAD_OFF]}' or '{self[DiscoveryKeys.PAYLOAD_ON]}'")
+            logger.error(f"{self.log_identity} Failed to write value '{raw_value}': Must be either '{self[DiscoveryKeys.PAYLOAD_OFF]}' or '{self[DiscoveryKeys.PAYLOAD_ON]}'")
             return False
         return True

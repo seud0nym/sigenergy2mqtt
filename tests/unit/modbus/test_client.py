@@ -48,7 +48,7 @@ class TestModbusClient:
         """Test trace packet handler for send."""
         client._trace = True
 
-        with patch("sigenergy2mqtt.modbus.client.logging") as mock_logging:
+        with patch("sigenergy2mqtt.modbus.client.logger") as mock_logging:
             result = client._trace_packet_handler(is_send=True, data=b"\x01\x02\x03")
 
             mock_logging.debug.assert_called_once()
@@ -60,7 +60,7 @@ class TestModbusClient:
         """Test trace packet handler for receive."""
         client._trace = True
 
-        with patch("sigenergy2mqtt.modbus.client.logging") as mock_logging:
+        with patch("sigenergy2mqtt.modbus.client.logger") as mock_logging:
             result = client._trace_packet_handler(is_send=False, data=b"\x04\x05\x06")
 
             mock_logging.debug.assert_called_once()
@@ -72,7 +72,7 @@ class TestModbusClient:
         """Test trace packet handler when tracing is disabled."""
         client._trace = False
 
-        with patch("sigenergy2mqtt.modbus.client.logging") as mock_logging:
+        with patch("sigenergy2mqtt.modbus.client.logger") as mock_logging:
             result = client._trace_packet_handler(is_send=True, data=b"\x01\x02\x03")
 
             mock_logging.debug.assert_not_called()

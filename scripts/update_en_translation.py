@@ -35,7 +35,7 @@ from collections import deque
 from pathlib import Path
 from typing import overload
 
-from ruamel.yaml import YAML
+from ruamel.yaml import YAML, YAMLError
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 
 # ---------------------------------------------------------------------------
@@ -357,7 +357,7 @@ def get_ast_string_values(node: ast.expr | None) -> list[str]:
         left = get_ast_string_values(node.left)
         right = get_ast_string_values(node.right)
         if left and right:
-            return [l + r for l in left for r in right]  # noqa: E741
+            return [l + r for l in left for r in right]
         return left or right
 
     if isinstance(node, ast.List):
@@ -1140,7 +1140,7 @@ def deep_update_commented(target: dict, source: dict) -> dict:
             target[k] = v
 
         if hasattr(target, "move_to_end"):
-            getattr(target, "move_to_end")(k)
+            getattr(target, "move_to_end")(k)  # noqa: B009
 
     return target
 
@@ -1435,7 +1435,7 @@ def propagate_to_other_translations(
     for language_file in language_files:
         try:
             _update_language_file(language_file, en_translations, class_bases, old_en_translations)
-        except Exception as exc:
+        except (OSError, YAMLError, KeyError, TypeError, AttributeError, ValueError) as exc:
             log.error("Error updating %s: %s", language_file.name, exc)
 
 
@@ -1484,7 +1484,7 @@ def main() -> None:
             content = py_file.read_text(encoding="utf-8")
             tree = ast.parse(content)
             trees.append((py_file, tree))
-        except Exception as exc:
+        except (OSError, SyntaxError, UnicodeDecodeError) as exc:
             log.error("Error parsing %s: %s", py_file, exc)
 
     # 1. First pass: Collect all class_bases to allow _has_ancestor to work
@@ -1504,7 +1504,7 @@ def main() -> None:
     for py_file, tree in trees:
         try:
             extractor.visit(tree)
-        except Exception as exc:
+        except (AttributeError, KeyError, TypeError, ValueError, IndexError, RecursionError) as exc:
             log.error("Error visiting %s: %s", py_file, exc)
 
     merge_translations(sensor_translations, extractor.translations)
@@ -1519,12 +1519,10 @@ def main() -> None:
         log.info("Extracted %d CLI help texts.", len(cli_translations))
 
     # 4. Assemble and sort the full translation dict.
-    raw_all = prune_empty_dicts(
-        {
-            "class": sort_dict(sensor_translations),
-            **({"cli": sort_dict(cli_translations)} if cli_translations else {}),
-        }
-    )
+    raw_all = prune_empty_dicts({
+        "class": sort_dict(sensor_translations),
+        **({"cli": sort_dict(cli_translations)} if cli_translations else {}),
+    })
     assert isinstance(raw_all, dict)
     all_translations: dict = sort_dict(raw_all)
 

@@ -12,6 +12,7 @@ from sigenergy2mqtt.modbus import ModbusDataType
 from .constants import DiscoveryKeys
 from .readable import ReadOnlySensor
 
+logger = logging.getLogger("sigenergy2mqtt")
 # =============================================================================
 
 
@@ -86,7 +87,7 @@ class TimestampSensor(ReadOnlySensor):
         iso8601 = dt_object.isoformat()
 
         if self.debug_logging:
-            logging.debug(f"{self.log_identity} get_state: raw={value} tz_offset={self._tz_offset_seconds} corrected_epoch={correct_epoch} {iso8601=}")
+            logger.debug(f"{self.log_identity} get_state: raw={value} tz_offset={self._tz_offset_seconds} corrected_epoch={correct_epoch} {iso8601=}")
 
         return iso8601
 
@@ -113,9 +114,9 @@ class TimestampSensor(ReadOnlySensor):
             raw = epoch + self._tz_offset_seconds
 
             if self.debug_logging:
-                logging.debug(f"{self.log_identity} state2raw: {state=} {epoch=} tz_offset={self._tz_offset_seconds} corrected_epoch={raw}")
+                logger.debug(f"{self.log_identity} state2raw: {state=} {epoch=} tz_offset={self._tz_offset_seconds} corrected_epoch={raw}")
 
             return int(raw)
         except ValueError:
-            logging.error(f"{self.log_identity} Invalid timestamp: {state}")
+            logger.error(f"{self.log_identity} Invalid timestamp: {state}")
             return 0

@@ -152,14 +152,14 @@ class TestConfigValidation:
         with pytest.raises(ValueError, match="modbus-auto-discovery-max-device-id must be a positive integer"):
             Settings.validate_max_device_id("invalid_int")
 
-    @patch("sigenergy2mqtt.config.settings.datetime")
+    @patch("sigenergy2mqtt.config.settings.date")
     def test_pvoutput_current_time_period_debug_logging(self, mock_datetime):
         import logging
-        from datetime import datetime as dt
+        from datetime import date as dt
 
         from sigenergy2mqtt.config.models import PvOutputConfig
 
-        mock_dt = dt(2023, 1, 2, 12, 0)  # Monday
+        mock_dt = dt(2023, 1, 2)  # Monday
         mock_datetime.now.return_value = mock_dt
 
         # Test branch where time matches

@@ -6,6 +6,8 @@ from typing import Any, Literal
 
 from sigenergy2mqtt.devices import Device
 
+logger = logging.getLogger("sigenergy2mqtt")
+
 
 @dataclass
 class ThreadConfig:
@@ -56,9 +58,8 @@ class ThreadConfig:
 
     @classmethod
     def create(cls, host: str | None, port: int | None, timeout: float = 1.0, retries: int = 3, name: str | None = None):
-        if host is None or port is None:
-            if name is None:
-                raise ValueError("Name must be provided when host or port are None")
+        if (host is None or port is None) and name is None:
+            raise ValueError("Name must be provided when host or port are None")
         instance = thread_config_registry.get_config(host, port, name)
         if instance is None:
             if name is None:
@@ -134,9 +135,9 @@ class ThreadConfig:
         if value is True:
             raise ValueError("Use a Future to bring devices online, not True")
         elif value is False:
-            logging.debug(f"{self.url if self.host is not None else self.description} going offline")
+            logger.debug(f"{self.url if self.host is not None else self.description} going offline")
         else:
-            logging.debug(f"{self.url if self.host is not None else self.description} coming online")
+            logger.debug(f"{self.url if self.host is not None else self.description} coming online")
         for device in self._devices:
             device.online = value
 
@@ -205,7 +206,7 @@ class ThreadConfigRegistry:
                 raise ValueError(f"Attempt to add existing config {config}")
             self._configs.append(config)
         else:
-            raise ValueError("config must be an instance of ThreadConfig")
+            raise TypeError("config must be an instance of ThreadConfig")
 
     def get_config(self, host: str | None, port: int | None, name: str | None = None) -> ThreadConfig | None:
         """Return the config for ``(host, port, name)``.

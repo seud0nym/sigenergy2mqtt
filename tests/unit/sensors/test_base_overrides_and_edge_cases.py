@@ -73,7 +73,7 @@ class TestDebugLoggingBranches:
         s = _make_sensor(uid_suffix="pub_dbg", debug=True)
         assert s.publishable is True
         # Setting same value triggers the debug branch for "unchanged"
-        with patch("sigenergy2mqtt.sensors.base.sensor.logging") as mock_log:
+        with patch("sigenergy2mqtt.sensors.base.sensor.logger") as mock_log:
             s.publishable = True  # No change → debug branch
             mock_log.debug.assert_called()
 
@@ -81,21 +81,21 @@ class TestDebugLoggingBranches:
         """Setting publish_raw to same value with debug_logging=True."""
         s = _make_sensor(uid_suffix="raw_dbg", debug=True)
         assert s.publish_raw is False
-        with patch("sigenergy2mqtt.sensors.base.sensor.logging") as mock_log:
+        with patch("sigenergy2mqtt.sensors.base.sensor.logger") as mock_log:
             s.publish_raw = False  # unchanged → debug branch
             mock_log.debug.assert_called()
 
     def test_publishable_setter_changed_with_debug(self):
         """Setting publishable to different value with debug_logging=True."""
         s = _make_sensor(uid_suffix="pub_chg_dbg", debug=True)
-        with patch("sigenergy2mqtt.sensors.base.sensor.logging") as mock_log:
+        with patch("sigenergy2mqtt.sensors.base.sensor.logger") as mock_log:
             s.publishable = False
             mock_log.debug.assert_called()
 
     def test_apply_gain_and_precision_none_with_debug(self):
         """_apply_gain_and_precision with None and debug_logging=True."""
         s = _make_sensor(uid_suffix="gap_none_dbg", debug=True)
-        with patch("sigenergy2mqtt.sensors.base.sensor.logging") as mock_log:
+        with patch("sigenergy2mqtt.sensors.base.sensor.logger") as mock_log:
             result = s._apply_gain_and_precision(None)
             assert result is None
             mock_log.debug.assert_called()
@@ -103,7 +103,7 @@ class TestDebugLoggingBranches:
     def test_apply_gain_and_precision_float_with_debug(self):
         """_apply_gain_and_precision with float and debug_logging=True."""
         s = _make_sensor(uid_suffix="gap_float_dbg", debug=True)
-        with patch("sigenergy2mqtt.sensors.base.sensor.logging") as mock_log:
+        with patch("sigenergy2mqtt.sensors.base.sensor.logger") as mock_log:
             result = s._apply_gain_and_precision(100.0)
             assert result == 100.0
             mock_log.debug.assert_called()

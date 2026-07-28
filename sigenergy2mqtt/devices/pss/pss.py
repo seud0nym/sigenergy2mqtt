@@ -39,7 +39,7 @@ class PSS(ModbusDevice):
         )
 
     @classmethod
-    async def create(cls, plant_index: int, device_address: int, protocol_version: Protocol, modbus_client: ModbusClient) -> "PSS":
+    async def create(cls, plant_index: int, device_address: int, protocol_version: Protocol, modbus_client: ModbusClient) -> PSS:
         model = ro.PSSModelType(plant_index, device_address)
         serial_number = ro.PSSSerialNumber(plant_index, device_address)
 

@@ -19,6 +19,10 @@ from sigenergy2mqtt.metrics import Metrics
 logging.getLogger("urllib3").setLevel(logging.INFO)
 
 
+class InfluxQueryException(Exception):
+    """Custom exception for InfluxDB query errors."""
+
+
 class InfluxConfigValues(TypedDict):
     """Typed dictionary for resolved InfluxDB configuration values."""
 
@@ -43,15 +47,7 @@ class InfluxBase(Device):
     issuing any write or query calls.
     """
 
-    def __init__(
-        self,
-        name: str,
-        plant_index: int,
-        unique: str,
-        manufacturer: str,
-        model: str,
-        logger: logging.Logger,
-    ) -> None:
+    def __init__(self, name: str, plant_index: int, unique: str, manufacturer: str, model: str, logger: logging.Logger) -> None:
         """Initialise shared state, HTTP session, and write/query buffers.
 
         No network I/O is performed here; call :meth:`async_init` to establish
@@ -149,18 +145,11 @@ class InfluxBase(Device):
                         timeout=5,
                     )
                     return r2.status_code in (201, 200)
-        except Exception as e:
+        except (ValueError, requests.RequestException, TimeoutError) as e:
             self.logger.debug(f"{self.log_identity} v2 bucket creation failed: {e}")
         return False
 
-    def _try_v2_write(
-        self,
-        base: str,
-        bucket: str,
-        org: str | None,
-        token: str | None,
-        test_line: bytes,
-    ) -> bool:
+    def _try_v2_write(self, base: str, bucket: str, org: str | None, token: str | None, test_line: bytes) -> bool:
         """Probe the v2 HTTP write endpoint and configure the writer if reachable.
 
         If the target bucket does not exist and a token is available, an attempt
@@ -193,16 +182,15 @@ class InfluxBase(Device):
                 return True
 
             # If bucket not found and token provided, attempt to create it
-            if r.status_code in (400, 404) and token:
-                if self._create_v2_bucket(base, bucket, token):
-                    r3 = self._session.post(url_v2, headers=headers or None, data=test_line, timeout=5)
-                    if r3.status_code in (204, 200):
-                        self._writer_type = "v2_http"
-                        self._write_url = url_v2
-                        self._write_headers = headers or {}
-                        self.logger.info(f"{self.log_identity} Created v2 bucket and will use v2 HTTP write to {url_v2}")
-                        return True
-        except Exception as e:
+            if r.status_code in (400, 404) and token and self._create_v2_bucket(base, bucket, token):
+                r3 = self._session.post(url_v2, headers=headers or None, data=test_line, timeout=5)
+                if r3.status_code in (204, 200):
+                    self._writer_type = "v2_http"
+                    self._write_url = url_v2
+                    self._write_headers = headers or {}
+                    self.logger.info(f"{self.log_identity} Created v2 bucket and will use v2 HTTP write to {url_v2}")
+                    return True
+        except (requests.RequestException, TimeoutError) as e:
             self.logger.debug(f"{self.log_identity} v2 HTTP detection failed: {e}")
 
         return False
@@ -223,17 +211,11 @@ class InfluxBase(Device):
             q = {"q": f"CREATE DATABASE {db}"}
             r2 = self._session.post(create_url, params=q, auth=auth, timeout=5)
             return r2.status_code == 200
-        except Exception as e:
+        except (requests.RequestException, TimeoutError) as e:
             self.logger.debug(f"{self.log_identity} v1 database creation failed: {e}")
         return False
 
-    def _try_v1_write(
-        self,
-        base: str,
-        db: str,
-        auth: tuple | None,
-        test_line: bytes,
-    ) -> bool:
+    def _try_v1_write(self, base: str, db: str, auth: tuple | None, test_line: bytes) -> bool:
         """Probe the v1 HTTP write endpoint and configure the writer if reachable.
 
         If the target database does not exist, an attempt is made to create it
@@ -260,16 +242,15 @@ class InfluxBase(Device):
                 return True
 
             # Attempt to create database and retry
-            if r.status_code in (404, 400) or (r.status_code >= 400 and r.content and b"database" in r.content.lower()):
-                if self._create_v1_database(base, db, auth):
-                    r3 = self._session.post(url_v1, params={"db": db, "precision": "s"}, data=test_line, auth=auth, timeout=5)
-                    if r3.status_code in (204, 200):
-                        self._writer_type = "v1_http"
-                        self._write_url = url_v1
-                        self._write_auth = auth
-                        self.logger.info(f"{self.log_identity} Created v1 database and will use v1 HTTP write to {url_v1}")
-                        return True
-        except Exception as e:
+            if (r.status_code in (404, 400) or (r.status_code >= 400 and r.content and b"database" in r.content.lower())) and self._create_v1_database(base, db, auth):
+                r3 = self._session.post(url_v1, params={"db": db, "precision": "s"}, data=test_line, auth=auth, timeout=5)
+                if r3.status_code in (204, 200):
+                    self._writer_type = "v1_http"
+                    self._write_url = url_v1
+                    self._write_auth = auth
+                    self.logger.info(f"{self.log_identity} Created v1 database and will use v1 HTTP write to {url_v1}")
+                    return True
+        except (requests.RequestException, TimeoutError) as e:
             self.logger.debug(f"{self.log_identity} v1 HTTP detection failed: {e}")
 
         return False
@@ -289,24 +270,20 @@ class InfluxBase(Device):
         test_line = b"state value=1"
 
         # Try v2 HTTP write endpoint (preferred if token provided)
-        if config["token"]:
-            if self._try_v2_write(config["base"], config["bucket"], config["org"], config["token"], test_line):
-                return
+        if config["token"] and self._try_v2_write(config["base"], config["bucket"], config["org"], config["token"], test_line):
+            return
 
         # If username is provided, prefer v1 HTTP (InfluxDB 1.x)
-        if config["user"]:
-            if self._try_v1_write(config["base"], config["db"], config["auth"], test_line):
-                return
+        if config["user"] and self._try_v1_write(config["base"], config["db"], config["auth"], test_line):
+            return
 
         # Try v2 without token (some setups)
-        if not self._writer_type:
-            if self._try_v2_write(config["base"], config["bucket"], config["org"], None, test_line):
-                return
+        if not self._writer_type and self._try_v2_write(config["base"], config["bucket"], config["org"], None, test_line):
+            return
 
         # Final fallback: try v1 HTTP without username (no auth)
-        if not self._writer_type:
-            if self._try_v1_write(config["base"], config["db"], config["auth"], test_line):
-                return
+        if not self._writer_type and self._try_v1_write(config["base"], config["db"], config["auth"], test_line):
+            return
 
         raise RuntimeError(f"{self.log_identity} Initialization failed: could not determine writable endpoint or create database/bucket")
 
@@ -324,7 +301,7 @@ class InfluxBase(Device):
             try:
                 await asyncio.to_thread(self._init_connection)
                 return True
-            except Exception as e:
+            except RuntimeError as e:
                 self.logger.error(f"{self.log_identity} Initialization failed: {e}")
                 service_health_registry.set_health(self.service_health_key, False)
                 return False
@@ -464,7 +441,7 @@ class InfluxBase(Device):
                 await Metrics.influxdb_write(batch_size, elapsed)
             else:
                 await Metrics.influxdb_write_error()
-        except Exception as e:
+        except (ValueError, TypeError, RuntimeError) as e:
             self.logger.error(f"InfluxDB batch write failed: {e} (type={self._writer_type} url={self._write_url} batch_size={batch_size})")
             await Metrics.influxdb_write_error()
 
@@ -538,7 +515,7 @@ class InfluxBase(Device):
                 service_health_registry.set_health(self.service_health_key, False)
                 return False
 
-        except Exception as e:
+        except (OSError, requests.RequestException, TimeoutError) as e:
             self.logger.error(f"InfluxDB write failed: {e} (type={self._writer_type} url={self._write_url})")
             service_health_registry.set_health(self.service_health_key, False)
         return False
@@ -547,13 +524,7 @@ class InfluxBase(Device):
     # Queries
     # ------------------------------------------------------------------
 
-    async def _rate_limited_query(
-        self,
-        query_func,
-        operation_name: str,
-        max_retries: int = 3,
-        base_delay: float = 0.5,
-    ) -> tuple[bool, Any]:
+    async def _rate_limited_query(self, query_func, operation_name: str, max_retries: int = 3, base_delay: float = 0.5) -> tuple[bool, Any]:
         """Execute a query coroutine with rate limiting and exponential-backoff retries.
 
         A semaphore caps concurrency at 10 simultaneous queries.  Within that
@@ -588,7 +559,7 @@ class InfluxBase(Device):
                     return False, None
                 try:
                     return await query_func()
-                except Exception as e:
+                except (ValueError, TypeError, RuntimeError, InfluxQueryException, requests.RequestException) as e:
                     if attempt == max_retries:
                         self.logger.debug(f"{self.log_identity} {operation_name} failed after {max_retries + 1} attempts: {e}")
                         await Metrics.influxdb_query_error()
@@ -602,15 +573,7 @@ class InfluxBase(Device):
         # satisfies type checkers that require a return on all code paths.
         return False, None  # pragma: no cover
 
-    async def query_v2(
-        self,
-        base: str,
-        org: str | None,
-        token: str,
-        flux_query: str,
-        timeout: int | float | None = None,
-        max_retries: int | None = None,
-    ) -> tuple[bool, Any]:
+    async def query_v2(self, base: str, org: str | None, token: str, flux_query: str, timeout: float | None = None, max_retries: int | None = None) -> tuple[bool, Any]:
         """Execute a Flux query against the v2 API with rate limiting and retries.
 
         Args:
@@ -637,14 +600,7 @@ class InfluxBase(Device):
             max_retries if max_retries is not None else active_config.influxdb.max_retries,
         )
 
-    async def query_v2_internal(
-        self,
-        base: str,
-        org: str | None,
-        token: str,
-        flux_query: str,
-        timeout: int | float,
-    ) -> tuple[bool, Any]:
+    async def query_v2_internal(self, base: str, org: str | None, token: str, flux_query: str, timeout: float) -> tuple[bool, Any]:
         """Perform a single Flux query HTTP request without retry logic.
 
         Intended to be wrapped by :meth:`query_v2` rather than called directly.
@@ -660,7 +616,7 @@ class InfluxBase(Device):
             ``(True, response_text)`` on HTTP 200.
 
         Raises:
-            Exception: On any non-200 HTTP status or network error.
+            InfluxQueryException: On any non-200 HTTP status or network error.
         """
         headers = {"Authorization": f"Token {token}", "Content-Type": "application/vnd.flux"}
         url = f"{base}/api/v2/query"
@@ -669,18 +625,9 @@ class InfluxBase(Device):
         if r.status_code == 200:
             await Metrics.influxdb_query()
             return True, r.text
-        raise Exception(f"HTTP {r.status_code}: {r.text}")
+        raise InfluxQueryException(f"HTTP {r.status_code}: {r.text}")
 
-    async def query_v1(
-        self,
-        base: str,
-        db: str,
-        auth: tuple | None,
-        query: str,
-        epoch: str | None = None,
-        timeout: int | float | None = None,
-        max_retries: int | None = None,
-    ) -> tuple[bool, Any]:
+    async def query_v1(self, base: str, db: str, auth: tuple | None, query: str, epoch: str | None = None, timeout: float | None = None, max_retries: int | None = None) -> tuple[bool, Any]:
         """Execute an InfluxQL query against the v1 API with rate limiting and retries.
 
         Args:
@@ -709,15 +656,7 @@ class InfluxBase(Device):
             max_retries if max_retries is not None else active_config.influxdb.max_retries,
         )
 
-    async def query_v1_internal(
-        self,
-        base: str,
-        db: str,
-        auth: tuple | None,
-        query: str,
-        epoch: str | None,
-        timeout: int | float,
-    ) -> tuple[bool, Any]:
+    async def query_v1_internal(self, base: str, db: str, auth: tuple | None, query: str, epoch: str | None, timeout: float) -> tuple[bool, Any]:
         """Perform a single InfluxQL query HTTP request without retry logic.
 
         Intended to be wrapped by :meth:`query_v1` rather than called directly.
@@ -734,7 +673,7 @@ class InfluxBase(Device):
             ``(True, json_result)`` on HTTP 200.
 
         Raises:
-            Exception: On any non-200 HTTP status or network error.
+            InfluxQueryException: On any non-200 HTTP status or network error.
         """
         url = f"{base}/query"
         params: dict[str, str] = {"db": db, "q": query}
@@ -744,7 +683,7 @@ class InfluxBase(Device):
         if r.status_code == 200:
             await Metrics.influxdb_query()
             return True, r.json()
-        raise Exception(f"HTTP {r.status_code}: {r.text}")
+        raise InfluxQueryException(f"HTTP {r.status_code}: {r.text}")
 
     # ------------------------------------------------------------------
     # Utilities
@@ -761,7 +700,7 @@ class InfluxBase(Device):
         Returns:
             Unix timestamp as an integer number of seconds since the epoch.
         """
-        dt = datetime.fromisoformat(time_str.replace("Z", "+00:00"))
+        dt = datetime.fromisoformat(time_str)
         return int(dt.timestamp())
 
     def build_v1_tag_filter(self, tags: dict[str, str]) -> str:

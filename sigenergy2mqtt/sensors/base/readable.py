@@ -7,6 +7,7 @@ import logging
 import time
 from typing import Any, cast
 
+from pymodbus.exceptions import ModbusException
 from pymodbus.pdu import ExceptionResponse
 
 from sigenergy2mqtt.common import DeviceClass, InputType, Protocol, StateClass
@@ -19,6 +20,7 @@ from .constants import SensorAttributeKeys
 from .mixins import ModbusSensorMixin, ReadableSensorMixin
 from .sensor import AvailabilityMixin, Sensor, TypedSensorMixin
 
+logger = logging.getLogger("sigenergy2mqtt")
 # =============================================================================
 
 
@@ -94,12 +96,12 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
         try:
             return await self._perform_modbus_read(modbus_client, **kwargs)
         except asyncio.CancelledError:
-            logging.warning(f"{self.log_identity} Modbus read interrupted")
+            logger.warning(f"{self.log_identity} Modbus read interrupted")
             return False
-        except asyncio.TimeoutError:
-            logging.warning(f"{self.log_identity} Modbus read failed to acquire lock within {self.scan_interval}s")
+        except TimeoutError:
+            logger.warning(f"{self.log_identity} Modbus read failed to acquire lock within {self.scan_interval}s")
             return False
-        except Exception:
+        except (ModbusException, OSError):
             # Record error in metrics
             await Metrics.modbus_read_error()
             raise
@@ -108,7 +110,7 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
         """Log details of Modbus read attempt."""
         actual_interval = None if len(self._states) == 0 else f"{round(time.time() - self._states[-1][0], 2)}s"
 
-        logging.debug(
+        logger.debug(
             f"{self.log_identity} read_{self.input_type}_registers("
             f"{self.address}, count={self.count}, device_id={self.device_address}) "
             f"plant_index={self.plant_index} interval={self.scan_interval}s "
@@ -146,7 +148,7 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
             # Convert registers to value and update state
             value = modbus_client.convert_from_registers(rr.registers, cast(Any, self.data_type))
             if self.debug_logging:
-                logging.debug(f"{self.log_identity} Converted registers {rr.registers} to {self.data_type.name} raw state value: {value}")
+                logger.debug(f"{self.log_identity} Converted registers {rr.registers} to {self.data_type.name} raw state value: {value}")
             # set_latest_state returns True only when self._states was updated
             # (i.e. the value changed, or the repeat-publish interval has elapsed).
             # Returning False here causes get_state() to return None, which
@@ -168,7 +170,7 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
         """
         actual_interval = None if len(self._states) == 0 else f"{round(time.time() - self._states[-1][0], 2)}s"
 
-        logging.debug(
+        logger.debug(
             f"{self.log_identity} read_{self.input_type}_registers("
             f"{self.address}, count={self.count}, device_id={self.device_address}) "
             f"plant_index={self.plant_index} interval={self.scan_interval}s "
@@ -293,11 +295,9 @@ class ReservedSensor(ReadOnlySensor):
 
     def apply_device_overrides(self, registers: RegisterAccess | None):
         """Reserved sensors ignore overrides."""
-        pass
 
     def apply_sensor_overrides(self):
         """Reserved sensors ignore overrides."""
-        pass
 
 
 # =============================================================================

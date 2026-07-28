@@ -42,8 +42,8 @@ class SanityCheck:
         state_class: StateClass | None = None,
         data_type: ModbusDataType | None = None,
         gain: float | None = None,
-        min_raw: float | int | None = None,
-        max_raw: float | int | None = None,
+        min_raw: float | None = None,
+        max_raw: float | None = None,
         delta: bool | None = None,
         precision: int | None = None,
     ) -> None:
@@ -102,7 +102,7 @@ class SanityCheck:
         if self.min_raw is not None and self.max_raw is not None:
             self.min_raw = max(self.max_raw * -1, self.min_raw)
 
-    def _raw2value(self, raw: float | int | None) -> str | None:
+    def _raw2value(self, raw: float | None) -> str | None:
         if raw is None:
             return raw
         if self._gain is not None:
@@ -142,7 +142,7 @@ class SanityCheck:
     def is_enabled(self) -> bool:
         return self.min_raw is not None or self.max_raw is not None
 
-    def is_sane(self, state: float | int, previous_states: list[tuple[float, float | int | str]]) -> bool:
+    def is_sane(self, state: float, previous_states: list[tuple[float, float | int | str]]) -> bool:
         if state is None or not isinstance(state, (float, int)) or (self.min_raw is None and self.max_raw is None) or (self.delta and len(previous_states) == 0):
             return True
         if self.delta:

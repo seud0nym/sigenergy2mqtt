@@ -28,14 +28,18 @@ import os
 import socket
 import sys
 import time
+from collections.abc import Generator
 from contextlib import contextmanager
 from copy import deepcopy
 from io import StringIO
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Generator
+from typing import TYPE_CHECKING, Any, ClassVar
 
+from paho.mqtt import MQTTException
 from pydantic import ValidationError
+from pymodbus.exceptions import ModbusException
 from ruamel.yaml import YAML
+from ruamel.yaml.error import YAMLError
 
 from sigenergy2mqtt import i18n
 from sigenergy2mqtt.persistence import Category
@@ -43,6 +47,8 @@ from sigenergy2mqtt.persistence import Category
 from . import const, version
 from .auto_discovery import scan as auto_discovery_scan
 from .settings import Settings
+
+logger = logging.getLogger("sigenergy2mqtt")
 
 AUTODISCOVERY_DEFAULT_TIMEOUT = 300.0
 
@@ -64,7 +70,7 @@ class Config:
     """
 
     clean: bool = False
-    origin: dict[str, str] = {"name": "sigenergy2mqtt", "sw": version.__version__, "url": "https://github.com/seud0nym/sigenergy2mqtt"}
+    origin: ClassVar[dict[str, str]] = {"name": "sigenergy2mqtt", "sw": version.__version__, "url": "https://github.com/seud0nym/sigenergy2mqtt"}
     persistent_state_path: Path
 
     validate_only_mode: str | None = None
@@ -95,7 +101,7 @@ class Config:
         try:
             self._settings = Settings()  # type: ignore[reportCallIssue]
             self._settings.finalize_modbus([])
-        except Exception:
+        except (ValidationError, OSError, YAMLError, ModbusException, ValueError):
             self._settings = None
 
     @property
@@ -217,7 +223,7 @@ class Config:
         Records *filename* as the configuration source and delegates to :meth:`reload`.
         Subsequent calls to :meth:`reload` will re-read the same file.
         """
-        logging.info(f"Loading configuration from {filename}...")
+        logger.info(f"Loading configuration from {filename}...")
         self._source = filename
         await self.reload()
 
@@ -248,9 +254,8 @@ class Config:
             self._settings.finalize_modbus(discovery_results)
 
             # Ensure at least one Modbus device is configured (unless auto discovery provides it)
-            if not self._settings.modbus:
-                if not self._settings.modbus_auto_discovery:
-                    raise ConfigurationError("At least one Modbus device must be configured")
+            if not self._settings.modbus and not self._settings.modbus_auto_discovery:
+                raise ConfigurationError("At least one Modbus device must be configured")
 
             i18n.load(self._settings.language)
 
@@ -300,15 +305,14 @@ class Config:
 
     def _should_run_discovery(self, auto_discovery, auto_discovery_cache) -> bool:
         if auto_discovery == "force":
-            logging.info("Auto-discovery required (FORCED)")
+            logger.info("Auto-discovery required (FORCED)")
             return True
         if auto_discovery == "once" and not auto_discovery_cache.is_file():
-            logging.info(f"Auto-discovery required (ONCE: {auto_discovery_cache} not found)")
+            logger.info(f"Auto-discovery required (ONCE: {auto_discovery_cache} not found)")
             return True
-        if auto_discovery not in ("force", "once"):
-            if self._settings is None or not self._settings.has_fully_configured_modbus:
-                logging.info("Auto-discovery required (No Modbus host configured)")
-                return True
+        if auto_discovery not in ("force", "once") and (self._settings is None or not self._settings.has_fully_configured_modbus):
+            logger.info("Auto-discovery required (No Modbus host configured)")
+            return True
         return False
 
     def _get_final_cache_path(self, auto_discovery: str | None, auto_discovery_cache: Path, auto_discovery_should_run: bool) -> Path | None:
@@ -322,7 +326,7 @@ class Config:
         # valid and must be returned so that _finalize_reload sees the devices.
         if auto_discovery == "once":
             if auto_discovery_cache.is_file():
-                logging.info(f"Auto-discovery cached results found in {auto_discovery_cache}")
+                logger.info(f"Auto-discovery cached results found in {auto_discovery_cache}")
                 return auto_discovery_cache
             return None
 
@@ -333,7 +337,7 @@ class Config:
         # Continuous / env-driven discovery: scan ran (or was skipped because
         # hosts are already configured).  Only pass the cache when one exists.
         if auto_discovery_cache.is_file():
-            logging.info(f"Auto-discovery cached results found in {auto_discovery_cache}")
+            logger.info(f"Auto-discovery cached results found in {auto_discovery_cache}")
             return auto_discovery_cache
         return None
 
@@ -352,9 +356,9 @@ class Config:
                     cached = await state_store.load(Category.CONFIG, "auto-discovery")
                     if cached:
                         auto_discovery_cache.write_text(cached)
-                        logging.info("Auto-discovery cache restored from MQTT")
-            except Exception:
-                logging.debug("StateStore not available for auto-discovery restore")
+                        logger.info("Auto-discovery cache restored from MQTT")
+            except (OSError, UnicodeError):
+                logger.debug("StateStore not available for auto-discovery restore")
 
     async def _save_discovery_results(self, auto_discovery_cache: Path, auto_discovered: list):
         yaml_content = self._serialize_discovery(auto_discovered)
@@ -364,8 +368,8 @@ class Config:
 
             if state_store.is_initialised:
                 await state_store.save(Category.CONFIG, "auto-discovery", yaml_content)
-        except Exception:
-            pass
+        except (OSError, UnicodeError, MQTTException, TypeError, ValueError) as exc:
+            logger.warning(f"Failed to save auto-discovery cache: {exc}")
 
     def _serialize_discovery(self, auto_discovered: list) -> str:
         with StringIO() as stream:
@@ -479,12 +483,12 @@ class Config:
                     seen.add(ip)
                     ips.append(f"{ip}/32")
             if ips:
-                logging.info(f"Resolved modbus host '{host}' to {', '.join(ips)} for auto-discovery")
+                logger.info(f"Resolved modbus host '{host}' to {', '.join(ips)} for auto-discovery")
                 return ips
-            logging.warning(f"Could not resolve modbus host '{host}' to any IPv4 address")
+            logger.warning(f"Could not resolve modbus host '{host}' to any IPv4 address")
             return []
         except (socket.gaierror, OSError) as e:
-            logging.warning(f"Failed to resolve modbus host '{host}' for auto-discovery: {e}")
+            logger.warning(f"Failed to resolve modbus host '{host}' for auto-discovery: {e}")
             return []
 
     async def _run_auto_discovery(
@@ -512,11 +516,11 @@ class Config:
                 ),
                 timeout=timeout,
             )
-        except asyncio.TimeoutError:
-            logging.error(f"Auto-discovery timed out after {timeout:.1f}s")
+        except TimeoutError:
+            logger.error(f"Auto-discovery timed out after {timeout:.1f}s")
             return []
-        except Exception:
-            logging.exception("Auto-discovery failed")
+        except ModbusException:
+            logger.exception("Auto-discovery failed")
             return []
 
     def __getattr__(self, name: str) -> Any:
@@ -621,9 +625,9 @@ def _clean_stale_files(path: Path) -> None:
         if stat.st_mtime < threshold_time and file.suffix not in _keep_suffixes:
             try:
                 file.unlink()
-                logging.info(f"Removed stale state file: {file} (last modified: {time.ctime(stat.st_mtime)})")
+                logger.info(f"Removed stale state file: {file} (last modified: {time.ctime(stat.st_mtime)})")
             except (PermissionError, OSError) as e:
-                logging.error(f"Failed to remove stale state file: {file} ({e})")
+                logger.error(f"Failed to remove stale state file: {file} ({e})")
 
 
 def _create_persistent_state_path() -> Path:
@@ -650,10 +654,10 @@ def _create_persistent_state_path() -> Path:
         if os.path.isdir(base) and os.access(base, os.W_OK):
             path = Path(base, "sigenergy2mqtt")
             if not path.is_dir():
-                logging.info(f"Persistent state folder '{path}' created")
-                path.mkdir(parents=True, exist_ok=True) # don't throw an error if another thread/process creates the folder a millisecond before this one does (usually during parallel testing!)
+                logger.info(f"Persistent state folder '{path}' created")
+                path.mkdir(parents=True, exist_ok=True)  # don't throw an error if another thread/process creates the folder a millisecond before this one does (usually during parallel testing!)
             else:
-                logging.debug(f"Persistent state folder '{path}' found")
+                logger.debug(f"Persistent state folder '{path}' found")
                 _clean_stale_files(path)
             return path.resolve()
     raise ConfigurationError("Unable to create persistent state folder!")
@@ -698,12 +702,8 @@ def configure_root_logging(level: int | None = None, fmt: str | None = None) -> 
     """
     if not fmt:
         fmt = os.getenv(const.SIGENERGY2MQTT_LOG_FMT)
-    if not fmt:
-        try:
-            if "active_config" in globals() and active_config is not None:
-                fmt = active_config.log_fmt
-        except Exception:
-            pass
+    if not fmt and "active_config" in globals() and active_config is not None:
+        fmt = active_config.log_fmt
     if not fmt:
         if os.isatty(sys.stdout.fileno()):
             fmt = "{asctime} {levelname:<8} sigenergy2mqtt:{module:.<15.15}{lineno:04d} {message}"
@@ -754,7 +754,7 @@ def _system_initialize():
     """
     configure_root_logging()
 
-    logging.info(f"Release {version.__version__} (Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro})")
+    logger.info(f"Release {version.__version__} (Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro})")
 
     min_version = (3, 12)
     if sys.version_info < min_version:

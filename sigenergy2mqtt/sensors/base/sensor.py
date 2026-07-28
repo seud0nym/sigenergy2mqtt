@@ -10,9 +10,10 @@ import logging
 import re
 import time
 from collections import deque
-from typing import TYPE_CHECKING, Any, Deque, cast
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 import paho.mqtt.client as mqtt
+from pymodbus.exceptions import ModbusException
 from pymodbus.pdu import ExceptionResponse
 
 from sigenergy2mqtt.common import DeviceClass, Protocol, StateClass
@@ -29,6 +30,7 @@ from .sanity_check import SanityCheck, SanityCheckException
 if TYPE_CHECKING:
     from .derived import DerivedSensor
 
+logger = logging.getLogger("sigenergy2mqtt")
 # =============================================================================
 
 
@@ -76,8 +78,8 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
     """
 
     # Class-level tracking of used IDs (intentional shared state)
-    _used_object_ids: dict[str, str] = {}
-    _used_unique_ids: dict[str, str] = {}
+    _used_object_ids: ClassVar[dict[str, str]] = {}
+    _used_unique_ids: ClassVar[dict[str, str]] = {}
 
     def __init__(
         self,
@@ -105,7 +107,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
 
         # Validate protocol version
         if not isinstance(protocol_version, Protocol):
-            raise AssertionError(f"{self.__class__.__name__} protocol_version '{protocol_version}' is invalid")
+            raise TypeError(f"{self.__class__.__name__} protocol_version '{protocol_version}' is invalid")
 
         super().__init__(**kwargs)
 
@@ -139,7 +141,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         self._publish_persistence_key: str = f"{_sanitize_path_component(unique_id)}.publishable"
 
         # State history - use deque for efficient bounded collection
-        self._states: Deque[tuple[float, Any]] = deque(maxlen=_DEFAULT_STATE_HISTORY_SIZE)
+        self._states: deque[tuple[float, Any]] = deque(maxlen=_DEFAULT_STATE_HISTORY_SIZE)
 
         # Failure tracking
         self._failures: int = 0
@@ -181,10 +183,10 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         # Have to apply sensor overrides AFTER sanity check because overrides can apply to it
         self.apply_sensor_overrides()
         if self.debug_logging:
-            logging.debug(f"{self.log_identity} {self.sanity_check}")
+            logger.debug(f"{self.log_identity} {self.sanity_check}")
 
         if device_class is not None and not DeviceClass.is_valid_unit(device_class, unit):
-            logging.error(f"{self.log_identity} unit '{unit}' is not valid for device class {device_class.name}")
+            logger.error(f"{self.log_identity} unit '{unit}' is not valid for device class {device_class.name}")
 
     def _validate_unique_id(self, unique_id: str) -> None:
         """Validate that unique_id is not duplicated and has correct prefix.
@@ -246,7 +248,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         return None if len(self._states) == 0 else self._states[-1][1]
 
     @latest_raw_state.setter
-    def latest_raw_state(self, value: float | int | str):
+    def latest_raw_state(self, value: float | str):
         """Update the most recent raw state value."""
         if len(self._states) > 0:
             latest = self._states.pop()
@@ -282,19 +284,21 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
             f"dev={device_address}",
         ]
 
-        if hasattr(self, "phase"):
-            phase = str(getattr(self, "phase")).strip()
-            if phase:
-                suffix_parts.append(f"phase={phase}")
+        phase = getattr(self, "phase", None)
+        if phase is not None:
+            suffix_parts.append(f"phase={str(phase).strip()}")
 
-        if hasattr(self, "slot"):
-            suffix_parts.append(f"slot={getattr(self, 'slot')}")
+        slot = getattr(self, "slot", None)
+        if slot is not None:
+            suffix_parts.append(f"slot={slot}")
 
-        if hasattr(self, "smart_load_index"):
-            suffix_parts.append(f"idx={getattr(self, 'smart_load_index')}")
+        sli = getattr(self, "smart_load_index", None)
+        if sli is not None:
+            suffix_parts.append(f"idx={sli}")
 
-        if hasattr(self, "string_number"):
-            suffix_parts.append(f"string={getattr(self, 'string_number')}")
+        string = getattr(self, "string_number", None)
+        if string is not None:
+            suffix_parts.append(f"string={string}")
 
         return f"{self.__class__.__name__}[{','.join(suffix_parts)}]"
 
@@ -325,7 +329,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
                 raise AssertionError(f"{self.log_identity}: Invalid protocol_version '{protocol_version}'")
             self._protocol_version = protocol
         else:
-            raise AssertionError(f"{self.log_identity}: protocol_version must be Protocol or float, got {type(protocol_version)}")
+            raise TypeError(f"{self.log_identity}: protocol_version must be Protocol or float, got {type(protocol_version)}")
 
     @property
     def publishable(self) -> bool:
@@ -336,14 +340,14 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
     def publishable(self, value: bool):
         """Set whether this sensor should be published to MQTT."""
         if not isinstance(value, bool):
-            raise ValueError(f"{self.log_identity}.publishable must be a bool")
+            raise TypeError(f"{self.log_identity}.publishable must be a bool")
 
         if self._publishable == value:
             if self.debug_logging:
-                logging.debug(f"{self.log_identity}.publishable unchanged ({value})")
+                logger.debug(f"{self.log_identity}.publishable unchanged ({value})")
         else:
             self._publishable = value
-            logging.debug(f"{self.log_identity}.publishable set to {value}")
+            logger.debug(f"{self.log_identity}.publishable set to {value}")
 
     @property
     def monitorable(self) -> bool:
@@ -354,14 +358,14 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
     def monitorable(self, value: bool):
         """Set whether this sensor should be registered for overdue health checks."""
         if not isinstance(value, bool):
-            raise ValueError(f"{self.log_identity}.monitorable must be a bool")
+            raise TypeError(f"{self.log_identity}.monitorable must be a bool")
 
         if self._monitorable == value:
             if self.debug_logging:
-                logging.debug(f"{self.log_identity}.monitorable unchanged ({value})")
+                logger.debug(f"{self.log_identity}.monitorable unchanged ({value})")
         else:
             self._monitorable = value
-            logging.debug(f"{self.log_identity}.monitorable set to {value}")
+            logger.debug(f"{self.log_identity}.monitorable set to {value}")
 
     @property
     def publish_raw(self) -> bool:
@@ -372,14 +376,14 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
     def publish_raw(self, value: bool):
         """Set whether raw values should be published."""
         if not isinstance(value, bool):
-            raise ValueError(f"{self.log_identity}.publish_raw must be a bool")
+            raise TypeError(f"{self.log_identity}.publish_raw must be a bool")
 
         if self._publish_raw == value:
             if self.debug_logging:
-                logging.debug(f"{self.log_identity}.publish_raw unchanged ({value})")
+                logger.debug(f"{self.log_identity}.publish_raw unchanged ({value})")
         else:
             self._publish_raw = value
-            logging.debug(f"{self.log_identity}.publish_raw set to {value}")
+            logger.debug(f"{self.log_identity}.publish_raw set to {value}")
 
     @property
     def raw_state_topic(self) -> str:
@@ -405,7 +409,6 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         Returns:
             True if state was updated, False otherwise, or Exception on error.
         """
-        pass
 
     # =========================================================================
     # Public Methods
@@ -428,12 +431,12 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         """
         if not self.publishable:
             if self.debug_logging:
-                logging.debug(f"{self.log_identity} Device overrides not applied (publishable={self.publishable})")
+                logger.debug(f"{self.log_identity} Device overrides not applied (publishable={self.publishable})")
         elif registers:
             # Check for remote EMS override
             if registers.no_remote_ems and (getattr(self, "_remote_ems", None) is not None or getattr(self, "address", None) == 40029):
                 if self.debug_logging:
-                    logging.debug(f"{self.log_identity} Applying device 'no-remote-ems' override ({registers.no_remote_ems})")
+                    logger.debug(f"{self.log_identity} Applying device 'no-remote-ems' override ({registers.no_remote_ems})")
                 self.publishable = False
                 return
 
@@ -446,27 +449,27 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
             if is_writable and not is_write_only:
                 if not registers.read_write:
                     if self.debug_logging:
-                        logging.debug(f"{self.log_identity} Applying device 'read-write' override ({registers.read_write})")
+                        logger.debug(f"{self.log_identity} Applying device 'read-write' override ({registers.read_write})")
                     self.publishable = registers.read_write
             elif is_readable:
                 if not registers.read_only:
                     if self.debug_logging:
-                        logging.debug(f"{self.log_identity} Applying device 'read-only' override ({registers.read_only})")
+                        logger.debug(f"{self.log_identity} Applying device 'read-only' override ({registers.read_only})")
                     self.publishable = registers.read_only
             elif is_write_only:
                 if not registers.write_only:
                     if self.debug_logging:
-                        logging.debug(f"{self.log_identity} Applying device 'write-only' override ({registers.write_only})")
+                        logger.debug(f"{self.log_identity} Applying device 'write-only' override ({registers.write_only})")
                     self.publishable = registers.write_only
             else:
-                logging.warning(f"{self.log_identity} Failed to determine superclass to apply device publishable overrides")
+                logger.warning(f"{self.log_identity} Failed to determine superclass to apply device publishable overrides")
         elif self.debug_logging:
-            logging.debug(f"{self.log_identity} Device overrides not applied (RegisterAccess=None)")
+            logger.debug(f"{self.log_identity} Device overrides not applied (RegisterAccess=None)")
 
     def apply_sensor_overrides(self):
         """Apply configuration overrides"""
         # Pre-compile regex patterns for efficiency
-        identifier_patterns = {identifier: re.compile(identifier) for identifier in active_config.sensor_overrides.keys()}  # type: ignore[reportGeneralTypeIssues]
+        identifier_patterns = {identifier: re.compile(identifier) for identifier in active_config.sensor_overrides}
 
         for identifier, pattern in identifier_patterns.items():
             if self._matches_override_pattern(pattern):
@@ -517,97 +520,97 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         """Apply debug logging override."""
         if self.debug_logging != value:
             self.debug_logging = value
-            logging.debug(f"{self.log_identity} Applying {identifier} 'debug-logging' override ({value})")
+            logger.debug(f"{self.log_identity} Applying {identifier} 'debug-logging' override ({value})")
 
     def _override_gain(self, identifier: str, value: float) -> None:
         """Apply gain override."""
         if self._gain != value:
-            logging.debug(f"{self.log_identity} Applying {identifier} 'gain' override ({value})")
+            logger.debug(f"{self.log_identity} Applying {identifier} 'gain' override ({value})")
             self._gain = value
 
     def _override_icon(self, identifier: str, value: str) -> None:
         """Apply icon override."""
         if self[DiscoveryKeys.ICON] != value:
-            logging.debug(f"{self.log_identity} Applying {identifier} 'icon' override ({value})")
+            logger.debug(f"{self.log_identity} Applying {identifier} 'icon' override ({value})")
             self[DiscoveryKeys.ICON] = value
 
     def _override_max_failures(self, identifier: str, value: int) -> None:
         """Apply max failures override."""
         if self._max_failures != value:
-            logging.debug(f"{self.log_identity} Applying {identifier} 'max-failures' override ({value})")
+            logger.debug(f"{self.log_identity} Applying {identifier} 'max-failures' override ({value})")
             self._max_failures = value
 
     def _override_max_failures_retry_interval(self, identifier: str, value: int) -> None:
         """Apply max failures retry interval override."""
         if self._max_failures_retry_interval != value:
-            logging.debug(f"{self.log_identity} Applying {identifier} 'max-failures-retry-interval' override ({value})")
+            logger.debug(f"{self.log_identity} Applying {identifier} 'max-failures-retry-interval' override ({value})")
             self._max_failures_retry_interval = value
 
     def _override_precision(self, identifier: str, value: int) -> None:
         """Apply precision override."""
         if self.precision != value:
-            logging.debug(f"{self.log_identity} Applying {identifier} 'precision' override ({value})")
+            logger.debug(f"{self.log_identity} Applying {identifier} 'precision' override ({value})")
             self.precision = value
             self[DiscoveryKeys.DISPLAY_PRECISION] = self.precision
 
     def _override_publishable(self, identifier: str, value: bool) -> None:
         """Apply publishable override."""
         if self.publishable != value:
-            logging.debug(f"{self.log_identity} Applying {identifier} 'publishable' override ({value})")
+            logger.debug(f"{self.log_identity} Applying {identifier} 'publishable' override ({value})")
             self.publishable = value
 
     def _override_monitorable(self, identifier: str, value: bool) -> None:
         """Apply monitorable override."""
         if self.monitorable != value:
-            logging.debug(f"{self.log_identity} Applying {identifier} 'monitorable' override ({value})")
+            logger.debug(f"{self.log_identity} Applying {identifier} 'monitorable' override ({value})")
             self.monitorable = value
 
     def _override_publish_raw(self, identifier: str, value: bool) -> None:
         """Apply publish-raw override."""
         if self.publish_raw != value:
-            logging.debug(f"{self.log_identity} Applying {identifier} 'publish-raw' override ({value})")
+            logger.debug(f"{self.log_identity} Applying {identifier} 'publish-raw' override ({value})")
             self.publish_raw = value
 
     def _override_sanity_check_delta(self, identifier: str, value: bool) -> None:
         """Apply sanity check delta override."""
         if self.sanity_check.delta != value:
-            logging.debug(f"{self.log_identity} Applying {identifier} 'sanity-check-delta' override ({value})")
+            logger.debug(f"{self.log_identity} Applying {identifier} 'sanity-check-delta' override ({value})")
             self.sanity_check.delta = value
 
     def _override_sanity_check_max(self, identifier: str, value: float) -> None:
         """Apply sanity check max value override."""
         if self.sanity_check.max_raw != value:
-            logging.debug(f"{self.log_identity} Applying {identifier} 'sanity-check-max-value' override ({value})")
+            logger.debug(f"{self.log_identity} Applying {identifier} 'sanity-check-max-value' override ({value})")
             self.sanity_check.max_raw = value
 
     def _override_sanity_check_min(self, identifier: str, value: float) -> None:
         """Apply sanity check min value override."""
         if self.sanity_check.min_raw != value:
-            logging.debug(f"{self.log_identity} Applying {identifier} 'sanity-check-min-value' override ({value})")
+            logger.debug(f"{self.log_identity} Applying {identifier} 'sanity-check-min-value' override ({value})")
             self.sanity_check.min_raw = value
 
     def _override_unit(self, identifier: str, value: str) -> None:
         """Apply unit of measurement override."""
         if self[DiscoveryKeys.UNIT_OF_MEASUREMENT] != value:
-            logging.debug(f"{self.log_identity} Applying {identifier} 'unit-of-measurement' override ({value})")
+            logger.debug(f"{self.log_identity} Applying {identifier} 'unit-of-measurement' override ({value})")
             self[DiscoveryKeys.UNIT_OF_MEASUREMENT] = value
 
     def _override_device_class(self, identifier: str, value: DeviceClass) -> None:
         """Apply device class override."""
         if self[DiscoveryKeys.DEVICE_CLASS] != value:
-            logging.debug(f"{self.log_identity} Applying {identifier} 'device-class' override ({value})")
+            logger.debug(f"{self.log_identity} Applying {identifier} 'device-class' override ({value})")
             self[DiscoveryKeys.DEVICE_CLASS] = value
 
     def _override_state_class(self, identifier: str, value: StateClass) -> None:
         """Apply state class override."""
         if self[DiscoveryKeys.STATE_CLASS] != value:
-            logging.debug(f"{self.log_identity} Applying {identifier} 'state-class' override ({value})")
+            logger.debug(f"{self.log_identity} Applying {identifier} 'state-class' override ({value})")
             self[DiscoveryKeys.STATE_CLASS] = value
 
     def _override_name(self, identifier: str, value: str) -> None:
         """Apply name override."""
         if self[DiscoveryKeys.NAME] != value:
-            logging.debug(f"{self.log_identity} Applying {identifier} 'name' override ({value})")
+            logger.debug(f"{self.log_identity} Applying {identifier} 'name' override ({value})")
             self[DiscoveryKeys.NAME] = value
 
     def configure_mqtt_topics(self, device_id: str) -> str:
@@ -650,10 +653,10 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
 
     def _log_configured_topics(self) -> None:
         """Log the configured MQTT topics for debugging."""
-        logging.debug(f"{self.log_identity} Configured MQTT topics (HA={active_config.home_assistant.enabled} simplified={active_config.home_assistant.use_simplified_topics})")
+        logger.debug(f"{self.log_identity} Configured MQTT topics (HA={active_config.home_assistant.enabled} simplified={active_config.home_assistant.use_simplified_topics})")
         for key in (DiscoveryKeys.STATE_TOPIC, DiscoveryKeys.RAW_STATE_TOPIC, DiscoveryKeys.JSON_ATTRIBUTES_TOPIC, DiscoveryKeys.AVAILABILITY):
             if key in self:
-                logging.debug(f"{self.log_identity} >>> {key}={self[key]})")
+                logger.debug(f"{self.log_identity} >>> {key}={self[key]})")
 
     def get_attributes(self) -> dict[str, float | int | str]:
         """Get sensor attributes for MQTT publishing.
@@ -700,7 +703,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
             raise RuntimeError(f"{self.log_identity} MQTT topics are not configured")
 
         if self.debug_logging:
-            logging.debug(f"{self.log_identity} Getting discovery")
+            logger.debug(f"{self.log_identity} Getting discovery")
 
         components = self.get_discovery_components()
 
@@ -725,7 +728,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         state_store.delete_sync(Category.SENSOR, self._publish_persistence_key)
 
         if self.debug_logging:
-            logging.debug(f"{self.log_identity} Removed persistence for {self._publish_persistence_key} (publishable={self.publishable} clean={active_config.clean})")
+            logger.debug(f"{self.log_identity} Removed persistence for {self._publish_persistence_key} (publishable={self.publishable} clean={active_config.clean})")
 
     def _handle_unpublishable_discovery(self, mqtt_client: mqtt.Client, components: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
         """Handle discovery for unpublishable sensors.
@@ -741,7 +744,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         if DiscoveryKeys.JSON_ATTRIBUTES_TOPIC in self:
             self._publish_message(mqtt_client, cast(str, self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC]), b"", qos=0, retain=False)
             if self.debug_logging:
-                logging.debug(f"{self.log_identity} unpublished - removed any retained messages in topic {self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC]}")
+                logger.debug(f"{self.log_identity} unpublished - removed any retained messages in topic {self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC]}")
 
         # Check for persistent state
         persisted = state_store.load_sync(Category.SENSOR, self._publish_persistence_key)
@@ -749,15 +752,15 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         if persisted is not None or active_config.clean:
             components = {}
             if self.debug_logging:
-                logging.debug(f"{self.log_identity} unpublished - removed all discovery (persisted={persisted is not None} clean={active_config.clean})")
+                logger.debug(f"{self.log_identity} unpublished - removed all discovery (persisted={persisted is not None} clean={active_config.clean})")
         else:
             # Create minimal discovery to remove entity
-            for comp_id in components.keys():
+            for comp_id in components:
                 components[comp_id] = {"p": self[DiscoveryKeys.PLATFORM]}
 
             state_store.save_sync(Category.SENSOR, self._publish_persistence_key, "0")
             if self.debug_logging:
-                logging.debug(f"{self.log_identity} unpublished - removed all discovery except {components} (persistence handling)")
+                logger.debug(f"{self.log_identity} unpublished - removed all discovery except {components} (persistence handling)")
 
         return components
 
@@ -793,7 +796,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
             state = self._states[-1][1]
             if self.debug_logging:
                 timestamp = time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(self._states[-1][0]))
-                logging.debug(f"{self.log_identity} Republishing previous state (state={state} retrieved={timestamp})")
+                logger.debug(f"{self.log_identity} Republishing previous state (state={state} retrieved={timestamp})")
         else:
             result = await self._update_internal_state(**kwargs)
             if result:
@@ -821,7 +824,6 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
 
         The default implementation does nothing.
         """
-        pass
 
     async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool = False) -> bool:
         """Publish sensor state to MQTT.
@@ -841,7 +843,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
             published = await self._attempt_publish(mqtt_client, modbus_client, republish)
             await self._publish_derived_sensors(mqtt_client, modbus_client, republish)
             return published
-        except Exception as e:
+        except (ModbusException, SanityCheckException) as e:
             await Metrics.mqtt_publish_attempt(physical_publish=False)
             await Metrics.mqtt_publish_failure()
             return self._handle_publish_error(mqtt_client, modbus_client, e)
@@ -858,7 +860,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         should_publish = self._failures < self._max_failures or (self._next_retry is not None and self._next_retry <= now)
 
         if not should_publish and self.debug_logging:
-            logging.debug(f"{self.log_identity} failures={self._failures} max={self._max_failures} next_retry={self._next_retry} now={now}")
+            logger.debug(f"{self.log_identity} failures={self._failures} max={self._max_failures} next_retry={self._next_retry} now={now}")
 
         return should_publish
 
@@ -880,19 +882,19 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
 
         if state is None and not self.force_publish:
             if self.debug_logging:
-                logging.debug(f"{self.log_identity} Publishing SKIPPED: State is None")
+                logger.debug(f"{self.log_identity} Publishing SKIPPED: State is None")
             await Metrics.mqtt_publish_attempt(physical_publish=False)
             return False
 
         # Reset failure count on successful state acquisition
         if self._failures > 0:
-            logging.info(f"{self.log_identity} Resetting failure count from {self._failures} to 0 because valid state acquired (state={state})")
+            logger.info(f"{self.log_identity} Resetting failure count from {self._failures} to 0 because valid state acquired (state={state})")
             self._failures = 0
             self._next_retry = None
 
         # Publish state
         if self.debug_logging:
-            logging.debug(f"{self.log_identity} Publishing state={state} to topic {self[DiscoveryKeys.STATE_TOPIC]}")
+            logger.debug(f"{self.log_identity} Publishing state={state} to topic {self[DiscoveryKeys.STATE_TOPIC]}")
 
         # Don't catch exceptions here - they will be handled by the caller
         published = self._publish_message(mqtt_client, cast(str, self[DiscoveryKeys.STATE_TOPIC]), f"{state}", self._qos, self._retain)
@@ -903,13 +905,13 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         # Publish raw state if configured
         if self.publish_raw:
             if self.debug_logging:
-                logging.debug(f"{self.log_identity} Publishing raw state={self.latest_raw_state} to topic {self[DiscoveryKeys.RAW_STATE_TOPIC]}")
+                logger.debug(f"{self.log_identity} Publishing raw state={self.latest_raw_state} to topic {self[DiscoveryKeys.RAW_STATE_TOPIC]}")
             try:
                 self._publish_message(mqtt_client, cast(str, self[DiscoveryKeys.RAW_STATE_TOPIC]), f"{self.latest_raw_state}", self._qos, self._retain, timeout=0.1)
             except ValueError:
-                logging.warning(f"{self.log_identity} Failed to publish raw state={self.latest_raw_state} to topic {self[DiscoveryKeys.RAW_STATE_TOPIC]} - Queue full")
+                logger.warning(f"{self.log_identity} Failed to publish raw state={self.latest_raw_state} to topic {self[DiscoveryKeys.RAW_STATE_TOPIC]} - Queue full")
             except RuntimeError:
-                logging.warning(f"{self.log_identity} Failed to publish raw state={self.latest_raw_state} to topic {self[DiscoveryKeys.RAW_STATE_TOPIC]} - Other error")
+                logger.warning(f"{self.log_identity} Failed to publish raw state={self.latest_raw_state} to topic {self[DiscoveryKeys.RAW_STATE_TOPIC]} - Other error")
 
         return published
 
@@ -941,9 +943,9 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
             message.wait_for_publish(timeout=timeout)
         if message.is_published():
             if self.debug_logging:
-                logging.debug(f"{self.log_identity} Published  state={payload} to topic {topic} result={message.rc}")
+                logger.debug(f"{self.log_identity} Published  state={payload} to topic {topic} result={message.rc}")
         else:
-            logging.warning(f"{self.log_identity} Failed to publish state={payload} to topic {topic} result={message.rc}")
+            logger.warning(f"{self.log_identity} Failed to publish state={payload} to topic {topic} result={message.rc}")
         return message.is_published()
 
     async def _publish_derived_sensors(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool) -> None:
@@ -968,15 +970,15 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         Returns:
             False (publish failed)
         """
-        logging.warning(f"{self.log_identity} Publishing SKIPPED: Failed to get state ({repr(error)})")
+        logger.warning(f"{self.log_identity} Publishing SKIPPED: Failed to get state ({error!r})")
 
         if modbus_client and modbus_client.connected:
             self._update_failure_count(error)
         else:
-            raise
+            raise error
 
         if active_config.home_assistant.enabled:
-            self.publish_attributes(mqtt_client, clean=False, failures=self._failures, exception=f"{repr(error)}")
+            self.publish_attributes(mqtt_client, clean=False, failures=self._failures, exception=f"{error!r}")
 
         if self._failures >= self._max_failures:
             self._log_publish_disabled()
@@ -991,7 +993,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         """
         if isinstance(error, SanityCheckException) and not active_config.sanity_check_failures_increment:
             if self.debug_logging:
-                logging.debug(f"{self.log_identity} SanityCheck failure ignored for failure counting ({self._failures} failures)")
+                logger.debug(f"{self.log_identity} SanityCheck failure ignored for failure counting ({self._failures} failures)")
         else:
             self._failures += 1
             now = time.time()
@@ -999,13 +1001,13 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
                 None if self._failures < self._max_failures or self._max_failures_retry_interval == 0 else (now + (self._max_failures_retry_interval * max(1, self._failures - self._max_failures)))
             )
             if self.debug_logging:
-                logging.debug(f"{self.log_identity} failures={self._failures} max_failures={self._max_failures} next_retry={self._next_retry}")
+                logger.debug(f"{self.log_identity} failures={self._failures} max_failures={self._max_failures} next_retry={self._next_retry}")
 
     def _log_publish_disabled(self) -> None:
         """Log that publishing has been disabled due to too many failures."""
         next_str = "restart" if self._next_retry is None else time.strftime("%c", time.localtime(self._next_retry))
         affected = [s.__class__.__name__ for s in self.derived_sensors.values()]
-        logging.warning(f"{self.log_identity} Publishing DISABLED until {next_str} ({self._failures} failures >= {self._max_failures}) Affected derived sensors={','.join(affected)}")
+        logger.warning(f"{self.log_identity} Publishing DISABLED until {next_str} ({self._failures} failures >= {self._max_failures}) Affected derived sensors={','.join(affected)}")
 
     def publish_attributes(self, mqtt_client: mqtt.Client, clean: bool = False, **kwargs) -> None:
         """Publish sensor attributes to MQTT.
@@ -1032,7 +1034,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
             mqtt_client: MQTT client for publishing
         """
         if self.debug_logging:
-            logging.debug(f"{self.log_identity} cleaning attributes")
+            logger.debug(f"{self.log_identity} cleaning attributes")
 
         self._publish_message(mqtt_client, cast(str, self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC]), b"", qos=0, retain=True)
 
@@ -1051,7 +1053,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
 
         attributes_json = json.dumps(attributes)
         if self.debug_logging:
-            logging.debug(f"{self.log_identity} Publishing attributes={attributes_json}")
+            logger.debug(f"{self.log_identity} Publishing attributes={attributes_json}")
         self._publish_message(mqtt_client, cast(str, self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC]), attributes_json, qos=1, retain=True)
 
         self._attributes_published = True
@@ -1062,13 +1064,13 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         if self._states:
             for sensor in self.derived_sensors.values():
                 if self.debug_logging:
-                    logging.debug(f"{self.log_identity} Setting derived sensor {sensor.log_identity} source values (latest_raw_state={self.latest_raw_state})")
+                    logger.debug(f"{self.log_identity} Setting derived sensor {sensor.log_identity} source values (latest_raw_state={self.latest_raw_state})")
                 try:
                     sensor.update_from_source_sensor(self)
-                except Exception as error:
-                    logging.warning(f"{self.log_identity} Failed to update derived sensor {sensor.log_identity} source values: {repr(error)}")
+                except (ValueError, TypeError, RuntimeError) as error:
+                    logger.warning(f"{self.log_identity} Failed to update derived sensor {sensor.log_identity} source values: {error!r}")
 
-    def set_latest_state(self, state: int | float | str | list[bool] | list[int] | list[float]) -> bool:
+    def set_latest_state(self, state: float | str | list[bool] | list[int] | list[float]) -> bool:
         """Update latest state and propagate to derived sensors.
 
         Args:
@@ -1094,7 +1096,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
             elif interval < 0:
                 # Never republish an unchanged value.
                 if self.debug_logging:
-                    logging.debug(f"{self.log_identity} Repeated state suppressed (repeated_state_publish_interval={interval}): {state=}")
+                    logger.debug(f"{self.log_identity} Repeated state suppressed (repeated_state_publish_interval={interval}): {state=}")
                 updated = False
             else:
                 # Republish only when a full interval (or multiple thereof) has elapsed
@@ -1102,12 +1104,12 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
                 elapsed = time.time() - self._states[-1][0]
                 if elapsed >= interval:
                     if self.debug_logging:
-                        logging.debug(f"{self.log_identity} Repeated state republished after {elapsed:.1f}s (repeated_state_publish_interval={interval}): {state=}")
+                        logger.debug(f"{self.log_identity} Repeated state republished after {elapsed:.1f}s (repeated_state_publish_interval={interval}): {state=}")
                     self.set_state(state)
                     updated = True
                 else:
                     if self.debug_logging:
-                        logging.debug(f"{self.log_identity} Repeated state suppressed ({elapsed:.1f}s < repeated_state_publish_interval={interval}): {state=}")
+                        logger.debug(f"{self.log_identity} Repeated state suppressed ({elapsed:.1f}s < repeated_state_publish_interval={interval}): {state=}")
                     updated = False
 
         # Always pass the current state to derived sensors regardless of suppression,
@@ -1130,7 +1132,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
             return active_config.sensor_overrides[identifier]
         return None
 
-    def set_state(self, state: int | float | str | list[bool] | list[int] | list[float]) -> None:
+    def set_state(self, state: float | str | list[bool] | list[int] | list[float]) -> None:
         """Update latest state without propagating to derived sensors.
 
         Args:
@@ -1138,7 +1140,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         """
         if isinstance(state, str) or (isinstance(state, (int, float)) and self.sanity_check.is_sane(state, list(self._states))):
             if self.debug_logging:
-                logging.debug(f"{self.log_identity} Acquired raw state={state}")
+                logger.debug(f"{self.log_identity} Acquired raw state={state}")
 
             self._states.append((time.time(), state))
 
@@ -1146,7 +1148,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
     # Helper Methods
     # =========================================================================
 
-    def _apply_gain_and_precision(self, state: float | int | None, raw: bool = False) -> float | int | None:
+    def _apply_gain_and_precision(self, state: float | None, raw: bool = False) -> float | int | None:
         """Apply gain and precision transformations to a state value.
 
         Args:
@@ -1158,14 +1160,14 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         """
         if state is None:
             if self.debug_logging:
-                logging.debug(f"{self.log_identity} Skipped applying gain={self.gain} and precision={self.precision} to state={state}")
+                logger.debug(f"{self.log_identity} Skipped applying gain={self.gain} and precision={self.precision} to state={state}")
             return None
 
         if not isinstance(state, (float, int)) or raw:
             return state
 
         if self.debug_logging:
-            logging.debug(f"{self.log_identity} Applying gain={self.gain} and precision={self.precision} to state={state}")
+            logger.debug(f"{self.log_identity} Applying gain={self.gain} and precision={self.precision} to state={state}")
 
         if self.gain is not None:
             state /= self.gain
@@ -1201,7 +1203,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
 
         return _t(f"{self.__class__.__name__}.options.{index}", option, self.debug_logging)
 
-    def _get_option_index(self, value: str | int | float) -> int:
+    def _get_option_index(self, value: str | float) -> int:
         """Get option index by value or translated value.
 
         Args:
@@ -1229,9 +1231,8 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
 
             # Try translated strings
             for i, option in enumerate(options):
-                if option != "" and option is not None:
-                    if _t(f"{self.__class__.__name__}.options.{i}", option, self.debug_logging) == str(value):
-                        return i
+                if option != "" and option is not None and _t(f"{self.__class__.__name__}.options.{i}", option, self.debug_logging) == str(value):
+                    return i
 
             # Try raw English strings
             for i, option in enumerate(options):
@@ -1240,7 +1241,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
 
         raise ValueError(f"'{value}' is not a valid option")
 
-    def state2raw(self, state: float | int | str) -> float | int | str | None:
+    def state2raw(self, state: float | str) -> float | int | str | None:
         """Convert processed state back to raw value.
 
         Args:
@@ -1270,9 +1271,8 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
             value = state
 
         # Apply gain to numeric values
-        if isinstance(value, (float, int)):
-            if self.gain is not None and self.gain != 1:
-                value *= self.gain
+        if isinstance(value, (float, int)) and self.gain is not None and self.gain != 1:
+            value *= self.gain
 
         return int(value)
 

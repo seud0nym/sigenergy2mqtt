@@ -26,7 +26,7 @@ import string
 import sys
 import threading
 import time
-from typing import Any
+from typing import Any, ClassVar
 
 # Need to set a Modbus host otherwise configuration initialisation will launch auto-discovery
 os.environ["SIGENERGY2MQTT_MODBUS_HOST"] = "127.0.0.1"
@@ -58,7 +58,7 @@ from tests.utils import get_sensor_instances
 logging.getLogger("asyncio").setLevel(logging.CRITICAL)
 logging.getLogger("pymodbus.logging").setLevel(logging.CRITICAL)
 
-_logger = logging.getLogger(__file__)
+_logger = logging.getLogger(__name__)
 _logger.setLevel(logging.INFO)
 
 # Simulated Modbus response latency bounds (milliseconds).
@@ -80,7 +80,7 @@ class TestConfig:
 
     use_simplified_topics: bool = False
 
-    registers_to_debug: list[int] = []
+    registers_to_debug: ClassVar[list[int]] = []
 
     simulate_grid_outages: bool = False
     grid_status_initial_state: int | None = None  # 0=On Grid, 1=Off Grid (auto), 2=Off Grid (manual), None=source/random
@@ -90,7 +90,7 @@ class TestConfig:
     simulate_firmware_upgrade: bool = False
     simulate_power_factor_errors: bool = False
 
-    force_sensor_values: dict[str, Any] = {}  # key: sensor class pattern, value: sensor value
+    force_sensor_values: ClassVar[dict[str, Any]] = {}  # key: sensor class pattern, value: sensor value
 
 
 class CustomMqttHandler:
@@ -137,7 +137,7 @@ class CustomMqttHandler:
                     self.connected = True
                     if len(self._topics) > 0:
                         self._logger.info("Reconnected to mqtt")
-                        for topic in self._topics.keys():
+                        for topic in self._topics:
                             result = client.unsubscribe(topic)
                             self._logger.debug(f"on_reconnect: unsubscribe('{topic}') -> {result}")
                             result = client.subscribe(topic)
@@ -344,20 +344,19 @@ class CustomDataBlock:
 
             # ── Debug logging ──────────────────────────────────────────────
             # Log external Modbus requests if they target a register specified for debugging.
-            if _logger.isEnabledFor(logging.DEBUG):
-                if 0 in TestConfig.registers_to_debug or any(addr in TestConfig.registers_to_debug for addr in range(address, address + count)):
-                    is_write = set_values is not None
-                    prefix = f"#{dev_addr} {'WRITE ' if is_write else 'READ  '} @{address}"
-                    if count > 1:
-                        prefix += f"-{address + count - 1}"
+            if _logger.isEnabledFor(logging.DEBUG) and (0 in TestConfig.registers_to_debug or any(addr in TestConfig.registers_to_debug for addr in range(address, address + count))):
+                is_write = set_values is not None
+                prefix = f"#{dev_addr} {'WRITE ' if is_write else 'READ  '} @{address}"
+                if count > 1:
+                    prefix += f"-{address + count - 1}"
 
-                    if is_write:
-                        values_str = f" values={set_values}"
-                    else:
-                        offset = address - start_address
-                        values_str = f" values={current_registers[offset : offset + count]}"
+                if is_write:
+                    values_str = f" values={set_values}"
+                else:
+                    offset = address - start_address
+                    values_str = f" values={current_registers[offset : offset + count]}"
 
-                    _logger.debug(f"{prefix} (count={count}){values_str}")
+                _logger.debug(f"{prefix} (count={count}){values_str}")
 
             # ── Reserved registers ─────────────────────────────────────────
             # Specific requests for reserved registers (not as part of a bulk
@@ -373,12 +372,10 @@ class CustomDataBlock:
             # If the grid is down (initial state 1 or 2), AC charger registers
             # fail to respond, provided that the current GridStatus register
             # matches that initial state.
-            if set_values is None and TestConfig.grid_status_initial_state in (1, 2):
-                if any(32000 <= addr <= 32014 for addr in range(address, address + count)):
-                    if block._server is not None:
-                        grid_status = await block._server.context.async_getValues(Constants.PLANT_DEVICE_ADDRESS, 0x03, GridStatus.ADDRESS, 1)
-                        if grid_status and grid_status[0] == TestConfig.grid_status_initial_state:
-                            return ExcCodes.DEVICE_FAILURE
+            if set_values is None and TestConfig.grid_status_initial_state in (1, 2) and any(32000 <= addr <= 32014 for addr in range(address, address + count)) and block._server is not None:
+                grid_status = await block._server.context.async_getValues(Constants.PLANT_DEVICE_ADDRESS, 0x03, GridStatus.ADDRESS, 1)
+                if grid_status and grid_status[0] == TestConfig.grid_status_initial_state:
+                    return ExcCodes.DEVICE_FAILURE
 
             # ── Simulated latency ──────────────────────────────────────────
             budget = block._latency_budget
@@ -496,7 +493,7 @@ class CustomDataBlock:
 
     # ── Value encoding / writing ──────────────────────────────────────────────
 
-    def _set_value(self, sensor: Any, value: float | int | str, source: str = "", debug: bool = False) -> None:
+    def _set_value(self, sensor: Any, value: float | str, source: str = "", debug: bool = False) -> None:
         """Encode *value* using *sensor*'s conversion logic and cache it in :attr:`_initial_registers`.
 
         Called only during the **initialisation** phase (inside :meth:`add_sensor`)
@@ -544,7 +541,7 @@ class CustomDataBlock:
             if sensor.count > 1:
                 prefix += f"-{sensor.address + sensor.count - 1}"
             _logger.debug(f"{prefix} (count={sensor.count}) values={registers} {source=}")
-        for i in range(0, sensor.count):
+        for i in range(sensor.count):
             self.setValues(address + i, registers[i])
 
         # Phase mirroring in the initial register cache.  At runtime this is
@@ -569,7 +566,7 @@ class CustomDataBlock:
                 if target_addr != address and "PV" in target_sensor.name and "Current" in target_sensor.name:
                     self.setValues(target_addr, registers[0])
 
-    async def _async_set_value(self, sensor: Any, value: float | int | str, source: str = "", debug: bool = False) -> None:
+    async def _async_set_value(self, sensor: Any, value: float | str, source: str = "", debug: bool = False) -> None:
         """Async counterpart to :meth:`_set_value` for **post-initialisation** writes.
 
         Used exclusively by the MQTT message handler (:meth:`_handle_mqtt_message`)
@@ -738,7 +735,7 @@ class CustomDataBlock:
         if sensor.latest_raw_state is not None and isinstance(sensor.latest_raw_state, (int, float)):
             return (sensor.latest_raw_state / sensor.gain, "latest_raw_state")
         if sensor.device_class == DeviceClass.TIMESTAMP:
-            return (datetime.now().isoformat(), "timestamp")
+            return (datetime.now().astimezone().isoformat(), "timestamp")
         if sensor.device_class == DeviceClass.ENUM:
             return (0, "options")
         if hasattr(sensor, "state_off") and hasattr(sensor, "state_on"):  # SwitchSensor
@@ -894,7 +891,7 @@ async def prepopulate(modbus_client: ModbusClient, groups: dict[int, list]) -> N
                 continue
             first_address: int = min([s.address for s in group_sensors if hasattr(s, "address") and not s.__class__.__name__.startswith("Reserved")])
             last_address: int = max([s.address + s.count - 1 for s in group_sensors if hasattr(s, "address") and not s.__class__.__name__.startswith("Reserved")])
-            count: int = sum([s.count for s in group_sensors if hasattr(s, "count") and first_address <= getattr(s, "address") <= last_address])
+            count: int = sum([s.count for s in group_sensors if hasattr(s, "count") and first_address <= s.address <= last_address])
             assert first_address and last_address and (last_address - first_address + 1) == count
             device_address = group_sensors[0].device_address
             try:
@@ -1033,11 +1030,14 @@ async def run_async_server(
     # when it tries to fall back to ID 0 for unknown unit IDs (e.g. during auto-discovery).
     sim_devices.append(SimDevice(id=0, simdata=[SimData(0, datatype=DataType.REGISTERS, values=[0])]))
 
-    try:
-        with open("/app/build_date.txt", "r") as f:
-            BUILD_DATE = f.read().strip()
-    except FileNotFoundError:
-        BUILD_DATE = datetime.now().astimezone().strftime("%Y-%m-%dT%H:%M:%S%z")
+    def _read_build_date() -> str:
+        try:
+            with open("/app/build_date.txt", "r") as f:
+                return f.read().strip()
+        except FileNotFoundError:
+            return datetime.now().astimezone().strftime("%Y-%m-%dT%H:%M:%S%z")
+
+    BUILD_DATE = await asyncio.to_thread(_read_build_date)
 
     _logger.info(f"Starting ASYNC Modbus TCP Testing Server (build date: {BUILD_DATE})...")
     if log_level <= logging.INFO:
@@ -1125,7 +1125,7 @@ async def wait_for_server_start(host: str, port: int, timeout: float = 10.0) -> 
     start_time = time.monotonic()
     while time.monotonic() - start_time < timeout:
         try:
-            reader, writer = await asyncio.open_connection(host, port)
+            _, writer = await asyncio.open_connection(host, port)
             writer.close()
             await writer.wait_closed()
             return True

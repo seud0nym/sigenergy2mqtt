@@ -79,7 +79,7 @@ class EnvSettingsSource(PydanticBaseSettingsSource):
     def get_field_value(self, field: Any, field_name: str) -> tuple[Any, str, bool]:
         return None, field_name, False
 
-    def __call__(self) -> dict[str, Any]:  # noqa: C901
+    def __call__(self) -> dict[str, Any]:
         g = os.environ.get
         result: dict[str, Any] = {}
 

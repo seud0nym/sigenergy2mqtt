@@ -10,6 +10,7 @@ import time
 from typing import TYPE_CHECKING, Any, cast
 
 import paho.mqtt.client as mqtt
+from pymodbus.exceptions import ModbusException
 from pymodbus.pdu import ExceptionResponse, ModbusPDU
 
 from sigenergy2mqtt.common import Constants, DeviceClass, InputType
@@ -31,6 +32,7 @@ except ImportError:
 if TYPE_CHECKING:
     from sigenergy2mqtt.mqtt import MqttHandler
 
+logger = logging.getLogger("sigenergy2mqtt")
 # =============================================================================
 
 
@@ -45,7 +47,7 @@ class ReadableSensorMixin(Sensor):
             raise ValueError(f"{self.__class__.__name__}: Missing required parameter 'scan_interval'")
 
         if not isinstance(kwargs["scan_interval"], int):
-            raise ValueError(f"{self.__class__.__name__}: scan_interval must be an int")
+            raise TypeError(f"{self.__class__.__name__}: scan_interval must be an int")
 
         if kwargs["scan_interval"] < 1:
             raise ValueError(f"{self.__class__.__name__}: scan_interval cannot be less than 1 second")
@@ -58,12 +60,11 @@ class ReadableSensorMixin(Sensor):
 
     def _apply_scan_interval_overrides(self) -> None:
         """Apply scan interval overrides from configuration."""
-        for identifier in active_config.sensor_overrides.keys():  # type: ignore[reportGeneralTypeIssues]
+        for identifier in active_config.sensor_overrides:
             overrides = self._get_applicable_overrides(identifier)
-            if overrides and "scan-interval" in overrides:
-                if self.scan_interval != overrides["scan-interval"]:
-                    logging.debug(f"{self.log_identity} Applying {identifier} 'scan-interval' override ({overrides['scan-interval']})")
-                    self.scan_interval = overrides["scan-interval"]
+            if overrides and "scan-interval" in overrides and self.scan_interval != overrides["scan-interval"]:
+                logger.debug(f"{self.log_identity} Applying {identifier} 'scan-interval' override ({overrides['scan-interval']})")
+                self.scan_interval = overrides["scan-interval"]
 
     def _get_applicable_overrides(self, identifier: str) -> dict | None:
         """Get override configuration if identifier matches this sensor.
@@ -163,11 +164,11 @@ class ModbusSensorMixin(SensorDebuggingMixin):
             Exception: For various Modbus error conditions
         """
         if rr is None:
-            logging.error(f"{self.log_identity} Modbus {source} failed to read registers (None response)")
+            logger.error(f"{self.log_identity} Modbus {source} failed to read registers (None response)")
             return False
 
         if self.debug_logging:
-            logging.debug(f"{self.log_identity} Modbus {source} response: {rr}")
+            logger.debug(f"{self.log_identity} Modbus {source} response: {rr}")
 
         if not (rr.isError() or isinstance(rr, ExceptionResponse)):
             return True
@@ -190,64 +191,64 @@ class ModbusSensorMixin(SensorDebuggingMixin):
 
     def _handle_illegal_function(self, source: str, rr: ModbusPDU, **kwargs) -> None:
         """Handle illegal function exception."""
-        logging.log(
+        logger.log(
             logging.ERROR if "skip_failure_logging" not in kwargs or not kwargs["skip_failure_logging"] else logging.DEBUG,
             f"{self.log_identity} Modbus {source} returned 0x01 ILLEGAL FUNCTION",
         )
         if self.debug_logging:
-            logging.debug(rr)
-        raise Exception("0x01 ILLEGAL FUNCTION")
+            logger.debug(rr)
+        raise ModbusException("0x01 ILLEGAL FUNCTION")
 
     def _handle_illegal_data_address(self, source: str, rr: ModbusPDU, **kwargs) -> None:
         """Handle illegal data address exception."""
-        logging.log(
+        logger.log(
             logging.ERROR if "skip_failure_logging" not in kwargs or not kwargs["skip_failure_logging"] else logging.DEBUG,
             f"{self.log_identity} Modbus {source} returned 0x02 ILLEGAL DATA ADDRESS {self.address} (count={self.count} type={self.input_type})",
         )
         if self.debug_logging:
-            logging.debug(rr)
+            logger.debug(rr)
 
         # Mark this sensor as having an illegal data address
         self.illegal_data_address = True
 
         # Disable retries for invalid addresses on read operations
         if source != "write_registers":
-            logging.log(
+            logger.log(
                 logging.WARNING if "skip_failure_logging" not in kwargs or not kwargs["skip_failure_logging"] else logging.DEBUG,
                 f"{self.log_identity} Setting max allowed failures to 0 for '{self.unique_id}' because of ILLEGAL DATA ADDRESS exception",
             )
             self._max_failures = 0
             self._max_failures_retry_interval = 0
 
-        raise Exception("0x02 ILLEGAL DATA ADDRESS")
+        raise ModbusException("0x02 ILLEGAL DATA ADDRESS")
 
     def _handle_illegal_data_value(self, source: str, rr: ModbusPDU, **kwargs) -> None:
         """Handle illegal data value exception."""
-        logging.log(
+        logger.log(
             logging.ERROR if "skip_failure_logging" not in kwargs or not kwargs["skip_failure_logging"] else logging.DEBUG,
             f"{self.log_identity} Modbus {source} returned 0x03 ILLEGAL DATA VALUE",
         )
         if self.debug_logging:
-            logging.debug(rr)
-        raise Exception("0x03 ILLEGAL DATA VALUE")
+            logger.debug(rr)
+        raise ModbusException("0x03 ILLEGAL DATA VALUE")
 
     def _handle_slave_device_failure(self, source: str, rr: ModbusPDU, **kwargs) -> None:
         """Handle slave device failure exception."""
-        logging.log(
+        logger.log(
             logging.ERROR if "skip_failure_logging" not in kwargs or not kwargs["skip_failure_logging"] else logging.DEBUG,
             f"{self.log_identity} Modbus {source} returned 0x04 SLAVE DEVICE FAILURE",
         )
         if self.debug_logging:
-            logging.debug(rr)
-        raise Exception("0x04 SLAVE DEVICE FAILURE")
+            logger.debug(rr)
+        raise ModbusException("0x04 SLAVE DEVICE FAILURE")
 
     def _handle_unknown_exception(self, source: str, rr: ModbusPDU, **kwargs) -> None:
         """Handle unknown exception."""
-        logging.log(
+        logger.log(
             logging.ERROR if "skip_failure_logging" not in kwargs or not kwargs["skip_failure_logging"] else logging.DEBUG,
             f"{self.log_identity} Modbus {source} returned {rr}",
         )
-        raise Exception(rr)
+        raise ModbusException(rr)
 
 
 # =============================================================================
@@ -261,7 +262,7 @@ class ObservableMixin(abc.ABC):
     """Mixin for sensors that can be observed/controlled via MQTT."""
 
     @abc.abstractmethod
-    async def notify(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+    async def notify(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
         """Handle notification of value change.
 
         Args:
@@ -274,7 +275,6 @@ class ObservableMixin(abc.ABC):
         Returns:
             True if notification was handled
         """
-        pass
 
     def observable_topics(self) -> set[str]:
         """Get set of MQTT topics this sensor observes.
@@ -319,7 +319,7 @@ class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
             raise RuntimeError(f"{self.log_identity} command topic is not defined")
         return topic
 
-    def _raw2state(self, raw_value: float | int | str) -> float | int | str:
+    def _raw2state(self, raw_value: float | str) -> float | int | str:
         """Convert raw value to display state.
 
         Args:
@@ -366,7 +366,7 @@ class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
 
         return raw_value
 
-    async def _write_registers(self, modbus_client: ModbusClient, raw_value: float | int | str, mqtt_client: mqtt.Client) -> bool:
+    async def _write_registers(self, modbus_client: ModbusClient, raw_value: float | str, mqtt_client: mqtt.Client) -> bool:
         """Write value to Modbus registers.
 
         Args:
@@ -381,7 +381,7 @@ class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
         device_id = self.device_address
         no_response_expected = False
 
-        logging.info(f"{self.log_identity} _write_registers value={self._raw2state(raw_value)} (raw={raw_value} latest_raw_state={self.latest_raw_state} address={self.address} device_id={device_id})")
+        logger.info(f"{self.log_identity} _write_registers value={self._raw2state(raw_value)} (raw={raw_value} latest_raw_state={self.latest_raw_state} address={self.address} device_id={device_id})")
 
         # Convert value to registers
         registers = self._convert_value_to_registers(modbus_client, raw_value)
@@ -392,17 +392,17 @@ class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
         try:
             return await self._perform_modbus_write(modbus_client, registers, device_id, no_response_expected, method)
         except asyncio.CancelledError:
-            logging.warning(f"{self.log_identity} Modbus write interrupted")
+            logger.warning(f"{self.log_identity} Modbus write interrupted")
             return False
-        except asyncio.TimeoutError:
-            logging.warning(f"{self.log_identity} Modbus write failed to acquire lock within {max_wait}s")
+        except TimeoutError:
+            logger.warning(f"{self.log_identity} Modbus write failed to acquire lock within {max_wait}s")
             return False
-        except Exception as e:
-            logging.error(f"{self.log_identity} write_registers: {repr(e)}")
+        except ModbusException as e:
+            logger.error(f"{self.log_identity} write_registers: {e!r}")
             await Metrics.modbus_write_error()
             raise
 
-    def _convert_value_to_registers(self, modbus_client: ModbusClient, raw_value: float | int | str) -> list[int]:
+    def _convert_value_to_registers(self, modbus_client: ModbusClient, raw_value: float | str) -> list[int]:
         """Convert a value to Modbus register format.
 
         Args:
@@ -450,7 +450,7 @@ class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
         await Metrics.modbus_write(len(registers), elapsed)
 
         if self.debug_logging:
-            logging.debug(
+            logger.debug(
                 f"{self.log_identity} {method}({self.address}, value={registers}, device_id={device_id}, no_response_expected={no_response_expected}) [plant_index={self.plant_index}] took {elapsed:.3f}s"
             )
 
@@ -469,7 +469,7 @@ class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
         self[DiscoveryKeys.COMMAND_TOPIC] = f"{base}/set"
         return base
 
-    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
         """Set sensor value from MQTT command.
 
         Args:
@@ -490,17 +490,17 @@ class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
         try:
             if not await self.value_is_valid(modbus_client, value):
                 return False
-        except Exception as e:
-            logging.error(f"{self.log_identity} value_is_valid check of value '{value if isinstance(value, str) else self._apply_gain_and_precision(value)}' (raw={value}) FAILED: {repr(e)}")
+        except ModbusException as e:
+            logger.error(f"{self.log_identity} value_is_valid check of value '{value if isinstance(value, str) else self._apply_gain_and_precision(value)}' (raw={value}) FAILED: {e!r}")
             raise
 
         if source == self[DiscoveryKeys.COMMAND_TOPIC]:
             return await self._write_registers(modbus_client, value, mqtt_client)
         else:
-            logging.error(f"{self.log_identity} Attempt to set value '{value if isinstance(value, str) else self._apply_gain_and_precision(value)}' (raw={value}) from unknown topic {source}")
+            logger.error(f"{self.log_identity} Attempt to set value '{value if isinstance(value, str) else self._apply_gain_and_precision(value)}' (raw={value}) from unknown topic {source}")
             return False
 
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | int | str) -> bool:
+    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | str) -> bool:
         """Validate that a value is acceptable for this sensor.
 
         Args:
@@ -528,7 +528,7 @@ class PVPowerSensor(ObservableMixin):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    async def notify(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | int | str, source: str, handler: MqttHandler) -> bool:
+    async def notify(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
         """Handle notification (currently no-op).
 
         Args:

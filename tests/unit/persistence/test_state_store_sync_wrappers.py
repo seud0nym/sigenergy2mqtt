@@ -109,6 +109,6 @@ async def test_sync_wrappers_timeout_exception(temp_state_dir, mock_persistence_
 
     # Run from another thread to trigger run_coroutine_threadsafe path
     # They should catch the timeout exception internally and log warning
-    with patch("sigenergy2mqtt.persistence.state_store.logging.warning") as mock_log:
+    with patch("sigenergy2mqtt.persistence.state_store.logger.warning") as mock_log:
         await loop.run_in_executor(None, call_sync_timeout)
         assert mock_log.call_count == 3

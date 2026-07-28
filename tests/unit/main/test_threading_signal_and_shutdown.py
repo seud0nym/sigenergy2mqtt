@@ -2,6 +2,7 @@ import asyncio
 from unittest.mock import ANY, AsyncMock, MagicMock, patch
 
 import pytest
+from pymodbus import ModbusException
 
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.main.device_thread import read_and_publish_device_sensors
@@ -109,7 +110,7 @@ def test_run_modbus_event_loop_exception(caplog):
     config = MagicMock()
     config.description = "CrashedThread"
     loop = MagicMock(spec=asyncio.AbstractEventLoop)
-    loop.run_until_complete.side_effect = Exception("loop crash")
+    loop.run_until_complete.side_effect = RuntimeError("loop crash")
 
     with patch("sigenergy2mqtt.main.device_thread.read_and_publish_device_sensors", new_callable=MagicMock, return_value=None), patch("asyncio.set_event_loop"):
         run_modbus_event_loop(config, loop)
@@ -158,7 +159,7 @@ async def test_start_logic_with_exception(caplog):
         patch("asyncio.new_event_loop", return_value=mock_loop),
     ):
         mock_fut = MagicMock()
-        mock_fut.result.side_effect = Exception("future error")
+        mock_fut.result.side_effect = RuntimeError("future error")
         mock_executor.return_value.__enter__.return_value.submit.return_value = mock_fut
         patch_wait = patch("concurrent.futures.wait", return_value=([mock_fut], []))
 
@@ -213,7 +214,7 @@ async def test_read_and_publish_device_sensors_on_commencement_exception(caplog)
     device.name = "TestDevice"
     device.publish_discovery = AsyncMock()
     device.schedule.return_value = [fake_task()]
-    device.on_commencement.side_effect = Exception("commencement failed")
+    device.on_commencement.side_effect = ModbusException("commencement failed")
     config.devices = [device]
 
     mqtt_handler = MagicMock()
@@ -245,7 +246,7 @@ async def test_read_and_publish_device_sensors_on_completion_exception(caplog):
     device.name = "TestDevice"
     device.publish_discovery = AsyncMock()
     device.schedule.return_value = [fake_task()]
-    device.on_completion.side_effect = Exception("completion failed")
+    device.on_completion.side_effect = ModbusException("completion failed")
     config.devices = [device]
 
     mqtt_handler = MagicMock()
@@ -295,19 +296,17 @@ async def test_read_and_publish_device_sensors_task_exception(caplog):
 
 def test_run_modbus_event_loop_stop_event_set():
     """Cover run_modbus_event_loop exception with stop_event.set() (line 162)."""
-    from sigenergy2mqtt.main.device_thread import run_modbus_event_loop
     import threading
+
+    from sigenergy2mqtt.main.device_thread import run_modbus_event_loop
 
     config = MagicMock()
     config.description = "CrashedThreadStopEvent"
     loop = MagicMock(spec=asyncio.AbstractEventLoop)
-    loop.run_until_complete.side_effect = Exception("loop crash")
+    loop.run_until_complete.side_effect = RuntimeError("loop crash")
     stop_event = threading.Event()
 
-    with (
-        patch("sigenergy2mqtt.main.device_thread.read_and_publish_device_sensors", new_callable=MagicMock, return_value=None),
-        patch("asyncio.set_event_loop")
-    ):
+    with patch("sigenergy2mqtt.main.device_thread.read_and_publish_device_sensors", new_callable=MagicMock, return_value=None), patch("asyncio.set_event_loop"):
         run_modbus_event_loop(config, loop, stop_event)
         assert stop_event.is_set()
 
@@ -315,9 +314,10 @@ def test_run_modbus_event_loop_stop_event_set():
 @pytest.mark.asyncio
 async def test_start_logic_sibling_thread_crashed():
     """Cover start logic when a sibling thread crashed (lines 200-207)."""
-    from sigenergy2mqtt.main.device_thread import start
-    import time
     import asyncio
+    import time
+
+    from sigenergy2mqtt.main.device_thread import start
 
     cfg_crasher = MagicMock()
     cfg_crasher.description = "crasher"
@@ -337,14 +337,13 @@ async def test_start_logic_sibling_thread_crashed():
                 time.sleep(0.1)
 
     original_sleep = asyncio.sleep
+
     async def fake_sleep(delay):
         # Yield to the event loop to avoid blocking it completely, but don't actually sleep long
         await original_sleep(0.001)
 
-    with patch("sigenergy2mqtt.main.device_thread.run_modbus_event_loop", side_effect=fake_run_modbus_event_loop):
-        with patch("sigenergy2mqtt.main.device_thread.asyncio.sleep", side_effect=fake_sleep):
-            await start([cfg_crasher, cfg_pending])
+    with patch("sigenergy2mqtt.main.device_thread.run_modbus_event_loop", side_effect=fake_run_modbus_event_loop), patch("sigenergy2mqtt.main.device_thread.asyncio.sleep", side_effect=fake_sleep):
+        await start([cfg_crasher, cfg_pending])
 
     cfg_crasher.offline.assert_called_once()
     cfg_pending.offline.assert_called_once()
-
