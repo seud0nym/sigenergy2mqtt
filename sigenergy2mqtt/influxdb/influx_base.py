@@ -7,6 +7,7 @@ from typing import Any, TypedDict
 
 import requests
 from requests.adapters import HTTPAdapter
+from urllib3.exceptions import MaxRetryError
 from urllib3.util.retry import Retry
 
 from sigenergy2mqtt.common import Protocol, service_health_registry
@@ -38,6 +39,36 @@ class InfluxConfigValues(TypedDict):
     auth: tuple[str, str] | None
 
 
+class _ShutdownAwareRetry(Retry):
+    """urllib3 :class:`~urllib3.util.retry.Retry` that aborts when shutdown is signalled.
+
+    urllib3 calls :meth:`increment` *between* each attempt to decide whether to
+    retry.  By raising :exc:`~urllib3.exceptions.MaxRetryError` there whenever
+    :attr:`_shutdown_event` is set, we prevent any further attempt the instant
+    the application goes offline — even if the *current* socket call is still
+    blocking inside the C runtime.
+
+    :attr:`_shutdown_event` holds an :class:`asyncio.Event`.
+    ``asyncio.Event.is_set()`` is safe to call from a worker thread in CPython
+    because the underlying ``_value`` attribute is a plain :class:`bool` whose
+    read is atomic under the GIL.
+    """
+
+    _shutdown_event: asyncio.Event | None = None
+
+    def new(self, **kw: Any) -> "_ShutdownAwareRetry":
+        """Propagate the shutdown event to the cloned Retry urllib3 creates per attempt."""
+        instance = super().new(**kw)
+        instance._shutdown_event = self._shutdown_event
+        return instance  # type: ignore[return-value]
+
+    def increment(self, *args: Any, **kwargs: Any) -> Retry:
+        """Raise MaxRetryError immediately if shutdown has been signalled."""
+        if self._shutdown_event is not None and self._shutdown_event.is_set():
+            raise MaxRetryError(None, None, "Shutdown in progress")  # type: ignore[arg-type]
+        return super().increment(*args, **kwargs)
+
+
 class InfluxBase(Device):
     """Base class for InfluxDB integration.
 
@@ -66,13 +97,19 @@ class InfluxBase(Device):
         self.logger = logger
         self.plant_index = plant_index
 
-        # Enhanced connection pooling with retry strategy
+        # Enhanced connection pooling with retry strategy.
+        # _ShutdownAwareRetry is used instead of plain Retry so that the
+        # retry loop is aborted immediately when the service goes offline,
+        # preventing urllib3 from scheduling further connection attempts
+        # after a shutdown signal has been received.
         self._session = requests.Session()
-        retry_strategy = Retry(
+        retry_strategy = _ShutdownAwareRetry(
             total=active_config.influxdb.max_retries,
             backoff_factor=0.5,
             status_forcelist=[429, 500, 502, 503, 504],
         )
+        # Wire the shutdown event *after* super().__init__() has created it.
+        retry_strategy._shutdown_event = self._shutdown_event
         adapter = HTTPAdapter(
             pool_connections=active_config.influxdb.pool_connections,
             pool_maxsize=active_config.influxdb.pool_maxsize,
@@ -105,6 +142,37 @@ class InfluxBase(Device):
         self._write_auth: tuple[str, str] | None = None
         self._writer_obj_bucket: str | None = None
         self._writer_obj_org: str | None = None
+
+    # ------------------------------------------------------------------
+    # Shutdown hook
+    # ------------------------------------------------------------------
+
+    @property  # type: ignore[override]
+    def online(self) -> bool:  # type: ignore[override]
+        """Whether the device is currently considered online."""
+        return super().online  # type: ignore[misc]
+
+    @online.setter  # type: ignore[override]
+    def online(self, value) -> None:  # type: ignore[override]
+        """Set the online status, closing the HTTP session on shutdown.
+
+        Closing the session interrupts any in-flight blocking ``requests``
+        calls (including retry loops in :meth:`_init_connection`) so that a
+        single shutdown signal is sufficient to exit promptly even when
+        InfluxDB is unreachable.
+        """
+        # Delegate to the Device base-class setter first so that all asyncio
+        # bookkeeping (future cancellation, shutdown event, sleeper task
+        # cancellation, etc.) is performed before we close the session.
+        Device.online.fset(self, value)  # type: ignore[attr-defined]
+
+        # Close the HTTP session when going offline so that any blocking
+        # requests call running in a thread-pool worker raises immediately.
+        if value is False:
+            try:
+                self._session.close()
+            except OSError:  # pragma: no cover — best-effort cleanup
+                pass
 
     @property
     def service_health_key(self) -> str:
@@ -273,16 +341,34 @@ class InfluxBase(Device):
         if config["token"] and self._try_v2_write(config["base"], config["bucket"], config["org"], config["token"], test_line):
             return
 
+        # Bail early if a shutdown signal arrived during the v2 probe.
+        if self._shutdown_event.is_set():
+            return
+
         # If username is provided, prefer v1 HTTP (InfluxDB 1.x)
         if config["user"] and self._try_v1_write(config["base"], config["db"], config["auth"], test_line):
+            return
+
+        # Bail early if a shutdown signal arrived during the v1 probe.
+        if self._shutdown_event.is_set():
             return
 
         # Try v2 without token (some setups)
         if not self._writer_type and self._try_v2_write(config["base"], config["bucket"], config["org"], None, test_line):
             return
 
+        # Bail early if a shutdown signal arrived during the tokenless v2 probe.
+        if self._shutdown_event.is_set():
+            return
+
         # Final fallback: try v1 HTTP without username (no auth)
         if not self._writer_type and self._try_v1_write(config["base"], config["db"], config["auth"], test_line):
+            return
+
+        # If we were shut down during the probing sequence, don't raise — just
+        # return silently.  The caller (async_init) will detect the offline
+        # state before deciding whether to surface an error.
+        if self._shutdown_event.is_set():
             return
 
         raise RuntimeError(f"{self.log_identity} Initialization failed: could not determine writable endpoint or create database/bucket")

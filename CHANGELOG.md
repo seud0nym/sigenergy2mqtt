@@ -17,6 +17,7 @@
 - Fixed DerivedSensors did not respect the repeated state publishing interval setting
 - Ignored accumulation intervals of two hours or longer to avoid clock-jump spikes
 - Reset daily energy sensors when their upstream lifetime counter decreases
+- InfluxDBService was not properly shutdown aware
 
 ### Changed
 
