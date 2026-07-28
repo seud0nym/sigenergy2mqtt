@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime
-from typing import Any, Optional
+from datetime import date
+from typing import Any
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -26,7 +26,7 @@ class PvOutputConfig(BaseModel):
     api_key: str = Field("", alias="api-key")
     system_id: str = Field("", alias="system-id")
     testing: bool = Field(False)
-    consumption: Optional[str] = Field(None, alias="consumption")
+    consumption: str | None = Field(None, alias="consumption")
     exports: bool = Field(False, alias="exports")
     imports: bool = Field(False, alias="imports")
     output_hour: int = Field(23, alias="output-hour")
@@ -101,7 +101,7 @@ class PvOutputConfig(BaseModel):
 
     @field_validator("consumption", mode="before")
     @classmethod
-    def validate_consumption(cls, v: Any) -> Optional[str]:
+    def validate_consumption(cls, v: Any) -> str | None:
         if v is None or v is False or v == "false":
             return None
         if v is True or v == "true" or v == ConsumptionSource.CONSUMPTION.value:
@@ -142,7 +142,7 @@ class PvOutputConfig(BaseModel):
         tariffs: list[Tariff] = []
         for index, tariff_dict in enumerate(v):
             if not isinstance(tariff_dict, dict):
-                raise ValueError(f"pvoutput.time-periods[{index}] must be a time period definition")
+                raise TypeError(f"pvoutput.time-periods[{index}] must be a time period definition")
             for key in tariff_dict:
                 if key not in ("plan", "from-date", "to-date", "default", "periods"):
                     raise ValueError(f"pvoutput.time-periods[{index}] contains unknown option '{key}'")
@@ -180,18 +180,18 @@ class PvOutputConfig(BaseModel):
             )
         return sorted(
             tariffs,
-            key=lambda t: (t.from_date or datetime.min.date(), t.to_date or datetime.max.date()),
+            key=lambda t: (t.from_date or date.min, t.to_date or date.max),
             reverse=True,
         )
 
     @model_validator(mode="after")
-    def set_testing_flag(self) -> "PvOutputConfig":
+    def set_testing_flag(self) -> PvOutputConfig:
         if self.system_id == "testing":
             self.testing = True
         return self
 
     @model_validator(mode="after")
-    def check_required_when_enabled(self) -> "PvOutputConfig":
+    def check_required_when_enabled(self) -> PvOutputConfig:
         if self.enabled:
             if not self.api_key:
                 raise ValueError("pvoutput.api-key must be provided when enabled")

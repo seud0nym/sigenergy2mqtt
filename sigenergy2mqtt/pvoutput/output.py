@@ -109,21 +109,32 @@ class PVOutputOutputService(Service):
         Args:
             minute: Minute within the configured hour for end-of-day uploads.
         """
-        t = time.localtime()
-        now = time.mktime(t)
+        # Local timezone-aware current datetime
+        now_dt = datetime.now().astimezone()
+
         if active_config.pvoutput.output_hour == -1:  # Update at status interval
             interval, _ = await self.seconds_until_status_upload(rand_min=16, rand_max=30)
-            next = now + 120 + interval  # Wait 2 minutes plus the interval to ensure status upload has completed
+            # Wait 2 minutes plus the interval to ensure status upload has completed
+            next_dt = now_dt + timedelta(seconds=120 + interval)
+        elif active_config.pvoutput.testing:
+            next_dt = now_dt + timedelta(seconds=60)
         else:
-            if active_config.pvoutput.testing:
-                next = now + 60
-            else:
-                next = time.mktime((t.tm_year, t.tm_mon, t.tm_mday, active_config.pvoutput.output_hour, minute, 0, t.tm_wday, t.tm_yday, t.tm_isdst))
-                if next <= now:
-                    today = datetime.fromtimestamp(next)
-                    tomorrow = today + timedelta(days=1, seconds=randint(-15, 15))  # Add a random offset of up to 15 seconds for variability
-                    next = tomorrow.timestamp()
-        return next
+            # Construct target time today in local timezone
+            next_dt = now_dt.replace(
+                hour=active_config.pvoutput.output_hour,
+                minute=minute,
+                second=0,
+                microsecond=0,
+            )
+
+            # If today's target time has already passed, advance to tomorrow
+            if next_dt <= now_dt:
+                next_dt += timedelta(days=1)
+
+            # Add a random offset of up to 15 seconds for variability
+            next_dt += timedelta(seconds=randint(-15, 15))
+
+        return next_dt.timestamp()
 
     async def _verify(self, payload: dict[str, float | int | str], force: bool = False) -> bool:
         """Verify uploaded output data by reading it back from PVOutput.
@@ -182,10 +193,9 @@ class PVOutputOutputService(Service):
                 if matches:
                     for topic in [t for t in self._service_topics.values() if t.enabled]:
                         key = topic._value_key.value
-                        if key in payload and key in result:
-                            if payload[key] != result[key]:
-                                self.logger.debug(f"{self.log_identity} Verification FAILED: payload['{key}']={payload[key]} != result['{key}']={result[key]}")
-                                matches = False
+                        if key in payload and key in result and payload[key] != result[key]:
+                            self.logger.debug(f"{self.log_identity} Verification FAILED: payload['{key}']={payload[key]} != result['{key}']={result[key]}")
+                            matches = False
                 if matches:
                     try:
                         self.logger.info(f"{self.log_identity} Verification SUCCESS {payload=} downloaded={result} ({response.text})")  # type: ignore # pyrefly: ignore

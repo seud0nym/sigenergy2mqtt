@@ -8,7 +8,7 @@ from .hass_history_sync import HassHistorySync
 from .influx_base import InfluxBase
 from .influx_service import InfluxService
 
-__all__ = ["get_influxdb_services", "InfluxBase", "InfluxService", "HassHistorySync"]
+__all__ = ["HassHistorySync", "InfluxBase", "InfluxService", "get_influxdb_services"]
 
 
 def get_influxdb_services() -> list[InfluxService]:

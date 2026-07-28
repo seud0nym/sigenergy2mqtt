@@ -314,7 +314,7 @@ class ServiceTopics(dict[str, Topic]):
                     self._logger.debug(f"{self._service.log_identity} Skipping updating check for {self._name} because service just started")
                 return True
             interval_seconds = interval_minutes * 60
-            min_warning_minutes = max(0, round(active_config.repeated_state_publish_interval / 60)) # zero or positive repeated state publish interval in minutes
+            min_warning_minutes = max(0, round(active_config.repeated_state_publish_interval / 60))  # zero or positive repeated state publish interval in minutes
             updated = 0
             for topic in self.values():
                 scan_interval = topic.scan_interval if topic.scan_interval is not None else interval_seconds
@@ -421,7 +421,7 @@ class ServiceTopics(dict[str, Topic]):
             else:
                 self._logger.debug(f"{self._service.log_identity} Not subscribing to topic {topic} because {self._name} uploading is disabled")
 
-    async def handle_update(self, modbus_client: Any, mqtt_client: mqtt.Client | None, value: float | int | str, topic: str, handler: MqttHandler | None) -> bool:
+    async def handle_update(self, modbus_client: Any, mqtt_client: mqtt.Client | None, value: float | str, topic: str, handler: MqttHandler | None) -> bool:
         """Handle a new MQTT value and update aggregate state.
 
         Args:
@@ -514,4 +514,3 @@ class TimePeriodServiceTopics(ServiceTopics):
             mqtt_client: MQTT client instance (unused).
             mqtt_handler: MQTT handler instance (unused).
         """
-        pass

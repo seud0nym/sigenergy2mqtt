@@ -1,4 +1,5 @@
 import logging
+from typing import ClassVar
 
 from .client import ModbusClient
 from .lock import ModbusLock
@@ -7,7 +8,7 @@ from .lock import ModbusLock
 class ModbusLockFactory:
     """Singleton-style cache for per-client :class:`ModbusLock` instances."""
 
-    _locks: dict[ModbusClient, ModbusLock] = {}
+    _locks: ClassVar[dict[ModbusClient, ModbusLock]] = {}
     _logger = logging.getLogger("pymodbus.logging")
 
     @classmethod

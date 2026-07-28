@@ -229,14 +229,13 @@ class HassHistorySync(InfluxBase):
             where_clause = f"WHERE {v1_filter}" if v1_filter else ""
             query = f'SELECT * FROM "{measurement}" {where_clause} ORDER BY time ASC LIMIT 1'
             success, result = await self.query_v1(config["base"], config["db"], config["auth"], query)
-            if success and result:
-                if result.get("results"):
-                    series = result["results"][0].get("series", [])
-                    if series and "values" in series[0] and series[0]["values"]:
-                        time_str = series[0]["values"][0][0]
-                        timestamp = self.parse_timestamp(time_str)
-                        self.logger.debug(f"{self.log_identity} Found earliest timestamp {timestamp} for {measurement} with tags {tags}")
-                        return timestamp
+            if success and result and result.get("results"):
+                series = result["results"][0].get("series", [])
+                if series and "values" in series[0] and series[0]["values"]:
+                    time_str = series[0]["values"][0][0]
+                    timestamp = self.parse_timestamp(time_str)
+                    self.logger.debug(f"{self.log_identity} Found earliest timestamp {timestamp} for {measurement} with tags {tags}")
+                    return timestamp
 
             return int(time.time())
 

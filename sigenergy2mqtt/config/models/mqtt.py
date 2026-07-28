@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import secrets
 import string
-from typing import Literal, Optional
+from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -22,26 +22,21 @@ class MqttConfig(BaseModel):
     tls_insecure: bool = Field(False, alias="tls-insecure")
     transport: Literal["tcp", "websockets"] = Field("tcp", alias="transport")
     anonymous: bool = Field(False, alias="anonymous")
-    username: Optional[str] = Field(None, alias="username")
-    password: Optional[str] = Field(None, alias="password")
-    client_id_prefix: str = Field(
-        default_factory=lambda: (
-            f"sigenergy2mqtt_"
-            f"{''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(4))}"
-        )
-    )
+    username: str | None = Field(None, alias="username")
+    password: str | None = Field(None, alias="password")
+    client_id_prefix: str = Field(default_factory=lambda: f"sigenergy2mqtt_{''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(4))}")
     log_level: int = Field(logging.WARNING, alias="log-level")
     _validate_log_level = field_validator("log_level", mode="before")(validate_log_level)
 
     @model_validator(mode="after")
-    def apply_tls_port_default(self) -> "MqttConfig":
+    def apply_tls_port_default(self) -> MqttConfig:
         """When TLS is enabled and the port is still the plain default, switch to 8883."""
         if self.tls and self.port == 1883:
             self.port = 8883
         return self
 
     @model_validator(mode="after")
-    def check_auth(self) -> "MqttConfig":
+    def check_auth(self) -> MqttConfig:
         if not self.anonymous:
             fields_set = getattr(self, "model_fields_set", set())
             explicit_auth_config = any(field in fields_set for field in ("anonymous", "username", "password"))

@@ -17,7 +17,7 @@ class ESSPreHeating(ModbusDevice):
         super().__init__(device_type, name, plant_index, 247, "ESS Pre-Heating", protocol_version, plant_suffix=plant_suffix)
 
     @classmethod
-    async def create(cls, plant_index: int, device_type: DeviceType, rated_charging_power: float, rated_discharging_power: float, protocol_version: Protocol) -> "ESSPreHeating":
+    async def create(cls, plant_index: int, device_type: DeviceType, rated_charging_power: float, rated_discharging_power: float, protocol_version: Protocol) -> ESSPreHeating:
         ess_preheating = ESSPreHeating(plant_index, device_type, protocol_version)
         await ess_preheating._register_sensors(rated_charging_power, rated_discharging_power)
         return ess_preheating

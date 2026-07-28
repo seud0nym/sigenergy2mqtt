@@ -106,7 +106,7 @@ class InfluxService(InfluxBase):
             finally:
                 self.sleeper_task = None
 
-        for topic in self._topic_cache.keys():
+        for topic in self._topic_cache:
             mqtt_client.unsubscribe(topic)
         self.logger.info(f"{self.log_identity} Unsubscribed from {len(self._topic_cache)} topics")
         self._topic_cache.clear()

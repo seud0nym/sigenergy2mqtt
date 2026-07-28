@@ -36,7 +36,7 @@ class PID(ModbusDevice):
         )
 
     @classmethod
-    async def create(cls, plant_index: int, device_address: int, protocol_version: Protocol, modbus_client: ModbusClient) -> "PID":
+    async def create(cls, plant_index: int, device_address: int, protocol_version: Protocol, modbus_client: ModbusClient) -> PID:
         model = ro.PIDModelType(plant_index, device_address)
         firmware_version = ro.PIDMachineFirmwareVersion(plant_index, device_address)
         serial_number = ro.PIDSerialNumber(plant_index, device_address)

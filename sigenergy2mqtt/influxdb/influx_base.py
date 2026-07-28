@@ -182,15 +182,14 @@ class InfluxBase(Device):
                 return True
 
             # If bucket not found and token provided, attempt to create it
-            if r.status_code in (400, 404) and token:
-                if self._create_v2_bucket(base, bucket, token):
-                    r3 = self._session.post(url_v2, headers=headers or None, data=test_line, timeout=5)
-                    if r3.status_code in (204, 200):
-                        self._writer_type = "v2_http"
-                        self._write_url = url_v2
-                        self._write_headers = headers or {}
-                        self.logger.info(f"{self.log_identity} Created v2 bucket and will use v2 HTTP write to {url_v2}")
-                        return True
+            if r.status_code in (400, 404) and token and self._create_v2_bucket(base, bucket, token):
+                r3 = self._session.post(url_v2, headers=headers or None, data=test_line, timeout=5)
+                if r3.status_code in (204, 200):
+                    self._writer_type = "v2_http"
+                    self._write_url = url_v2
+                    self._write_headers = headers or {}
+                    self.logger.info(f"{self.log_identity} Created v2 bucket and will use v2 HTTP write to {url_v2}")
+                    return True
         except (requests.RequestException, TimeoutError) as e:
             self.logger.debug(f"{self.log_identity} v2 HTTP detection failed: {e}")
 
@@ -243,15 +242,14 @@ class InfluxBase(Device):
                 return True
 
             # Attempt to create database and retry
-            if r.status_code in (404, 400) or (r.status_code >= 400 and r.content and b"database" in r.content.lower()):
-                if self._create_v1_database(base, db, auth):
-                    r3 = self._session.post(url_v1, params={"db": db, "precision": "s"}, data=test_line, auth=auth, timeout=5)
-                    if r3.status_code in (204, 200):
-                        self._writer_type = "v1_http"
-                        self._write_url = url_v1
-                        self._write_auth = auth
-                        self.logger.info(f"{self.log_identity} Created v1 database and will use v1 HTTP write to {url_v1}")
-                        return True
+            if (r.status_code in (404, 400) or (r.status_code >= 400 and r.content and b"database" in r.content.lower())) and self._create_v1_database(base, db, auth):
+                r3 = self._session.post(url_v1, params={"db": db, "precision": "s"}, data=test_line, auth=auth, timeout=5)
+                if r3.status_code in (204, 200):
+                    self._writer_type = "v1_http"
+                    self._write_url = url_v1
+                    self._write_auth = auth
+                    self.logger.info(f"{self.log_identity} Created v1 database and will use v1 HTTP write to {url_v1}")
+                    return True
         except (requests.RequestException, TimeoutError) as e:
             self.logger.debug(f"{self.log_identity} v1 HTTP detection failed: {e}")
 
@@ -272,24 +270,20 @@ class InfluxBase(Device):
         test_line = b"state value=1"
 
         # Try v2 HTTP write endpoint (preferred if token provided)
-        if config["token"]:
-            if self._try_v2_write(config["base"], config["bucket"], config["org"], config["token"], test_line):
-                return
+        if config["token"] and self._try_v2_write(config["base"], config["bucket"], config["org"], config["token"], test_line):
+            return
 
         # If username is provided, prefer v1 HTTP (InfluxDB 1.x)
-        if config["user"]:
-            if self._try_v1_write(config["base"], config["db"], config["auth"], test_line):
-                return
+        if config["user"] and self._try_v1_write(config["base"], config["db"], config["auth"], test_line):
+            return
 
         # Try v2 without token (some setups)
-        if not self._writer_type:
-            if self._try_v2_write(config["base"], config["bucket"], config["org"], None, test_line):
-                return
+        if not self._writer_type and self._try_v2_write(config["base"], config["bucket"], config["org"], None, test_line):
+            return
 
         # Final fallback: try v1 HTTP without username (no auth)
-        if not self._writer_type:
-            if self._try_v1_write(config["base"], config["db"], config["auth"], test_line):
-                return
+        if not self._writer_type and self._try_v1_write(config["base"], config["db"], config["auth"], test_line):
+            return
 
         raise RuntimeError(f"{self.log_identity} Initialization failed: could not determine writable endpoint or create database/bucket")
 
@@ -706,7 +700,7 @@ class InfluxBase(Device):
         Returns:
             Unix timestamp as an integer number of seconds since the epoch.
         """
-        dt = datetime.fromisoformat(time_str.replace("Z", "+00:00"))
+        dt = datetime.fromisoformat(time_str)
         return int(dt.timestamp())
 
     def build_v1_tag_filter(self, tags: dict[str, str]) -> str:
