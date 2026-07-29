@@ -1,11 +1,16 @@
+from __future__ import annotations
+
 import asyncio
 import logging
 from asyncio import sleep
+from typing import TYPE_CHECKING
 
 from paho.mqtt import MQTTException
 
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.modbus import ModbusClient
+
+if TYPE_CHECKING:
+    from sigenergy2mqtt.modbus import ModbusClient
 
 from .client import MqttClient
 from .handler import MqttHandler

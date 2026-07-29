@@ -4,7 +4,7 @@ import abc
 import asyncio
 import logging
 from collections.abc import Awaitable
-from typing import Literal, cast
+from typing import TYPE_CHECKING, Literal, cast
 
 import paho.mqtt.client as mqtt
 
@@ -12,9 +12,11 @@ from sigenergy2mqtt.common import DeviceType, HybridInverter, Protocol, PVInvert
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.config.models import RegisterAccess
 from sigenergy2mqtt.i18n import _t
-from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.mqtt import MqttHandler
 from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, CrossDeviceDerivedSensor, DerivedSensor, ObservableMixin, ReadableSensorMixin, Sensor, WritableSensorMixin, WriteOnlySensor
+
+if TYPE_CHECKING:
+    from sigenergy2mqtt.modbus import ModbusClient
 
 from .ha_publisher import HaPublisherMixin
 from .poller import SensorGroupPoller

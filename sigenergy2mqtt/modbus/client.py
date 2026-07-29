@@ -12,7 +12,6 @@ from pymodbus.logging import Log
 from pymodbus.pdu import ExceptionResponse, ModbusPDU
 
 from sigenergy2mqtt.common import InputType
-from sigenergy2mqtt.metrics import Metrics
 
 from .read_ahead import ReadAhead
 
@@ -85,6 +84,7 @@ class ModbusClient(AsyncModbusTcpClient, ModbusClientMixin):
     async def _read_registers(
         self, address: int, count: int = 1, device_id: int = 1, input_type: InputType = InputType.HOLDING, no_response_expected: bool = False, use_pre_read: bool = False, trace: bool = False
     ) -> ModbusPDU:
+        from sigenergy2mqtt.metrics import Metrics
         """Read Modbus registers, optionally serving from read-ahead cache first.
 
         Args:
@@ -159,6 +159,7 @@ class ModbusClient(AsyncModbusTcpClient, ModbusClientMixin):
         if device_id in self._read_ahead_pdu:
             self._read_ahead_pdu[device_id].update({key: None for key in range(address, address + count)})
 
+
     async def connect(self) -> bool:
         connected = await super().connect()
         if connected:
@@ -176,6 +177,7 @@ class ModbusClient(AsyncModbusTcpClient, ModbusClientMixin):
                 self._health.last_closed_at = time.monotonic()
 
     async def read_ahead_registers(self, address, count: int = 1, device_id: int = 1, input_type: InputType = InputType.INPUT, no_response_expected: bool = False, trace: bool = False) -> int:
+        from sigenergy2mqtt.metrics import Metrics
         """Pre-fetch a register range and populate the read-ahead cache.
 
         Args:

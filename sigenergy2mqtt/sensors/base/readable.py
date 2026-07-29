@@ -13,7 +13,6 @@ from pymodbus.pdu import ExceptionResponse
 from sigenergy2mqtt.common import DeviceClass, InputType, Protocol, StateClass
 from sigenergy2mqtt.config.models import RegisterAccess
 from sigenergy2mqtt.i18n import _t
-from sigenergy2mqtt.metrics import Metrics
 from sigenergy2mqtt.modbus import ModbusClient, ModbusDataType
 
 from .constants import SensorAttributeKeys
@@ -102,6 +101,7 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
             logger.warning(f"{self.log_identity} Modbus read failed to acquire lock within {self.scan_interval}s")
             return False
         except (ModbusException, OSError):
+            from sigenergy2mqtt.metrics import Metrics
             # Record error in metrics
             await Metrics.modbus_read_error()
             raise
@@ -139,6 +139,7 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
         elapsed = time.monotonic() - start
 
         # Record metrics
+        from sigenergy2mqtt.metrics import Metrics
         await Metrics.modbus_read(self.count, elapsed)
 
         # Check response validity

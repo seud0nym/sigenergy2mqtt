@@ -170,6 +170,42 @@ The directory in which to store persistent state files. The defaults are:
 A sub-directory will be created in the specified directory called `sigenergy2mqtt` to store the files.
 
 
+
+## Diagnostics
+
+<a id="opt_diagnostics_enabled"></a>
+### Enabled
+- CLI: `--no-diagnostics`
+- ENV: `SIGENERGY2MQTT_DIAGNOSTICS_ENABLED`
+- Config key: `diagnostics.enabled`
+
+Set to `false` to disable the diagnostics web server. Note: If running  within Docker, this flag is ignored and treated as true.
+
+<a id="opt_diagnostics_host"></a>
+### Host
+- CLI: `--diagnostics-host`
+- ENV: `SIGENERGY2MQTT_DIAGNOSTICS_HOST`
+- Config key: `diagnostics.host`
+
+The address to which the diagnostics web server is to be bound. Default is `0.0.0.0` (all interfaces).
+
+<a id="opt_diagnostics_port"></a>
+### Port
+- CLI: `--diagnostics-port`
+- ENV: `SIGENERGY2MQTT_DIAGNOSTICS_PORT`
+- Config key: `diagnostics.port`
+
+The diagnostics web server listening port. Must be between `1` and `65535`. Default is `8502`.
+
+<a id="opt_diagnostics_refresh_interval"></a>
+### Refresh Interval
+- CLI: `--diagnostics-refresh-interval`
+- ENV: `SIGENERGY2MQTT_DIAGNOSTICS_REFRESH_INTERVAL`
+- Config key: `diagnostics.refresh-interval`
+
+The diagnostics web page refresh interval in seconds. Must be greater than `0`. Default is `5.0`.
+
+
 ## Health Check
 
 <a id="opt_health_check_enabled"></a>

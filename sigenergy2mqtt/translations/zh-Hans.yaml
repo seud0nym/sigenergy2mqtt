@@ -465,6 +465,8 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 日放电电量
+  DiagnosticsService:
+    name: 诊断
   DischargeCutOffSoC:
     attributes:
       source: Modbus 寄存器 {address}
@@ -2772,6 +2774,14 @@ cli:
     help: "设置电站消耗功率传感器的计算方法。有效值为：'calculated'、'total'（总负载功率寄存器）或 'general'（V2.8 通用负载功率寄存器）。默认值为 'calculated'。在低于支持 Modbus 协议 V2.8 的固件上，此选项将被忽略。"
   SIGENERGY2MQTT_DEBUG_SENSOR:
     help: '指定要调试的传感器，使用完整或部分的实体ID或传感器类名（例如：指定 ''daily'' 将匹配所有实体名称中包含 ''daily'' 的传感器），或用于匹配实体ID或传感器类名的正则表达式（例如：''^PowerFactor$'' 仅匹配单个类名）。如果指定，--log-level 也将被强制设为 DEBUG。'
+  SIGENERGY2MQTT_DIAGNOSTICS_ENABLED:
+    help: 禁用诊断 Web 服务器。
+  SIGENERGY2MQTT_DIAGNOSTICS_HOST:
+    help: '诊断Web服务器要绑定的地址（默认：0.0.0.0）'
+  SIGENERGY2MQTT_DIAGNOSTICS_PORT:
+    help: '诊断Web服务器监听端口（默认：8502）'
+  SIGENERGY2MQTT_DIAGNOSTICS_REFRESH_INTERVAL:
+    help: '诊断网页刷新间隔（以秒为单位）（默认值：5.0）'
   SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX:
     help: 'Home Assistant实体名称前缀'
   SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX:

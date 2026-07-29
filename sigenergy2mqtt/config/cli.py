@@ -847,6 +847,41 @@ def get_parser() -> argparse.ArgumentParser:
     )
     # endregion
 
+    # region Diagnostics Configuration
+    parser.add_argument(
+        "--no-diagnostics",
+        action="store_false",
+        dest=const.SIGENERGY2MQTT_DIAGNOSTICS_ENABLED,
+        help="Disable the diagnostics web server.",
+    )
+    parser.add_argument(
+        "--diagnostics-host",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_DIAGNOSTICS_HOST,
+        default=os.getenv(const.SIGENERGY2MQTT_DIAGNOSTICS_HOST, None),
+        help="The address to which the diagnostics web server is to be bound (default: 0.0.0.0)",
+    )
+    parser.add_argument(
+        "--diagnostics-port",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_DIAGNOSTICS_PORT,
+        type=int,
+        default=os.getenv(const.SIGENERGY2MQTT_DIAGNOSTICS_PORT, None),
+        help="The diagnostics web server listening port (default: 8502)",
+    )
+    parser.add_argument(
+        "--diagnostics-refresh-interval",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_DIAGNOSTICS_REFRESH_INTERVAL,
+        type=float,
+        default=os.getenv(const.SIGENERGY2MQTT_DIAGNOSTICS_REFRESH_INTERVAL, None),
+        help="The diagnostics web page refresh interval in seconds (default: 5.0)",
+    )
+    # endregion
+
     parser.add_argument(
         "--clean",
         action="store_true",

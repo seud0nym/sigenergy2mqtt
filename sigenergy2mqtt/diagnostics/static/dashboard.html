@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>sigenergy2mqtt — Diagnostics</title>
+  <link rel="icon" type="image/x-icon" href="/diagnostics/static/favicon.ico">
+  <style>
+    :root {
+      --bg: #0b1220;
+      --bg-panel: #121b2e;
+      --bg-card: #16223a;
+      --border: #24314d;
+      --text: #e6ebf5;
+      --text-dim: #8b98b3;
+      --accent: #3ddc97;
+      --accent-dim: rgba(61, 220, 151, 0.15);
+      --warn: #f5a623;
+      --warn-dim: rgba(245, 166, 35, 0.15);
+      --bad: #ef4b5f;
+      --bad-dim: rgba(239, 75, 95, 0.15);
+      --unknown: #6b7794;
+      --mono: "SF Mono", "JetBrains Mono", Consolas, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(1200px 600px at 15% -10%, rgba(61, 220, 151, 0.07), transparent 60%),
+        radial-gradient(900px 500px at 90% 0%, rgba(58, 123, 213, 0.08), transparent 55%),
+        var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 32px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(18, 27, 46, 0.6);
+      backdrop-filter: blur(6px);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .brand img {
+      height: 32px;
+      width: auto;
+      display: block;
+    }
+
+    .brand-sub {
+      font-size: 13px;
+      color: var(--text-dim);
+      letter-spacing: 0.02em;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .conn-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+    }
+
+    .conn-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--unknown);
+      transition: background 0.3s;
+    }
+
+    .conn-pill.live .conn-dot {
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+    }
+
+    .conn-pill.down .conn-dot {
+      background: var(--bad);
+      box-shadow: 0 0 8px var(--bad);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text);
+      cursor: pointer;
+      text-decoration: none;
+      transition: border-color 0.15s, transform 0.1s;
+    }
+
+    .btn:hover {
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+
+    main {
+      padding: 28px 32px 60px;
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+
+    .status-banner {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 18px 24px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: var(--bg-panel);
+      margin-bottom: 28px;
+    }
+
+    .status-banner .big-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--unknown);
+      box-shadow: 0 0 0 6px transparent;
+      transition: background 0.3s, box-shadow 0.3s;
+    }
+
+    .status-banner.healthy .big-dot {
+      background: var(--accent);
+      box-shadow: 0 0 0 6px var(--accent-dim);
+    }
+
+    .status-banner.degraded .big-dot {
+      background: var(--warn);
+      box-shadow: 0 0 0 6px var(--warn-dim);
+    }
+
+    .status-banner.unknown .big-dot {
+      background: var(--unknown);
+    }
+
+    .status-banner .label {
+      font-size: 18px;
+      font-weight: 600;
+      text-transform: capitalize;
+    }
+
+    .status-banner .meta {
+      margin-left: auto;
+      font-size: 13px;
+      color: var(--text-dim);
+      font-family: var(--mono);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 18px;
+      margin-bottom: 28px;
+    }
+
+    .card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .card-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    .pill {
+      font-size: 11px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .pill.ok {
+      background: var(--accent-dim);
+      color: var(--accent);
+    }
+
+    .pill.warn {
+      background: var(--warn-dim);
+      color: var(--warn);
+    }
+
+    .pill.bad {
+      background: var(--bad-dim);
+      color: var(--bad);
+    }
+
+    .pill.unknown {
+      background: rgba(107, 119, 148, 0.15);
+      color: var(--unknown);
+    }
+
+    .metric-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 13px;
+      color: var(--text-dim);
+      padding: 4px 0;
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.05);
+    }
+
+    .metric-row:last-child {
+      border-bottom: none;
+    }
+
+    .metric-row .v {
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 13px;
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin: 34px 0 14px;
+    }
+
+    .table-wrap {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th,
+    td {
+      text-align: left;
+      padding: 10px 18px;
+    }
+
+    th {
+      color: var(--text-dim);
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      font-family: var(--mono);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-dim);
+      font-size: 14px;
+    }
+
+    .footer-note {
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 12px;
+      margin-top: 40px;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.4;
+      }
+    }
+
+    .pulsing {
+      animation: pulse 1.6s ease-in-out infinite;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <div class="brand">
+      <img src="/diagnostics/static/logo.png" alt="sigenergy2mqtt">
+      <span class="brand-sub">Diagnostics</span>
+    </div>
+    <div class="header-right">
+      <span class="conn-pill" id="connPill"><span class="conn-dot"></span><span id="connLabel">Connecting…</span></span>
+      <a class="btn" href="/diagnostics/export" download>⬇ Export JSON</a>
+    </div>
+  </header>
+
+  <main>
+    <div class="status-banner unknown" id="statusBanner">
+      <span class="big-dot"></span>
+      <span class="label" id="statusLabel">Waiting for data…</span>
+      <span class="meta" id="statusMeta"></span>
+    </div>
+
+    <div class="grid" id="cardGrid">
+      <div class="empty-state pulsing">Waiting for the first diagnostics snapshot…</div>
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      const cardGrid = document.getElementById('cardGrid');
+      const statusBanner = document.getElementById('statusBanner');
+      const statusLabel = document.getElementById('statusLabel');
+      const statusMeta = document.getElementById('statusMeta');
+      const connPill = document.getElementById('connPill');
+      const connLabel = document.getElementById('connLabel');
+
+      function pillClassFor(value) {
+        if (value === true || value === 'healthy') return 'ok';
+        if (value === false || value === 'degraded') return 'bad';
+        if (value === 'unknown' || value === null || value === undefined) return 'unknown';
+        return 'warn';
+      }
+
+      function fmtVal(v) {
+        if (typeof v === 'number') {
+          return Number.isInteger(v) ? v.toLocaleString() : v.toFixed(2);
+        }
+        if (typeof v === 'boolean') return v ? 'yes' : 'no';
+        if (v === null || v === undefined) return '—';
+        return String(v);
+      }
+
+      // Key-suffix -> unit convention. A provider names a field "foo_ms" or
+      // "cpu_percent" and gets correct formatting for free — no schema/wrapper
+      // object required. Order matters: longer/more specific suffixes first so
+      // e.g. "_ms" doesn't accidentally match something ending in "_ms_avg".
+      const UNIT_FORMATTERS = [
+        { suffix: '_percentage', format: formatPercent },
+        { suffix: '_percent', format: formatPercent },
+        { suffix: '_pct', format: formatPercent },
+        { suffix: '_bytes', format: formatBytes },
+        { suffix: '_ms', format: formatMillis },
+        { suffix: '_seconds', format: formatDuration },
+        { suffix: '_secs', format: formatDuration },
+        { suffix: '_timestamp', format: formatTimestamp },
+        { suffix: '_count', format: v => Number(v).toLocaleString() },
+      ];
+
+      function formatPercent(v) {
+        const n = Number(v);
+        return Number.isFinite(n) ? `${n.toFixed(1)}%` : fmtVal(v);
+      }
+
+      function formatMillis(v) {
+        const n = Number(v);
+        if (!Number.isFinite(n)) return fmtVal(v);
+        return n < 1000 ? `${n.toFixed(n < 10 ? 1 : 0)} ms` : `${(n / 1000).toFixed(2)} s`;
+      }
+
+      function formatDuration(v) {
+        const s = Number(v);
+        if (!Number.isFinite(s)) return fmtVal(v);
+        if (s < 1) return `${Math.round(s * 1000)} ms`;
+        if (s < 60) return `${s.toFixed(1)} s`;
+        const m = Math.floor(s / 60);
+        const rem = Math.round(s % 60);
+        return `${m}m ${rem}s`;
+      }
+
+      function formatBytes(v) {
+        const b = Number(v);
+        if (!Number.isFinite(b)) return fmtVal(v);
+        if (b < 1024) return `${b} B`;
+        const units = ['KB', 'MB', 'GB', 'TB'];
+        let val = b, i = -1;
+        do { val /= 1024; i++; } while (val >= 1024 && i < units.length - 1);
+        return `${val.toFixed(1)} ${units[i]}`;
+      }
+
+      function formatTimestamp(v) {
+        const n = Number(v);
+        if (!Number.isFinite(n)) return fmtVal(v);
+        return new Date(n * 1000).toLocaleString();
+      }
+
+      // Returns { label, display } — label has the unit suffix stripped (the
+      // unit is now visible in the formatted value itself, so keeping it in the
+      // label would be redundant), display is the formatted value.
+      function formatMetric(rawKey, value) {
+        if (typeof value === 'number') {
+          const hit = UNIT_FORMATTERS.find(u => rawKey.endsWith(u.suffix));
+          if (hit) {
+            return { label: rawKey.slice(0, -hit.suffix.length), display: hit.format(value) };
+          }
+        }
+        return { label: rawKey, display: null };
+      }
+
+      function humanKey(k) {
+        return k.replace(/^sigenergy2mqtt_/, '').replace(/_/g, ' ');
+      }
+
+      // Renders one provider's dict as a card. Nested dicts (e.g. per-client
+      // connection maps) get flattened one level with a "group.key" label so
+      // any future provider "just works" without UI changes.
+      function buildCard(name, data) {
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        const title = document.createElement('div');
+        title.className = 'card-title';
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = humanKey(name);
+        title.appendChild(nameSpan);
+
+        if (data && typeof data === 'object' && 'status' in data) {
+          const pill = document.createElement('span');
+          pill.className = 'pill ' + pillClassFor(data.status);
+          pill.textContent = data.status;
+          title.appendChild(pill);
+        } else if (data && typeof data === 'object' && 'error' in data) {
+          const pill = document.createElement('span');
+          pill.className = 'pill bad';
+          pill.textContent = 'error';
+          title.appendChild(pill);
+        }
+        card.appendChild(title);
+
+        const rows = document.createElement('div');
+        function addRows(obj, prefix) {
+          Object.entries(obj).forEach(([k, v]) => {
+            if (k === 'status') return;
+            if (v && typeof v === 'object' && !Array.isArray(v)) {
+              addRows(v, prefix ? `${prefix}.${k}` : k);
+              return;
+            }
+            const row = document.createElement('div');
+            row.className = 'metric-row';
+            const fullKey = prefix ? `${prefix}.${k}` : k;
+            const { label: strippedKey, display } = formatMetric(fullKey, v);
+            const label = document.createElement('span');
+            label.textContent = humanKey(strippedKey);
+            const val = document.createElement('span');
+            val.className = 'v';
+            if (typeof v === 'boolean') {
+              val.innerHTML = `<span class="pill ${pillClassFor(v)}">${fmtVal(v)}</span>`;
+            } else if (display !== null) {
+              val.textContent = display;
+            } else {
+              val.textContent = fmtVal(v);
+            }
+            row.appendChild(label);
+            row.appendChild(val);
+            rows.appendChild(row);
+          });
+        }
+        if (data && typeof data === 'object') addRows(data, '');
+        card.appendChild(rows);
+        return card;
+      }
+
+      function render(snapshot) {
+        const monitor = snapshot.monitor || {};
+        const status = monitor.status || 'unknown';
+        statusBanner.className = 'status-banner ' + (status === 'healthy' ? 'healthy' : status === 'degraded' ? 'degraded' : 'unknown');
+        statusLabel.textContent = status;
+        const ts = snapshot.timestamp ? new Date(snapshot.timestamp * 1000).toLocaleString() : '—';
+        statusMeta.textContent = `last updated ${ts}`;
+
+        cardGrid.innerHTML = '';
+        const keys = Object.keys(snapshot).filter(k => k !== 'timestamp');
+        if (keys.length === 0) {
+          cardGrid.innerHTML = '<div class="empty-state">No diagnostics providers registered.</div>';
+          return;
+        }
+        keys.forEach(key => cardGrid.appendChild(buildCard(key, snapshot[key])));
+      }
+
+      function setConn(state) {
+        connPill.className = 'conn-pill ' + state;
+        connLabel.textContent = state === 'live' ? 'Live' : state === 'down' ? 'Disconnected' : 'Connecting…';
+      }
+
+      let socket = null;
+      let retryDelay = 1000;
+
+      function connect() {
+        const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+        socket = new WebSocket(`${proto}://${location.host}/diagnostics/ws`);
+
+        socket.onopen = () => { setConn('live'); retryDelay = 1000; };
+        socket.onmessage = (evt) => {
+          try { render(JSON.parse(evt.data)); } catch (e) { console.error('Bad diagnostics payload', e); }
+        };
+        socket.onclose = () => {
+          setConn('down');
+          setTimeout(connect, retryDelay);
+          retryDelay = Math.min(retryDelay * 1.5, 15000);
+        };
+        socket.onerror = () => socket.close();
+      }
+
+      connect();
+    })();
+  </script>
+
+</body>
+
+</html>
