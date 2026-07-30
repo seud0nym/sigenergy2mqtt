@@ -616,9 +616,6 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
 
     def _override_qos(self, identifier: str, value: int) -> None:
         """Apply qos override."""
-        if value not in (0, 1, 2):
-            logger.warning(f"{self.log_identity} Ignoring {identifier} 'qos' override ({value}) - must be 0, 1, or 2")
-            return
         if self._qos != value:
             logger.debug(f"{self.log_identity} Applying {identifier} 'qos' override ({value})")
             self._qos = value
