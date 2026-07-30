@@ -251,11 +251,39 @@ class Metrics:
     @classmethod
     @asynccontextmanager
     async def lock(cls, timeout: float | None = 1.0):
-        """Async context manager that acquires threading.Lock without blocking the event loop."""
+        """Async context manager that acquires threading.Lock without blocking the event loop.
+
+        Cancellation-safe: if a ``CancelledError`` is raised while the thread-pool
+        worker is blocked inside ``threading.Lock.acquire``, the worker may still
+        acquire the lock after the coroutine has been unwound.  A ``threading.Event``
+        is used to signal the result back to the ``finally`` block so that the lock
+        is always released, preventing permanent deadlocks across restart cycles.
+        """
         timeout_arg = -1.0 if timeout is None else timeout
 
-        # Offload the blocking acquire() call to a threadpool thread
-        acquired = await asyncio.to_thread(cls._lock.acquire, timeout=timeout_arg)
+        # Use a threading.Event to capture whether the thread-pool worker actually
+        # acquired the lock.  This lets the finally block release it even when a
+        # CancelledError interrupts the await before the worker finishes.
+        acquire_result: list[bool] = [False]
+        done_event = threading.Event()
+
+        def _acquire_with_signal() -> bool:
+            result = cls._lock.acquire(timeout=timeout_arg)
+            acquire_result[0] = result
+            done_event.set()
+            return result
+
+        try:
+            acquired = await asyncio.to_thread(_acquire_with_signal)
+        except asyncio.CancelledError:
+            # The await was cancelled but the thread may still be running.
+            # Block (briefly, without holding the event loop) until the thread
+            # finishes so we know whether it acquired the lock.
+            await asyncio.to_thread(done_event.wait)
+            if acquire_result[0]:
+                cls._lock.release()
+            raise
+
         if not acquired:
             raise TimeoutError("Failed to acquire Metrics lock within the timeout period.")
 
