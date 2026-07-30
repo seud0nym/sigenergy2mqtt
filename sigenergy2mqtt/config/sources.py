@@ -253,6 +253,7 @@ class EnvSettingsSource(PydanticBaseSettingsSource):
         _set(diagnostics, "host", g(const.SIGENERGY2MQTT_DIAGNOSTICS_HOST))
         _set(diagnostics, "port", _int(g(const.SIGENERGY2MQTT_DIAGNOSTICS_PORT)))
         _set(diagnostics, "refresh_interval", _float(g(const.SIGENERGY2MQTT_DIAGNOSTICS_REFRESH_INTERVAL)))
+        _set(diagnostics, "allowed_ips", _str_list(g(const.SIGENERGY2MQTT_DIAGNOSTICS_ALLOWED_IPS)))
         if diagnostics:
             result["diagnostics"] = diagnostics
 

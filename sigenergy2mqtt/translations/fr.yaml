@@ -2774,6 +2774,8 @@ cli:
     help: "Définir la méthode de calcul du capteur de Puissance Consommée de l'Installation. Valeurs valides: 'calculated', 'total' (registre Puissance de Charge Totale), ou 'general' (registre Puissance de Charge Générale V2.8). Par défaut: 'calculated'. Cette option est ignorée sur les firmwares antérieurs au Protocole Modbus V2.8."
   SIGENERGY2MQTT_DEBUG_SENSOR:
     help: "Spécifier un capteur à déboguer en utilisant l'ID d'entité complet ou partiel ou le nom de classe du capteur (ex: 'daily' correspondrait à tous les capteurs contenant 'daily' dans leur nom), ou une expression régulière (ex: '^PowerFactor$' ne correspond qu'à ce seul nom de classe). Si spécifié, --log-level est également forcé à DEBUG."
+  SIGENERGY2MQTT_DIAGNOSTICS_ALLOWED_IPS:
+    help: Liste des adresses IP autorisées pour le serveur Web de diagnostic. Si elles ne sont pas spécifiées, toutes les adresses IP sont autorisées.
   SIGENERGY2MQTT_DIAGNOSTICS_ENABLED:
     help: Désactivez le serveur Web de diagnostic.
   SIGENERGY2MQTT_DIAGNOSTICS_HOST:

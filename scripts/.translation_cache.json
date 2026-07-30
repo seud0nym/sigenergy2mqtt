@@ -2545,5 +2545,14 @@
   "zh-CN:The address to which the diagnostics web server is to be bound (default: 127.0.0.1)": "诊断Web服务器要绑定的地址（默认：0.0.0.0）",
   "zh-CN:The diagnostics web page refresh interval in seconds (default: 5.0)": "诊断网页刷新间隔（以秒为单位）（默认值：5.0）",
   "zh-CN:Diagnostics": "诊断",
-  "zh-CN:Disable the diagnostics web server.": "禁用诊断 Web 服务器。"
+  "zh-CN:Disable the diagnostics web server.": "禁用诊断 Web 服务器。",
+  "de:List of allowed IP addresses for the diagnostics web server. If not specified, all IP addresses are allowed.": "Liste der zulässigen IP-Adressen für den Diagnose-Webserver. Wenn nicht angegeben, sind alle IP-Adressen zulässig.",
+  "es:List of allowed IP addresses for the diagnostics web server. If not specified, all IP addresses are allowed.": "Lista de direcciones IP permitidas para el servidor web de diagnóstico. Si no se especifica, se permiten todas las direcciones IP.",
+  "fr:List of allowed IP addresses for the diagnostics web server. If not specified, all IP addresses are allowed.": "Liste des adresses IP autorisées pour le serveur Web de diagnostic. Si elles ne sont pas spécifiées, toutes les adresses IP sont autorisées.",
+  "it:List of allowed IP addresses for the diagnostics web server. If not specified, all IP addresses are allowed.": "Elenco degli indirizzi IP consentiti per il server Web di diagnostica. Se non specificato, sono consentiti tutti gli indirizzi IP.",
+  "ja:List of allowed IP addresses for the diagnostics web server. If not specified, all IP addresses are allowed.": "診断 Web サーバーに許可される IP アドレスのリスト。指定しない場合、すべての IP アドレスが許可されます。",
+  "ko:List of allowed IP addresses for the diagnostics web server. If not specified, all IP addresses are allowed.": "진단 웹 서버에 허용되는 IP 주소 목록입니다. 지정하지 않으면 모든 IP 주소가 허용됩니다.",
+  "nl:List of allowed IP addresses for the diagnostics web server. If not specified, all IP addresses are allowed.": "Lijst met toegestane IP-adressen voor de diagnostische webserver. Indien niet gespecificeerd, zijn alle IP-adressen toegestaan.",
+  "pt:List of allowed IP addresses for the diagnostics web server. If not specified, all IP addresses are allowed.": "Lista de endereços IP permitidos para o servidor web de diagnóstico. Se não for especificado, todos os endereços IP serão permitidos.",
+  "zh-CN:List of allowed IP addresses for the diagnostics web server. If not specified, all IP addresses are allowed.": "诊断 Web 服务器允许的 IP 地址列表。如果未指定，则允许所有 IP 地址。"
 }

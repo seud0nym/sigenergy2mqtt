@@ -205,6 +205,14 @@ The diagnostics and health check web server listening port. Must be between `1` 
 
 The diagnostics web page refresh interval in seconds. Must be greater than `0`. Default is `5.0`.
 
+<a id="opt_diagnostics_allowed_ips"></a>
+### Allowed IPs
+- CLI: `--diagnostics-allowed-ips`
+- ENV: `SIGENERGY2MQTT_DIAGNOSTICS_ALLOWED_IPS`
+- Config key: `diagnostics.allowed-ips`
+
+List of allowed IP addresses for the diagnostics web server. If not specified, all IP addresses are allowed.
+
 
 ## Health Check
 

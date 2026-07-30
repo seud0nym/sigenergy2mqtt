@@ -2774,6 +2774,8 @@ cli:
     help: "Stel de methode in voor het berekenen van de Plant Verbruikt Vermogen sensor. Geldige waarden zijn: 'calculated', 'total' (Totaal Belastingsvermogen register), of 'general' (V2.8 Algemeen Belastingsvermogen register). De standaardwaarde is 'calculated'. Deze optie wordt genegeerd op firmware die ouder is dan de firmware die Modbus Protocol V2.8 ondersteunt."
   SIGENERGY2MQTT_DEBUG_SENSOR:
     help: 'Specificeer een sensor om te debuggen met de volledige of gedeeltelijke entiteit-ID of de sensorklassenaam (bijv. ''daily'' komt overeen met alle sensoren met ''daily'' in hun naam), of een reguliere expressie die vergeleken wordt met de entiteit-ID of sensorklassenaam (bijv. ''^PowerFactor$'' komt alleen overeen met de enkele klassenaam). Indien opgegeven, wordt --log-level ook geforceerd naar DEBUG.'
+  SIGENERGY2MQTT_DIAGNOSTICS_ALLOWED_IPS:
+    help: Lijst met toegestane IP-adressen voor de diagnostische webserver. Indien niet gespecificeerd, zijn alle IP-adressen toegestaan.
   SIGENERGY2MQTT_DIAGNOSTICS_ENABLED:
     help: Schakel de diagnostische webserver uit.
   SIGENERGY2MQTT_DIAGNOSTICS_HOST:

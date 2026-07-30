@@ -932,3 +932,11 @@ diagnostics:
   #   default: 5.0
   #   description:  The diagnostics web page refresh interval in seconds.
   refresh-interval: 5.0
+  # allowed-ips
+  #   added: 2026.7.30
+  #   default: null
+  #   description:  List of allowed IP addresses for the diagnostics web server.
+  #                 If not specified, all IP addresses are allowed.
+  allowed-ips:
+     - 127.0.0.1
+     - 192.168.1.0/24
