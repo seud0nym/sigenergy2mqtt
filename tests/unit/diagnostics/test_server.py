@@ -247,7 +247,7 @@ def test_parse_allowed_networks() -> None:
 async def test_ip_filter_middleware_allow_all(server: DiagnosticsServer) -> None:
     server._allowed_networks = None
     
-    request = make_mocked_request("GET", "/health")
+    request = make_mocked_request("GET", "/diagnostics")
     handler = AsyncMock(return_value=web.Response(text="OK"))
     
     response = await server._ip_filter_middleware(request, handler)
@@ -259,7 +259,7 @@ async def test_ip_filter_middleware_allow_all(server: DiagnosticsServer) -> None
 async def test_ip_filter_middleware_empty_list_denies(server: DiagnosticsServer) -> None:
     server._allowed_networks = []
     
-    request = make_mocked_request("GET", "/health")
+    request = make_mocked_request("GET", "/diagnostics")
     handler = AsyncMock()
     
     with pytest.raises(web.HTTPForbidden):
@@ -274,7 +274,7 @@ async def test_ip_filter_middleware_allowed_ip(server: DiagnosticsServer) -> Non
     from unittest.mock import PropertyMock
     server._allowed_networks = [ipaddress.ip_network("192.168.1.0/24")]
     
-    request = make_mocked_request("GET", "/health")
+    request = make_mocked_request("GET", "/diagnostics")
     with patch.object(type(request), 'remote', new_callable=PropertyMock, return_value="192.168.1.100"):
         handler = AsyncMock(return_value=web.Response(text="OK"))
         response = await server._ip_filter_middleware(request, handler)
@@ -287,7 +287,7 @@ async def test_ip_filter_middleware_denied_ip(server: DiagnosticsServer) -> None
     from unittest.mock import PropertyMock
     server._allowed_networks = [ipaddress.ip_network("192.168.1.0/24")]
     
-    request = make_mocked_request("GET", "/health")
+    request = make_mocked_request("GET", "/diagnostics")
     with patch.object(type(request), 'remote', new_callable=PropertyMock, return_value="10.0.0.5"):
         handler = AsyncMock()
         with pytest.raises(web.HTTPForbidden):
@@ -300,8 +300,36 @@ async def test_ip_filter_middleware_invalid_remote(server: DiagnosticsServer) ->
     from unittest.mock import PropertyMock
     server._allowed_networks = [ipaddress.ip_network("192.168.1.0/24")]
     
-    request = make_mocked_request("GET", "/health")
+    request = make_mocked_request("GET", "/diagnostics")
     with patch.object(type(request), 'remote', new_callable=PropertyMock, return_value="invalid"):
         handler = AsyncMock()
         with pytest.raises(web.HTTPForbidden):
             await server._ip_filter_middleware(request, handler)
+
+
+@pytest.mark.asyncio
+async def test_ip_filter_middleware_health_exempt_in_docker(server: DiagnosticsServer) -> None:
+    server._allowed_networks = []  # Empty list normally denies all
+    
+    request = make_mocked_request("GET", "/health")
+    handler = AsyncMock(return_value=web.Response(text="OK"))
+    
+    with patch("sigenergy2mqtt.diagnostics.server.is_docker", return_value=True):
+        response = await server._ip_filter_middleware(request, handler)
+        
+    assert response.text == "OK"
+    handler.assert_called_once_with(request)
+
+
+@pytest.mark.asyncio
+async def test_ip_filter_middleware_health_not_exempt_outside_docker(server: DiagnosticsServer) -> None:
+    server._allowed_networks = []  # Empty list normally denies all
+    
+    request = make_mocked_request("GET", "/health")
+    handler = AsyncMock()
+    
+    with patch("sigenergy2mqtt.diagnostics.server.is_docker", return_value=False):
+        with pytest.raises(web.HTTPForbidden):
+            await server._ip_filter_middleware(request, handler)
+            
+    handler.assert_not_called()

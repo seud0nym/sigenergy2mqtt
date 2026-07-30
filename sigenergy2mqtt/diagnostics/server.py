@@ -94,6 +94,9 @@ class DiagnosticsServer:
         this server ever sits behind a reverse proxy, use that proxy's own
         ACLs/allow-list instead of trusting X-Forwarded-For here.
         """
+        if is_docker() and request.path == "/health" and request.remote == "127.0.0.1":
+            return await handler(request)
+
         if self._allowed_networks is not None:
             peer = request.remote
             try:
