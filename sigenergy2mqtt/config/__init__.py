@@ -80,6 +80,7 @@ def _promote_cli_to_env(args) -> None:
             const.SIGENERGY2MQTT_PVOUTPUT_HEALTH_MONITORING,
             const.SIGENERGY2MQTT_INFLUX_HEALTH_MONITORING,
             const.SIGENERGY2MQTT_PERSISTENCE_MQTT_REDUNDANCY,
+            const.SIGENERGY2MQTT_DIAGNOSTICS_ENABLED,
         )
         if arg in store_false_args:  # uses store_false, whereas all other boolean flags use store_true
             if value is True:
