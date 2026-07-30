@@ -17,6 +17,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import time
 from pathlib import Path
 from typing import Any
 
@@ -65,8 +66,15 @@ class DiagnosticsServer:
         self._app.router.add_static("/diagnostics/static/", STATIC_DIR, name="static")
 
     @property
-    def last_snapshot(self) -> dict[str, Any]:
-        """The most recent diagnostics snapshot (cheap, cached; used by /health)."""
+    def last_snapshot(self) -> dict[str, Any] | None:
+        """The most recent diagnostics snapshot (cheap, cached; used by /health).
+
+        Returns ``None`` when the cache is empty or the snapshot timestamp is
+        older than ``_refresh_interval`` seconds, indicating stale data.
+        """
+        ts = self._last_snapshot.get("timestamp")
+        if ts is None or (time.time() - ts) > self._refresh_interval:
+            return None
         return self._last_snapshot
 
     async def _handle_health(self, request: web.Request) -> web.Response:
