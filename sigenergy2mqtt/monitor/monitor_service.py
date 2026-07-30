@@ -215,7 +215,7 @@ class MonitorService(Device):
         if secs > 0 or not parts:
             parts.append(f"{secs}s")
 
-        return ", ".join(parts)
+        return " ".join(parts)
 
     async def _publish_health(self, mqtt_client: mqtt.Client, is_docker_env: bool) -> None:
         """Publishes the health status to the JSON file and MQTT.
