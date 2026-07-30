@@ -223,10 +223,6 @@ async def test_publish_health_includes_modbus_and_mqtt_connectivity(monkeypatch,
 
     await svc._publish_health(mqtt_client, is_docker_env=False)
 
-    assert svc._health_file.exists()
-    content = svc._health_file.read_text(encoding="utf-8")
-    assert '"modbus_connected": true' in content
-    assert '"mqtt_connected": true' in content
     assert any(t[0] == "sigenergy2mqtt/health/state" for t in mqtt_client.published)
     assert any(t[0] == "sigenergy2mqtt/health/attributes" for t in mqtt_client.published)
 
@@ -375,9 +371,6 @@ async def test_publish_health_considers_all_modbus_clients(monkeypatch, tmp_path
 
     await svc._publish_health(mqtt_client, is_docker_env=False)
 
-    content = svc._health_file.read_text(encoding="utf-8")
-    assert '"modbus_connected": false' in content
-    assert '"mqtt_connected": true' in content
     assert any(t[0] == "sigenergy2mqtt/health/state" for t in mqtt_client.published)
     assert any(t[0] == "sigenergy2mqtt/health/attributes" for t in mqtt_client.published)
 

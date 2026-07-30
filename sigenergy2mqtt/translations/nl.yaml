@@ -465,6 +465,8 @@ class:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Dagelijkse Ontlaadenergie
+  DiagnosticsService:
+    name: Diagnostiek
   DischargeCutOffSoC:
     attributes:
       source: Modbus-register {address}
@@ -2772,6 +2774,14 @@ cli:
     help: "Stel de methode in voor het berekenen van de Plant Verbruikt Vermogen sensor. Geldige waarden zijn: 'calculated', 'total' (Totaal Belastingsvermogen register), of 'general' (V2.8 Algemeen Belastingsvermogen register). De standaardwaarde is 'calculated'. Deze optie wordt genegeerd op firmware die ouder is dan de firmware die Modbus Protocol V2.8 ondersteunt."
   SIGENERGY2MQTT_DEBUG_SENSOR:
     help: 'Specificeer een sensor om te debuggen met de volledige of gedeeltelijke entiteit-ID of de sensorklassenaam (bijv. ''daily'' komt overeen met alle sensoren met ''daily'' in hun naam), of een reguliere expressie die vergeleken wordt met de entiteit-ID of sensorklassenaam (bijv. ''^PowerFactor$'' komt alleen overeen met de enkele klassenaam). Indien opgegeven, wordt --log-level ook geforceerd naar DEBUG.'
+  SIGENERGY2MQTT_DIAGNOSTICS_ENABLED:
+    help: Schakel de diagnostische webserver uit.
+  SIGENERGY2MQTT_DIAGNOSTICS_HOST:
+    help: 'Het adres waaraan de diagnostische webserver moet worden gekoppeld (standaard: 127.0.0.1)'
+  SIGENERGY2MQTT_DIAGNOSTICS_PORT:
+    help: 'De luisterpoort van de diagnostische webserver (standaard: 8502)'
+  SIGENERGY2MQTT_DIAGNOSTICS_REFRESH_INTERVAL:
+    help: 'Het vernieuwingsinterval van de diagnostische webpagina in seconden (standaard: 5.0)'
   SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX:
     help: 'Het voorvoegsel voor Home Assistant entiteitsnamen'
   SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX:

@@ -15,7 +15,6 @@ import sigenergy2mqtt.metrics.metrics_sensors as sensors
 from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import Device
-from sigenergy2mqtt.metrics import Metrics
 from sigenergy2mqtt.modbus import ModbusClient
 
 logger = logging.getLogger("sigenergy2mqtt")
@@ -87,14 +86,7 @@ class MetricsService(Device):
         self._add_sensor(sensors.ResetMetrics())
 
     def on_commencement(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client) -> None:
-        """
-        Initialise metrics timestamps and mark the service online.
-
-        :meth:`Metrics.commence` is called here rather than at import time so
-        that ``_started`` and ``sigenergy2mqtt_started`` reflect the actual
-        service start rather than the earlier module-load time.
-        """
-        Metrics.commence()
+        """Mark the service online."""
         logger.info(f"{self.log_identity} Commenced")
         mqtt_client.publish("sigenergy2mqtt/status", "online", qos=0, retain=True)
 

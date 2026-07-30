@@ -20,7 +20,6 @@ from sigenergy2mqtt.common import DeviceClass, Protocol, StateClass
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.config.models import RegisterAccess
 from sigenergy2mqtt.i18n import _t
-from sigenergy2mqtt.metrics import Metrics
 from sigenergy2mqtt.modbus import ModbusClient, ModbusDataType
 from sigenergy2mqtt.persistence import Category, state_store
 
@@ -826,15 +825,16 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         """
 
     async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool = False) -> bool:
-        """Publish sensor state to MQTT.
+        from sigenergy2mqtt.metrics import Metrics
+        """Publish the sensor state to MQTT.
 
         Args:
             mqtt_client: MQTT client for publishing
             modbus_client: Modbus client for reading values
-            republish: If True, republish last known state
-
+            republish: If True, republish last known state without re-reading
+            
         Returns:
-            True if successfully published
+            True if successfully published, False otherwise
         """
         if not self._should_attempt_publish():
             return False
@@ -865,6 +865,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         return should_publish
 
     async def _attempt_publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool) -> bool:
+        from sigenergy2mqtt.metrics import Metrics
         """Attempt to publish sensor state.
 
         Args:

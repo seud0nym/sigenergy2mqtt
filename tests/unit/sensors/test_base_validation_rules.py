@@ -203,7 +203,7 @@ class TestReadOnlySensorUpdateInternalState:
         mock_metrics.modbus_read = AsyncMock()
         mock_metrics.modbus_read_error = AsyncMock()
 
-        with patch("sigenergy2mqtt.sensors.base.readable.Metrics", mock_metrics):
+        with patch("sigenergy2mqtt.metrics.Metrics", mock_metrics):
             result = await s._update_internal_state(modbus_client=modbus)
         assert result is False
 
@@ -217,7 +217,7 @@ class TestReadOnlySensorUpdateInternalState:
         mock_metrics = MagicMock()
         mock_metrics.modbus_read = AsyncMock()
 
-        with patch("sigenergy2mqtt.sensors.base.readable.Metrics", mock_metrics):
+        with patch("sigenergy2mqtt.metrics.Metrics", mock_metrics):
             result = await s._update_internal_state(modbus_client=modbus)
         assert result is False
 
@@ -258,7 +258,7 @@ class TestReadOnlySensorUpdateInternalState:
         mock_metrics = MagicMock()
         mock_metrics.modbus_read = AsyncMock()
 
-        with patch("sigenergy2mqtt.sensors.base.readable.Metrics", mock_metrics):
+        with patch("sigenergy2mqtt.metrics.Metrics", mock_metrics):
             result = await s._update_internal_state(modbus_client=modbus)
         assert result is True
         modbus.read_input_registers.assert_called_once()
@@ -274,7 +274,7 @@ class TestReadOnlySensorUpdateInternalState:
         mock_metrics.modbus_read = AsyncMock()
         mock_metrics.modbus_read_error = AsyncMock()
 
-        with patch("sigenergy2mqtt.sensors.base.readable.Metrics", mock_metrics), pytest.raises(Exception, match="generic"):
+        with patch("sigenergy2mqtt.metrics.Metrics", mock_metrics), pytest.raises(Exception, match="generic"):
             await s._update_internal_state(modbus_client=modbus)
 
         mock_metrics.modbus_read_error.assert_awaited_once()
@@ -296,7 +296,7 @@ class TestReadOnlySensorUpdateInternalState:
         mock_metrics = MagicMock()
         mock_metrics.modbus_read = AsyncMock()
 
-        with patch("sigenergy2mqtt.sensors.base.readable.Metrics", mock_metrics), patch("sigenergy2mqtt.sensors.base.readable.logger") as mock_log:
+        with patch("sigenergy2mqtt.metrics.Metrics", mock_metrics), patch("sigenergy2mqtt.sensors.base.readable.logger") as mock_log:
             result = await s._update_internal_state(modbus_client=modbus)
         assert result is True
         mock_log.debug.assert_called()

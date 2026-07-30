@@ -87,7 +87,7 @@ class TestModbusClient:
         read_ahead.get_registers.return_value = mock_pdu
         client._read_ahead_pdu = {1: {100: read_ahead}}
 
-        with patch("sigenergy2mqtt.modbus.client.Metrics") as mock_metrics:
+        with patch("sigenergy2mqtt.metrics.Metrics") as mock_metrics:
             mock_metrics.modbus_cache_hits = AsyncMock()
 
             result = await client._read_registers(address=100, count=1, device_id=1, input_type=InputType.HOLDING, use_pre_read=True)
@@ -105,7 +105,7 @@ class TestModbusClient:
         read_ahead.get_registers.side_effect = IndexError("Out of range")
         client._read_ahead_pdu = {1: {100: read_ahead}}
 
-        with patch("sigenergy2mqtt.modbus.client.Metrics") as mock_metrics:
+        with patch("sigenergy2mqtt.metrics.Metrics") as mock_metrics:
             mock_metrics.modbus_cache_hits = AsyncMock()
             mock_metrics.modbus_read = AsyncMock()
 
@@ -122,7 +122,7 @@ class TestModbusClient:
     @pytest.mark.asyncio
     async def test_read_registers_no_cache(self, client, mock_pdu):
         """Test _read_registers without using pre-read cache."""
-        with patch("sigenergy2mqtt.modbus.client.Metrics") as mock_metrics:
+        with patch("sigenergy2mqtt.metrics.Metrics") as mock_metrics:
             mock_metrics.modbus_read = AsyncMock()
 
             with patch("pymodbus.client.AsyncModbusTcpClient.read_holding_registers", new_callable=AsyncMock) as mock_read:
@@ -139,7 +139,7 @@ class TestModbusClient:
     @pytest.mark.asyncio
     async def test_read_registers_input_type(self, client, mock_pdu):
         """Test _read_registers with INPUT input type."""
-        with patch("sigenergy2mqtt.modbus.client.Metrics") as mock_metrics:
+        with patch("sigenergy2mqtt.metrics.Metrics") as mock_metrics:
             mock_metrics.modbus_read = AsyncMock()
 
             with patch("pymodbus.client.AsyncModbusTcpClient.read_input_registers", new_callable=AsyncMock) as mock_read:
@@ -152,7 +152,7 @@ class TestModbusClient:
     @pytest.mark.asyncio
     async def test_read_registers_none_response(self, client):
         """Test _read_registers when response is None."""
-        with patch("sigenergy2mqtt.modbus.client.Metrics") as mock_metrics:
+        with patch("sigenergy2mqtt.metrics.Metrics") as mock_metrics:
             mock_metrics.modbus_read_error = AsyncMock()
 
             with patch("pymodbus.client.AsyncModbusTcpClient.read_holding_registers", new_callable=AsyncMock) as mock_read:
@@ -167,7 +167,7 @@ class TestModbusClient:
     @pytest.mark.asyncio
     async def test_read_registers_error_response(self, client, mock_error_pdu):
         """Test _read_registers with error response."""
-        with patch("sigenergy2mqtt.modbus.client.Metrics") as mock_metrics:
+        with patch("sigenergy2mqtt.metrics.Metrics") as mock_metrics:
             mock_metrics.modbus_read_error = AsyncMock()
 
             with patch("pymodbus.client.AsyncModbusTcpClient.read_holding_registers", new_callable=AsyncMock) as mock_read:
@@ -183,7 +183,7 @@ class TestModbusClient:
         """Test _read_registers when ModbusException is raised."""
         from pymodbus.exceptions import ModbusException
 
-        with patch("sigenergy2mqtt.modbus.client.Metrics") as mock_metrics:
+        with patch("sigenergy2mqtt.metrics.Metrics") as mock_metrics:
             mock_metrics.modbus_read_error = AsyncMock()
 
             with patch("pymodbus.client.AsyncModbusTcpClient.read_holding_registers", new_callable=AsyncMock) as mock_read:
@@ -197,7 +197,7 @@ class TestModbusClient:
     @pytest.mark.asyncio
     async def test_read_registers_unknown_input_type(self, client):
         """Test _read_registers with unknown input type."""
-        with patch("sigenergy2mqtt.modbus.client.Metrics"):
+        with patch("sigenergy2mqtt.metrics.Metrics"):
             with pytest.raises(Exception, match="Unknown input type"):
                 await client._read_registers(address=100, count=1, device_id=1, input_type="INVALID", use_pre_read=False)
 
@@ -224,7 +224,7 @@ class TestModbusClient:
     @pytest.mark.asyncio
     async def test_read_ahead_registers_stores_cache(self, client, mock_pdu):
         """Test read_ahead_registers stores response in cache."""
-        with patch("sigenergy2mqtt.modbus.client.Metrics") as mock_metrics:
+        with patch("sigenergy2mqtt.metrics.Metrics") as mock_metrics:
             mock_metrics.modbus_read = AsyncMock()
             mock_metrics.modbus_cache_fill = AsyncMock()
 
@@ -245,7 +245,7 @@ class TestModbusClient:
     @pytest.mark.asyncio
     async def test_read_ahead_registers_error_clears_cache(self, client, mock_error_pdu):
         """Test read_ahead_registers sets cache to None on error."""
-        with patch("sigenergy2mqtt.modbus.client.Metrics") as mock_metrics:
+        with patch("sigenergy2mqtt.metrics.Metrics") as mock_metrics:
             mock_metrics.modbus_read_error = AsyncMock()
 
             with patch("pymodbus.client.AsyncModbusTcpClient.read_input_registers", new_callable=AsyncMock) as mock_read:
@@ -284,7 +284,7 @@ class TestModbusClient:
         # Set up cache with None entry (bypassed)
         client._read_ahead_pdu = {1: {100: None}}
 
-        with patch("sigenergy2mqtt.modbus.client.Metrics") as mock_metrics:
+        with patch("sigenergy2mqtt.metrics.Metrics") as mock_metrics:
             mock_metrics.modbus_cache_hits = AsyncMock()
             mock_metrics.modbus_read = AsyncMock()
 

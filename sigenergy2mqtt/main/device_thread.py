@@ -162,7 +162,7 @@ def run_modbus_event_loop(
     asyncio.set_event_loop(loop)
     try:
         loop.run_until_complete(read_and_publish_device_sensors(config, loop, stop_event))
-    except (ValueError, TypeError, RuntimeError):
+    except (OSError, RuntimeError, TypeError, ValueError):
         logger.exception(f"{config.description} thread crashed !!!")
         if stop_event is not None:
             stop_event.set()

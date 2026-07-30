@@ -5,16 +5,16 @@ import json
 import logging
 import time
 from collections.abc import Awaitable
-from pathlib import Path
+from datetime import datetime
 from typing import Any
 
 import paho.mqtt.client as mqtt
 from paho.mqtt import MQTTException
 
 from sigenergy2mqtt.common import Protocol, service_health_registry
-from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.config.config import is_docker
+from sigenergy2mqtt.config import active_config, is_docker
 from sigenergy2mqtt.devices import Device
+from sigenergy2mqtt.diagnostics import diagnostics_registry
 from sigenergy2mqtt.modbus import ModbusClientFactory
 from sigenergy2mqtt.mqtt import MqttHandler, mqtt_health_registry, mqtt_setup, mqtt_teardown
 from sigenergy2mqtt.sensors.base import ReadableSensorMixin
@@ -44,7 +44,7 @@ class MonitorService(Device):
         self._topics: dict[str, MonitoredSensor] = {}
         self._health_state_topic = "sigenergy2mqtt/health/state"
         self._health_attributes_topic = "sigenergy2mqtt/health/attributes"
-        self._health_file = Path("/tmp/sigenergy2mqtt-health.json")
+        self._health_payload: dict[str, Any] = {"status": "unknown"}
         self._monitor_topic_updates = active_config.monitor_topic_updates
         self._current_status = "unknown"
         self._health_contributors: dict[str, bool] = {}
@@ -53,6 +53,28 @@ class MonitorService(Device):
         self._health_publish_interval = active_config.health_check.interval
         self._health_check_failures = 0
         self._started = time.monotonic()
+        self._last_published_at: float = 0.0  # 0 = never published; guaranteed stale until first _publish_health call
+        diagnostics_registry.register("monitor", self._diagnostics_collect)
+
+    async def _diagnostics_collect(self) -> dict[str, Any]:
+        """Diagnostics provider callback: exposes the latest health payload.
+
+        Registered with the ``diagnostics_registry`` so the web dashboard,
+        WebSocket feed, and JSON export all surface this without the web
+        layer needing any knowledge of MQTT/Modbus/health-check internals.
+
+        If the monitor loop has stopped or hung — detected by ``_last_published_at``
+        being older than two ``_health_publish_interval`` periods — the cached
+        payload's status is overridden with ``"unknown"`` so a dead monitor is
+        not falsely reported as healthy.
+        """
+        payload = dict(self._health_payload)
+        age = time.monotonic() - self._last_published_at
+        if age > 2 * self._health_publish_interval:
+            payload["status"] = "unknown"
+            payload["stale"] = True
+        payload["monitored_topics"] = len(self._topics)
+        return payload
 
     async def _monitor(self, mqtt_client: mqtt.Client) -> None:
         """Check for overdue topics and log warning/recovery events.
@@ -85,11 +107,11 @@ class MonitorService(Device):
             finally:
                 self.sleeper_task = None
 
-    def _check_modbus(self) -> bool:
+    def _check_modbus(self) -> tuple[bool, int]:
         """Checks that all Modbus Client instances are connected"""
         clients = ModbusClientFactory._clients.values()
         if not clients:
-            return False
+            return False, 0
         now = time.monotonic()
         modbus_healthy_connections = 0
         for client in clients:
@@ -102,13 +124,13 @@ class MonitorService(Device):
             else:
                 logger.debug(f"{self.log_identity} Modbus connection {cid} healthy (connected {health.connect_count}x)")
                 modbus_healthy_connections += 1
-        return bool(modbus_healthy_connections == len(clients))
+        return bool(modbus_healthy_connections == len(clients)), len(clients)
 
-    def _check_mqtt(self, mqtt_client: mqtt.Client) -> bool:
+    def _check_mqtt(self, mqtt_client: mqtt.Client) -> tuple[bool, int]:
         """Checks that all MQTT client connections are healthy"""
         mqtt_snapshot = mqtt_health_registry.snapshot()
         if not mqtt_snapshot:
-            return False
+            return False, 0
         now = time.monotonic()
         mqtt_healthy_connections = 0
         for cid, health in mqtt_snapshot.items():
@@ -130,7 +152,7 @@ class MonitorService(Device):
                     else:
                         logger.debug(f"{self.log_identity} MQTT Client ID {cid} healthy (connected {health.connect_count}x)")
                 mqtt_healthy_connections += 1
-        return bool(mqtt_healthy_connections == len(mqtt_snapshot))
+        return bool(mqtt_healthy_connections == len(mqtt_snapshot)), len(mqtt_snapshot)
 
     def _check_service_health(self) -> tuple[bool, dict[str, bool]]:
         """Evaluate optional service health contributors."""
@@ -173,6 +195,28 @@ class MonitorService(Device):
                 logger.warning(f"{self.log_identity} '{sensor.name}' has not been seen for {sensor.overdue}s (scan_interval={sensor.scan_interval}s {topic=})")
         return len(overdue)
 
+    def _format_uptime(self, seconds: float) -> str:
+        """Convert uptime in seconds to a human-readable string."""
+        if seconds < 0:
+            return "Invalid uptime"
+
+        days = int(seconds // 86400)
+        hours = int((seconds % 86400) // 3600)
+        minutes = int((seconds % 3600) // 60)
+        secs = int(seconds % 60)
+
+        parts = []
+        if days > 0:
+            parts.append(f"{days}d")
+        if hours > 0:
+            parts.append(f"{hours}h")
+        if minutes > 0:
+            parts.append(f"{minutes}m")
+        if secs > 0 or not parts:
+            parts.append(f"{secs}s")
+
+        return ", ".join(parts)
+
     async def _publish_health(self, mqtt_client: mqtt.Client, is_docker_env: bool) -> None:
         """Publishes the health status to the JSON file and MQTT.
 
@@ -182,14 +226,15 @@ class MonitorService(Device):
         """
         is_enabled = active_config.health_check.enabled or is_docker_env
         if not is_enabled:
+            self._health_payload = {"status": "disabled"}
             if self._monitor_topic_updates:
                 await self._check_topic_health()
             return
 
         # Sync checks: fast lock-protected snapshots, not interruptible by asyncio.timeout
         # but cannot stall meaningfully, so no executor needed.
-        modbus_connected = self._check_modbus()
-        mqtt_connected = self._check_mqtt(mqtt_client)
+        modbus_connected, modbus_connections = self._check_modbus()
+        mqtt_connected, mqtt_connections = self._check_mqtt(mqtt_client)
         services_healthy, service_contributors = self._check_service_health()
         try:
             async with asyncio.timeout(active_config.health_check.timeout):
@@ -210,16 +255,23 @@ class MonitorService(Device):
 
         payload = {
             "status": status,
-            "mqtt_connected": mqtt_connected,
+            "timestamp": datetime.now().astimezone().isoformat(sep=" ", timespec="seconds"),
+            "uptime": self._format_uptime(time.monotonic() - self._started),
+            "modbus_connections": modbus_connections,
             "modbus_connected": modbus_connected,
-            "overdue_topics": overdue_count,
+            "mqtt_connections": mqtt_connections,
+            "mqtt_connected": mqtt_connected,
             "monitored_topics": len(self._topics),
-            "service_health": service_contributors,
-            "timestamp": int(time.time()),
+            "overdue_topics": overdue_count,
+            "services_healthy": services_healthy,
         }
+        if len(service_contributors) > 0:
+            payload["services_monitored"] = len(service_contributors)
+            for key, value in service_contributors.items():
+                payload[f"service_{key}_healthy"] = value
+        self._last_published_at = time.monotonic()
+        self._health_payload = payload
         try:
-            self._health_file.write_text(json.dumps(payload), encoding="utf-8")
-            logger.debug(f"{self.log_identity} Published health payload to {self._health_file}")
             if mqtt_client:
                 mqtt_client.publish(self._health_state_topic, status, qos=1, retain=True)
                 mqtt_client.publish(self._health_attributes_topic, json.dumps(payload), qos=1, retain=True)
@@ -285,24 +337,8 @@ class MonitorService(Device):
 
     @classmethod
     async def clean(cls) -> None:
-        """Clean up the monitor service."""
-        # Remove any health file matching the pattern in /tmp recursively
-        tmp_dir = Path("/tmp")
-        for health_file in tmp_dir.rglob("*health.json*"):
-            try:
-                logger.debug(f"MonitorService: Removing health file {health_file}")
-                health_file.unlink(missing_ok=True)
-                logger.info(f"MonitorService: Health file {health_file} removed successfully")
-            except OSError as exc:
-                logger.error(f"MonitorService: Failed to remove health file {health_file}: {exc}")
-        # Proceed with MQTT topic cleanup as before
+        """Clean up the monitor service (clears retained MQTT health topics)."""
         service = cls([])
-        try:
-            logger.debug(f"MonitorService: Removing health file {service._health_file}")
-            service._health_file.unlink(missing_ok=True)
-            logger.info(f"MonitorService: Health file {service._health_file} removed successfully")
-        except OSError as exc:
-            logger.error(f"MonitorService: Failed to remove health file {service._health_file}: {exc}")
         try:
             client_id = f"{active_config.mqtt.client_id_prefix}_Monitor"
             client, handler = await mqtt_setup(client_id, None, asyncio.get_running_loop())

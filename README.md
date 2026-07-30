@@ -1,4 +1,4 @@
-<img src="https://github.com/seud0nym/sigenergy2mqtt/raw/main/resources/logo.png" alt="sigenergy2mqtt" height="50"><br>
+<img src="https://github.com/seud0nym/sigenergy2mqtt/raw/main/sigenergy2mqtt/diagnostics/static/logo.png" alt="sigenergy2mqtt" height="50"><br>
 
 ![Dynamic YAML Badge](https://img.shields.io/badge/dynamic/yaml?url=https%3A%2F%2Fraw.githubusercontent.com%2Fseud0nym%2Fhome-assistant-addons%2Frefs%2Fheads%2Fmain%2Fsigenergy2mqtt%2Fconfig.yaml&query=%24.version&prefix=v&label=app)
 [![Docker Image Version](https://img.shields.io/github/v/tag/seud0nym/sigenergy2mqtt?sort=date&filter=!*a*&label=docker)](https://hub.docker.com/r/seud0nym/sigenergy2mqtt)

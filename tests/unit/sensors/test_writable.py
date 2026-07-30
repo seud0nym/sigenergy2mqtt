@@ -27,7 +27,7 @@ def mock_config_all():
 
 @pytest.fixture(autouse=True)
 def mock_metrics():
-    with patch("sigenergy2mqtt.sensors.base.Metrics") as mock:
+    with patch("sigenergy2mqtt.metrics.Metrics") as mock:
         mock.modbus_read = AsyncMock()
         mock.modbus_write = AsyncMock()
         mock.modbus_read_error = AsyncMock()

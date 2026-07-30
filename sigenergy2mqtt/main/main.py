@@ -17,10 +17,11 @@ from pymodbus.exceptions import ModbusException
 from pymodbus.pdu import ModbusPDU
 
 from sigenergy2mqtt.common import Constants, ConsumptionMethod, FirmwareVersion, HybridInverter, InputType, Protocol, ProtocolApplies, PVInverter, service_health_registry
-from sigenergy2mqtt.config import active_config, configure_root_logging, initialize_async
+from sigenergy2mqtt.config import active_config, configure_root_logging, initialize_async, is_docker
 from sigenergy2mqtt.devices import PID, PSS, ACCharger, DCCharger, Device, Inverter, PowerPlant, bind_cross_device_sensors
+from sigenergy2mqtt.diagnostics import DiagnosticsService
 from sigenergy2mqtt.influxdb import get_influxdb_services
-from sigenergy2mqtt.metrics.metrics_service import Metrics, MetricsService
+from sigenergy2mqtt.metrics import Metrics, MetricsService
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.monitor import MonitorService
 from sigenergy2mqtt.mqtt import interrupt_mqtt_reconnection, mqtt_health_registry, reset_mqtt_reconnection_interrupt
@@ -573,6 +574,10 @@ def setup_services(configs: list[ThreadConfig], protocol_version: Protocol | Non
 
     svc_thread_cfg = ThreadConfig.create(name="Services", host=None, port=None)
 
+    if active_config.diagnostics.enabled or is_docker():
+        svc_thread_cfg.add_device(DiagnosticsService())
+
+    Metrics.commence()
     if active_config.metrics_enabled:
         svc_thread_cfg.add_device(MetricsService(protocol_version if protocol_version is not None else Protocol.N_A))
 

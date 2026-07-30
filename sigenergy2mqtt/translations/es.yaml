@@ -465,6 +465,8 @@ class:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
     name: Energía de Descarga Diaria
+  DiagnosticsService:
+    name: Diagnóstico
   DischargeCutOffSoC:
     attributes:
       source: Registro Modbus {address}
@@ -2772,6 +2774,14 @@ cli:
     help: "Establecer el método de cálculo del sensor de Potencia Consumida de la Planta. Valores válidos son: 'calculated', 'total' (registro de Potencia de Carga Total), o 'general' (registro de Potencia de Carga General V2.8). El predeterminado es 'calculated'. Esta opción se ignora en firmware anterior al que soporta el Protocolo Modbus V2.8."
   SIGENERGY2MQTT_DEBUG_SENSOR:
     help: Especificar un sensor para depurar usando el ID de entidad completo o parcial o el nombre de clase del sensor (ej. especificar 'daily' coincidiría con todos los sensores con 'daily' en su nombre), o una expresión regular para coincidir con el ID de entidad o nombre de clase (ej. '^PowerFactor$' solo coincide con ese nombre de clase). Si se especifica, --log-level también se fuerza a DEBUG.
+  SIGENERGY2MQTT_DIAGNOSTICS_ENABLED:
+    help: Deshabilite el servidor web de diagnóstico.
+  SIGENERGY2MQTT_DIAGNOSTICS_HOST:
+    help: 'La dirección a la que se vinculará el servidor web de diagnóstico (predeterminado: 127.0.0.1)'
+  SIGENERGY2MQTT_DIAGNOSTICS_PORT:
+    help: 'El puerto de escucha del servidor web de diagnóstico (predeterminado: 8502)'
+  SIGENERGY2MQTT_DIAGNOSTICS_REFRESH_INTERVAL:
+    help: 'El intervalo de actualización de la página web de diagnóstico en segundos (predeterminado: 5,0)'
   SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX:
     help: "El prefijo para nombres de entidad de Home Assistant. Ejemplo: Un prefijo 'prefix' antepondrá 'prefix ' a los nombres (predeterminado: '')"
   SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX:

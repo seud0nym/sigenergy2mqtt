@@ -15,7 +15,6 @@ from pymodbus.pdu import ExceptionResponse, ModbusPDU
 
 from sigenergy2mqtt.common import Constants, DeviceClass, InputType
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.metrics import Metrics
 from sigenergy2mqtt.modbus import ModbusClient, ModbusDataType
 
 from .constants import (
@@ -398,6 +397,7 @@ class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
             logger.warning(f"{self.log_identity} Modbus write failed to acquire lock within {max_wait}s")
             return False
         except ModbusException as e:
+            from sigenergy2mqtt.metrics import Metrics
             logger.error(f"{self.log_identity} write_registers: {e!r}")
             await Metrics.modbus_write_error()
             raise
@@ -447,6 +447,7 @@ class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
         elapsed = time.monotonic() - start
 
         # Record metrics
+        from sigenergy2mqtt.metrics import Metrics
         await Metrics.modbus_write(len(registers), elapsed)
 
         if self.debug_logging:

@@ -25,6 +25,8 @@ thread and the asyncio loop can access it concurrently without races:
 immediately visible across threads without relying on the GIL.
 """
 
+from __future__ import annotations
+
 import asyncio
 import concurrent.futures
 import inspect
@@ -33,13 +35,15 @@ import threading
 import time
 from collections import namedtuple
 from collections.abc import Callable, Coroutine
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import paho.mqtt.client as mqtt
 from paho.mqtt.enums import MQTTErrorCode
 
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.modbus import ModbusClient
+
+if TYPE_CHECKING:
+    from sigenergy2mqtt.modbus import ModbusClient
 
 from .registry import MqttHealthRegistry
 
@@ -311,7 +315,7 @@ class MqttHandler:
     # Public API
     # ------------------------------------------------------------------
 
-    def register(self, client: mqtt.Client, topic: str, handler: Callable[[ModbusClient | None, mqtt.Client, str, str, "MqttHandler"], Coroutine[Any, Any, bool]]) -> tuple[MQTTErrorCode, int | None]:
+    def register(self, client: mqtt.Client, topic: str, handler: Callable[[ModbusClient | None, mqtt.Client, str, str, MqttHandler], Coroutine[Any, Any, bool]]) -> tuple[MQTTErrorCode, int | None]:
         """Register a handler for *topic* and subscribe to it on the broker.
 
         Multiple handlers may be registered for the same topic; they are

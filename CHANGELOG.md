@@ -8,6 +8,7 @@
 - Health monitoring of InfluxDB writes and PVOutput uploads (if these services are enabled)
 - Added new monitorable state property to allow health monitoring to be disabled for specific sensors via sensor overrides
 - Added new derived sensor for battery status ('Charging', 'Discharging', 'Full', 'Empty', 'Cutoff', 'Idle', and 'Unknown')
+- Added new diagnostics and health-monitoring web-server endpoint available at http://[IP_ADDRESS]/diagnostics
 
 ### Fixed
 
@@ -22,6 +23,7 @@
 ### Changed
 
 - Health monitoring of topic updates are now enabled by default (previously only enabled during debugging)
+- Docker health checks now use the new diagnostics and health-monitoring web-server endpoint (http://127.0.0.1:8502/health)
 - Upgraded `pymodbus` from 3.13.1 to 3.14.0
 
 ---

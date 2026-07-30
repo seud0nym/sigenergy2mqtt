@@ -539,6 +539,26 @@ properties:
         default: 3
         minimum: 1
 
+  diagnostics:
+    type: object
+    additionalProperties: false
+    properties:
+      enabled:
+        type: boolean
+        default: true
+      host:
+        type: string
+        default: "127.0.0.1"
+      port:
+        type: integer
+        default: 8502
+        minimum: 1
+        maximum: 65535
+      refresh-interval:
+        type: number
+        default: 5.0
+        exclusiveMinimum: 0
+
   # Pydantic internal
   modbus-auto-discovery: {type: [string, "null"]}
   modbus-auto-discovery-exclude: { type: array, items: { type: string }, default: [ "PID", "PSS" ] }

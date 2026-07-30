@@ -18,7 +18,7 @@ from collections.abc import Callable
 from concurrent.futures import Future, ThreadPoolExecutor, wait
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import ClassVar
+from typing import Any, ClassVar
 
 from sigenergy2mqtt.config import active_config
 
@@ -251,45 +251,51 @@ class Metrics:
     @classmethod
     @asynccontextmanager
     async def lock(cls, timeout: float | None = 1.0):
+        """Async context manager that acquires threading.Lock without blocking the event loop.
+
+        Cancellation-safe: if a ``CancelledError`` is raised while the thread-pool
+        worker is blocked inside ``threading.Lock.acquire``, the worker may still
+        acquire the lock after the coroutine has been unwound.  A ``threading.Event``
+        is used to signal the result back to the ``finally`` block so that the lock
+        is always released, preventing permanent deadlocks across restart cycles.
         """
-        Async context manager that acquires the internal :class:`threading.Lock`.
+        timeout_arg = -1.0 if timeout is None else timeout
 
-        ``threading.Lock`` is used deliberately: this app runs one asyncio
-        event loop per thread, so an ``asyncio.Lock`` would be loop-bound and
-        unsafe across threads (modbus and InfluxDB writers run in separate
-        threads). The GIL ensures that the non-blocking ``acquire(timeout=…)``
-        call is safe to issue from any thread without stalling the event loop.
+        # Use a threading.Event to capture whether the thread-pool worker actually
+        # acquired the lock.  This lets the finally block release it even when a
+        # CancelledError interrupts the await before the worker finishes.
+        acquire_result: list[bool] = [False]
+        done_event = threading.Event()
 
-        Args:
-            timeout: Maximum seconds to wait for the lock. Raises
-                :class:`TimeoutError` if the lock cannot be acquired in time.
-                Pass ``None`` to wait indefinitely.
+        def _acquire_with_signal() -> bool:
+            result = cls._lock.acquire(timeout=timeout_arg)
+            acquire_result[0] = result
+            done_event.set()
+            return result
 
-        Raises:
-            TimeoutError: When ``timeout`` is set and the lock is not acquired
-                within that period.
-        """
-        acquired: bool = False
         try:
-            if timeout is None:
-                acquired = cls._lock.acquire()
-            else:
-                acquired = cls._lock.acquire(timeout=timeout)
-                if not acquired:
-                    raise TimeoutError("Failed to acquire Metrics lock within the timeout period.")
+            acquired = await asyncio.to_thread(_acquire_with_signal)
+        except asyncio.CancelledError:
+            # The await was cancelled but the thread may still be running.
+            # Block (briefly, without holding the event loop) until the thread
+            # finishes so we know whether it acquired the lock.
+            await asyncio.to_thread(done_event.wait)
+            if acquire_result[0]:
+                cls._lock.release()
+            raise
+
+        if not acquired:
+            raise TimeoutError("Failed to acquire Metrics lock within the timeout period.")
+
+        try:
             yield
         finally:
-            if acquired:
-                cls._lock.release()
+            cls._lock.release()
 
     @classmethod
     def commence(cls) -> None:
         """
-        Initialise time-sensitive fields at actual service start.
-
-        Must be called from the service ``on_commencement`` handler so that
-        ``_started`` and ``sigenergy2mqtt_started`` reflect the real service
-        start time rather than the earlier module-import time.
+        Initialise time-sensitive fields and diagnostics collection.
 
         This is intentionally synchronous. It is called before any async
         workers are running, so no lock is required — direct assignment is
@@ -300,6 +306,83 @@ class Metrics:
         """
         cls._started = time.monotonic()
         cls.sigenergy2mqtt_started = datetime.now().astimezone().isoformat()
+
+        from sigenergy2mqtt.diagnostics.registry import diagnostics_registry
+
+        diagnostics_registry.register("modbus", cls._diagnostics_collect_modbus)
+        diagnostics_registry.register("mqtt", cls._diagnostics_collect_mqtt)
+        diagnostics_registry.register("persistence", cls._diagnostics_collect_state_store)
+        if active_config.influxdb.enabled:
+            diagnostics_registry.register("influxdb", cls._diagnostics_collect_influxdb)
+        if active_config.pvoutput.enabled:
+            diagnostics_registry.register("pvoutput", cls._diagnostics_collect_pvoutput)
+
+    @classmethod
+    async def _diagnostics_collect_modbus(cls) -> dict[str, Any]:
+        """Diagnostics provider callback: exposes the latest Modbus metric."""
+        async with cls.lock(timeout=1.0):
+            return {
+                "cache_hits_percent": cls.sigenergy2mqtt_modbus_cache_hit_percentage,
+                "physical_reads_percent": cls.sigenergy2mqtt_modbus_physical_read_percentage,
+                "read_max_ms": cls.sigenergy2mqtt_modbus_read_max,
+                "read_mean_ms": cls.sigenergy2mqtt_modbus_read_mean,
+                "read_min_ms": cls.sigenergy2mqtt_modbus_read_min if cls.sigenergy2mqtt_modbus_read_min != float("inf") else 0.0,
+                "read_errors": cls.sigenergy2mqtt_modbus_read_errors,
+                "write_max_ms": cls.sigenergy2mqtt_modbus_write_max,
+                "write_mean_ms": cls.sigenergy2mqtt_modbus_write_mean,
+                "write_min_ms": cls.sigenergy2mqtt_modbus_write_min if cls.sigenergy2mqtt_modbus_write_min != float("inf") else 0.0,
+                "write_errors": cls.sigenergy2mqtt_modbus_write_errors,
+                "skipped_errors": cls.sigenergy2mqtt_modbus_skipped_errors,
+            }
+
+    @classmethod
+    async def _diagnostics_collect_mqtt(cls) -> dict[str, Any]:
+        """Diagnostics provider callback: exposes the latest MQTT metrics."""
+        async with cls.lock(timeout=1.0):
+            return {
+                "publish_failures": cls.sigenergy2mqtt_mqtt_publish_failures,
+                "physical_publishes_percent": cls.sigenergy2mqtt_mqtt_physical_publish_percentage,
+            }
+
+    @classmethod
+    async def _diagnostics_collect_influxdb(cls) -> dict[str, Any]:
+        """Diagnostics provider callback: exposes the latest InfluxDB metrics."""
+        async with cls.lock(timeout=1.0):
+            return {
+                "write_errors": cls.sigenergy2mqtt_influxdb_write_errors,
+                "write_max_ms": cls.sigenergy2mqtt_influxdb_write_max,
+                "write_mean_ms": cls.sigenergy2mqtt_influxdb_write_mean,
+                "write_min_ms": cls.sigenergy2mqtt_influxdb_write_min if cls.sigenergy2mqtt_influxdb_write_min != float("inf") else 0.0,
+                "query_errors": cls.sigenergy2mqtt_influxdb_query_errors,
+                "retries": cls.sigenergy2mqtt_influxdb_retries,
+                "rate_limit_waits": cls.sigenergy2mqtt_influxdb_rate_limit_waits,
+            }
+
+    @classmethod
+    async def _diagnostics_collect_state_store(cls) -> dict[str, Any]:
+        """Diagnostics provider callback: exposes the latest StateStore metrics."""
+        async with cls.lock(timeout=1.0):
+            return {
+                "save_max_ms": cls.sigenergy2mqtt_state_store_save_max,
+                "save_mean_ms": cls.sigenergy2mqtt_state_store_save_mean,
+                "save_min_ms": cls.sigenergy2mqtt_state_store_save_min if cls.sigenergy2mqtt_state_store_save_min != float("inf") else 0.0,
+                "load_hits_percent": cls.sigenergy2mqtt_state_store_load_hit_percentage,
+                "save_errors": cls.sigenergy2mqtt_state_store_save_errors,
+                "load_errors": cls.sigenergy2mqtt_state_store_load_errors,
+                "delete_errors": cls.sigenergy2mqtt_state_store_delete_errors,
+            }
+
+    @classmethod
+    async def _diagnostics_collect_pvoutput(cls) -> dict[str, Any]:
+        """Diagnostics provider callback: exposes the latest PVOutput metrics."""
+        async with cls.lock(timeout=1.0):
+            return {
+                "upload_errors": cls.sigenergy2mqtt_pvoutput_upload_errors,
+                "upload_skipped": cls.sigenergy2mqtt_pvoutput_upload_skipped,
+                "upload_max_ms": cls.sigenergy2mqtt_pvoutput_upload_max,
+                "upload_mean_ms": cls.sigenergy2mqtt_pvoutput_upload_mean,
+                "upload_min_ms": cls.sigenergy2mqtt_pvoutput_upload_min if cls.sigenergy2mqtt_pvoutput_upload_min != float("inf") else None,
+            }
 
     @classmethod
     def _metrics_enabled(cls) -> bool:
@@ -331,20 +414,19 @@ class Metrics:
     @classmethod
     def _update_with_lock(cls, operation: Callable[[], None], warning: str) -> None:
         """Run a metric update while holding the class lock."""
-        acquired = False
-        try:
-            if not cls._metrics_enabled():
-                return
+        if not cls._metrics_enabled():
+            return
 
-            acquired = cls._lock.acquire(timeout=1)
-            if not acquired:
+        try:
+            # Standard synchronous lock for regular methods
+            if not cls._lock.acquire(timeout=1.0):
                 raise TimeoutError("Failed to acquire Metrics lock within the timeout period.")
-            operation()
+            try:
+                operation()
+            finally:
+                cls._lock.release()
         except (ArithmeticError, LookupError, OSError, ReferenceError, RuntimeError, TimeoutError, TypeError, ValueError) as exc:
             logger.warning(f"Error during {warning}: {exc!r}")
-        finally:
-            if acquired:
-                cls._lock.release()
 
     @classmethod
     async def drain(cls, timeout: float | None = 1.0) -> None:

@@ -13,7 +13,6 @@ from typing import Any, cast
 
 from sigenergy2mqtt.common import PERCENTAGE, DeviceClass, Protocol, ProtocolApplies
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.modbus import ModbusLockFactory
 from sigenergy2mqtt.sensors.base import DiscoveryKeys, ReadableSensorMixin, WriteOnlySensor
 
 from .metrics import Metrics
@@ -381,6 +380,7 @@ class ModbusActiveLocks(MetricsSensor):
         )
 
     async def _update_internal_state(self, **kwargs) -> bool:
+        from sigenergy2mqtt.modbus import ModbusLockFactory
         value = ModbusLockFactory.get_waiter_count()
         self.set_latest_state(value)
         return True

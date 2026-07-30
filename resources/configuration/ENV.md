@@ -171,4 +171,14 @@ Environment variables override the configuration file, but *not* command line op
 | `SIGENERGY2MQTT_HEALTH_CHECK_RETRIES` | Number of consecutive health check failures allowed before a restart is requested. (default: `3`) [<sup>(More…)</sup>](README.md#opt_health_check_retries) | 2026.6.28 |
 
 
+## Diagnostics Configuration Variables
+
+| Name | Description | Since |
+|------|-------------|-------|
+| `SIGENERGY2MQTT_DIAGNOSTICS_ENABLED` | Set to `false` to disable the diagnostics and health check web server. Note: If running  within Docker, this flag is ignored and treated as true. [<sup>(More…)</sup>](README.md#opt_diagnostics_enabled) | 2026.7.29 |
+| `SIGENERGY2MQTT_DIAGNOSTICS_HOST` | The address to which the diagnostics and health check web server is to be bound. (default: `127.0.0.1`) [<sup>(More…)</sup>](README.md#opt_diagnostics_host) | 2026.7.29 |
+| `SIGENERGY2MQTT_DIAGNOSTICS_PORT` | The diagnostics and health check web server listening port. (default: `8502`) Note: If running  within Docker, this setting is ignored and always uses the default.[<sup>(More…)</sup>](README.md#opt_diagnostics_port) | 2026.7.29 |
+| `SIGENERGY2MQTT_DIAGNOSTICS_REFRESH_INTERVAL` | The diagnostics and health check web page refresh interval in seconds. Must be greater than `0`. (default: `5.0`) [<sup>(More…)</sup>](README.md#opt_diagnostics_refresh_interval) | 2026.7.29 |
+
+
 

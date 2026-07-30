@@ -247,6 +247,15 @@ class EnvSettingsSource(PydanticBaseSettingsSource):
         if health_check:
             result["health_check"] = health_check
 
+        # ── Diagnostics ──────────────────────────────────────────────────────
+        diagnostics: dict[str, Any] = {}
+        _set(diagnostics, "enabled", _bool(g(const.SIGENERGY2MQTT_DIAGNOSTICS_ENABLED)))
+        _set(diagnostics, "host", g(const.SIGENERGY2MQTT_DIAGNOSTICS_HOST))
+        _set(diagnostics, "port", _int(g(const.SIGENERGY2MQTT_DIAGNOSTICS_PORT)))
+        _set(diagnostics, "refresh_interval", _float(g(const.SIGENERGY2MQTT_DIAGNOSTICS_REFRESH_INTERVAL)))
+        if diagnostics:
+            result["diagnostics"] = diagnostics
+
         # ── Auto-discovery ───────────────────────────────────────────────────
         result.update(_auto_discovery_env_values(g, include_modbus_port=True))
 

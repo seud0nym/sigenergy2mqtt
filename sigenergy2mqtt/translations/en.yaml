@@ -465,6 +465,8 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Daily Discharge Energy
+  DiagnosticsService:
+    name: Diagnostics
   DischargeCutOffSoC:
     attributes:
       source: Modbus Register {address}
@@ -2772,6 +2774,14 @@ cli:
     help: "Set the method of calculating the Plant Consumed Power sensor. Valid values are: 'calculated', 'total' (Total Load Power register), or 'general' (V2.8 General Load Power register). The default is 'total'. This option is ignored on firmware earlier than that supporting Modbus Protocol V2.8."
   SIGENERGY2MQTT_DEBUG_SENSOR:
     help: Specify a sensor to be debugged using either the full or partial entity id or sensor class name (e.g. specifying 'daily' would match all sensors with daily in their entity name), or a regular expression to be matched against the entity id or sensor class name (e.g. '^PowerFactor$' only matches the single class name). If specified, --log-level is also forced to DEBUG.
+  SIGENERGY2MQTT_DIAGNOSTICS_ENABLED:
+    help: Disable the diagnostics web server.
+  SIGENERGY2MQTT_DIAGNOSTICS_HOST:
+    help: 'The address to which the diagnostics web server is to be bound (default: 127.0.0.1)'
+  SIGENERGY2MQTT_DIAGNOSTICS_PORT:
+    help: 'The diagnostics web server listening port (default: 8502)'
+  SIGENERGY2MQTT_DIAGNOSTICS_REFRESH_INTERVAL:
+    help: 'The diagnostics web page refresh interval in seconds (default: 5.0)'
   SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX:
     help: "The prefix to use for Home Assistant entity names. Example: A prefix of 'prefix' will prepend 'prefix ' to names (default: '')"
   SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX:

@@ -29,6 +29,7 @@ from sigenergy2mqtt.config.merge import (
     propagate_to_all_devices,
 )
 from sigenergy2mqtt.config.models import (
+    DiagnosticsConfig,
     HealthCheckConfig,
     HomeAssistantConfig,
     InfluxDbConfig,
@@ -165,6 +166,7 @@ class Settings(BaseSettings):
     persistence: PersistenceConfig = Field(default_factory=PersistenceConfig, alias="persistence")  # type: ignore[reportCallIssue]
     pvoutput: PvOutputConfig = Field(default_factory=PvOutputConfig)  # type: ignore[reportCallIssue]
     influxdb: InfluxDbConfig = Field(default_factory=InfluxDbConfig)  # type: ignore[reportCallIssue]
+    diagnostics: DiagnosticsConfig = Field(default_factory=DiagnosticsConfig, alias="diagnostics")  # type: ignore[reportCallIssue]
     modbus: list[ModbusConfig] = Field(default_factory=list)
 
     sensor_overrides: dict[str, Any] = Field(default_factory=dict, alias="sensor-overrides")
@@ -184,6 +186,8 @@ class Settings(BaseSettings):
 
         # 1. Merge negated YAML/kebab keys to their positive snake_case field names
         negated_mapping = {
+            "no-diagnostics": "diagnostics.enabled",
+            "no_diagnostics": "diagnostics.enabled",
             "no-ems-mode-check": "ems_mode_check",
             "no_ems_mode_check": "ems_mode_check",
             "no-metrics": "metrics_enabled",

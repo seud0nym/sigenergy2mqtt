@@ -10,7 +10,7 @@ from sigenergy2mqtt.common.status_field import StatusField
 from sigenergy2mqtt.common.voltage_source import VoltageSource
 
 from . import cli, const
-from .config import Config, ConfigurationError, _create_persistent_state_path, _swap_active_config, active_config, configure_root_logging
+from .config import Config, ConfigurationError, _create_persistent_state_path, _swap_active_config, active_config, configure_root_logging, is_docker
 from .settings import Settings
 
 __all__ = [
@@ -26,6 +26,7 @@ __all__ = [
     "configure_root_logging",
     "initialize",
     "initialize_async",
+    "is_docker",
 ]
 
 logger = logging.getLogger("sigenergy2mqtt")
@@ -79,6 +80,7 @@ def _promote_cli_to_env(args) -> None:
             const.SIGENERGY2MQTT_PVOUTPUT_HEALTH_MONITORING,
             const.SIGENERGY2MQTT_INFLUX_HEALTH_MONITORING,
             const.SIGENERGY2MQTT_PERSISTENCE_MQTT_REDUNDANCY,
+            const.SIGENERGY2MQTT_DIAGNOSTICS_ENABLED,
         )
         if arg in store_false_args:  # uses store_false, whereas all other boolean flags use store_true
             if value is True:
