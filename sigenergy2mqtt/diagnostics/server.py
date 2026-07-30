@@ -77,12 +77,24 @@ class DiagnosticsServer:
             return None
         return self._last_snapshot
 
+    async def _fresh_snapshot(self) -> dict[str, Any]:
+        """Return a fresh diagnostics snapshot.
+
+        Uses the cached ``_last_snapshot`` when it is still within
+        ``_refresh_interval``; otherwise fetches a new snapshot from the
+        registry, stores it in the cache, and returns it.
+        """
+        snapshot = self.last_snapshot
+        if snapshot is None:
+            snapshot = self._last_snapshot = await diagnostics_registry.snapshot()
+        return snapshot
+
     async def _handle_health(self, request: web.Request) -> web.Response:
         """Fast health probe. Reuses the cached snapshot rather than recomputing
         checks synchronously — the HTTP round-trip itself already proves the
         event loop is alive and responsive.
         """
-        snapshot = self._last_snapshot or await diagnostics_registry.snapshot()
+        snapshot = await self._fresh_snapshot()
         monitor = snapshot.get("monitor", {})
         status = monitor.get("status", "unknown")
         code = 200 if status == "healthy" else 503
@@ -115,8 +127,9 @@ class DiagnosticsServer:
         self._sockets.add(ws)
         logger.debug(f"DiagnosticsServer: WebSocket client connected ({len(self._sockets)} total)")
         try:
-            if self._last_snapshot:
-                await ws.send_json(self._last_snapshot)
+            cached = self.last_snapshot
+            if cached is not None:
+                await ws.send_json(cached)
             async for msg in ws:
                 if msg.type == WSMsgType.ERROR:
                     logger.warning(f"DiagnosticsServer: WebSocket error: {ws.exception()}")

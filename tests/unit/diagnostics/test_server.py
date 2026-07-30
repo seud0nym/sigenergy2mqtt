@@ -61,7 +61,7 @@ async def test_handle_health_uses_cached_snapshot(server: DiagnosticsServer) -> 
     request = make_mocked_request("GET", "/health")
     
     server._last_snapshot = {
-        "timestamp": 999,
+        "timestamp": time.time(),
         "monitor": {"status": "healthy"}
     }
     
@@ -147,13 +147,13 @@ async def test_handle_websocket(server: DiagnosticsServer) -> None:
     mock_ws = MockWS()
     
     with patch("sigenergy2mqtt.diagnostics.server.web.WebSocketResponse", return_value=mock_ws):
-        server._last_snapshot = {"pre": "loaded"}
+        server._last_snapshot = {"pre": "loaded", "timestamp": time.time()}
         
         ws_res = await server._handle_websocket(request)
         
         assert ws_res is mock_ws
         mock_ws.prepare.assert_called_once_with(request)
-        mock_ws.send_json.assert_called_once_with({"pre": "loaded"})
+        mock_ws.send_json.assert_called_once_with(server._last_snapshot)
         assert mock_ws not in server._sockets  # discarded in finally
 
 
