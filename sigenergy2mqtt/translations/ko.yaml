@@ -2777,7 +2777,7 @@ cli:
   SIGENERGY2MQTT_DIAGNOSTICS_ENABLED:
     help: 진단 웹 서버를 비활성화합니다.
   SIGENERGY2MQTT_DIAGNOSTICS_HOST:
-    help: '진단 웹 서버가 바인딩될 주소(기본값: 0.0.0.0)'
+    help: '진단 웹 서버가 바인딩될 주소(기본값: 127.0.0.1)'
   SIGENERGY2MQTT_DIAGNOSTICS_PORT:
     help: '진단 웹 서버 수신 포트(기본값: 8502)'
   SIGENERGY2MQTT_DIAGNOSTICS_REFRESH_INTERVAL:

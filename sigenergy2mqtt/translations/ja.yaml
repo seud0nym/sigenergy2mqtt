@@ -2777,7 +2777,7 @@ cli:
   SIGENERGY2MQTT_DIAGNOSTICS_ENABLED:
     help: 診断 Web サーバーを無効にします。
   SIGENERGY2MQTT_DIAGNOSTICS_HOST:
-    help: '診断 Web サーバーがバインドされるアドレス (デフォルト: 0.0.0.0)'
+    help: '診断 Web サーバーがバインドされるアドレス (デフォルト: 127.0.0.1)'
   SIGENERGY2MQTT_DIAGNOSTICS_PORT:
     help: '診断 Web サーバーのリスニング ポート (デフォルト: 8502)'
   SIGENERGY2MQTT_DIAGNOSTICS_REFRESH_INTERVAL:

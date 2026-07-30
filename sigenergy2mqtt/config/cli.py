@@ -860,7 +860,7 @@ def get_parser() -> argparse.ArgumentParser:
         action="store",
         dest=const.SIGENERGY2MQTT_DIAGNOSTICS_HOST,
         default=os.getenv(const.SIGENERGY2MQTT_DIAGNOSTICS_HOST, None),
-        help="The address to which the diagnostics web server is to be bound (default: 0.0.0.0)",
+        help="The address to which the diagnostics web server is to be bound (default: 127.0.0.1)",
     )
     parser.add_argument(
         "--diagnostics-port",

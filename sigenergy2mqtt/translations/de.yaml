@@ -2777,7 +2777,7 @@ cli:
   SIGENERGY2MQTT_DIAGNOSTICS_ENABLED:
     help: Deaktivieren Sie den Diagnose-Webserver.
   SIGENERGY2MQTT_DIAGNOSTICS_HOST:
-    help: 'Die Adresse, an die der Diagnose-Webserver gebunden werden soll (Standard: 0.0.0.0)'
+    help: 'Die Adresse, an die der Diagnose-Webserver gebunden werden soll (Standard: 127.0.0.1)'
   SIGENERGY2MQTT_DIAGNOSTICS_PORT:
     help: 'Der Überwachungsport des Diagnose-Webservers (Standard: 8502)'
   SIGENERGY2MQTT_DIAGNOSTICS_REFRESH_INTERVAL:

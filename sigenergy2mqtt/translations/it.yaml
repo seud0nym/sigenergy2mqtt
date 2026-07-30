@@ -2777,7 +2777,7 @@ cli:
   SIGENERGY2MQTT_DIAGNOSTICS_ENABLED:
     help: Disabilitare il server Web di diagnostica.
   SIGENERGY2MQTT_DIAGNOSTICS_HOST:
-    help: 'L''indirizzo al quale deve essere collegato il web server di diagnostica (default: 0.0.0.0)'
+    help: 'L''indirizzo al quale deve essere collegato il web server di diagnostica (default: 127.0.0.1)'
   SIGENERGY2MQTT_DIAGNOSTICS_PORT:
     help: 'La porta di ascolto del server Web di diagnostica (impostazione predefinita: 8502)'
   SIGENERGY2MQTT_DIAGNOSTICS_REFRESH_INTERVAL:

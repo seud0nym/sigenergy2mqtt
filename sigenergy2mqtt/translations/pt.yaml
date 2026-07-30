@@ -2777,7 +2777,7 @@ cli:
   SIGENERGY2MQTT_DIAGNOSTICS_ENABLED:
     help: Desative o servidor web de diagnóstico.
   SIGENERGY2MQTT_DIAGNOSTICS_HOST:
-    help: 'O endereço ao qual o servidor web de diagnóstico deve ser vinculado (padrão: 0.0.0.0)'
+    help: 'O endereço ao qual o servidor web de diagnóstico deve ser vinculado (padrão: 127.0.0.1)'
   SIGENERGY2MQTT_DIAGNOSTICS_PORT:
     help: 'A porta de escuta do servidor web de diagnóstico (padrão: 8502)'
   SIGENERGY2MQTT_DIAGNOSTICS_REFRESH_INTERVAL:
