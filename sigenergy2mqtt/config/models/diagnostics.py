@@ -43,3 +43,9 @@ class DiagnosticsConfig(BaseModel):
         gt=0.0,
     )
     """The diagnostics web page refresh interval in seconds."""
+
+    allowed_ips: list[str] | None = Field(
+        None,
+        alias="allowed-ips",
+    )
+    """List of allowed IP addresses for the diagnostics web server."""

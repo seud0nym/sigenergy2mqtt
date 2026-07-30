@@ -2774,6 +2774,8 @@ cli:
     help: "「発電所消費電力」センサーの計算方法を設定します。有効な値は、「calculated」、「total」（合計負荷電力レジスタ）、または「general」（V2.8一般負荷電力レジスタ）です。デフォルトは「calculated」です。このオプションは、ModbusプロトコルV2.8をサポートする前のファームウェアでは無視されます。"
   SIGENERGY2MQTT_DEBUG_SENSOR:
     help: 'デバッグするセンサーを、完全または部分的なエンティティID、またはセンサークラス名（例：「daily」を指定すると、エンティティ名に「daily」が含まれるすべてのセンサーが一致します）、または完全または部分的なエンティティID、またはセンサークラス名（例：「^PowerFactor$」は単一のクラス名のみに一致します）に一致する正規表現を使用して指定します。指定された場合、--log-levelも強制的にDEBUGになります。'
+  SIGENERGY2MQTT_DIAGNOSTICS_ALLOWED_IPS:
+    help: 診断 Web サーバーに許可される IP アドレスのリスト。指定しない場合、すべての IP アドレスが許可されます。
   SIGENERGY2MQTT_DIAGNOSTICS_ENABLED:
     help: 診断 Web サーバーを無効にします。
   SIGENERGY2MQTT_DIAGNOSTICS_HOST:

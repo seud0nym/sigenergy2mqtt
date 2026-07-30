@@ -880,6 +880,14 @@ def get_parser() -> argparse.ArgumentParser:
         default=os.getenv(const.SIGENERGY2MQTT_DIAGNOSTICS_REFRESH_INTERVAL, None),
         help="The diagnostics web page refresh interval in seconds (default: 5.0)",
     )
+    parser.add_argument(
+        "--diagnostics-allowed-ips",
+        nargs="*",
+        action="store",
+        dest=const.SIGENERGY2MQTT_DIAGNOSTICS_ALLOWED_IPS,
+        default=os.getenv(const.SIGENERGY2MQTT_DIAGNOSTICS_ALLOWED_IPS, None),
+        help="List of allowed IP addresses for the diagnostics web server. If not specified, all IP addresses are allowed.",
+    )
     # endregion
 
     parser.add_argument(

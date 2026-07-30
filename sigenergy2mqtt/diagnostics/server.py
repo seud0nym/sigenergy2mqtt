@@ -15,6 +15,7 @@ Routes:
 from __future__ import annotations
 
 import asyncio
+import ipaddress
 import json
 import logging
 import time
@@ -51,7 +52,8 @@ class DiagnosticsServer:
         self._host = "127.0.0.1"
         self._port = DEFAULT_PORT
         self._refresh_interval = 5.0
-        self._app = web.Application()
+        self._allowed_networks: list[ipaddress.IPv4Network | ipaddress.IPv6Network] = []
+        self._app = web.Application(middlewares=[self._ip_filter_middleware])
         self._runner: web.AppRunner | None = None
         self._sockets: set[web.WebSocketResponse] = set()
         self._broadcast_task: asyncio.Task | None = None
@@ -64,6 +66,42 @@ class DiagnosticsServer:
         self._app.router.add_get("/diagnostics/ws", self._handle_websocket)
         self._app.router.add_get("/diagnostics/export", self._handle_export)
         self._app.router.add_static("/diagnostics/static/", STATIC_DIR, name="static")
+
+    @staticmethod
+    def _parse_allowed_networks(raw: list[str] | None) -> list[ipaddress.IPv4Network | ipaddress.IPv6Network]:
+        """Parse config entries into ``ipaddress`` networks.
+
+        Accepts single IPs (``10.10.2.8``) and CIDR ranges (``10.10.2.0/24``).
+        Invalid entries are logged and skipped rather than raising, so a typo
+        in the config doesn't take the whole server down.
+        """
+        networks: list[ipaddress.IPv4Network | ipaddress.IPv6Network] = []
+        for entry in raw or []:
+            try:
+                networks.append(ipaddress.ip_network(entry.strip(), strict=False))
+            except ValueError:
+                logger.warning(f"DiagnosticsServer: Ignoring invalid allowed_ips entry: {entry!r}")
+        return networks
+
+    @web.middleware
+    async def _ip_filter_middleware(self, request: web.Request, handler) -> web.StreamResponse:
+        """Reject requests from IPs outside ``self._allowed_networks``.
+
+        An empty allow-list means "no restriction" (matches today's default
+        behaviour). ``request.remote`` is the directly-connecting peer; if
+        this server ever sits behind a reverse proxy, use that proxy's own
+        ACLs/allow-list instead of trusting X-Forwarded-For here.
+        """
+        if self._allowed_networks:
+            peer = request.remote
+            try:
+                addr = ipaddress.ip_address(peer) if peer else None
+            except ValueError:
+                addr = None
+            if addr is None or not any(addr in net for net in self._allowed_networks):
+                logger.warning(f"DiagnosticsServer: Rejected request from disallowed address {peer!r}")
+                raise web.HTTPForbidden(text="Forbidden")
+        return await handler(request)
 
     @property
     def last_snapshot(self) -> dict[str, Any] | None:
@@ -172,6 +210,9 @@ class DiagnosticsServer:
         self._host = getattr(cfg, "host", self._host)
         self._port = DEFAULT_PORT if is_docker() else getattr(cfg, "port", self._port)
         self._refresh_interval = getattr(cfg, "refresh_interval", self._refresh_interval)
+        self._allowed_networks = self._parse_allowed_networks(getattr(cfg, "allowed_ips", None))
+        if self._allowed_networks:
+            logger.info(f"DiagnosticsServer: Restricting access to {[str(n) for n in self._allowed_networks]}")
 
         self._runner = web.AppRunner(self._app, access_log=None)
         await self._runner.setup()

@@ -2774,6 +2774,8 @@ cli:
     help: "Establecer el método de cálculo del sensor de Potencia Consumida de la Planta. Valores válidos son: 'calculated', 'total' (registro de Potencia de Carga Total), o 'general' (registro de Potencia de Carga General V2.8). El predeterminado es 'calculated'. Esta opción se ignora en firmware anterior al que soporta el Protocolo Modbus V2.8."
   SIGENERGY2MQTT_DEBUG_SENSOR:
     help: Especificar un sensor para depurar usando el ID de entidad completo o parcial o el nombre de clase del sensor (ej. especificar 'daily' coincidiría con todos los sensores con 'daily' en su nombre), o una expresión regular para coincidir con el ID de entidad o nombre de clase (ej. '^PowerFactor$' solo coincide con ese nombre de clase). Si se especifica, --log-level también se fuerza a DEBUG.
+  SIGENERGY2MQTT_DIAGNOSTICS_ALLOWED_IPS:
+    help: Lista de direcciones IP permitidas para el servidor web de diagnóstico. Si no se especifica, se permiten todas las direcciones IP.
   SIGENERGY2MQTT_DIAGNOSTICS_ENABLED:
     help: Deshabilite el servidor web de diagnóstico.
   SIGENERGY2MQTT_DIAGNOSTICS_HOST:

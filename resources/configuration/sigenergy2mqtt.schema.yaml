@@ -562,6 +562,10 @@ properties:
         type: number
         default: 5.0
         exclusiveMinimum: 0
+      allowed-ips:
+        type: array
+        items:
+          type: string
 
   # Pydantic internal
   modbus-auto-discovery: {type: [string, "null"]}
