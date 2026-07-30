@@ -249,6 +249,7 @@ class EnvSettingsSource(PydanticBaseSettingsSource):
 
         # ── Diagnostics ──────────────────────────────────────────────────────
         diagnostics: dict[str, Any] = {}
+        _set(diagnostics, "enabled", _bool(g(const.SIGENERGY2MQTT_DIAGNOSTICS_ENABLED)))
         _set(diagnostics, "host", g(const.SIGENERGY2MQTT_DIAGNOSTICS_HOST))
         _set(diagnostics, "port", _int(g(const.SIGENERGY2MQTT_DIAGNOSTICS_PORT)))
         _set(diagnostics, "refresh_interval", _float(g(const.SIGENERGY2MQTT_DIAGNOSTICS_REFRESH_INTERVAL)))
