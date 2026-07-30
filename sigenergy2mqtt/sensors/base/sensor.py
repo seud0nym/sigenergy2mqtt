@@ -509,6 +509,8 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
             "device-class": self._override_device_class,
             "state-class": self._override_state_class,
             "name": self._override_name,
+            "qos": self._override_qos,
+            "retain": self._override_retain,
         }
 
         for key, handler in override_handlers.items():
@@ -611,6 +613,18 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         if self[DiscoveryKeys.NAME] != value:
             logger.debug(f"{self.log_identity} Applying {identifier} 'name' override ({value})")
             self[DiscoveryKeys.NAME] = value
+
+    def _override_qos(self, identifier: str, value: int) -> None:
+        """Apply qos override."""
+        if self._qos != value:
+            logger.debug(f"{self.log_identity} Applying {identifier} 'qos' override ({value})")
+            self._qos = value
+
+    def _override_retain(self, identifier: str, value: bool) -> None:
+        """Apply retain override."""
+        if self._retain != value:
+            logger.debug(f"{self.log_identity} Applying {identifier} 'retain' override ({value})")
+            self._retain = value
 
     def configure_mqtt_topics(self, device_id: str) -> str:
         """Configure MQTT topics for this sensor.

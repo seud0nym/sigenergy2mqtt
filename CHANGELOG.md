@@ -9,6 +9,7 @@
 - Added new monitorable state property to allow health monitoring to be disabled for specific sensors via sensor overrides
 - Added new derived sensor for battery status ('Charging', 'Discharging', 'Full', 'Empty', 'Cutoff', 'Idle', and 'Unknown')
 - Added new diagnostics and health-monitoring web-server endpoint available at http://[IP_ADDRESS]/diagnostics
+- Added the ability to over-ride the MQTT QoS and retain flags via sensor overrides
 
 ### Fixed
 
