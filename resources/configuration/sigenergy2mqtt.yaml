@@ -498,6 +498,18 @@ sensor-overrides:
     #   description:  Change the unit of this sensor. Used in conjunction
     #                 with gain.
     unit-of-measurement: Wh
+    # qos
+    #   added: 2026.7.30
+    #   default: There is no default
+    #   description:  Change the MQTT Quality of Service level for this
+    #                 sensor's state updates. Must be 0, 1, or 2.
+    qos: 0
+    # retain
+    #   added: 2026.7.30
+    #   default: There is no default
+    #   description:  If true, MQTT state updates for this sensor will be
+    #                 published with the retain flag set.
+    retain: false
   # Example of making all sensors of the second PV string on inverter device
   # id 1 unpublishable. Because it will have no sensors, the PV String
   # device will also not appear in Home Assistant.

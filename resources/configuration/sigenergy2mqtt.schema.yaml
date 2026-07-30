@@ -302,11 +302,15 @@ properties:
             type: number
           sanity-check-delta:
             type: boolean
-            default: false
           scan-interval:
             type: integer
           unit-of-measurement:
             type: string
+          qos:
+            type: integer
+            enum: [0, 1, 2]
+          retain:
+            type: boolean
 
   pvoutput:
     type: object
