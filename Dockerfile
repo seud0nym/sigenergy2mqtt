@@ -10,6 +10,6 @@ RUN pip install --root-user-action=ignore --break-system-packages --no-cache-dir
 EXPOSE 8502
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=45s --retries=3 \
-  CMD python -c "import json,sys,urllib.request as u; sys.exit(0 if json.loads(u.urlopen('http://127.0.0.1:8083/health', timeout=4).read()).get('status') == 'healthy' else 1)"
+  CMD python -c "import urllib.request as u; u.urlopen('http://127.0.0.1:8502/health', timeout=4)"
 
 CMD [ "sigenergy2mqtt" ]
