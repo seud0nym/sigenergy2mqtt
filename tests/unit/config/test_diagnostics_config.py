@@ -13,13 +13,13 @@ class TestDiagnosticsConfigDefaults:
 
     def test_default_values(self):
         config = DiagnosticsConfig()
-        assert config.host == "0.0.0.0"
+        assert config.host == "127.0.0.1"
         assert config.port == 8502
         assert config.refresh_interval == 5.0
 
     def test_custom_host(self):
-        config = DiagnosticsConfig(host="127.0.0.1")
-        assert config.host == "127.0.0.1"
+        config = DiagnosticsConfig(host="192.168.1.1")
+        assert config.host == "192.168.1.1"
 
     def test_custom_port(self):
         config = DiagnosticsConfig(port=9000)
@@ -128,6 +128,6 @@ class TestDiagnosticsConfigEnvVars:
             with _swap_active_config(Config()) as cfg:
                 cfg.persistent_state_path = tmp_path
                 asyncio.run(cfg.reload())
-                assert cfg.diagnostics.host == "0.0.0.0"
+                assert cfg.diagnostics.host == "127.0.0.1"
                 assert cfg.diagnostics.port == 8502
                 assert cfg.diagnostics.refresh_interval == pytest.approx(5.0)

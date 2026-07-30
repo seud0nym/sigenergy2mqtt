@@ -1,5 +1,6 @@
 import asyncio
 import json
+import time
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -113,8 +114,14 @@ async def test_start_and_stop(server: DiagnosticsServer) -> None:
 
 
 def test_last_snapshot_property(server: DiagnosticsServer) -> None:
-    server._last_snapshot = {"test": 1}
-    assert server.last_snapshot == {"test": 1}
+    now = time.time()
+    server._last_snapshot = {"test": 1, "timestamp": now}
+    assert server.last_snapshot == {"test": 1, "timestamp": now}
+
+
+def test_stale_last_snapshot_property(server: DiagnosticsServer) -> None:
+    server._last_snapshot = {"test": 1, "timestamp": time.time() - server._refresh_interval - 0.001}
+    assert server.last_snapshot is None
 
 
 @pytest.mark.asyncio
