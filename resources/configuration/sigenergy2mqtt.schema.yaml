@@ -563,7 +563,7 @@ properties:
         default: 5.0
         exclusiveMinimum: 0
       allowed-ips:
-        type: array
+        type: [array, "null"]
         items:
           type: string
 

@@ -216,3 +216,92 @@ async def test_broadcast_loop(server: DiagnosticsServer) -> None:
             pass
             
         mock_ws.send_json.assert_called_with({"new": "data"})
+
+
+def test_parse_allowed_networks() -> None:
+    import ipaddress
+    # Test None
+    assert DiagnosticsServer._parse_allowed_networks(None) is None
+    
+    # Test empty
+    assert DiagnosticsServer._parse_allowed_networks([]) == []
+    
+    # Test valid networks
+    networks = DiagnosticsServer._parse_allowed_networks(["192.168.1.1", "10.0.0.0/24"])
+    assert networks is not None
+    assert len(networks) == 2
+    assert ipaddress.ip_network("192.168.1.1") in networks
+    assert ipaddress.ip_network("10.0.0.0/24") in networks
+    
+    # Test invalid networks (should be ignored, not crash)
+    networks_with_invalid = DiagnosticsServer._parse_allowed_networks(["192.168.1.1", "invalid_ip"])
+    assert networks_with_invalid is not None
+    assert len(networks_with_invalid) == 1
+    assert ipaddress.ip_network("192.168.1.1") in networks_with_invalid
+
+    # Test only invalid networks (should return [])
+    assert DiagnosticsServer._parse_allowed_networks(["invalid_ip"]) == []
+
+
+@pytest.mark.asyncio
+async def test_ip_filter_middleware_allow_all(server: DiagnosticsServer) -> None:
+    server._allowed_networks = None
+    
+    request = make_mocked_request("GET", "/health")
+    handler = AsyncMock(return_value=web.Response(text="OK"))
+    
+    response = await server._ip_filter_middleware(request, handler)
+    assert response.text == "OK"
+    handler.assert_called_once_with(request)
+
+
+@pytest.mark.asyncio
+async def test_ip_filter_middleware_empty_list_denies(server: DiagnosticsServer) -> None:
+    server._allowed_networks = []
+    
+    request = make_mocked_request("GET", "/health")
+    handler = AsyncMock()
+    
+    with pytest.raises(web.HTTPForbidden):
+        await server._ip_filter_middleware(request, handler)
+        
+    handler.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_ip_filter_middleware_allowed_ip(server: DiagnosticsServer) -> None:
+    import ipaddress
+    from unittest.mock import PropertyMock
+    server._allowed_networks = [ipaddress.ip_network("192.168.1.0/24")]
+    
+    request = make_mocked_request("GET", "/health")
+    with patch.object(type(request), 'remote', new_callable=PropertyMock, return_value="192.168.1.100"):
+        handler = AsyncMock(return_value=web.Response(text="OK"))
+        response = await server._ip_filter_middleware(request, handler)
+        assert response.text == "OK"
+
+
+@pytest.mark.asyncio
+async def test_ip_filter_middleware_denied_ip(server: DiagnosticsServer) -> None:
+    import ipaddress
+    from unittest.mock import PropertyMock
+    server._allowed_networks = [ipaddress.ip_network("192.168.1.0/24")]
+    
+    request = make_mocked_request("GET", "/health")
+    with patch.object(type(request), 'remote', new_callable=PropertyMock, return_value="10.0.0.5"):
+        handler = AsyncMock()
+        with pytest.raises(web.HTTPForbidden):
+            await server._ip_filter_middleware(request, handler)
+
+
+@pytest.mark.asyncio
+async def test_ip_filter_middleware_invalid_remote(server: DiagnosticsServer) -> None:
+    import ipaddress
+    from unittest.mock import PropertyMock
+    server._allowed_networks = [ipaddress.ip_network("192.168.1.0/24")]
+    
+    request = make_mocked_request("GET", "/health")
+    with patch.object(type(request), 'remote', new_callable=PropertyMock, return_value="invalid"):
+        handler = AsyncMock()
+        with pytest.raises(web.HTTPForbidden):
+            await server._ip_filter_middleware(request, handler)

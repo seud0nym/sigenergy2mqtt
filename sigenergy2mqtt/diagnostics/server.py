@@ -52,7 +52,7 @@ class DiagnosticsServer:
         self._host = "127.0.0.1"
         self._port = DEFAULT_PORT
         self._refresh_interval = 5.0
-        self._allowed_networks: list[ipaddress.IPv4Network | ipaddress.IPv6Network] = []
+        self._allowed_networks: list[ipaddress.IPv4Network | ipaddress.IPv6Network] | None = None
         self._app = web.Application(middlewares=[self._ip_filter_middleware])
         self._runner: web.AppRunner | None = None
         self._sockets: set[web.WebSocketResponse] = set()
@@ -68,15 +68,17 @@ class DiagnosticsServer:
         self._app.router.add_static("/diagnostics/static/", STATIC_DIR, name="static")
 
     @staticmethod
-    def _parse_allowed_networks(raw: list[str] | None) -> list[ipaddress.IPv4Network | ipaddress.IPv6Network]:
+    def _parse_allowed_networks(raw: list[str] | None) -> list[ipaddress.IPv4Network | ipaddress.IPv6Network] | None:
         """Parse config entries into ``ipaddress`` networks.
 
         Accepts single IPs (``10.10.2.8``) and CIDR ranges (``10.10.2.0/24``).
         Invalid entries are logged and skipped rather than raising, so a typo
         in the config doesn't take the whole server down.
         """
+        if raw is None:
+            return None
         networks: list[ipaddress.IPv4Network | ipaddress.IPv6Network] = []
-        for entry in raw or []:
+        for entry in raw:
             try:
                 networks.append(ipaddress.ip_network(entry.strip(), strict=False))
             except ValueError:
@@ -87,12 +89,12 @@ class DiagnosticsServer:
     async def _ip_filter_middleware(self, request: web.Request, handler) -> web.StreamResponse:
         """Reject requests from IPs outside ``self._allowed_networks``.
 
-        An empty allow-list means "no restriction" (matches today's default
+        A None allow-list means "no restriction" (matches today's default
         behaviour). ``request.remote`` is the directly-connecting peer; if
         this server ever sits behind a reverse proxy, use that proxy's own
         ACLs/allow-list instead of trusting X-Forwarded-For here.
         """
-        if self._allowed_networks:
+        if self._allowed_networks is not None:
             peer = request.remote
             try:
                 addr = ipaddress.ip_address(peer) if peer else None
@@ -211,7 +213,7 @@ class DiagnosticsServer:
         self._port = DEFAULT_PORT if is_docker() else getattr(cfg, "port", self._port)
         self._refresh_interval = getattr(cfg, "refresh_interval", self._refresh_interval)
         self._allowed_networks = self._parse_allowed_networks(getattr(cfg, "allowed_ips", None))
-        if self._allowed_networks:
+        if self._allowed_networks is not None:
             logger.info(f"DiagnosticsServer: Restricting access to {[str(n) for n in self._allowed_networks]}")
 
         self._runner = web.AppRunner(self._app, access_log=None)
