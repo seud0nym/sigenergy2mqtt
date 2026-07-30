@@ -179,7 +179,7 @@ A sub-directory will be created in the specified directory called `sigenergy2mqt
 - ENV: `SIGENERGY2MQTT_DIAGNOSTICS_ENABLED`
 - Config key: `diagnostics.enabled`
 
-Set to `false` to disable the diagnostics web server. Note: If running  within Docker, this flag is ignored and treated as true.
+Set to `false` to disable the diagnostics and health check web server. Note: If running  within Docker, this flag is ignored and treated as true.
 
 <a id="opt_diagnostics_host"></a>
 ### Host
@@ -187,7 +187,7 @@ Set to `false` to disable the diagnostics web server. Note: If running  within D
 - ENV: `SIGENERGY2MQTT_DIAGNOSTICS_HOST`
 - Config key: `diagnostics.host`
 
-The address to which the diagnostics web server is to be bound. Default is `0.0.0.0` (all interfaces).
+The address to which the diagnostics and health check web server is to be bound. Default is `127.0.0.1` (localhost).
 
 <a id="opt_diagnostics_port"></a>
 ### Port
@@ -195,7 +195,7 @@ The address to which the diagnostics web server is to be bound. Default is `0.0.
 - ENV: `SIGENERGY2MQTT_DIAGNOSTICS_PORT`
 - Config key: `diagnostics.port`
 
-The diagnostics web server listening port. Must be between `1` and `65535`. Default is `8502`.
+The diagnostics and health check web server listening port. Must be between `1` and `65535`. Default is `8502`. Note: If running  within Docker, this setting is ignored and always uses the default to facilitate the Dockerfile HEALTHCHECK.
 
 <a id="opt_diagnostics_refresh_interval"></a>
 ### Refresh Interval

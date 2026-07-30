@@ -22,13 +22,14 @@ from typing import Any
 
 from aiohttp import WSMsgType, web
 
-from sigenergy2mqtt.config import active_config
+from sigenergy2mqtt.config import active_config, is_docker
 
 from .registry import diagnostics_registry
 
 logger = logging.getLogger("sigenergy2mqtt")
 
 STATIC_DIR = Path(__file__).parent / "static"
+DEFAULT_PORT = 8502
 
 
 class DiagnosticsServer:
@@ -46,8 +47,8 @@ class DiagnosticsServer:
         file takes effect on the next cycle rather than being frozen at
         whatever it was when the process first imported this module.
         """
-        self._host = "0.0.0.0"
-        self._port = 8083
+        self._host = "127.0.0.1"
+        self._port = DEFAULT_PORT
         self._refresh_interval = 5.0
         self._app = web.Application()
         self._runner: web.AppRunner | None = None
@@ -148,7 +149,7 @@ class DiagnosticsServer:
         """
         cfg = active_config.diagnostics
         self._host = getattr(cfg, "host", self._host)
-        self._port = getattr(cfg, "port", self._port)
+        self._port = DEFAULT_PORT if is_docker() else getattr(cfg, "port", self._port)
         self._refresh_interval = getattr(cfg, "refresh_interval", self._refresh_interval)
 
         self._runner = web.AppRunner(self._app, access_log=None)

@@ -24,7 +24,7 @@ class DiagnosticsConfig(BaseModel):
     within Docker, this flag is ignored and treated as True."""
 
     host: str = Field(
-        "0.0.0.0",
+        "127.0.0.1",
         alias="host",
     )
     """The address to which the diagnostics web server is to be bound."""
