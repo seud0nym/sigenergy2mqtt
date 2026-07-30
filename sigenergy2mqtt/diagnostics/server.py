@@ -82,7 +82,7 @@ class DiagnosticsServer:
             try:
                 networks.append(ipaddress.ip_network(entry.strip(), strict=False))
             except ValueError:
-                logger.warning(f"DiagnosticsServer: Ignoring invalid allowed_ips entry: {entry!r}")
+                logger.warning(f"DiagnosticsServer Ignoring invalid allowed_ips entry: {entry!r}")
         return networks
 
     @web.middleware
@@ -104,7 +104,7 @@ class DiagnosticsServer:
             except ValueError:
                 addr = None
             if addr is None or not any(addr in net for net in self._allowed_networks):
-                logger.warning(f"DiagnosticsServer: Rejected request from disallowed address {peer!r}")
+                logger.warning(f"DiagnosticsServer Rejected request from disallowed address {peer!r}")
                 raise web.HTTPForbidden(text="Forbidden")
         return await handler(request)
 
@@ -168,19 +168,19 @@ class DiagnosticsServer:
         ws = web.WebSocketResponse(heartbeat=30)
         await ws.prepare(request)
         self._sockets.add(ws)
-        logger.debug(f"DiagnosticsServer: WebSocket client connected ({len(self._sockets)} total)")
+        logger.debug(f"DiagnosticsServer WebSocket client connected ({len(self._sockets)} total)")
         try:
             cached = self.last_snapshot
             if cached is not None:
                 await ws.send_json(cached)
             async for msg in ws:
                 if msg.type == WSMsgType.ERROR:
-                    logger.warning(f"DiagnosticsServer: WebSocket error: {ws.exception()}")
+                    logger.warning(f"DiagnosticsServer WebSocket error: {ws.exception()}")
                 # No client->server messages are expected; this loop just
                 # keeps the connection open and detects close/error.
         finally:
             self._sockets.discard(ws)
-            logger.debug(f"DiagnosticsServer: WebSocket client disconnected ({len(self._sockets)} remaining)")
+            logger.debug(f"DiagnosticsServer WebSocket client disconnected ({len(self._sockets)} remaining)")
         return ws
 
     async def _broadcast_loop(self) -> None:
@@ -188,7 +188,7 @@ class DiagnosticsServer:
         while True:
             try:
                 self._last_snapshot = await diagnostics_registry.snapshot()
-                # logger.debug(f"DiagnosticsServer: Snapshot: {self._last_snapshot}")
+                # logger.debug(f"DiagnosticsServer Snapshot: {self._last_snapshot}")
                 if self._sockets:
                     dead: set[web.WebSocketResponse] = set()
                     for ws in self._sockets:
@@ -200,7 +200,7 @@ class DiagnosticsServer:
             except asyncio.CancelledError:
                 raise
             except Exception as exc:  # noqa: BLE001 - this loop must survive indefinitely; a provider or send_json failure here must never kill the only task pushing live diagnostics
-                logger.warning(f"DiagnosticsServer: Broadcast loop error: {exc}")
+                logger.warning(f"DiagnosticsServer Broadcast loop error: {exc}")
             await asyncio.sleep(self._refresh_interval)
 
     async def start(self) -> None:
@@ -217,14 +217,14 @@ class DiagnosticsServer:
         self._refresh_interval = getattr(cfg, "refresh_interval", self._refresh_interval)
         self._allowed_networks = self._parse_allowed_networks(getattr(cfg, "allowed_ips", None))
         if self._allowed_networks is not None:
-            logger.info(f"DiagnosticsServer: Restricting access to {[str(n) for n in self._allowed_networks]}")
+            logger.info(f"DiagnosticsServer Restricting access to {[str(n) for n in self._allowed_networks]}")
 
         self._runner = web.AppRunner(self._app, access_log=None)
         await self._runner.setup()
         site = web.TCPSite(self._runner, self._host, self._port)
         await site.start()
         self._broadcast_task = asyncio.create_task(self._broadcast_loop())
-        logger.info(f"DiagnosticsServer: Listening on http://{self._host}:{self._port} (dashboard at /diagnostics)")
+        logger.info(f"DiagnosticsServer Listening on http://{self._host}:{self._port} (dashboard at /diagnostics)")
 
     async def stop(self) -> None:
         """Cancel the broadcast loop, close sockets, and tear down the runner."""
@@ -238,7 +238,7 @@ class DiagnosticsServer:
             await ws.close()
         if self._runner:
             await self._runner.cleanup()
-        logger.info("DiagnosticsServer: Stopped")
+        logger.info("DiagnosticsServer Stopped")
 
     async def run(self) -> None:
         """Start the server and block until cancelled.
