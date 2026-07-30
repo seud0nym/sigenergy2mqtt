@@ -1,7 +1,7 @@
 import asyncio
 import json
 import time
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, patch, PropertyMock
 
 import pytest
 from aiohttp import web
@@ -312,6 +312,7 @@ async def test_ip_filter_middleware_health_exempt_in_docker(server: DiagnosticsS
     server._allowed_networks = []  # Empty list normally denies all
     
     request = make_mocked_request("GET", "/health")
+    type(request).remote = PropertyMock(return_value="127.0.0.1")
     handler = AsyncMock(return_value=web.Response(text="OK"))
     
     with patch("sigenergy2mqtt.diagnostics.server.is_docker", return_value=True):
