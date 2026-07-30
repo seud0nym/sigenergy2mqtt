@@ -46,6 +46,8 @@ _SENSOR_OVERRIDE_VALIDATORS: dict[str, Any] = {
     "sanity-check-min-value": lambda v, ctx: check_float(v, ctx, allow_none=False),
     "sanity-check-delta": lambda v, ctx: check_bool(v, ctx),
     "unit-of-measurement": lambda v, ctx: check_string(v, ctx, allow_none=False),
+    "qos": lambda v, ctx: check_int(v, ctx, allow_none=False, min=0, max=2),
+    "retain": lambda v, ctx: check_bool(v, ctx),
 }
 
 
