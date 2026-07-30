@@ -53,6 +53,7 @@ class MonitorService(Device):
         self._health_publish_interval = active_config.health_check.interval
         self._health_check_failures = 0
         self._started = time.monotonic()
+        self._last_published_at: float = 0.0  # 0 = never published; guaranteed stale until first _publish_health call
         diagnostics_registry.register("monitor", self._diagnostics_collect)
 
     async def _diagnostics_collect(self) -> dict[str, Any]:
@@ -61,11 +62,19 @@ class MonitorService(Device):
         Registered with the ``diagnostics_registry`` so the web dashboard,
         WebSocket feed, and JSON export all surface this without the web
         layer needing any knowledge of MQTT/Modbus/health-check internals.
+
+        If the monitor loop has stopped or hung — detected by ``_last_published_at``
+        being older than two ``_health_publish_interval`` periods — the cached
+        payload's status is overridden with ``"unknown"`` so a dead monitor is
+        not falsely reported as healthy.
         """
-        return {
-            **self._health_payload,
-            "monitored_topics": len(self._topics),
-        }
+        payload = dict(self._health_payload)
+        age = time.monotonic() - self._last_published_at
+        if age > 2 * self._health_publish_interval:
+            payload["status"] = "unknown"
+            payload["stale"] = True
+        payload["monitored_topics"] = len(self._topics)
+        return payload
 
     async def _monitor(self, mqtt_client: mqtt.Client) -> None:
         """Check for overdue topics and log warning/recovery events.
@@ -260,6 +269,7 @@ class MonitorService(Device):
             payload["services_monitored"] = len(service_contributors)
             for key, value in service_contributors.items():
                 payload[f"service_{key}_healthy"] = value
+        self._last_published_at = time.monotonic()
         self._health_payload = payload
         try:
             if mqtt_client:
