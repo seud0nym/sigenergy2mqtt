@@ -1,14 +1,14 @@
 <!-- git log [since tag]..HEAD --oneline -->
 # Changelog 
 
-## [2026.7.25b3] - 2026-07-25
+## [2026.7.31a3] - 2026-07-31
 
 ### Added
 
 - Health monitoring of InfluxDB writes and PVOutput uploads (if these services are enabled)
 - Added new monitorable state property to allow health monitoring to be disabled for specific sensors via sensor overrides
 - Added new derived sensor for battery status ('Charging', 'Discharging', 'Full', 'Empty', 'Cutoff', 'Idle', and 'Unknown')
-- Added new diagnostics and health-monitoring web-server endpoint available at http://[IP_ADDRESS]/diagnostics
+- Added new diagnostics and health-monitoring web-server endpoint available at http://[IP_ADDRESS]/diagnostics/
 - Added the ability to over-ride the MQTT QoS and retain flags via sensor overrides
 
 ### Fixed
