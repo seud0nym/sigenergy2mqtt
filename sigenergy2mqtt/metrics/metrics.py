@@ -381,7 +381,7 @@ class Metrics:
                 "upload_skipped": cls.sigenergy2mqtt_pvoutput_upload_skipped,
                 "upload_max_ms": cls.sigenergy2mqtt_pvoutput_upload_max,
                 "upload_mean_ms": cls.sigenergy2mqtt_pvoutput_upload_mean,
-                "upload_min_ms": cls.sigenergy2mqtt_pvoutput_upload_min if cls.sigenergy2mqtt_pvoutput_upload_min != float("inf") else None,
+                "upload_min_ms": cls.sigenergy2mqtt_pvoutput_upload_min if cls.sigenergy2mqtt_pvoutput_upload_min != float("inf") else 0.0,
             }
 
     @classmethod
