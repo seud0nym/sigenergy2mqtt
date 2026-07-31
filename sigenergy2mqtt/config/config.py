@@ -48,7 +48,7 @@ from . import const, version
 from .auto_discovery import scan as auto_discovery_scan
 from .settings import Settings
 
-logger = logging.getLogger("sigenergy2mqtt")
+logger = logging.getLogger(__name__)
 
 AUTODISCOVERY_DEFAULT_TIMEOUT = 300.0
 

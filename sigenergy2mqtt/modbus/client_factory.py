@@ -5,7 +5,7 @@ from pymodbus.exceptions import ModbusException
 
 from .client import ModbusClient
 
-logger = logging.getLogger("sigenergy2mqtt")
+logger = logging.getLogger(__name__)
 
 
 class ModbusClientFactory:

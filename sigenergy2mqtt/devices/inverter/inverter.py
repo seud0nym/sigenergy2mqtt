@@ -14,7 +14,7 @@ from sigenergy2mqtt.sensors.inverter_derived import InverterSelfConsumedPower, P
 from .ess import ESS
 from .pv_string import PVString
 
-logger = logging.getLogger("sigenergy2mqtt")
+logger = logging.getLogger(__name__)
 
 
 class Inverter(ModbusDevice):

@@ -64,7 +64,7 @@ async def test_influx_service_uses_config_values(monkeypatch):
     active_config.influxdb.max_retries = 2
 
     logger = MagicMock()
-    svc = InfluxService(logger, plant_index=0)
+    svc = InfluxService(plant_index=0)
     svc._online = True
 
     # Check attributes set in init

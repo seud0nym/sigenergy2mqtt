@@ -680,5 +680,5 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    logging.getLogger().setLevel(logging.INFO)
+    logging.getLogger(__name__).setLevel(logging.INFO)
     asyncio.run(main())

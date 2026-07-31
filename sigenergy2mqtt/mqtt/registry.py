@@ -11,7 +11,7 @@ import threading
 import time
 from dataclasses import dataclass
 
-logger = logging.getLogger("sigenergy2mqtt")
+logger = logging.getLogger(__name__)
 
 
 @dataclass

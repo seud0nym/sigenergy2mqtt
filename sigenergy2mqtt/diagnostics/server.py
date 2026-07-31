@@ -28,7 +28,7 @@ from sigenergy2mqtt.config import active_config, is_docker
 
 from .registry import diagnostics_registry
 
-logger = logging.getLogger("sigenergy2mqtt")
+logger = logging.getLogger(__name__)
 
 STATIC_DIR = Path(__file__).parent / "static"
 DEFAULT_PORT = 8502

@@ -33,7 +33,7 @@ def service(logger):
     mock_config.max_sync_workers = 5
 
     with patch.object(active_config, "influxdb", mock_config):
-        svc = InfluxService(logger, plant_index=0)
+        svc = InfluxService(plant_index=0)
         yield svc
 
 
@@ -335,7 +335,7 @@ class TestMiscEdgeCases:
         mock_config.load_hass_history = False
 
         with patch.object(active_config, "influxdb", mock_config):
-            svc = InfluxService(logger, plant_index=5)
+            svc = InfluxService(plant_index=5)
         assert "5" in svc.name
         assert "InfluxDB" in svc.name
 
@@ -364,7 +364,7 @@ class TestHassHistorySyncCoverage:
         # We set it directly on the active_config proxy.
         # It will be reset by the next reload() or next test that mocks it.
         active_config.influxdb = mock_config
-        return HassHistorySync(logger, plant_index=0)
+        return HassHistorySync(plant_index=0)
 
     @pytest.mark.asyncio
     async def test_detect_homeassistant_db_v2_bucket_found(self, logger):

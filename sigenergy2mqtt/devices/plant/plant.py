@@ -19,7 +19,7 @@ from .grid_code import GridCode
 from .grid_sensor import GridSensor
 from .statistics import PlantStatistics
 
-logger = logging.getLogger("sigenergy2mqtt")
+logger = logging.getLogger(__name__)
 
 
 class PowerPlant(ModbusDevice):

@@ -29,7 +29,7 @@ __all__ = [
     "is_docker",
 ]
 
-logger = logging.getLogger("sigenergy2mqtt")
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------

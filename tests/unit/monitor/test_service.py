@@ -249,7 +249,7 @@ async def test_pvoutput_upload_failure_marks_health_unhealthy(monkeypatch):
 
     monkeypatch.setattr("sigenergy2mqtt.pvoutput.service.requests.post", lambda *args, **kwargs: FakeResponse())
 
-    service = PvOutputService("pvoutput", "pvoutput", "PVOutput", logging.getLogger("test"))
+    service = PvOutputService("pvoutput", "pvoutput", "PVOutput")
     uploaded = await service.upload_payload("https://example.test", {"d": "20240101"})
 
     assert uploaded is False
@@ -262,7 +262,7 @@ async def test_influxdb_write_failure_marks_health_unhealthy(monkeypatch):
     monkeypatch.setattr(active_config.influxdb, "health_monitoring", True, raising=False)
     service_health_registry.set_health("influxdb_0", True)
 
-    service = InfluxBase("influx", 0, "unique", "manufacturer", "model", logging.getLogger("test"))
+    service = InfluxBase("influx", 0, "unique", "manufacturer", "model")
     loop = asyncio.get_running_loop()
     service.online = loop.create_future()
     service._writer_type = "v1_http"
@@ -288,8 +288,8 @@ async def test_multi_plant_influxdb_health_isolation(monkeypatch):
     monkeypatch.setattr(active_config, "modbus", [MagicMock(host="host1"), MagicMock(host="host2")])
     service_health_registry.clear()
 
-    plant0_service = InfluxBase("influx0", 0, "unique0", "manufacturer", "model", logging.getLogger("test0"))
-    plant1_service = InfluxBase("influx1", 1, "unique1", "manufacturer", "model", logging.getLogger("test1"))
+    plant0_service = InfluxBase("influx0", 0, "unique0", "manufacturer", "model")
+    plant1_service = InfluxBase("influx1", 1, "unique1", "manufacturer", "model")
 
     loop = asyncio.get_running_loop()
     plant0_service.online = loop.create_future()
@@ -388,7 +388,7 @@ async def test_influxdb_init_failure_registers_unhealthy(monkeypatch):
     monkeypatch.setattr(active_config, "modbus", [MagicMock(host="host0")], raising=False)
     service_health_registry.clear()
 
-    service = InfluxBase("influx", 0, "unique", "manufacturer", "model", logging.getLogger("test"))
+    service = InfluxBase("influx", 0, "unique", "manufacturer", "model")
 
     # Make _init_connection raise unconditionally (simulates a completely
     # unreachable InfluxDB host).

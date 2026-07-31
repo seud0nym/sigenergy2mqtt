@@ -30,7 +30,7 @@ _MAX_CONNECT_ATTEMPTS: int = 3
 # ---------------------------------------------------------------------------
 _interrupted: bool = False
 
-logger = logging.getLogger("sigenergy2mqtt")
+logger = logging.getLogger(__name__)
 
 
 def _check_interrupted(broker_url: str, client_id: str) -> None:

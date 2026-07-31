@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field, model_validator
 
 from sigenergy2mqtt.config.models._base import _SUB
 
-logger = logging.getLogger("sigenergy2mqtt")
+logger = logging.getLogger(__name__)
 
 
 class HomeAssistantConfig(BaseModel):

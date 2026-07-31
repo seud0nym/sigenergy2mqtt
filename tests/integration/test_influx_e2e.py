@@ -30,7 +30,7 @@ def service(logger):
     from sigenergy2mqtt.config import _swap_active_config
 
     with _swap_active_config(cfg):
-        svc = HassHistorySync(logger, plant_index=0)
+        svc = HassHistorySync(plant_index=0)
         svc._online = True  # Mark as online for tests
         yield svc
 

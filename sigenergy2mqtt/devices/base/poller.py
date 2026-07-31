@@ -22,7 +22,7 @@ INITIAL_RECONNECT_DELAY = 0.5
 MAX_RECONNECT_DELAY = 60.0
 RECONNECT_BACKOFF_MULTIPLIER = 2.0
 
-logger = logging.getLogger("sigenergy2mqtt")
+logger = logging.getLogger(__name__)
 
 
 class SensorGroupPoller:

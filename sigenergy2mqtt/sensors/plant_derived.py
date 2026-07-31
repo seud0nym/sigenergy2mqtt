@@ -29,7 +29,7 @@ from .plant_read_only import (
 )
 from .plant_read_write import ESSBackupSOC, ESSChargeCutOffSOC, ESSDischargeCutOffSOC
 
-logger = logging.getLogger("sigenergy2mqtt")
+logger = logging.getLogger(__name__)
 
 
 class BatteryChargingPower(DerivedSensor, HybridInverter):

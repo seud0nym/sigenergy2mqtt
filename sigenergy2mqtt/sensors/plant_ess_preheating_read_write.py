@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 from sigenergy2mqtt.common import PERCENTAGE, DeviceClass, HybridInverter, InputType, UnitOfPower, UnitOfTime
 from sigenergy2mqtt.sensors.base import AvailabilityMixin, DiscoveryKeys, NumericSensor, ScanInterval, SelectSensor, SwitchSensor
 
-logger = logging.getLogger("sigenergy2mqtt")
+logger = logging.getLogger(__name__)
 
 
 class ESSPreHeatingEnable(SwitchSensor, HybridInverter):

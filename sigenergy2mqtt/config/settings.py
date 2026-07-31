@@ -44,7 +44,7 @@ from sigenergy2mqtt.config.sources import (
 )
 from sigenergy2mqtt.config.validators import validate_log_level, validate_sensor_overrides
 
-logger = logging.getLogger("sigenergy2mqtt")
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # PvOutputConfig methods that use datetime.now() must live here so that

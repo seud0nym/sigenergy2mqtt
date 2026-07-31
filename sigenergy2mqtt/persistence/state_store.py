@@ -64,7 +64,7 @@ _PAYLOAD_VALUE_KEY = "v"
 _PAYLOAD_TS_KEY = "ts"
 _PAYLOAD_VER_KEY = "ver"
 
-logger = logging.getLogger("sigenergy2mqtt")
+logger = logging.getLogger(__name__)
 
 
 class Category(StrEnum):

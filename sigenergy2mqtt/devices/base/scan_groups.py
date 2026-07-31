@@ -8,7 +8,7 @@ from sigenergy2mqtt.sensors.base import ModbusSensorMixin, ReadableSensorMixin, 
 if TYPE_CHECKING:
     from .device import Device
 
-logger = logging.getLogger("sigenergy2mqtt")
+logger = logging.getLogger(__name__)
 
 
 class ReadableSensorGroup(list[ReadableSensorMixin | ModbusSensorMixin]):

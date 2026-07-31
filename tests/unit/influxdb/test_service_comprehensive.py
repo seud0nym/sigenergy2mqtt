@@ -76,13 +76,13 @@ def test_init_no_influx_config(logger):
     mock_config.query_interval = 0.1
 
     with patch.object(active_config, "influxdb", mock_config):
-        svc = InfluxService(logger, plant_index=0)
+        svc = InfluxService(plant_index=0)
         assert svc._writer_type is None
 
 
 def test_init_influx_disabled(logger):
     active_config.influxdb.enabled = False
-    svc = InfluxService(logger, plant_index=0)
+    svc = InfluxService(plant_index=0)
     assert svc._writer_type is None
 
 
@@ -93,7 +93,7 @@ async def test_init_token_prefers_v2_http(logger, influx_config):
         mock_post.side_effect = [
             MockResponse(204),  # v2 HTTP success
         ]
-        svc = InfluxService(logger, plant_index=0)
+        svc = InfluxService(plant_index=0)
         await svc.async_init()
         assert svc._writer_type == "v2_http"
 
@@ -106,7 +106,7 @@ async def test_init_v2_http_success_no_token(logger, influx_config):
         mock_post.side_effect = [
             MockResponse(204),  # v2 HTTP success
         ]
-        svc = InfluxService(logger, plant_index=0)
+        svc = InfluxService(plant_index=0)
         await svc.async_init()
         assert svc._writer_type == "v2_http"
 
@@ -122,7 +122,7 @@ async def test_init_v2_http_bucket_creation(logger, influx_config):
         ]
         mock_get.return_value = MockResponse(200, {"orgs": [{"id": "org123"}]})
 
-        svc = InfluxService(logger, plant_index=0)
+        svc = InfluxService(plant_index=0)
         await svc.async_init()
         assert svc._writer_type == "v2_http"
 
@@ -137,7 +137,7 @@ async def test_init_v1_http_database_creation(logger, influx_config):
             MockResponse(204),  # v1 write retry success
         ]
 
-        svc = InfluxService(logger, plant_index=0)
+        svc = InfluxService(plant_index=0)
         await svc.async_init()
         assert svc._writer_type == "v1_http"
 
@@ -147,13 +147,13 @@ async def test_init_all_fail_returns_false(logger, influx_config):
     # Ensure even with token we fail if network fails
     influx_config.token = "tok"
     with patch("requests.Session.post", side_effect=requests.RequestException("all fail")):
-        svc = InfluxService(logger, plant_index=0)
+        svc = InfluxService(plant_index=0)
         success = await svc.async_init()
         assert success is False
 
 
 def test_to_line_protocol(logger):
-    svc = InfluxService(logger, plant_index=0)
+    svc = InfluxService(plant_index=0)
     tags = {"t1": "v1", "t 2": "v 2"}
     fields = {"f1": 10, "f2": 10.5, "f3": "str val"}
     ts = 1234567890
@@ -162,10 +162,10 @@ def test_to_line_protocol(logger):
 
 
 @pytest.mark.asyncio
-async def testwrite_line_http_fail(logger, influx_config):
+async def testwrite_line_http_fail(influx_config):
     # Disable init so we can manually configure the writer for the test
     influx_config.enabled = False
-    svc = InfluxService(logger, plant_index=0)
+    svc = InfluxService(plant_index=0)
     svc._online = True  # Enable for write test
 
     # Manually configure writer
@@ -173,7 +173,7 @@ async def testwrite_line_http_fail(logger, influx_config):
     svc._write_url = "http://localhost:8086/api/v2/write"
 
     # Mock clean session post failure
-    with patch.object(svc._session, "post", side_effect=requests.RequestException("write error")), patch.object(logger, "error") as mock_logger_error:
+    with patch.object(svc._session, "post", side_effect=requests.RequestException("write error")), patch("sigenergy2mqtt.influxdb.influx_base.logger.error") as mock_logger_error:
         await svc.write_line("test line")
         await svc.flush_buffer()  # Force flush to trigger write
         # Log message contains exception detail and context
@@ -183,7 +183,7 @@ async def testwrite_line_http_fail(logger, influx_config):
 
 @pytest.mark.asyncio
 async def test_handle_mqtt_numeric_and_string(logger):
-    svc = InfluxService(logger, plant_index=0)
+    svc = InfluxService(plant_index=0)
     svc._topic_cache["topic1"] = {"uom": "W", "object_id": "obj1", "unique_id": "uid1"}
     svc._writer_type = "v1_http"
 
@@ -199,9 +199,9 @@ async def test_handle_mqtt_numeric_and_string(logger):
 
 @pytest.mark.asyncio
 async def test_handle_mqtt_cache_miss(logger):
-    svc = InfluxService(logger, plant_index=0)
+    svc = InfluxService(plant_index=0)
     # Disable init as we don't have config here and it might fail if we had it
-    with patch.object(logger, "warning") as mock_warn:
+    with patch("sigenergy2mqtt.influxdb.influx_service.logger.warning") as mock_warn:
         res = await svc.handle_mqtt(None, None, "100", "unknown_topic", None)
         assert res is False
         mock_warn.assert_called()
@@ -209,17 +209,17 @@ async def test_handle_mqtt_cache_miss(logger):
 
 @pytest.mark.asyncio
 async def test_handle_mqtt_exception_handling(logger):
-    svc = InfluxService(logger, plant_index=0)
+    svc = InfluxService(plant_index=0)
     svc._topic_cache["topic1"] = {"uom": "W", "object_id": "obj1", "unique_id": "uid1"}
 
-    with patch.object(svc, "to_line_protocol", side_effect=requests.RequestException("format error")), patch.object(logger, "error") as mock_error:
+    with patch.object(svc, "to_line_protocol", side_effect=requests.RequestException("format error")), patch("sigenergy2mqtt.influxdb.influx_service.logger.error") as mock_error:
         res = await svc.handle_mqtt(None, None, "100", "topic1", None)
         assert res is False
         assert "Failed to handle MQTT message" in mock_error.call_args[0][0]
 
 
 def test_subscribe_comprehensive(logger):
-    svc = InfluxService(logger, plant_index=0)
+    svc = InfluxService(plant_index=0)
 
     mock_sensor = MagicMock()
     mock_sensor.publishable = True
@@ -240,7 +240,7 @@ def test_subscribe_comprehensive(logger):
 
 @pytest.mark.asyncio
 async def test_schedule_lifecycle(logger):
-    svc = InfluxService(logger, plant_index=0)
+    svc = InfluxService(plant_index=0)
     tasks = svc.schedule(None, None)
     assert len(tasks) == 1
 
@@ -257,13 +257,13 @@ async def test_schedule_lifecycle(logger):
 
 
 def test_empty_methods(logger):
-    svc = InfluxService(logger, plant_index=0)
+    svc = InfluxService(plant_index=0)
     svc.publish_availability(None, None)
     svc.publish_discovery(None)
 
 
 def test_subscribe_edge_cases(logger):
-    svc = InfluxService(logger, plant_index=0)
+    svc = InfluxService(plant_index=0)
 
     # Case 1: No devices
     with patch("sigenergy2mqtt.devices.base.registry.DeviceRegistry.get", return_value=None):
@@ -306,7 +306,7 @@ def test_subscribe_edge_cases(logger):
 @pytest.mark.asyncio
 async def testwrite_line_v2_http_and_v1_http(logger, influx_config):
     influx_config.enabled = False  # Disable init
-    svc = InfluxService(logger, plant_index=0)
+    svc = InfluxService(plant_index=0)
     svc._online = True
 
     # v2_http
@@ -343,7 +343,7 @@ async def test_init_v1_fallback_success(logger, influx_config):
         # Call 2: v1 check -> success
         mock_post.side_effect = [requests.RequestException("v2 conn fail"), MockResponse(204)]
 
-        svc = InfluxService(logger, plant_index=0)
+        svc = InfluxService(plant_index=0)
         await svc.async_init()
         assert svc._writer_type == "v1_http"
 
@@ -352,7 +352,7 @@ async def test_init_v1_fallback_success(logger, influx_config):
 async def test_schedule_starts_and_cancels_sync_task(logger):
     from sigenergy2mqtt.influxdb.hass_history_sync import HassHistorySync
 
-    svc = InfluxService(logger, plant_index=0)
+    svc = InfluxService(plant_index=0)
     active_config.influxdb.load_hass_history = True
     # Manually simulate established connection
     svc._writer_type = "v2_http"

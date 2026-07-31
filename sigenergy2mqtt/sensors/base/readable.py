@@ -19,7 +19,7 @@ from .constants import SensorAttributeKeys
 from .mixins import ModbusSensorMixin, ReadableSensorMixin
 from .sensor import AvailabilityMixin, Sensor, TypedSensorMixin
 
-logger = logging.getLogger("sigenergy2mqtt")
+logger = logging.getLogger(__name__)
 # =============================================================================
 
 
@@ -102,6 +102,7 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
             return False
         except (ModbusException, OSError):
             from sigenergy2mqtt.metrics import Metrics
+
             # Record error in metrics
             await Metrics.modbus_read_error()
             raise
@@ -140,6 +141,7 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
 
         # Record metrics
         from sigenergy2mqtt.metrics import Metrics
+
         await Metrics.modbus_read(self.count, elapsed)
 
         # Check response validity

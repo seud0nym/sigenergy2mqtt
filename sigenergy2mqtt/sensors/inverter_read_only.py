@@ -41,7 +41,7 @@ from .base import (
     TimestampSensor,
 )
 
-logger = logging.getLogger("sigenergy2mqtt")
+logger = logging.getLogger(__name__)
 
 
 class InverterModel(ReadOnlySensor, HybridInverter, PVInverter):

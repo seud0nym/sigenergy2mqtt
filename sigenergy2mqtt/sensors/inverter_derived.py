@@ -14,7 +14,7 @@ from sigenergy2mqtt.sensors.inverter_read_only import ActivePower
 from .base import DerivedSensor, EnergyDailyAccumulationSensor, EnergyLifetimeAccumulationSensor, Sensor
 from .inverter_read_only import ChargeDischargePower, PVCurrentSensor, PVVoltageSensor
 
-logger = logging.getLogger("sigenergy2mqtt")
+logger = logging.getLogger(__name__)
 
 
 class InverterBatteryChargingPower(DerivedSensor, HybridInverter):

@@ -64,7 +64,7 @@ _GRID_RESTORE_WATCH_TASKS: set[tuple[str, int, int]] = set()
 # ---------------------------------------------------------------------------
 # Logging
 # ---------------------------------------------------------------------------
-logger = logging.getLogger("sigenergy2mqtt")
+logger = logging.getLogger(__name__)
 
 
 class _FramerSkipFilter(logging.Filter):
@@ -93,9 +93,11 @@ def configure_logging() -> None:
     # with configure_root_logging() performed at import time.
     configure_root_logging(active_config.log_level, active_config.log_fmt)
 
-    _configure_logger("paho.mqtt", active_config.mqtt.log_level)
-    _configure_logger("pvoutput", active_config.pvoutput.log_level)
+    _configure_logger("sigenergy2mqtt", active_config.log_level)
+    _configure_logger("sigenergy2mqtt.influxdb", active_config.influxdb.log_level)
+    _configure_logger("sigenergy2mqtt.pvoutput", active_config.pvoutput.log_level)
     _configure_logger("sigenergy2mqtt.mqtt.client", active_config.mqtt.log_level)
+    _configure_logger("paho.mqtt", active_config.mqtt.log_level)
 
     # We have to configure root logging before pymodbus so basicConfig wins the handler race
     modbus_log_level = active_config.get_modbus_log_level()

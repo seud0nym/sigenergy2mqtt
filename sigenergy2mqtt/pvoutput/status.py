@@ -22,13 +22,14 @@ from .service import Service
 from .service_topics import Calculation, ServiceTopics
 from .topic import Topic
 
+logger = logging.getLogger(__name__)
+
 
 class PVOutputStatusService(Service):
     """Upload interval-based PVOutput status records from MQTT topic values."""
 
     def __init__(
         self,
-        logger: logging.Logger,
         topics: dict[StatusField, list[Topic]],
         extended_data: dict[StatusField, str | None],
         ha_extended_entities: dict[StatusField, str] | None = None,
@@ -36,32 +37,31 @@ class PVOutputStatusService(Service):
         """Configure status field aggregators and register discovered topics.
 
         Args:
-            logger: Logger used by the status service.
             topics: Mapping of PVOutput status fields to source MQTT topics.
             extended_data: Metadata describing configured extended fields.
         """
-        super().__init__("PVOutput Add Status Service", unique_id="pvoutput_status", model="PVOutput.AddStatus", logger=logger)
+        super().__init__("PVOutput Add Status Service", unique_id="pvoutput_status", model="PVOutput.AddStatus")
         self._ha_extended_entities = ha_extended_entities or {}
         self._ha_supervisor_warning_emitted = False
 
-        _v1 = ServiceTopics(self, False, logger, value_key=StatusField.GENERATION_ENERGY)
-        _v2 = ServiceTopics(self, True, logger, value_key=StatusField.GENERATION_POWER, calc=Calculation.SUM | Calculation.DIFFERENCE | Calculation.CONVERT_TO_WATTS)
-        _v3 = ServiceTopics(self, False, logger, value_key=StatusField.CONSUMPTION_ENERGY)
-        _v4 = ServiceTopics(self, active_config.pvoutput.consumption_enabled, logger, value_key=StatusField.CONSUMPTION_POWER, calc=Calculation.SUM | Calculation.DIFFERENCE | Calculation.CONVERT_TO_WATTS)
-        _v5 = ServiceTopics(self, bool(active_config.pvoutput.temperature_topic), logger, value_key=StatusField.TEMPERATURE, calc=Calculation.AVERAGE, decimals=1, negative=True)
-        _v6 = ServiceTopics(self, True, logger, value_key=StatusField.VOLTAGE, calc=Calculation.L_L_AVG if active_config.pvoutput.voltage == VoltageSource.L_L_AVG else Calculation.AVERAGE, decimals=1)
-        _v7 = ServiceTopics(self, bool(active_config.pvoutput.extended[StatusField.V7]), logger, value_key=StatusField.V7, calc=Calculation.MEAN, decimals=4, donation=True, negative=True)
-        _v8 = ServiceTopics(self, bool(active_config.pvoutput.extended[StatusField.V8]), logger, value_key=StatusField.V8, calc=Calculation.MEAN, decimals=4, donation=True, negative=True)
-        _v9 = ServiceTopics(self, bool(active_config.pvoutput.extended[StatusField.V9]), logger, value_key=StatusField.V9, calc=Calculation.MEAN, decimals=4, donation=True, negative=True)
-        _v10 = ServiceTopics(self, bool(active_config.pvoutput.extended[StatusField.V10]), logger, value_key=StatusField.V10, calc=Calculation.MEAN, decimals=4, donation=True, negative=True)
-        _v11 = ServiceTopics(self, bool(active_config.pvoutput.extended[StatusField.V11]), logger, value_key=StatusField.V11, calc=Calculation.MEAN, decimals=4, donation=True, negative=True)
-        _v12 = ServiceTopics(self, bool(active_config.pvoutput.extended[StatusField.V12]), logger, value_key=StatusField.V12, calc=Calculation.MEAN, decimals=4, donation=True, negative=True)
-        _b1 = ServiceTopics(self, True, logger, value_key=StatusField.BATTERY_POWER, calc=Calculation.SUM | Calculation.DIFFERENCE | Calculation.CONVERT_TO_WATTS, decimals=1, donation=True, negative=True)
-        _b2 = ServiceTopics(self, True, logger, value_key=StatusField.BATTERY_SOC, calc=Calculation.AVERAGE, donation=True, decimals=1)
-        _b3 = ServiceTopics(self, True, logger, value_key=StatusField.BATTERY_CAPACITY, donation=True)
-        _b4 = ServiceTopics(self, True, logger, value_key=StatusField.BATTERY_CHARGED, donation=True)
-        _b5 = ServiceTopics(self, True, logger, value_key=StatusField.BATTERY_DISCHARGED, donation=True)
-        _b6 = ServiceTopics(self, False, logger, value_key=StatusField.BATTERY_STATE, donation=True)
+        _v1 = ServiceTopics(self, False, value_key=StatusField.GENERATION_ENERGY)
+        _v2 = ServiceTopics(self, True, value_key=StatusField.GENERATION_POWER, calc=Calculation.SUM | Calculation.DIFFERENCE | Calculation.CONVERT_TO_WATTS)
+        _v3 = ServiceTopics(self, False, value_key=StatusField.CONSUMPTION_ENERGY)
+        _v4 = ServiceTopics(self, active_config.pvoutput.consumption_enabled, value_key=StatusField.CONSUMPTION_POWER, calc=Calculation.SUM | Calculation.DIFFERENCE | Calculation.CONVERT_TO_WATTS)
+        _v5 = ServiceTopics(self, bool(active_config.pvoutput.temperature_topic), value_key=StatusField.TEMPERATURE, calc=Calculation.AVERAGE, decimals=1, negative=True)
+        _v6 = ServiceTopics(self, True, value_key=StatusField.VOLTAGE, calc=Calculation.L_L_AVG if active_config.pvoutput.voltage == VoltageSource.L_L_AVG else Calculation.AVERAGE, decimals=1)
+        _v7 = ServiceTopics(self, bool(active_config.pvoutput.extended[StatusField.V7]), value_key=StatusField.V7, calc=Calculation.MEAN, decimals=4, donation=True, negative=True)
+        _v8 = ServiceTopics(self, bool(active_config.pvoutput.extended[StatusField.V8]), value_key=StatusField.V8, calc=Calculation.MEAN, decimals=4, donation=True, negative=True)
+        _v9 = ServiceTopics(self, bool(active_config.pvoutput.extended[StatusField.V9]), value_key=StatusField.V9, calc=Calculation.MEAN, decimals=4, donation=True, negative=True)
+        _v10 = ServiceTopics(self, bool(active_config.pvoutput.extended[StatusField.V10]), value_key=StatusField.V10, calc=Calculation.MEAN, decimals=4, donation=True, negative=True)
+        _v11 = ServiceTopics(self, bool(active_config.pvoutput.extended[StatusField.V11]), value_key=StatusField.V11, calc=Calculation.MEAN, decimals=4, donation=True, negative=True)
+        _v12 = ServiceTopics(self, bool(active_config.pvoutput.extended[StatusField.V12]), value_key=StatusField.V12, calc=Calculation.MEAN, decimals=4, donation=True, negative=True)
+        _b1 = ServiceTopics(self, True, value_key=StatusField.BATTERY_POWER, calc=Calculation.SUM | Calculation.DIFFERENCE | Calculation.CONVERT_TO_WATTS, decimals=1, donation=True, negative=True)
+        _b2 = ServiceTopics(self, True, value_key=StatusField.BATTERY_SOC, calc=Calculation.AVERAGE, donation=True, decimals=1)
+        _b3 = ServiceTopics(self, True, value_key=StatusField.BATTERY_CAPACITY, donation=True)
+        _b4 = ServiceTopics(self, True, value_key=StatusField.BATTERY_CHARGED, donation=True)
+        _b5 = ServiceTopics(self, True, value_key=StatusField.BATTERY_DISCHARGED, donation=True)
+        _b6 = ServiceTopics(self, False, value_key=StatusField.BATTERY_STATE, donation=True)
 
         self._previous_payload: dict | None = None
         self._service_topics: dict[str, ServiceTopics] = {
@@ -94,7 +94,7 @@ class PVOutputStatusService(Service):
                     if topic.precision is not None:
                         self._service_topics[field].decimals = topic.precision
             else:
-                self.logger.debug(f"{self.log_identity} IGNORED unrecognized {field}")
+                logger.debug(f"{self.log_identity} IGNORED unrecognized {field}")
 
     async def _refresh_home_assistant_extended_fields(self) -> None:
         """Refresh HA sensor-backed extended field values via Supervisor API."""
@@ -104,7 +104,7 @@ class PVOutputStatusService(Service):
         token = os.getenv("SUPERVISOR_TOKEN")
         if not token:
             if not self._ha_supervisor_warning_emitted:
-                self.logger.warning(f"{self.log_identity} Home Assistant sensor source configured, but SUPERVISOR_TOKEN is not available")
+                logger.warning(f"{self.log_identity} Home Assistant sensor source configured, but SUPERVISOR_TOKEN is not available")
                 self._ha_supervisor_warning_emitted = True
             return
 
@@ -116,19 +116,19 @@ class PVOutputStatusService(Service):
             try:
                 response = await asyncio.to_thread(requests.get, url, headers=headers, timeout=5)
                 if response.status_code != 200:
-                    self.logger.warning(f"{self.log_identity} Failed to read Home Assistant sensor '{entity_id}' via Supervisor API: status_code={response.status_code}")
+                    logger.warning(f"{self.log_identity} Failed to read Home Assistant sensor '{entity_id}' via Supervisor API: status_code={response.status_code}")
                     continue
                 state_raw = response.json().get("state")
                 if state_raw in (None, "unknown", "unavailable"):
-                    self.logger.debug(f"{self.log_identity} Ignoring Home Assistant sensor '{entity_id}' state={state_raw}")
+                    logger.debug(f"{self.log_identity} Ignoring Home Assistant sensor '{entity_id}' state={state_raw}")
                     continue
                 topic = f"__ha_sensor__:{entity_id}"
                 if field in self._service_topics and topic in self._service_topics[field]:
                     await self._service_topics[field].handle_update(None, None, float(state_raw), topic, None)
             except (TypeError, ValueError):
-                self.logger.warning(f"{self.log_identity} Home Assistant sensor '{entity_id}' returned non-numeric state='{state_raw}'")
+                logger.warning(f"{self.log_identity} Home Assistant sensor '{entity_id}' returned non-numeric state='{state_raw}'")
             except (OSError, requests.RequestException, TimeoutError) as exc:
-                self.logger.warning(f"{self.log_identity} Failed reading Home Assistant sensor '{entity_id}' via Supervisor API: {exc}")
+                logger.warning(f"{self.log_identity} Failed reading Home Assistant sensor '{entity_id}' via Supervisor API: {exc}")
 
     def _create_payload(self, now: time.struct_time) -> tuple[dict[str, Any], dict[str, dict[str, tuple[float | None, time.struct_time | None]]]]:
         """Build a status payload and snapshot state for rollback on failure.
@@ -155,7 +155,7 @@ class PVOutputStatusService(Service):
             rand_max: Maximum random offset (seconds) for next upload.
         """
         seconds, next_time = await super().seconds_until_status_upload(rand_min, rand_max)
-        self.logger.debug(f"{self.log_identity} Next update at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(next_time))} ({seconds:.2f}s)")
+        logger.debug(f"{self.log_identity} Next update at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(next_time))} ({seconds:.2f}s)")
         return seconds, next_time
 
     def schedule(self, modbus_client: Any, mqtt_client: Any) -> list[Awaitable[None]]:
@@ -188,13 +188,13 @@ class PVOutputStatusService(Service):
                             elif payload.get(StatusField.CONSUMPTION_ENERGY.value) is not None:
                                 payload["c1"] = 3
                             if payload.get(StatusField.CONSUMPTION_POWER.value, 0) < 0:
-                                self.logger.warning(
+                                logger.warning(
                                     f"{self.log_identity} Adjusted {StatusField.CONSUMPTION_POWER.name} (payload['{StatusField.CONSUMPTION_POWER.value}']) to 0 from {payload[StatusField.CONSUMPTION_POWER]} to comply with PVOutput requirements"
                                 )
                                 payload[StatusField.CONSUMPTION_POWER.value] = 0  # PVOutput does not accept negative consumption power values
                             uploaded = await self.upload_payload("https://pvoutput.org/service/r2/addstatus.jsp", payload)
                             if not uploaded:
-                                self.logger.debug(f"{self.log_identity} Restoring previous state of topics due to failed upload")
+                                logger.debug(f"{self.log_identity} Restoring previous state of topics due to failed upload")
                                 async with self.lock(timeout=5):
                                     for st, topics_dict in self._service_topics.items():
                                         for topic in topics_dict.values():
@@ -202,7 +202,7 @@ class PVOutputStatusService(Service):
                                                 topic.previous_state, topic.previous_timestamp = snapshot[st][topic.topic]
                         else:
                             await Metrics.pvoutput_upload_skipped()
-                            self.logger.warning(f"{self.log_identity} No generation{' or consumption data' if active_config.pvoutput.consumption_enabled else ''} to upload, skipping... ({payload=})")
+                            logger.warning(f"{self.log_identity} No generation{' or consumption data' if active_config.pvoutput.consumption_enabled else ''} to upload, skipping... ({payload=})")
                         wait, _ = await self.seconds_until_status_upload()
                     sleep = min(wait, 1)
                     wait -= sleep
@@ -214,16 +214,16 @@ class PVOutputStatusService(Service):
                         finally:
                             self.sleeper_task = None
                 except asyncio.CancelledError:
-                    self.logger.info(f"{self.log_identity} Sleep interrupted")
+                    logger.info(f"{self.log_identity} Sleep interrupted")
                 except TimeoutError:
-                    self.logger.warning(f"{self.log_identity} Failed to acquire lock within timeout")
+                    logger.warning(f"{self.log_identity} Failed to acquire lock within timeout")
                     if wait <= 0:
                         wait = 60
                 except RuntimeError as e:
-                    self.logger.error(f"{self.log_identity} {e}")
+                    logger.error(f"{self.log_identity} {e}")
                     if wait <= 0:
                         wait = 60
-            self.logger.info(f"{self.log_identity} Completed: Flagged as offline ({self.online=})")
+            logger.info(f"{self.log_identity} Completed: Flagged as offline ({self.online=})")
 
         tasks: list[Awaitable[None]] = [publish_updates(modbus_client, mqtt_client)]
         return tasks

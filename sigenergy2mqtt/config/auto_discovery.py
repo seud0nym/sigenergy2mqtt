@@ -12,7 +12,7 @@ import psutil
 from pymodbus import ExceptionResponse, FramerType, ModbusException
 from pymodbus.client import AsyncModbusTcpClient
 
-logger = logging.getLogger("sigenergy2mqtt")
+logger = logging.getLogger(__name__)
 
 
 class DiscoveryInterruptedError(Exception):

@@ -22,7 +22,7 @@ from typing import Any, ClassVar
 
 from sigenergy2mqtt.config import active_config
 
-logger = logging.getLogger("sigenergy2mqtt")
+logger = logging.getLogger(__name__)
 
 
 class Metrics:

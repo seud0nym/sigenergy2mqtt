@@ -18,7 +18,7 @@ from sigenergy2mqtt.sensors.base import Sensor
 
 def make_service():
     logger = logging.getLogger("test-pvoutput")
-    return Service("pvtest", "pvtest", "pvmodel", logger)
+    return Service("pvtest", "pvtest", "pvmodel")
 
 
 class TestPVOutputBase:

@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 HA_REPUBLISH_MIN_JITTER = 0.0
 HA_REPUBLISH_MAX_JITTER = 3.0
 
-logger = logging.getLogger("sigenergy2mqtt")
+logger = logging.getLogger(__name__)
 
 
 class HaPublisherMixin(abc.ABC):

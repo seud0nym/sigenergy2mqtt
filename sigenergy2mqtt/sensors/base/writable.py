@@ -22,7 +22,7 @@ from .mixins import WritableSensorMixin
 from .readable import ReadOnlySensor
 from .sensor import AvailabilityMixin, Sensor
 
-logger = logging.getLogger("sigenergy2mqtt")
+logger = logging.getLogger(__name__)
 # =============================================================================
 
 
