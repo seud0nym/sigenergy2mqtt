@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.influxdb.influx_service import InfluxService
+from sigenergy2mqtt.influxdb.service import InfluxService
 
 
 class DummyMqtt:

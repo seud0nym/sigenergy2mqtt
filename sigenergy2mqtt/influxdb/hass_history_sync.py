@@ -6,9 +6,9 @@ from typing import Any, cast
 import requests
 
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.influxdb.influx_base import InfluxConfigValues
+from sigenergy2mqtt.influxdb.base import InfluxConfigValues
 
-from .influx_base import InfluxBase
+from .base import InfluxBase
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class HassHistorySync(InfluxBase):
     """Backfill helper that copies historical sensor data from a Home Assistant InfluxDB database.
 
-    This class is created by :class:`~.influx_service.InfluxService` and shares
+    This class is created by :class:`~.service.InfluxService` and shares
     its already-initialised HTTP session and writer state via
     :meth:`~InfluxBase.copy_connection_from`.  It does **not** call
     :meth:`~InfluxBase.async_init` itself.
@@ -496,7 +496,7 @@ class HassHistorySync(InfluxBase):
 
         Args:
             topic_cache: The :attr:`~InfluxBase._topic_cache` dict from the
-                parent :class:`~.influx_service.InfluxService`, mapping MQTT
+                parent :class:`~.service.InfluxService`, mapping MQTT
                 state topics to sensor metadata dicts.
 
         Returns:

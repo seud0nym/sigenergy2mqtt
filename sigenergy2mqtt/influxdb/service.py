@@ -13,8 +13,8 @@ from sigenergy2mqtt.devices import DeviceRegistry
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.mqtt import MqttHandler
 
+from .base import InfluxBase
 from .hass_history_sync import HassHistorySync
-from .influx_base import InfluxBase
 
 logger = logging.getLogger(__name__)
 

@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from sigenergy2mqtt.config import active_config
 
+from .base import InfluxBase
 from .hass_history_sync import HassHistorySync
-from .influx_base import InfluxBase
-from .influx_service import InfluxService
+from .service import InfluxService
 
 __all__ = ["HassHistorySync", "InfluxBase", "InfluxService", "get_influxdb_services"]
 

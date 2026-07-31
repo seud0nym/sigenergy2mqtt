@@ -9,7 +9,7 @@ import requests
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.config.config import active_config
 from sigenergy2mqtt.influxdb.hass_history_sync import HassHistorySync
-from sigenergy2mqtt.influxdb.influx_service import InfluxService
+from sigenergy2mqtt.influxdb.service import InfluxService
 
 
 class MockResponse:

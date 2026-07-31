@@ -8,7 +8,7 @@ import requests
 
 from sigenergy2mqtt.common import service_health_registry
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.influxdb.influx_base import InfluxBase
+from sigenergy2mqtt.influxdb.base import InfluxBase
 from sigenergy2mqtt.modbus import ModbusClientFactory
 from sigenergy2mqtt.monitor.monitor_service import MonitorService
 from sigenergy2mqtt.monitor.monitored_sensor import MonitoredSensor

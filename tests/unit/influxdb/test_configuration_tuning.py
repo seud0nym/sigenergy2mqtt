@@ -4,7 +4,7 @@ import pytest
 
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.config.settings import InfluxDbConfig
-from sigenergy2mqtt.influxdb.influx_service import InfluxService
+from sigenergy2mqtt.influxdb.service import InfluxService
 
 
 def test_influxdb_config_tuning_defaults():
@@ -56,7 +56,7 @@ def test_influxdb_config_tuning_parsing():
 
 
 @pytest.mark.asyncio
-async def test_influx_service_uses_config_values(monkeypatch):
+async def test_service_uses_config_values(monkeypatch):
     # Setup custom config
     active_config.influxdb.batch_size = 50
     active_config.influxdb.flush_interval = 2.0

@@ -6,7 +6,7 @@ import pytest
 import requests
 
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.influxdb.influx_service import InfluxService
+from sigenergy2mqtt.influxdb.service import InfluxService
 
 
 class MockResponse:
@@ -173,7 +173,7 @@ async def testwrite_line_http_fail(influx_config):
     svc._write_url = "http://localhost:8086/api/v2/write"
 
     # Mock clean session post failure
-    with patch.object(svc._session, "post", side_effect=requests.RequestException("write error")), patch("sigenergy2mqtt.influxdb.influx_base.logger.error") as mock_logger_error:
+    with patch.object(svc._session, "post", side_effect=requests.RequestException("write error")), patch("sigenergy2mqtt.influxdb.base.logger.error") as mock_logger_error:
         await svc.write_line("test line")
         await svc.flush_buffer()  # Force flush to trigger write
         # Log message contains exception detail and context
@@ -201,7 +201,7 @@ async def test_handle_mqtt_numeric_and_string(logger):
 async def test_handle_mqtt_cache_miss(logger):
     svc = InfluxService(plant_index=0)
     # Disable init as we don't have config here and it might fail if we had it
-    with patch("sigenergy2mqtt.influxdb.influx_service.logger.warning") as mock_warn:
+    with patch("sigenergy2mqtt.influxdb.service.logger.warning") as mock_warn:
         res = await svc.handle_mqtt(None, None, "100", "unknown_topic", None)
         assert res is False
         mock_warn.assert_called()
@@ -212,7 +212,7 @@ async def test_handle_mqtt_exception_handling(logger):
     svc = InfluxService(plant_index=0)
     svc._topic_cache["topic1"] = {"uom": "W", "object_id": "obj1", "unique_id": "uid1"}
 
-    with patch.object(svc, "to_line_protocol", side_effect=requests.RequestException("format error")), patch("sigenergy2mqtt.influxdb.influx_service.logger.error") as mock_error:
+    with patch.object(svc, "to_line_protocol", side_effect=requests.RequestException("format error")), patch("sigenergy2mqtt.influxdb.service.logger.error") as mock_error:
         res = await svc.handle_mqtt(None, None, "100", "topic1", None)
         assert res is False
         assert "Failed to handle MQTT message" in mock_error.call_args[0][0]

@@ -5,7 +5,7 @@ import requests
 
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.influxdb.hass_history_sync import HassHistorySync
-from sigenergy2mqtt.influxdb.influx_service import InfluxService
+from sigenergy2mqtt.influxdb.service import InfluxService
 
 
 @pytest.mark.integration
@@ -664,7 +664,7 @@ async def testcopy_records_v2_field_standardization():
     svc._session = MagicMock()
 
     # Mock CSV response for v2
-    # Headers default indices: _time=5, _value=7, _field=6 (based on influx_service.py defaults if not in header)
+    # Headers default indices: _time=5, _value=7, _field=6 (based on service.py defaults if not in header)
     # But usually headers are parsed.
     # The Service parses headers from lines starting with underscore.
 

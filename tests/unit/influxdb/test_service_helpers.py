@@ -9,7 +9,7 @@ import requests
 
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.influxdb.hass_history_sync import HassHistorySync
-from sigenergy2mqtt.influxdb.influx_service import InfluxService
+from sigenergy2mqtt.influxdb.service import InfluxService
 
 
 @pytest.fixture
@@ -505,7 +505,7 @@ class TestHassHistorySyncCoverage:
 
     @pytest.mark.asyncio
     async def test_query_v1_post_success(self, logger):
-        # query_v1_internal actually uses GET (see influx_base.py:732)
+        # query_v1_internal actually uses GET (see base.py:732)
         hass_sync = self._make_hass_sync(logger)
         fut = asyncio.Future()
         fut.set_result(True)
