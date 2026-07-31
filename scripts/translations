@@ -13,8 +13,12 @@ fi
 echo -e "${GREEN}>>> Updating English translations...${NC}"
 python3 scripts/update_en_translation.py || exit
 
-echo -e "${GREEN}>>> Updating native translations...${NC}"
-python3 scripts/translate_missing.py || exit
+if git diff --name-only | grep -qE 'sigenergy2mqtt/translations/.+\.yaml'; then
+    echo -e "${GREEN}>>> Updating native translations...${NC}"
+    python3 scripts/translate_missing.py || exit
 
-echo -e "${GREEN}>>> Checking translations...${NC}"
-python3 scripts/verify_translations.py || exit
+    if git diff --name-only | grep -qE 'sigenergy2mqtt/translations/.+\.yaml'; then
+        echo -e "${GREEN}>>> Checking translations...${NC}"
+        python3 scripts/verify_translations.py || exit
+    fi
+fi
