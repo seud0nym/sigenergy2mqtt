@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>sigenergy2mqtt — Diagnostics</title>
-  <link rel="icon" type="image/x-icon" href="/diagnostics/static/favicon.ico">
+  <link rel="icon" type="image/x-icon" href="static/favicon.ico">
   <style>
     :root {
       --bg: #0b1220;
@@ -340,12 +340,12 @@
 
   <header>
     <div class="brand">
-      <img src="/diagnostics/static/logo.png" alt="sigenergy2mqtt">
+      <img src="static/logo.png" alt="sigenergy2mqtt">
       <span class="brand-sub">Diagnostics</span>
     </div>
     <div class="header-right">
       <span class="conn-pill" id="connPill"><span class="conn-dot"></span><span id="connLabel">Connecting…</span></span>
-      <a class="btn" href="/diagnostics/export" download>⬇ Export JSON</a>
+      <a class="btn" href="export" download>⬇ Export JSON</a>
     </div>
   </header>
 
@@ -541,8 +541,14 @@
       let retryDelay = 1000;
 
       function connect() {
-        const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-        socket = new WebSocket(`${proto}://${location.host}/diagnostics/ws`);
+        // Resolve "ws" relative to the current document location rather than
+        // hardcoding an absolute "/diagnostics/ws". This page may be served
+        // directly (http://host:8502/diagnostics/) or via Home Assistant's
+        // ingress proxy (https://ha/api/hassio_ingress/<token>/diagnostics/) —
+        // the relative resolution lands correctly on both.
+        const wsUrl = new URL('ws', location.href);
+        wsUrl.protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+        socket = new WebSocket(wsUrl.href);
 
         socket.onopen = () => { setConn('live'); retryDelay = 1000; };
         socket.onmessage = (evt) => {

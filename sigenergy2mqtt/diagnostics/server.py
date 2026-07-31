@@ -62,7 +62,8 @@ class DiagnosticsServer:
 
     def _configure_routes(self) -> None:
         self._app.router.add_get("/health", self._handle_health)
-        self._app.router.add_get("/diagnostics", self._handle_dashboard)
+        self._app.router.add_get("/diagnostics", self._handle_dashboard_redirect)
+        self._app.router.add_get("/diagnostics/", self._handle_dashboard)
         self._app.router.add_get("/diagnostics/ws", self._handle_websocket)
         self._app.router.add_get("/diagnostics/export", self._handle_export)
         self._app.router.add_static("/diagnostics/static/", STATIC_DIR, name="static")
@@ -182,6 +183,20 @@ class DiagnosticsServer:
             },
             status=code,
         )
+
+    async def _handle_dashboard_redirect(self, request: web.Request) -> web.Response:
+        """Redirect ``/diagnostics`` -> ``/diagnostics/``.
+
+        The Location header is deliberately *relative* ("diagnostics/"),
+        not absolute ("/diagnostics/"). This server has no idea whether
+        it's being hit directly or via Home Assistant's ingress proxy,
+        which fronts it behind a per-session prefix such as
+        ``/api/hassio_ingress/<token>/``. A relative redirect is resolved
+        by the browser against the *externally visible* URL, so it lands
+        on the right place either way; an absolute one would drop the
+        ingress prefix and 404.
+        """
+        raise web.HTTPFound(location="diagnostics/")
 
     async def _handle_dashboard(self, request: web.Request) -> web.FileResponse:
         return web.FileResponse(STATIC_DIR / "dashboard.html")
