@@ -53,7 +53,7 @@ class DiagnosticsServer:
         self._port = DEFAULT_PORT
         self._refresh_interval = 5.0
         self._allowed_networks: list[ipaddress.IPv4Network | ipaddress.IPv6Network] | None = None
-        self._app = web.Application(middlewares=[self._ip_filter_middleware])
+        self._app = web.Application(middlewares=[self._logging_middleware, self._ip_filter_middleware])
         self._runner: web.AppRunner | None = None
         self._sockets: set[web.WebSocketResponse] = set()
         self._broadcast_task: asyncio.Task | None = None
@@ -84,6 +84,38 @@ class DiagnosticsServer:
             except ValueError:
                 logger.warning(f"DiagnosticsServer Ignoring invalid allowed_ips entry: {entry!r}")
         return networks
+
+    @web.middleware
+    async def _logging_middleware(self, request: web.Request, handler) -> web.StreamResponse:
+        """Log every request and its outcome at DEBUG level.
+
+        Runs outermost (registered before ``_ip_filter_middleware``) so it
+        also captures requests rejected by the IP filter, and the status
+        code it logs is whatever was ultimately returned/raised. For the
+        WebSocket route, "response" logging fires only once the socket
+        closes, since that's when the handler coroutine returns - the
+        connect/disconnect events themselves are already logged separately
+        in :meth:`_handle_websocket`.
+        """
+        if not logger.isEnabledFor(logging.DEBUG):
+            return await handler(request)
+
+        started = time.monotonic()
+        query = f"?{request.query_string}" if request.query_string else ""
+        logger.debug(f"DiagnosticsServer --> {request.method} {request.path}{query} from {request.remote!r}")
+        status: int | str = "FAILED"
+        try:
+            response = await handler(request)
+            status = response.status
+            return response
+        except web.HTTPException as exc:
+            # aiohttp uses these to carry non-2xx responses (e.g. our own
+            # HTTPForbidden from _ip_filter_middleware) - not a real failure.
+            status = exc.status
+            raise
+        finally:
+            elapsed_ms = (time.monotonic() - started) * 1000
+            logger.debug(f"DiagnosticsServer <-- {request.method} {request.path}{query} {status} ({elapsed_ms:.1f}ms)")
 
     @web.middleware
     async def _ip_filter_middleware(self, request: web.Request, handler) -> web.StreamResponse:
