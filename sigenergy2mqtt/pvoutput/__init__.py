@@ -40,6 +40,8 @@ from .output import PVOutputOutputService
 from .status import PVOutputStatusService
 from .topic import Topic
 
+logger = logging.getLogger(__name__)
+
 if TYPE_CHECKING:
     from sigenergy2mqtt.main.thread_config import ThreadConfig
 
@@ -118,8 +120,6 @@ def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusSer
     """
     if not active_config.pvoutput.enabled:
         return []
-    logger = logging.getLogger("pvoutput")
-    logger.setLevel(active_config.pvoutput.log_level)
 
     if active_config.pvoutput.testing:
         logger.warning("PVOutput system-id is set to 'testing'. PVOutput data will not be sent to the actual PVOutput service.")
@@ -267,7 +267,7 @@ def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusSer
             elif temp_source.startswith("sensor.") or temp_source.lower().startswith("ha:sensor."):
                 logger.warning(f"PVOutput temperature source '{temp_source}' ignored as Home Assistant sensor source because app runtime was not detected; using literal MQTT topic")
 
-    status = PVOutputStatusService(logger, status_topics, extended_data, ha_extended_entities)
-    output = PVOutputOutputService(logger, output_topics)
+    status = PVOutputStatusService(status_topics, extended_data, ha_extended_entities)
+    output = PVOutputOutputService(output_topics)
 
     return [status, output]

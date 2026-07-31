@@ -18,10 +18,7 @@ def make_st(enabled=True, calc=Calc.SUM, value_key=OutputField.GENERATION, **kwa
     service.scan_interval.return_value = 300
     service.lock.return_value.__aenter__ = AsyncMock()
     service.lock.return_value.__aexit__ = AsyncMock()
-    logger = logging.getLogger("sigenergy2mqtt.test")
-    logger.setLevel(logging.DEBUG)
-    logger.propagate = True
-    return ServiceTopics(service, enabled, logger, value_key=value_key, calc=calc, **kwargs)
+    return ServiceTopics(service, enabled, value_key=value_key, calc=calc, **kwargs)
 
 
 def test_setters_and_assertions():
@@ -55,7 +52,7 @@ def test_registration(caplog):
 
 
 def test_aggregate_adjustment_logging(caplog):
-    caplog.set_level(logging.DEBUG)
+    caplog.set_level(logging.DEBUG, logger="sigenergy2mqtt.pvoutput.service_topics")
     cfg_obj = Config()
     cfg_obj.pvoutput.calc_debug_logging = True
     with _swap_active_config(cfg_obj):
@@ -66,7 +63,7 @@ def test_aggregate_adjustment_logging(caplog):
 
 
 def test_aggregate_difference_logic(caplog):
-    caplog.set_level(logging.DEBUG)
+    caplog.set_level(logging.DEBUG, logger="sigenergy2mqtt.pvoutput.service_topics")
     now = time.mktime((2024, 6, 1, 12, 0, 0, 0, 0, -1))
     cfg_obj = Config()
     cfg_obj.pvoutput.calc_debug_logging = True
@@ -100,7 +97,7 @@ def test_aggregate_difference_logic(caplog):
 
 
 def test_check_is_updating_branches(caplog):
-    caplog.set_level(logging.DEBUG)
+    caplog.set_level(logging.DEBUG, logger="sigenergy2mqtt.pvoutput.service_topics")
     now = time.time()
     st = make_st()
     cfg_obj = Config()
@@ -180,7 +177,7 @@ def test_reset_with_child():
 
 
 def test_aggregate_logging_no_dt(caplog):
-    caplog.set_level(logging.DEBUG)
+    caplog.set_level(logging.DEBUG, logger="sigenergy2mqtt.pvoutput.service_topics")
     cfg_obj = Config()
     cfg_obj.pvoutput.calc_debug_logging = True
     with _swap_active_config(cfg_obj):
@@ -205,7 +202,7 @@ def test_aggregate_logging_no_dt(caplog):
 
 
 def test_aggregate_logging_with_dt(caplog):
-    caplog.set_level(logging.DEBUG)
+    caplog.set_level(logging.DEBUG, logger="sigenergy2mqtt.pvoutput.service_topics")
     cfg_obj = Config()
     cfg_obj.pvoutput.calc_debug_logging = True
     with _swap_active_config(cfg_obj):
@@ -221,7 +218,7 @@ def test_aggregate_logging_with_dt(caplog):
 
 
 def test_payload_deletion_and_remaining_gaps(caplog):
-    caplog.set_level(logging.DEBUG)
+    caplog.set_level(logging.DEBUG, logger="sigenergy2mqtt.pvoutput.service_topics")
 
     # 158: check_is_updating fails
     cfg_obj = Config()
@@ -260,7 +257,7 @@ def test_payload_deletion_and_remaining_gaps(caplog):
 
 @pytest.mark.asyncio
 async def test_handle_update_complex_branches(caplog):
-    caplog.set_level(logging.DEBUG)
+    caplog.set_level(logging.DEBUG, logger="sigenergy2mqtt.pvoutput.service_topics")
     st = make_st(calc=Calc.PEAK)
     child = make_st()
     st._time_periods = [child]
@@ -301,6 +298,6 @@ def test_subscribe_branches(caplog):
 
 
 def test_time_period_misc():
-    tp = TimePeriodServiceTopics(MagicMock(), True, logging.getLogger(), value_key=OutputField.GENERATION)
+    tp = TimePeriodServiceTopics(MagicMock(), True, value_key=OutputField.GENERATION)
     tp.subscribe(None, None)
     tp.register(Topic("t1"))

@@ -9,7 +9,7 @@ import requests
 
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.influxdb.hass_history_sync import HassHistorySync
-from sigenergy2mqtt.influxdb.influx_service import InfluxService
+from sigenergy2mqtt.influxdb.service import InfluxService
 
 
 @pytest.fixture
@@ -33,7 +33,7 @@ def service(logger):
     mock_config.max_sync_workers = 5
 
     with patch.object(active_config, "influxdb", mock_config):
-        svc = InfluxService(logger, plant_index=0)
+        svc = InfluxService(plant_index=0)
         yield svc
 
 
@@ -335,7 +335,7 @@ class TestMiscEdgeCases:
         mock_config.load_hass_history = False
 
         with patch.object(active_config, "influxdb", mock_config):
-            svc = InfluxService(logger, plant_index=5)
+            svc = InfluxService(plant_index=5)
         assert "5" in svc.name
         assert "InfluxDB" in svc.name
 
@@ -364,7 +364,7 @@ class TestHassHistorySyncCoverage:
         # We set it directly on the active_config proxy.
         # It will be reset by the next reload() or next test that mocks it.
         active_config.influxdb = mock_config
-        return HassHistorySync(logger, plant_index=0)
+        return HassHistorySync(plant_index=0)
 
     @pytest.mark.asyncio
     async def test_detect_homeassistant_db_v2_bucket_found(self, logger):
@@ -505,7 +505,7 @@ class TestHassHistorySyncCoverage:
 
     @pytest.mark.asyncio
     async def test_query_v1_post_success(self, logger):
-        # query_v1_internal actually uses GET (see influx_base.py:732)
+        # query_v1_internal actually uses GET (see base.py:732)
         hass_sync = self._make_hass_sync(logger)
         fut = asyncio.Future()
         fut.set_result(True)

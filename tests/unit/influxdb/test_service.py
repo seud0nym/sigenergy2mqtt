@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.influxdb.influx_service import InfluxService
+from sigenergy2mqtt.influxdb.service import InfluxService
 
 
 class DummyMqtt:
@@ -14,7 +14,7 @@ class DummyMqtt:
 @pytest.mark.asyncio
 async def test_influx_handle_mqtt_writes_line():
     logger = MagicMock()
-    svc = InfluxService(logger, plant_index=0)
+    svc = InfluxService(plant_index=0)
 
     # Create a fake sensor
     class FakeSensor:
@@ -64,7 +64,7 @@ async def test_influx_org_propagation():
     # Test v2 HTTP path with org parameter
     with patch("requests.Session.post") as mock_post:
         mock_post.return_value.status_code = 204
-        svc = InfluxService(logger, plant_index=0)
+        svc = InfluxService(plant_index=0)
         await svc.async_init()
 
         # Verify URL contains org parameter

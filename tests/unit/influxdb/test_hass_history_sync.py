@@ -23,7 +23,7 @@ def future() -> Generator[Future[Any], Any, None]:
 
 @pytest.fixture
 def influx(future: Future[Any]) -> HassHistorySync:
-    influx = HassHistorySync(logging.getLogger(__name__))
+    influx = HassHistorySync(plant_index=0)
     influx.online = future
     return influx
 

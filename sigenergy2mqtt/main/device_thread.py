@@ -23,7 +23,7 @@ from sigenergy2mqtt.mqtt import mqtt_setup, mqtt_teardown
 
 from .thread_config import ThreadConfig
 
-logger = logging.getLogger("sigenergy2mqtt")
+logger = logging.getLogger(__name__)
 
 
 async def read_and_publish_device_sensors(

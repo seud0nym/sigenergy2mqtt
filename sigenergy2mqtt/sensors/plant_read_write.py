@@ -21,7 +21,7 @@ from sigenergy2mqtt.sensors.base import (
     WriteOnlySensor,
 )
 
-logger = logging.getLogger("sigenergy2mqtt")
+logger = logging.getLogger(__name__)
 
 
 class PlantStatus(WriteOnlySensor, HybridInverter, PVInverter):

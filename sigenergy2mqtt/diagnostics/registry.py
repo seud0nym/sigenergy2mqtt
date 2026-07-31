@@ -25,7 +25,7 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import Any, Protocol, cast, runtime_checkable
 
-logger = logging.getLogger("sigenergy2mqtt")
+logger = logging.getLogger(__name__)
 
 CollectFn = Callable[[], "Awaitable[dict[str, Any]] | dict[str, Any]"]
 

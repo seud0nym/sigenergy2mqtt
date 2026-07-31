@@ -15,7 +15,7 @@ from sigenergy2mqtt.pvoutput.topic import Topic
 
 def make_service() -> Service:
     logger = logging.getLogger("test-pvoutput-service")
-    return Service("pvtest", "pvtest", "pvmodel", logger)
+    return Service("pvtest", "pvtest", "pvmodel")
 
 
 class TestPVOutputService:
@@ -165,7 +165,7 @@ class TestPVOutputService:
     async def test_service_remaining_misses(self, caplog):
         """Targets missing lines in service.py."""
         caplog.set_level(logging.DEBUG)
-        svc = Service("Test", "id", "model", logging.getLogger("test-service"))
+        svc = Service("Test", "id", "model")
 
         with patch.object(active_config.pvoutput, "api_key", "k"), patch.object(active_config.pvoutput, "system_id", "s"), patch("requests.get") as mock_get:
             resp = MagicMock()
@@ -323,7 +323,7 @@ class TestPVOutputComponentIntegration:
 
     def test_pvoutput_output_service_payload(self):
         with patch.object(active_config.pvoutput, "exports", False), patch.object(active_config.pvoutput, "imports", False):
-            svc = PVOutputOutputService(logging.getLogger("test"), {})
+            svc = PVOutputOutputService({})
             st = svc._service_topics[OutputField.GENERATION]
             st.enabled = True
             t = Topic("gen", gain=1.0, state=5000.0, timestamp=time.strptime("2023-10-27 12:00:00", "%Y-%m-%d %H:%M:%S"))
@@ -337,7 +337,7 @@ class TestPVOutputComponentIntegration:
     def test_pvoutput_status_service_payload(self):
         # Patch 'consumption' instead of read-only 'consumption_enabled'
         with patch.object(active_config.pvoutput, "consumption", ConsumptionSource.CONSUMPTION), patch.object(active_config.pvoutput, "temperature_topic", None):
-            svc = PVOutputStatusService(logging.getLogger("test"), {}, {})
+            svc = PVOutputStatusService({}, {})
             st = svc._service_topics[StatusField.GENERATION_ENERGY]
             st.enabled = True
             t = Topic("gen_e", gain=1.0, state=12345.0, timestamp=time.strptime("2023-10-27 12:00:00", "%Y-%m-%d %H:%M:%S"))

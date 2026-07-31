@@ -13,8 +13,10 @@ from sigenergy2mqtt.devices import DeviceRegistry
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.mqtt import MqttHandler
 
+from .base import InfluxBase
 from .hass_history_sync import HassHistorySync
-from .influx_base import InfluxBase
+
+logger = logging.getLogger(__name__)
 
 
 class InfluxService(InfluxBase):
@@ -26,17 +28,16 @@ class InfluxService(InfluxBase):
     from the Home Assistant InfluxDB database via :class:`HassHistorySync`.
     """
 
-    def __init__(self, logger: logging.Logger, plant_index: int = -1) -> None:
+    def __init__(self, plant_index: int = -1) -> None:
         """Initialise the service for the given plant index.
 
         Args:
-            logger: Pre-configured logger (typically ``influxdb.plant<N>``).
             plant_index: Zero-based index identifying which Modbus plant this
                 service belongs to.
         """
         name = f"Sigenergy InfluxDB Updater Service (Plant {plant_index})"
         unique = f"influxdb_updater_{plant_index}"
-        super().__init__(name, plant_index, unique, "sigenergy2mqtt", "InfluxDB.Updater", logger)
+        super().__init__(name, plant_index, unique, "sigenergy2mqtt", "InfluxDB.Updater")
 
         self._history_sync: HassHistorySync | None = None
 
@@ -82,18 +83,18 @@ class InfluxService(InfluxBase):
             mqtt_client: Active MQTT client used for unsubscription on shutdown.
         """
         if not await self.async_init():
-            self.logger.error(f"{self.log_identity} Initialisation failed — service will not write to InfluxDB")
+            logger.error(f"{self.log_identity} Initialisation failed — service will not write to InfluxDB")
             return
 
         sync_task: asyncio.Task | None = None
         if self._writer_type:
             if active_config.influxdb.load_hass_history:
                 # Create history sync helper and share our established connection.
-                self._history_sync = HassHistorySync(self.logger, self.plant_index)
+                self._history_sync = HassHistorySync(self.plant_index)
                 self._history_sync.copy_connection_from(self)
                 sync_task = asyncio.create_task(self._history_sync.sync_from_homeassistant(self._topic_cache))
             else:
-                self.logger.debug(f"{self.log_identity} Loading history from Home Assistant is disabled")
+                logger.debug(f"{self.log_identity} Loading history from Home Assistant is disabled")
 
         while self.online:
             try:
@@ -101,28 +102,28 @@ class InfluxService(InfluxBase):
                 self.sleeper_task = task
                 await task
             except asyncio.CancelledError:
-                self.logger.debug(f"{self.log_identity} sleep interrupted")
+                logger.debug(f"{self.log_identity} sleep interrupted")
                 break
             finally:
                 self.sleeper_task = None
 
         for topic in self._topic_cache:
             mqtt_client.unsubscribe(topic)
-        self.logger.info(f"{self.log_identity} Unsubscribed from {len(self._topic_cache)} topics")
+        logger.info(f"{self.log_identity} Unsubscribed from {len(self._topic_cache)} topics")
         self._topic_cache.clear()
 
         if sync_task:
             if not sync_task.done():
-                self.logger.info(f"{self.log_identity} Cancelling background sync task")
+                logger.info(f"{self.log_identity} Cancelling background sync task")
                 sync_task.cancel()
                 try:
                     await sync_task
                 except asyncio.CancelledError:
                     pass
             elif sync_task.exception():
-                self.logger.error(f"{self.log_identity} Sync task failed: {sync_task.exception()}")
+                logger.error(f"{self.log_identity} Sync task failed: {sync_task.exception()}")
 
-        self.logger.info(f"{self.log_identity} Completed: Flagged as offline ({self.online=})")
+        logger.info(f"{self.log_identity} Completed: Flagged as offline ({self.online=})")
 
     # ------------------------------------------------------------------
     # MQTT handling
@@ -157,7 +158,7 @@ class InfluxService(InfluxBase):
         try:
             sensor = self._topic_cache.get(topic)
             if not sensor:
-                self.logger.warning(f"{self.log_identity} Received update for unknown topic '{topic}' (no cache entry)")
+                logger.warning(f"{self.log_identity} Received update for unknown topic '{topic}' (no cache entry)")
                 return False
 
             timestamp = int(time.time())
@@ -177,11 +178,11 @@ class InfluxService(InfluxBase):
 
             line = self.to_line_protocol(measurement, tags, fields, timestamp)
             if sensor.get("debug_logging"):
-                self.logger.debug(f"{self.log_identity} [{topic}] Writing line protocol: {line}")
+                logger.debug(f"{self.log_identity} [{topic}] Writing line protocol: {line}")
             await self.write_line(line)
 
         except (requests.RequestException, ValueError, TypeError, RuntimeError) as e:
-            self.logger.error(f"{self.log_identity} Failed to handle MQTT message from {topic}: {e}")
+            logger.error(f"{self.log_identity} Failed to handle MQTT message from {topic}: {e}")
             return False
         return True
 
@@ -239,19 +240,19 @@ class InfluxService(InfluxBase):
                     tpc: str = cast(str, getattr(s, "state_topic", None))
 
                     if not tpc:
-                        self.logger.debug(f"{self.log_identity} Skipping sensor '{obj}': no state_topic")
+                        logger.debug(f"{self.log_identity} Skipping sensor '{obj}': no state_topic")
                         continue
 
                     if not getattr(s, "publishable", False):
-                        self.logger.debug(f"{self.log_identity} Skipping '{tpc}' because object_id '{obj}' is not publishable")
+                        logger.debug(f"{self.log_identity} Skipping '{tpc}' because object_id '{obj}' is not publishable")
                         continue
 
                     if active_config.influxdb.include and not self._matches_filter(s, obj, uid, active_config.influxdb.include):
-                        self.logger.info(f"{self.log_identity} Skipping '{tpc}' because object_id '{obj}' is not in include list")
+                        logger.info(f"{self.log_identity} Skipping '{tpc}' because object_id '{obj}' is not in include list")
                         continue
 
                     if active_config.influxdb.exclude and self._matches_filter(s, obj, uid, active_config.influxdb.exclude):
-                        self.logger.info(f"{self.log_identity} Skipping '{tpc}' because object_id '{obj}' is excluded")
+                        logger.info(f"{self.log_identity} Skipping '{tpc}' because object_id '{obj}' is excluded")
                         continue
 
                     self._topic_cache[tpc] = {
@@ -263,7 +264,7 @@ class InfluxService(InfluxBase):
                     mqtt_handler.register(mqtt_client, tpc, self.handle_mqtt)
 
             except requests.RequestException as e:
-                self.logger.warning(f"{self.log_identity} Failed to subscribe sensors for device '{device}': {e}")
+                logger.warning(f"{self.log_identity} Failed to subscribe sensors for device '{device}': {e}")
                 continue
 
-        self.logger.info(f"{self.log_identity} Subscribed to {len(self._topic_cache)} topics")
+        logger.info(f"{self.log_identity} Subscribed to {len(self._topic_cache)} topics")

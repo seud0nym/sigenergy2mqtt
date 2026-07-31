@@ -169,14 +169,14 @@ class TestConfigureLogging:
             logging.getLogger().setLevel(logging.NOTSET)
             logging.getLogger("pymodbus.logging").setLevel(logging.NOTSET)
             logging.getLogger("paho.mqtt").setLevel(logging.NOTSET)
-            logging.getLogger("pvoutput").setLevel(logging.NOTSET)
+            logging.getLogger("sigenergy2mqtt.pvoutput").setLevel(logging.NOTSET)
 
             main_mod.configure_logging()
 
             assert logging.getLogger().level == logging.DEBUG
             assert logging.getLogger("pymodbus.logging").level == logging.INFO
             assert logging.getLogger("paho.mqtt").level == logging.WARNING
-            assert logging.getLogger("pvoutput").level == logging.ERROR
+            assert logging.getLogger("sigenergy2mqtt.pvoutput").level == logging.ERROR
 
     def test_configure_logging_tty_format(self, monkeypatch):
         """Test the TTY logging format branch."""
@@ -522,7 +522,7 @@ class TestFactories:
             patch("sigenergy2mqtt.sensors.inverter_read_only.PVStringCount.get_state", AsyncMock(return_value=1)),
             patch("sigenergy2mqtt.sensors.inverter_read_only.InverterSerialNumber.get_state", AsyncMock(return_value="SN1")),
             patch("sigenergy2mqtt.sensors.inverter_read_only.OutputType.get_state", AsyncMock(return_value=1)),
-            patch("sigenergy2mqtt.main.main.logger.debug") as mock_debug,
+            patch("sigenergy2mqtt.devices.inverter.inverter.logger.debug") as mock_debug,
         ):
             await main_mod.make_plant_and_inverter(0, mock_client, 1, None, seen)
             assert clean_config.ems_mode_check is False

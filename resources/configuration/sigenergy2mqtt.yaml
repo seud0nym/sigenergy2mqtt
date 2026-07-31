@@ -819,7 +819,7 @@ influxdb:
   #   default: WARNING  
   #   description:  The InfluxDB interface logging level. Must be one of:
   #                 DEBUG, INFO, WARNING, ERROR, or CRITICAL
-  log-level: CRITICAL
+  log-level: WARNING
   # write-timeout
   #   added: 2026.1.31
   #   default: 30.0
@@ -940,3 +940,8 @@ diagnostics:
   allowed-ips:
      - 127.0.0.1
      - 192.168.1.0/24
+  # log-level
+  #   default: WARNING  
+  #   description:  The diagnostics sub-system logging level. Must be one of:
+  #                 DEBUG, INFO, WARNING, ERROR, or CRITICAL
+  log-level: WARNING

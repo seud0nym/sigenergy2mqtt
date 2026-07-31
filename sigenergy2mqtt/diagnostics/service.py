@@ -23,7 +23,7 @@ from sigenergy2mqtt.devices import Device
 
 from .server import diagnostics_server
 
-logger = logging.getLogger("sigenergy2mqtt")
+logger = logging.getLogger(__name__)
 
 
 class DiagnosticsService(Device):

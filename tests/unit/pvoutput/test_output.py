@@ -14,7 +14,7 @@ from sigenergy2mqtt.pvoutput.service_topics import Calculation, ServiceTopics, T
 
 def make_output_service():
     logger = logging.getLogger("test-pvoutput-output")
-    return PVOutputOutputService(logger, {})
+    return PVOutputOutputService({})
 
 
 class DummyResponse:

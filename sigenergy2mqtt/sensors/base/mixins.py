@@ -31,7 +31,7 @@ except ImportError:
 if TYPE_CHECKING:
     from sigenergy2mqtt.mqtt import MqttHandler
 
-logger = logging.getLogger("sigenergy2mqtt")
+logger = logging.getLogger(__name__)
 # =============================================================================
 
 
@@ -398,6 +398,7 @@ class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
             return False
         except ModbusException as e:
             from sigenergy2mqtt.metrics import Metrics
+
             logger.error(f"{self.log_identity} write_registers: {e!r}")
             await Metrics.modbus_write_error()
             raise
@@ -448,6 +449,7 @@ class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
 
         # Record metrics
         from sigenergy2mqtt.metrics import Metrics
+
         await Metrics.modbus_write(len(registers), elapsed)
 
         if self.debug_logging:

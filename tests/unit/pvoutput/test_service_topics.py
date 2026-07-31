@@ -13,16 +13,14 @@ from sigenergy2mqtt.pvoutput.topic import Topic
 
 
 def make_service(unique_id: str = "test_service") -> Service:
-    logger = logging.getLogger("test")
-    return Service("pv", unique_id, "model", logger)
+    return Service("pv", unique_id, "model")
 
 
 def make_service_topics(name="test", enabled=True, value_key=OutputField.GENERATION, **kwargs):
-    logger = logging.getLogger("test-pvoutput-topics")
     service = MagicMock(spec=Service)
     service.unique_id = "test_service"
     service.lock = MagicMock()
-    return ServiceTopics(service, enabled, logger, value_key=value_key, **kwargs)
+    return ServiceTopics(service, enabled, value_key=value_key, **kwargs)
 
 
 class TestPVOutputTopic:
@@ -159,7 +157,7 @@ class TestPVOutputServiceTopics:
     @pytest.mark.asyncio
     async def test_time_period_service_topics_integration(self):
         st = make_service_topics()
-        tp = TimePeriodServiceTopics(st._service, True, logging.getLogger(), value_key=OutputField.EXPORT_PEAK)
+        tp = TimePeriodServiceTopics(st._service, True, value_key=OutputField.EXPORT_PEAK)
         st._time_periods = [tp]
 
         with patch("pathlib.Path.is_file", return_value=False):

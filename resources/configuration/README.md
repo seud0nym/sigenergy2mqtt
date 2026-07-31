@@ -213,6 +213,22 @@ The diagnostics web page refresh interval in seconds. Must be greater than `0`. 
 
 List of allowed IP addresses for the diagnostics web server. If not specified, all IP addresses are allowed.
 
+<a id="opt_diagnostics_log_level"></a>
+### Log Level
+- CLI: `-l, --diagnostics-log-level`
+- ENV: `SIGENERGY2MQTT_DIAGNOSTICS_LOG_LEVEL`
+- Config key: `diagnostics.log-level`
+
+The sigenergy2mqtt default logging level. Must be one of:
+
+- `DEBUG`
+- `INFO`
+- `WARNING`
+- `ERROR`
+- `CRITICAL`
+
+The default is `WARNING`.
+
 
 ## Health Check
 

@@ -17,7 +17,7 @@ from pymodbus.exceptions import ModbusException
 from pymodbus.pdu import ModbusPDU
 
 from sigenergy2mqtt.common import Constants, ConsumptionMethod, FirmwareVersion, HybridInverter, InputType, Protocol, ProtocolApplies, PVInverter, service_health_registry
-from sigenergy2mqtt.config import active_config, configure_root_logging, initialize_async, is_docker
+from sigenergy2mqtt.config import active_config, configure_root_logger, initialize_async, is_docker
 from sigenergy2mqtt.devices import PID, PSS, ACCharger, DCCharger, Device, Inverter, PowerPlant, bind_cross_device_sensors
 from sigenergy2mqtt.diagnostics import DiagnosticsService
 from sigenergy2mqtt.influxdb import get_influxdb_services
@@ -64,7 +64,7 @@ _GRID_RESTORE_WATCH_TASKS: set[tuple[str, int, int]] = set()
 # ---------------------------------------------------------------------------
 # Logging
 # ---------------------------------------------------------------------------
-logger = logging.getLogger("sigenergy2mqtt")
+logger = logging.getLogger(__name__)
 
 
 class _FramerSkipFilter(logging.Filter):
@@ -88,14 +88,17 @@ class _FramerSkipFilter(logging.Filter):
 
 
 def configure_logging() -> None:
-    """Configure the root logger with a format appropriate to the runtime environment."""
+    """Configure the runtime logging environment."""
     # Configure root logger format/level via shared helper so logic is unified
-    # with configure_root_logging() performed at import time.
-    configure_root_logging(active_config.log_level, active_config.log_fmt)
+    # with configure_root_logger() performed at import time.
+    configure_root_logger(active_config.log_level, active_config.log_fmt)
 
-    _configure_logger("paho.mqtt", active_config.mqtt.log_level)
-    _configure_logger("pvoutput", active_config.pvoutput.log_level)
+    _configure_logger("sigenergy2mqtt", active_config.log_level)
+    _configure_logger("sigenergy2mqtt.diagnostics", active_config.diagnostics.log_level)
+    _configure_logger("sigenergy2mqtt.influxdb", active_config.influxdb.log_level)
+    _configure_logger("sigenergy2mqtt.pvoutput", active_config.pvoutput.log_level)
     _configure_logger("sigenergy2mqtt.mqtt.client", active_config.mqtt.log_level)
+    _configure_logger("paho.mqtt", active_config.mqtt.log_level)
 
     # We have to configure root logging before pymodbus so basicConfig wins the handler race
     modbus_log_level = active_config.get_modbus_log_level()

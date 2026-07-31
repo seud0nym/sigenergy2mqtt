@@ -9,7 +9,7 @@ import requests
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.config.config import active_config
 from sigenergy2mqtt.influxdb.hass_history_sync import HassHistorySync
-from sigenergy2mqtt.influxdb.influx_service import InfluxService
+from sigenergy2mqtt.influxdb.service import InfluxService
 
 
 class MockResponse:
@@ -42,7 +42,7 @@ def service(logger):
     mock_config.query_interval = 0.1
 
     with patch.object(active_config, "influxdb", mock_config):
-        svc = InfluxService(logger, plant_index=0)
+        svc = InfluxService(plant_index=0)
     # Manually configure basic writer for these tests
     svc._writer_type = "v2_http"
     svc._write_url = "http://localhost:8086/api/v2/write"
@@ -65,7 +65,7 @@ def hass_sync(logger):
     mock_config.default_measurement = "state"
 
     with patch.object(active_config, "influxdb", mock_config):
-        svc = HassHistorySync(logger, plant_index=0)
+        svc = HassHistorySync(plant_index=0)
     svc._writer_type = "v2_http"
     svc._write_url = "http://localhost:8086/api/v2/write"
     svc._write_headers = {}

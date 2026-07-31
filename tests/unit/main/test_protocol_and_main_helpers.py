@@ -34,7 +34,7 @@ async def test_get_influxdb_services_coverage():
         services = get_influxdb_services()
         assert len(services) == 2
         for svc in services:
-            from sigenergy2mqtt.influxdb.influx_service import InfluxService
+            from sigenergy2mqtt.influxdb.service import InfluxService
 
             assert isinstance(svc, InfluxService)
 
@@ -103,9 +103,9 @@ def test_main_validate_reinstalls_default_sigint(monkeypatch):
         patch("sigenergy2mqtt.__main__.asyncio.run"),
         patch("sigenergy2mqtt.__main__._validate_main", new_callable=MagicMock),
         patch("sigenergy2mqtt.__main__.validate_connections", new_callable=MagicMock),
+        pytest.raises(SystemExit) as exc_info,
     ):
-        with pytest.raises(SystemExit) as exc_info:
-            main_module.main()
+        main_module.main()
 
     assert exc_info.value.code == 0
     assert (main_module.signal.SIGINT, main_module.signal.default_int_handler) in [c.args for c in mock_signal.call_args_list]
@@ -132,10 +132,9 @@ def test_main_validate_calls_validate_main(monkeypatch):
         patch("sigenergy2mqtt.__main__.asyncio.run") as mock_run,
         patch("sigenergy2mqtt.__main__._validate_main", new_callable=MagicMock) as mock_validate,
         patch("sigenergy2mqtt.__main__.validate_connections", new_callable=MagicMock),
+        pytest.raises(SystemExit),
     ):
-        with pytest.raises(SystemExit):
-            main_module.main()
+        main_module.main()
 
     # asyncio.run should have been called with _validate_main coroutine
     mock_run.assert_called_once()
-

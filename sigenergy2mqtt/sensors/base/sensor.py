@@ -29,7 +29,7 @@ from .sanity_check import SanityCheck, SanityCheckException
 if TYPE_CHECKING:
     from .derived import DerivedSensor
 
-logger = logging.getLogger("sigenergy2mqtt")
+logger = logging.getLogger(__name__)
 # =============================================================================
 
 
@@ -840,6 +840,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
 
     async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool = False) -> bool:
         from sigenergy2mqtt.metrics import Metrics
+
         """Publish the sensor state to MQTT.
 
         Args:
@@ -880,6 +881,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
 
     async def _attempt_publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool) -> bool:
         from sigenergy2mqtt.metrics import Metrics
+
         """Attempt to publish sensor state.
 
         Args:

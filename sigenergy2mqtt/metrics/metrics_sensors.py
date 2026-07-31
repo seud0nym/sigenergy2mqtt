@@ -17,7 +17,7 @@ from sigenergy2mqtt.sensors.base import DiscoveryKeys, ReadableSensorMixin, Writ
 
 from .metrics import Metrics
 
-logger = logging.getLogger("sigenergy2mqtt")
+logger = logging.getLogger(__name__)
 
 
 class MetricsSensor(ReadableSensorMixin):
@@ -381,6 +381,7 @@ class ModbusActiveLocks(MetricsSensor):
 
     async def _update_internal_state(self, **kwargs) -> bool:
         from sigenergy2mqtt.modbus import ModbusLockFactory
+
         value = ModbusLockFactory.get_waiter_count()
         self.set_latest_state(value)
         return True

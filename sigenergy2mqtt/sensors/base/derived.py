@@ -15,7 +15,7 @@ from sigenergy2mqtt.common import Protocol
 from .constants import DiscoveryKeys
 from .sensor import Sensor, TypedSensorMixin
 
-logger = logging.getLogger("sigenergy2mqtt")
+logger = logging.getLogger(__name__)
 # =============================================================================
 
 

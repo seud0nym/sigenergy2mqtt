@@ -25,7 +25,7 @@ from .sensor import Sensor
 if TYPE_CHECKING:
     from sigenergy2mqtt.mqtt import MqttHandler
 
-logger = logging.getLogger("sigenergy2mqtt")
+logger = logging.getLogger(__name__)
 # =============================================================================
 
 

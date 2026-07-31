@@ -16,7 +16,7 @@ def make_status_service(topics=None, extended=None):
     logger = logging.getLogger("test-pvoutput-status")
     topics = {} if topics is None else topics
     extended = {} if extended is None else extended
-    return PVOutputStatusService(logger, topics, extended)
+    return PVOutputStatusService(topics, extended)
 
 
 class TestPVOutputStatus:
@@ -46,7 +46,7 @@ class TestPVOutputStatus:
         now = time.strptime("2024-06-01 12:00:00", "%Y-%m-%d %H:%M:%S")
 
         # Enable some topics
-        st_gen = ServiceTopics(svc, True, svc.logger, value_key=StatusField.GENERATION_POWER, calc=Calculation.SUM)
+        st_gen = ServiceTopics(svc, True, value_key=StatusField.GENERATION_POWER, calc=Calculation.SUM)
         svc._service_topics[StatusField.GENERATION_POWER] = st_gen
         t = Topic("gen", gain=1.0)
         st_gen.register(t)
@@ -67,7 +67,7 @@ class TestPVOutputStatus:
         now = time.strptime("2024-06-01 12:00:00", "%Y-%m-%d %H:%M:%S")
 
         # v7 requires donation
-        st_v7 = ServiceTopics(svc, True, svc.logger, value_key=StatusField.V7, donation=True)
+        st_v7 = ServiceTopics(svc, True, value_key=StatusField.V7, donation=True)
         svc._service_topics[StatusField.V7] = st_v7
         st_v7.register(Topic("v7", gain=1.0, state=100.0))
 
@@ -212,7 +212,7 @@ class TestPVOutputStatus:
         topic.previous_state = 100.0
         topic.previous_timestamp = None
 
-        st_dict = ServiceTopics(svc, True, None, value_key=StatusField.GENERATION_POWER)
+        st_dict = ServiceTopics(svc, True, value_key=StatusField.GENERATION_POWER)
         svc._service_topics[StatusField.GENERATION_POWER] = st_dict
         st_dict["test"] = topic
 
@@ -249,7 +249,7 @@ class TestPVOutputStatus:
     def test_status_ignored_field(self, caplog):
         """Hits status.py unrecognized field logic."""
         caplog.set_level(logging.DEBUG)
-        PVOutputStatusService(logging.getLogger("test-status"), {"FAKE": []}, {})
+        PVOutputStatusService({"FAKE": []}, {})
         assert "IGNORED unrecognized FAKE" in caplog.text
 
     @pytest.mark.asyncio

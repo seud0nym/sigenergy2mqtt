@@ -18,7 +18,7 @@ from typing import Any, Final
 
 from ruamel.yaml import YAML, YAMLError
 
-logger = logging.getLogger("sigenergy2mqtt")
+logger = logging.getLogger(__name__)
 
 DEFAULT_LANGUAGE: Final[str] = "en"
 

@@ -6,7 +6,7 @@ from typing import Any, Literal
 
 from sigenergy2mqtt.devices import Device
 
-logger = logging.getLogger("sigenergy2mqtt")
+logger = logging.getLogger(__name__)
 
 
 @dataclass

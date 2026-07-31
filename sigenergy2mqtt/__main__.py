@@ -15,7 +15,7 @@ from sigenergy2mqtt.config import ConfigurationError, active_config, auto_discov
 from sigenergy2mqtt.main import async_main, validate_connections
 from sigenergy2mqtt.metrics.metrics import Metrics
 
-logger = logging.getLogger("sigenergy2mqtt")
+logger = logging.getLogger(__name__)
 
 
 def _make_early_signal_handler():

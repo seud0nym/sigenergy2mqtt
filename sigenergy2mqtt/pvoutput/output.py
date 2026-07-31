@@ -25,32 +25,33 @@ from .service import Service
 from .service_topics import Calculation, ServiceTopics, TimePeriodServiceTopics
 from .topic import Topic
 
+logger = logging.getLogger(__name__)
+
 
 class PVOutputOutputService(Service):
     """Upload daily PVOutput output records from aggregated MQTT topic state."""
 
-    def __init__(self, logger: logging.Logger, topics: dict[OutputField, list[Topic]]):
+    def __init__(self, topics: dict[OutputField, list[Topic]]):
         """Build output field aggregators and register configured MQTT topics.
 
         Args:
-            logger: Logger used by the output service.
             topics: Mapping of PVOutput output fields to source MQTT topics.
         """
-        super().__init__("PVOutput Add Output Service", unique_id="pvoutput_output", model="PVOutput.AddOutput", logger=logger)
+        super().__init__("PVOutput Add Output Service", unique_id="pvoutput_output", model="PVOutput.AddOutput")
 
-        _c = ServiceTopics(self, False, logger, value_key=OutputField.CONSUMPTION)  # Disable EoD consumption update because it is updated via the status service
-        _eh = TimePeriodServiceTopics(self, active_config.pvoutput.exports, logger, value_key=OutputField.EXPORT_HIGH_SHOULDER)
-        _eo = TimePeriodServiceTopics(self, active_config.pvoutput.exports, logger, value_key=OutputField.EXPORT_OFF_PEAK)
-        _ep = TimePeriodServiceTopics(self, active_config.pvoutput.exports, logger, value_key=OutputField.EXPORT_PEAK)
-        _es = TimePeriodServiceTopics(self, active_config.pvoutput.exports, logger, value_key=OutputField.EXPORT_SHOULDER)
-        _e = ServiceTopics(self, active_config.pvoutput.exports, logger, value_key=OutputField.EXPORTS, periods=[_eh, _eo, _ep, _es])
-        _g = ServiceTopics(self, False, logger, value_key=OutputField.GENERATION)  # Disable EoD generation update because it is updated via the status service
-        _ih = TimePeriodServiceTopics(self, active_config.pvoutput.imports, logger, value_key=OutputField.IMPORT_HIGH_SHOULDER)
-        _io = TimePeriodServiceTopics(self, active_config.pvoutput.imports, logger, value_key=OutputField.IMPORT_OFF_PEAK)
-        _ip = TimePeriodServiceTopics(self, active_config.pvoutput.imports, logger, value_key=OutputField.IMPORT_PEAK)
-        _is = TimePeriodServiceTopics(self, active_config.pvoutput.imports, logger, value_key=OutputField.IMPORT_SHOULDER)
-        _i = ServiceTopics(self, active_config.pvoutput.imports, logger, value_key=OutputField.IMPORTS, periods=[_ih, _io, _ip, _is])  # Dummy parent for import periods
-        _pp = ServiceTopics(self, True, logger, value_key=OutputField.PEAK_POWER, datetime_key="pt", calc=Calculation.SUM | Calculation.PEAK)
+        _c = ServiceTopics(self, False, value_key=OutputField.CONSUMPTION)  # Disable EoD consumption update because it is updated via the status service
+        _eh = TimePeriodServiceTopics(self, active_config.pvoutput.exports, value_key=OutputField.EXPORT_HIGH_SHOULDER)
+        _eo = TimePeriodServiceTopics(self, active_config.pvoutput.exports, value_key=OutputField.EXPORT_OFF_PEAK)
+        _ep = TimePeriodServiceTopics(self, active_config.pvoutput.exports, value_key=OutputField.EXPORT_PEAK)
+        _es = TimePeriodServiceTopics(self, active_config.pvoutput.exports, value_key=OutputField.EXPORT_SHOULDER)
+        _e = ServiceTopics(self, active_config.pvoutput.exports, value_key=OutputField.EXPORTS, periods=[_eh, _eo, _ep, _es])
+        _g = ServiceTopics(self, False, value_key=OutputField.GENERATION)  # Disable EoD generation update because it is updated via the status service
+        _ih = TimePeriodServiceTopics(self, active_config.pvoutput.imports, value_key=OutputField.IMPORT_HIGH_SHOULDER)
+        _io = TimePeriodServiceTopics(self, active_config.pvoutput.imports, value_key=OutputField.IMPORT_OFF_PEAK)
+        _ip = TimePeriodServiceTopics(self, active_config.pvoutput.imports, value_key=OutputField.IMPORT_PEAK)
+        _is = TimePeriodServiceTopics(self, active_config.pvoutput.imports, value_key=OutputField.IMPORT_SHOULDER)
+        _i = ServiceTopics(self, active_config.pvoutput.imports, value_key=OutputField.IMPORTS, periods=[_ih, _io, _ip, _is])  # Dummy parent for import periods
+        _pp = ServiceTopics(self, True, value_key=OutputField.PEAK_POWER, datetime_key="pt", calc=Calculation.SUM | Calculation.PEAK)
 
         self._latest_peak_at: str | None = None
         self._previous_payload: dict | None = None
@@ -75,7 +76,7 @@ class PVOutputOutputService(Service):
                 for topic in topic_list:
                     self._service_topics[field].register(topic)
             else:
-                self.logger.debug(f"{self.log_identity} IGNORED unrecognized {field}")
+                logger.debug(f"{self.log_identity} IGNORED unrecognized {field}")
 
     def _create_payload(self, now_struct: time.struct_time, interval: int) -> dict[str, float | int | str]:
         """Create a dated output payload from currently aggregated topic values.
@@ -143,7 +144,7 @@ class PVOutputOutputService(Service):
             payload: Payload that was uploaded.
             force: Whether to retry verification aggressively.
         """
-        self.logger.debug(f"{self.log_identity} Verifying uploaded {payload=}")
+        logger.debug(f"{self.log_identity} Verifying uploaded {payload=}")
         url = f"https://pvoutput.org/service/r2/getoutput.jsp?df={payload['d']}&dt={payload['d']}{'&timeofexport=1' if active_config.pvoutput.exports else ''}"
         verify_retries: int = 3 if force else 1
         initial_wait: float = 0.1 if not force or active_config.pvoutput.testing else 120.0
@@ -151,12 +152,12 @@ class PVOutputOutputService(Service):
         matches: bool = False
         for validate in range(1, verify_retries + 1, 1):
             wait: float = initial_wait if validate == 1 else subsequent_wait
-            self.logger.debug(f"{self.log_identity} Waiting for {wait}s before checking that the upload has been processed successfully...")
+            logger.debug(f"{self.log_identity} Waiting for {wait}s before checking that the upload has been processed successfully...")
             await asyncio.sleep(wait)
             result = {}
             try:
                 if active_config.pvoutput.testing:
-                    self.logger.debug(f"{self.log_identity} Verification attempt #{validate} simulation for testing mode, not sending request to {url=}")
+                    logger.debug(f"{self.log_identity} Verification attempt #{validate} simulation for testing mode, not sending request to {url=}")
                     if validate > 1:
                         v = re.split(
                             r"[,]",
@@ -164,14 +165,14 @@ class PVOutputOutputService(Service):
                         )
                         matches = True
                     else:
-                        self.logger.debug(f"{self.log_identity} Verification attempt #{validate} simulation FAILED")
+                        logger.debug(f"{self.log_identity} Verification attempt #{validate} simulation FAILED")
                         matches = False
                 else:
-                    self.logger.debug(f"{self.log_identity} Verification attempt #{validate} to {url=}...")
+                    logger.debug(f"{self.log_identity} Verification attempt #{validate} to {url=}...")
                     response = await asyncio.to_thread(requests.get, url, headers=self.request_headers, timeout=10)
                     limit, remaining, at, reset = self.get_response_headers(response)
                     if response.status_code == 200:
-                        self.logger.debug(
+                        logger.debug(
                             f"{self.log_identity} Verification attempt #{validate} OKAY status_code={response.status_code} {limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))} ({reset}s) response={response.text}"
                         )
                         v = re.split(r"[,]", response.text)
@@ -188,35 +189,35 @@ class PVOutputOutputService(Service):
                         result["eh"] = int(v[17]) if active_config.pvoutput.exports and len(v) > 17 and v[17] != "NaN" else None
                         matches = True
                     else:
-                        self.logger.debug(f"{self.log_identity} Verification attempt #{validate} FAILED status_code={response.status_code} reason={response.reason}")
+                        logger.debug(f"{self.log_identity} Verification attempt #{validate} FAILED status_code={response.status_code} reason={response.reason}")
                         matches = False
                 if matches:
                     for topic in [t for t in self._service_topics.values() if t.enabled]:
                         key = topic._value_key.value
                         if key in payload and key in result and payload[key] != result[key]:
-                            self.logger.debug(f"{self.log_identity} Verification FAILED: payload['{key}']={payload[key]} != result['{key}']={result[key]}")
+                            logger.debug(f"{self.log_identity} Verification FAILED: payload['{key}']={payload[key]} != result['{key}']={result[key]}")
                             matches = False
                 if matches:
                     try:
-                        self.logger.info(f"{self.log_identity} Verification SUCCESS {payload=} downloaded={result} ({response.text})")  # type: ignore # pyrefly: ignore
+                        logger.info(f"{self.log_identity} Verification SUCCESS {payload=} downloaded={result} ({response.text})")  # type: ignore # pyrefly: ignore
                     except NameError:
-                        self.logger.info(f"{self.log_identity} Verification SUCCESS {payload=} downloaded={result}")
+                        logger.info(f"{self.log_identity} Verification SUCCESS {payload=} downloaded={result}")
                     break
                 elif validate < verify_retries:
-                    self.logger.debug(f"{self.log_identity} Verification attempt #{validate} of uploaded {payload=} FAILED, retrying...")
+                    logger.debug(f"{self.log_identity} Verification attempt #{validate} of uploaded {payload=} FAILED, retrying...")
                 else:
                     try:
-                        self.logger.error(f"{self.log_identity} Verification FAILED after {validate} attempts for uploaded {payload=} ({response.text})")  # type: ignore # pyrefly: ignore
+                        logger.error(f"{self.log_identity} Verification FAILED after {validate} attempts for uploaded {payload=} ({response.text})")  # type: ignore # pyrefly: ignore
                     except NameError:
-                        self.logger.error(f"{self.log_identity} Verification FAILED after {validate} attempts for uploaded {payload=}")
+                        logger.error(f"{self.log_identity} Verification FAILED after {validate} attempts for uploaded {payload=}")
             except requests.exceptions.HTTPError as exc:
-                self.logger.error(f"{self.log_identity} HTTP Error: {exc}")
+                logger.error(f"{self.log_identity} HTTP Error: {exc}")
             except requests.exceptions.Timeout as exc:
-                self.logger.error(f"{self.log_identity} Timeout Error: {exc}")
+                logger.error(f"{self.log_identity} Timeout Error: {exc}")
             except requests.RequestException as exc:
-                self.logger.error(f"{self.log_identity} Error Connecting: {exc}")
+                logger.error(f"{self.log_identity} Error Connecting: {exc}")
             except (OSError, TimeoutError) as exc:
-                self.logger.error(f"{self.log_identity} {exc}")
+                logger.error(f"{self.log_identity} {exc}")
         return matches
 
     async def _upload(self, payload: dict[str, float | int | str], last_upload_of_day: bool = False) -> None:
@@ -252,8 +253,8 @@ class PVOutputOutputService(Service):
                 break
         if skipped:
             await Metrics.pvoutput_upload_skipped()
-            self.logger.log(active_config.pvoutput.upload_log_level, f"{self.log_identity} Skipped uploading unchanged {payload=}")
-        self.logger.debug(f"{self.log_identity} Upload completed for {payload=}: {changed=} {uploaded=} attempts={attempt} verified={matches} ({last_upload_of_day=})")
+            logger.log(active_config.pvoutput.upload_log_level, f"{self.log_identity} Skipped uploading unchanged {payload=}")
+        logger.debug(f"{self.log_identity} Upload completed for {payload=}: {changed=} {uploaded=} attempts={attempt} verified={matches} ({last_upload_of_day=})")
         if changed and active_config.pvoutput.output_hour == -1:
             self._previous_payload = payload
 
@@ -269,7 +270,7 @@ class PVOutputOutputService(Service):
             minute: int = randint(56, 59)
             next: float = await self._next_output_upload(minute)
             last: float | None = None
-            self.logger.info(f"{self.log_identity} Commenced (Updating at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(next))})")
+            logger.info(f"{self.log_identity} Commenced (Updating at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(next))})")
             while self.online:
                 try:
                     now_struct: time.struct_time = time.localtime()
@@ -281,18 +282,18 @@ class PVOutputOutputService(Service):
                         last_update_of_day: bool = time.localtime(tomorrow).tm_yday != now_struct.tm_yday  # Bypass verification except on last upload of the day
                         await self._upload(payload, last_update_of_day)
                         next = tomorrow
-                        self.logger.debug(f"{self.log_identity} Next update at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(next))} ({next - now:.2f}s)")
+                        logger.debug(f"{self.log_identity} Next update at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(next))} ({next - now:.2f}s)")
                     elif int(now) % (30 if active_config.pvoutput.testing else 900) == 0:
                         for topic in [t for k, t in self._service_topics.items() if t.enabled and k != OutputField.PEAK_POWER]:
                             topic.check_is_updating(5, now_struct)
                         total, at, _ = self._service_topics[OutputField.PEAK_POWER].aggregate(exclude_zero=False)
                         if total is not None and total > 0 and self._latest_peak_at != at:
                             self._latest_peak_at = at
-                            self.logger.info(f"{self.log_identity} Peak Power {total:.0f}W recorded at {at}")
+                            logger.info(f"{self.log_identity} Peak Power {total:.0f}W recorded at {at}")
                     if last:
                         was = time.localtime(last)
                         if was.tm_yday != now_struct.tm_yday:
-                            self.logger.info(f"{self.log_identity} Resetting service topic states to 0.0 because the day has changed ({was.tm_yday} -> {now_struct.tm_yday})")
+                            logger.info(f"{self.log_identity} Resetting service topic states to 0.0 because the day has changed ({was.tm_yday} -> {now_struct.tm_yday})")
                             self._previous_payload = None
                             async with self.lock(timeout=5):
                                 for topic in self._service_topics.values():
@@ -307,13 +308,13 @@ class PVOutputOutputService(Service):
                         finally:
                             self.sleeper_task = None
                 except asyncio.CancelledError:
-                    self.logger.info(f"{self.log_identity} Sleep interrupted")
+                    logger.info(f"{self.log_identity} Sleep interrupted")
                 except TimeoutError:
-                    self.logger.warning(f"{self.log_identity} Failed to acquire lock within timeout")
+                    logger.warning(f"{self.log_identity} Failed to acquire lock within timeout")
                 except RuntimeError as e:
-                    self.logger.error(f"{self.log_identity}  Sleeping for 60s after exception: {e}")
+                    logger.error(f"{self.log_identity}  Sleeping for 60s after exception: {e}")
                     await asyncio.sleep(60)
-            self.logger.info(f"{self.log_identity} Completed: Flagged as offline ({self.online=})")
+            logger.info(f"{self.log_identity} Completed: Flagged as offline ({self.online=})")
 
         tasks: list[Awaitable[None]] = [publish_updates(modbus_client, mqtt_client)]
         return tasks

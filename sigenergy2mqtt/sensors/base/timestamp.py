@@ -12,7 +12,7 @@ from sigenergy2mqtt.modbus import ModbusDataType
 from .constants import DiscoveryKeys
 from .readable import ReadOnlySensor
 
-logger = logging.getLogger("sigenergy2mqtt")
+logger = logging.getLogger(__name__)
 # =============================================================================
 
 

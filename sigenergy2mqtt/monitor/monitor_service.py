@@ -21,7 +21,7 @@ from sigenergy2mqtt.sensors.base import ReadableSensorMixin
 
 from .monitored_sensor import MonitoredSensor
 
-logger = logging.getLogger("sigenergy2mqtt")
+logger = logging.getLogger(__name__)
 
 
 class MonitorService(Device):

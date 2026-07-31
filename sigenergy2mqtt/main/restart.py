@@ -5,7 +5,7 @@ from sigenergy2mqtt.config import active_config
 
 from .thread_config import thread_config_registry
 
-logger = logging.getLogger("sigenergy2mqtt")
+logger = logging.getLogger(__name__)
 
 
 class RestartController:

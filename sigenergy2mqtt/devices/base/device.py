@@ -23,7 +23,7 @@ from .poller import SensorGroupPoller
 from .registry import DeviceRegistry
 from .scan_groups import create_sensor_scan_groups
 
-logger = logging.getLogger("sigenergy2mqtt")
+logger = logging.getLogger(__name__)
 
 
 class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta):

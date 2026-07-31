@@ -888,6 +888,15 @@ def get_parser() -> argparse.ArgumentParser:
         default=os.getenv(const.SIGENERGY2MQTT_DIAGNOSTICS_ALLOWED_IPS, None),
         help="List of allowed IP addresses for the diagnostics web server. If not specified, all IP addresses are allowed.",
     )
+    parser.add_argument(
+        "--diagnostics-log-level",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_DIAGNOSTICS_LOG_LEVEL,
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        default=os.getenv(const.SIGENERGY2MQTT_DIAGNOSTICS_LOG_LEVEL, None),
+        help="Diagnostics subsystem log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)",
+    )
     # endregion
 
     parser.add_argument(
