@@ -2780,6 +2780,8 @@ cli:
     help: 禁用诊断 Web 服务器。
   SIGENERGY2MQTT_DIAGNOSTICS_HOST:
     help: '诊断Web服务器要绑定的地址（默认：0.0.0.0）'
+  SIGENERGY2MQTT_DIAGNOSTICS_LOG_LEVEL:
+    help: '诊断子系统日志级别。有效值为：DEBUG、INFO、WARNING、ERROR 或 CRITICAL。默认为 WARNING（警告、错误和严重故障）'
   SIGENERGY2MQTT_DIAGNOSTICS_PORT:
     help: '诊断Web服务器监听端口（默认：8502）'
   SIGENERGY2MQTT_DIAGNOSTICS_REFRESH_INTERVAL:

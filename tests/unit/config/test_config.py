@@ -2,9 +2,9 @@ import asyncio
 import logging
 import os
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
+from unittest.mock import MagicMock, PropertyMock, patch
 
-import pytest  # noqa: F401
+import pytest
 from ruamel.yaml import YAML
 
 from sigenergy2mqtt.config import Config, _promote_cli_to_env, active_config, const
@@ -181,12 +181,10 @@ class TestConfigSettings:
 
     def test_settings_language_invalid_fallback(self, caplog):
         """Test that invalid language falls back to default."""
-        with patch("sigenergy2mqtt.i18n.get_available_translations", return_value=["en", "fr"]):
-            with patch("sigenergy2mqtt.i18n.get_default_language", return_value="en"):
-                with caplog.at_level(logging.WARNING):
-                    s = Settings(language="de", modbus=[ModbusConfig(host="localhost")])
-                    assert s.language == "en"
-                    assert "Invalid language 'de'" in caplog.text
+        with patch("sigenergy2mqtt.i18n.get_available_translations", return_value=["en", "fr"]), patch("sigenergy2mqtt.i18n.get_default_language", return_value="en"), caplog.at_level(logging.WARNING):
+            s = Settings(language="de", modbus=[ModbusConfig(host="localhost")])
+            assert s.language == "en"
+            assert "Invalid language 'de'" in caplog.text
 
 
 class TestConfigReload:
@@ -196,17 +194,17 @@ class TestConfigReload:
         """Test reload with environment variable overrides."""
         from sigenergy2mqtt.config.const import SIGENERGY2MQTT_LOG_LEVEL, SIGENERGY2MQTT_MODBUS_HOST
 
-        with _swap_active_config(Config()) as cfg:
-            with patch.dict("os.environ", {SIGENERGY2MQTT_LOG_LEVEL: "DEBUG", SIGENERGY2MQTT_MODBUS_HOST: "localhost"}, clear=True):
-                asyncio.run(cfg.reload())
-                assert cfg.log_level == logging.DEBUG
+        with _swap_active_config(Config()) as cfg, patch.dict("os.environ", {SIGENERGY2MQTT_LOG_LEVEL: "DEBUG", SIGENERGY2MQTT_MODBUS_HOST: "localhost"}, clear=True):
+            asyncio.run(cfg.reload())
+            assert cfg.log_level == logging.DEBUG
 
     def test_reload_with_no_ems_mode_check_env(self):
         """Test reload with SIGENERGY2MQTT_NO_EMS_MODE_CHECK environment variable."""
         from sigenergy2mqtt.config.const import SIGENERGY2MQTT_MODBUS_HOST, SIGENERGY2MQTT_NO_EMS_MODE_CHECK
 
-        with _swap_active_config(Config()) as cfg:
-            with patch.dict(
+        with (
+            _swap_active_config(Config()) as cfg,
+            patch.dict(
                 "os.environ",
                 {
                     SIGENERGY2MQTT_NO_EMS_MODE_CHECK: "true",
@@ -215,22 +213,22 @@ class TestConfigReload:
                     "SIGENERGY2MQTT_MODBUS_READ_WRITE": "true",
                 },
                 clear=True,
-            ):
-                asyncio.run(cfg.reload())
-                assert cfg.ems_mode_check is False
+            ),
+        ):
+            asyncio.run(cfg.reload())
+            assert cfg.ems_mode_check is False
 
     def test_reload_with_language_env_invalid_fallback(self, caplog):
         """Test reload with invalid language environment variable."""
         from sigenergy2mqtt.config.const import SIGENERGY2MQTT_LANGUAGE, SIGENERGY2MQTT_MODBUS_HOST
 
-        with _swap_active_config(Config()) as cfg:
-            with patch.dict("os.environ", {SIGENERGY2MQTT_LANGUAGE: "de", SIGENERGY2MQTT_MODBUS_HOST: "localhost"}, clear=True):
-                with patch("sigenergy2mqtt.i18n.get_available_translations", return_value=["en", "fr"]):
-                    with patch("sigenergy2mqtt.i18n.get_default_language", return_value="en"):
-                        with caplog.at_level(logging.WARNING):
-                            asyncio.run(cfg.reload())
-                            assert cfg.language == "en"
-                            assert "Invalid language 'de'" in caplog.text
+        with _swap_active_config(Config()) as cfg, patch.dict("os.environ", {SIGENERGY2MQTT_LANGUAGE: "de", SIGENERGY2MQTT_MODBUS_HOST: "localhost"}, clear=True):
+            with patch("sigenergy2mqtt.i18n.get_available_translations", return_value=["en", "fr"]):
+                with patch("sigenergy2mqtt.i18n.get_default_language", return_value="en"):
+                    with caplog.at_level(logging.WARNING):
+                        asyncio.run(cfg.reload())
+                        assert cfg.language == "en"
+                        assert "Invalid language 'de'" in caplog.text
 
     @patch("sigenergy2mqtt.config.config.Config._perform_auto_discovery")
     def test_reload_with_auto_discovery_force(self, mock_perform_auto_discovery, tmp_path):
@@ -247,9 +245,8 @@ class TestConfigReload:
         with _swap_active_config(Config()) as cfg:
             cfg._source = str(config_file)
             cfg.persistent_state_path = tmp_path
-            with patch.dict("os.environ", {const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY: "force"}, clear=True):
-                with patch("sigenergy2mqtt.config.config.Path.is_file", return_value=True):
-                    asyncio.run(cfg.reload())
+            with patch.dict("os.environ", {const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY: "force"}, clear=True), patch("sigenergy2mqtt.config.config.Path.is_file", return_value=True):
+                asyncio.run(cfg.reload())
             mock_perform_auto_discovery.assert_called_once()
 
     @patch("sigenergy2mqtt.config.config.Config._perform_auto_discovery")
@@ -440,8 +437,6 @@ class TestGetFinalCachePath:
         cfg._settings = None
         return cfg
 
-
-
     # ------------------------------------------------------------------ #
     # "force" mode                                                         #
     # ------------------------------------------------------------------ #
@@ -561,6 +556,7 @@ class TestConfigCoverageAugmentation:
             cfg.language = "fr"
         with pytest.raises(AttributeError):
             from sigenergy2mqtt.common import ConsumptionMethod
+
             cfg.consumption = ConsumptionMethod.LOAD
         with pytest.raises(AttributeError):
             cfg.persistence_debug = True
@@ -583,6 +579,7 @@ class TestConfigCoverageAugmentation:
 
     def test_validate_hosts_after_discovery_no_devices(self):
         from sigenergy2mqtt.config.config import ConfigurationError
+
         cfg = Config()
         cfg._settings = MagicMock()
         cfg._settings.modbus = []
@@ -591,6 +588,7 @@ class TestConfigCoverageAugmentation:
 
     def test_validate_hosts_after_discovery_no_host(self):
         from sigenergy2mqtt.config.config import ConfigurationError
+
         cfg = Config()
         device = MagicMock()
         device.host = ""
@@ -618,7 +616,6 @@ class TestConfigCoverageAugmentation:
     @patch("sigenergy2mqtt.persistence.StateStore.is_initialised", new_callable=PropertyMock, return_value=True)
     @patch("sigenergy2mqtt.persistence.StateStore.load", side_effect=OSError("mock error"))
     def test_restore_discovery_from_mqtt_exception(self, mock_load, mock_is_initialised, mock_active_config, tmp_path):
-        from unittest.mock import PropertyMock
         mock_active_config.persistence.mqtt_redundancy = True
         cfg = Config()
         asyncio.run(cfg._restore_discovery_from_mqtt(tmp_path / "cache.yaml"))
@@ -626,7 +623,6 @@ class TestConfigCoverageAugmentation:
     @patch("sigenergy2mqtt.persistence.StateStore.is_initialised", new_callable=PropertyMock, return_value=True)
     @patch("sigenergy2mqtt.persistence.StateStore.save", side_effect=OSError("mock save error"))
     def test_save_discovery_results_exception(self, mock_save, mock_is_initialised, tmp_path):
-        from unittest.mock import PropertyMock
         cfg = Config()
         asyncio.run(cfg._save_discovery_results(tmp_path / "cache.yaml", []))
 
@@ -658,10 +654,10 @@ class TestConfigCoverageAugmentation:
             assert "Mock OS Error" in caplog.text
 
     def test_setup_logging_tty(self):
-        from sigenergy2mqtt.config.config import configure_root_logging
+        from sigenergy2mqtt.config.config import configure_root_logger
 
         with patch("sigenergy2mqtt.config.config.os.isatty", return_value=True):
-            configure_root_logging()
+            configure_root_logger()
 
     def test_config_proxy_methods(self):
         from sigenergy2mqtt.config.config import _ConfigProxy
@@ -719,10 +715,10 @@ class TestConfigCoverageAugmentation:
             assert cfg._source is None
 
     def test_setup_logging_level_from_env(self):
-        from sigenergy2mqtt.config.config import configure_root_logging
+        from sigenergy2mqtt.config.config import configure_root_logger
 
         with patch.dict("os.environ", {"SIGENERGY2MQTT_LOG_LEVEL": "DEBUG"}):
-            configure_root_logging()
+            configure_root_logger()
             assert logging.getLogger().level == logging.DEBUG
 
 
@@ -834,7 +830,7 @@ def test_apply_cli_overrides_boolean_flags():
     setattr(args, const.SIGENERGY2MQTT_MQTT_TLS, "false")
     setattr(args, const.SIGENERGY2MQTT_LOG_LEVEL, None)
     setattr(args, const.SIGENERGY2MQTT_PVOUTPUT_ENABLED, True)
-    setattr(args, "some_other_arg", "some_value")
+    args.some_other_arg = "some_value"
 
     with patch("sigenergy2mqtt.config.config.auto_discovery_scan", return_value=[]):
         _promote_cli_to_env(args)
@@ -874,7 +870,7 @@ def test_reload_applies_yaml(tmp_path):
     try:
         active_config.modbus.clear()
         asyncio.run(active_config.load(config_path))
-        assert active_config.log_level == getattr(__import__("logging"), "DEBUG")
+        assert active_config.log_level == __import__("logging").DEBUG
         assert len(active_config.modbus) >= 1
         assert active_config.modbus[0].port == 1502
     finally:

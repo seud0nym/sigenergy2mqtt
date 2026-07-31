@@ -2780,6 +2780,8 @@ cli:
     help: Schakel de diagnostische webserver uit.
   SIGENERGY2MQTT_DIAGNOSTICS_HOST:
     help: 'Het adres waaraan de diagnostische webserver moet worden gekoppeld (standaard: 127.0.0.1)'
+  SIGENERGY2MQTT_DIAGNOSTICS_LOG_LEVEL:
+    help: 'Logboekniveau van het diagnostische subsysteem. Geldige waarden zijn: DEBUG, INFO, WAARSCHUWING, ERROR of CRITICAL. Standaard is WAARSCHUWING (waarschuwingen, fouten en kritieke storingen)'
   SIGENERGY2MQTT_DIAGNOSTICS_PORT:
     help: 'De luisterpoort van de diagnostische webserver (standaard: 8502)'
   SIGENERGY2MQTT_DIAGNOSTICS_REFRESH_INTERVAL:

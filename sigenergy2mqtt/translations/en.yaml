@@ -2780,6 +2780,8 @@ cli:
     help: Disable the diagnostics web server.
   SIGENERGY2MQTT_DIAGNOSTICS_HOST:
     help: 'The address to which the diagnostics web server is to be bound (default: 127.0.0.1)'
+  SIGENERGY2MQTT_DIAGNOSTICS_LOG_LEVEL:
+    help: 'Diagnostics subsystem log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)'
   SIGENERGY2MQTT_DIAGNOSTICS_PORT:
     help: 'The diagnostics web server listening port (default: 8502)'
   SIGENERGY2MQTT_DIAGNOSTICS_REFRESH_INTERVAL:

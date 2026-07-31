@@ -2780,6 +2780,8 @@ cli:
     help: Désactivez le serveur Web de diagnostic.
   SIGENERGY2MQTT_DIAGNOSTICS_HOST:
     help: 'L''adresse à laquelle le serveur Web de diagnostic doit être lié (par défaut : 127.0.0.1)'
+  SIGENERGY2MQTT_DIAGNOSTICS_LOG_LEVEL:
+    help: 'Niveau de journalisation du sous-système de diagnostic. Les valeurs valides sont : DEBUG, INFO, AVERTISSEMENT, ERREUR ou CRITICAL. La valeur par défaut est AVERTISSEMENT (avertissements, erreurs et échecs critiques)'
   SIGENERGY2MQTT_DIAGNOSTICS_PORT:
     help: 'Le port d''écoute du serveur Web de diagnostic (par défaut : 8502)'
   SIGENERGY2MQTT_DIAGNOSTICS_REFRESH_INTERVAL:

@@ -2780,6 +2780,8 @@ cli:
     help: 진단 웹 서버를 비활성화합니다.
   SIGENERGY2MQTT_DIAGNOSTICS_HOST:
     help: '진단 웹 서버가 바인딩될 주소(기본값: 127.0.0.1)'
+  SIGENERGY2MQTT_DIAGNOSTICS_LOG_LEVEL:
+    help: '진단 하위 시스템 로그 수준입니다. 유효한 값은 DEBUG, INFO, WARNING, ERROR 또는 CRITICAL입니다. 기본값은 WARNING(경고, 오류 및 심각한 오류)입니다.'
   SIGENERGY2MQTT_DIAGNOSTICS_PORT:
     help: '진단 웹 서버 수신 포트(기본값: 8502)'
   SIGENERGY2MQTT_DIAGNOSTICS_REFRESH_INTERVAL:
