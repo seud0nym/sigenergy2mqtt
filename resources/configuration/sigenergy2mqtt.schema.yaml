@@ -484,7 +484,7 @@ properties:
           - type: string
             enum: [DEBUG, INFO, WARNING, ERROR, CRITICAL]
           - type: integer
-        default: CRITICAL
+        default: WARNING
       write-timeout:
         type: number
         default: 30.0
@@ -566,6 +566,12 @@ properties:
         type: [array, "null"]
         items:
           type: string
+      log-level:
+        oneOf:
+          - type: string
+            enum: [DEBUG, INFO, WARNING, ERROR, CRITICAL]
+          - type: integer
+        default: WARNING
 
   # Pydantic internal
   modbus-auto-discovery: {type: [string, "null"]}

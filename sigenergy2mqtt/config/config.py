@@ -669,7 +669,7 @@ def is_docker() -> bool:
     return Path("/.dockerenv").is_file() or (cgroup.is_file() and "docker" in cgroup.read_text())
 
 
-def configure_root_logging(level: int | None = None, fmt: str | None = None) -> None:
+def configure_root_logger(level: int | None = None, fmt: str | None = None) -> None:
     """Configure the root logger with a format appropriate to the runtime environment.
 
     Three formats are used:
@@ -752,7 +752,7 @@ def _system_initialize():
         ConfigurationError: If the Python version requirement is not met, or if no
             writable directory can be found for persistent state storage.
     """
-    configure_root_logging()
+    configure_root_logger()
 
     logger.info(f"Release {version.__version__} (Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro})")
 

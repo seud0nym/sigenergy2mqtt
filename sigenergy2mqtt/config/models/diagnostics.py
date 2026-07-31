@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+import logging
+
+from pydantic import BaseModel, Field, field_validator
 
 from sigenergy2mqtt.config.models._base import _SUB
+from sigenergy2mqtt.config.validators import validate_log_level
 
 
 class DiagnosticsConfig(BaseModel):
@@ -17,35 +20,21 @@ class DiagnosticsConfig(BaseModel):
 
     model_config = _SUB
 
-    enabled: bool = Field(
-        True,
-    )
-    """Set to False to disable diagnostics. Note: If running
-    within Docker, this flag is ignored and treated as True."""
+    enabled: bool = Field(True)
+    """Set to False to disable diagnostics. Note: If running within Docker, this flag is ignored and treated as True."""
 
-    host: str = Field(
-        "127.0.0.1",
-        alias="host",
-    )
+    host: str = Field("127.0.0.1", alias="host")
     """The address to which the diagnostics web server is to be bound."""
 
-    port: int = Field(
-        8502,
-        alias="port",
-        ge=1,
-        le=65535,
-    )
+    port: int = Field(8502, alias="port", ge=1, le=65535)
     """The diagnostics web server listening port."""
 
-    refresh_interval: float = Field(
-        5.0,
-        alias="refresh-interval",
-        gt=0.0,
-    )
+    refresh_interval: float = Field(5.0, alias="refresh-interval", gt=0.0)
     """The diagnostics web page refresh interval in seconds."""
 
-    allowed_ips: list[str] | None = Field(
-        None,
-        alias="allowed-ips",
-    )
+    allowed_ips: list[str] | None = Field(None, alias="allowed-ips")
     """List of allowed IP addresses for the diagnostics web server."""
+
+    log_level: int = Field(logging.WARNING, alias="log-level")
+    """Diagnostics subsystem log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)"""
+    _validate_log_level = field_validator("log_level", mode="before")(validate_log_level)
