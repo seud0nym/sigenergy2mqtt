@@ -19,7 +19,7 @@ from sigenergy2mqtt.modbus import ModbusClientFactory
 from sigenergy2mqtt.mqtt import MqttHandler, mqtt_health_registry, mqtt_setup, mqtt_teardown
 from sigenergy2mqtt.sensors.base import ReadableSensorMixin
 
-from .monitored_sensor import MonitoredSensor
+from .sensor import MonitoredSensor
 
 logger = logging.getLogger(__name__)
 

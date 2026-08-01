@@ -100,7 +100,7 @@ def test_on_topic_update(monkeypatch):
     device = DummyDevice([sensor])
     svc = MonitorService([device])
     # Populate topics dict as subscribe would
-    from sigenergy2mqtt.monitor.monitored_sensor import MonitoredSensor
+    from sigenergy2mqtt.monitor.sensor import MonitoredSensor
 
     svc._topics["home/temp"] = MonitoredSensor("Device1", "temp", 10)
     result = asyncio.run(svc.on_topic_update(None, FakeMqttClient(), "23", "home/temp", None))
