@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.monitor.monitor_service import MonitorService
+from sigenergy2mqtt.monitor.service import MonitorService
 from sigenergy2mqtt.mqtt.registry import MqttClientHealth
 
 
@@ -118,8 +118,8 @@ async def test_clean_oserror_tmp_dir(monkeypatch, caplog):
     mock_tmp.rglob.return_value = [mock_path]
 
     # We also mock mqtt_setup to avoid real connection attempts during clean
-    monkeypatch.setattr("sigenergy2mqtt.monitor.monitor_service.mqtt_setup", AsyncMock(return_value=(MagicMock(), MagicMock())))
-    monkeypatch.setattr("sigenergy2mqtt.monitor.monitor_service.mqtt_teardown", AsyncMock())
+    monkeypatch.setattr("sigenergy2mqtt.monitor.service.mqtt_setup", AsyncMock(return_value=(MagicMock(), MagicMock())))
+    monkeypatch.setattr("sigenergy2mqtt.monitor.service.mqtt_teardown", AsyncMock())
 
     await MonitorService.clean()
 

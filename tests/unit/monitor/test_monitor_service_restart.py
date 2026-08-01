@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.monitor.monitor_service import MonitorService
+from sigenergy2mqtt.monitor.service import MonitorService
 
 
 class FakeMqttClient:
@@ -50,7 +50,7 @@ def track_tasks():
 
 def test_schedule_returns_monitor_when_enabled(monkeypatch, track_tasks):
     """schedule() should return a coroutine when health checks are enabled."""
-    with patch("sigenergy2mqtt.monitor.monitor_service.is_docker", return_value=False):
+    with patch("sigenergy2mqtt.monitor.service.is_docker", return_value=False):
         svc = MonitorService([])
         # enabled=True is default, _monitor_topic_updates is False by default (non-debug)
         tasks = svc.schedule(None, FakeMqttClient())
@@ -62,7 +62,7 @@ def test_schedule_returns_empty_when_disabled_and_no_topic_monitoring(monkeypatc
     """schedule() returns [] when health checks disabled and topic monitoring inactive."""
     svc = MonitorService([])
     svc._monitor_topic_updates = False
-    with patch("sigenergy2mqtt.monitor.monitor_service.is_docker", return_value=False), patch("sigenergy2mqtt.config.active_config.health_check") as mock_hc:
+    with patch("sigenergy2mqtt.monitor.service.is_docker", return_value=False), patch("sigenergy2mqtt.config.active_config.health_check") as mock_hc:
         mock_hc.enabled = False
         tasks = svc.schedule(None, FakeMqttClient())
         track_tasks.extend(tasks)  # Register them for automatic cleanup
@@ -73,7 +73,7 @@ def test_schedule_returns_monitor_when_docker_even_if_disabled(track_tasks):
     """schedule() returns a coroutine when in Docker even if enabled=False."""
     svc = MonitorService([])
     svc._monitor_topic_updates = False
-    with patch("sigenergy2mqtt.monitor.monitor_service.is_docker", return_value=True), patch("sigenergy2mqtt.config.active_config.health_check") as mock_hc:
+    with patch("sigenergy2mqtt.monitor.service.is_docker", return_value=True), patch("sigenergy2mqtt.config.active_config.health_check") as mock_hc:
         mock_hc.enabled = False
         tasks = svc.schedule(None, FakeMqttClient())
         track_tasks.extend(tasks)  # Register them for automatic cleanup
@@ -84,7 +84,7 @@ def test_schedule_returns_monitor_when_topic_monitoring_active(track_tasks):
     """schedule() returns a coroutine when topic monitoring is active even if health check disabled."""
     svc = MonitorService([])
     svc._monitor_topic_updates = True
-    with patch("sigenergy2mqtt.monitor.monitor_service.is_docker", return_value=False), patch("sigenergy2mqtt.config.active_config.health_check") as mock_hc:
+    with patch("sigenergy2mqtt.monitor.service.is_docker", return_value=False), patch("sigenergy2mqtt.config.active_config.health_check") as mock_hc:
         mock_hc.enabled = False
         tasks = svc.schedule(None, FakeMqttClient())
         track_tasks.extend(tasks)  # Register them for automatic cleanup
@@ -240,7 +240,7 @@ def test_subscribe_clears_retained_messages_when_disabled(monkeypatch):
     mqtt_client = FakeMqttClient()
     mqtt_handler = MagicMock()
 
-    with patch("sigenergy2mqtt.monitor.monitor_service.is_docker", return_value=False), patch("sigenergy2mqtt.config.active_config.health_check") as mock_hc:
+    with patch("sigenergy2mqtt.monitor.service.is_docker", return_value=False), patch("sigenergy2mqtt.config.active_config.health_check") as mock_hc:
         mock_hc.enabled = False
         svc.subscribe(mqtt_client, mqtt_handler)
 
@@ -258,7 +258,7 @@ def test_subscribe_does_not_clear_messages_when_enabled():
     mqtt_client = FakeMqttClient()
     mqtt_handler = MagicMock()
 
-    with patch("sigenergy2mqtt.monitor.monitor_service.is_docker", return_value=False):
+    with patch("sigenergy2mqtt.monitor.service.is_docker", return_value=False):
         svc.subscribe(mqtt_client, mqtt_handler)
 
     assert mqtt_client.publish.call_count == 0

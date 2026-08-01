@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from sigenergy2mqtt.monitor.monitor_service import MonitorService
+from sigenergy2mqtt.monitor.service import MonitorService
 from sigenergy2mqtt.mqtt.registry import MqttClientHealth
 
 
@@ -118,7 +118,7 @@ def test_clean_removes_topics(monkeypatch, tmp_path):
     async def fake_setup(*args, **kwargs):
         return mock_client, mock_handler
 
-    monkeypatch.setattr("sigenergy2mqtt.monitor.monitor_service.mqtt_setup", fake_setup)
+    monkeypatch.setattr("sigenergy2mqtt.monitor.service.mqtt_setup", fake_setup)
 
     async def run_clean():
         await MonitorService.clean()

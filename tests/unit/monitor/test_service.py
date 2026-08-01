@@ -10,8 +10,8 @@ from sigenergy2mqtt.common import service_health_registry
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.influxdb.base import InfluxBase
 from sigenergy2mqtt.modbus import ModbusClientFactory
-from sigenergy2mqtt.monitor.monitor_service import MonitorService
 from sigenergy2mqtt.monitor.monitored_sensor import MonitoredSensor
+from sigenergy2mqtt.monitor.service import MonitorService
 from sigenergy2mqtt.pvoutput.service import Service as PvOutputService
 from sigenergy2mqtt.sensors.base import ReadableSensorMixin
 
@@ -219,7 +219,7 @@ async def test_publish_health_includes_modbus_and_mqtt_connectivity(monkeypatch,
         connect_count = 1
         disconnect_count = 0
 
-    monkeypatch.setattr("sigenergy2mqtt.monitor.monitor_service.mqtt_health_registry.snapshot", lambda: {"fake": MockMqttHealth()})
+    monkeypatch.setattr("sigenergy2mqtt.monitor.service.mqtt_health_registry.snapshot", lambda: {"fake": MockMqttHealth()})
 
     await svc._publish_health(mqtt_client, is_docker_env=False)
 
@@ -367,7 +367,7 @@ async def test_publish_health_considers_all_modbus_clients(monkeypatch, tmp_path
         connect_count = 1
         disconnect_count = 0
 
-    monkeypatch.setattr("sigenergy2mqtt.monitor.monitor_service.mqtt_health_registry.snapshot", lambda: {"fake": MockMqttHealth()})
+    monkeypatch.setattr("sigenergy2mqtt.monitor.service.mqtt_health_registry.snapshot", lambda: {"fake": MockMqttHealth()})
 
     await svc._publish_health(mqtt_client, is_docker_env=False)
 
