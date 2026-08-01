@@ -276,6 +276,7 @@
       padding: 20px;
       display: flex;
       flex-direction: column;
+      min-width: 0;
       gap: 12px;
     }
 
@@ -322,6 +323,7 @@
       display: flex;
       justify-content: space-between;
       align-items: baseline;
+      gap: 12px;
       font-size: 13px;
       color: var(--text-dim);
       padding: 4px 0;
@@ -332,10 +334,18 @@
       border-bottom: none;
     }
 
+    .metric-row>span:first-child {
+      flex-shrink: 0;
+    }
+
     .metric-row .v {
       color: var(--text);
       font-family: var(--mono);
       font-size: 13px;
+      text-align: right;
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
 
     .section-title {
