@@ -77,7 +77,7 @@ def reset_config():
         os.environ[k] = v
 
     from sigenergy2mqtt.config import active_config
-    from sigenergy2mqtt.config.config import Config
+    from sigenergy2mqtt.config.config import Config, is_docker
     from sigenergy2mqtt.devices import DeviceRegistry
     from sigenergy2mqtt.modbus.client_factory import ModbusClientFactory
     from sigenergy2mqtt.modbus.lock_factory import ModbusLockFactory
@@ -95,6 +95,7 @@ def reset_config():
     DeviceRegistry.clear()
     ModbusClientFactory.clear()
     ModbusLockFactory.clear()
+    is_docker.cache_clear()
 
     # Clear sensor registries
     from sigenergy2mqtt.sensors.base import Sensor
@@ -121,6 +122,7 @@ def reset_config():
     DeviceRegistry.clear()
     ModbusClientFactory.clear()
     ModbusLockFactory.clear()
+    is_docker.cache_clear()
 
     Sensor._used_unique_ids.clear()
     Sensor._used_object_ids.clear()
