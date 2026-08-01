@@ -19,10 +19,10 @@ os.environ["SIGENERGY2MQTT_MODBUS_HOST"] = "127.0.0.1"
 
 import requests
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
+from sigenergy2mqtt.metrics.service import MetricsService
 
 from sigenergy2mqtt.common import ConsumptionMethod, HybridInverter, Protocol, PVInverter
 from sigenergy2mqtt.config import Config, _swap_active_config
-from sigenergy2mqtt.metrics.metrics_service import MetricsService
 from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, ModbusSensorMixin, ReadableSensorMixin, ReservedSensor, Sensor, TypedSensorMixin, WritableSensorMixin, WriteOnlySensor
 from sigenergy2mqtt.sensors.plant_derived import PlantConsumedPower
 from sigenergy2mqtt.sensors.plant_read_write import RemoteEMSLimit
