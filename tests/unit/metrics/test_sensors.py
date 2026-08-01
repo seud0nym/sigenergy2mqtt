@@ -2,10 +2,7 @@ import time
 from unittest.mock import patch
 
 import pytest
-
-from sigenergy2mqtt.common import Protocol
-from sigenergy2mqtt.metrics.metrics import Metrics
-from sigenergy2mqtt.metrics.metrics_sensors import (
+from sigenergy2mqtt.metrics.sensors import (
     MetricsSensor,
     ModbusActiveLocks,
     ModbusCacheHits,
@@ -30,6 +27,9 @@ from sigenergy2mqtt.metrics.metrics_sensors import (
     StateStoreSaveMin,
     StateStoreSaves,
 )
+
+from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.metrics.metrics import Metrics
 
 
 @pytest.fixture(autouse=True)
@@ -225,7 +225,7 @@ class TestProtocolVersion:
 class TestProtocolPublished:
     @pytest.mark.asyncio
     async def test_update_internal_state(self):
-        with patch("sigenergy2mqtt.metrics.metrics_sensors.ProtocolApplies", return_value="2024-08-05"):
+        with patch("sigenergy2mqtt.metrics.sensors.ProtocolApplies", return_value="2024-08-05"):
             sensor = ProtocolPublished(Protocol.V1_8)
             await sensor._update_internal_state()
             assert sensor.latest_raw_state == "2024-08-05"

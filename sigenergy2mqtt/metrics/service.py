@@ -1,7 +1,7 @@
 """
 MQTT service device that publishes sigenergy2mqtt runtime metrics to Home Assistant.
 
-:class:`MetricsService` wires together the individual :mod:`metrics_sensors`
+:class:`MetricsService` wires together the individual :mod:`sensors`
 sensor entities and handles the service lifecycle: marking the broker status
 topic online/offline and initialising the :class:`~sigenergy2mqtt.metrics.Metrics`
 timestamps at actual commencement time.
@@ -11,10 +11,10 @@ import logging
 
 import paho.mqtt.client as mqtt
 
-import sigenergy2mqtt.metrics.metrics_sensors as sensors
 from sigenergy2mqtt.common import Protocol
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import Device
+from sigenergy2mqtt.metrics import sensors
 from sigenergy2mqtt.modbus import ModbusClient
 
 logger = logging.getLogger(__name__)

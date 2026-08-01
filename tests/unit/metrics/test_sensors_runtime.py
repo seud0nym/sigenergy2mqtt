@@ -2,9 +2,7 @@ import time
 from unittest.mock import patch
 
 import pytest
-
-from sigenergy2mqtt.metrics.metrics import Metrics
-from sigenergy2mqtt.metrics.metrics_sensors import (
+from sigenergy2mqtt.metrics.sensors import (
     InfluxDBQueries,
     InfluxDBQueryErrors,
     InfluxDBRetries,
@@ -18,6 +16,8 @@ from sigenergy2mqtt.metrics.metrics_sensors import (
     ResetMetrics,
     Started,
 )
+
+from sigenergy2mqtt.metrics.metrics import Metrics
 
 
 @pytest.fixture(autouse=True)
@@ -123,7 +123,7 @@ class TestMetricsSensorsExtended:
     async def test_mqtt_publish_failures(self):
         # Hit 97, 106-107
         sensor = InfluxDBWrites()  # Wait, I should use MQTTPublishFailures
-        from sigenergy2mqtt.metrics.metrics_sensors import MQTTPublishFailures
+        from sigenergy2mqtt.metrics.sensors import MQTTPublishFailures
 
         sensor = MQTTPublishFailures()
         Metrics.sigenergy2mqtt_mqtt_publish_failures = 5
@@ -133,7 +133,7 @@ class TestMetricsSensorsExtended:
     @pytest.mark.asyncio
     async def test_mqtt_physical_publishes(self):
         # Hit 114, 124-125
-        from sigenergy2mqtt.metrics.metrics_sensors import MQTTPhysicalPublishes
+        from sigenergy2mqtt.metrics.sensors import MQTTPhysicalPublishes
 
         sensor = MQTTPhysicalPublishes()
         Metrics.sigenergy2mqtt_mqtt_physical_publish_percentage = 99.9
