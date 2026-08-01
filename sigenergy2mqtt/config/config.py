@@ -31,6 +31,7 @@ import time
 from collections.abc import Generator
 from contextlib import contextmanager
 from copy import deepcopy
+from functools import cache
 from io import StringIO
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar
@@ -663,8 +664,12 @@ def _create_persistent_state_path() -> Path:
     raise ConfigurationError("Unable to create persistent state folder!")
 
 
+@cache
 def is_docker() -> bool:
-    """Return True if running inside a Docker container."""
+    """Return True if running inside a Docker container.
+
+    Result is evaluated once on first call and cached in memory.
+    """
     cgroup = Path("/proc/self/cgroup")
     return Path("/.dockerenv").is_file() or (cgroup.is_file() and "docker" in cgroup.read_text())
 

@@ -5,11 +5,11 @@
 
 ### Added
 
+- Added new diagnostics and health-monitoring web-server endpoint available at http://[IP_ADDRESS]/diagnostics/
 - Health monitoring of InfluxDB writes and PVOutput uploads (if these services are enabled)
 - Added new monitorable state property to allow health monitoring to be disabled for specific sensors via sensor overrides
-- Added new derived sensor for battery status ('Charging', 'Discharging', 'Full', 'Empty', 'Cutoff', 'Idle', and 'Unknown')
-- Added new diagnostics and health-monitoring web-server endpoint available at http://[IP_ADDRESS]/diagnostics/
 - Added the ability to over-ride the MQTT QoS and retain flags via sensor overrides
+- Added new derived sensor for battery status ('Charging', 'Discharging', 'Full', 'Empty', 'Cutoff', 'Idle', and 'Unknown')
 
 ### Fixed
 
@@ -20,6 +20,7 @@
 - Ignored accumulation intervals of two hours or longer to avoid clock-jump spikes
 - Reset daily energy sensors when their upstream lifetime counter decreases
 - InfluxDBService was not properly shutdown aware
+- Cached `is_docker()` result to optimize configuration checks
 
 ### Changed
 
