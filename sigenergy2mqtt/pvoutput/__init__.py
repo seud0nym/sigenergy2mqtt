@@ -13,7 +13,7 @@ from sigenergy2mqtt.common.output_field import OutputField
 from sigenergy2mqtt.common.status_field import StatusField
 from sigenergy2mqtt.common.voltage_source import VoltageSource
 
-__all__ = ["get_pvoutput_services"]
+__all__ = ["PVOutputSettings", "get_pvoutput_services"]
 
 import logging
 import os
@@ -37,6 +37,7 @@ from sigenergy2mqtt.sensors.plant_read_only import (
 )
 
 from .output import PVOutputOutputService
+from .settings import PVOutputSettings
 from .status import PVOutputStatusService
 from .topic import Topic
 

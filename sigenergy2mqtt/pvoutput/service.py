@@ -17,15 +17,13 @@ from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.metrics import Metrics
 
+from .settings import PVOutputSettings
+
 logger = logging.getLogger(__name__)
 
 
 class Service(Device):
     """Common PVOutput device behaviour for API timing and uploads."""
-
-    _donator: bool = False
-    _interval: int = 5  # Interval in minutes for PVOutput status updates
-    _interval_updated: float | None = None
 
     def __init__(self, name: str, unique_id: str, model: str):
         """Initialize the shared service wrapper and synchronization lock.
@@ -119,15 +117,17 @@ class Service(Device):
         url = "https://pvoutput.org/service/r2/getsystem.jsp?donations=1"
         current_time = time.time()  # Current time in seconds since epoch
         async with self._lock:
-            if Service._interval_updated is None or (Service._interval_updated + 3600) < current_time:
+            if PVOutputSettings.interval_updated is None or (PVOutputSettings.interval_updated + 3600) < current_time:
                 logger.debug(
-                    f"{self.log_identity} Service cache needs updating: {Service._donator=} {Service._interval=} {Service._interval_updated=} {current_time=} next_update={(Service._interval_updated + 3600) if Service._interval_updated is not None else current_time}"
+                    f"{self.log_identity} Service cache needs updating: {PVOutputSettings.donator=} {PVOutputSettings.interval=} {PVOutputSettings.interval_updated=} {current_time=} next_update={(PVOutputSettings.interval_updated + 3600) if PVOutputSettings.interval_updated is not None else current_time}"
                 )
                 if active_config.pvoutput.testing:
-                    Service._interval = 5
-                    Service._interval_updated = current_time
-                    Service._donator = True
-                    logger.info(f"{self.log_identity} Testing mode, not sending request to {url=} - using default/previous interval of {Service._interval} minutes and donator status {Service._donator}")
+                    PVOutputSettings.interval = 5
+                    PVOutputSettings.interval_updated = current_time
+                    PVOutputSettings.donator = True
+                    logger.info(
+                        f"{self.log_identity} Testing mode, not sending request to {url=} - using default/previous interval of {PVOutputSettings.interval} minutes and donator status {PVOutputSettings.donator}"
+                    )
                 else:
                     logger.debug(f"{self.log_identity} Acquiring System Information from PVOutput ({url=})")
                     try:
@@ -140,23 +140,23 @@ class Service(Device):
                             logger.debug(
                                 f"{self.log_identity} Acquired {interval=} {donations=} OKAY status_code={response.status_code} {limit=} {remaining=} reset={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))} ({reset}s)"
                             )
-                            Service._interval_updated = current_time
-                            if Service._interval != interval:
-                                logger.info(f"{self.log_identity} Status Interval changed from {Service._interval} to {interval} minutes")
-                                Service._interval = interval
-                            if Service._donator != (donations != 0):
-                                logger.info(f"{self.log_identity} Donation Status changed from {Service._donator} to {donations != 0}")
-                                Service._donator = donations != 0
+                            PVOutputSettings.interval_updated = current_time
+                            if PVOutputSettings.interval != interval:
+                                logger.info(f"{self.log_identity} Status Interval changed from {PVOutputSettings.interval} to {interval} minutes")
+                                PVOutputSettings.interval = interval
+                            if PVOutputSettings.donator != (donations != 0):
+                                logger.info(f"{self.log_identity} Donation Status changed from {PVOutputSettings.donator} to {donations != 0}")
+                                PVOutputSettings.donator = donations != 0
                         else:
                             logger.warning(f"{self.log_identity} FAILED to acquire System Information status_code={response.status_code} reason={response.reason}")
                     except (OSError, requests.RequestException, TimeoutError, ValueError, AttributeError) as exc:
-                        Service._interval = 5  # Default interval in minutes if not set
-                        Service._donator = False  # Default donator status if not set
+                        PVOutputSettings.interval = 5  # Default interval in minutes if not set
+                        PVOutputSettings.donator = False  # Default donator status if not set
                         logger.warning(
-                            f"{self.log_identity} Failed to acquire System Information from PVOutput: {exc} - using default/previous interval of {Service._interval} minutes and donator status {Service._donator}"
+                            f"{self.log_identity} Failed to acquire System Information from PVOutput: {exc} - using default/previous interval of {PVOutputSettings.interval} minutes and donator status {PVOutputSettings.donator}"
                         )
         minutes = int(current_time // 60)  # Total minutes since epoch
-        next_boundary = (minutes // Service._interval + 1) * Service._interval  # Next interval boundary
+        next_boundary = (minutes // PVOutputSettings.interval + 1) * PVOutputSettings.interval  # Next interval boundary
         next_time = (next_boundary * 60) + randint(rand_min, rand_max)  # Convert back to seconds with a random offset for variability
         seconds = 60 if active_config.pvoutput.testing else float(next_time - current_time)
         return seconds, next_time

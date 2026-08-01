@@ -13,7 +13,6 @@ from sigenergy2mqtt.pvoutput.topic import Topic
 
 
 def make_status_service(topics=None, extended=None):
-    logger = logging.getLogger("test-pvoutput-status")
     topics = {} if topics is None else topics
     extended = {} if extended is None else extended
     return PVOutputStatusService(topics, extended)
@@ -54,7 +53,7 @@ class TestPVOutputStatus:
         # Properly update state via handle_update to ensure it's included in aggregation
         await st_gen.handle_update(None, MagicMock(), 500.0, "gen", MagicMock())
 
-        payload, snapshot = svc._create_payload(now)
+        payload, _ = svc._create_payload(now)
 
         assert payload["d"] == time.strftime("%Y%m%d", now)
         assert payload["t"] == time.strftime("%H:%M", now)
@@ -71,7 +70,7 @@ class TestPVOutputStatus:
         svc._service_topics[StatusField.V7] = st_v7
         st_v7.register(Topic("v7", gain=1.0, state=100.0))
 
-        with patch("sigenergy2mqtt.pvoutput.service.Service._donator", False):
+        with patch("sigenergy2mqtt.pvoutput.service.PVOutputSettings.donator", False):
             payload, _ = svc._create_payload(now)
             assert StatusField.V7.value not in payload
 
@@ -79,7 +78,7 @@ class TestPVOutputStatus:
         # mark extended V7 present so it's enabled and donation-flagged
         active_config.pvoutput.extended[StatusField.V7] = "energy"
         # force service donator state
-        with patch("sigenergy2mqtt.pvoutput.service.Service._donator", True):
+        with patch("sigenergy2mqtt.pvoutput.service.PVOutputSettings.donator", True):
             now = time.mktime((2024, 6, 1, 12, 0, 0, 0, 0, -1))
             # ensure started flag so updating checks pass
             active_config.pvoutput.started = now - 3600

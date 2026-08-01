@@ -23,6 +23,7 @@ from sigenergy2mqtt.mqtt import MqttHandler
 
 from .service import Service
 from .service_topics import Calculation, ServiceTopics, TimePeriodServiceTopics
+from .settings import PVOutputSettings
 from .topic import Topic
 
 logger = logging.getLogger(__name__)
@@ -277,7 +278,7 @@ class PVOutputOutputService(Service):
                     now: float = time.mktime(now_struct)
                     if now >= next:
                         async with self.lock(timeout=5):
-                            payload = self._create_payload(now_struct, Service._interval)
+                            payload = self._create_payload(now_struct, PVOutputSettings.interval)
                         tomorrow = await self._next_output_upload(minute)
                         last_update_of_day: bool = time.localtime(tomorrow).tm_yday != now_struct.tm_yday  # Bypass verification except on last upload of the day
                         await self._upload(payload, last_update_of_day)

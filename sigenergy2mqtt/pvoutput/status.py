@@ -20,6 +20,7 @@ from sigenergy2mqtt.metrics import Metrics
 
 from .service import Service
 from .service_topics import Calculation, ServiceTopics
+from .settings import PVOutputSettings
 from .topic import Topic
 
 logger = logging.getLogger(__name__)
@@ -137,14 +138,14 @@ class PVOutputStatusService(Service):
             now: Timestamp used to stamp the payload date/time values.
         """
         payload: dict[str, Any] = {"d": time.strftime("%Y%m%d", now), "t": time.strftime("%H:%M", now)}
-        topics: list[ServiceTopics] = [t for t in self._service_topics.values() if t.enabled and (not t.requires_donation or Service._donator)]
+        topics: list[ServiceTopics] = [t for t in self._service_topics.values() if t.enabled and (not t.requires_donation or PVOutputSettings.donator)]
         snapshot: dict[str, dict[str, tuple[float | None, time.struct_time | None]]] = {
             st: {t.topic: (t.previous_state, t.previous_timestamp) for t in st_topics.values()}
             for st, st_topics in self._service_topics.items()
-            if st_topics.enabled and (not st_topics.requires_donation or Service._donator)
+            if st_topics.enabled and (not st_topics.requires_donation or PVOutputSettings.donator)
         }
         for topic in topics:
-            topic.add_to_payload(payload, Service._interval, now)
+            topic.add_to_payload(payload, PVOutputSettings.interval, now)
         return payload, snapshot
 
     async def seconds_until_status_upload(self, rand_min: int = 1, rand_max: int = 15) -> tuple[float, int]:

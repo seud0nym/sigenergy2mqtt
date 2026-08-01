@@ -9,7 +9,7 @@ import requests
 from sigenergy2mqtt.common import ConsumptionSource, StatusField, UnitOfEnergy, UnitOfPower, VoltageSource
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.config.settings import PvOutputConfig
-from sigenergy2mqtt.pvoutput import get_gain, get_pvoutput_services
+from sigenergy2mqtt.pvoutput import PVOutputSettings, get_gain, get_pvoutput_services
 from sigenergy2mqtt.pvoutput.output import PVOutputOutputService
 from sigenergy2mqtt.pvoutput.service import Service
 from sigenergy2mqtt.pvoutput.status import PVOutputStatusService
@@ -17,7 +17,6 @@ from sigenergy2mqtt.sensors.base import Sensor
 
 
 def make_service():
-    logger = logging.getLogger("test-pvoutput")
     return Service("pvtest", "pvtest", "pvmodel")
 
 
@@ -47,7 +46,7 @@ class TestPVOutputBase:
             seconds, next_time = await svc.seconds_until_status_upload(rand_min=1, rand_max=1)
             assert seconds == 60
             assert isinstance(next_time, int)
-            assert Service._interval == 5
+            assert PVOutputSettings.interval == 5
 
     @pytest.mark.asyncio
     async def test_upload_payload_testing_mode(self):

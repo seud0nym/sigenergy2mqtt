@@ -9,12 +9,12 @@ import requests
 from sigenergy2mqtt.config import ConsumptionSource, OutputField, StatusField, active_config
 from sigenergy2mqtt.pvoutput.output import PVOutputOutputService
 from sigenergy2mqtt.pvoutput.service import Service
+from sigenergy2mqtt.pvoutput.settings import PVOutputSettings
 from sigenergy2mqtt.pvoutput.status import PVOutputStatusService
 from sigenergy2mqtt.pvoutput.topic import Topic
 
 
 def make_service() -> Service:
-    logger = logging.getLogger("test-pvoutput-service")
     return Service("pvtest", "pvtest", "pvmodel")
 
 
@@ -25,9 +25,9 @@ class TestPVOutputService:
     async def test_seconds_until_status_upload_fetches_system_info(self, monkeypatch):
         svc = make_service()
         # Reset class-level cache
-        Service._interval = None
-        Service._interval_updated = None
-        Service._donator = False
+        PVOutputSettings.interval = None
+        PVOutputSettings.interval_updated = None
+        PVOutputSettings.donator = False
 
         with patch.object(active_config.pvoutput, "testing", False):
             # Mock the response: interval=10 at index 15, donations=1 (donator=True)
@@ -50,30 +50,30 @@ class TestPVOutputService:
             seconds, next_time = await svc.seconds_until_status_upload()
 
             assert isinstance(seconds, float)
-            assert Service._interval == 10
-            assert Service._donator is True
-            assert Service._interval_updated is not None
+            assert PVOutputSettings.interval == 10
+            assert PVOutputSettings.donator is True
+            assert PVOutputSettings.interval_updated is not None
 
     @pytest.mark.asyncio
     async def test_seconds_until_status_upload_exception_uses_defaults(self, monkeypatch):
         svc = make_service()
-        Service._interval = None
-        Service._interval_updated = None
-        Service._donator = None
+        PVOutputSettings.interval = None
+        PVOutputSettings.interval_updated = None
+        PVOutputSettings.donator = None
 
         with patch.object(active_config.pvoutput, "testing", False):
             monkeypatch.setattr("requests.get", MagicMock(side_effect=requests.RequestException("Network error")))
             seconds, next_time = await svc.seconds_until_status_upload()
             assert isinstance(seconds, float)
-            assert Service._interval == 5
-            assert Service._donator is False
+            assert PVOutputSettings.interval == 5
+            assert PVOutputSettings.donator is False
 
     @pytest.mark.asyncio
     async def test_seconds_until_status_upload_uses_cache(self, monkeypatch):
         svc = make_service()
-        Service._interval = 7
-        Service._interval_updated = time.time()
-        Service._donator = True
+        PVOutputSettings.interval = 7
+        PVOutputSettings.interval_updated = time.time()
+        PVOutputSettings.donator = True
 
         with patch.object(active_config.pvoutput, "testing", False):
             mock_get = MagicMock(side_effect=requests.RequestException("Should not be called"))
@@ -81,7 +81,7 @@ class TestPVOutputService:
             seconds, next_time = await svc.seconds_until_status_upload()
             assert isinstance(seconds, float)
             assert not mock_get.called
-            assert Service._interval == 7
+            assert PVOutputSettings.interval == 7
 
     @pytest.mark.asyncio
     async def test_upload_payload_success_on_second_attempt(self, monkeypatch):
@@ -174,12 +174,12 @@ class TestPVOutputService:
             resp.headers = {"X-Rate-Limit-Limit": "60", "X-Rate-Limit-Remaining": "59", "X-Rate-Limit-Reset": str(time.time() + 3600)}
             mock_get.return_value = resp
 
-            Service._interval = 0
-            Service._interval_updated = None
+            PVOutputSettings.interval = 0
+            PVOutputSettings.interval_updated = None
             await svc.seconds_until_status_upload()
             assert "Status Interval changed" in caplog.text
 
-        Service._interval_updated = None
+        PVOutputSettings.interval_updated = None
         with patch("requests.get") as mock_get2:
             resp2 = MagicMock()
             resp2.status_code = 200
@@ -187,9 +187,9 @@ class TestPVOutputService:
             resp2.headers = resp.headers
             mock_get2.return_value = resp2
 
-            Service._donator = True
+            PVOutputSettings.donator = True
             await svc.seconds_until_status_upload()
-            assert Service._donator is False
+            assert PVOutputSettings.donator is False
             assert "Donation Status changed" in caplog.text
 
     @pytest.mark.asyncio
@@ -210,7 +210,7 @@ class TestPVOutputService:
     @pytest.mark.asyncio
     async def test_seconds_until_status_upload_non_200(self, monkeypatch, caplog):
         svc = make_service()
-        Service._interval_updated = None
+        PVOutputSettings.interval_updated = None
         with patch.object(active_config.pvoutput, "testing", False):
 
             class DummyResp:
