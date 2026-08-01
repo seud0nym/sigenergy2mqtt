@@ -384,6 +384,36 @@
       border-bottom: none;
     }
 
+    /* A provider may nest static/config values under a reserved "config" key
+       alongside its live metrics. Those get grouped in the same card under
+       this divider, and rendered dimmed/italic (see .config-row) to flag
+       them as settings rather than live, changing data. */
+    .card-config-divider {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-dim);
+    }
+
+    .card-config-divider svg {
+      width: 13px;
+      height: 13px;
+      opacity: 0.75;
+      flex-shrink: 0;
+    }
+
+    .metric-row.config-row .v {
+      color: var(--text-dim);
+      font-style: italic;
+    }
+
     .empty-state {
       text-align: center;
       padding: 60px 20px;
@@ -501,6 +531,7 @@
         { suffix: '_percent', format: formatPercent },
         { suffix: '_pct', format: formatPercent },
         { suffix: '_bytes', format: formatBytes },
+        { suffix: '_minutes', format: formatMinutes },
         { suffix: '_ms', format: formatMillis },
         { suffix: '_seconds', format: formatDuration },
         { suffix: '_secs', format: formatDuration },
@@ -517,6 +548,12 @@
         const n = Number(v);
         if (!Number.isFinite(n)) return fmtVal(v);
         return n < 1000 ? `${n.toFixed(n < 10 ? 1 : 0)} ms` : `${(n / 1000).toFixed(2)} s`;
+      }
+
+      function formatMinutes(v) {
+        const n = Number(v);
+        if (!Number.isFinite(n)) return fmtVal(v);
+        return `${n.toFixed(1)} m`;
       }
 
       function formatDuration(v) {
@@ -588,12 +625,15 @@
         }
         card.appendChild(title);
 
-        const rows = document.createElement('div');
-        function addRows(obj, prefix) {
+        // Renders obj's entries as .metric-row elements into `container`.
+        // 'config' is skipped here — it's a reserved key handled separately
+        // below, so any provider can nest static settings under it without
+        // them being mixed into the regular metric flattening.
+        function buildRows(obj, prefix, container) {
           Object.entries(obj).forEach(([k, v]) => {
-            if (k === 'status') return;
+            if (k === 'status' || k === 'config') return;
             if (v && typeof v === 'object' && !Array.isArray(v)) {
-              addRows(v, prefix ? `${prefix}.${k}` : k);
+              buildRows(v, prefix ? `${prefix}.${k}` : k, container);
               return;
             }
             const row = document.createElement('div');
@@ -613,11 +653,31 @@
             }
             row.appendChild(label);
             row.appendChild(val);
-            rows.appendChild(row);
+            container.appendChild(row);
           });
         }
-        if (data && typeof data === 'object') addRows(data, '');
+
+        const rows = document.createElement('div');
+        if (data && typeof data === 'object') buildRows(data, '', rows);
         card.appendChild(rows);
+
+        // Reserved "config" key: any provider can attach a "config": {...}
+        // sub-object with whatever static settings it wants, no schema
+        // required. Rendered in the same card, under a small divider, with
+        // values dimmed/italic (see .config-row CSS) to flag them as
+        // settings rather than live metrics.
+        if (data && typeof data === 'object' && data.config && typeof data.config === 'object' && !Array.isArray(data.config) && Object.keys(data.config).length > 0) {
+          const divider = document.createElement('div');
+          divider.className = 'card-config-divider';
+          divider.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg><span>Configuration</span>';
+          card.appendChild(divider);
+
+          const configRows = document.createElement('div');
+          buildRows(data.config, '', configRows);
+          configRows.querySelectorAll('.metric-row').forEach(r => r.classList.add('config-row'));
+          card.appendChild(configRows);
+        }
+
         return card;
       }
 

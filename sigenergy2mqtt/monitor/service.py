@@ -74,6 +74,9 @@ class MonitorService(Device):
             payload["status"] = "unknown"
             payload["stale"] = True
         payload["monitored_topics"] = len(self._topics)
+        payload["config"] = {
+            "health_check_interval_secs": active_config.health_check.interval,
+        }
         return payload
 
     async def _monitor(self, mqtt_client: mqtt.Client) -> None:
