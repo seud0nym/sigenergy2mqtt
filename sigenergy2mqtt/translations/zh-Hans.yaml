@@ -679,7 +679,7 @@ class:
     name: PCS告警
   GridActivity:
     attributes:
-      comment: 根据有功潮流指示电网活动电池的当前状态。有效值为“正在导入”、“正在导出”、“空闲”和“未知”。 “空闲”表示有功功率流在 -10 至 10 瓦之间。 “未知”表示并非所有信息都可用于评估状态。
+      comment: 根据有功潮流指示电网活动的当前状态。有效值为“正在导入”、“正在导出”、“空闲”和“未知”。 “空闲”表示有功功率流在 -10 至 10 瓦之间。 “未知”表示并非所有信息都可用于评估状态。
       source: GridSensorActivePower #verify:ignore
     name: 网格活动
     options:

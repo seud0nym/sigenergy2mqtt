@@ -679,7 +679,7 @@ class:
     name: PCS-Alarme
   GridActivity:
     attributes:
-      comment: Zeigt den aktuellen Zustand der Netzaktivitätsbatterie basierend auf dem aktiven Leistungsfluss an. Gültige Werte sind „Importieren“, „Exportieren“, „Leer“ und „Unbekannt“. „Leerlauf“ zeigt an, dass der aktive Leistungsfluss zwischen -10 und 10 Watt liegt. „Unbekannt“ bedeutet, dass nicht alle Informationen zur Beurteilung des Zustands verfügbar sind.
+      comment: Zeigt den aktuellen Zustand der Netzaktivität basierend auf dem aktiven Leistungsfluss an. Gültige Werte sind „Importieren“, „Exportieren“, „Leer“ und „Unbekannt“. „Leerlauf“ zeigt an, dass der aktive Leistungsfluss zwischen -10 und 10 Watt liegt. „Unbekannt“ bedeutet, dass nicht alle Informationen zur Beurteilung des Zustands verfügbar sind.
       source: GridSensorActivePower #verify:ignore
     name: Grid-Aktivität
     options:

@@ -679,7 +679,7 @@ class:
     name: Alarmes PCS
   GridActivity:
     attributes:
-      comment: Indique l'état actuel de la batterie d'activité du réseau en fonction du flux de puissance active. Les valeurs valides sont « Importation », « Exportation », « Idle » et « Inconnu ». « Idle » indique que le flux de puissance active est compris entre -10 et 10 watts. « Inconnu » indique que toutes les informations ne sont pas disponibles pour évaluer l'état.
+      comment: Indique l'état actuel de l'activité du réseau en fonction du flux de puissance active. Les valeurs valides sont « Importation », « Exportation », « Idle » et « Inconnu ». « Idle » indique que le flux de puissance active est compris entre -10 et 10 watts. « Inconnu » indique que toutes les informations ne sont pas disponibles pour évaluer l'état.
       source: GridSensorActivePower #verify:ignore
     name: Activité de la grille
     options:

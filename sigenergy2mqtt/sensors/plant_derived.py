@@ -310,7 +310,7 @@ class GridActivity(DerivedSensor, HybridInverter):
         attributes = super().get_attributes()
         attributes["source"] = "GridSensorActivePower"
         attributes["comment"] = (
-            "Indicates the current state of grid activity battery based on active power flow. "
+            "Indicates the current state of grid activity based on active power flow. "
             "Valid values are 'Importing', 'Exporting', 'Idle', and 'Unknown'. "
             "'Idle' indicates that the active power flow is between -10 and 10 watts. "
             "'Unknown' indicates not all information is available to assess state."
@@ -326,7 +326,7 @@ class GridActivity(DerivedSensor, HybridInverter):
                 state: str | None = None
                 if raw > 10:
                     state = self._get_option(GridActivity.IMPORTING)
-                elif raw < 10:
+                elif raw < -10:
                     state = self._get_option(GridActivity.EXPORTING)
                 else:
                     state = self._get_option(GridActivity.IDLE)

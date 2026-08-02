@@ -679,7 +679,7 @@ class:
     name: Allarmi PCS
   GridActivity:
     attributes:
-      comment: Indica lo stato attuale della batteria relativa all'attività della rete in base al flusso di potenza attiva. I valori validi sono "Importazione", "Esportazione", "Inattivo" e "Sconosciuto". 'Inattivo' indica che il flusso di potenza attiva è compreso tra -10 e 10 watt. "Sconosciuto" indica che non tutte le informazioni sono disponibili per valutare lo stato.
+      comment: Indica lo stato attuale dell'attività della rete in base al flusso di potenza attiva. I valori validi sono "Importazione", "Esportazione", "Inattivo" e "Sconosciuto". 'Inattivo' indica che il flusso di potenza attiva è compreso tra -10 e 10 watt. "Sconosciuto" indica che non tutte le informazioni sono disponibili per valutare lo stato.
       source: GridSensorActivePower #verify:ignore
     name: Attività della griglia
     options:
