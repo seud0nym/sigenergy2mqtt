@@ -199,7 +199,7 @@ class DiagnosticsServer:
         raise web.HTTPFound(location="diagnostics/")
 
     async def _handle_dashboard(self, request: web.Request) -> web.FileResponse:
-        return web.FileResponse(STATIC_DIR / "dashboard.html")
+        return web.FileResponse(STATIC_DIR / "diagnostics.html")
 
     async def _handle_export(self, request: web.Request) -> web.Response:
         """Full, freshly-collected diagnostics payload as a downloadable file."""
