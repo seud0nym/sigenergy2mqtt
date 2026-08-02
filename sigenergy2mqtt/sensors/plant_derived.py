@@ -276,6 +276,67 @@ class GridSensorImportPower(DerivedSensor, HybridInverter, PVInverter):
         return True
 
 
+class GridActivity(DerivedSensor, HybridInverter):
+    IMPORTING = 0
+    EXPORTING = 1
+    UNKNOWN = 2
+    IDLE = 3
+
+    def __init__(self, plant_index: int, active_power: GridSensorActivePower):
+        # Set properties before super().__init__ so that log_identity is correctly generated
+        self.plant_index = plant_index
+        super().__init__(
+            name="Grid Activity",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_grid_activity",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_grid_activity",
+            data_type=ModbusDataType.STRING,
+            unit=None,
+            device_class=DeviceClass.ENUM,
+            state_class=None,
+            icon="mdi:transmission-tower",
+            gain=None,
+            precision=0,
+            source_sensors=(active_power,),
+        )
+        self[DiscoveryKeys.OPTIONS] = [
+            "Importing",  # 0
+            "Exporting",  # 1
+            "Unknown",  # 2
+            "Idle",  # 3
+        ]
+        self.protocol_version = Protocol.V2_9
+
+    def get_attributes(self) -> dict[str, float | int | str]:
+        attributes = super().get_attributes()
+        attributes["source"] = "GridSensorActivePower"
+        attributes["comment"] = (
+            "Indicates the current state of grid activity based on active power flow. "
+            "Valid values are 'Importing', 'Exporting', 'Idle', and 'Unknown'. "
+            "'Idle' indicates that the active power flow is between -10 and 10 watts. "
+            "'Unknown' indicates not all information is available to assess state."
+        )
+        return attributes
+
+    def update_from_source_sensor(self, sensor: Sensor) -> bool:
+        match sensor:
+            case GridSensorActivePower():
+                if sensor.latest_raw_state is None:
+                    return False
+                raw = float(sensor.latest_raw_state)
+                state: str | None = None
+                if raw > 10:
+                    state = self._get_option(GridActivity.IMPORTING)
+                elif raw < -10:
+                    state = self._get_option(GridActivity.EXPORTING)
+                else:
+                    state = self._get_option(GridActivity.IDLE)
+                if state is not None:
+                    self.set_latest_state(state)
+                    return True
+                return False
+        return False
+
+
 class TotalPVPower(DerivedSensor, HybridInverter, PVInverter):
     @dataclass
     class Value:

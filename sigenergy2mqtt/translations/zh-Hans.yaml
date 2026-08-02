@@ -677,6 +677,16 @@ class:
       source: Modbus寄存器 30027-30028
       source_range: Modbus 寄存器 {start}-{end}
     name: PCS告警
+  GridActivity:
+    attributes:
+      comment: 根据有功潮流指示电网活动的当前状态。有效值为“正在导入”、“正在导出”、“空闲”和“未知”。 “空闲”表示有功功率流在 -10 至 10 瓦之间。 “未知”表示并非所有信息都可用于评估状态。
+      source: GridSensorActivePower #verify:ignore
+    name: 网格活动
+    options:
+      '0': 输入
+      '1': 出口
+      '2': 未知
+      '3': 闲置的
   GridCode:
     name: Sigenergy电站 电网规范 {plant_suffix}
   GridCodeHVRT:

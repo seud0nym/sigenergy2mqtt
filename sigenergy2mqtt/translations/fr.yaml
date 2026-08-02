@@ -677,6 +677,16 @@ class:
       source: Registres Modbus 30027-30028
       source_range: Registres Modbus {start}-{end}
     name: Alarmes PCS
+  GridActivity:
+    attributes:
+      comment: Indique l'état actuel de l'activité du réseau en fonction du flux de puissance active. Les valeurs valides sont « Importation », « Exportation », « Idle » et « Inconnu ». « Idle » indique que le flux de puissance active est compris entre -10 et 10 watts. « Inconnu » indique que toutes les informations ne sont pas disponibles pour évaluer l'état.
+      source: GridSensorActivePower #verify:ignore
+    name: Activité de la grille
+    options:
+      '0': Importation
+      '1': Exportation
+      '2': Inconnu
+      '3': Inactif
   GridCode:
     name: Code Réseau Installation Sigenergy {plant_suffix}
   GridCodeHVRT:

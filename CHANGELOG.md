@@ -10,6 +10,7 @@
 - Added new monitorable state property to allow health monitoring to be disabled for specific sensors via sensor overrides
 - Added the ability to over-ride the MQTT QoS and retain flags via sensor overrides
 - Added new derived sensor for battery status ('Charging', 'Discharging', 'Full', 'Empty', 'Cutoff', 'Idle', and 'Unknown')
+- Added new derived sensor for grid activity ('Importing', 'Exporting', 'Idle', and 'Unknown')
 
 ### Fixed
 
