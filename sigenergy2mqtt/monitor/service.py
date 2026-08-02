@@ -5,6 +5,7 @@ import json
 import logging
 import time
 from collections.abc import Awaitable
+from dataclasses import replace
 from datetime import datetime
 from typing import Any
 
@@ -15,13 +16,16 @@ from sigenergy2mqtt.common import Protocol, service_health_registry
 from sigenergy2mqtt.config import active_config, is_docker
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.diagnostics import diagnostics_registry
+from sigenergy2mqtt.i18n import _t
 from sigenergy2mqtt.modbus import ModbusClientFactory
 from sigenergy2mqtt.mqtt import MqttHandler, mqtt_health_registry, mqtt_setup, mqtt_teardown
-from sigenergy2mqtt.sensors.base import ReadableSensorMixin
+from sigenergy2mqtt.sensors.base import AlarmSensor, DerivedSensor, ReadableSensorMixin
 
 from .sensor import MonitoredSensor
 
 logger = logging.getLogger(__name__)
+
+NO_ALARM_I18N = _t("AlarmSensor.no_alarm", AlarmSensor.NO_ALARM, False)
 
 
 class MonitorService(Device):
@@ -54,61 +58,7 @@ class MonitorService(Device):
         self._health_check_failures = 0
         self._started = time.monotonic()
         self._last_published_at: float = 0.0  # 0 = never published; guaranteed stale until first _publish_health call
-        diagnostics_registry.register("monitor", self._diagnostics_collect)
-
-    async def _diagnostics_collect(self) -> dict[str, Any]:
-        """Diagnostics provider callback: exposes the latest health payload.
-
-        Registered with the ``diagnostics_registry`` so the web dashboard,
-        WebSocket feed, and JSON export all surface this without the web
-        layer needing any knowledge of MQTT/Modbus/health-check internals.
-
-        If the monitor loop has stopped or hung — detected by ``_last_published_at``
-        being older than two ``_health_publish_interval`` periods — the cached
-        payload's status is overridden with ``"unknown"`` so a dead monitor is
-        not falsely reported as healthy.
-        """
-        payload = dict(self._health_payload)
-        age = time.monotonic() - self._last_published_at
-        if age > 2 * self._health_publish_interval:
-            payload["status"] = "unknown"
-            payload["stale"] = True
-        payload["monitored_topics"] = len(self._topics)
-        payload["config"] = {
-            "health_check_interval_secs": active_config.health_check.interval,
-        }
-        return payload
-
-    async def _monitor(self, mqtt_client: mqtt.Client) -> None:
-        """Check for overdue topics and log warning/recovery events.
-
-        Args:
-            mqtt_client: MQTT client instance.
-        """
-
-        logger.info(f"{self.log_identity} Sleeping for 5s before commencing...")
-        try:
-            task = asyncio.create_task(asyncio.sleep(5))
-            self.sleeper_task = task
-            await task
-        except asyncio.CancelledError:
-            logger.debug(f"{self.log_identity} sleep interrupted")
-            return
-        finally:
-            self.sleeper_task = None
-
-        is_docker_env = is_docker()
-        while self.online:
-            await self._publish_health(mqtt_client, is_docker_env)
-            try:
-                task = asyncio.create_task(asyncio.sleep(self._health_publish_interval))
-                self.sleeper_task = task
-                await task
-            except asyncio.CancelledError:
-                logger.debug(f"{self.log_identity} sleep interrupted")
-                break
-            finally:
-                self.sleeper_task = None
+        diagnostics_registry.register("monitor", self._collect_diagnostics)
 
     def _check_modbus(self) -> tuple[bool, int]:
         """Checks that all Modbus Client instances are connected"""
@@ -198,6 +148,147 @@ class MonitorService(Device):
                 logger.warning(f"{self.log_identity} '{sensor.name}' has not been seen for {sensor.overdue}s (scan_interval={sensor.scan_interval}s {topic=})")
         return len(overdue)
 
+    async def _collect_diagnostics(self) -> dict[str, Any]:
+        """Diagnostics provider callback: exposes the latest health payload.
+
+        Registered with the ``diagnostics_registry`` so the web dashboard,
+        WebSocket feed, and JSON export all surface this without the web
+        layer needing any knowledge of MQTT/Modbus/health-check internals.
+
+        If the monitor loop has stopped or hung — detected by ``_last_published_at``
+        being older than two ``_health_publish_interval`` periods — the cached
+        payload's status is overridden with ``"unknown"`` so a dead monitor is
+        not falsely reported as healthy.
+        """
+        payload = dict(self._health_payload)
+        age = time.monotonic() - self._last_published_at
+        if age > 2 * self._health_publish_interval:
+            payload["status"] = "unknown"
+            payload["stale"] = True
+        payload["monitored_topics"] = len(self._topics)
+        payload["config"] = {
+            "health_check_interval_secs": active_config.health_check.interval,
+            "sigenergy2mqtt_version": active_config.version,
+        }
+        return payload
+
+    async def _collect_plant_states(self) -> dict[str, Any]:
+        """Diagnostics provider callback: exposes the latest selected plant states."""
+        async with self._lock:
+            snapshot = {topic: replace(sensor) for topic, sensor in self._topics.items()}
+
+        states: dict[str, Any] = {}
+
+        def _format_lifetime(sensor: MonitoredSensor) -> str:
+            if sensor.unit == "kWh" and isinstance(sensor.last_state, (int, float)) and sensor.last_state > 1000:
+                return f"{sensor.last_state / 1000:.2f} MWh"
+            if sensor.last_state is None:
+                return "unknown"
+            if sensor.unit is None:
+                return str(sensor.last_state)
+            return f"{sensor.last_state} {sensor.unit}"
+
+        running_state = {s.name: s.last_state for s in snapshot.values() if "PlantRunningState" in s.sensor_name}
+        if len(running_state) == 1:
+            states["running_state"] = next(iter(running_state.values()))
+        elif len(running_state) > 1:
+            for name, state in running_state.items():
+                plant = name.split("plant=")[-1].rstrip("]")
+                states[f"running_state_{plant}"] = state
+
+        states["has_alarms"] = any(s.last_state != NO_ALARM_I18N for s in snapshot.values() if "Alarm" in s.sensor_name)
+
+        grid_status = {s.name: s.last_state for s in snapshot.values() if "GridStatus" in s.sensor_name}
+        if len(grid_status) == 1:
+            states["grid_status"] = next(iter(grid_status.values()))
+        elif len(grid_status) > 1:
+            for name, status in grid_status.items():
+                plant = name.split("plant=")[-1].rstrip("]")
+                states[f"grid_status_{plant}"] = status
+
+        grid_activity = {s.name: s.last_state for s in snapshot.values() if "GridActivity" in s.sensor_name}
+        if len(grid_activity) == 1:
+            states["grid_activity"] = next(iter(grid_activity.values()))
+        elif len(grid_activity) > 1:
+            for name, activity in grid_activity.items():
+                plant = name.split("plant=")[-1].rstrip("]")
+                states[f"grid_activity_{plant}"] = activity
+
+        pv = {s.name: _format_lifetime(s) for s in snapshot.values() if "TotalLifetimePVEnergy" in s.sensor_name}
+        if len(pv) == 1:
+            states["lifetime_generation"] = next(iter(pv.values()))
+        elif len(pv) > 1:
+            for name, energy in pv.items():
+                plant = name.split("plant=")[-1].rstrip("]")
+                states[f"lifetime_generation_{plant}"] = energy
+
+        consumption = {s.name: _format_lifetime(s) for s in snapshot.values() if "TotalLoadConsumption" in s.sensor_name}
+        if len(consumption) == 1:
+            states["lifetime_consumption"] = next(iter(consumption.values()))
+        elif len(consumption) > 1:
+            for name, energy in consumption.items():
+                plant = name.split("plant=")[-1].rstrip("]")
+                states[f"lifetime_consumption_{plant}"] = energy
+
+        inverter_temp = {s.name: f"{s.last_state} {s.unit}" for s in snapshot.values() if "InverterTemperature" in s.sensor_name}
+        if len(inverter_temp) == 1:
+            states["inverter_temp"] = next(iter(inverter_temp.values()))
+        elif len(inverter_temp) > 1:
+            for name, temp in inverter_temp.items():
+                plant = name.split("plant=")[-1].rstrip("]")
+                dev = name.split("dev=")[-1].rstrip("]")
+                states[f"inverter_temp_{plant}_{dev}"] = temp
+
+        ess_avg_cell_temp = {s.name: f"{s.last_state} {s.unit}" for s in snapshot.values() if "ESSAverageCellTemperature" in s.sensor_name}
+        if len(ess_avg_cell_temp) == 1:
+            states["ess_avg_cell_temp"] = next(iter(ess_avg_cell_temp.values()))
+        elif len(ess_avg_cell_temp) > 1:
+            for name, temp in ess_avg_cell_temp.items():
+                plant = name.split("plant=")[-1].rstrip("]")
+                states[f"ess_avg_cell_temp_{plant}"] = temp
+
+        soc = {s.name: s.last_state for s in snapshot.values() if "PlantBatterySoC" in s.sensor_name}
+        if len(soc) == 1:
+            states["ess_soc_pct"] = next(iter(soc.values()))
+        elif len(soc) > 1:
+            for name, state in soc.items():
+                plant = name.split("plant=")[-1].rstrip("]")
+                states[f"ess_soc_{plant}_pct"] = state
+
+        battery_status = {s.name: s.last_state for s in snapshot.values() if "BatteryStatus" in s.sensor_name}
+        if len(battery_status) == 1:
+            states["ess_status"] = next(iter(battery_status.values()))
+        elif len(battery_status) > 1:
+            for name, state in battery_status.items():
+                plant = name.split("plant=")[-1].rstrip("]")
+                states[f"ess_status_{plant}"] = state
+
+        charged = {s.name: _format_lifetime(s) for s in snapshot.values() if "ESSTotalChargedEnergy" in s.sensor_name}
+        if len(charged) == 1:
+            states["ess_lifetime_charged"] = next(iter(charged.values()))
+        elif len(charged) > 1:
+            for name, energy in charged.items():
+                plant = name.split("plant=")[-1].rstrip("]")
+                states[f"ess_lifetime_charged_{plant}"] = energy
+
+        discharged = {s.name: _format_lifetime(s) for s in snapshot.values() if "ESSTotalDischargedEnergy" in s.sensor_name}
+        if len(discharged) == 1:
+            states["ess_lifetime_discharged"] = next(iter(discharged.values()))
+        elif len(discharged) > 1:
+            for name, energy in discharged.items():
+                plant = name.split("plant=")[-1].rstrip("]")
+                states[f"ess_lifetime_discharged_{plant}"] = energy
+
+        fw = {s.name: s.last_state for s in snapshot.values() if "InverterFirmwareVersion" in s.sensor_name}
+        if len(fw) == 1:
+            states["firmware"] = next(iter(fw.values()))
+        elif len(fw) > 1:
+            for name, version in fw.items():
+                dev = name.split("dev=")[-1].rstrip("]")
+                states[f"firmware_{dev}"] = version
+
+        return states
+
     def _format_uptime(self, seconds: float) -> str:
         """Convert uptime in seconds to a human-readable string."""
         if seconds < 0:
@@ -220,14 +311,43 @@ class MonitorService(Device):
 
         return " ".join(parts)
 
-    async def _publish_health(self, mqtt_client: mqtt.Client, is_docker_env: bool) -> None:
+    async def _monitor(self, mqtt_client: mqtt.Client) -> None:
+        """Check for overdue topics and log warning/recovery events.
+
+        Args:
+            mqtt_client: MQTT client instance.
+        """
+
+        logger.info(f"{self.log_identity} Sleeping for 5s before commencing...")
+        try:
+            task = asyncio.create_task(asyncio.sleep(5))
+            self.sleeper_task = task
+            await task
+        except asyncio.CancelledError:
+            logger.debug(f"{self.log_identity} sleep interrupted")
+            return
+        finally:
+            self.sleeper_task = None
+
+        while self.online:
+            await self._publish_health(mqtt_client)
+            try:
+                task = asyncio.create_task(asyncio.sleep(self._health_publish_interval))
+                self.sleeper_task = task
+                await task
+            except asyncio.CancelledError:
+                logger.debug(f"{self.log_identity} sleep interrupted")
+                break
+            finally:
+                self.sleeper_task = None
+
+    async def _publish_health(self, mqtt_client: mqtt.Client) -> None:
         """Publishes the health status to the JSON file and MQTT.
 
         Args:
             mqtt_client: MQTT client instance.
-            is_docker_env: Whether the service is running in a Docker environment.
         """
-        is_enabled = active_config.health_check.enabled or is_docker_env
+        is_enabled = active_config.health_check.enabled or is_docker()  # is_docker() is cached so safe to call repeatedly
         if not is_enabled:
             self._health_payload = {"status": "disabled"}
             if self._monitor_topic_updates:
@@ -283,7 +403,7 @@ class MonitorService(Device):
             logger.warning(f"{self.log_identity} Failed to publish health payload: {ex}")
         self._current_status = status
 
-        if not is_docker_env:
+        if not is_docker():  # is_docker() is cached so safe to call repeatedly
             if status == "healthy":
                 self._health_check_failures = 0
             else:
@@ -295,6 +415,30 @@ class MonitorService(Device):
 
                         restart_controller.request("Health check failed repeatedly")
                         self._health_check_failures = 0  # reset to suppress repeat calls until restart completes
+
+    @classmethod
+    async def clean(cls) -> None:
+        """Clean up the monitor service (clears retained MQTT health topics)."""
+        service = cls([])
+        try:
+            client_id = f"{active_config.mqtt.client_id_prefix}_Monitor"
+            client, handler = await mqtt_setup(client_id, None, asyncio.get_running_loop())
+            try:
+                for topic in (service._health_state_topic, service._health_attributes_topic):
+                    logger.debug(f"MonitorService: Removing topic {topic}")
+                    info = client.publish(topic, b"", qos=2, retain=True)
+                    if info.rc == mqtt.MQTT_ERR_SUCCESS:
+                        info.wait_for_publish(timeout=5.0)
+                        logger.info(f"MonitorService: Topic {topic} removed successfully")
+                    else:
+                        logger.error(f"MonitorService: Failed to clean topic {topic}")
+            except (OSError, UnicodeError, MQTTException, TypeError, ValueError) as exc:
+                logger.warning(f"MonitorService: Failed to clean topics: {exc}")
+            finally:
+                await mqtt_teardown(client, handler)
+        except (OSError, UnicodeError, MQTTException, TypeError, ValueError) as exc:
+            logger.warning(f"MonitorService: MQTT connection failed ({exc}) — cleaned disk only")
+            return
 
     async def on_ha_state_change(self, modbus_client: Any | None, mqtt_client: mqtt.Client, ha_state: str, source: str, mqtt_handler: MqttHandler) -> bool:
         """Handle Home Assistant state updates.
@@ -330,37 +474,28 @@ class MonitorService(Device):
             sensor = self._topics[source]
             if sensor.notified:
                 logger.info(f"{self.log_identity} '{sensor.name}' seen after {sensor.overdue}s (scan_interval={sensor.scan_interval}s {source=})")
+            state: float | str
+            try:
+                state = float(value)
+            except ValueError:
+                state = value
             async with self._lock:
                 sensor.last_seen = time.time()
+                sensor.last_state = state
                 sensor.notified = False
             return True
         else:
             logger.warning(f"{self.log_identity} updated from  topic {source}, but topic is not registered !!!")
         return False
 
-    @classmethod
-    async def clean(cls) -> None:
-        """Clean up the monitor service (clears retained MQTT health topics)."""
-        service = cls([])
-        try:
-            client_id = f"{active_config.mqtt.client_id_prefix}_Monitor"
-            client, handler = await mqtt_setup(client_id, None, asyncio.get_running_loop())
-            try:
-                for topic in (service._health_state_topic, service._health_attributes_topic):
-                    logger.debug(f"MonitorService: Removing topic {topic}")
-                    info = client.publish(topic, b"", qos=2, retain=True)
-                    if info.rc == mqtt.MQTT_ERR_SUCCESS:
-                        info.wait_for_publish(timeout=5.0)
-                        logger.info(f"MonitorService: Topic {topic} removed successfully")
-                    else:
-                        logger.error(f"MonitorService: Failed to clean topic {topic}")
-            except (OSError, UnicodeError, MQTTException, TypeError, ValueError) as exc:
-                logger.warning(f"MonitorService: Failed to clean topics: {exc}")
-            finally:
-                await mqtt_teardown(client, handler)
-        except (OSError, UnicodeError, MQTTException, TypeError, ValueError) as exc:
-            logger.warning(f"MonitorService: MQTT connection failed ({exc}) — cleaned disk only")
-            return
+    def on_commencement(self, modbus_client: Any | None, mqtt_client: mqtt.Client) -> None:
+        """Log when the monitor service has started.
+
+        Args:
+            modbus_client: Optional Modbus client instance.
+            mqtt_client: MQTT client instance.
+        """
+        diagnostics_registry.register("plant", self._collect_plant_states)
 
     def on_completion(self, modbus_client: Any | None, mqtt_client: mqtt.Client) -> None:
         """Log when the monitor service has stopped and clear stale health messages.
@@ -438,14 +573,15 @@ class MonitorService(Device):
         for d in self._devices:
             device = d.log_identity
             sensors = 0
-            for s in [sensor for sensor in d.get_all_sensors().values() if isinstance(sensor, ReadableSensorMixin) and sensor.publishable and sensor.monitorable]:
+            for s in [sensor for sensor in d.get_all_sensors().values() if isinstance(sensor, (DerivedSensor, ReadableSensorMixin)) and sensor.publishable and sensor.monitorable]:
                 sensor = s.log_identity
-                scan_interval = s.scan_interval
+                scan_interval = s.scan_interval if isinstance(s, ReadableSensorMixin) else max([src.scan_interval for src in s.bound_source_sensors if isinstance(src, ReadableSensorMixin)], default=600)
+                unit = s.unit
                 topic = s.state_topic
                 if topic in self._topics:
                     logger.error(f"{self.log_identity} Sensor '{device} - {sensor}' has the same topic as '{self._topics[topic].name}' ({topic=}) ????")
                 else:
-                    self._topics[topic] = MonitoredSensor(device, sensor, scan_interval)
+                    self._topics[topic] = MonitoredSensor(device, sensor, scan_interval, str(unit) if unit else None)
                     sensors += 1
                     mqtt_handler.register(mqtt_client, topic, handler=self.on_topic_update)
             if sensors > 0:

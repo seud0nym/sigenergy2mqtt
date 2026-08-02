@@ -15,13 +15,16 @@ class MonitoredSensor:
         sensor_name: Human-readable name of the sensor.
         scan_interval: Expected publish interval in seconds for the sensor.
         last_seen: Unix timestamp of the last observed MQTT update.
+        last_state: Last observed state of the sensor.
         notified: Whether an overdue warning has already been logged.
     """
 
     device_name: str
     sensor_name: str
     scan_interval: int
+    unit: str | None
     last_seen: float = field(default_factory=time.time)
+    last_state: float | str | None = None
     notified: bool = False
 
     @property
