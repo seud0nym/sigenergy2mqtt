@@ -677,6 +677,16 @@ class:
       source: Registos Modbus 30027-30028
       source_range: Registos Modbus {start}-{end}
     name: Alarmes PCS
+  GridActivity:
+    attributes:
+      comment: Indica o estado atual da bateria de atividade da rede com base no fluxo de energia ativa. Os valores válidos são 'Importando', 'Exportando', 'Inativo' e 'Desconhecido'. 'Idle' indica que o fluxo de potência ativa está entre -10 e 10 watts. 'Desconhecido' indica que nem todas as informações estão disponíveis para avaliar o estado.
+      source: GridSensorActivePower #verify:ignore
+    name: Atividade de grade
+    options:
+      '0': Importando
+      '1': Exportador
+      '2': Desconhecido
+      '3': Parado
   GridCode:
     name: Código de Rede Central Sigenergy {plant_suffix}
   GridCodeHVRT:

@@ -677,6 +677,16 @@ class:
       source: Registros Modbus 30027-30028
       source_range: Registros Modbus {start}-{end}
     name: Alarmas PCS
+  GridActivity:
+    attributes:
+      comment: Indica el estado actual de la actividad de la red de la batería en función del flujo de energía activa. Los valores válidos son "Importando", "Exportando", "Inactivo" y "Desconocido". "Inactivo" indica que el flujo de potencia activa está entre -10 y 10 vatios. "Desconocido" indica que no toda la información está disponible para evaluar el estado.
+      source: GridSensorActivePower #verify:ignore
+    name: Actividad de cuadrícula
+    options:
+      '0': Importador
+      '1': Exportador
+      '2': Desconocido
+      '3': Inactivo
   GridCode:
     name: Código de Red Planta Sigenergy {plant_suffix}
   GridCodeHVRT:

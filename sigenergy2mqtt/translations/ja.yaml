@@ -677,6 +677,16 @@ class:
       source: Modbusレジスタ 30027-30028
       source_range: Modbusレジスタ {start}-{end}
     name: PCSアラーム
+  GridActivity:
+    attributes:
+      comment: 有効電力潮流に基づいて、グリッド活動バッテリーの現在の状態を示します。有効な値は、「インポート中」、「エクスポート中」、「アイドル」、および「不明」です。 「アイドル」は、有効電力の流れが -10 ～ 10 ワットであることを示します。 「不明」は、状態を評価するためにすべての情報が利用できるわけではないことを示します。
+      source: GridSensorActivePower #verify:ignore
+    name: グリッドアクティビティ
+    options:
+      '0': インポート中
+      '1': 輸出中
+      '2': 未知
+      '3': アイドル状態
   GridCode:
     name: Sigenergyシステム 系統規程 {plant_suffix}
   GridCodeHVRT:

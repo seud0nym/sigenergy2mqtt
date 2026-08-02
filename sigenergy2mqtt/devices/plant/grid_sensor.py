@@ -51,6 +51,7 @@ class GridSensor(ModbusDevice):
         self._add_sensor(export_power)
         self._add_sensor(derived.GridSensorDailyExportEnergy(self.plant_index, export_energy))
         self._add_sensor(derived.GridSensorDailyImportEnergy(self.plant_index, import_energy))
+        self._add_sensor(derived.GridActivity(self.plant_index, active_power))
 
         self._add_sensor(rw.PCCPowerFactorAdjustmentTargetValueGridImport(self.plant_index))
         self._add_sensor(rw.PCCPowerFactorAdjustmentTargetValueGridExport(self.plant_index))

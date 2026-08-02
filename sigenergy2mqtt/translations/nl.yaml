@@ -677,6 +677,16 @@ class:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: PCS Alarmen
+  GridActivity:
+    attributes:
+      comment: Geeft de huidige status van de batterijactiviteit op het elektriciteitsnet aan op basis van de actieve stroomstroom. Geldige waarden zijn 'Importeren', 'Exporteren', 'Inactief' en 'Onbekend'. 'Idle' geeft aan dat de actieve stroomstroom tussen -10 en 10 watt ligt. 'Onbekend' geeft aan dat niet alle informatie beschikbaar is om de toestand te beoordelen.
+      source: GridSensorActivePower #verify:ignore
+    name: Rasteractiviteit
+    options:
+      '0': Importeren
+      '1': Exporteren
+      '2': Onbekend
+      '3': Inactief
   GridCode:
     name: Sigenergy-installatie Netcode {plant_suffix}
   GridCodeHVRT:
