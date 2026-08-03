@@ -124,7 +124,7 @@ def test_monitored_sensor_is_overdue_uses_scan_interval_when_repeated_disabled(m
 
 def test_monitored_sensor_is_overdue_disabled_when_repeated_negative(monkeypatch):
     monkeypatch.setattr(active_config, "repeated_state_publish_interval", -1)
-    ms = MonitoredSensor("Dev", "S", 1, last_seen=time.time() - 10_000, "")
+    ms = MonitoredSensor("Dev", "S", 1, "", last_seen=time.time() - 10_000)
 
     assert ms.is_overdue is False
 
@@ -172,7 +172,7 @@ async def test_monitor_marks_overdue_and_stops(monkeypatch):
     svc._started = 0
     topic = "topic/overdue"
     # make last_seen well in the past so it's overdue
-    ms = MonitoredSensor("Dev", "S", 1, last_seen=time.time() - 100, "")
+    ms = MonitoredSensor("Dev", "S", 1, "", last_seen=time.time() - 100)
     svc._topics[topic] = ms
 
     # mark service as online by providing a Future
