@@ -212,6 +212,7 @@ The attributes payload currently includes:
 <a href='#sigen_0_grid_sensor_daily_export_energy'>Daily Exported Energy</a><br>
 <a href='#sigen_0_grid_sensor_daily_import_energy'>Daily Imported Energy</a><br>
 <a href='#sigen_0_grid_sensor_export_power'>Export Power</a><br>
+<a href='#sigen_0_grid_activity'>Grid Activity</a><br>
 <a href='#sigen_0_247_30004'>Grid Sensor Status</a><br>
 <a href='#sigen_0_247_30009'>Grid Status</a><br>
 <a href='#sigen_0_grid_sensor_import_power'>Import Power</a><br>
@@ -626,7 +627,7 @@ The attributes payload currently includes:
 <a href='#sigen_0_001_41000_set'>DC Charger Stop/Start</a><br>
 <a href='#sigen_0_001_41002_set'>Max Charging Power Limit</a><br>
 <a href='#sigen_0_001_41004_set'>Max Discharging Power Limit</a><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></td></tr>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></td></tr>
 </table>
 
 ## Published Topics
@@ -2539,6 +2540,17 @@ The attributes payload currently includes:
 <tr><td>Source</td><td>GridSensorActivePower < 0 × -1</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 <tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>The value must be between -500000.0 W and 500000.0 W (-500000 ≦ raw value ≦ 500000)</td></tr>
+</table>
+<h5><a id='sigen_0_grid_activity'>Grid Activity</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>GridActivity</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_grid_activity</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_grid_activity/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_grid_activity/state</td></tr>
+<tr><td>Source</td><td>GridSensorActivePower</td></tr>
+<tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='0'>Importing</li><li value='1'>Exporting</li><li value='2'>Unknown</li><li value='3'>Idle</li></ol></td></tr>
+<tr><td>Comment</td><td>Indicates the current state of grid activity based on active power flow. Valid values are 'Importing', 'Exporting', 'Idle', and 'Unknown'. 'Idle' indicates that the active power flow is between -10 and 10 watts. 'Unknown' indicates not all information is available to assess state.</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.9</td></tr>
 </table>
 <h5><a id='sigen_0_247_30004'>Grid Sensor Status</a></h5>
 <table>
