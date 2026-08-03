@@ -70,6 +70,7 @@ class DerivedSensor(TypedSensorMixin, Sensor):
         if sensor not in self.bound_source_sensors:
             self.bound_source_sensors.append(sensor)
         if sensor.debug_logging:
+            logger.debug(f"{self.log_identity} Added source sensor {sensor.log_identity}")
             # Force debug logging on derived sensors when source is being debugged
             self.debug_logging = True
             # Re-apply sensor overrides so that an explicit debug-logging=False override will be respected
