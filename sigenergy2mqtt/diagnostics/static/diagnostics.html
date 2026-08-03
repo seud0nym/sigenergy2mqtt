@@ -465,6 +465,7 @@
     </div>
     <div class="header-right">
       <span class="conn-pill" id="connPill"><span class="conn-dot"></span><span id="connLabel">Connecting…</span></span>
+      <a class="btn" href="solar">☀ Solar &amp; Battery</a>
       <a class="btn" href="export" download>⬇ Export JSON</a>
       <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle light/dark theme"
         title="Toggle theme">
@@ -691,6 +692,20 @@
         return card;
       }
 
+      // Providers listed here have their own dedicated page (e.g. "solar" ->
+      // /diagnostics/solar) and are deliberately excluded from this page's
+      // generic card grid. buildRows()/buildCard() assume a flat "scalar or
+      // one level of nesting" shape; a provider designed for its own richer
+      // page (nested {value, unit} leaves, per-device sub-objects) would
+      // render here as a wall of flattened "a.b.value"/"a.b.unit" rows —
+      // and worse, buildRows silently drops any key literally named
+      // "config" at ANY nesting depth (not just top-level), so a nested
+      // config sub-object would silently vanish rather than just look ugly.
+      // Both dashboards still read from the same /diagnostics/ws feed and
+      // the provider's data still appears in /diagnostics/export — this only
+      // hides it from this page's auto-generated grid.
+      const DEDICATED_PAGE_PROVIDERS = new Set(['solar']);
+
       function render(snapshot) {
         const monitor = snapshot.monitor || {};
         const status = monitor.status || 'unknown';
@@ -700,7 +715,7 @@
         statusMeta.textContent = `last updated ${ts}`;
 
         cardGrid.innerHTML = '';
-        const keys = Object.keys(snapshot).filter(k => k !== 'timestamp');
+        const keys = Object.keys(snapshot).filter(k => k !== 'timestamp' && !DEDICATED_PAGE_PROVIDERS.has(k));
         if (keys.length === 0) {
           cardGrid.innerHTML = '<div class="empty-state">No diagnostics providers registered.</div>';
           return;

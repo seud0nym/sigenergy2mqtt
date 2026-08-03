@@ -21,6 +21,7 @@ from sigenergy2mqtt.modbus import ModbusClientFactory
 from sigenergy2mqtt.mqtt import MqttHandler, mqtt_health_registry, mqtt_setup, mqtt_teardown
 from sigenergy2mqtt.sensors.base import AlarmSensor, DerivedSensor, ReadableSensorMixin
 
+from.dashboard import extract_dashboard_state
 from .sensor import MonitoredSensor
 
 logger = logging.getLogger(__name__)
@@ -46,6 +47,7 @@ class MonitorService(Device):
         self._devices: list[Device] = devices
         self._lock = asyncio.Lock()
         self._topics: dict[str, MonitoredSensor] = {}
+        self._topics_snapshot: dict[str, Any] = {"timestamp":time.monotonic(), "snapshot": None}
         self._health_state_topic = "sigenergy2mqtt/health/state"
         self._health_attributes_topic = "sigenergy2mqtt/health/attributes"
         self._health_payload: dict[str, Any] = {"status": "unknown"}
@@ -148,6 +150,17 @@ class MonitorService(Device):
                 logger.warning(f"{self.log_identity} '{sensor.name}' has not been seen for {sensor.overdue}s (scan_interval={sensor.scan_interval}s {topic=})")
         return len(overdue)
 
+    async def _collect_dashboard_states(self) -> dict[str, Any]:
+        """Diagnostics provider callback: exposes the latest selected plant states."""
+        if self._topics_snapshot["snapshot"] is None or self._topics_snapshot["timestamp"] + self._health_publish_interval < time.monotonic():
+            async with self._lock:
+                snapshot = {topic: replace(sensor) for topic, sensor in self._topics.items()}
+            self._topics_snapshot = {"timestamp":time.monotonic(), "snapshot":snapshot}
+        else:
+            snapshot = self._topics_snapshot["snapshot"]
+        
+        return extract_dashboard_state(snapshot)
+
     async def _collect_diagnostics(self) -> dict[str, Any]:
         """Diagnostics provider callback: exposes the latest health payload.
 
@@ -174,8 +187,12 @@ class MonitorService(Device):
 
     async def _collect_plant_states(self) -> dict[str, Any]:
         """Diagnostics provider callback: exposes the latest selected plant states."""
-        async with self._lock:
-            snapshot = {topic: replace(sensor) for topic, sensor in self._topics.items()}
+        if self._topics_snapshot["snapshot"] is None or self._topics_snapshot["timestamp"] + self._health_publish_interval < time.monotonic():
+            async with self._lock:
+                snapshot = {topic: replace(sensor) for topic, sensor in self._topics.items()}
+            self._topics_snapshot = {"timestamp":time.monotonic(), "snapshot":snapshot}
+        else:
+            snapshot = self._topics_snapshot["snapshot"]
 
         states: dict[str, Any] = {}
 
@@ -496,6 +513,7 @@ class MonitorService(Device):
             mqtt_client: MQTT client instance.
         """
         diagnostics_registry.register("plant", self._collect_plant_states)
+        diagnostics_registry.register("solar", self._collect_dashboard_states)
 
     def on_completion(self, modbus_client: Any | None, mqtt_client: mqtt.Client) -> None:
         """Log when the monitor service has stopped and clear stale health messages.

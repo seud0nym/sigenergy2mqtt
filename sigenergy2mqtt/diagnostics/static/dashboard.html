@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>sigenergy2mqtt — Solar &amp; Battery</title>
+    <link rel="icon" type="image/x-icon" href="static/favicon.ico">
+    <script>
+        (function () {
+            try {
+                const saved = localStorage.getItem('s2m-theme');
+                const theme = saved || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+                if (theme === 'light') document.documentElement.setAttribute('data-theme', 'light');
+            } catch (e) { /* localStorage unavailable — default to dark */ }
+        })();
+    </script>
+    <style>
+        :root {
+            --bg: #0b1220;
+            --bg-panel: #121b2e;
+            --bg-card: #16223a;
+            --border: #24314d;
+            --text: #e6ebf5;
+            --text-dim: #8b98b3;
+            --accent: #3ddc97;
+            --accent-dim: rgba(61, 220, 151, 0.15);
+            --warn: #f5a623;
+            --warn-dim: rgba(245, 166, 35, 0.15);
+            --bad: #ef4b5f;
+            --bad-dim: rgba(239, 75, 95, 0.15);
+            --unknown: #6b7794;
+            --mono: "SF Mono", "JetBrains Mono", Consolas, monospace;
+            --glow-1: rgba(61, 220, 151, 0.07);
+            --glow-2: rgba(58, 123, 213, 0.08);
+            --dash-border: rgba(255, 255, 255, 0.05);
+            --dash-border-strong: rgba(255, 255, 255, 0.04);
+            --header-bg: rgba(18, 27, 46, 0.6);
+            --scheme: dark;
+        }
+
+        :root[data-theme="light"] {
+            --bg: #f4f6fb;
+            --bg-panel: #ffffff;
+            --bg-card: #ffffff;
+            --border: #dde3ee;
+            --text: #1a2233;
+            --text-dim: #5b6579;
+            --accent: #1f9d6f;
+            --accent-dim: rgba(31, 157, 111, 0.12);
+            --warn: #b1720a;
+            --warn-dim: rgba(177, 114, 10, 0.12);
+            --bad: #c8293e;
+            --bad-dim: rgba(200, 41, 62, 0.1);
+            --unknown: #7a8499;
+            --glow-1: rgba(31, 157, 111, 0.06);
+            --glow-2: rgba(58, 123, 213, 0.06);
+            --dash-border: rgba(0, 0, 0, 0.06);
+            --dash-border-strong: rgba(0, 0, 0, 0.05);
+            --header-bg: rgba(255, 255, 255, 0.7);
+            --scheme: light;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            color-scheme: var(--scheme);
+        }
+
+        body {
+            margin: 0;
+            background:
+                radial-gradient(1200px 600px at 15% -10%, var(--glow-1), transparent 60%),
+                radial-gradient(900px 500px at 90% 0%, var(--glow-2), transparent 55%),
+                var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            min-height: 100vh;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 32px;
+            border-bottom: 1px solid var(--border);
+            background: var(--header-bg);
+            backdrop-filter: blur(6px);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .brand img {
+            height: 32px;
+            width: auto;
+            display: block;
+        }
+
+        .brand-sub {
+            font-size: 13px;
+            color: var(--text-dim);
+            letter-spacing: 0.02em;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .conn-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+        }
+
+        .conn-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--unknown);
+            transition: background 0.3s;
+        }
+
+        .conn-pill.live .conn-dot {
+            background: var(--accent);
+            box-shadow: 0 0 8px var(--accent);
+        }
+
+        .conn-pill.down .conn-dot {
+            background: var(--bad);
+            box-shadow: 0 0 8px var(--bad);
+        }
+
+        .conn-pill.demo .conn-dot {
+            background: var(--warn);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text);
+            cursor: pointer;
+            text-decoration: none;
+            transition: border-color 0.15s;
+        }
+
+        .btn:hover {
+            border-color: var(--accent);
+        }
+
+        .theme-toggle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            padding: 0;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: border-color 0.15s, color 0.15s;
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--accent);
+            color: var(--text);
+        }
+
+        .theme-toggle svg {
+            width: 16px;
+            height: 16px;
+            display: block;
+        }
+
+        .theme-toggle .icon-moon {
+            display: none;
+        }
+
+        :root[data-theme="light"] .theme-toggle .icon-sun {
+            display: none;
+        }
+
+        :root[data-theme="light"] .theme-toggle .icon-moon {
+            display: block;
+        }
+
+        main {
+            padding: 28px 32px 60px;
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        .status-banner {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 18px 24px;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            background: var(--bg-panel);
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+        }
+
+        .status-banner .big-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--unknown);
+            box-shadow: 0 0 0 6px transparent;
+            transition: background 0.3s, box-shadow 0.3s;
+            flex-shrink: 0;
+        }
+
+        .status-banner.healthy .big-dot {
+            background: var(--accent);
+            box-shadow: 0 0 0 6px var(--accent-dim);
+        }
+
+        .status-banner.degraded .big-dot {
+            background: var(--bad);
+            box-shadow: 0 0 0 6px var(--bad-dim);
+        }
+
+        .status-banner.unknown .big-dot {
+            background: var(--unknown);
+        }
+
+        .status-banner .label {
+            font-size: 18px;
+            font-weight: 600;
+            text-transform: capitalize;
+        }
+
+        .status-banner .status-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .status-banner .meta {
+            margin-left: auto;
+            font-size: 13px;
+            color: var(--text-dim);
+            font-family: var(--mono);
+        }
+
+        /* This grid holds exactly 4 known cards (2 "normal" + 2 "wide"), unlike
+       the diagnostics dashboard's grid which holds an arbitrary, unknown
+       number of provider cards. auto-fill was computing however many 280px+
+       columns fit the viewport (often 3 or 4), and 1+2 (or 2+2) cards per
+       row rarely divides evenly into that count — leaving a dead column of
+       whitespace and cards narrower than the width used by the status
+       banner / device list above and below. A fixed 2-column grid is always
+       exactly as wide as its container, no matter the viewport. */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 18px;
+            margin-bottom: 28px;
+        }
+
+        .card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            gap: 14px;
+        }
+
+        .card.wide {
+            grid-column: 1 / -1;
+        }
+
+        @media (max-width: 620px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+        }
+
+        .pill {
+            font-size: 11px;
+            padding: 3px 9px;
+            border-radius: 999px;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            white-space: nowrap;
+        }
+
+        .pill.ok {
+            background: var(--accent-dim);
+            color: var(--accent);
+        }
+
+        .pill.warn {
+            background: var(--warn-dim);
+            color: var(--warn);
+        }
+
+        .pill.bad {
+            background: var(--bad-dim);
+            color: var(--bad);
+        }
+
+        .pill.unknown {
+            background: rgba(107, 119, 148, 0.15);
+            color: var(--unknown);
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 12px;
+            font-size: 13px;
+            color: var(--text-dim);
+            padding: 4px 0;
+            border-bottom: 1px dashed var(--dash-border);
+        }
+
+        .metric-row:last-child {
+            border-bottom: none;
+        }
+
+        .metric-row>span:first-child {
+            flex-shrink: 0;
+        }
+
+        .metric-row .v {
+            color: var(--text);
+            font-family: var(--mono);
+            font-size: 13px;
+            text-align: right;
+            min-width: 0;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+
+        .metric-row.config-row .v {
+            color: var(--text-dim);
+            font-style: italic;
+        }
+
+        .card-config-divider {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 4px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-dim);
+        }
+
+        .card-config-divider svg {
+            width: 13px;
+            height: 13px;
+            opacity: 0.75;
+            flex-shrink: 0;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 34px 0 14px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-dim);
+            font-size: 13px;
+        }
+
+        .footer-note {
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 12px;
+            margin-top: 40px;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.4;
+            }
+        }
+
+        .pulsing {
+            animation: pulse 1.6s ease-in-out infinite;
+        }
+
+        /* ---------- Gauges ---------- */
+        /* Fill uses the arc's true geometric length for stroke-dasharray/offset
+       rather than the SVG `pathLength` attribute's normalized-to-100 trick —
+       pathLength-based dashing was verified NOT to render correctly in at
+       least one real rendering engine, whereas raw-unit dasharray is basic
+       SVG supported everywhere. See extraction notes for the verification. */
+        .gauge-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: flex-start;
+        }
+
+        .gauge {
+            width: 124px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .gauge-svg {
+            width: 100%;
+            height: auto;
+            display: block;
+            overflow: visible;
+        }
+
+        .gauge-track {
+            fill: none;
+            stroke: var(--dash-border-strong);
+            stroke-width: 10;
+            stroke-linecap: round;
+        }
+
+        :root[data-theme="light"] .gauge-track {
+            stroke: var(--border);
+        }
+
+        .gauge-fill {
+            fill: none;
+            stroke-width: 10;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.6s ease, stroke 0.3s ease;
+        }
+
+        .gauge-readout {
+            position: absolute;
+            top: 54%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .gauge-value {
+            font-family: var(--mono);
+            font-size: 19px;
+            font-weight: 700;
+            color: var(--text);
+            line-height: 1.1;
+        }
+
+        .gauge-unit {
+            font-size: 10px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .gauge-label {
+            margin-top: 8px;
+            font-size: 11px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            text-align: center;
+        }
+
+        /* ---------- Bar charts (power flow + today's energy) ---------- */
+        .flow-chart,
+        .energy-chart {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .flow-row,
+        .energy-row {
+            display: grid;
+            grid-template-columns: 96px 1fr 78px;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+        }
+
+        .flow-label,
+        .energy-label {
+            color: var(--text-dim);
+            overflow-wrap: anywhere;
+        }
+
+        .flow-track,
+        .energy-track {
+            position: relative;
+            height: 10px;
+            background: var(--dash-border-strong);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        :root[data-theme="light"] .flow-track,
+        :root[data-theme="light"] .energy-track {
+            background: var(--border);
+        }
+
+        .flow-track.divergent {
+            overflow: visible;
+        }
+
+        .flow-fill {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            transition: width 0.6s ease;
+        }
+
+        .flow-track:not(.divergent) .flow-fill {
+            left: 0;
+            border-radius: 6px;
+        }
+
+        .flow-track.divergent .flow-fill.pos {
+            left: 50%;
+            border-radius: 0 6px 6px 0;
+        }
+
+        .flow-track.divergent .flow-fill.neg {
+            right: 50%;
+            border-radius: 6px 0 0 6px;
+        }
+
+        .flow-mid {
+            position: absolute;
+            left: 50%;
+            top: -3px;
+            bottom: -3px;
+            width: 2px;
+            margin-left: -1px;
+            background: var(--text-dim);
+            opacity: 0.35;
+        }
+
+        .energy-fill {
+            height: 100%;
+            border-radius: 6px;
+            background: var(--accent);
+            transition: width 0.6s ease;
+        }
+
+        .flow-value,
+        .energy-value {
+            font-family: var(--mono);
+            text-align: right;
+            color: var(--text);
+        }
+
+        /* ---------- Device accordion ---------- */
+        .device-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .device-row {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden;
+        }
+
+        .device-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            cursor: pointer;
+            gap: 14px;
+            user-select: none;
+        }
+
+        .device-header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            min-width: 0;
+        }
+
+        .device-header-left .name {
+            overflow-wrap: anywhere;
+        }
+
+        .device-chevron {
+            display: inline-flex;
+            color: var(--text-dim);
+            transition: transform 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .device-row.expanded .device-chevron {
+            transform: rotate(90deg);
+        }
+
+        .device-headline {
+            font-family: var(--mono);
+            color: var(--text-dim);
+            font-size: 13px;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+        .device-detail {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.25s ease;
+            padding: 0 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .device-row.expanded .device-detail {
+            max-height: 900px;
+            padding: 0 20px 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="brand">
+            <img src="static/logo.png" alt="sigenergy2mqtt">
+            <span class="brand-sub">Solar &amp; Battery</span>
+        </div>
+        <div class="header-right">
+            <span class="conn-pill" id="connPill"><span class="conn-dot"></span><span
+                    id="connLabel">Connecting…</span></span>
+            <a class="btn" href=".">📊 Diagnostics</a>
+            <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle light/dark theme"
+                title="Toggle theme">
+                <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="4"></circle>
+                    <path
+                        d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41">
+                    </path>
+                </svg>
+                <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <div class="status-banner unknown" id="statusBanner">
+            <span class="big-dot"></span>
+            <span class="label" id="statusLabel">Waiting for data…</span>
+            <span class="status-pills" id="statusPills"></span>
+            <span class="meta" id="statusMeta"></span>
+        </div>
+
+        <div class="grid" id="plantGrid">
+            <div class="empty-state pulsing">Waiting for the first snapshot…</div>
+        </div>
+
+        <div id="devicesSection" style="display:none;">
+            <div class="section-title">Devices</div>
+            <div class="device-list" id="deviceList"></div>
+        </div>
+    </main>
+
+    <script>
+        // Embedded fallback so this page renders something meaningful even
+        // before a live data source is wired up. Generated from an actual
+        // extract_dashboard_state() payload — see extract_state.py. Replaced the
+        // instant a real snapshot arrives over the WebSocket.
+        const SAMPLE_DATA = { "plant": { "grid_status": { "value": "On Grid", "unit": null }, "grid_activity": { "value": "Exporting", "unit": null }, "running_state": { "value": "Normal", "unit": null }, "ems_work_mode": { "value": "Time of Use", "unit": null }, "battery_soc": { "value": 100.0, "unit": "%" }, "battery_soh": { "value": 100.0, "unit": "%" }, "battery_power": { "value": 1.0, "unit": "W" }, "pv_power": { "value": 1427.0, "unit": "W" }, "load_power": { "value": 1105.0, "unit": "W" }, "grid_import_power": { "value": 0.0, "unit": "W" }, "grid_export_power": { "value": 324.0, "unit": "W" }, "daily_pv_energy": { "value": 0.13, "unit": "kWh" }, "daily_charge_energy": { "value": 0.0, "unit": "kWh" }, "daily_discharge_energy": { "value": 0.0, "unit": "kWh" }, "daily_consumed_energy": { "value": 25.95, "unit": "kWh" }, "grid_daily_import_energy": { "value": 0.0, "unit": "kWh" }, "grid_daily_export_energy": { "value": 0.03, "unit": "kWh" }, "alarms": { "value": "No Alarm", "unit": null }, "config": { "rated_energy_capacity": { "value": 24.18, "unit": "kWh" }, "max_active_power": { "value": 6.6, "unit": "kW" }, "rated_charging_power": { "value": 12.6, "unit": "kW" }, "rated_discharging_power": { "value": 13.68, "unit": "kW" }, "grid_max_export_limit": { "value": 5.0, "unit": "kW" } }, "has_battery": true }, "inverters": { "1": { "running_state": { "value": "Normal", "unit": null }, "active_power": { "value": 0.43, "unit": "kW" }, "pv_power": { "value": 432.0, "unit": "W" }, "battery_soc": { "value": 100.0, "unit": "%" }, "battery_soh": { "value": 100.0, "unit": "%" }, "temperature": { "value": 35.1, "unit": "\u00b0C" }, "daily_pv_energy": { "value": 10.11, "unit": "kWh" }, "pcs_alarm": { "value": "No Alarm", "unit": null }, "config": { "model": { "value": "SigenStor EC 12.0 TP", "unit": null }, "serial_number": { "value": "CMU123A45BP678", "unit": null }, "firmware_version": { "value": "V100R001C00SPC114", "unit": null }, "rated_active_power": { "value": 6.0, "unit": "kW" }, "rated_battery_capacity": { "value": 24.18, "unit": "kWh" } } } }, "dc_chargers": { "1": { "running_state": { "value": "Idle", "unit": null }, "output_power": { "value": 63.57, "unit": "kW" }, "vehicle_soc": { "value": 14.3, "unit": "%" }, "current_charging_capacity": { "value": 871.43, "unit": "kWh" }, "config": { "rated_charging_power": { "value": 158.55, "unit": "kW" }, "max_charging_power_limit": { "value": 463.58, "unit": "kW" } } } }, "ac_chargers": { "2": { "running_state": { "value": "Initialising", "unit": null }, "charging_power": { "value": 79.8, "unit": "kW" }, "output_current": { "value": 10.17, "unit": "A" }, "alarm": { "value": "No Alarm", "unit": null }, "config": { "rated_power": { "value": 351.21, "unit": "kW" }, "rated_current": { "value": 63.0, "unit": "A" } } } }, "timestamp": 1785648790 };
+
+        (function () {
+            const plantGrid = document.getElementById('plantGrid');
+            const devicesSection = document.getElementById('devicesSection');
+            const deviceList = document.getElementById('deviceList');
+            const statusBanner = document.getElementById('statusBanner');
+            const statusLabel = document.getElementById('statusLabel');
+            const statusPills = document.getElementById('statusPills');
+            const statusMeta = document.getElementById('statusMeta');
+            const connPill = document.getElementById('connPill');
+            const connLabel = document.getElementById('connLabel');
+            const themeToggle = document.getElementById('themeToggle');
+
+            themeToggle.addEventListener('click', () => {
+                const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+                const next = isLight ? 'dark' : 'light';
+                if (next === 'light') {
+                    document.documentElement.setAttribute('data-theme', 'light');
+                } else {
+                    document.documentElement.removeAttribute('data-theme');
+                }
+                try { localStorage.setItem('s2m-theme', next); } catch (e) { /* ignore */ }
+            });
+
+            const GEAR_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>';
+
+            function fmtNum(v) {
+                if (typeof v !== 'number' || !Number.isFinite(v)) return '—';
+                return Number.isInteger(v) ? v.toLocaleString() : v.toFixed(2);
+            }
+
+            // A field is always {value, unit} (or absent). Renders "63.57 kW",
+            // "100%", "Normal", or "—" for a missing/None value.
+            function fmtField(field) {
+                if (!field || field.value === null || field.value === undefined) return '—';
+                if (typeof field.value === 'number') {
+                    const unit = field.unit ? (field.unit === '%' ? '%' : ` ${field.unit}`) : '';
+                    return fmtNum(field.value) + unit;
+                }
+                return String(field.value);
+            }
+
+            function humanKey(k) {
+                return k.replace(/_/g, ' ');
+            }
+
+            // Null-safe field accessors — used instead of `field?.value` / `?? null`
+            // (optional chaining / nullish coalescing) for broader engine
+            // compatibility; confirmed by testing that at least one real rendering
+            // engine fails the entire <script> block silently on that syntax.
+            function fval(field) {
+                return (field && typeof field.value !== 'undefined') ? field.value : null;
+            }
+            function funit(field) {
+                return field ? field.unit : null;
+            }
+
+            // Heuristic status -> pill color for the free-text status/alarm fields
+            // sigenergy2mqtt reports (e.g. "On Grid", "No Alarm", "Initialising").
+            // Per explicit design feedback: importing, off-grid, and an active
+            // alarm are all "caution" states (warn/amber), not "bad" (red) — bad
+            // is reserved for states that aren't just a normal-but-suboptimal
+            // condition (disconnected/offline/fault/error).
+            function pillClassForStatus(value) {
+                if (value === null || value === undefined) return 'unknown';
+                const v = String(value).toLowerCase();
+                if (v === 'no alarm') return 'ok';
+                if (v.includes('alarm') || v.includes('fault') || v.includes('error')) return 'warn';
+                if (v.includes('disconnected') || v.includes('offline')) return 'bad';
+                if (v === 'off grid' || v.includes('importing')) return 'warn';
+                if (v.includes('normal') || v === 'on grid' || v === 'connected' || v.includes('exporting') || v.includes('charging') || v.includes('idle')) return 'ok';
+                if (v.includes('initialising') || v.includes('initializing') || v.includes('warning') || v.includes('degraded')) return 'warn';
+                return 'unknown';
+            }
+
+            function pill(text, cls) {
+                const p = document.createElement('span');
+                p.className = 'pill ' + cls;
+                p.textContent = text;
+                return p;
+            }
+
+            // ---------- Gauges ----------
+            // Semicircle-and-a-bit "speedometer" gauge, 270° sweep with a 90° gap
+            // at the bottom. Fill uses the arc's true geometric length for
+            // stroke-dasharray/offset (NOT the SVG pathLength attribute — verified
+            // that pathLength-normalized dashing fails to render in at least one
+            // real engine, so raw units are used for maximum compatibility).
+            const GAUGE_START = -135;
+            const GAUGE_END = 135;
+            const GAUGE_SWEEP_RAD = (GAUGE_END - GAUGE_START) * Math.PI / 180;
+
+            function polarToCartesian(cx, cy, r, angleDeg) {
+                const rad = (angleDeg - 90) * Math.PI / 180;
+                return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+            }
+
+            function gaugeArcPath(cx, cy, r) {
+                const start = polarToCartesian(cx, cy, r, GAUGE_START);
+                const end = polarToCartesian(cx, cy, r, GAUGE_END);
+                return `M ${start.x.toFixed(2)} ${start.y.toFixed(2)} A ${r} ${r} 0 1 1 ${end.x.toFixed(2)} ${end.y.toFixed(2)}`;
+            }
+
+            // mode 'good-high': low value is the concerning end (e.g. battery SoC).
+            // mode 'caution-high' (default): high value is the concerning end
+            // (e.g. temperature, power against a rated maximum).
+            function gaugeColor(pct, mode) {
+                if (mode === 'good-high') {
+                    if (pct < 0.15) return 'var(--bad)';
+                    if (pct < 0.30) return 'var(--warn)';
+                    return 'var(--accent)';
+                }
+                if (pct > 0.90) return 'var(--bad)';
+                if (pct > 0.70) return 'var(--warn)';
+                return 'var(--accent)';
+            }
+
+            function buildGauge({ label, value, unit, min = 0, max = 100, mode = 'caution-high' }) {
+                const cx = 60, cy = 54, r = 44;
+                const d = gaugeArcPath(cx, cy, r);
+                const hasValue = typeof value === 'number' && Number.isFinite(value);
+                const clamped = hasValue ? Math.min(max, Math.max(min, value)) : min;
+                const pct = max === min ? 0 : (clamped - min) / (max - min);
+                const totalLen = r * GAUGE_SWEEP_RAD;
+                const filledLen = totalLen * pct;
+                const color = gaugeColor(pct, mode);
+
+                const wrap = document.createElement('div');
+                wrap.className = 'gauge';
+                wrap.innerHTML = `
+          <svg class="gauge-svg" viewBox="0 0 120 100">
+            <path d="${d}" class="gauge-track"></path>
+            <path d="${d}" class="gauge-fill" style="stroke:${color};stroke-dasharray:${totalLen.toFixed(2)};stroke-dashoffset:${(totalLen - filledLen).toFixed(2)};"></path>
+          </svg>
+          <div class="gauge-readout">
+            <div class="gauge-value">${hasValue ? fmtNum(value) : '—'}</div>
+            <div class="gauge-unit">${unit || ''}</div>
+          </div>
+          <div class="gauge-label">${label}</div>
+        `;
+                return wrap;
+            }
+
+            // ---------- Bar charts ----------
+            // divergent rows (battery, grid) grow from a center line. Color is
+            // driven by each row's own semantics rather than a fixed pos/neg rule
+            // — battery charging and grid exporting are both "good" (green) even
+            // though they're opposite signs of the same net-power calculation,
+            // while battery discharging, grid importing, and load (consumption)
+            // are all "caution" (amber). All rows in one chart share a common
+            // scale so relative magnitudes compare.
+            function buildFlowChart(rows) {
+                const visible = rows.filter(r => r.value !== null && r.value !== undefined);
+                const maxAbs = Math.max(1, ...visible.map(r => Math.abs(r.value)));
+                const wrap = document.createElement('div');
+                wrap.className = 'flow-chart';
+                visible.forEach(r => {
+                    const row = document.createElement('div');
+                    row.className = 'flow-row';
+                    const label = document.createElement('span');
+                    label.className = 'flow-label';
+                    label.textContent = r.label;
+                    const track = document.createElement('div');
+                    track.className = 'flow-track' + (r.divergent ? ' divergent' : '');
+                    const fill = document.createElement('div');
+                    const v = r.value;
+                    if (r.divergent) {
+                        const pct = Math.min(50, Math.abs(v) / maxAbs * 50);
+                        fill.className = 'flow-fill ' + (v >= 0 ? 'pos' : 'neg');
+                        fill.style.width = pct + '%';
+                        fill.style.background = v >= 0 ? (r.posColor || 'var(--accent)') : (r.negColor || 'var(--warn)');
+                        const mid = document.createElement('div');
+                        mid.className = 'flow-mid';
+                        track.appendChild(mid);
+                    } else {
+                        const pct = Math.min(100, Math.abs(v) / maxAbs * 100);
+                        fill.className = 'flow-fill pos';
+                        fill.style.width = pct + '%';
+                        fill.style.background = r.color || 'var(--accent)';
+                    }
+                    track.appendChild(fill);
+                    const val = document.createElement('span');
+                    val.className = 'flow-value';
+                    val.textContent = fmtNum(v) + (r.unit ? ' ' + r.unit : '');
+                    row.appendChild(label);
+                    row.appendChild(track);
+                    row.appendChild(val);
+                    wrap.appendChild(row);
+                });
+                return wrap;
+            }
+
+            function buildEnergyChart(rows) {
+                const visible = rows.filter(r => r.value !== null && r.value !== undefined);
+                const maxVal = Math.max(1, ...visible.map(r => r.value));
+                const wrap = document.createElement('div');
+                wrap.className = 'energy-chart';
+                visible.forEach(r => {
+                    const row = document.createElement('div');
+                    row.className = 'energy-row';
+                    const label = document.createElement('span');
+                    label.className = 'energy-label';
+                    label.textContent = r.label;
+                    const track = document.createElement('div');
+                    track.className = 'energy-track';
+                    const fill = document.createElement('div');
+                    fill.className = 'energy-fill';
+                    fill.style.width = Math.min(100, (r.value / maxVal) * 100) + '%';
+                    track.appendChild(fill);
+                    const val = document.createElement('span');
+                    val.className = 'energy-value';
+                    val.textContent = fmtNum(r.value) + (r.unit ? ' ' + r.unit : '');
+                    row.appendChild(label);
+                    row.appendChild(track);
+                    row.appendChild(val);
+                    wrap.appendChild(row);
+                });
+                return wrap;
+            }
+
+            // ---------- Generic rows / config divider (matches diagnostics-dashboard convention) ----------
+            function appendMetricRows(container, obj, skipKeys, extraClass) {
+                Object.entries(obj).forEach(([k, field]) => {
+                    if (skipKeys.has(k)) return;
+                    if (!field || typeof field.value === 'undefined') return;
+                    const row = document.createElement('div');
+                    row.className = 'metric-row' + (extraClass ? ' ' + extraClass : '');
+                    const label = document.createElement('span');
+                    label.textContent = humanKey(k);
+                    const val = document.createElement('span');
+                    val.className = 'v';
+                    if (extraClass !== 'config-row' && field.unit === null && typeof field.value === 'string') {
+                        val.innerHTML = '';
+                        val.appendChild(pill(field.value, pillClassForStatus(field.value)));
+                    } else {
+                        val.textContent = fmtField(field);
+                    }
+                    row.appendChild(label);
+                    row.appendChild(val);
+                    container.appendChild(row);
+                });
+            }
+
+            function appendConfigSection(container, configObj) {
+                if (!configObj || Object.keys(configObj).length === 0) return;
+                const divider = document.createElement('div');
+                divider.className = 'card-config-divider';
+                divider.innerHTML = GEAR_SVG + '<span>Configuration</span>';
+                container.appendChild(divider);
+                const rows = document.createElement('div');
+                appendMetricRows(rows, configObj, new Set(), 'config-row');
+                container.appendChild(rows);
+            }
+
+            // ---------- Plant-level cards ----------
+            function buildPlantCards(plant) {
+                const cards = [];
+
+                // Battery
+                const batteryCard = document.createElement('div');
+                batteryCard.className = 'card';
+                const batteryTitle = document.createElement('div');
+                batteryTitle.className = 'card-title';
+                batteryTitle.innerHTML = '<span>Battery</span>';
+                batteryCard.appendChild(batteryTitle);
+                if (plant.has_battery) {
+                    const gr = document.createElement('div');
+                    gr.className = 'gauge-row';
+                    gr.appendChild(buildGauge({ label: 'State of Charge', value: fval(plant.battery_soc), unit: funit(plant.battery_soc), min: 0, max: 100, mode: 'good-high' }));
+                    gr.appendChild(buildGauge({ label: 'State of Health', value: fval(plant.battery_soh), unit: funit(plant.battery_soh), min: 0, max: 100, mode: 'good-high' }));
+                    gr.appendChild(buildGauge({ label: 'Cell Temperature', value: fval(plant.average_cell_temperature), unit: funit(plant.average_cell_temperature), min: 0, max: 60 }));
+                    batteryCard.appendChild(gr);
+                    const rows = document.createElement('div');
+                    appendMetricRows(rows, { battery_power: plant.battery_power }, new Set(), '');
+                    batteryCard.appendChild(rows);
+                } else {
+                    const empty = document.createElement('div');
+                    empty.className = 'empty-state';
+                    empty.textContent = 'No battery installed on this system.';
+                    batteryCard.appendChild(empty);
+                }
+                cards.push(batteryCard);
+
+                // Plant status / capacity context — pushed immediately after Battery
+                // (both are "normal" width) so the two pair up side-by-side in the
+                // first row of the fixed 2-column grid; the "wide" cards below each
+                // take a full row of their own.
+                const statusCard = document.createElement('div');
+                statusCard.className = 'card';
+                statusCard.innerHTML = '<div class="card-title"><span>Plant</span></div>';
+                const statusRows = document.createElement('div');
+                appendMetricRows(statusRows, {
+                    grid_status: plant.grid_status,
+                    ems_work_mode: plant.ems_work_mode,
+                }, new Set(), '');
+                statusCard.appendChild(statusRows);
+                appendConfigSection(statusCard, plant.config);
+                cards.push(statusCard);
+
+                // Power flow
+                const flowCard = document.createElement('div');
+                flowCard.className = 'card wide';
+                flowCard.innerHTML = '<div class="card-title"><span>Power Flow</span></div>';
+                const flowRows = [
+                    { label: 'PV', value: fval(plant.pv_power), unit: funit(plant.pv_power), divergent: false, color: 'var(--accent)' },
+                ];
+                if (plant.has_battery) {
+                    flowRows.push({ label: 'Battery', value: fval(plant.battery_power), unit: funit(plant.battery_power), divergent: true, posColor: 'var(--accent)', negColor: 'var(--warn)' });
+                }
+                const gridNet = (fval(plant.grid_import_power) || 0) - (fval(plant.grid_export_power) || 0);
+                flowRows.push({ label: 'Grid', value: gridNet, unit: funit(plant.grid_import_power) || funit(plant.grid_export_power), divergent: true, posColor: 'var(--warn)', negColor: 'var(--accent)' });
+                flowRows.push({ label: 'Load', value: fval(plant.load_power), unit: funit(plant.load_power), divergent: false, color: 'var(--warn)' });
+                flowCard.appendChild(buildFlowChart(flowRows));
+                const flowNote = document.createElement('div');
+                flowNote.className = 'empty-state';
+                flowNote.style.padding = '0';
+                flowNote.style.textAlign = 'left';
+                flowNote.style.fontSize = '11px';
+                flowNote.textContent = plant.has_battery ? 'Battery/Grid bars: right = charging/importing, left = discharging/exporting.' : 'Grid bar: right = importing, left = exporting.';
+                flowCard.appendChild(flowNote);
+                cards.push(flowCard);
+
+                // Today's energy
+                const energyCard = document.createElement('div');
+                energyCard.className = 'card wide';
+                energyCard.innerHTML = '<div class="card-title"><span>Today\u2019s Energy</span></div>';
+                const energyRows = [
+                    { label: 'PV Generated', value: fval(plant.daily_pv_energy), unit: funit(plant.daily_pv_energy) },
+                ];
+                if (plant.has_battery) {
+                    energyRows.push({ label: 'Charged', value: fval(plant.daily_charge_energy), unit: funit(plant.daily_charge_energy) });
+                    energyRows.push({ label: 'Discharged', value: fval(plant.daily_discharge_energy), unit: funit(plant.daily_discharge_energy) });
+                }
+                energyRows.push({ label: 'Imported', value: fval(plant.grid_daily_import_energy), unit: funit(plant.grid_daily_import_energy) });
+                energyRows.push({ label: 'Exported', value: fval(plant.grid_daily_export_energy), unit: funit(plant.grid_daily_export_energy) });
+                energyRows.push({ label: 'Consumed', value: fval(plant.daily_consumed_energy), unit: funit(plant.daily_consumed_energy) });
+                energyRows.push({ label: 'Self Consumed', value: fval(plant.daily_self_consumed_energy), unit: funit(plant.daily_self_consumed_energy) });
+                energyCard.appendChild(buildEnergyChart(energyRows));
+                cards.push(energyCard);
+
+                return cards;
+            }
+
+            // ---------- Device accordion ----------
+            const DEVICE_KINDS = {
+                inverter: {
+                    title: 'Inverter',
+                    headline: 'active_power',
+                    statusKey: 'running_state',
+                    gauges: [
+                        { key: 'battery_soc', label: 'Battery SoC', min: 0, max: 100, mode: 'good-high' },
+                        { key: 'battery_soh', label: 'Battery SoH', min: 0, max: 100, mode: 'good-high' },
+                        { key: 'temperature', label: 'Temperature', min: 0, max: 70 },
+                    ],
+                },
+                dc_charger: {
+                    title: 'DC Charger',
+                    headline: 'output_power',
+                    statusKey: 'running_state',
+                    gauges: [
+                        { key: 'vehicle_soc', label: 'Vehicle SoC', min: 0, max: 100, mode: 'good-high' },
+                        { key: 'output_power', label: 'Output Power', min: 0, maxFromConfig: 'rated_charging_power' },
+                    ],
+                },
+                ac_charger: {
+                    title: 'AC Charger',
+                    headline: 'charging_power',
+                    statusKey: 'running_state',
+                    gauges: [
+                        { key: 'charging_power', label: 'Charging Power', min: 0, maxFromConfig: 'rated_power' },
+                    ],
+                },
+            };
+
+            // Survives across render() calls even though buildDeviceList() rebuilds
+            // every device row's DOM from scratch on each snapshot — without this,
+            // an expanded row would silently re-collapse on the next data refresh.
+            const expandedDeviceKeys = new Set();
+
+            function buildDeviceRow(kindKey, devId, data) {
+                const cfg = DEVICE_KINDS[kindKey];
+                const row = document.createElement('div');
+                row.className = 'device-row';
+
+                const header = document.createElement('div');
+                header.className = 'device-header';
+
+                const left = document.createElement('div');
+                left.className = 'device-header-left';
+                const chevron = document.createElement('span');
+                chevron.className = 'device-chevron';
+                chevron.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"></path></svg>';
+                const name = document.createElement('span');
+                name.className = 'name';
+                name.textContent = `${cfg.title} ${devId}`;
+                left.appendChild(chevron);
+                left.appendChild(name);
+                const statusField = data[cfg.statusKey];
+                if (statusField && statusField.value !== null && statusField.value !== undefined) {
+                    left.appendChild(pill(statusField.value, pillClassForStatus(statusField.value)));
+                }
+                header.appendChild(left);
+
+                const headline = document.createElement('span');
+                headline.className = 'device-headline';
+                headline.textContent = fmtField(data[cfg.headline]);
+                header.appendChild(headline);
+
+                row.appendChild(header);
+
+                const detail = document.createElement('div');
+                detail.className = 'device-detail';
+
+                const gaugesToShow = cfg.gauges.filter(g => data[g.key] && typeof data[g.key].value === 'number');
+                const skipKeys = new Set(['config', cfg.statusKey, cfg.headline, ...gaugesToShow.map(g => g.key)]);
+
+                if (gaugesToShow.length) {
+                    const gr = document.createElement('div');
+                    gr.className = 'gauge-row';
+                    gaugesToShow.forEach(g => {
+                        const field = data[g.key];
+                        let max = typeof g.max !== 'undefined' ? g.max : 100;
+                        if (g.maxFromConfig && data.config && data.config[g.maxFromConfig] && typeof data.config[g.maxFromConfig].value === 'number') {
+                            max = data.config[g.maxFromConfig].value;
+                        }
+                        gr.appendChild(buildGauge({
+                            label: g.label,
+                            value: field.value,
+                            unit: field.unit,
+                            min: typeof g.min !== 'undefined' ? g.min : 0,
+                            max,
+                            mode: g.mode || 'caution-high',
+                        }));
+                    });
+                    detail.appendChild(gr);
+                }
+
+                const rows = document.createElement('div');
+                appendMetricRows(rows, data, skipKeys, '');
+                detail.appendChild(rows);
+
+                appendConfigSection(detail, data.config);
+
+                row.appendChild(detail);
+
+                const deviceKey = kindKey + '-' + devId;
+                if (expandedDeviceKeys.has(deviceKey)) row.classList.add('expanded');
+
+                header.addEventListener('click', () => {
+                    row.classList.toggle('expanded');
+                    if (row.classList.contains('expanded')) {
+                        expandedDeviceKeys.add(deviceKey);
+                    } else {
+                        expandedDeviceKeys.delete(deviceKey);
+                    }
+                });
+                return row;
+            }
+
+            function buildDeviceList(payload) {
+                deviceList.innerHTML = '';
+                let any = false;
+                Object.entries(payload.inverters || {}).forEach(([devId, data]) => {
+                    deviceList.appendChild(buildDeviceRow('inverter', devId, data));
+                    any = true;
+                });
+                Object.entries(payload.dc_chargers || {}).forEach(([devId, data]) => {
+                    deviceList.appendChild(buildDeviceRow('dc_charger', devId, data));
+                    any = true;
+                });
+                Object.entries(payload.ac_chargers || {}).forEach(([devId, data]) => {
+                    deviceList.appendChild(buildDeviceRow('ac_charger', devId, data));
+                    any = true;
+                });
+                devicesSection.style.display = any ? '' : 'none';
+            }
+
+            // ---------- Top-level render ----------
+            function render(payload) {
+                const plant = payload.plant || {};
+                const alarmActive = plant.alarms && plant.alarms.value && plant.alarms.value !== 'No Alarm';
+                const runningOk = !plant.running_state || plant.running_state.value === 'Normal';
+                const status = alarmActive ? 'degraded' : (runningOk ? 'healthy' : 'unknown');
+                statusBanner.className = 'status-banner ' + status;
+                statusLabel.textContent = plant.running_state ? plant.running_state.value : 'Unknown';
+
+                statusPills.innerHTML = '';
+                [plant.grid_status, plant.grid_activity, plant.ems_work_mode, plant.alarms].forEach(field => {
+                    if (field && field.value !== null && field.value !== undefined) {
+                        statusPills.appendChild(pill(field.value, pillClassForStatus(field.value)));
+                    }
+                });
+
+                const ts = payload.timestamp ? new Date(payload.timestamp * 1000).toLocaleString() : '—';
+                statusMeta.textContent = `last updated ${ts}`;
+
+                plantGrid.innerHTML = '';
+                buildPlantCards(plant).forEach(c => plantGrid.appendChild(c));
+
+                buildDeviceList(payload);
+            }
+
+            function setConn(state) {
+                connPill.className = 'conn-pill ' + state;
+                const labels = { live: 'Live', down: 'Disconnected', demo: 'Demo data', connecting: 'Connecting…' };
+                connLabel.textContent = labels[state] || state;
+            }
+
+            // Render demo data immediately so the page is never empty, then try to
+            // connect for live updates — the demo badge clears the moment a real
+            // snapshot arrives.
+            render(SAMPLE_DATA);
+            setConn('demo');
+
+            let socket = null;
+            let retryDelay = 1000;
+            let gotLiveData = false;
+
+            function connect() {
+                // Served at ".../diagnostics/solar" (no trailing slash) specifically
+                // so this relative resolution lands on ".../diagnostics/ws" — the
+                // SAME feed the main diagnostics dashboard uses — without needing a
+                // second WebSocket route or broadcast loop. Also resolves correctly
+                // through Home Assistant's ingress prefix, same as the diagnostics
+                // dashboard's own connect().
+                const wsUrl = new URL('ws', location.href);
+                wsUrl.protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+                try {
+                    socket = new WebSocket(wsUrl.href);
+                } catch (e) {
+                    return; // no WebSocket support / invalid URL context (e.g. this file opened directly from disk)
+                }
+
+                socket.onopen = () => { retryDelay = 1000; };
+                socket.onmessage = (evt) => {
+                    try {
+                        // This page is served via DiagnosticsServer, which broadcasts the
+                        // FULL registry snapshot ({ monitor: {...}, solar: {...}, timestamp })
+                        // over the one shared /diagnostics/ws feed — not a solar-only
+                        // payload. Pull out the "solar" provider's data and graft the
+                        // top-level timestamp onto it so render() (written against the
+                        // plain {plant, inverters, dc_chargers, ac_chargers, timestamp}
+                        // shape) doesn't need to know about the wrapping.
+                        const full = JSON.parse(evt.data);
+                        const solarPayload = Object.assign({}, full.solar, { timestamp: full.timestamp });
+                        render(solarPayload);
+                        gotLiveData = true;
+                        setConn('live');
+                    } catch (e) { console.error('Bad payload', e); }
+                };
+                socket.onclose = () => {
+                    setConn(gotLiveData ? 'down' : 'demo');
+                    setTimeout(connect, retryDelay);
+                    retryDelay = Math.min(retryDelay * 1.5, 15000);
+                };
+                socket.onerror = () => socket.close();
+            }
+
+            connect();
+        })();
+    </script>
+
+</body>
+
+</html>

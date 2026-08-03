@@ -7,6 +7,7 @@ following the same ``Device.schedule()`` pattern as :class:`MonitorService`.
 Routes:
     GET  /health              Plain status check for Docker HEALTHCHECK / probes.
     GET  /diagnostics         Live dashboard (HTML + WebSocket client).
+    GET  /diagnostics/solar   Solar/battery dashboard (shares the same WebSocket feed).
     GET  /diagnostics/ws      WebSocket pushing the full diagnostics payload
                               every ``refresh_interval`` seconds.
     GET  /diagnostics/export  Full diagnostics payload as a downloadable JSON file.
@@ -64,6 +65,7 @@ class DiagnosticsServer:
         self._app.router.add_get("/health", self._handle_health)
         self._app.router.add_get("/diagnostics", self._handle_dashboard_redirect)
         self._app.router.add_get("/diagnostics/", self._handle_dashboard)
+        self._app.router.add_get("/diagnostics/solar", self._handle_solar_dashboard)
         self._app.router.add_get("/diagnostics/ws", self._handle_websocket)
         self._app.router.add_get("/diagnostics/export", self._handle_export)
         self._app.router.add_static("/diagnostics/static/", STATIC_DIR, name="static")
@@ -200,6 +202,17 @@ class DiagnosticsServer:
 
     async def _handle_dashboard(self, request: web.Request) -> web.FileResponse:
         return web.FileResponse(STATIC_DIR / "diagnostics.html")
+
+    async def _handle_solar_dashboard(self, request: web.Request) -> web.FileResponse:
+        """Solar/battery dashboard — a separate page, but deliberately served
+        at ".../diagnostics/solar" (no trailing slash) rather than its own
+        top-level route. That makes "solar" the last path segment, so the
+        page's relative "ws" WebSocket URL and "static/..." asset paths both
+        resolve against ".../diagnostics/" — the exact same /diagnostics/ws
+        feed and /diagnostics/static/ assets the main dashboard already uses.
+        No second WebSocket route or broadcast loop needed for this page.
+        """
+        return web.FileResponse(STATIC_DIR / "dashboard.html")
 
     async def _handle_export(self, request: web.Request) -> web.Response:
         """Full, freshly-collected diagnostics payload as a downloadable file."""
