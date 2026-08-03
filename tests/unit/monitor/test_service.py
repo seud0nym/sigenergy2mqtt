@@ -22,6 +22,7 @@ class DummyReadable(ReadableSensorMixin):
         self.name = name
         self._log_identity = name
         self.scan_interval = scan_interval
+        self.unit = ""
         self["state_topic"] = state_topic
         self._publishable = publishable
         self._monitorable = monitorable
