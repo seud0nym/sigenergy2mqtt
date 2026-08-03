@@ -1,6 +1,6 @@
 import asyncio
 import time
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -102,7 +102,7 @@ def test_on_topic_update(monkeypatch):
     # Populate topics dict as subscribe would
     from sigenergy2mqtt.monitor.sensor import MonitoredSensor
 
-    svc._topics["home/temp"] = MonitoredSensor("Device1", "temp", 10)
+    svc._topics["home/temp"] = MonitoredSensor("Device1", "temp", 10, "°C")
     result = asyncio.run(svc.on_topic_update(None, FakeMqttClient(), "23", "home/temp", None))
     assert result is True
     ms = svc._topics["home/temp"]
@@ -132,7 +132,8 @@ def test_publish_health_writes_mqtt(monkeypatch, fake_mqtt_client, tmp_path):
     monkeypatch.setattr(svc, "_check_modbus", lambda: (True, ""))
     monkeypatch.setattr(svc, "_check_mqtt", lambda client: (True, ""))
     monkeypatch.setattr(svc, "_check_topic_health", AsyncMock(return_value=0))
-    asyncio.run(svc._publish_health(fake_mqtt_client, is_docker_env=True))
+    with patch("sigenergy2mqtt.diagnostics.server.is_docker", return_value=True):
+        asyncio.run(svc._publish_health(fake_mqtt_client))
     published_topics = [call[0][0] for call in fake_mqtt_client.publish.call_args_list]
     assert svc._health_state_topic in published_topics
     assert svc._health_attributes_topic in published_topics
