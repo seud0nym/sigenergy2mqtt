@@ -54,14 +54,15 @@ class DiagnosticsServer:
         self._port = DEFAULT_PORT
         self._refresh_interval = 5.0
         self._allowed_networks: list[ipaddress.IPv4Network | ipaddress.IPv6Network] | None = None
-        self._app = web.Application(middlewares=[self._logging_middleware, self._ip_filter_middleware])
+        self._app: web.Application | None = None
         self._runner: web.AppRunner | None = None
         self._sockets: set[web.WebSocketResponse] = set()
         self._broadcast_task: asyncio.Task | None = None
         self._last_snapshot: dict[str, Any] = {}
-        self._configure_routes()
 
     def _configure_routes(self) -> None:
+        if self._app is None:
+            return
         self._app.router.add_get("/health", self._handle_health)
         self._app.router.add_get("/diagnostics", self._handle_dashboard_redirect)
         self._app.router.add_get("/diagnostics/", self._handle_dashboard)
@@ -279,9 +280,12 @@ class DiagnosticsServer:
         if self._allowed_networks is not None:
             logger.info(f"DiagnosticsServer Restricting access to {[str(n) for n in self._allowed_networks]}")
 
+        self._app = web.Application(middlewares=[self._logging_middleware, self._ip_filter_middleware])
+        self._configure_routes()
+
         self._runner = web.AppRunner(self._app, access_log=None)
         await self._runner.setup()
-        site = web.TCPSite(self._runner, self._host, self._port)
+        site = web.TCPSite(self._runner, self._host, self._port, reuse_address=True, reuse_port=True)
         await site.start()
         self._broadcast_task = asyncio.create_task(self._broadcast_loop())
         logger.info(f"DiagnosticsServer Listening on http://{self._host}:{self._port} (dashboard at /diagnostics)")
@@ -296,8 +300,11 @@ class DiagnosticsServer:
                 pass
         for ws in list(self._sockets):
             await ws.close()
+        self._sockets.clear()
         if self._runner:
             await self._runner.cleanup()
+            self._runner = None
+        self._app = None
         logger.info("DiagnosticsServer Stopped")
 
     async def run(self) -> None:
