@@ -1,16 +1,17 @@
 <!-- git log [since tag]..HEAD --oneline -->
 # Changelog 
 
-## [2026.8.1a1] - 2026-08-01
+## [2026.8.4a1] - 2026-08-04
 
 ### Added
 
-- Added new diagnostics and health-monitoring web-server endpoint available at http://[IP_ADDRESS]/diagnostics/
-- Health monitoring of InfluxDB writes and PVOutput uploads (if these services are enabled)
-- Added new monitorable state property to allow health monitoring to be disabled for specific sensors via sensor overrides
+- Added diagnostics and health-monitoring web-server endpoint available at http://[IP_ADDRESS]:8502/diagnostics/
+- Added simple dashboard at http://[IP_ADDRESS]:8502/diagnostics/solar/
+- Added health monitoring of InfluxDB writes and PVOutput uploads (if these services are enabled)
+- Added monitorable state property to allow health monitoring to be disabled for specific sensors via sensor overrides
 - Added the ability to over-ride the MQTT QoS and retain flags via sensor overrides
-- Added new derived sensor for battery status ('Charging', 'Discharging', 'Full', 'Empty', 'Cutoff', 'Idle', and 'Unknown')
-- Added new derived sensor for grid activity ('Importing', 'Exporting', 'Idle', and 'Unknown')
+- Added derived sensor for battery status ('Charging', 'Discharging', 'Full', 'Empty', 'Cutoff', 'Idle', and 'Unknown')
+- Added derived sensor for grid activity ('Importing', 'Exporting', 'Idle', and 'Unknown')
 
 ### Fixed
 

@@ -839,6 +839,19 @@
                 return `M ${start.x.toFixed(2)} ${start.y.toFixed(2)} A ${r} ${r} 0 1 1 ${end.x.toFixed(2)} ${end.y.toFixed(2)}`;
             }
 
+            // Generic version for an arbitrary sub-arc (used to draw the two-tone
+            // capacity gauge as two independent real arcs rather than one shared
+            // path faked into two colors via stroke-dasharray/dashoffset — that
+            // approach turned out to have rounding artifacts on very small
+            // segments in real-world testing, occasionally painting a sliver of
+            // the wrong color at the wrong end of the arc).
+            function arcSegmentPath(cx, cy, r, startAngle, endAngle) {
+                const start = polarToCartesian(cx, cy, r, startAngle);
+                const end = polarToCartesian(cx, cy, r, endAngle);
+                const largeArcFlag = (endAngle - startAngle) <= 180 ? '0' : '1';
+                return `M ${start.x.toFixed(2)} ${start.y.toFixed(2)} A ${r} ${r} 0 ${largeArcFlag} 1 ${end.x.toFixed(2)} ${end.y.toFixed(2)}`;
+            }
+
             // mode 'good-high': low value is the concerning end (e.g. battery SoC).
             // mode 'caution-high' (default): high value is the concerning end
             // (e.g. temperature, power against a rated maximum).
@@ -905,18 +918,21 @@
                 const usableFrac = hasValue ? Math.min(1, Math.max(0, dischargeVal / total)) : 0;
 
                 const cx = 60, cy = 54, r = 44;
-                const d = gaugeArcPath(cx, cy, r);
-                const totalLen = r * GAUGE_SWEEP_RAD;
-                const usableLen = totalLen * usableFrac;
-                const chargeableLen = totalLen - usableLen;
+                const splitAngle = GAUGE_START + (GAUGE_END - GAUGE_START) * usableFrac;
+                const trackPath = gaugeArcPath(cx, cy, r);
+                // Skip a segment entirely rather than drawing a zero-length arc at
+                // the 0%/100% extremes (a degenerate start===end arc can render
+                // oddly in some engines).
+                const usablePath = usableFrac > 0.002 ? arcSegmentPath(cx, cy, r, GAUGE_START, splitAngle) : null;
+                const chargeablePath = usableFrac < 0.998 ? arcSegmentPath(cx, cy, r, splitAngle, GAUGE_END) : null;
 
                 const wrap = document.createElement('div');
                 wrap.className = 'gauge';
                 wrap.innerHTML = `
           <svg class="gauge-svg" viewBox="0 0 120 100">
-            <path d="${d}" class="gauge-track"></path>
-            <path d="${d}" class="gauge-fill" style="stroke:var(--accent);stroke-dasharray:${usableLen.toFixed(2)} ${(totalLen - usableLen).toFixed(2)};stroke-dashoffset:0;"></path>
-            <path d="${d}" class="gauge-fill" style="stroke:var(--warn);stroke-dasharray:${chargeableLen.toFixed(2)} ${(totalLen - chargeableLen).toFixed(2)};stroke-dashoffset:${(-usableLen).toFixed(2)};"></path>
+            <path d="${trackPath}" class="gauge-track"></path>
+            ${usablePath ? `<path d="${usablePath}" class="gauge-fill" style="stroke:var(--accent);"></path>` : ''}
+            ${chargeablePath ? `<path d="${chargeablePath}" class="gauge-fill" style="stroke:var(--warn);"></path>` : ''}
           </svg>
           <div class="gauge-readout">
             <div class="gauge-value">${hasValue ? fmtNum(dischargeVal) : '—'}</div>
