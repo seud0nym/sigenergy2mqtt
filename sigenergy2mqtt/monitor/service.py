@@ -212,7 +212,7 @@ class MonitorService(Device):
                 plant = name.split("plant=")[-1].rstrip("]")
                 states[f"running_state_{plant}"] = state
 
-        if states["running_state"]:
+        if states.get("running_state"):
             states["has_alarms"] = "No" if all(s.last_state == NO_ALARM_I18N for s in snapshot.values() if "Alarm" in s.sensor_name) else "** YES **"
         else:
             states["has_alarms"] = "unknown"

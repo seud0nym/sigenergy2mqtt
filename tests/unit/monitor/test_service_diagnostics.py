@@ -112,3 +112,160 @@ async def test_collect_dashboard_states_and_diagnostics():
     # Expire cache and run again to cover re-generating snapshot
     svc._topics_snapshot["timestamp"] = 0
     await svc._collect_plant_states()
+
+@pytest.mark.asyncio
+async def test_collect_plant_states_lifetime_formatting_and_single_plant():
+    svc = MonitorService([])
+    
+    # Test _format_lifetime logic:
+    # >1000 kWh -> MWh conversion (lines 199-200)
+    # None state -> "unknown" (lines 201-202)
+    # unit None -> str(last_state) (lines 203-204)
+    # unit with <=1000 or non-kWh -> "value unit" (line 205)
+    ms_mwh = MonitoredSensor(
+        device_name="PowerPlant[plant=0,dev=1]",
+        sensor_name="TotalLifetimePVEnergy",
+        scan_interval=5,
+        unit="kWh",
+        last_state=1500.0,
+    )
+    ms_unknown = MonitoredSensor(
+        device_name="PowerPlant[plant=0,dev=1]",
+        sensor_name="TotalLoadConsumption",
+        scan_interval=5,
+        unit="kWh",
+        last_state=None,
+    )
+    rs_single = MonitoredSensor(
+        device_name="PowerPlant[plant=0,dev=1]",
+        sensor_name="PlantRunningState",
+        scan_interval=5,
+        unit=None,
+        last_state="Running",
+    )
+    gs_single = MonitoredSensor(
+        device_name="PowerPlant[plant=0,dev=1]",
+        sensor_name="GridStatus",
+        scan_interval=5,
+        unit=None,
+        last_state="Connected",
+    )
+    ga_single = MonitoredSensor(
+        device_name="PowerPlant[plant=0,dev=1]",
+        sensor_name="GridActivity",
+        scan_interval=5,
+        unit=None,
+        last_state="Exporting",
+    )
+
+    svc._topics = {
+        "topic/pv": ms_mwh,
+        "topic/load": ms_unknown,
+        "topic/rs": rs_single,
+        "topic/gs": gs_single,
+        "topic/ga": ga_single,
+    }
+
+    svc._topics_snapshot = {"timestamp": 0, "snapshot": None}
+    plant_states = await svc._collect_plant_states()
+
+    assert plant_states["lifetime_generation"] == "1.50 MWh"
+    assert plant_states["lifetime_consumption"] == "unknown"
+    assert plant_states["running_state"] == "Running"
+    assert plant_states["grid_status"] == "Connected"
+    assert plant_states["grid_activity"] == "Exporting"
+    assert plant_states["has_alarms"] == "No"
+
+@pytest.mark.asyncio
+async def test_collect_plant_states_format_lifetime_helper_branches():
+    svc = MonitorService([])
+    ms_kwh = MonitoredSensor(
+        device_name="PowerPlant[plant=0,dev=1]",
+        sensor_name="TotalLifetimePVEnergy",
+        scan_interval=5,
+        unit="kWh",
+        last_state=500.0,
+    )
+    ms_no_unit = MonitoredSensor(
+        device_name="PowerPlant[plant=0,dev=1]",
+        sensor_name="TotalLoadConsumption",
+        scan_interval=5,
+        unit=None,
+        last_state=42,
+    )
+    svc._topics = {
+        "topic/pv": ms_kwh,
+        "topic/load": ms_no_unit,
+    }
+    svc._topics_snapshot = {"timestamp": 0, "snapshot": None}
+    plant_states = await svc._collect_plant_states()
+    assert plant_states["lifetime_generation"] == "500.0 kWh"
+    assert plant_states["lifetime_consumption"] == "42"
+
+@pytest.mark.asyncio
+async def test_collect_plant_states_multi_plant():
+    svc = MonitorService([])
+    svc._topics_snapshot = {"timestamp": 0, "snapshot": None}
+
+    rs_p0 = MonitoredSensor(
+        device_name="PowerPlant",
+        sensor_name="PlantRunningState[plant=0]",
+        scan_interval=5,
+        unit=None,
+        last_state="Running",
+    )
+    rs_p1 = MonitoredSensor(
+        device_name="PowerPlant",
+        sensor_name="PlantRunningState[plant=1]",
+        scan_interval=5,
+        unit=None,
+        last_state="Standby",
+    )
+    gs_p0 = MonitoredSensor(
+        device_name="PowerPlant",
+        sensor_name="GridStatus[plant=0]",
+        scan_interval=5,
+        unit=None,
+        last_state="Connected",
+    )
+    gs_p1 = MonitoredSensor(
+        device_name="PowerPlant",
+        sensor_name="GridStatus[plant=1]",
+        scan_interval=5,
+        unit=None,
+        last_state="Disconnected",
+    )
+    ga_p0 = MonitoredSensor(
+        device_name="PowerPlant",
+        sensor_name="GridActivity[plant=0]",
+        scan_interval=5,
+        unit=None,
+        last_state="Exporting",
+    )
+    ga_p1 = MonitoredSensor(
+        device_name="PowerPlant",
+        sensor_name="GridActivity[plant=1]",
+        scan_interval=5,
+        unit=None,
+        last_state="Importing",
+    )
+
+    svc._topics = {
+        "topic/rs_p0": rs_p0,
+        "topic/rs_p1": rs_p1,
+        "topic/gs_p0": gs_p0,
+        "topic/gs_p1": gs_p1,
+        "topic/ga_p0": ga_p0,
+        "topic/ga_p1": ga_p1,
+    }
+
+    plant_states = await svc._collect_plant_states()
+    assert plant_states["running_state_0"] == "Running"
+    assert plant_states["running_state_1"] == "Standby"
+    assert plant_states["grid_status_0"] == "Connected"
+    assert plant_states["grid_status_1"] == "Disconnected"
+    assert plant_states["grid_activity_0"] == "Exporting"
+    assert plant_states["grid_activity_1"] == "Importing"
+
+
+
