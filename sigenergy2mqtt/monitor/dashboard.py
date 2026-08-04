@@ -46,6 +46,9 @@ PLANT_LIVE_FIELDS = {
     "battery_soc": "plant_battery_soc",
     "battery_soh": "plant_battery_soh",
     "battery_power": "plant_battery_power",
+    "battery_status": "battery_status",
+    "lifetime_charged_energy": "accumulated_charge_energy",
+    "lifetime_discharged_energy": "accumulated_discharge_energy",
     "pv_power": "total_pv_power",
     "load_power": "total_load_power",
     "grid_import_power": "grid_sensor_import_power",
@@ -59,6 +62,17 @@ PLANT_LIVE_FIELDS = {
     "self_consumed_power": "self_consumed_power",
     "daily_self_consumed_energy": "daily_self_consumed_energy",
     "average_cell_temperature": "ess_average_cell_temperature",
+    "available_max_charging_capacity": "plant_available_max_charging_capacity",
+    "available_max_discharging_capacity": "plant_available_max_discharging_capacity",
+    # Alarms are aggregated at plant level rather than per-device — e.g.
+    # "general_alarm_5" is the DC-charger-alarm rollup covering every DC
+    # charger on the plant (a per-charger sensor doesn't scale/exist), and
+    # inverter-level PCS alarms are likewise redundant with general_pcs_alarm
+    # here. See INVERTER_LIVE_FIELDS/DC_CHARGER_LIVE_FIELDS notes below.
+    "pcs_alarms": "general_pcs_alarm",
+    "ess_alarms": "general_alarm_3",
+    "gateway_alarms": "general_alarm_4",
+    "dc_charger_alarms": "general_alarm_5",
     "alarms": "plant_alarms",
 }
 PLANT_CONFIG_FIELDS = {
@@ -77,8 +91,13 @@ INVERTER_LIVE_FIELDS = {
     "battery_soc": "battery_soc",
     "battery_soh": "battery_soh",
     "temperature": "temperature",
+    "min_battery_temperature": "min_battery_temperature",
+    "max_battery_temperature": "max_battery_temperature",
     "daily_pv_energy": "daily_pv_energy",
-    "pcs_alarm": "pcs_alarm",
+    # pcs_alarm deliberately omitted — it's the same alarm rolled up at
+    # plant level as "pcs_alarms" (general_pcs_alarm); showing both would
+    # duplicate the same information per-inverter instead of once for the
+    # whole plant.
 }
 INVERTER_CONFIG_FIELDS = {
     "model": "model",
@@ -89,6 +108,11 @@ INVERTER_CONFIG_FIELDS = {
 }
 
 # --- Per-DC-charger (0..N instances; absent entirely on most systems) ---
+# No per-device alarm field here deliberately — DC charger alarms are only
+# available as a single plant-level rollup (general_alarm_5, extracted as
+# plant.dc_charger_alarms) covering every DC charger on the plant at once,
+# not per-charger. That scales correctly regardless of how many DC chargers
+# exist, which a per-device sensor wouldn't.
 DC_CHARGER_LIVE_FIELDS = {
     "running_state": "running_state",
     "output_power": "output_power",

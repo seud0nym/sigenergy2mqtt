@@ -465,8 +465,8 @@
     </div>
     <div class="header-right">
       <span class="conn-pill" id="connPill"><span class="conn-dot"></span><span id="connLabel">Connecting…</span></span>
-      <a class="btn" href="solar">☀ Solar &amp; Battery</a>
       <a class="btn" href="export" download>⬇ Export JSON</a>
+      <a class="btn" href="solar">☀ Solar &amp; Battery</a>
       <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle light/dark theme"
         title="Toggle theme">
         <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -558,7 +558,7 @@
       function formatMillis(v) {
         const n = Number(v);
         if (!Number.isFinite(n)) return fmtVal(v);
-        return n < 1000 ? `${n.toFixed(n < 10 ? 1 : 0)} ms` : `${(n / 1000).toFixed(2)} s`;
+        return n < 1000 ? `${n.toFixed(n < 10 ? 1 : 0)}ms` : `${(n / 1000).toFixed(2)}s`;
       }
 
       function formatMinutes(v) {
@@ -570,11 +570,22 @@
       function formatDuration(v) {
         const s = Number(v);
         if (!Number.isFinite(s)) return fmtVal(v);
-        if (s < 1) return `${Math.round(s * 1000)} ms`;
-        if (s < 60) return `${s.toFixed(1)} s`;
-        const m = Math.floor(s / 60);
-        const rem = Math.round(s % 60);
-        return `${m}m ${rem}s`;
+        if (s < 1) return `${Math.round(s * 1000)}ms`;
+        if (s <= 60) return `${s.toFixed(1)}s`;
+
+        const totalSeconds = Math.round(s);
+        const d = Math.floor(totalSeconds / 86400);
+        const h = Math.floor((totalSeconds % 86400) / 3600);
+        const m = Math.floor((totalSeconds % 3600) / 60);
+        const rem = totalSeconds % 60;
+
+        const parts = [];
+        if (d > 0) parts.push(`${d}d`);
+        if (h > 0) parts.push(`${h}h`);
+        if (m > 0) parts.push(`${m}m`);
+        if (rem > 0) parts.push(`${rem}s`);
+
+        return parts.join(' ');
       }
 
       function formatBytes(v) {

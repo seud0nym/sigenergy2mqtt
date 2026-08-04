@@ -6,7 +6,6 @@ import logging
 import time
 from collections.abc import Awaitable
 from dataclasses import replace
-from datetime import datetime
 from typing import Any
 
 import paho.mqtt.client as mqtt
@@ -21,7 +20,7 @@ from sigenergy2mqtt.modbus import ModbusClientFactory
 from sigenergy2mqtt.mqtt import MqttHandler, mqtt_health_registry, mqtt_setup, mqtt_teardown
 from sigenergy2mqtt.sensors.base import AlarmSensor, DerivedSensor, ReadableSensorMixin
 
-from.dashboard import extract_dashboard_state
+from .dashboard import extract_dashboard_state
 from .sensor import MonitoredSensor
 
 logger = logging.getLogger(__name__)
@@ -47,7 +46,7 @@ class MonitorService(Device):
         self._devices: list[Device] = devices
         self._lock = asyncio.Lock()
         self._topics: dict[str, MonitoredSensor] = {}
-        self._topics_snapshot: dict[str, Any] = {"timestamp":time.monotonic(), "snapshot": None}
+        self._topics_snapshot: dict[str, Any] = {"timestamp": time.monotonic(), "snapshot": None}
         self._health_state_topic = "sigenergy2mqtt/health/state"
         self._health_attributes_topic = "sigenergy2mqtt/health/attributes"
         self._health_payload: dict[str, Any] = {"status": "unknown"}
@@ -155,10 +154,10 @@ class MonitorService(Device):
         if self._topics_snapshot["snapshot"] is None or self._topics_snapshot["timestamp"] + self._health_publish_interval < time.monotonic():
             async with self._lock:
                 snapshot = {topic: replace(sensor) for topic, sensor in self._topics.items()}
-            self._topics_snapshot = {"timestamp":time.monotonic(), "snapshot":snapshot}
+            self._topics_snapshot = {"timestamp": time.monotonic(), "snapshot": snapshot}
         else:
             snapshot = self._topics_snapshot["snapshot"]
-        
+
         return extract_dashboard_state(snapshot)
 
     async def _collect_diagnostics(self) -> dict[str, Any]:
@@ -190,7 +189,7 @@ class MonitorService(Device):
         if self._topics_snapshot["snapshot"] is None or self._topics_snapshot["timestamp"] + self._health_publish_interval < time.monotonic():
             async with self._lock:
                 snapshot = {topic: replace(sensor) for topic, sensor in self._topics.items()}
-            self._topics_snapshot = {"timestamp":time.monotonic(), "snapshot":snapshot}
+            self._topics_snapshot = {"timestamp": time.monotonic(), "snapshot": snapshot}
         else:
             snapshot = self._topics_snapshot["snapshot"]
 
@@ -213,7 +212,10 @@ class MonitorService(Device):
                 plant = name.split("plant=")[-1].rstrip("]")
                 states[f"running_state_{plant}"] = state
 
-        states["has_alarms"] = any(s.last_state != NO_ALARM_I18N for s in snapshot.values() if "Alarm" in s.sensor_name)
+        if states["running_state"]:
+            states["has_alarms"] = "No" if all(s.last_state == NO_ALARM_I18N for s in snapshot.values() if "Alarm" in s.sensor_name) else "** YES **"
+        else:
+            states["has_alarms"] = "unknown"
 
         grid_status = {s.name: s.last_state for s in snapshot.values() if "GridStatus" in s.sensor_name}
         if len(grid_status) == 1:
@@ -306,28 +308,6 @@ class MonitorService(Device):
 
         return states
 
-    def _format_uptime(self, seconds: float) -> str:
-        """Convert uptime in seconds to a human-readable string."""
-        if seconds < 0:
-            return "Invalid uptime"
-
-        days = int(seconds // 86400)
-        hours = int((seconds % 86400) // 3600)
-        minutes = int((seconds % 3600) // 60)
-        secs = int(seconds % 60)
-
-        parts = []
-        if days > 0:
-            parts.append(f"{days}d")
-        if hours > 0:
-            parts.append(f"{hours}h")
-        if minutes > 0:
-            parts.append(f"{minutes}m")
-        if secs > 0 or not parts:
-            parts.append(f"{secs}s")
-
-        return " ".join(parts)
-
     async def _monitor(self, mqtt_client: mqtt.Client) -> None:
         """Check for overdue topics and log warning/recovery events.
 
@@ -395,8 +375,7 @@ class MonitorService(Device):
 
         payload = {
             "status": status,
-            "timestamp": datetime.now().astimezone().isoformat(sep=" ", timespec="seconds"),
-            "uptime": self._format_uptime(time.monotonic() - self._started),
+            "uptime_secs": time.monotonic() - self._started,
             "modbus_connections": modbus_connections,
             "modbus_connected": modbus_connected,
             "mqtt_connections": mqtt_connections,

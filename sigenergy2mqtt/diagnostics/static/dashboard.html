@@ -599,7 +599,6 @@
         .energy-fill {
             height: 100%;
             border-radius: 6px;
-            background: var(--accent);
             transition: width 0.6s ease;
         }
 
@@ -734,7 +733,7 @@
         // before a live data source is wired up. Generated from an actual
         // extract_dashboard_state() payload — see extract_state.py. Replaced the
         // instant a real snapshot arrives over the WebSocket.
-        const SAMPLE_DATA = { "plant": { "grid_status": { "value": "On Grid", "unit": null }, "grid_activity": { "value": "Exporting", "unit": null }, "running_state": { "value": "Normal", "unit": null }, "ems_work_mode": { "value": "Time of Use", "unit": null }, "battery_soc": { "value": 100.0, "unit": "%" }, "battery_soh": { "value": 100.0, "unit": "%" }, "battery_power": { "value": 1.0, "unit": "W" }, "pv_power": { "value": 1427.0, "unit": "W" }, "load_power": { "value": 1105.0, "unit": "W" }, "grid_import_power": { "value": 0.0, "unit": "W" }, "grid_export_power": { "value": 324.0, "unit": "W" }, "daily_pv_energy": { "value": 0.13, "unit": "kWh" }, "daily_charge_energy": { "value": 0.0, "unit": "kWh" }, "daily_discharge_energy": { "value": 0.0, "unit": "kWh" }, "daily_consumed_energy": { "value": 25.95, "unit": "kWh" }, "grid_daily_import_energy": { "value": 0.0, "unit": "kWh" }, "grid_daily_export_energy": { "value": 0.03, "unit": "kWh" }, "alarms": { "value": "No Alarm", "unit": null }, "config": { "rated_energy_capacity": { "value": 24.18, "unit": "kWh" }, "max_active_power": { "value": 6.6, "unit": "kW" }, "rated_charging_power": { "value": 12.6, "unit": "kW" }, "rated_discharging_power": { "value": 13.68, "unit": "kW" }, "grid_max_export_limit": { "value": 5.0, "unit": "kW" } }, "has_battery": true }, "inverters": { "1": { "running_state": { "value": "Normal", "unit": null }, "active_power": { "value": 0.43, "unit": "kW" }, "pv_power": { "value": 432.0, "unit": "W" }, "battery_soc": { "value": 100.0, "unit": "%" }, "battery_soh": { "value": 100.0, "unit": "%" }, "temperature": { "value": 35.1, "unit": "\u00b0C" }, "daily_pv_energy": { "value": 10.11, "unit": "kWh" }, "pcs_alarm": { "value": "No Alarm", "unit": null }, "config": { "model": { "value": "SigenStor EC 12.0 TP", "unit": null }, "serial_number": { "value": "CMU123A45BP678", "unit": null }, "firmware_version": { "value": "V100R001C00SPC114", "unit": null }, "rated_active_power": { "value": 6.0, "unit": "kW" }, "rated_battery_capacity": { "value": 24.18, "unit": "kWh" } } } }, "dc_chargers": { "1": { "running_state": { "value": "Idle", "unit": null }, "output_power": { "value": 63.57, "unit": "kW" }, "vehicle_soc": { "value": 14.3, "unit": "%" }, "current_charging_capacity": { "value": 871.43, "unit": "kWh" }, "config": { "rated_charging_power": { "value": 158.55, "unit": "kW" }, "max_charging_power_limit": { "value": 463.58, "unit": "kW" } } } }, "ac_chargers": { "2": { "running_state": { "value": "Initialising", "unit": null }, "charging_power": { "value": 79.8, "unit": "kW" }, "output_current": { "value": 10.17, "unit": "A" }, "alarm": { "value": "No Alarm", "unit": null }, "config": { "rated_power": { "value": 351.21, "unit": "kW" }, "rated_current": { "value": 63.0, "unit": "A" } } } }, "timestamp": 1785648790 };
+        const SAMPLE_DATA = { "plant": { "grid_status": { "value": "On Grid", "unit": null }, "grid_activity": { "value": "Exporting", "unit": null }, "running_state": { "value": "Normal", "unit": null }, "ems_work_mode": { "value": "Time of Use", "unit": null }, "battery_soc": { "value": 100.0, "unit": "%" }, "battery_soh": { "value": 100.0, "unit": "%" }, "battery_power": { "value": 1.0, "unit": "W" }, "battery_status": { "value": "Charging", "unit": null }, "lifetime_charged_energy": { "value": 7878.47, "unit": "kWh" }, "lifetime_discharged_energy": { "value": 7181.71, "unit": "kWh" }, "pv_power": { "value": 1427.0, "unit": "W" }, "load_power": { "value": 1105.0, "unit": "W" }, "grid_import_power": { "value": 0.0, "unit": "W" }, "grid_export_power": { "value": 324.0, "unit": "W" }, "daily_pv_energy": { "value": 0.13, "unit": "kWh" }, "daily_charge_energy": { "value": 0.0, "unit": "kWh" }, "daily_discharge_energy": { "value": 0.0, "unit": "kWh" }, "daily_consumed_energy": { "value": 25.95, "unit": "kWh" }, "grid_daily_import_energy": { "value": 0.0, "unit": "kWh" }, "grid_daily_export_energy": { "value": 0.03, "unit": "kWh" }, "self_consumed_power": { "value": null, "unit": "W" }, "daily_self_consumed_energy": { "value": null, "unit": "kWh" }, "average_cell_temperature": { "value": 24.1, "unit": "\u00b0C" }, "available_max_charging_capacity": { "value": 0.0, "unit": "kWh" }, "available_max_discharging_capacity": { "value": 25.9, "unit": "kWh" }, "pcs_alarms": { "value": "No Alarm", "unit": null }, "ess_alarms": { "value": "No Alarm", "unit": null }, "gateway_alarms": { "value": "No Alarm", "unit": null }, "dc_charger_alarms": { "value": "No Alarm", "unit": null }, "alarms": { "value": "No Alarm", "unit": null }, "config": { "rated_energy_capacity": { "value": 24.18, "unit": "kWh" }, "max_active_power": { "value": 6.6, "unit": "kW" }, "rated_charging_power": { "value": 12.6, "unit": "kW" }, "rated_discharging_power": { "value": 13.68, "unit": "kW" }, "grid_max_export_limit": { "value": 5.0, "unit": "kW" } }, "has_battery": true }, "inverters": { "1": { "running_state": { "value": "Normal", "unit": null }, "active_power": { "value": 0.43, "unit": "kW" }, "pv_power": { "value": 432.0, "unit": "W" }, "battery_soc": { "value": 100.0, "unit": "%" }, "battery_soh": { "value": 100.0, "unit": "%" }, "temperature": { "value": 35.1, "unit": "\u00b0C" }, "min_battery_temperature": { "value": 21.7, "unit": "\u00b0C" }, "max_battery_temperature": { "value": 26.1, "unit": "\u00b0C" }, "daily_pv_energy": { "value": 10.11, "unit": "kWh" }, "config": { "model": { "value": "SigenStor EC 12.0 TP", "unit": null }, "serial_number": { "value": "CMU123A45BP678", "unit": null }, "firmware_version": { "value": "V100R001C00SPC114", "unit": null }, "rated_active_power": { "value": 6.0, "unit": "kW" }, "rated_battery_capacity": { "value": 24.18, "unit": "kWh" } } } }, "dc_chargers": { "1": { "running_state": { "value": "Idle", "unit": null }, "output_power": { "value": 63.57, "unit": "kW" }, "vehicle_soc": { "value": 14.3, "unit": "%" }, "current_charging_capacity": { "value": 871.43, "unit": "kWh" }, "config": { "rated_charging_power": { "value": 158.55, "unit": "kW" }, "max_charging_power_limit": { "value": 463.58, "unit": "kW" } } } }, "ac_chargers": { "2": { "running_state": { "value": "Initialising", "unit": null }, "charging_power": { "value": 79.8, "unit": "kW" }, "output_current": { "value": 10.17, "unit": "A" }, "alarm": { "value": "No Alarm", "unit": null }, "config": { "rated_power": { "value": 351.21, "unit": "kW" }, "rated_current": { "value": 63.0, "unit": "A" } } } }, "timestamp": 1785648790 };
 
         (function () {
             const plantGrid = document.getElementById('plantGrid');
@@ -794,17 +793,19 @@
 
             // Heuristic status -> pill color for the free-text status/alarm fields
             // sigenergy2mqtt reports (e.g. "On Grid", "No Alarm", "Initialising").
-            // Per explicit design feedback: importing, off-grid, and an active
-            // alarm are all "caution" states (warn/amber), not "bad" (red) — bad
-            // is reserved for states that aren't just a normal-but-suboptimal
-            // condition (disconnected/offline/fault/error).
+            // Importing/off-grid are "caution" (warn/amber) per design feedback,
+            // but an active alarm is "bad" (red) — alarms get their own severity
+            // tier, separate from normal-but-suboptimal operating states.
             function pillClassForStatus(value) {
                 if (value === null || value === undefined) return 'unknown';
                 const v = String(value).toLowerCase();
                 if (v === 'no alarm') return 'ok';
-                if (v.includes('alarm') || v.includes('fault') || v.includes('error')) return 'warn';
-                if (v.includes('disconnected') || v.includes('offline')) return 'bad';
+                if (v.includes('alarm') || v.includes('fault') || v.includes('error') || v.includes('disconnected') || v.includes('offline')) return 'bad';
                 if (v === 'off grid' || v.includes('importing')) return 'warn';
+                // Checked before the generic "charging" match below, since
+                // "discharging" contains "charging" as a substring and would
+                // otherwise be misclassified as the same 'ok' state as charging.
+                if (v.includes('discharging')) return 'warn';
                 if (v.includes('normal') || v === 'on grid' || v === 'connected' || v.includes('exporting') || v.includes('charging') || v.includes('idle')) return 'ok';
                 if (v.includes('initialising') || v.includes('initializing') || v.includes('warning') || v.includes('degraded')) return 'warn';
                 return 'unknown';
@@ -878,6 +879,54 @@
                 return wrap;
             }
 
+            // A single gauge representing two related quantities: how much energy
+            // could still be discharged (the fill — conceptually "how much is
+            // usable right now", similar to SoC but in kWh) out of the combined
+            // charge+discharge capacity window (the max). As the battery empties,
+            // charging headroom grows and discharging headroom shrinks — same
+            // relationship SoC has to charge/discharge, just expressed in kWh
+            // rather than %. Both numbers are broken out in a caption underneath
+            // since the gauge fill alone only shows one of the two.
+            // Two-tone version of the gauge arc: green covers "usable" (available
+            // discharge capacity), orange covers the remaining "chargeable"
+            // headroom, together spanning the full charge+discharge total. Built
+            // directly rather than via buildGauge() since that only supports one
+            // fill color — this draws two stroke-dasharray segments sharing the
+            // same arc path, the second offset by a negative dashoffset equal to
+            // the first segment's length so it picks up exactly where the first
+            // leaves off. Verified pixel-exact against known fractions (25/50/
+            // 75/100%) before use.
+            function buildDualCapacityGauge(chargeField, dischargeField) {
+                const chargeVal = fval(chargeField);
+                const dischargeVal = fval(dischargeField);
+                const unit = funit(dischargeField) || funit(chargeField) || 'kWh';
+                const total = (chargeVal || 0) + (dischargeVal || 0);
+                const hasValue = total > 0;
+                const usableFrac = hasValue ? Math.min(1, Math.max(0, dischargeVal / total)) : 0;
+
+                const cx = 60, cy = 54, r = 44;
+                const d = gaugeArcPath(cx, cy, r);
+                const totalLen = r * GAUGE_SWEEP_RAD;
+                const usableLen = totalLen * usableFrac;
+                const chargeableLen = totalLen - usableLen;
+
+                const wrap = document.createElement('div');
+                wrap.className = 'gauge';
+                wrap.innerHTML = `
+          <svg class="gauge-svg" viewBox="0 0 120 100">
+            <path d="${d}" class="gauge-track"></path>
+            <path d="${d}" class="gauge-fill" style="stroke:var(--accent);stroke-dasharray:${usableLen.toFixed(2)} ${(totalLen - usableLen).toFixed(2)};stroke-dashoffset:0;"></path>
+            <path d="${d}" class="gauge-fill" style="stroke:var(--warn);stroke-dasharray:${chargeableLen.toFixed(2)} ${(totalLen - chargeableLen).toFixed(2)};stroke-dashoffset:${(-usableLen).toFixed(2)};"></path>
+          </svg>
+          <div class="gauge-readout">
+            <div class="gauge-value">${hasValue ? fmtNum(dischargeVal) : '—'}</div>
+            <div class="gauge-unit">${unit}</div>
+          </div>
+          <div class="gauge-label">Available Capacity</div>
+        `;
+                return wrap;
+            }
+
             // ---------- Bar charts ----------
             // divergent rows (battery, grid) grow from a center line. Color is
             // driven by each row's own semantics rather than a fixed pos/neg rule
@@ -943,6 +992,7 @@
                     const fill = document.createElement('div');
                     fill.className = 'energy-fill';
                     fill.style.width = Math.min(100, (r.value / maxVal) * 100) + '%';
+                    fill.style.background = r.color || 'var(--accent)';
                     track.appendChild(fill);
                     const val = document.createElement('span');
                     val.className = 'energy-value';
@@ -989,6 +1039,18 @@
                 container.appendChild(rows);
             }
 
+            // Picks a subset of keys out of a config object — used to split
+            // plant.config between the Battery card (rated capacity/charging/
+            // discharging power, which are battery specs) and the Plant card
+            // (max active power, grid export limit, which are plant-wide).
+            function pickConfig(configObj, keys) {
+                const result = {};
+                keys.forEach(k => {
+                    if (configObj && configObj[k]) result[k] = configObj[k];
+                });
+                return result;
+            }
+
             // ---------- Plant-level cards ----------
             function buildPlantCards(plant) {
                 const cards = [];
@@ -1006,10 +1068,20 @@
                     gr.appendChild(buildGauge({ label: 'State of Charge', value: fval(plant.battery_soc), unit: funit(plant.battery_soc), min: 0, max: 100, mode: 'good-high' }));
                     gr.appendChild(buildGauge({ label: 'State of Health', value: fval(plant.battery_soh), unit: funit(plant.battery_soh), min: 0, max: 100, mode: 'good-high' }));
                     gr.appendChild(buildGauge({ label: 'Cell Temperature', value: fval(plant.average_cell_temperature), unit: funit(plant.average_cell_temperature), min: 0, max: 60 }));
+                    gr.appendChild(buildDualCapacityGauge(plant.available_max_charging_capacity, plant.available_max_discharging_capacity));
                     batteryCard.appendChild(gr);
                     const rows = document.createElement('div');
-                    appendMetricRows(rows, { battery_power: plant.battery_power }, new Set(), '');
+                    appendMetricRows(rows, {
+                        battery_power: plant.battery_power,
+                        chargeable: plant.available_max_charging_capacity,
+                        usable: plant.available_max_discharging_capacity,
+                        lifetime_charged: plant.lifetime_charged_energy,
+                        lifetime_discharged: plant.lifetime_discharged_energy,
+                    }, new Set(), '');
                     batteryCard.appendChild(rows);
+                    // Rated capacity/charging/discharging power are battery specs,
+                    // not plant-wide config — moved here from the Plant card.
+                    appendConfigSection(batteryCard, pickConfig(plant.config, ['rated_energy_capacity', 'rated_charging_power', 'rated_discharging_power']));
                 } else {
                     const empty = document.createElement('div');
                     empty.className = 'empty-state';
@@ -1031,7 +1103,23 @@
                     ems_work_mode: plant.ems_work_mode,
                 }, new Set(), '');
                 statusCard.appendChild(statusRows);
-                appendConfigSection(statusCard, plant.config);
+
+                // Alarms are aggregated at plant level across 5 subsystems rather
+                // than shown per-device (see extract_state.py notes) — each is its
+                // own row/pill here so a specific subsystem can be identified,
+                // distinct from the single combined "Alarms"/"No Alarm" summary
+                // pill in the top status banner.
+                const alarmRows = document.createElement('div');
+                appendMetricRows(alarmRows, {
+                    pcs_alarms: plant.pcs_alarms,
+                    ess_alarms: plant.ess_alarms,
+                    gateway_alarms: plant.gateway_alarms,
+                    dc_charger_alarms: plant.dc_charger_alarms,
+                    alarms: plant.alarms,
+                }, new Set(), '');
+                statusCard.appendChild(alarmRows);
+
+                appendConfigSection(statusCard, pickConfig(plant.config, ['max_active_power', 'grid_max_export_limit']));
                 cards.push(statusCard);
 
                 // Power flow
@@ -1047,6 +1135,7 @@
                 const gridNet = (fval(plant.grid_import_power) || 0) - (fval(plant.grid_export_power) || 0);
                 flowRows.push({ label: 'Grid', value: gridNet, unit: funit(plant.grid_import_power) || funit(plant.grid_export_power), divergent: true, posColor: 'var(--warn)', negColor: 'var(--accent)' });
                 flowRows.push({ label: 'Load', value: fval(plant.load_power), unit: funit(plant.load_power), divergent: false, color: 'var(--warn)' });
+                flowRows.push({ label: 'Self Consumed', value: fval(plant.self_consumed_power), unit: funit(plant.self_consumed_power), divergent: false, color: 'var(--warn)' });
                 flowCard.appendChild(buildFlowChart(flowRows));
                 const flowNote = document.createElement('div');
                 flowNote.className = 'empty-state';
@@ -1062,16 +1151,16 @@
                 energyCard.className = 'card wide';
                 energyCard.innerHTML = '<div class="card-title"><span>Today\u2019s Energy</span></div>';
                 const energyRows = [
-                    { label: 'PV Generated', value: fval(plant.daily_pv_energy), unit: funit(plant.daily_pv_energy) },
+                    { label: 'PV Generated', value: fval(plant.daily_pv_energy), unit: funit(plant.daily_pv_energy), color: 'var(--accent)' },
                 ];
                 if (plant.has_battery) {
-                    energyRows.push({ label: 'Charged', value: fval(plant.daily_charge_energy), unit: funit(plant.daily_charge_energy) });
-                    energyRows.push({ label: 'Discharged', value: fval(plant.daily_discharge_energy), unit: funit(plant.daily_discharge_energy) });
+                    energyRows.push({ label: 'Charged', value: fval(plant.daily_charge_energy), unit: funit(plant.daily_charge_energy), color: 'var(--accent)' });
+                    energyRows.push({ label: 'Discharged', value: fval(plant.daily_discharge_energy), unit: funit(plant.daily_discharge_energy), color: 'var(--warn)' });
                 }
-                energyRows.push({ label: 'Imported', value: fval(plant.grid_daily_import_energy), unit: funit(plant.grid_daily_import_energy) });
-                energyRows.push({ label: 'Exported', value: fval(plant.grid_daily_export_energy), unit: funit(plant.grid_daily_export_energy) });
-                energyRows.push({ label: 'Consumed', value: fval(plant.daily_consumed_energy), unit: funit(plant.daily_consumed_energy) });
-                energyRows.push({ label: 'Self Consumed', value: fval(plant.daily_self_consumed_energy), unit: funit(plant.daily_self_consumed_energy) });
+                energyRows.push({ label: 'Imported', value: fval(plant.grid_daily_import_energy), unit: funit(plant.grid_daily_import_energy), color: 'var(--warn)' });
+                energyRows.push({ label: 'Exported', value: fval(plant.grid_daily_export_energy), unit: funit(plant.grid_daily_export_energy), color: 'var(--accent)' });
+                energyRows.push({ label: 'Consumed', value: fval(plant.daily_consumed_energy), unit: funit(plant.daily_consumed_energy), color: 'var(--warn)' });
+                energyRows.push({ label: 'Self Consumed', value: fval(plant.daily_self_consumed_energy), unit: funit(plant.daily_self_consumed_energy), color: 'var(--warn)' });
                 energyCard.appendChild(buildEnergyChart(energyRows));
                 cards.push(energyCard);
 
@@ -1087,7 +1176,9 @@
                     gauges: [
                         { key: 'battery_soc', label: 'Battery SoC', min: 0, max: 100, mode: 'good-high' },
                         { key: 'battery_soh', label: 'Battery SoH', min: 0, max: 100, mode: 'good-high' },
-                        { key: 'temperature', label: 'Temperature', min: 0, max: 70 },
+                        { key: 'temperature', label: 'Inverter Temperature', min: 0, max: 70 },
+                        { key: 'min_battery_temperature', label: 'Min Battery Temp', min: 0, max: 60 },
+                        { key: 'max_battery_temperature', label: 'Max Battery Temp', min: 0, max: 60 },
                     ],
                 },
                 dc_charger: {
@@ -1212,21 +1303,42 @@
                 devicesSection.style.display = any ? '' : 'none';
             }
 
+            // Aggregates every alarm source system-wide into one true/false signal:
+            // the plant's 5 alarm categories (PCS/ESS/Gateway/DC-charger/Plant,
+            // all already rolled up at plant level) plus every AC charger's own
+            // alarm (AC chargers have a genuine per-device alarm sensor, unlike DC
+            // chargers which only exist as the plant-level rollup already
+            // included above). Used for the single top-level "No Alarm"/"Alarms"
+            // pill rather than showing/checking one alarm field in isolation.
+            function anyAlarmActive(payload) {
+                const plant = payload.plant || {};
+                const fields = [plant.alarms, plant.pcs_alarms, plant.ess_alarms, plant.gateway_alarms, plant.dc_charger_alarms];
+                Object.values(payload.ac_chargers || {}).forEach(d => fields.push(d.alarm));
+                return fields.some(f => {
+                    const v = fval(f);
+                    return v !== null && v !== undefined && String(v) !== 'No Alarm';
+                });
+            }
+
             // ---------- Top-level render ----------
             function render(payload) {
                 const plant = payload.plant || {};
-                const alarmActive = plant.alarms && plant.alarms.value && plant.alarms.value !== 'No Alarm';
+                const alarmActive = anyAlarmActive(payload);
                 const runningOk = !plant.running_state || plant.running_state.value === 'Normal';
                 const status = alarmActive ? 'degraded' : (runningOk ? 'healthy' : 'unknown');
                 statusBanner.className = 'status-banner ' + status;
                 statusLabel.textContent = plant.running_state ? plant.running_state.value : 'Unknown';
 
                 statusPills.innerHTML = '';
-                [plant.grid_status, plant.grid_activity, plant.ems_work_mode, plant.alarms].forEach(field => {
+                [plant.grid_status, plant.grid_activity, plant.ems_work_mode, plant.battery_status].forEach(field => {
                     if (field && field.value !== null && field.value !== undefined) {
                         statusPills.appendChild(pill(field.value, pillClassForStatus(field.value)));
                     }
                 });
+                // One aggregated alarm pill rather than a single field's raw value —
+                // "No Alarm" (green) only when every alarm source above is clear,
+                // "Alarms" (red) the moment any one of them isn't.
+                statusPills.appendChild(pill(alarmActive ? 'Alarms' : 'No Alarm', alarmActive ? 'bad' : 'ok'));
 
                 const ts = payload.timestamp ? new Date(payload.timestamp * 1000).toLocaleString() : '—';
                 statusMeta.textContent = `last updated ${ts}`;

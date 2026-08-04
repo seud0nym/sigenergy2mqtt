@@ -1,6 +1,6 @@
 from typing import Any
 
-from sigenergy2mqtt.config import active_config
+from sigenergy2mqtt.config import ConsumptionSource, active_config
 from sigenergy2mqtt.metrics.metrics import Metrics
 
 from .registry import diagnostics_registry
@@ -35,7 +35,7 @@ class DiagnosticsCollectors:
                 "write_errors": Metrics.sigenergy2mqtt_modbus_write_errors,
                 "skipped_errors": Metrics.sigenergy2mqtt_modbus_skipped_errors,
                 "config": {
-                    "chunking": not active_config.modbus[0].disable_chunking,
+                    "chunking": "no" if active_config.modbus[0].disable_chunking else "yes",
                     "timeout_0_secs": active_config.modbus[0].timeout,
                     "max_retries_0": active_config.modbus[0].retries,
                 },
@@ -49,12 +49,12 @@ class DiagnosticsCollectors:
                 "physical_publishes_pct": Metrics.sigenergy2mqtt_mqtt_physical_publish_percentage,
                 "publish_errors": Metrics.sigenergy2mqtt_mqtt_publish_failures,
                 "config": {
-                    "simplified_topics": not active_config.home_assistant.enabled or active_config.home_assistant.use_simplified_topics,
+                    "simplified_topics": "yes" if active_config.home_assistant.enabled or active_config.home_assistant.use_simplified_topics else "no",
                     "repeated_state_publish_interval_secs": active_config.repeated_state_publish_interval,
                     "keepalive_secs": active_config.mqtt.keepalive,
                     "retry_delay_secs": active_config.mqtt.retry_delay,
-                    "tls": active_config.mqtt.tls,
-                    "tls_insecure": active_config.mqtt.tls_insecure,
+                    "tls": "yes" if active_config.mqtt.tls else "no",
+                    "tls_insecure": "yes" if active_config.mqtt.tls_insecure else "no",
                 },
             }
 
@@ -90,8 +90,8 @@ class DiagnosticsCollectors:
                 "load_errors": Metrics.sigenergy2mqtt_state_store_load_errors,
                 "delete_errors": Metrics.sigenergy2mqtt_state_store_delete_errors,
                 "config": {
-                    "mqtt_redundancy": active_config.persistence.mqtt_redundancy,
-                    "disk_primary": active_config.persistence.disk_primary,
+                    "mqtt_redundancy": "yes" if active_config.persistence.mqtt_redundancy else "no",
+                    "disk_primary": "yes" if active_config.persistence.disk_primary else "no",
                     "sync_timeout_secs": active_config.persistence.sync_timeout,
                 },
             }
@@ -109,13 +109,12 @@ class DiagnosticsCollectors:
                 "upload_mean_ms": Metrics.sigenergy2mqtt_pvoutput_upload_mean,
                 "upload_min_ms": Metrics.sigenergy2mqtt_pvoutput_upload_min if Metrics.sigenergy2mqtt_pvoutput_upload_min != float("inf") else 0.0,
                 "config": {
-                    "donator": PVOutputSettings.donator,
-                    "status_interval_minutes": PVOutputSettings.interval,
-                    "exports": active_config.pvoutput.exports,
-                    "imports": active_config.pvoutput.imports,
-                    "consumption": active_config.pvoutput.consumption,
-                    "temperature_topic": active_config.pvoutput.temperature_topic,
+                    "donator": "yes" if PVOutputSettings.donator else "no",
+                    "status_interval_secs": PVOutputSettings.interval * 60,
+                    "exports": "yes" if active_config.pvoutput.exports else "no",
+                    "imports": "yes" if active_config.pvoutput.imports else "no",
+                    "consumption": "yes" if active_config.pvoutput.consumption == ConsumptionSource.CONSUMPTION.value else active_config.pvoutput.consumption.value,
                     "voltage": active_config.pvoutput.voltage.value,
-                    "end_of_day": "with status" if active_config.pvoutput.output_hour == -1 else f"{active_config.pvoutput.output_hour}:00",
+                    "end_of_day": "@ status interval" if active_config.pvoutput.output_hour == -1 else f"{active_config.pvoutput.output_hour}:00",
                 },
             }
