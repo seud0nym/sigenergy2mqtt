@@ -43,6 +43,13 @@ Create your configuration file in `/etc/sigenergy2mqtt.yaml`. Use the [sample co
 
 If you use the complete sample file, make sure you edit it and update it with your own configuration. It is **sample** file _only_ and should _not_ be used as is.
 
+### Diagnostics and Solar Dashboard
+
+`sigenergy2mqtt` provides a simple diagnostics web server accessible on port 8502 where system metrics can be found. There is also a simple Solar & Battery dashboard available via the diagnostics Web UI. 
+
+By default, access to this service is restricted to `localhost` only. You can control the listening IP address via the [`diagnostics.host`](../configuration/README.md#opt_diagnostics_host) YAML configuration option. You can also control access to the diagnostics and solar dashboards by limiting the IP addresses that can access it via the [`diagnostics.allowed-ips`](../configuration/README.md#opt_diagnostics_allowed_ips) YAML configuration option.
+
+
 ## Start Background Service
 
 When you are ready to start the service, use this command:

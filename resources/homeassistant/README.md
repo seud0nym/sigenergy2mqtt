@@ -36,6 +36,10 @@ Follow these steps to get the app repository installed on your Home Assistant sy
 
 You can set the current values for daily accumulation sensors from the mySigen app through the MQTT device screen. The screen contains controls for inputting the values.
 
+## Diagnostics and Solar Dashboard
+
+`sigenergy2mqtt` provides a simple diagnostics web server accessible from the `Open Web UI` button in the app configuration where system metrics can be found. There is also a simple Solar & Battery dashboard available via the diagnostics Web UI.
+
 ## MQTT Devices
 
 For each Sigenergy host, an MQTT device will be created in Home Assistant. A host can be configured in the app Configuration tab, or it can be discovered automatically.

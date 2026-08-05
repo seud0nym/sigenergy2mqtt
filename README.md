@@ -56,7 +56,3 @@ The topics that are published and subscribed to by `sigenergy2mqtt` can be found
 ## Disclaimer
 
 `sigenergy2mqtt` was developed for my own use, and as such has only been tested in my single-phase environment without AC or DC chargers, although I have developed a testing environment in software that emulates the chargers and three phase implementations. If you find a problem, please raise an issue.
-
-## Thanks
-
-`sigenergy2mqtt` was inspired the Home Assistant integrations developed by [TypQxQ](https://github.com/TypQxQ/).
