@@ -151,7 +151,7 @@ class MonitorService(Device):
 
     async def _collect_dashboard_states(self) -> dict[str, Any]:
         """Diagnostics provider callback: exposes the latest selected plant states."""
-        if self._topics_snapshot["snapshot"] is None or self._topics_snapshot["timestamp"] + self._health_publish_interval < time.monotonic():
+        if self._topics_snapshot["snapshot"] is None or self._topics_snapshot["timestamp"] + active_config.diagnostics.refresh_interval < time.monotonic():
             async with self._lock:
                 snapshot = {topic: replace(sensor) for topic, sensor in self._topics.items()}
             self._topics_snapshot = {"timestamp": time.monotonic(), "snapshot": snapshot}
@@ -174,7 +174,7 @@ class MonitorService(Device):
         """
         payload = dict(self._health_payload)
         age = time.monotonic() - self._last_published_at
-        if age > 2 * self._health_publish_interval:
+        if age > 2 * active_config.diagnostics.refresh_interval:
             payload["status"] = "unknown"
             payload["stale"] = True
         payload["monitored_topics"] = len(self._topics)
@@ -186,7 +186,7 @@ class MonitorService(Device):
 
     async def _collect_plant_states(self) -> dict[str, Any]:
         """Diagnostics provider callback: exposes the latest selected plant states."""
-        if self._topics_snapshot["snapshot"] is None or self._topics_snapshot["timestamp"] + self._health_publish_interval < time.monotonic():
+        if self._topics_snapshot["snapshot"] is None or self._topics_snapshot["timestamp"] + active_config.diagnostics.refresh_interval < time.monotonic():
             async with self._lock:
                 snapshot = {topic: replace(sensor) for topic, sensor in self._topics.items()}
             self._topics_snapshot = {"timestamp": time.monotonic(), "snapshot": snapshot}
