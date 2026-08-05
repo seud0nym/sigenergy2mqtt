@@ -27,7 +27,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from config import active_config
+from sigenergy2mqtt.config import active_config
 
 DEVICE_RE = re.compile(r"^(?P<type>\w+)\[plant=(?P<plant>\d+),dev=(?P<dev>\d+)\]$")
 
