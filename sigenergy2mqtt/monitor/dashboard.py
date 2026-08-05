@@ -27,6 +27,8 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from config import active_config
+
 DEVICE_RE = re.compile(r"^(?P<type>\w+)\[plant=(?P<plant>\d+),dev=(?P<dev>\d+)\]$")
 
 # Maps the device_name "type" token -> the MQTT topic segment used for that
@@ -146,11 +148,7 @@ def _extract(state: dict[str, Any], topic_prefix: str, fields: dict[str, str]) -
     the Modbus/HA integration), so carrying it through beats trying to
     re-infer units from field-name suffixes on the dashboard side.
     """
-    return {
-        short: {"value": sensor.last_state, "unit": sensor.unit}
-        for short, suffix in fields.items()
-        if (sensor := state.get(f"{topic_prefix}_{suffix}/state")) is not None
-    }
+    return {short: {"value": sensor.last_state, "unit": sensor.unit} for short, suffix in fields.items() if (sensor := state.get(f"{topic_prefix}_{suffix}/state")) is not None}
 
 
 def extract_dashboard_state(state: dict[str, Any]) -> dict[str, Any]:
@@ -161,15 +159,11 @@ def extract_dashboard_state(state: dict[str, Any]) -> dict[str, Any]:
     """
     # Discover which plant(s)/inverter(s)/charger(s) actually exist by
     # reading device_name off every sensor, rather than assuming dev=1.
-    devices = {
-        (m["type"], m["plant"], m["dev"])
-        for sensor in state.values()
-        if (m := DEVICE_RE.match(sensor.device_name))
-    }
+    devices = {(m["type"], m["plant"], m["dev"]) for sensor in state.values() if (m := DEVICE_RE.match(sensor.device_name))}
 
     plant_ids = sorted({plant for typ, plant, _ in devices if typ == "PowerPlant"})
     plant_id = plant_ids[0] if plant_ids else "0"  # sigenergy2mqtt currently supports a single plant
-    plant_prefix = f"sigenergy2mqtt/sigen_{plant_id}"
+    plant_prefix = f"sigenergy2mqtt/{active_config.home_assistant.entity_id_prefix}_{plant_id}"
 
     plant = _extract(state, plant_prefix, PLANT_LIVE_FIELDS)
     plant["config"] = _extract(state, plant_prefix, PLANT_CONFIG_FIELDS)
@@ -186,7 +180,7 @@ def extract_dashboard_state(state: dict[str, Any]) -> dict[str, Any]:
     for typ, dev_plant_id, dev in sorted(devices, key=lambda d: (d[0], int(d[2]))):
         if typ not in TOPIC_SEGMENT:
             continue  # PowerPlant already handled above
-        prefix = f"sigenergy2mqtt/sigen_{dev_plant_id}_{TOPIC_SEGMENT[typ]}_{dev}"
+        prefix = f"sigenergy2mqtt/{active_config.home_assistant.entity_id_prefix}_{dev_plant_id}_{TOPIC_SEGMENT[typ]}_{dev}"
         if typ == "Inverter":
             entry = _extract(state, prefix, INVERTER_LIVE_FIELDS)
             entry["config"] = _extract(state, prefix, INVERTER_CONFIG_FIELDS)
