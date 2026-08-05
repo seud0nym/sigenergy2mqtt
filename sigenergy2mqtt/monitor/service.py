@@ -11,29 +11,23 @@ from typing import Any
 import paho.mqtt.client as mqtt
 from paho.mqtt import MQTTException
 
-from sigenergy2mqtt.common import Protocol, service_health_registry
+from sigenergy2mqtt.common import PERCENTAGE, Protocol, UnitOfTemperature, service_health_registry
 from sigenergy2mqtt.config import active_config, is_docker
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.diagnostics import diagnostics_registry
 from sigenergy2mqtt.i18n import _t
 from sigenergy2mqtt.modbus import ModbusClientFactory
 from sigenergy2mqtt.mqtt import MqttHandler, mqtt_health_registry, mqtt_setup, mqtt_teardown
-from sigenergy2mqtt.sensors.base import AlarmSensor, DerivedSensor, ReadableSensorMixin
+from sigenergy2mqtt.sensors.base import DerivedSensor, ReadableSensorMixin
 
 from .dashboard import extract_dashboard_state
 from .sensor import MonitoredSensor
 
 logger = logging.getLogger(__name__)
 
-NO_ALARM_I18N = _t("AlarmSensor.no_alarm", AlarmSensor.NO_ALARM, False)
-
 
 class MonitorService(Device):
-    """Background service that monitors system health.
-
-    Args:
-        devices: Devices whose readable/publishable sensors should be monitored.
-    """
+    """Background service that monitors system health."""
 
     def __init__(self, devices: list[Device]):
         """Initialize the monitor service and internal topic registry.
@@ -59,6 +53,8 @@ class MonitorService(Device):
         self._health_check_failures = 0
         self._started = time.monotonic()
         self._last_published_at: float = 0.0  # 0 = never published; guaranteed stale until first _publish_health call
+        self._no_alarm_i18n = _t("AlarmSensor.no_alarm")  # Can't use constant because it gets initialised before i18n is available
+
         diagnostics_registry.register("monitor", self._collect_diagnostics)
 
     def _check_modbus(self) -> tuple[bool, int]:
@@ -174,10 +170,10 @@ class MonitorService(Device):
         """
         payload = dict(self._health_payload)
         age = time.monotonic() - self._last_published_at
-        if age > 2 * active_config.diagnostics.refresh_interval:
+        if age > 2 * self._health_publish_interval:
             payload["status"] = "unknown"
-            payload["stale"] = True
-        payload["monitored_topics"] = len(self._topics)
+            payload["Stale"] = True
+        payload["Monitored Topics"] = len(self._topics)
         payload["config"] = {
             "health_check_interval_secs": active_config.health_check.interval,
             "sigenergy2mqtt_version": active_config.version,
@@ -195,116 +191,40 @@ class MonitorService(Device):
 
         states: dict[str, Any] = {}
 
-        def _format_lifetime(sensor: MonitoredSensor) -> str:
+        def _format_value(sensor: MonitoredSensor) -> str:
             if sensor.unit == "kWh" and isinstance(sensor.last_state, (int, float)) and sensor.last_state > 1000:
                 return f"{sensor.last_state / 1000:.2f} MWh"
             if sensor.last_state is None:
                 return "unknown"
             if sensor.unit is None:
                 return str(sensor.last_state)
+            if sensor.unit is PERCENTAGE or sensor.unit == UnitOfTemperature.CELSIUS or sensor.unit == UnitOfTemperature.FAHRENHEIT:
+                return f"{sensor.last_state}{sensor.unit}"
             return f"{sensor.last_state} {sensor.unit}"
 
-        running_state = {s.name: s.last_state for s in snapshot.values() if "PlantRunningState" in s.sensor_name}
-        if len(running_state) == 1:
-            states["running_state"] = next(iter(running_state.values()))
-        elif len(running_state) > 1:
-            for name, state in running_state.items():
-                plant = name.split("plant=")[-1].rstrip("]")
-                states[f"running_state_{plant}"] = state
+        def _updates_states(classname: str) -> None:
+            values = {s.name: (s.description, _format_value(s)) for s in snapshot.values() if classname in s.sensor_name}
+            if len(values) == 1:
+                key, state = next(iter(values.values()))
+                states[key] = state
+            elif len(values) > 1:
+                for name, value in values.items():
+                    plant = name.split("plant=")[-1].rstrip("]")
+                    states[f"{value[0]}_{plant}"] = value[1]
 
-        if states.get("running_state"):
-            states["has_alarms"] = "No" if all(s.last_state == NO_ALARM_I18N for s in snapshot.values() if "Alarm" in s.sensor_name) else "** YES **"
-        else:
-            states["has_alarms"] = "unknown"
-
-        grid_status = {s.name: s.last_state for s in snapshot.values() if "GridStatus" in s.sensor_name}
-        if len(grid_status) == 1:
-            states["grid_status"] = next(iter(grid_status.values()))
-        elif len(grid_status) > 1:
-            for name, status in grid_status.items():
-                plant = name.split("plant=")[-1].rstrip("]")
-                states[f"grid_status_{plant}"] = status
-
-        grid_activity = {s.name: s.last_state for s in snapshot.values() if "GridActivity" in s.sensor_name}
-        if len(grid_activity) == 1:
-            states["grid_activity"] = next(iter(grid_activity.values()))
-        elif len(grid_activity) > 1:
-            for name, activity in grid_activity.items():
-                plant = name.split("plant=")[-1].rstrip("]")
-                states[f"grid_activity_{plant}"] = activity
-
-        pv = {s.name: _format_lifetime(s) for s in snapshot.values() if "TotalLifetimePVEnergy" in s.sensor_name}
-        if len(pv) == 1:
-            states["lifetime_generation"] = next(iter(pv.values()))
-        elif len(pv) > 1:
-            for name, energy in pv.items():
-                plant = name.split("plant=")[-1].rstrip("]")
-                states[f"lifetime_generation_{plant}"] = energy
-
-        consumption = {s.name: _format_lifetime(s) for s in snapshot.values() if "TotalLoadConsumption" in s.sensor_name}
-        if len(consumption) == 1:
-            states["lifetime_consumption"] = next(iter(consumption.values()))
-        elif len(consumption) > 1:
-            for name, energy in consumption.items():
-                plant = name.split("plant=")[-1].rstrip("]")
-                states[f"lifetime_consumption_{plant}"] = energy
-
-        inverter_temp = {s.name: f"{s.last_state} {s.unit}" for s in snapshot.values() if "InverterTemperature" in s.sensor_name}
-        if len(inverter_temp) == 1:
-            states["inverter_temp"] = next(iter(inverter_temp.values()))
-        elif len(inverter_temp) > 1:
-            for name, temp in inverter_temp.items():
-                plant = name.split("plant=")[-1].rstrip("]")
-                dev = name.split("dev=")[-1].rstrip("]")
-                states[f"inverter_temp_{plant}_{dev}"] = temp
-
-        ess_avg_cell_temp = {s.name: f"{s.last_state} {s.unit}" for s in snapshot.values() if "ESSAverageCellTemperature" in s.sensor_name}
-        if len(ess_avg_cell_temp) == 1:
-            states["ess_avg_cell_temp"] = next(iter(ess_avg_cell_temp.values()))
-        elif len(ess_avg_cell_temp) > 1:
-            for name, temp in ess_avg_cell_temp.items():
-                plant = name.split("plant=")[-1].rstrip("]")
-                states[f"ess_avg_cell_temp_{plant}"] = temp
-
-        soc = {s.name: s.last_state for s in snapshot.values() if "PlantBatterySoC" in s.sensor_name}
-        if len(soc) == 1:
-            states["ess_soc_pct"] = next(iter(soc.values()))
-        elif len(soc) > 1:
-            for name, state in soc.items():
-                plant = name.split("plant=")[-1].rstrip("]")
-                states[f"ess_soc_{plant}_pct"] = state
-
-        battery_status = {s.name: s.last_state for s in snapshot.values() if "BatteryStatus" in s.sensor_name}
-        if len(battery_status) == 1:
-            states["ess_status"] = next(iter(battery_status.values()))
-        elif len(battery_status) > 1:
-            for name, state in battery_status.items():
-                plant = name.split("plant=")[-1].rstrip("]")
-                states[f"ess_status_{plant}"] = state
-
-        charged = {s.name: _format_lifetime(s) for s in snapshot.values() if "ESSTotalChargedEnergy" in s.sensor_name}
-        if len(charged) == 1:
-            states["ess_lifetime_charged"] = next(iter(charged.values()))
-        elif len(charged) > 1:
-            for name, energy in charged.items():
-                plant = name.split("plant=")[-1].rstrip("]")
-                states[f"ess_lifetime_charged_{plant}"] = energy
-
-        discharged = {s.name: _format_lifetime(s) for s in snapshot.values() if "ESSTotalDischargedEnergy" in s.sensor_name}
-        if len(discharged) == 1:
-            states["ess_lifetime_discharged"] = next(iter(discharged.values()))
-        elif len(discharged) > 1:
-            for name, energy in discharged.items():
-                plant = name.split("plant=")[-1].rstrip("]")
-                states[f"ess_lifetime_discharged_{plant}"] = energy
-
-        fw = {s.name: s.last_state for s in snapshot.values() if "InverterFirmwareVersion" in s.sensor_name}
-        if len(fw) == 1:
-            states["firmware"] = next(iter(fw.values()))
-        elif len(fw) > 1:
-            for name, version in fw.items():
-                dev = name.split("dev=")[-1].rstrip("]")
-                states[f"firmware_{dev}"] = version
+        _updates_states("PlantRunningState")
+        states[_t("InverterAlarm5.name")] = "-" if len(snapshot) == 0 else "No" if all(s.last_state == self._no_alarm_i18n for s in snapshot.values() if "Alarm" in s.sensor_name) else "** YES **"
+        _updates_states("GridStatus")
+        _updates_states("GridActivity")
+        _updates_states("TotalLifetimePVEnergy")
+        _updates_states("TotalLoadConsumption")
+        _updates_states("InverterTemperature")
+        _updates_states("ESSAverageCellTemperature")
+        _updates_states("PlantBatterySoC")
+        _updates_states("BatteryStatus")
+        _updates_states("ESSTotalChargedEnergy")
+        _updates_states("ESSTotalDischargedEnergy")
+        _updates_states("InverterFirmwareVersion")
 
         return states
 
@@ -375,19 +295,19 @@ class MonitorService(Device):
 
         payload = {
             "status": status,
-            "uptime_secs": time.monotonic() - self._started,
-            "modbus_connections": modbus_connections,
-            "modbus_connected": modbus_connected,
-            "mqtt_connections": mqtt_connections,
-            "mqtt_connected": mqtt_connected,
-            "monitored_topics": len(self._topics),
-            "overdue_topics": overdue_count,
-            "services_healthy": services_healthy,
+            "Uptime_secs": time.monotonic() - self._started,
+            "Modbus Connections": modbus_connections,
+            "Modbus Connected": modbus_connected,
+            "MQTT Connections": mqtt_connections,
+            "MQTT Connected": mqtt_connected,
+            "Monitored Topics": len(self._topics),
+            "Overdue Topics": overdue_count,
+            "Services Healthy": services_healthy,
         }
         if len(service_contributors) > 0:
-            payload["services_monitored"] = len(service_contributors)
+            payload["Services Monitored"] = len(service_contributors)
             for key, value in service_contributors.items():
-                payload[f"service_{key}_healthy"] = value
+                payload[f"Service '{key}' Healthy"] = value
         self._last_published_at = time.monotonic()
         self._health_payload = payload
         try:
@@ -578,7 +498,7 @@ class MonitorService(Device):
                 if topic in self._topics:
                     logger.error(f"{self.log_identity} Sensor '{device} - {sensor}' has the same topic as '{self._topics[topic].name}' ({topic=}) ????")
                 else:
-                    self._topics[topic] = MonitoredSensor(device, sensor, scan_interval, str(unit) if unit else None)
+                    self._topics[topic] = MonitoredSensor(device, sensor, s.name, scan_interval, str(unit) if unit else None)
                     sensors += 1
                     mqtt_handler.register(mqtt_client, topic, handler=self.on_topic_update)
             if sensors > 0:

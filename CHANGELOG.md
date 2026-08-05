@@ -21,13 +21,13 @@
 - Fixed DerivedSensors did not respect the repeated state publishing interval setting
 - Ignored accumulation intervals of two hours or longer to avoid clock-jump spikes
 - Reset daily energy sensors when their upstream lifetime counter decreases
-- InfluxDBService was not properly shutdown aware
-- Cached `is_docker()` result to optimize configuration checks
+- InfluxDBService was not properly shutdown-aware
 
 ### Changed
 
 - Health monitoring of topic updates are now enabled by default (previously only enabled during debugging)
 - Docker health checks now use the new diagnostics and health-monitoring web-server endpoint (http://127.0.0.1:8502/health)
+- Cached `is_docker()` result to optimize configuration checks
 - Upgraded `pymodbus` from 3.13.1 to 3.14.0
 
 ---

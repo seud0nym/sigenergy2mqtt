@@ -909,6 +909,8 @@ class:
     name: InfluxDB-Abfragen
   InfluxDBQueryErrors:
     name: InfluxDB-Abfragefehler
+  InfluxDBRateLimitWaits:
+    name: InfluxDB-Ratenbegrenzung wartet
   InfluxDBRetries:
     name: InfluxDB-Wiederholungen
   InfluxDBThroughput:
@@ -919,6 +921,8 @@ class:
     name: InfluxDB maximale Schreiblatenz
   InfluxDBWriteMean:
     name: InfluxDB mittlere Schreiblatenz
+  InfluxDBWriteMin:
+    name: Min. InfluxDB-Schreibzugriff
   InfluxDBWrites:
     name: InfluxDB-Schreibvorgänge
   InfluxService:
@@ -2693,7 +2697,7 @@ class:
   StateStoreLoadErrors:
     name: Statusdatei-Lesefehler
   StateStoreLoadHitPercentage:
-    name: Statusdatei-Lesetrefferquote %
+    name: Statusdatei-Ladezugriffe %
   StateStoreLoads:
     name: Statusdatei-Lesevorgänge
   StateStoreSaveErrors:

@@ -102,7 +102,7 @@ def test_on_topic_update(monkeypatch):
     # Populate topics dict as subscribe would
     from sigenergy2mqtt.monitor.sensor import MonitoredSensor
 
-    svc._topics["home/temp"] = MonitoredSensor("Device1", "temp", 10, "°C")
+    svc._topics["home/temp"] = MonitoredSensor("Device1", "temp", "Temperature", 10, "°C")
     result = asyncio.run(svc.on_topic_update(None, FakeMqttClient(), "23", "home/temp", None))
     assert result is True
     ms = svc._topics["home/temp"]

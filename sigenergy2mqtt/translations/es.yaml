@@ -909,6 +909,8 @@ class:
     name: Consultas InfluxDB
   InfluxDBQueryErrors:
     name: Errores de consulta InfluxDB
+  InfluxDBRateLimitWaits:
+    name: Esperas de límite de tasa de InfluxDB
   InfluxDBRetries:
     name: Reintentos InfluxDB
   InfluxDBThroughput:
@@ -919,6 +921,8 @@ class:
     name: Latencia máxima de escritura InfluxDB
   InfluxDBWriteMean:
     name: Latencia media de escritura InfluxDB
+  InfluxDBWriteMin:
+    name: Escritura mínima de InfluxDB
   InfluxDBWrites:
     name: Escrituras InfluxDB
   InfluxService:
@@ -2693,7 +2697,7 @@ class:
   StateStoreLoadErrors:
     name: Errores de Lectura del Almacén de Estado
   StateStoreLoadHitPercentage:
-    name: Tasa de Aciertos de Lectura %
+    name: La carga de la tienda estatal alcanza el %
   StateStoreLoads:
     name: Lecturas del Almacén de Estado
   StateStoreSaveErrors:

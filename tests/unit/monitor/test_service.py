@@ -100,16 +100,16 @@ def test_schedule_returns_monitor_task_when_repeated_negative(monkeypatch):
 
 
 def test_monitored_sensor_last_seen_uses_creation_time_default():
-    first = MonitoredSensor("Dev", "S1", 5, "")
+    first = MonitoredSensor("Dev", "S1", "S1", 5, "")
     time.sleep(0.01)
-    second = MonitoredSensor("Dev", "S2", 5, "")
+    second = MonitoredSensor("Dev", "S2", "S2", 5, "")
 
     assert second.last_seen > first.last_seen
 
 
 def test_monitored_sensor_is_overdue_uses_repeated_state_publish_interval_when_larger(monkeypatch):
     monkeypatch.setattr(active_config, "repeated_state_publish_interval", 60)
-    ms = MonitoredSensor("Dev", "S", 5, "", last_seen=time.time() - 20)
+    ms = MonitoredSensor("Dev", "S", "S", 5, "", last_seen=time.time() - 20)
 
     # Would be overdue with scan_interval (5*3=15), but should not be overdue when
     # repeated_state_publish_interval is larger (60*3=180).
@@ -118,14 +118,14 @@ def test_monitored_sensor_is_overdue_uses_repeated_state_publish_interval_when_l
 
 def test_monitored_sensor_is_overdue_uses_scan_interval_when_repeated_disabled(monkeypatch):
     monkeypatch.setattr(active_config, "repeated_state_publish_interval", 0)
-    ms = MonitoredSensor("Dev", "S", 5, "", last_seen=time.time() - 20)
+    ms = MonitoredSensor("Dev", "S", "S", 5, "", last_seen=time.time() - 20)
 
     assert ms.is_overdue is True
 
 
 def test_monitored_sensor_is_overdue_disabled_when_repeated_negative(monkeypatch):
     monkeypatch.setattr(active_config, "repeated_state_publish_interval", -1)
-    ms = MonitoredSensor("Dev", "S", 1, "", last_seen=time.time() - 10_000)
+    ms = MonitoredSensor("Dev", "S", "S", 1, "", last_seen=time.time() - 10_000)
 
     assert ms.is_overdue is False
 
@@ -134,7 +134,7 @@ def test_monitored_sensor_is_overdue_disabled_when_repeated_negative(monkeypatch
 async def test_on_topic_update_known_and_unknown():
     svc = MonitorService([])
     topic = "topic/known"
-    ms = MonitoredSensor("Dev", "S", 5, "")
+    ms = MonitoredSensor("Dev", "S", "S", 5, "")
     ms.notified = True
     old_last_seen = ms.last_seen
     svc._topics[topic] = ms
@@ -173,7 +173,7 @@ async def test_monitor_marks_overdue_and_stops(monkeypatch):
     svc._started = 0
     topic = "topic/overdue"
     # make last_seen well in the past so it's overdue
-    ms = MonitoredSensor("Dev", "S", 1, "", last_seen=time.time() - 100)
+    ms = MonitoredSensor("Dev", "S", "S", 1, "", last_seen=time.time() - 100)
     svc._topics[topic] = ms
 
     # mark service as online by providing a Future

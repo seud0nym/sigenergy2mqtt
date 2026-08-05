@@ -909,6 +909,8 @@ class:
     name: InfluxDB クエリ
   InfluxDBQueryErrors:
     name: InfluxDB クエリ エラー
+  InfluxDBRateLimitWaits:
+    name: InfluxDB レート制限待機
   InfluxDBRetries:
     name: InfluxDB リトライ
   InfluxDBThroughput:
@@ -919,6 +921,8 @@ class:
     name: InfluxDB 書き込み最大レイテンシ
   InfluxDBWriteMean:
     name: InfluxDB 書き込み平均レイテンシ
+  InfluxDBWriteMin:
+    name: InfluxDB 書き込み最小値
   InfluxDBWrites:
     name: InfluxDB 書き込み
   InfluxService:
@@ -2693,7 +2697,7 @@ class:
   StateStoreLoadErrors:
     name: 状態ストア読み込みエラー
   StateStoreLoadHitPercentage:
-    name: 状態ストア読み込みヒット率 %
+    name: 状態ストアのロード ヒット %
   StateStoreLoads:
     name: 状態ストア読み込み数
   StateStoreSaveErrors:

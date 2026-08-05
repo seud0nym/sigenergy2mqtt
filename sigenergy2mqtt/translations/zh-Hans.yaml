@@ -909,6 +909,8 @@ class:
     name: InfluxDB 查询
   InfluxDBQueryErrors:
     name: InfluxDB 查询错误
+  InfluxDBRateLimitWaits:
+    name: InfluxDB 速率限制等待
   InfluxDBRetries:
     name: InfluxDB 重试
   InfluxDBThroughput:
@@ -919,6 +921,8 @@ class:
     name: InfluxDB 最大写入延迟
   InfluxDBWriteMean:
     name: InfluxDB 平均写入延迟
+  InfluxDBWriteMin:
+    name: InfluxDB 写入最小值
   InfluxDBWrites:
     name: InfluxDB 写入
   InfluxService:
@@ -2693,7 +2697,7 @@ class:
   StateStoreLoadErrors:
     name: 状态存储读取错误
   StateStoreLoadHitPercentage:
-    name: 状态存储读取命中率 %
+    name: 状态存储负载命中百分比
   StateStoreLoads:
     name: 状态存储读取次数
   StateStoreSaveErrors:

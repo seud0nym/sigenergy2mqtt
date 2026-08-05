@@ -909,6 +909,8 @@ class:
     name: InfluxDB 쿼리
   InfluxDBQueryErrors:
     name: InfluxDB 쿼리 오류
+  InfluxDBRateLimitWaits:
+    name: InfluxDB 속도 제한 대기
   InfluxDBRetries:
     name: InfluxDB 재시도
   InfluxDBThroughput:
@@ -919,6 +921,8 @@ class:
     name: InfluxDB 최대 쓰기 지연 시간
   InfluxDBWriteMean:
     name: InfluxDB 평균 쓰기 지연 시간
+  InfluxDBWriteMin:
+    name: InfluxDB 쓰기 최소
   InfluxDBWrites:
     name: InfluxDB 쓰기
   InfluxService:
@@ -2693,7 +2697,7 @@ class:
   StateStoreLoadErrors:
     name: 상태 저장소 읽기 오류
   StateStoreLoadHitPercentage:
-    name: 상태 저장소 읽기 적중률 %
+    name: 상태 저장소 로드 적중률(%)
   StateStoreLoads:
     name: 상태 저장소 읽기 수
   StateStoreSaveErrors:

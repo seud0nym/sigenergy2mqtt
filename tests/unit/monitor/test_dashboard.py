@@ -8,6 +8,7 @@ def test_extract_dashboard_state_full_plant():
         "sigenergy2mqtt/sigen_0_plant_battery_soc/state": MonitoredSensor(
             device_name="PowerPlant[plant=0,dev=1]",
             sensor_name="PlantBatterySoC",
+            description="Battery SoC",
             scan_interval=5,
             unit="%",
             last_state=95.5
@@ -15,6 +16,7 @@ def test_extract_dashboard_state_full_plant():
         "sigenergy2mqtt/sigen_0_plant_rated_energy_capacity/state": MonitoredSensor(
             device_name="PowerPlant[plant=0,dev=1]",
             sensor_name="PlantRatedEnergyCapacity",
+            description="Rated Energy Capacity",
             scan_interval=5,
             unit="kWh",
             last_state=10.0
@@ -23,6 +25,7 @@ def test_extract_dashboard_state_full_plant():
         "sigenergy2mqtt/sigen_0_inverter_1_active_power/state": MonitoredSensor(
             device_name="Inverter[plant=0,dev=1]",
             sensor_name="InverterActivePower",
+            description="Active Power",
             scan_interval=5,
             unit="W",
             last_state=1500
@@ -31,6 +34,7 @@ def test_extract_dashboard_state_full_plant():
         "sigenergy2mqtt/sigen_0_inverter_2_model/state": MonitoredSensor(
             device_name="Inverter[plant=0,dev=2]",
             sensor_name="InverterModel",
+            description="Inverter Model",
             scan_interval=5,
             unit=None,
             last_state="SigenStor"
@@ -39,6 +43,7 @@ def test_extract_dashboard_state_full_plant():
         "sigenergy2mqtt/sigen_0_dc_charger_1_running_state/state": MonitoredSensor(
             device_name="DCCharger[plant=0,dev=1]",
             sensor_name="DCChargerRunningState",
+            description="Running State",
             scan_interval=5,
             unit=None,
             last_state="Charging"
@@ -47,6 +52,7 @@ def test_extract_dashboard_state_full_plant():
         "sigenergy2mqtt/sigen_0_ac_charger_2_alarm/state": MonitoredSensor(
             device_name="ACCharger[plant=0,dev=2]",
             sensor_name="ACChargerAlarm",
+            description="Alarm",
             scan_interval=5,
             unit=None,
             last_state="No Alarm"
@@ -74,6 +80,7 @@ def test_extract_dashboard_state_no_battery():
         "sigenergy2mqtt/sigen_0_plant_grid_status/state": MonitoredSensor(
             device_name="PowerPlant[plant=0,dev=1]",
             sensor_name="PlantGridStatus",
+            description="Grid Status",
             scan_interval=5,
             unit=None,
             last_state="On-grid"
@@ -91,6 +98,7 @@ def test_extract_dashboard_state_invalid_device():
         "sigenergy2mqtt/sigen_0_unknown_1_test/state": MonitoredSensor(
             device_name="UnknownDevice[plant=0,dev=1]",
             sensor_name="TestSensor",
+            description="Test Sensor",
             scan_interval=5,
             unit=None,
             last_state=1
@@ -98,6 +106,7 @@ def test_extract_dashboard_state_invalid_device():
         "sigenergy2mqtt/sigen_0_unmatched/state": MonitoredSensor(
             device_name="NotMatchRegex",
             sensor_name="TestSensor2",
+            description="Test Sensor 2",
             scan_interval=5,
             unit=None,
             last_state=1

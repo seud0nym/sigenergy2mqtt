@@ -512,6 +512,26 @@ class InfluxDBWriteMax(MetricsSensor):
         return True
 
 
+class InfluxDBWriteMin(MetricsSensor):
+    """Minimum InfluxDB write duration per write call, in milliseconds."""
+
+    def __init__(self):
+        super().__init__(
+            name="InfluxDB Write Min",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_influxdb_write_min",
+            object_id="sigenergy2mqtt_influxdb_write_min",
+            unit="ms",
+            icon="mdi:timer-outline",
+            precision=2,
+        )
+        self.publishable = active_config.influxdb.enabled
+
+    async def _update_internal_state(self, **kwargs) -> bool:
+        value = Metrics.sigenergy2mqtt_influxdb_write_min
+        self.set_latest_state(value)
+        return True
+
+
 class InfluxDBWriteMean(MetricsSensor):
     """Mean InfluxDB write duration per write call, in milliseconds."""
 
@@ -585,6 +605,25 @@ class InfluxDBRetries(MetricsSensor):
 
     async def _update_internal_state(self, **kwargs) -> bool:
         new_state = Metrics.sigenergy2mqtt_influxdb_retries
+        self.set_latest_state(new_state)
+        return True
+
+
+class InfluxDBRateLimitWaits(MetricsSensor):
+    """Cumulative count of number of times execution was paused due to InfluxDB rate limiting."""
+
+    def __init__(self):
+        super().__init__(
+            name="InfluxDB Rate Limit Waits",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_influxdb_rate_limit_waits",
+            object_id="sigenergy2mqtt_influxdb_rate_limit_waits",
+            icon="mdi:reload",
+            precision=0,
+        )
+        self.publishable = active_config.influxdb.enabled
+
+    async def _update_internal_state(self, **kwargs) -> bool:
+        new_state = Metrics.sigenergy2mqtt_influxdb_rate_limit_waits
         self.set_latest_state(new_state)
         return True
 
@@ -733,7 +772,7 @@ class StateStoreLoadHitPercentage(MetricsSensor):
 
     def __init__(self):
         super().__init__(
-            name="State Store Load Hit %",
+            name="State Store Load Hits %",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_state_store_load_hit_percentage",
             object_id="sigenergy2mqtt_state_store_load_hit_percentage",
             unit=PERCENTAGE,

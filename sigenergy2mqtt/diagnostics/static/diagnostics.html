@@ -538,6 +538,7 @@
       // object required. Order matters: longer/more specific suffixes first so
       // e.g. "_ms" doesn't accidentally match something ending in "_ms_avg".
       const UNIT_FORMATTERS = [
+        { suffix: ' %', format: formatPercent },
         { suffix: '_percentage', format: formatPercent },
         { suffix: '_percent', format: formatPercent },
         { suffix: '_pct', format: formatPercent },

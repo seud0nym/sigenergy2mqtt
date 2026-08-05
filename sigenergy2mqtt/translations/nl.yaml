@@ -909,6 +909,8 @@ class:
     name: InfluxDB-queries
   InfluxDBQueryErrors:
     name: InfluxDB-queryfouten
+  InfluxDBRateLimitWaits:
+    name: InfluxDB-snelheidslimiet wacht
   InfluxDBRetries:
     name: InfluxDB-pogingen
   InfluxDBThroughput:
@@ -919,6 +921,8 @@ class:
     name: InfluxDB maximale schrijflatentie
   InfluxDBWriteMean:
     name: InfluxDB gemiddelde schrijflatentie
+  InfluxDBWriteMin:
+    name: InfluxDB Schrijven Min
   InfluxDBWrites:
     name: InfluxDB-schrijfacties
   InfluxService:
@@ -2693,7 +2697,7 @@ class:
   StateStoreLoadErrors:
     name: Statusopslagleesfouten
   StateStoreLoadHitPercentage:
-    name: Statusopslag Leestrefferquotum %
+    name: Staat Store Load Hits %
   StateStoreLoads:
     name: Statusopslagleesbewerkingen
   StateStoreSaveErrors:

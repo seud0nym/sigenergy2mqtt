@@ -909,6 +909,8 @@ class:
     name: InfluxDB Queries
   InfluxDBQueryErrors:
     name: InfluxDB Query Errors
+  InfluxDBRateLimitWaits:
+    name: InfluxDB Rate Limit Waits
   InfluxDBRetries:
     name: InfluxDB Retries
   InfluxDBThroughput:
@@ -919,6 +921,8 @@ class:
     name: InfluxDB Write Max
   InfluxDBWriteMean:
     name: InfluxDB Write Mean
+  InfluxDBWriteMin:
+    name: InfluxDB Write Min
   InfluxDBWrites:
     name: InfluxDB Writes
   InfluxService:
@@ -2693,7 +2697,7 @@ class:
   StateStoreLoadErrors:
     name: State Store Load Errors
   StateStoreLoadHitPercentage:
-    name: State Store Load Hit %
+    name: State Store Load Hits %
   StateStoreLoads:
     name: State Store Loads
   StateStoreSaveErrors:

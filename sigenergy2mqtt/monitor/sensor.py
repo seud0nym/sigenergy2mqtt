@@ -13,7 +13,9 @@ class MonitoredSensor:
     Args:
         device_name: Human-readable name of the device publishing the sensor.
         sensor_name: Human-readable name of the sensor.
+        description: Human-readable description of the sensor.
         scan_interval: Expected publish interval in seconds for the sensor.
+        unit: Unit of measurement for the sensor, if applicable.
         last_seen: Unix timestamp of the last observed MQTT update.
         last_state: Last observed state of the sensor.
         notified: Whether an overdue warning has already been logged.
@@ -21,6 +23,7 @@ class MonitoredSensor:
 
     device_name: str
     sensor_name: str
+    description: str
     scan_interval: int
     unit: str | None
     last_seen: float = field(default_factory=time.time)

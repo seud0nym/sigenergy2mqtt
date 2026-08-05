@@ -39,8 +39,10 @@ class MetricsService(Device):
         self._add_sensor(sensors.InfluxDBWriteErrors())
         self._add_sensor(sensors.InfluxDBWriteMax())
         self._add_sensor(sensors.InfluxDBWriteMean())
+        self._add_sensor(sensors.InfluxDBWriteMin())
         self._add_sensor(sensors.InfluxDBQueries())
         self._add_sensor(sensors.InfluxDBQueryErrors())
+        self._add_sensor(sensors.InfluxDBRateLimitWaits())
         self._add_sensor(sensors.InfluxDBRetries())
         self._add_sensor(sensors.InfluxDBThroughput())
 
