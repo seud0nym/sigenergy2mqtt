@@ -91,7 +91,7 @@ class ESSPreHeatingAdvanceEnable(SwitchSensor, HybridInverter):
     async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | str) -> bool:
         if self._availability_control_sensor is not None and self._availability_control_sensor.latest_raw_state == 0:
             logger.error(
-                f"{self.log_identity} Failed to write value '{raw_value}': {self._availability_control_sensor.name} is set to Automatic mode, so cannot enable Advance. Set Preheating Mode to Manual first."
+                f"{self.log_identity} Failed to write value '{raw_value}': {self._availability_control_sensor.log_identity} is set to Automatic mode, so cannot enable Advance. Set Preheating Mode to Manual first."
             )
             return False
         return await super().value_is_valid(modbus_client, raw_value)

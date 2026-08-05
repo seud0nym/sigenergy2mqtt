@@ -155,7 +155,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         # Public attributes
         self.derived_sensors: dict[str, DerivedSensor] = {}
         self.force_publish: bool = False
-        self.name: str = name
+        self.name: str = str(self[DiscoveryKeys.NAME])
         self.object_id: str = object_id
         self.parent_device: Any = None
         self.precision: int | None = precision
