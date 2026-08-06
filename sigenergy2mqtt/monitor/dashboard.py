@@ -148,7 +148,7 @@ def _extract(state: dict[str, Any], topic_prefix: str, fields: dict[str, str]) -
     the Modbus/HA integration), so carrying it through beats trying to
     re-infer units from field-name suffixes on the dashboard side.
     """
-    return {short: {"value": sensor.last_state, "unit": sensor.unit} for short, suffix in fields.items() if (sensor := state.get(f"{topic_prefix}_{suffix}/state")) is not None}
+    return {short: {"label": sensor.description, "value": sensor.last_state, "unit": sensor.unit} for short, suffix in fields.items() if (sensor := state.get(f"{topic_prefix}_{suffix}/state")) is not None}
 
 
 def extract_dashboard_state(state: dict[str, Any]) -> dict[str, Any]:

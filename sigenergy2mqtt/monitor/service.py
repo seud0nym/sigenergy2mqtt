@@ -498,7 +498,13 @@ class MonitorService(Device):
                 if topic in self._topics:
                     logger.error(f"{self.log_identity} Sensor '{device} - {sensor}' has the same topic as '{self._topics[topic].name}' ({topic=}) ????")
                 else:
-                    self._topics[topic] = MonitoredSensor(device, sensor, s.name, scan_interval, str(unit) if unit else None)
+                    self._topics[topic] = MonitoredSensor(
+                        device_name=device,
+                        sensor_name=sensor,
+                        description=s.name,
+                        scan_interval=scan_interval,
+                        unit=str(unit) if unit else None,
+                    )
                     sensors += 1
                     mqtt_handler.register(mqtt_client, topic, handler=self.on_topic_update)
             if sensors > 0:
