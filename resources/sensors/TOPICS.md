@@ -534,11 +534,13 @@ The attributes payload currently includes:
 <h6>Metrics</h6>
 <a href='#sigen_influxdb_queries'>InfluxDB Queries</a><br>
 <a href='#sigen_influxdb_query_errors'>InfluxDB Query Errors</a><br>
+<a href='#sigen_influxdb_rate_limit_waits'>InfluxDB Rate Limit Waits</a><br>
 <a href='#sigen_influxdb_retries'>InfluxDB Retries</a><br>
 <a href='#sigen_influxdb_throughput'>InfluxDB Throughput</a><br>
 <a href='#sigen_influxdb_write_errors'>InfluxDB Write Errors</a><br>
 <a href='#sigen_influxdb_write_max'>InfluxDB Write Max</a><br>
 <a href='#sigen_influxdb_write_mean'>InfluxDB Write Mean</a><br>
+<a href='#sigen_influxdb_write_min'>InfluxDB Write Min</a><br>
 <a href='#sigen_influxdb_writes'>InfluxDB Writes</a><br>
 <a href='#sigen_mqtt_physical_publish_percentage'>MQTT Physical Publishes</a><br>
 <a href='#sigen_mqtt_publish_failures'>MQTT Publish Failures</a><br>
@@ -568,7 +570,7 @@ The attributes payload currently includes:
 <a href='#sigen_state_store_delete_errors'>State Store Delete Errors</a><br>
 <a href='#sigen_state_store_deletes'>State Store Deletes</a><br>
 <a href='#sigen_state_store_load_errors'>State Store Load Errors</a><br>
-<a href='#sigen_state_store_load_hit_percentage'>State Store Load Hit %</a><br>
+<a href='#sigen_state_store_load_hit_percentage'>State Store Load Hits %</a><br>
 <a href='#sigen_state_store_loads'>State Store Loads</a><br>
 <a href='#sigen_state_store_save_errors'>State Store Save Errors</a><br>
 <a href='#sigen_state_store_save_max'>State Store Save Max</a><br>
@@ -627,7 +629,7 @@ The attributes payload currently includes:
 <a href='#sigen_0_001_41000_set'>DC Charger Stop/Start</a><br>
 <a href='#sigen_0_001_41002_set'>Max Charging Power Limit</a><br>
 <a href='#sigen_0_001_41004_set'>Max Discharging Power Limit</a><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></td></tr>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></td></tr>
 </table>
 
 ## Published Topics
@@ -6624,11 +6626,13 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 |--------|---------:|------|------------|---------------|
 | <a id='sigen_influxdb_queries'>InfluxDB Queries</a> | 1 |  | sigenergy2mqtt/metrics/influxdb_queries ||
 | <a id='sigen_influxdb_query_errors'>InfluxDB Query Errors</a> | 1 |  | sigenergy2mqtt/metrics/influxdb_query_errors ||
+| <a id='sigen_influxdb_rate_limit_waits'>InfluxDB Rate Limit Waits</a> | 1 |  | sigenergy2mqtt/metrics/influxdb_rate_limit_waits ||
 | <a id='sigen_influxdb_retries'>InfluxDB Retries</a> | 1 |  | sigenergy2mqtt/metrics/influxdb_retries ||
 | <a id='sigen_influxdb_throughput'>InfluxDB Throughput</a> | 1 |  | sigenergy2mqtt/metrics/influxdb_throughput ||
 | <a id='sigen_influxdb_write_errors'>InfluxDB Write Errors</a> | 1 |  | sigenergy2mqtt/metrics/influxdb_write_errors ||
 | <a id='sigen_influxdb_write_max'>InfluxDB Write Max</a> | 1 | ms | sigenergy2mqtt/metrics/influxdb_write_max ||
 | <a id='sigen_influxdb_write_mean'>InfluxDB Write Mean</a> | 1 | ms | sigenergy2mqtt/metrics/influxdb_write_mean ||
+| <a id='sigen_influxdb_write_min'>InfluxDB Write Min</a> | 1 | ms | sigenergy2mqtt/metrics/influxdb_write_min ||
 | <a id='sigen_influxdb_writes'>InfluxDB Writes</a> | 1 |  | sigenergy2mqtt/metrics/influxdb_writes ||
 | <a id='sigen_mqtt_physical_publish_percentage'>MQTT Physical Publishes</a> | 1 | % | sigenergy2mqtt/metrics/mqtt_physical_publish_percentage ||
 | <a id='sigen_mqtt_publish_failures'>MQTT Publish Failures</a> | 1 |  | sigenergy2mqtt/metrics/mqtt_publish_failures ||
@@ -6658,7 +6662,7 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 | <a id='sigen_state_store_delete_errors'>State Store Delete Errors</a> | 1 |  | sigenergy2mqtt/metrics/state_store_delete_errors ||
 | <a id='sigen_state_store_deletes'>State Store Deletes</a> | 1 |  | sigenergy2mqtt/metrics/state_store_deletes ||
 | <a id='sigen_state_store_load_errors'>State Store Load Errors</a> | 1 |  | sigenergy2mqtt/metrics/state_store_load_errors ||
-| <a id='sigen_state_store_load_hit_percentage'>State Store Load Hit %</a> | 1 | % | sigenergy2mqtt/metrics/state_store_load_hit_percentage ||
+| <a id='sigen_state_store_load_hit_percentage'>State Store Load Hits %</a> | 1 | % | sigenergy2mqtt/metrics/state_store_load_hit_percentage ||
 | <a id='sigen_state_store_loads'>State Store Loads</a> | 1 |  | sigenergy2mqtt/metrics/state_store_loads ||
 | <a id='sigen_state_store_save_errors'>State Store Save Errors</a> | 1 |  | sigenergy2mqtt/metrics/state_store_save_errors ||
 | <a id='sigen_state_store_save_max'>State Store Save Max</a> | 1 | ms | sigenergy2mqtt/metrics/state_store_save_max ||
