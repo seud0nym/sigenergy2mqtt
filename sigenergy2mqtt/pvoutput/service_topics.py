@@ -448,7 +448,7 @@ class ServiceTopics(dict[str, Topic]):
                     ts = self[topic].restore_timestamp
 
                 if ts is not None:
-                    seconds = time.mktime(time.localtime()) - time.mktime(cast(time.struct_time, ts))  # pyrefly: ignore
+                    seconds = time.time() - time.mktime(cast(time.struct_time, ts))  # pyrefly: ignore
                     if int(seconds) % 60 == 0:
                         logger.debug(f"{self._service.log_identity} Ignoring {self._name} from topic {topic}: {state=} (<= Previous peak={self[topic].state})")
             if self._time_periods:

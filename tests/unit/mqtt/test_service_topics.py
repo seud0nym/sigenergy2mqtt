@@ -276,7 +276,7 @@ async def test_handle_update_complex_branches(caplog):
         t = st["t1"]
         t.state = 200.0
         # Use a fixed time in the future and mock time.time() to ensure int(seconds) % 60 == 0
-        fixed_now = 1000000.0
+        fixed_now = 2000000000.0
         t.restore_timestamp = time.localtime(fixed_now + 60)
         with patch("time.time", return_value=fixed_now):
             await st.handle_update(None, MagicMock(), 150.0, "t1", MagicMock())
