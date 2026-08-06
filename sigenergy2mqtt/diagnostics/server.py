@@ -153,6 +153,7 @@ class DiagnosticsServer:
         """
         ts = self._last_snapshot.get("timestamp")
         if ts is None or (time.time() - ts) > self._refresh_interval:
+            logger.debug("DiagnosticsServer last_snapshot is stale or empty; returning None")
             return None
         return self._last_snapshot
 
@@ -165,6 +166,7 @@ class DiagnosticsServer:
         """
         snapshot = self.last_snapshot
         if snapshot is None:
+            logger.debug("DiagnosticsServer fetching fresh snapshot")
             snapshot = self._last_snapshot = await diagnostics_registry.snapshot()
         return snapshot
 
@@ -217,6 +219,7 @@ class DiagnosticsServer:
 
     async def _handle_export(self, request: web.Request) -> web.Response:
         """Full, freshly-collected diagnostics payload as a downloadable file."""
+        logger.debug("DiagnosticsServer fetching fresh snapshot for export")
         snapshot = await diagnostics_registry.snapshot()
         body = json.dumps(snapshot, indent=2, default=str)
         return web.Response(

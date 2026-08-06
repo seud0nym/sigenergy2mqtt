@@ -73,23 +73,24 @@ class DiagnosticsRegistry:
             collect: Zero-arg callable (sync or async) returning a dict.
         """
         self._providers[name] = _RegisteredProvider(name, collect)
-        logger.debug(f"DiagnosticsRegistry: Registered provider '{name}'")
+        logger.debug(f"DiagnosticsRegistry Registered provider '{name}'")
 
     def unregister(self, name: str) -> None:
         """Remove a previously registered provider, if present."""
         if self._providers.pop(name, None) is not None:
-            logger.debug(f"DiagnosticsRegistry: Unregistered provider '{name}'")
+            logger.debug(f"DiagnosticsRegistry Unregistered provider '{name}'")
 
     async def snapshot(self) -> dict[str, Any]:
         """Collect every registered provider's data into one payload."""
 
         async def _run(p: _RegisteredProvider) -> tuple[str, dict[str, Any]]:
+            logger.debug(f"DiagnosticsRegistry Collecting from provider '{p.name}'")
             try:
                 raw = p.collect()
                 data: dict[str, Any] = await raw if inspect.isawaitable(raw) else cast("dict[str, Any]", raw)
                 return p.name, data
             except Exception as exc:  # noqa: BLE001 - providers are arbitrary user-registered callables; any of them can raise anything, and one must not take down the whole snapshot
-                logger.warning(f"DiagnosticsRegistry: Provider '{p.name}' failed: {exc}")
+                logger.warning(f"DiagnosticsRegistry Provider '{p.name}' failed: {exc}")
                 return p.name, {"error": str(exc)}
 
         async with self._lock:
