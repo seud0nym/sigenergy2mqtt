@@ -20,8 +20,6 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import ClassVar
 
-from sigenergy2mqtt.config import active_config
-
 logger = logging.getLogger(__name__)
 
 
@@ -312,16 +310,8 @@ class Metrics:
         DiagnosticsCollectors.collect_metrics()
 
     @classmethod
-    def _metrics_enabled(cls) -> bool:
-        """Return True when metrics recording is enabled in configuration."""
-        return bool(getattr(active_config, "metrics_enabled", True))
-
-    @classmethod
     def _submit(cls, operation: Callable[[], None]) -> None:
         """Queue a metric update to the internal worker and return immediately."""
-        if not cls._metrics_enabled():
-            return
-
         with cls._executor_lock:
             if cls._executor is None:
                 cls._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="metrics")
@@ -341,9 +331,6 @@ class Metrics:
     @classmethod
     def _update_with_lock(cls, operation: Callable[[], None], warning: str) -> None:
         """Run a metric update while holding the class lock."""
-        if not cls._metrics_enabled():
-            return
-
         try:
             # Standard synchronous lock for regular methods
             if not cls._lock.acquire(timeout=1.0):
