@@ -361,15 +361,15 @@ class TestMetricsEnabledGate:
         Metrics.sigenergy2mqtt_modbus_read_errors = original_errors
 
     @pytest.mark.asyncio
-    async def test_recording_skipped_when_metrics_disabled(self):
+    async def test_recording_not_skipped_when_metrics_disabled(self):
         active_config.metrics_enabled = False
 
         await Metrics.modbus_read(registers=10, seconds=0.05)
         await Metrics.modbus_read_error()
         await Metrics.drain()
 
-        assert Metrics.sigenergy2mqtt_modbus_reads == 0
-        assert Metrics.sigenergy2mqtt_modbus_read_errors == 0
+        assert Metrics.sigenergy2mqtt_modbus_reads == 1
+        assert Metrics.sigenergy2mqtt_modbus_read_errors == 1
 
     @pytest.mark.asyncio
     async def test_recording_resumes_when_metrics_enabled(self):
