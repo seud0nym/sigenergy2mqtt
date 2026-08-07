@@ -139,8 +139,8 @@ AC_CHARGER_CONFIG_FIELDS = {
 }
 
 
-def _extract(state: dict[str, Any], topic_prefix: str, fields: dict[str, str]) -> dict[str, Any]:
-    """Pull `fields` (short_name -> topic suffix) off `topic_prefix`, skipping
+def _extract(state: dict[str, Any], partial_key: str, fields: dict[str, str]) -> dict[str, Any]:
+    """Pull `fields` (short_name -> topic suffix) off `topic_key`, skipping
     any sensor that isn't present in this system's state dict.
 
     Each field comes back as {"value": ..., "unit": ...} rather than a bare
@@ -148,7 +148,17 @@ def _extract(state: dict[str, Any], topic_prefix: str, fields: dict[str, str]) -
     the Modbus/HA integration), so carrying it through beats trying to
     re-infer units from field-name suffixes on the dashboard side.
     """
-    return {short: {"label": sensor.description, "value": sensor.last_state, "unit": sensor.unit} for short, suffix in fields.items() if (sensor := state.get(f"{topic_prefix}_{suffix}/state")) is not None}
+    result = {}
+    for short, suffix in fields.items():
+        target = f"{partial_key}_{suffix}/state"
+        sensor = next((val for key, val in state.items() if key.endswith(target)), None)
+        if sensor is not None:
+            result[short] = {
+                "label": sensor.description,
+                "value": sensor.last_state,
+                "unit": sensor.unit,
+            }
+    return result
 
 
 def extract_dashboard_state(state: dict[str, Any]) -> dict[str, Any]:
@@ -162,11 +172,11 @@ def extract_dashboard_state(state: dict[str, Any]) -> dict[str, Any]:
     devices = {(m["type"], m["plant"], m["dev"]) for sensor in state.values() if (m := DEVICE_RE.match(sensor.device_name))}
 
     plant_ids = sorted({plant for typ, plant, _ in devices if typ == "PowerPlant"})
-    plant_id = plant_ids[0] if plant_ids else "0"  # sigenergy2mqtt currently supports a single plant
-    plant_prefix = f"sigenergy2mqtt/{active_config.home_assistant.entity_id_prefix}_{plant_id}"
+    plant_id = plant_ids[0] if plant_ids else "0"  # sigenergy2mqtt dashboard currently supports a single plant
+    plant_partial_key = f"/{active_config.home_assistant.entity_id_prefix}_{plant_id}"
 
-    plant = _extract(state, plant_prefix, PLANT_LIVE_FIELDS)
-    plant["config"] = _extract(state, plant_prefix, PLANT_CONFIG_FIELDS)
+    plant = _extract(state, plant_partial_key, PLANT_LIVE_FIELDS)
+    plant["config"] = _extract(state, plant_partial_key, PLANT_CONFIG_FIELDS)
     # Battery-less systems either never publish these topics at all (so
     # battery_soc is simply absent from `plant`), or in some firmware
     # versions publish the sensor with a literal None value. Either way,
@@ -180,18 +190,18 @@ def extract_dashboard_state(state: dict[str, Any]) -> dict[str, Any]:
     for typ, dev_plant_id, dev in sorted(devices, key=lambda d: (d[0], int(d[2]))):
         if typ not in TOPIC_SEGMENT:
             continue  # PowerPlant already handled above
-        prefix = f"sigenergy2mqtt/{active_config.home_assistant.entity_id_prefix}_{dev_plant_id}_{TOPIC_SEGMENT[typ]}_{dev}"
+        partial_key = f"/{active_config.home_assistant.entity_id_prefix}_{dev_plant_id}_{TOPIC_SEGMENT[typ]}_{dev}"
         if typ == "Inverter":
-            entry = _extract(state, prefix, INVERTER_LIVE_FIELDS)
-            entry["config"] = _extract(state, prefix, INVERTER_CONFIG_FIELDS)
+            entry = _extract(state, partial_key, INVERTER_LIVE_FIELDS)
+            entry["config"] = _extract(state, partial_key, INVERTER_CONFIG_FIELDS)
             inverters[dev] = entry
         elif typ == "DCCharger":
-            entry = _extract(state, prefix, DC_CHARGER_LIVE_FIELDS)
-            entry["config"] = _extract(state, prefix, DC_CHARGER_CONFIG_FIELDS)
+            entry = _extract(state, partial_key, DC_CHARGER_LIVE_FIELDS)
+            entry["config"] = _extract(state, partial_key, DC_CHARGER_CONFIG_FIELDS)
             dc_chargers[dev] = entry
         elif typ == "ACCharger":
-            entry = _extract(state, prefix, AC_CHARGER_LIVE_FIELDS)
-            entry["config"] = _extract(state, prefix, AC_CHARGER_CONFIG_FIELDS)
+            entry = _extract(state, partial_key, AC_CHARGER_LIVE_FIELDS)
+            entry["config"] = _extract(state, partial_key, AC_CHARGER_CONFIG_FIELDS)
             ac_chargers[dev] = entry
 
     return {
