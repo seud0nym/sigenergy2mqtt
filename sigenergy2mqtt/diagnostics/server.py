@@ -252,7 +252,7 @@ class DiagnosticsServer:
         while True:
             try:
                 self._last_snapshot = await diagnostics_registry.snapshot()
-                # logger.debug(f"DiagnosticsServer Snapshot: {self._last_snapshot}")
+                logger.debug(f"DiagnosticsServer Snapshot: {self._last_snapshot}")
                 if self._sockets:
                     dead: set[web.WebSocketResponse] = set()
                     for ws in self._sockets:
