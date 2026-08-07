@@ -132,13 +132,13 @@ jobs:
         uses: docker/setup-buildx-action@v4
 
       - name: Login to Docker Hub
-        uses: docker/login-action@371161bbe7024a29a25c5e19bfcbc0804fe9ad2c
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
       - name: Log in to GHCR
-        uses: docker/login-action@371161bbe7024a29a25c5e19bfcbc0804fe9ad2c
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -163,7 +163,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Attest build provenance (GHCR)
-        uses: actions/attest@v4.2.0
+        uses: actions/attest@v4.2.2
         with:
           subject-name: ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
           subject-digest: ${{ steps.docker_build.outputs.digest }}
@@ -172,7 +172,7 @@ jobs:
       # Docker Hub attestation can be flaky; keep but don't fail build if it errors
       - name: Attest build provenance (Docker Hub)
         continue-on-error: true
-        uses: actions/attest@v4.2.0
+        uses: actions/attest@v4.2.2
         with:
           subject-name: index.docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}
           subject-digest: ${{ steps.docker_build.outputs.digest }}
