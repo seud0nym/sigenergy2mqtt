@@ -122,6 +122,7 @@ class ModbusSensorMixin(SensorDebuggingMixin):
         slm_map = SIGENERGY_LOCAL_MODBUS_REGISTERS.get(address) if use_slm_naming else None
 
         if slm_map:
+            self._original_object_id = kwargs.get(DiscoveryKeys.OBJECT_ID)  # Used in Sensor._get_base_topic so that the original object_id is used for topic generation and dashboard population
             kwargs[DiscoveryKeys.OBJECT_ID] = str(slm_map["object_id"])
             kwargs.pop(DiscoveryKeys.UNIT_OF_MEASUREMENT, None)
             uom = cast(str | None, slm_map.get("unit"))

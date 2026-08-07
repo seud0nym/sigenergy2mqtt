@@ -659,10 +659,15 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         Returns:
             Base topic path
         """
+        object_id = (
+            getattr(  # Use original object_id for topic generation when active_config.home_assistant.enabled and active_config.home_assistant.sigenergy_local_modbus_naming, otherwise dashboard will be broken
+                self, "_original_object_id", self[DiscoveryKeys.OBJECT_ID]
+            )
+        )
         if active_config.home_assistant.enabled and not active_config.home_assistant.use_simplified_topics:
-            return f"{active_config.home_assistant.discovery_prefix}/{self[DiscoveryKeys.PLATFORM]}/{device_id}/{self[DiscoveryKeys.OBJECT_ID]}"
+            return f"{active_config.home_assistant.discovery_prefix}/{self[DiscoveryKeys.PLATFORM]}/{device_id}/{object_id}"
         else:
-            return f"sigenergy2mqtt/{self[DiscoveryKeys.OBJECT_ID]}"
+            return f"sigenergy2mqtt/{object_id}"
 
     def _log_configured_topics(self) -> None:
         """Log the configured MQTT topics for debugging."""
