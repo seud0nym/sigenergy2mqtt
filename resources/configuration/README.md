@@ -89,7 +89,7 @@ Ignored for firmware SPC113 and later as these limits are globally available in 
 - ENV: `SIGENERGY2MQTT_NO_METRICS`
 - Config key: `no-metrics`
 
-If true, sigenergy2mqtt will not publish any metrics to MQTT.
+If true, sigenergy2mqtt will not publish any metrics to MQTT. However, metrics will still be recorded for publishing to the the diagnostics web UI.
 
 <a id="opt_repeated_state_publish_interval"></a>
 ### Repeated State Publish Interval
