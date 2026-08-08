@@ -1,6 +1,14 @@
 <!-- git log [since tag]..HEAD --oneline -->
 # Changelog 
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed state class validation for energy sensors and update DC Charger capacity sensors to remove state class (#238)
+
+---
+
 ## [2026.8.8] - 2026-08-08
 
 ### Added
