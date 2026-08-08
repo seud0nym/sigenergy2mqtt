@@ -184,8 +184,12 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         if self.debug_logging:
             logger.debug(f"{self.log_identity} {self.sanity_check}")
 
-        if device_class is not None and not DeviceClass.is_valid_unit(device_class, unit):
-            logger.error(f"{self.log_identity} unit '{unit}' is not valid for device class {device_class.name}")
+        if device_class is not None:
+            if device_class == DeviceClass.ENERGY and state_class == StateClass.MEASUREMENT:
+                logger.error(f"{self.log_identity} state class '{state_class.name}' is not valid for device class '{device_class.name}'")
+            if not DeviceClass.is_valid_unit(device_class, unit):
+                logger.error(f"{self.log_identity} unit '{unit}' is not valid for device class '{device_class.name}'")
+        
 
     def _validate_unique_id(self, unique_id: str) -> None:
         """Validate that unique_id is not duplicated and has correct prefix.
