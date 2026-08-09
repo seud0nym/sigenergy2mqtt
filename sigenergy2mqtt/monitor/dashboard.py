@@ -39,8 +39,12 @@ TOPIC_SEGMENT = {
     "ACCharger": "ac_charger",
 }
 
+# The _FIELDS dicts below map a short, dashboard-friendly field name to the
+# corresponding MQTT topic suffix (the part after the device's topic segment).
+
 # --- Plant-level (single instance, keys have no per-device numeric suffix) ---
 PLANT_LIVE_FIELDS = {
+    "active_power": "plant_active_power",
     "grid_status": "plant_grid_status",
     "grid_activity": "grid_activity",
     "running_state": "plant_running_state",
@@ -52,6 +56,7 @@ PLANT_LIVE_FIELDS = {
     "lifetime_charged_energy": "accumulated_charge_energy",
     "lifetime_discharged_energy": "accumulated_discharge_energy",
     "pv_power": "total_pv_power",
+    "third_party_pv_power": "third_party_pv_power",
     "load_power": "total_load_power",
     "grid_import_power": "grid_sensor_import_power",
     "grid_export_power": "grid_sensor_export_power",

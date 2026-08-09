@@ -154,7 +154,9 @@ class MonitorService(Device):
         else:
             snapshot = self._topics_snapshot["snapshot"]
 
-        return extract_dashboard_state(snapshot)
+        state = extract_dashboard_state(snapshot)
+        logger.debug(f"{self.log_identity} Dashboard state snapshot: {state}")
+        return state
 
     async def _collect_diagnostics(self) -> dict[str, Any]:
         """Diagnostics provider callback: exposes the latest health payload.
