@@ -1,15 +1,19 @@
 <!-- git log [since tag]..HEAD --oneline -->
 # Changelog 
 
-## [Unreleased]
+## [2026.8.9a1] - 2026-08-09
 
 ### Fixed
 
 - Fixed state class validation for energy sensors and update DC Charger capacity sensors to remove state class (#238)
 
+### Changed
+
+- Added plant active power and third-party PV power to dashboard
+
 ---
 
-## [2026.8.8] - 2026-08-08
+## [2026.8.9a1] - 2026-08-09
 
 ### Added
 
