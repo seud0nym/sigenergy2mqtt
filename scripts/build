@@ -41,7 +41,7 @@ done
 
 changed_files=y
 if ls dist/sigenergy2mqtt-*-py3-none-any.whl >/dev/null 2>&1; then
-    file_list=$(find sigenergy2mqtt -newer $(ls -t dist/sigenergy2mqtt-*-py3-none-any.whl | head -n 1) -type f | grep -E '\.(py|yaml)$')
+    file_list=$(find sigenergy2mqtt -newer $(ls -t dist/sigenergy2mqtt-*-py3-none-any.whl | head -n 1) -type f | grep -E '\.(py|yaml|html)$')
     if [[ $(echo "$file_list" | grep -v 'sigenergy2mqtt/config/version.py\|sigenergy2mqtt/translations/en.yaml\|^[[:blank:]]*$' | wc -l) = 0 ]]; then
         changed_files=n
     else
