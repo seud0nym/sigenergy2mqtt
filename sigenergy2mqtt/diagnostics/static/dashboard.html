@@ -504,6 +504,12 @@
             transition: stroke-dashoffset 0.6s ease, stroke 0.3s ease;
         }
 
+        .gauge-zero-tick {
+            stroke: var(--text-dim);
+            stroke-width: 2;
+            opacity: 0.4;
+        }
+
         .gauge-readout {
             position: absolute;
             top: 54%;
@@ -758,7 +764,7 @@
         // before a live data source is wired up. Generated from an actual
         // extract_dashboard_state() payload — see extract_state.py. Replaced the
         // instant a real snapshot arrives over the WebSocket.
-        const SAMPLE_DATA = { "plant": { "active_power": { "label": "Active Power", "value": 80.91, "unit": "kW" }, "grid_status": { "label": "Grid Status", "value": "On Grid", "unit": null }, "grid_activity": { "label": "Grid Activity", "value": "Exporting", "unit": null }, "running_state": { "label": "Running State", "value": "Standby", "unit": null }, "ems_work_mode": { "label": "EMS Work Mode", "value": "Max Self Consumption", "unit": null }, "battery_soc": { "label": "Battery SoC", "value": 38.0, "unit": "%" }, "battery_soh": { "label": "Battery SoH", "value": 10.9, "unit": "%" }, "battery_power": { "label": "Battery Power", "value": 292845.0, "unit": "W" }, "battery_status": { "label": "Battery Status", "value": "Charging", "unit": null }, "lifetime_charged_energy": { "label": "Lifetime Charge Energy", "value": 1.7843817183484294e+17, "unit": "kWh" }, "lifetime_discharged_energy": { "label": "Lifetime Discharge Energy", "value": 2.9005924427074692e+16, "unit": "kWh" }, "pv_power": { "label": "Total PV Power", "value": 412257.0, "unit": "W" }, "third_party_pv_power": { "label": "Third-Party PVPower", "value": 35334.0, "unit": "W" }, "load_power": { "label": "Total Load Power", "value": 343553.0, "unit": "W" }, "grid_import_power": { "label": "Import Power", "value": 0.0, "unit": "W" }, "grid_export_power": { "label": "Export Power", "value": 52438.0, "unit": "W" }, "daily_pv_energy": { "label": "Daily Total PV Production", "value": 0.0, "unit": "kWh" }, "daily_charge_energy": { "label": "Daily Charge Energy", "value": 0.0, "unit": "kWh" }, "daily_discharge_energy": { "label": "Daily Discharge Energy", "value": 0.0, "unit": "kWh" }, "daily_consumed_energy": { "label": "Daily Consumption", "value": 32732071.51, "unit": "kWh" }, "grid_daily_import_energy": { "label": "Daily Imported Energy", "value": 0.0, "unit": "kWh" }, "grid_daily_export_energy": { "label": "Daily Exported Energy", "value": 0.0, "unit": "kWh" }, "self_consumed_power": { "label": "Self-Consumed Power", "value": null, "unit": "W" }, "daily_self_consumed_energy": { "label": "Daily Self Consumed Energy", "value": null, "unit": "kWh" }, "average_cell_temperature": { "label": "Average Cell Temperature", "value": 62.2, "unit": "°C" }, "available_max_charging_capacity": { "label": "AvailableMax Charging Capacity", "value": 664.7, "unit": "kWh" }, "available_max_discharging_capacity": { "label": "Available Max Discharging Capacity", "value": 3629.47, "unit": "kWh" }, "pcs_alarms": { "label": "PCS Alarms", "value": "No Alarm", "unit": null }, "ess_alarms": { "label": "ESS Alarms", "value": "No Alarm", "unit": null }, "gateway_alarms": { "label": "Gateway Alarms", "value": "No Alarm", "unit": null }, "dc_charger_alarms": { "label": "DC Charger Alarms", "value": "No Alarm", "unit": null }, "alarms": { "label": "Plant Alarms", "value": "No Alarm", "unit": null }, "config": { "rated_energy_capacity": { "label": "Rated Energy Capacity", "value": 3661.27, "unit": "kWh" }, "max_active_power": { "label": "Max Active Power", "value": 257.62, "unit": "kW" }, "rated_charging_power": { "label": "Rated Charging Power", "value": 12.6, "unit": "kW" }, "rated_discharging_power": { "label": "Rated Discharging Power", "value": 13.68, "unit": "kW" }, "grid_max_export_limit": { "label": "Grid Max Export Limit", "value": 2050034.25, "unit": "kW" } }, "has_battery": true }, "inverters": { "1": { "running_state": { "label": "Running State", "value": "Standby", "unit": null }, "active_power": { "label": "Active Power", "value": -303.81, "unit": "kW" }, "pv_power": { "label": "PV Power", "value": 403541.0, "unit": "W" }, "battery_soc": { "label": "Battery SoC", "value": 11.5, "unit": "%" }, "battery_soh": { "label": "Battery SoH", "value": 98.1, "unit": "%" }, "temperature": { "label": "Temperature", "value": 59.8, "unit": "°C" }, "min_battery_temperature": { "label": "Min Battery Temperature", "value": 33.1, "unit": "°C" }, "max_battery_temperature": { "label": "Max Battery Temperature", "value": 145.0, "unit": "°C" }, "daily_pv_energy": { "label": "Daily Production", "value": 23206680.25, "unit": "kWh" }, "config": { "model": { "label": "Model", "value": "SigenStor EC 12.0 TP", "unit": null }, "serial_number": { "label": "Serial Number", "value": "CMU123A45BP678", "unit": null }, "firmware_version": { "label": "Firmware Version", "value": "V100R001C00SPC112B107G", "unit": null }, "rated_active_power": { "label": "Rated Active Power", "value": 143.51, "unit": "kW" }, "rated_battery_capacity": { "label": "Rated Battery Capacity", "value": 147.29, "unit": "kWh" } } } }, "dc_chargers": { "1": { "running_state": { "label": "Running State", "value": "Idle", "unit": null }, "output_power": { "label": "Output Power", "value": 44.26, "unit": "kW" }, "vehicle_soc": { "label": "Vehicle SoC", "value": 44.2, "unit": "%" }, "current_charging_capacity": { "label": "Current Charging Capacity", "value": 4439.0, "unit": "kWh" }, "config": { "rated_charging_power": { "label": "Rated Charging Power", "value": 343.15, "unit": "kW" }, "max_charging_power_limit": { "label": "Max Charging Power Limit", "value": 480.72, "unit": "kW" } } } }, "ac_chargers": { "2": { "running_state": { "label": "Running State", "value": "Initialising", "unit": null }, "charging_power": { "label": "Charging Power", "value": 446.4, "unit": "kW" }, "output_current": { "label": "Output Current", "value": null, "unit": "A" }, "alarm": { "label": "Alarms", "value": "No Alarm", "unit": null }, "config": { "rated_power": { "label": "Rated Power", "value": 345.83, "unit": "kW" }, "rated_current": { "label": "Rated Current", "value": 63.0, "unit": "A" } } } } };
+        const SAMPLE_DATA = { "plant": { "active_power": { "label": "Active Power", "value": -4.97, "unit": "kW" }, "grid_status": { "label": "Grid Status", "value": "On Grid", "unit": null }, "grid_activity": { "label": "Grid Activity", "value": "Exporting", "unit": null }, "running_state": { "label": "Running State", "value": "Standby", "unit": null }, "ems_work_mode": { "label": "EMS Work Mode", "value": "Max Self Consumption", "unit": null }, "battery_soc": { "label": "Battery SoC", "value": 38.0, "unit": "%" }, "battery_soh": { "label": "Battery SoH", "value": 10.9, "unit": "%" }, "battery_power": { "label": "Battery Power", "value": 292845.0, "unit": "W" }, "battery_status": { "label": "Battery Status", "value": "Charging", "unit": null }, "lifetime_charged_energy": { "label": "Lifetime Charge Energy", "value": 1.7843817183484294e+17, "unit": "kWh" }, "lifetime_discharged_energy": { "label": "Lifetime Discharge Energy", "value": 2.9005924427074692e+16, "unit": "kWh" }, "pv_power": { "label": "Total PV Power", "value": 412257.0, "unit": "W" }, "third_party_pv_power": { "label": "Third-Party PVPower", "value": 35334.0, "unit": "W" }, "load_power": { "label": "Total Load Power", "value": 343553.0, "unit": "W" }, "grid_import_power": { "label": "Import Power", "value": 0.0, "unit": "W" }, "grid_export_power": { "label": "Export Power", "value": 52438.0, "unit": "W" }, "daily_pv_energy": { "label": "Daily Total PV Production", "value": 0.0, "unit": "kWh" }, "daily_charge_energy": { "label": "Daily Charge Energy", "value": 0.0, "unit": "kWh" }, "daily_discharge_energy": { "label": "Daily Discharge Energy", "value": 0.0, "unit": "kWh" }, "daily_consumed_energy": { "label": "Daily Consumption", "value": 32732071.51, "unit": "kWh" }, "grid_daily_import_energy": { "label": "Daily Imported Energy", "value": 0.0, "unit": "kWh" }, "grid_daily_export_energy": { "label": "Daily Exported Energy", "value": 0.0, "unit": "kWh" }, "self_consumed_power": { "label": "Self-Consumed Power", "value": null, "unit": "W" }, "daily_self_consumed_energy": { "label": "Daily Self Consumed Energy", "value": null, "unit": "kWh" }, "average_cell_temperature": { "label": "Average Cell Temperature", "value": 62.2, "unit": "°C" }, "available_max_charging_capacity": { "label": "AvailableMax Charging Capacity", "value": 664.7, "unit": "kWh" }, "available_max_discharging_capacity": { "label": "Available Max Discharging Capacity", "value": 3629.47, "unit": "kWh" }, "pcs_alarms": { "label": "PCS Alarms", "value": "No Alarm", "unit": null }, "ess_alarms": { "label": "ESS Alarms", "value": "No Alarm", "unit": null }, "gateway_alarms": { "label": "Gateway Alarms", "value": "No Alarm", "unit": null }, "dc_charger_alarms": { "label": "DC Charger Alarms", "value": "No Alarm", "unit": null }, "alarms": { "label": "Plant Alarms", "value": "No Alarm", "unit": null }, "config": { "rated_energy_capacity": { "label": "Rated Energy Capacity", "value": 3661.27, "unit": "kWh" }, "max_active_power": { "label": "Max Active Power", "value": 257.62, "unit": "kW" }, "rated_charging_power": { "label": "Rated Charging Power", "value": 12.6, "unit": "kW" }, "rated_discharging_power": { "label": "Rated Discharging Power", "value": 13.68, "unit": "kW" }, "grid_max_export_limit": { "label": "Grid Max Export Limit", "value": 2050034.25, "unit": "kW" } }, "has_battery": true }, "inverters": { "1": { "running_state": { "label": "Running State", "value": "Standby", "unit": null }, "active_power": { "label": "Active Power", "value": -303.81, "unit": "kW" }, "pv_power": { "label": "PV Power", "value": 403541.0, "unit": "W" }, "battery_soc": { "label": "Battery SoC", "value": 11.5, "unit": "%" }, "battery_soh": { "label": "Battery SoH", "value": 98.1, "unit": "%" }, "temperature": { "label": "Temperature", "value": 59.8, "unit": "°C" }, "min_battery_temperature": { "label": "Min Battery Temperature", "value": 33.1, "unit": "°C" }, "max_battery_temperature": { "label": "Max Battery Temperature", "value": 145.0, "unit": "°C" }, "daily_pv_energy": { "label": "Daily Production", "value": 23206680.25, "unit": "kWh" }, "config": { "model": { "label": "Model", "value": "SigenStor EC 12.0 TP", "unit": null }, "serial_number": { "label": "Serial Number", "value": "CMU123A45BP678", "unit": null }, "firmware_version": { "label": "Firmware Version", "value": "V100R001C00SPC112B107G", "unit": null }, "rated_active_power": { "label": "Rated Active Power", "value": 143.51, "unit": "kW" }, "rated_battery_capacity": { "label": "Rated Battery Capacity", "value": 147.29, "unit": "kWh" } } } }, "dc_chargers": { "1": { "running_state": { "label": "Running State", "value": "Idle", "unit": null }, "output_power": { "label": "Output Power", "value": 44.26, "unit": "kW" }, "vehicle_soc": { "label": "Vehicle SoC", "value": 44.2, "unit": "%" }, "current_charging_capacity": { "label": "Current Charging Capacity", "value": 4439.0, "unit": "kWh" }, "config": { "rated_charging_power": { "label": "Rated Charging Power", "value": 343.15, "unit": "kW" }, "max_charging_power_limit": { "label": "Max Charging Power Limit", "value": 480.72, "unit": "kW" } } } }, "ac_chargers": { "2": { "running_state": { "label": "Running State", "value": "Initialising", "unit": null }, "charging_power": { "label": "Charging Power", "value": 446.4, "unit": "kW" }, "output_current": { "label": "Output Current", "value": null, "unit": "A" }, "alarm": { "label": "Alarms", "value": "No Alarm", "unit": null }, "config": { "rated_power": { "label": "Rated Power", "value": 345.83, "unit": "kW" }, "rated_current": { "label": "Rated Current", "value": 63.0, "unit": "A" } } } } };
 
         (function () {
             const plantGrid = document.getElementById('plantGrid');
@@ -911,6 +917,58 @@
           <svg class="gauge-svg" viewBox="0 0 120 100">
             <path d="${d}" class="gauge-track"></path>
             <path d="${d}" class="gauge-fill" style="stroke:${color};stroke-dasharray:${totalLen.toFixed(2)};stroke-dashoffset:${(totalLen - filledLen).toFixed(2)};"></path>
+          </svg>
+          <div class="gauge-readout">
+            <div class="gauge-value">${hasValue ? fmtNum(value) : '—'}</div>
+            <div class="gauge-unit">${unit || ''}</div>
+          </div>
+          <div class="gauge-label">${label}</div>
+        `;
+                return wrap;
+            }
+
+            // Zero-centered gauge for values that can swing positive or negative
+            // around a symmetric ±max range (e.g. active_power against
+            // max_active_power). Unlike buildGauge — which fills cumulatively
+            // from the arc's start — this fills outward from the arc's true
+            // midpoint (top/12 o'clock, which is where zero sits since the
+            // scale is symmetric) toward the value: rightwards for positive,
+            // leftwards for negative. That keeps near-zero values reading as
+            // near-empty while still landing on the correct side, rather than
+            // a small value appearing ~half-filled (if measured from the
+            // start) or fully clamped to empty (if measured 0..max only).
+            // A short tick mark at the top edge of the track marks the zero
+            // point for reference, similar in spirit to the flow chart's
+            // center-line divider for divergent bars.
+            function buildCenteredGauge({ label, value, unit, max = 100, mode = 'neutral' }) {
+                const cx = 60, cy = 54, r = 44;
+                const trackPath = gaugeArcPath(cx, cy, r);
+                const hasValue = typeof value === 'number' && Number.isFinite(value);
+                const clamped = hasValue ? Math.min(max, Math.max(-max, value)) : 0;
+                const magPct = max === 0 ? 0 : Math.abs(clamped) / max;
+                const color = gaugeColor(magPct, mode);
+
+                // Symmetric scale: 0 maps exactly to angle 0 (top), -max maps to
+                // GAUGE_START, +max maps to GAUGE_END.
+                const valueAngle = max === 0 ? 0 : (clamped / max) * GAUGE_END;
+                let fillPath = null;
+                if (Math.abs(valueAngle) > 0.5) {
+                    fillPath = clamped >= 0
+                        ? arcSegmentPath(cx, cy, r, 0, valueAngle)
+                        : arcSegmentPath(cx, cy, r, valueAngle, 0);
+                }
+
+                // Zero tick: a short radial notch at the top of the track.
+                const zeroOuter = polarToCartesian(cx, cy, r + 4, 0);
+                const zeroInner = polarToCartesian(cx, cy, r - 4, 0);
+
+                const wrap = document.createElement('div');
+                wrap.className = 'gauge';
+                wrap.innerHTML = `
+          <svg class="gauge-svg" viewBox="0 0 120 100">
+            <path d="${trackPath}" class="gauge-track"></path>
+            <line x1="${zeroOuter.x.toFixed(2)}" y1="${zeroOuter.y.toFixed(2)}" x2="${zeroInner.x.toFixed(2)}" y2="${zeroInner.y.toFixed(2)}" class="gauge-zero-tick"></line>
+            ${fillPath ? `<path d="${fillPath}" class="gauge-fill" style="stroke:${color};"></path>` : ''}
           </svg>
           <div class="gauge-readout">
             <div class="gauge-value">${hasValue ? fmtNum(value) : '—'}</div>
@@ -1167,14 +1225,18 @@
                     const maxActivePower = plant.config && plant.config.max_active_power && typeof plant.config.max_active_power.value === 'number'
                         ? plant.config.max_active_power.value
                         : 100;
-                    // active_power can be negative (importing/consuming) as well as
-                    // positive (exporting/generating), so the gauge spans
-                    // -max..+max rather than 0..max, symmetric around zero.
-                    powerGr.appendChild(buildGauge({
+                    // active_power can be negative (importing/consuming) as well
+                    // as positive (exporting/generating), against a symmetric
+                    // ±max_active_power range. Zero sits at the arc's midpoint
+                    // (top), and the fill grows outward from there toward the
+                    // value — right for positive, left for negative — so
+                    // near-zero power reads as near-empty on the correct side
+                    // rather than clamping to zero or sitting half-filled.
+                    const activePowerVal = fval(plant.active_power);
+                    powerGr.appendChild(buildCenteredGauge({
                         label: 'Active Power',
-                        value: fval(plant.active_power),
+                        value: activePowerVal,
                         unit: funit(plant.active_power),
-                        min: -maxActivePower,
                         max: maxActivePower,
                         mode: 'neutral',
                     }));
