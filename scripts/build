@@ -183,6 +183,11 @@ if [[ -e ../home-assistant-addons/sigenergy2mqtt/config.yaml ]]; then
     grep -Eoe '^SIGENERGY2MQTT_[^:]+' sigenergy2mqtt/config/const.py | sort > ../home-assistant-addons/tests/sigenergy2mqtt/.local/bin/sigenergy2mqtt.env.vars
 fi
 
+if grep -qe "\[Unreleased\]" CHANGELOG.md; then
+    sed -e "s/\[Unreleased\]/[${new_version}] - $(date '+%Y-%m-%d')/g" -i CHANGELOG.md
+elif grep -qe "\[${old_version}\]" CHANGELOG.md; then
+    sed -e "s/\[${old_version}\].*/[${new_version}] - $(date '+%Y-%m-%d')/g" -i CHANGELOG.md
+fi
 grep -qe "\[${old_version}\]" CHANGELOG.md && sed -e "s/\[${old_version}\].*/[${new_version}] - $(date '+%Y-%m-%d')/g" -i CHANGELOG.md
 
 echo -e "${GREEN}>>> Build successful${NC} $(date): Old version=${ORANGE}$old_version${NC} New version=${GREEN}$new_version${NC} (PyPi=${GREEN}$pypi_version${NC})"
