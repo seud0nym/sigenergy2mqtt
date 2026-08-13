@@ -82,15 +82,8 @@ class Config:
 
     if TYPE_CHECKING:
         from sigenergy2mqtt.common import ConsumptionMethod
-        from sigenergy2mqtt.config.settings import (
-            HealthCheckConfig,
-            HomeAssistantConfig,
-            InfluxDbConfig,
-            ModbusConfig,
-            MqttConfig,
-            PersistenceConfig,
-            PvOutputConfig,
-        )
+
+        from .settings import ModbusConfig
 
     def __init__(self):
         self._source = None

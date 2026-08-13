@@ -254,7 +254,7 @@ class _MqttBackend:
 
     def _drain_retries(self, client) -> None:
         now = time.time()
-        for _ in range(len(self._retry_queue)):
+        while self._retry_queue:
             ts, attempt, fn, args = self._retry_queue[0]
             if ts > now:
                 break
