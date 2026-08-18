@@ -11,6 +11,7 @@
 ### Changed
 
 - Added plant active power and third-party PV power to dashboard
+- Upgraded `pydantic-settings` from 2.14.2 to 2.15.0
 
 ---
 
