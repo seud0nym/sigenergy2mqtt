@@ -9,7 +9,7 @@ dependencies = [
     "paho-mqtt==2.1.0",
     "psutil==7.2.2",
     "pydantic-settings==2.15.0",
-    "pymodbus==3.14.0",
+    "pymodbus==3.15.0",
     "requests==2.34.2",
     "ruamel.yaml==0.19.1",
 ]
@@ -44,12 +44,8 @@ scripts.cov = "pytest -n auto --cov=sigenergy2mqtt --cov-report=xml --maxfail=0"
 [tool.hatch.version]
 path = "sigenergy2mqtt/config/version.py"
 
-[tool.pyrefly]
-project-excludes = [".git", ".venv", "tests"]
-search-path = [".venv/lib/python3.14/site-packages"]
-
 [tool.pyright]
-exclude = [".git", ".venv", "tests"]
+exclude = [".git", ".venv", "tests", "**/node_modules", "**/__pycache__", "**/.*"]
 extraPaths = ["./sigenergy2mqtt"]
 ignore = [".git", ".venv", "tests"]
 typeCheckingMode = "standard"
