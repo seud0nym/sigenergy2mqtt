@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -eo pipefail
+
 cd "$(cd $(dirname $0)/..; pwd)"
 if [[ -z "$VIRTUAL_ENV" ]]; then
    source .venv/bin/activate
@@ -45,42 +47,51 @@ USAGE
   shift
 done
 
-frozen="$(pip freeze)"
-
 check_pkg () {
   local spec="$1"
   local add_after="$2"
   local pkg="${spec%%[=(]*}"
 
+  [ -z "$pkg" ] && { echo ">>> ERROR: Failed to extract package name from spec: $spec" >&2; exit 1; }
+
   if [[ "$install_only" -eq 1 ]]; then
-    eval pip install "'$spec'" --root-user-action=ignore --no-cache-dir $quiet || exit 1
+    $UV pip install "$spec" $ROOT_USER_ACTION --no-cache-dir $quiet || exit 1
     return
   fi
 
   [ -z "$quiet" ] && echo ">>> Checking $pkg..."
 
-  if ! echo "$frozen" | grep -q "^${pkg}=="; then
-    eval pip install "'$spec'" --root-user-action=ignore $quiet || exit 1
+  if ! $UV pip show $pkg --quiet; then
+    $UV pip install "$spec" $ROOT_USER_ACTION $quiet || exit 1
   elif [[ $no_upgrade -eq 0 ]]; then
-    eval pip install "'$spec'" --upgrade --root-user-action=ignore $quiet || exit 1
+    $UV pip install "$spec" --upgrade $ROOT_USER_ACTION $quiet || exit 1
   fi
 
   if [[ -n "$add_after" ]]; then
-    if grep -Eq "$pkg[=(]" pyproject.toml; then
-      sed -e "s/$pkg[=(][^\"]*/$(echo "$frozen" | grep "^${pkg}==")/" -i pyproject.toml
+    local version="$($UV pip show "$pkg" | grep -Eo 'Version: [^ ]+' | cut -d' ' -f2)"
+    if grep -Eq "${pkg}==" pyproject.toml; then
+      sed -e "s/${pkg}==[^\"]*/${pkg}==${version}/" -i pyproject.toml
     else
-      sed -e "/${add_after}/a\    \"$(echo "$frozen" | grep "^${pkg}==")\"," -i pyproject.toml
+      sed -e "/${add_after}/a\    \"${pkg}==${version}\"," -i pyproject.toml
     fi
   fi
 }
 
-eval pip install --upgrade pip $quiet
+[ -z "$quiet" ] && python3 --version
+if which -s uv; then
+  UV=uv
+  [ -z "$quiet" ] && uv --version
+else
+  ROOT_USER_ACTION="--root-user-action=ignore"
+  [ -z "$quiet" ] && pip --version
+fi
+
+eval $UV pip install --upgrade $UV pip $quiet
 
 if [[ "$install_build_deps" -eq 1 ]]; then
   for spec in \
       "build(>=1.3.0,<2.0.0)" \
       "twine(>=6.2.0,<7.0.0)" \
-      "pip-autoremove(>=0.10.0,<1.0.0)" \
       "pytest" \
       "pytest-asyncio" \
       "pytest-cov" \
@@ -109,6 +120,6 @@ done
 if [[ "$install_only" -eq 0 ]]; then
   for spec in $(sed -ne '/dependencies =/,/\]/p' pyproject.toml | tail -n +2 | head -n -1 | tr -d '",' | xargs); do
     pkg="${spec%%[=(]*}"
-    echo "$pkgs" | grep -Eq "$pkg[=(]" || { sed -e "/$pkg[=(]/d" -i pyproject.toml; echo ">>> Removing $pkg"; pip-autoremove $pkg; }
+    echo "$pkgs" | grep -Eq "$pkg[=(]" || { sed -e "/$pkg[=(]/d" -i pyproject.toml; echo ">>> Removing $pkg"; $UV pip uninstall $pkg; }
   done
 fi
