@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 from sigenergy2mqtt.common import PERCENTAGE, DeviceClass, InputType, StateClass
 
 from .constants import DiscoveryKeys
-from .mixins import ModbusWritableSensorMixin
+from .mixins import ModbusWritableSensorMixin, WritableSensorMixin
 from .readable import ReadOnlySensor
 from .sensor import AvailabilityMixin, Sensor
 
@@ -265,11 +265,11 @@ class ReadWriteSensor(ModbusWritableSensorMixin, ReadOnlySensor):
 # =============================================================================
 
 
-class NumericSensorMixin:
+class NumericSensorMixin(WritableSensorMixin):
     """Add Home Assistant number configuration and range validation.
 
-    Combine this with :class:`WritableSensorMixin` and a sensor implementation
-    that provides ``_write_value`` when the value is not backed by Modbus.
+    This inherits :class:`WritableSensorMixin`; provide ``_write_value`` in a
+    subclass when the value is not backed by Modbus.
     """
 
     def __init__(self, minimum: float | None = None, maximum: float | None = None, **kwargs):
@@ -303,7 +303,7 @@ class NumericSensorMixin:
         return (not isinstance(minimum, (int, float)) or value >= minimum) and (not isinstance(maximum, (int, float)) or value <= maximum)
 
 
-class SelectSensorMixin:
+class SelectSensorMixin(WritableSensorMixin):
     """Add Home Assistant select configuration and option validation."""
 
     def __init__(self, options: list[str], **kwargs):
@@ -329,7 +329,7 @@ class SelectSensorMixin:
         return True
 
 
-class SwitchSensorMixin:
+class SwitchSensorMixin(WritableSensorMixin):
     """Add Home Assistant switch configuration and binary value validation."""
 
     def __init__(self, **kwargs):

@@ -73,8 +73,8 @@ without choosing a transport:
   `1` commands.
 
 They mirror the command-facing behaviour of `NumericSensor`, `SelectSensor`,
-and `SwitchSensor`.  Use them before `WritableSensorMixin` in a multiple
-inheritance declaration when the backing service is not Modbus.
+and `SwitchSensor`, and each inherits `WritableSensorMixin`. Subclass the
+appropriate presentation mixin directly when the backing service is not Modbus.
 
 ## Creating a non-Modbus writable sensor
 
@@ -83,7 +83,7 @@ required by `Sensor`.  A write-only service-backed numeric entity can be
 created without an address, input type, Modbus data type, or client:
 
 ```python
-class ApiSetpoint(NumericSensorMixin, WritableSensorMixin, Sensor):
+class ApiSetpoint(NumericSensorMixin):
     async def _update_internal_state(self, **kwargs):
         return False
 
