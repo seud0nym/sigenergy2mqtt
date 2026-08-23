@@ -38,7 +38,7 @@ class PowerPlant(ModbusDevice):
             247,
             "Energy Management System",
             protocol_version,
-            sw=f"Modbus ProtocolVersion V{protocol_version.value}",
+            sw=f"Modbus Protocol V{protocol_version.value}",
             plant_suffix=plant_suffix,
         )
         self._consumption_source = ConsumptionMethod.CALCULATED if self.protocol_version < ProtocolVersion.V2_8 else active_config.consumption

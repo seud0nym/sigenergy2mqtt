@@ -416,7 +416,7 @@ class ProtocolVersionSensor(MetricsSensor):
 
     def __init__(self, protocol_version: ProtocolVersion):
         super().__init__(
-            name="ProtocolVersion Version",
+            name="Protocol Version",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_modbus_protocol",
             object_id="sigenergy2mqtt_modbus_protocol",
             icon="mdi:book-information-variant",
