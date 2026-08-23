@@ -359,7 +359,7 @@ class ModbusWriteableSensorMixin(TypedSensorMixin, ModbusSensorMixin, WriteableS
         # Early return removed to allow string processing below
 
         # Lazy import to avoid circular dependencies
-        from .writable import SwitchSensor, WriteOnlySensor
+        from .writeable import SwitchSensor, WriteOnlySensor
 
         # Handle Option-based sensors
         if DiscoveryKeys.OPTIONS in self and isinstance(raw_value, (int, float)):

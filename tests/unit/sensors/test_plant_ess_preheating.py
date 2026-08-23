@@ -58,7 +58,7 @@ async def test_ess_preheating_advance_enable_valid(monkeypatch):
     async def mock_super_valid(self, client, val):
         return True
     
-    monkeypatch.setattr("sigenergy2mqtt.sensors.base.writable.SwitchSensor.value_is_valid", mock_super_valid)
+    monkeypatch.setattr("sigenergy2mqtt.sensors.base.writeable.SwitchSensor.value_is_valid", mock_super_valid)
     valid = await sensor.value_is_valid(modbus_client=None, raw_value=1)
     assert valid
 

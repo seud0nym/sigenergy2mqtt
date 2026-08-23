@@ -18,7 +18,7 @@ from sigenergy2mqtt.sensors.base.mixins import (
     WriteableSensorMixin,
 )
 from sigenergy2mqtt.sensors.base.sensor import Sensor
-from sigenergy2mqtt.sensors.base.writable import SwitchSensor, WriteOnlySensor
+from sigenergy2mqtt.sensors.base.writeable import SwitchSensor, WriteOnlySensor
 
 
 class DummyReadable(ReadableSensorMixin, Sensor):

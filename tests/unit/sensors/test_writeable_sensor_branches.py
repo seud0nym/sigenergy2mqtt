@@ -1,7 +1,7 @@
-"""Tests for specific branches in sensors/base/writable.py.
+"""Tests for specific branches in sensors/base/writeable.py.
 
 Covers missing lines:
-  writable.py  56, 58, 113, 131, 150, 253, 345, 355, 357, 430, 433, 434, 436, 437,
+  writeable.py  56, 58, 113, 131, 150, 253, 345, 355, 357, 430, 433, 434, 436, 437,
                439, 455, 464, 465, 467, 581
 """
 
@@ -149,7 +149,7 @@ class TestWriteOnlySensorGetDiscoveryComponents:
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             sensor = WriteOnlySensor("Test", "sigen_test_disc_debug", 0, 1, 30001, Protocol.V2_4)
             sensor.debug_logging = True
-            with patch("sigenergy2mqtt.sensors.base.writable.logger") as mock_log:
+            with patch("sigenergy2mqtt.sensors.base.writeable.logger") as mock_log:
                 sensor.get_discovery_components()
                 mock_log.debug.assert_called()
 
@@ -446,7 +446,7 @@ class TestNumericSensorGetState:
 class TestThreePhaseAdjustmentTargetValue:
     def test_missing_output_type_raises(self):
         """Line 581: ValueError when output_type not in kwargs."""
-        from sigenergy2mqtt.sensors.base.writable import ThreePhaseAdjustmentTargetValue
+        from sigenergy2mqtt.sensors.base.writeable import ThreePhaseAdjustmentTargetValue
 
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             # output_type is passed through **kwargs by ThreePhaseAdjustmentTargetValue

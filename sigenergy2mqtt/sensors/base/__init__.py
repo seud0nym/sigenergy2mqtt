@@ -86,7 +86,7 @@ from .sensor import (  # noqa: F401
 from .timestamp import TimestampSensor  # noqa: F401
 
 # Writeable sensors
-from .writable import (  # noqa: F401
+from .writeable import (  # noqa: F401
     NumericSensor,
     NumericSensorMixin,
     ReadWriteSensor,
