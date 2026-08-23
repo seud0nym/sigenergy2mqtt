@@ -272,9 +272,8 @@ class NumericSensorMixin(WriteableSensorMixin):
     subclass when the value is not backed by Modbus.
     """
 
-    def __init__(self, minimum: float | None = None, maximum: float | None = None, **kwargs):
-        if minimum is not None and maximum is not None and minimum >= maximum:
-            raise AssertionError(f"{self.__class__.__name__}: min must be less than max")
+    def __init__(self, minimum: float | tuple[float, float] | None = None, maximum: float | tuple[float, float] | None = None, **kwargs):
+        self._validate_min_max_ranges(minimum, maximum)
         super().__init__(**kwargs)
         self[DiscoveryKeys.PLATFORM] = "number"
         self[DiscoveryKeys.MODE] = "slider" if (self.unit == PERCENTAGE and not active_config.home_assistant.edit_percentage_with_box) else "box"
@@ -282,25 +281,118 @@ class NumericSensorMixin(WriteableSensorMixin):
         if minimum is None and maximum is None and self.unit == PERCENTAGE:
             minimum, maximum = 0.0, 100.0
         if minimum is not None:
-            self[DiscoveryKeys.MIN] = float(minimum)
+            self[DiscoveryKeys.MIN] = self._format_range_value(minimum)
         if maximum is not None:
-            self[DiscoveryKeys.MAX] = float(maximum)
+            self[DiscoveryKeys.MAX] = self._format_range_value(maximum)
 
-    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
+        self._update_sanity_check_ranges(self.gain)
+
+    def _validate_min_max_ranges(self, minimum, maximum) -> None:
+        if minimum is None or maximum is None:
+            return
+        if isinstance(minimum, (int, float)) and isinstance(maximum, (int, float)):
+            if minimum >= maximum:
+                raise AssertionError(f"{self.__class__.__name__}: Invalid min/max values: {minimum}/{maximum} (min must be < max)")
+            return
+        if isinstance(minimum, tuple) and isinstance(maximum, tuple):
+            if len(minimum) != len(maximum):
+                raise AssertionError(f"{self.__class__.__name__}: Invalid min/max tuples: different lengths {len(minimum)}/{len(maximum)}")
+            for mn, mx in zip(minimum, maximum):
+                if not (isinstance(mn, (int, float)) and isinstance(mx, (int, float))):
+                    raise TypeError(f"{self.__class__.__name__}: Invalid tuple values: {mn}/{mx} (must be numeric)")
+                if mn >= mx:
+                    raise ValueError(f"{self.__class__.__name__}: Invalid tuple values: {mn}/{mx} (min must be < max)")
+            return
+        raise ValueError(f"{self.__class__.__name__}: Invalid min/max types: {type(minimum)}/{type(maximum)}")
+
+    def _format_range_value(self, value):
+        return float(value) if isinstance(value, (int, float)) else cast(tuple, value)
+
+    def _update_sanity_check_ranges(self, gain: float | None) -> None:
+        if DiscoveryKeys.MIN in self:
+            minimum = cast(float | tuple[float, ...], self[DiscoveryKeys.MIN])
+            minimum = min(minimum) if isinstance(minimum, tuple) else minimum
+            self.sanity_check.min_raw = int(minimum * gain) if gain else int(minimum)
+        if DiscoveryKeys.MAX in self:
+            maximum = cast(float | tuple[float, ...], self[DiscoveryKeys.MAX])
+            maximum = max(maximum) if isinstance(maximum, tuple) else maximum
+            self.sanity_check.max_raw = int(maximum * gain) if gain else int(maximum)
+
+    def apply_min_max(self, minimum, maximum) -> None:
+        if minimum is None and maximum is None and self.unit == PERCENTAGE:
+            self[DiscoveryKeys.MIN], self[DiscoveryKeys.MAX] = 0.0, 100.0
+        if minimum is not None:
+            self[DiscoveryKeys.MIN] = self._format_range_value(minimum)
+        elif maximum is not None:
+            self[DiscoveryKeys.MIN] = 0.0 if isinstance(maximum, float) else 0
+        if maximum is not None:
+            self[DiscoveryKeys.MAX] = self._format_range_value(maximum)
+        self._update_sanity_check_ranges(self.gain)
+
+    def get_discovery_components(self) -> dict[str, dict[str, Any]]:
+        components = super().get_discovery_components()
+        if DiscoveryKeys.MIN in self and isinstance(components[self.unique_id][DiscoveryKeys.MIN], (tuple, list)):
+            components[self.unique_id][DiscoveryKeys.MIN] = min(cast(Iterable[float], self[DiscoveryKeys.MIN]))
+        if DiscoveryKeys.MAX in self and isinstance(components[self.unique_id][DiscoveryKeys.MAX], (tuple, list)):
+            components[self.unique_id][DiscoveryKeys.MAX] = max(cast(Iterable[float], self[DiscoveryKeys.MAX]))
+        return components
+
+    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
+        state = await super().get_state(raw=raw, republish=republish, **kwargs)
+        if not isinstance(state, (float, int)):
+            return state
+        processed = cast(float | int, self._apply_gain_and_precision(state) if raw else state)
+        if getattr(self, "precision", None) == 0:
+            if isinstance(processed, int):
+                value = processed
+            elif processed == int(processed):
+                value = int(processed)
+            else:
+                value = float(processed)
+        else:
+            value = float(processed)
+        minimum = self.get(DiscoveryKeys.MIN)
+        maximum = self.get(DiscoveryKeys.MAX)
+        if isinstance(minimum, float):
+            value = max(value, minimum)
+        if isinstance(maximum, float):
+            value = min(value, maximum)
+        if isinstance(minimum, tuple) and value < 0 and not (min(minimum) <= value <= max(minimum)):
+            value = min(minimum)
+        if isinstance(maximum, tuple) and value > 0 and not (min(maximum) <= value <= max(maximum)):
+            value = max(maximum)
+        if raw and self.gain and self.gain != 1:
+            return value * self.gain
+        return value
+
+    async def set_value(self, modbus_client, mqtt_client, value, source, handler) -> bool:
+        if value is None:
+            logger.warning(f"{self.log_identity} Ignored attempt to set value to *None*")
+            return False
         try:
-            raw_value = float(value) * self.gain
-        except (TypeError, ValueError) as exc:
+            state = float(value)
+            if self.gain != 1:
+                state *= self.gain
+        except (ValueError, TypeError, RuntimeError) as exc:
             logger.warning(f"{self.log_identity} Attempt to set value to '{value}' FAILED: {exc!r}")
             return False
-        return await super().set_value(modbus_client, mqtt_client, raw_value, source, handler)
+        return await super().set_value(modbus_client, mqtt_client, state, source, handler)
 
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | str) -> bool:
+    async def value_is_valid(self, modbus_client, raw_value) -> bool:
         try:
-            value = float(raw_value) / self.gain
+            value = cast(float, self._apply_gain_and_precision(float(raw_value)))
+            minimum, maximum = self.get(DiscoveryKeys.MIN), self.get(DiscoveryKeys.MAX)
+            if isinstance(minimum, float) and value < minimum:
+                return False
+            if isinstance(maximum, float) and value > maximum:
+                return False
+            if isinstance(minimum, tuple) and value < 0 and not (min(minimum) <= value <= max(minimum)):
+                return False
+            if isinstance(maximum, tuple) and value > 0:
+                return min(maximum) <= value <= max(maximum)
+            return True
         except (TypeError, ValueError):
             return False
-        minimum, maximum = self.get(DiscoveryKeys.MIN), self.get(DiscoveryKeys.MAX)
-        return (not isinstance(minimum, (int, float)) or value >= minimum) and (not isinstance(maximum, (int, float)) or value <= maximum)
 
 
 class SelectSensorMixin(WriteableSensorMixin):
@@ -318,12 +410,24 @@ class SelectSensorMixin(WriteableSensorMixin):
 
         self[DiscoveryKeys.PLATFORM] = "select"
         self[DiscoveryKeys.OPTIONS] = options
+        self.sanity_check.min_raw = 0
+        self.sanity_check.max_raw = len(options) - 1
+
+    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
+        value = await super().get_state(raw=raw, republish=republish, **kwargs)
+        if raw or value is None:
+            return value
+        if isinstance(value, (float, int)):
+            option = self._get_option(int(value))
+            return option if option else f"Unknown Mode: {value}"
+        return f"Unknown Mode: {value}"
 
     async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
         try:
             value = self._get_option_index(value)
         except ValueError:
             self.force_publish = True
+            logger.error(f"{self.log_identity} invalid value '{value}': Not a valid option or index")
             return False
         return await super().set_value(modbus_client, mqtt_client, value, source, handler)
 
@@ -331,6 +435,7 @@ class SelectSensorMixin(WriteableSensorMixin):
         try:
             self._get_option_index(raw_value)
         except ValueError:
+            logger.error(f"{self.log_identity} invalid value '{raw_value}': Not a valid option or index")
             return False
         return True
 
@@ -358,7 +463,7 @@ class SwitchSensorMixin(WriteableSensorMixin):
 # =============================================================================
 
 
-class NumericSensor(ReadWriteSensor):
+class NumericSensor(NumericSensorMixin, ReadWriteSensor):
     """Sensor for numeric values with min/max constraints.
 
     Appears as a number input in Home Assistant with configurable range.
@@ -386,9 +491,7 @@ class NumericSensor(ReadWriteSensor):
         maximum: float | tuple[float, float] | None = None,
         **kwargs,
     ):
-        # Validate min/max ranges
-        self._validate_min_max_ranges(minimum, maximum)
-
+        kwargs.pop("state_class", None)
         super().__init__(
             availability_control_sensor=availability_control_sensor,
             name=name,
@@ -407,260 +510,11 @@ class NumericSensor(ReadWriteSensor):
             gain=gain,
             precision=precision,
             protocol_version=protocol_version,
+            minimum=minimum,
+            maximum=maximum,
             **kwargs,
         )
         self.sanity_check.delta = False
-
-        self[DiscoveryKeys.PLATFORM] = "number"
-
-        # Set input mode and step
-        self[DiscoveryKeys.MODE] = "slider" if (unit == PERCENTAGE and not active_config.home_assistant.edit_percentage_with_box) else "box"
-        self[DiscoveryKeys.STEP] = 1 if precision is None else 10**-precision
-
-        self.apply_min_max(minimum, maximum)
-
-    def _validate_min_max_ranges(self, minimum: float | tuple[float, float] | None, maximum: float | tuple[float, float] | None) -> None:
-        """Validate minimum and maximum range values.
-
-        Args:
-            minimum: Minimum value or range
-            maximum: Maximum value or range
-
-        Raises:
-            ValueError: If ranges are invalid
-        """
-        if minimum is None or maximum is None:
-            return
-
-        # Both are simple numbers
-        if isinstance(minimum, (int, float)) and isinstance(maximum, (int, float)):
-            if minimum >= maximum:
-                raise AssertionError(f"{self.__class__.__name__}: Invalid min/max values: {minimum}/{maximum} (min must be < max)")
-            return
-
-        # Both are tuples
-        if isinstance(minimum, tuple) and isinstance(maximum, tuple):
-            if len(minimum) != len(maximum):
-                raise AssertionError(f"{self.__class__.__name__}: Invalid min/max tuples: different lengths {len(minimum)}/{len(maximum)}")
-
-            for mn, mx in zip(minimum, maximum):
-                if not (isinstance(mn, (int, float)) and isinstance(mx, (int, float))):
-                    raise TypeError(f"{self.__class__.__name__}: Invalid tuple values: {mn}/{mx} (must be numeric)")
-                if mn >= mx:
-                    raise ValueError(f"{self.__class__.__name__}: Invalid tuple values: {mn}/{mx} (min must be < max)")
-            return
-
-        raise ValueError(f"{self.__class__.__name__}: Invalid min/max types: {type(minimum)}/{type(maximum)}")
-
-    def _format_range_value(self, value: float | tuple[float, float]) -> float | tuple[float, ...]:
-        """Format a range value for MQTT.
-
-        Args:
-            value: Single value or tuple of values
-
-        Returns:
-            Formatted value
-        """
-        if isinstance(value, (int, float)):
-            return float(value)
-        return cast(tuple, value)
-
-    def _update_sanity_check_ranges(self, gain: float | None) -> None:
-        """Update sanity check min/max based on configured ranges.
-
-        Args:
-            gain: Gain multiplier to apply
-        """
-        # Update minimum
-        if DiscoveryKeys.MIN in self:
-            if isinstance(self[DiscoveryKeys.MIN], (int, float)):
-                min_val = cast(float, self[DiscoveryKeys.MIN])
-                self.sanity_check.min_raw = int(min_val * gain) if gain else int(min_val)
-            elif isinstance(self[DiscoveryKeys.MIN], tuple):
-                min_val = min(cast(tuple[float, ...], self[DiscoveryKeys.MIN]))
-                self.sanity_check.min_raw = int(min_val * gain) if gain else int(min_val)
-
-        # Update maximum
-        if DiscoveryKeys.MAX in self:
-            if isinstance(self[DiscoveryKeys.MAX], (int, float)):
-                max_val = cast(float, self[DiscoveryKeys.MAX])
-                self.sanity_check.max_raw = int(max_val * gain) if gain else int(max_val)
-            elif isinstance(self[DiscoveryKeys.MAX], tuple):
-                max_val = max(cast(tuple[float, ...], self[DiscoveryKeys.MAX]))
-                self.sanity_check.max_raw = int(max_val * gain) if gain else int(max_val)
-
-    def apply_min_max(self, minimum: float | tuple[float, float] | None, maximum: float | tuple[float, float] | None) -> None:
-        """Apply new min/max values and update sanity check.
-
-        Args:
-            minimum: New minimum value or range
-            maximum: New maximum value or range
-        """
-        # Set default min/max for percentage
-        if minimum is None and maximum is None and self.unit == PERCENTAGE:
-            self[DiscoveryKeys.MIN] = 0.0
-            self[DiscoveryKeys.MAX] = 100.0
-
-        # Set minimum
-        if minimum is not None:
-            self[DiscoveryKeys.MIN] = self._format_range_value(minimum)
-        elif minimum is None and maximum is not None:
-            self[DiscoveryKeys.MIN] = 0.0 if isinstance(maximum, float) else 0
-
-        # Set maximum
-        if maximum is not None:
-            self[DiscoveryKeys.MAX] = self._format_range_value(maximum)
-
-        # Update sanity check ranges
-        self._update_sanity_check_ranges(self.gain)
-
-    def get_discovery_components(self) -> dict[str, dict[str, Any]]:
-        """Get discovery components with flattened min/max.
-
-        Returns:
-            Dictionary of component configurations
-        """
-        components = super().get_discovery_components()
-
-        # Flatten tuple ranges to single min/max values
-        if DiscoveryKeys.MIN in self and isinstance(components[self.unique_id][DiscoveryKeys.MIN], (tuple, list)):
-            components[self.unique_id][DiscoveryKeys.MIN] = min(cast(Iterable[float], self[DiscoveryKeys.MIN]))
-
-        if DiscoveryKeys.MAX in self and isinstance(components[self.unique_id][DiscoveryKeys.MAX], (tuple, list)):
-            components[self.unique_id][DiscoveryKeys.MAX] = max(cast(Iterable[float], self[DiscoveryKeys.MAX]))
-
-        return components
-
-    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
-        """Get state, constraining to min/max range.
-
-        Args:
-            raw: If True, return raw value
-            republish: If True, return last known state
-            **kwargs: Additional arguments
-
-        Returns:
-            State value constrained to valid range
-        """
-        state = await super().get_state(raw=raw, republish=republish, **kwargs)
-
-        if not isinstance(state, (float, int)):
-            return state
-
-        # Apply gain/precision first if raw requested, because min/max are defined in terms of having gain applied
-        processed = self._apply_gain_and_precision(state) if raw else state
-
-        # Preserve integer when precision == 0
-        if getattr(self, "precision", None) == 0:
-            if isinstance(processed, int):
-                value = processed
-            elif isinstance(processed, float) and processed == int(processed):
-                value = int(processed)
-            else:
-                value = float(processed)  # type: ignore
-        else:
-            value = float(processed)  # type: ignore
-
-        # Constrain to simple min/max
-        if DiscoveryKeys.MIN in self and isinstance(self[DiscoveryKeys.MIN], float):
-            value = max(value, cast(float, self[DiscoveryKeys.MIN]))
-
-        if DiscoveryKeys.MAX in self and isinstance(self[DiscoveryKeys.MAX], float):
-            value = min(value, cast(float, self[DiscoveryKeys.MAX]))
-
-        # Constrain to negative range (tuple)
-        if DiscoveryKeys.MIN in self and isinstance(self[DiscoveryKeys.MIN], tuple) and value < 0:
-            min_range = cast(tuple[float, ...], self[DiscoveryKeys.MIN])
-            if not (min(min_range) <= value <= max(min_range)):
-                value = min(min_range)
-
-        # Constrain to positive range (tuple)
-        if DiscoveryKeys.MAX in self and isinstance(self[DiscoveryKeys.MAX], tuple) and value > 0:
-            max_range = cast(tuple[float, ...], self[DiscoveryKeys.MAX])
-            if not (min(max_range) <= value <= max(max_range)):
-                value = max(max_range)
-
-        if value != processed and self.debug_logging:
-            logger.debug(f"{self.log_identity} value={state} adjusted to {value}")
-
-        # Re-apply gain to revert to back to raw value if necessary
-        if raw and self.gain and self.gain != 1:
-            return value * self.gain
-
-        return value
-
-    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
-        """Set numeric value with validation.
-
-        Args:
-            modbus_client: Modbus client for writing
-            mqtt_client: MQTT client
-            value: New value
-            source: Source topic
-            handler: MQTT handler
-
-        Returns:
-            True if successfully set
-        """
-        if value is None:
-            logger.warning(f"{self.log_identity} Ignored attempt to set value to *None*")
-            return False
-
-        try:
-            state = float(value)
-            if self.gain != 1:
-                state = state * self.gain  # Convert to raw value
-        except (ValueError, TypeError, RuntimeError) as e:
-            logger.warning(f"{self.log_identity} Attempt to set value to '{value}' FAILED: {e!r}")
-            return False
-
-        return await super().set_value(modbus_client, mqtt_client, state, source, handler)
-
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | str) -> bool:
-        """Validate numeric value is within range.
-
-        Args:
-            modbus_client: Modbus client (unused)
-            raw_value: Value to validate
-
-        Returns:
-            True if valid
-        """
-        try:
-            value = cast(float, self._apply_gain_and_precision(float(raw_value)))
-
-            # Check simple minimum
-            if isinstance(self.get(DiscoveryKeys.MIN), float):
-                min_val = cast(float, self[DiscoveryKeys.MIN])
-                if value < min_val:
-                    logger.error(f"{self.log_identity} invalid value '{value}' (raw={raw_value}): Less than minimum of {min_val}")
-                    return False
-
-            # Check simple maximum
-            if isinstance(self.get(DiscoveryKeys.MAX), float):
-                max_val = cast(float, self[DiscoveryKeys.MAX])
-                if value > max_val:
-                    logger.error(f"{self.log_identity} invalid value '{value}' (raw={raw_value}): Greater than maximum of {max_val}")
-                    return False
-
-            # Check negative range
-            if isinstance(self.get(DiscoveryKeys.MIN), tuple) and value < 0:
-                min_range = cast(tuple[float, ...], self[DiscoveryKeys.MIN])
-                if not (min(min_range) <= value <= max(min_range)):
-                    logger.error(f"{self.log_identity} invalid value '{value}' (raw={raw_value}): Not in range {min_range}")
-                    return False
-
-            # Check positive range
-            if isinstance(self.get(DiscoveryKeys.MAX), tuple) and value > 0:
-                max_range = cast(tuple[float, ...], self[DiscoveryKeys.MAX])
-                if not (min(max_range) <= value <= max(max_range)):
-                    logger.error(f"{self.log_identity} invalid value '{value}' (raw={raw_value}): Not in range {max_range}")
-                    return False
-
-            return True
-        except ValueError:
-            logger.error(f"{self.log_identity} invalid value '{raw_value}': Not a number")
-            return False
 
 
 class ThreePhaseAdjustmentTargetValue(NumericSensor):
@@ -681,7 +535,7 @@ class ThreePhaseAdjustmentTargetValue(NumericSensor):
 # =============================================================================
 
 
-class SelectSensor(ReadWriteSensor):
+class SelectSensor(SelectSensorMixin, ReadWriteSensor):
     """Sensor for selecting from a list of options.
 
     Appears as a dropdown selector in Home Assistant.
@@ -725,77 +579,9 @@ class SelectSensor(ReadWriteSensor):
             gain=None,
             precision=None,
             protocol_version=protocol_version,
+            options=options,
             **kwargs,
         )
-
-        self[DiscoveryKeys.PLATFORM] = "select"
-        self[DiscoveryKeys.OPTIONS] = options
-
-        self.sanity_check.min_raw = 0
-        self.sanity_check.max_raw = len(options) - 1
-
-    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
-        """Get state as option string.
-
-        Args:
-            raw: If True, return raw index value
-            republish: If True, return last known state
-            **kwargs: Additional arguments
-
-        Returns:
-            Option string or "Unknown Mode: X" if invalid
-        """
-        value = await super().get_state(raw=raw, republish=republish, **kwargs)
-
-        if raw or value is None:
-            return value
-
-        if isinstance(value, (float, int)):
-            option = self._get_option(int(value))
-            if option:
-                return option
-            return f"Unknown Mode: {value}"
-
-        return f"Unknown Mode: {value}"
-
-    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
-        """Set selected option by name or index.
-
-        Args:
-            modbus_client: Modbus client for writing
-            mqtt_client: MQTT client
-            value: Option name or index
-            source: Source topic
-            handler: MQTT handler
-
-        Returns:
-            True if successfully set
-        """
-        try:
-            index = self._get_option_index(value)
-        except ValueError:
-            self.force_publish = True
-            logger.error(f"{self.log_identity} invalid value '{value}': Not a valid option or index")
-            return False
-
-        return await super().set_value(modbus_client, mqtt_client, index, source, handler)
-
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | str) -> bool:
-        """Validate that value is a valid option.
-
-        Args:
-            modbus_client: Modbus client (unused)
-            raw_value: Value to validate
-
-        Returns:
-            True if valid option
-        """
-        try:
-            self._get_option_index(raw_value)
-            return True
-        except ValueError:
-            logger.error(f"{self.log_identity} invalid value '{raw_value}': Not a valid option or index")
-            return False
 
 
 # =============================================================================
@@ -803,7 +589,7 @@ class SelectSensor(ReadWriteSensor):
 # =============================================================================
 
 
-class SwitchSensor(ReadWriteSensor):
+class SwitchSensor(SwitchSensorMixin, ReadWriteSensor):
     """Binary switch sensor (on/off).
 
     Appears as a switch in Home Assistant.
@@ -841,15 +627,6 @@ class SwitchSensor(ReadWriteSensor):
             protocol_version=protocol_version,
             **kwargs,
         )
-
-        self[DiscoveryKeys.PLATFORM] = "switch"
-        self[DiscoveryKeys.PAYLOAD_OFF] = 0
-        self[DiscoveryKeys.PAYLOAD_ON] = 1
-        self[DiscoveryKeys.STATE_OFF] = 0
-        self[DiscoveryKeys.STATE_ON] = 1
-
-        self.sanity_check.min_raw = 0
-        self.sanity_check.max_raw = 1
 
     async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
         """Set switch value.
