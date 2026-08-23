@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, cast
 
 import paho.mqtt.client as mqtt
 
-from sigenergy2mqtt.common import Constants, Protocol
+from sigenergy2mqtt.common import Constants, ProtocolVersion
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus import ModbusClient, ModbusDataType
 
@@ -32,7 +32,7 @@ class ESSPreHeatingEnable(SwitchSensor, HybridInverter):
             device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=self.ADDRESS,
             scan_interval=ScanInterval.high(plant_index),
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
     def get_attributes(self) -> dict[str, float | int | str]:
@@ -57,7 +57,7 @@ class ESSPreHeatingMode(SelectSensor, AvailabilityMixin, HybridInverter):
                 "Automatic",  # 0
                 "Manual",  # 1
             ],
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
         self.publish_raw = True  # Always publish raw value for Advance availability control
 
@@ -79,7 +79,7 @@ class ESSPreHeatingAdvanceEnable(SwitchSensor, HybridInverter):
             device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=self.ADDRESS,
             scan_interval=ScanInterval.high(plant_index),
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
         self._use_raw_for_availability = True  # Use raw value of Preheating Mode for availability control
 
@@ -125,7 +125,7 @@ class ESSPreHeatingTOUTime(NumericSensor, HybridInverter, ABC):
             icon=icon,
             gain=1,
             precision=0,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
             slot=slot,
         )
         self[DiscoveryKeys.PLATFORM] = "time"
@@ -221,7 +221,7 @@ class ESSPreHeatingTOUTargetPower(NumericSensor, HybridInverter):
             icon="mdi:flash",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
             min=-rated_discharging_power,
             max=rated_charging_power,
             slot=slot,
@@ -253,7 +253,7 @@ class ESSPreHeatingReservedSOC(NumericSensor, HybridInverter):
             icon="mdi:percent-box-outline",
             gain=100,
             precision=None,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
     def get_attributes(self) -> dict[str, float | int | str]:

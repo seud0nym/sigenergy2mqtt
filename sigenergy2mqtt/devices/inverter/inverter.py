@@ -5,7 +5,7 @@ from typing import cast
 
 import sigenergy2mqtt.sensors.inverter_read_only as ro
 import sigenergy2mqtt.sensors.inverter_read_write as rw
-from sigenergy2mqtt.common import DeviceType, FirmwareVersion, HybridInverter, Protocol, PVInverter
+from sigenergy2mqtt.common import DeviceType, FirmwareVersion, HybridInverter, ProtocolVersion, PVInverter
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import ModbusDevice
 from sigenergy2mqtt.modbus import ModbusClient
@@ -23,7 +23,7 @@ class Inverter(ModbusDevice):
         plant_index: int,
         device_address: int,
         device_type: DeviceType,
-        protocol_version: Protocol,
+        protocol_version: ProtocolVersion,
         model_id: str,
         serial: str,
         firmware: str,
@@ -43,7 +43,7 @@ class Inverter(ModbusDevice):
         )
 
     @classmethod
-    async def create(cls, plant_index: int, device_address: int, device_type: DeviceType, protocol_version: Protocol, tz: timezone, modbus_client: ModbusClient) -> "Inverter":
+    async def create(cls, plant_index: int, device_address: int, device_type: DeviceType, protocol_version: ProtocolVersion, tz: timezone, modbus_client: ModbusClient) -> "Inverter":
         model = ro.InverterModel(plant_index, device_address)
         pv_string_count = ro.PVStringCount(plant_index, device_address)
         firmware_version = ro.InverterFirmwareVersion(plant_index, device_address)
@@ -81,7 +81,7 @@ class Inverter(ModbusDevice):
         plant_index: int,
         device_address: int,
         device_type: DeviceType,
-        protocol_version: Protocol,
+        protocol_version: ProtocolVersion,
         model_id: str,
         serial: str,
         strings: int,
@@ -99,11 +99,11 @@ class Inverter(ModbusDevice):
                     string_number=n,
                     voltage_address=address,
                     current_address=address + 1,
-                    protocol_version=Protocol.V1_8,
+                    protocol_version=ProtocolVersion.V1_8,
                 )
             )
             address += 2  # voltage is in the first register, current in the second
-        if protocol_version >= Protocol.V2_4:
+        if protocol_version >= ProtocolVersion.V2_4:
             address = 31042  # PV String 5 Voltage register
             for n in range(5, min(16, strings) + 1):
                 self._add_child_device(
@@ -116,11 +116,11 @@ class Inverter(ModbusDevice):
                         string_number=n,
                         voltage_address=address,
                         current_address=address + 1,
-                        protocol_version=Protocol.V2_4,
+                        protocol_version=ProtocolVersion.V2_4,
                     )
                 )
                 address += 2  # voltage is in the first register, current in the second
-        if protocol_version >= Protocol.V2_8 and isinstance(device_type, PVInverter):
+        if protocol_version >= ProtocolVersion.V2_8 and isinstance(device_type, PVInverter):
             address = 31066  # PV String 17 Voltage register
             for n in range(17, min(36, strings) + 1):
                 self._add_child_device(
@@ -133,7 +133,7 @@ class Inverter(ModbusDevice):
                         string_number=n,
                         voltage_address=address,
                         current_address=address + 1,
-                        protocol_version=Protocol.V2_8,
+                        protocol_version=ProtocolVersion.V2_8,
                     )
                 )
                 address += 2  # voltage is in the first register, current in the second

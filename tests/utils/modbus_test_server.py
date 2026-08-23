@@ -47,7 +47,7 @@ from pymodbus.constants import ExcCodes
 from pymodbus.server import ModbusTcpServer
 from pymodbus.simulator import DataType, SimData, SimDevice
 
-from sigenergy2mqtt.common import Constants, DeviceClass, Protocol
+from sigenergy2mqtt.common import Constants, DeviceClass, ProtocolVersion
 from sigenergy2mqtt.modbus.client import ModbusClient
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerInputBreaker, ACChargerRatedCurrent
 from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, OutputType, PhaseCurrent, PhaseVoltage, PowerFactor
@@ -76,7 +76,7 @@ class TestConfig:
 
     initial_firmware: str = "V100R001C00SPC112B107G"
     upgrade_firmware: str = "V100R001C00SPC113"
-    protocol_version: Protocol | None = None
+    protocol_version: ProtocolVersion | None = None
 
     use_simplified_topics: bool = False
 
@@ -916,7 +916,7 @@ async def run_async_server(
     use_simplified_topics: bool,
     host: str = "0.0.0.0",
     port: int = 502,
-    protocol_version: Protocol = list(Protocol)[-1],
+    protocol_version: ProtocolVersion = list(ProtocolVersion)[-1],
     log_level: int = logging.INFO,
 ) -> None:
     """Build and run the async Modbus TCP test server.
@@ -1227,14 +1227,14 @@ async def async_helper() -> None:
             return default
         return logging.getLevelNamesMapping()[value.upper()]
 
-    def _env_protocol(name: str) -> Protocol | None:
+    def _env_protocol(name: str) -> ProtocolVersion | None:
         value = _env(name)
         if value is None:
             return None
         normalized = value.upper()
         if not normalized.startswith("V"):
             normalized = f"V{normalized.replace('.', '_')}"
-        return Protocol[normalized]
+        return ProtocolVersion[normalized]
 
     def _env_registers(name: str) -> list[int]:
         value = _env(name)

@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.common import DeviceClass, Protocol, StateClass
+from sigenergy2mqtt.common import DeviceClass, ProtocolVersion, StateClass
 from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.base import ResettableAccumulationSensor, Sensor
 
@@ -379,7 +379,7 @@ class TestEnergyDailyAccumulationSensor:
         string.device_class = DeviceClass.POWER
         string.state_class = StateClass.MEASUREMENT
         string.precision = 2
-        string.protocol_version = Protocol.V1_8
+        string.protocol_version = ProtocolVersion.V1_8
 
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             import time

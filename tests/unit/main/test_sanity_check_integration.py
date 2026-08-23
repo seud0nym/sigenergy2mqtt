@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from sigenergy2mqtt.common import DeviceClass, InputType, Protocol, UnitOfPower
+from sigenergy2mqtt.common import DeviceClass, InputType, ProtocolVersion, UnitOfPower
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus.client import ModbusClient
 from sigenergy2mqtt.sensors.base import NumericSensor, SanityCheckException, SelectSensor
@@ -39,7 +39,7 @@ class TestSanityCheckIntegration:
             icon="mdi:test",
             gain=10,
             precision=1,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
             minimum=5.0,  # Display value
             maximum=20.0,  # Display value
         )
@@ -60,7 +60,7 @@ class TestSanityCheckIntegration:
             address=30002,
             scan_interval=60,
             options=options,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
         )
 
         # Raw values are indices 0, 1, 2
@@ -88,7 +88,7 @@ class TestSanityCheckIntegration:
             icon="mdi:test",
             gain=1,
             precision=1,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
             minimum=10,
             maximum=20,
         )
@@ -140,7 +140,7 @@ class TestSanityCheckIntegration:
             icon="mdi:test",
             gain=1,
             precision=1,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
             minimum=10,
             maximum=20,
         )

@@ -11,7 +11,7 @@ import logging
 
 import paho.mqtt.client as mqtt
 
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.metrics import sensors
@@ -31,7 +31,7 @@ class MetricsService(Device):
     correctly via their shared availability topic.
     """
 
-    def __init__(self, protocol_version: Protocol):
+    def __init__(self, protocol_version: ProtocolVersion):
         unique_id = f"{active_config.home_assistant.unique_id_prefix}_metrics"
         super().__init__("Sigenergy Metrics", -1, unique_id, "sigenergy2mqtt", "Metrics", protocol_version)
 
@@ -82,7 +82,7 @@ class MetricsService(Device):
         self._add_sensor(sensors.StateStoreDeleteErrors())
 
         self._add_sensor(sensors.Started())
-        self._add_sensor(sensors.ProtocolVersion(protocol_version))
+        self._add_sensor(sensors.ProtocolVersionSensor(protocol_version))
         self._add_sensor(sensors.ProtocolPublished(protocol_version))
 
         self._add_sensor(sensors.ResetMetrics())

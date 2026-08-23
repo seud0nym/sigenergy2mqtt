@@ -1,6 +1,6 @@
 import asyncio
 
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.main.thread_config import ThreadConfig, thread_config_registry
 
@@ -40,7 +40,7 @@ def test_threadconfig_properties_and_methods(monkeypatch):
     assert tc.description == "MyName"
 
     # Create a Device and attach to ThreadConfig
-    dev = Device("D1", 0, "uid-d1", "mf", "mdl", Protocol.N_A)
+    dev = Device("D1", 0, "uid-d1", "mf", "mdl", ProtocolVersion.N_A)
     tc.add_device(dev)
     assert dev in tc.devices
     assert dev in tc.devices

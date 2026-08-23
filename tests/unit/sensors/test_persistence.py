@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 import pytest
 
-from sigenergy2mqtt.common import InputType, Protocol, StateClass, UnitOfPower
+from sigenergy2mqtt.common import InputType, ProtocolVersion, StateClass, UnitOfPower
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.config.models.persistence import PersistenceConfig
 from sigenergy2mqtt.modbus import ModbusDataType
@@ -32,7 +32,7 @@ class MockSource(ReadOnlySensor):
             count=1,
             data_type=ModbusDataType.UINT16,
             scan_interval=10,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
             unit=UnitOfPower.WATT,
             device_class="power",
             state_class=StateClass.MEASUREMENT,

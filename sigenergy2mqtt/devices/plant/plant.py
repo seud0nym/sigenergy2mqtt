@@ -6,7 +6,7 @@ from typing import cast
 import sigenergy2mqtt.sensors.plant_derived as derived
 import sigenergy2mqtt.sensors.plant_read_only as ro
 import sigenergy2mqtt.sensors.plant_read_write as rw
-from sigenergy2mqtt.common import ConsumptionMethod, DeviceType, FirmwareVersion, HybridInverter, Protocol
+from sigenergy2mqtt.common import ConsumptionMethod, DeviceType, FirmwareVersion, HybridInverter, ProtocolVersion
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import ModbusDevice
 from sigenergy2mqtt.devices.plant.ess_preheating import ESSPreHeating
@@ -27,7 +27,7 @@ class PowerPlant(ModbusDevice):
         self,
         plant_index: int,
         device_type: DeviceType,
-        protocol_version: Protocol,
+        protocol_version: ProtocolVersion,
     ):
         name = "Sigenergy Plant"
         plant_suffix = "" if plant_index == 0 else str(plant_index + 1)
@@ -41,13 +41,13 @@ class PowerPlant(ModbusDevice):
             sw=f"Modbus Protocol V{protocol_version.value}",
             plant_suffix=plant_suffix,
         )
-        self._consumption_source = ConsumptionMethod.CALCULATED if self.protocol_version < Protocol.V2_8 else active_config.consumption
+        self._consumption_source = ConsumptionMethod.CALCULATED if self.protocol_version < ProtocolVersion.V2_8 else active_config.consumption
         self._consumption_group = "Consumption" if self._consumption_source == ConsumptionMethod.CALCULATED else None  # No need to group sensors for scanning if not calculating consumption
         self._grid_sensor = None
 
     @classmethod
     async def create(
-        cls, plant_index: int, device_type: DeviceType, firmware: FirmwareVersion, protocol_version: Protocol, tz: timezone, output_type: int, pre_heating: bool, modbus_client: ModbusClient
+        cls, plant_index: int, device_type: DeviceType, firmware: FirmwareVersion, protocol_version: ProtocolVersion, tz: timezone, output_type: int, pre_heating: bool, modbus_client: ModbusClient
     ) -> "PowerPlant":
         power_phases = OutputType.to_phases(output_type)
         plant = cls(plant_index, device_type, protocol_version)
@@ -81,13 +81,13 @@ class PowerPlant(ModbusDevice):
 
         self._add_child_device(await PlantStatistics.create(self.plant_index, self._device_type, self.protocol_version))
 
-        if self.protocol_version >= Protocol.V2_8:
+        if self.protocol_version >= ProtocolVersion.V2_8:
             if self._device_type.has_grid_code_interface:
                 self._add_child_device(await GridCode.create(self.plant_index, self._device_type, self.protocol_version, modbus_client))
             else:
                 logger.info(f"{self.log_identity} GridCode child device not registered because this device type ({self._device_type}) does not support grid code interface")
 
-        if self.protocol_version >= Protocol.V2_9:
+        if self.protocol_version >= ProtocolVersion.V2_9:
             if pre_heating:
                 self._add_child_device(await ESSPreHeating.create(self.plant_index, self._device_type, cast(float, rcp_value), cast(float, rdp_value), self.protocol_version))
             else:
@@ -234,7 +234,7 @@ class PowerPlant(ModbusDevice):
         self._add_sensor(ro.CurrentControlCommandValue(self.plant_index))
         self._add_sensor(ro.PlantAlarms(self.plant_index, ro.Alarm6(self.plant_index), ro.Alarm7(self.plant_index)))
 
-        plant_3rd_party_pv_power = ro.ThirdPartyPVPower(self.plant_index) if self.protocol_version >= Protocol.V2_7 else None
+        plant_3rd_party_pv_power = ro.ThirdPartyPVPower(self.plant_index) if self.protocol_version >= ProtocolVersion.V2_7 else None
         if plant_3rd_party_pv_power is None:
             total_pv_power = derived.TotalPVPower(self.plant_index, plant_pv_power)
         else:

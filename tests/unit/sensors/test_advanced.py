@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import pytest
 
-from sigenergy2mqtt.common import DeviceClass, Protocol, StateClass, UnitOfPower
+from sigenergy2mqtt.common import DeviceClass, ProtocolVersion, StateClass, UnitOfPower
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.sensors.base import Sensor
 
@@ -39,7 +39,7 @@ class ConcreteSensor(Sensor):
                 icon="mdi:power",
                 gain=1.0,
                 precision=2,
-                protocol_version=Protocol.V2_4,
+                protocol_version=ProtocolVersion.V2_4,
             )
             self._test_value: float | None = None
 

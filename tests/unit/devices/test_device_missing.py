@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.common import HybridInverter, Protocol
+from sigenergy2mqtt.common import HybridInverter, ProtocolVersion
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.devices import Device, DeviceRegistry, ModbusDevice
 from sigenergy2mqtt.sensors.base import (
@@ -58,7 +58,7 @@ class DummyWriteable(WriteableSensorMixin, Sensor):
         object.__setattr__(self, "debug_logging", False)
         object.__setattr__(self, "address", 1)
         object.__setattr__(self, "input_type", "holding")
-        object.__setattr__(self, "protocol_version", Protocol.V1_8)
+        object.__setattr__(self, "protocol_version", ProtocolVersion.V1_8)
         object.__setattr__(self, "parent_device", None)
 
     async def set_value(self, client, userdata, message):
@@ -79,7 +79,7 @@ class DummyWriteOnly(WriteOnlySensor):
         object.__setattr__(self, "unique_id", unique_id)
         object.__setattr__(self, "address", 1)
         object.__setattr__(self, "input_type", "holding")
-        object.__setattr__(self, "protocol_version", Protocol.V1_8)
+        object.__setattr__(self, "protocol_version", ProtocolVersion.V1_8)
         object.__setattr__(self, "debug_logging", False)
         object.__setattr__(self, "_publishable", True)
         self._values = {"off": 0, "on": 1}
@@ -152,7 +152,7 @@ def mock_config():
 
 @pytest.fixture
 def device(mock_config):
-    return Device("TestDev", 0, "uid_1", "mf", "model", Protocol.V1_8)
+    return Device("TestDev", 0, "uid_1", "mf", "model", ProtocolVersion.V1_8)
 
 
 # --- Tests ---
@@ -223,7 +223,7 @@ async def test_device_on_ha_state_change(device):
 
 
 def test_device_get_sensor(device):
-    child = Device("Child", 0, "child_uid", "mf", "model", Protocol.V1_8)
+    child = Device("Child", 0, "child_uid", "mf", "model", ProtocolVersion.V1_8)
     s_child = DummyReadable("s_child", publishable=True)
     child._add_sensor(s_child)
     device._add_child_device(child)
@@ -262,7 +262,7 @@ def test_device_get_sensor_by_type_and_child_alarm(device):
     s_parent = ParentReadable("parent_by_type", publishable=True)
     device._add_sensor(s_parent)
 
-    child = Device("ChildType", 0, "child_uid_type", "mf", "model", Protocol.V1_8)
+    child = Device("ChildType", 0, "child_uid_type", "mf", "model", ProtocolVersion.V1_8)
     s_child = ChildReadable("child_by_type", publishable=True)
     child._add_sensor(s_child)
     device._add_child_device(child)
@@ -303,7 +303,7 @@ def test_modbus_device_checks():
         def __init__(self, *args, **kwargs):
             super().__init__(HybridInverter(), *args, **kwargs)
 
-    dev = InverterDevice("Inv", 0, 1, "model", Protocol.V1_8)
+    dev = InverterDevice("Inv", 0, 1, "model", ProtocolVersion.V1_8)
 
     s_plain = DummyReadable("s_plain")
     assert dev._add_sensor(s_plain) is False
@@ -313,21 +313,21 @@ def test_modbus_device_checks():
             super().__init__(uid)
 
     s_valid = ValidInverterSensor("s_valid")
-    s_valid.protocol_version = Protocol.V1_8
+    s_valid.protocol_version = ProtocolVersion.V1_8
 
     assert dev._add_sensor(s_valid) is True
 
     s_future = ValidInverterSensor("s_future")
-    s_future.protocol_version = Protocol.V2_4
+    s_future.protocol_version = ProtocolVersion.V2_4
     assert dev._add_sensor(s_future) is False
 
 
 def test_device_registry():
     DeviceRegistry._devices.clear()
 
-    d1 = Device("d1", 0, "uid1", "mf", "md", Protocol.V1_8)
-    d2 = Device("d2", 0, "uid2", "mf", "md", Protocol.V1_8)
-    d3 = Device("d3", 1, "uid3", "mf", "md", Protocol.V1_8)
+    d1 = Device("d1", 0, "uid1", "mf", "md", ProtocolVersion.V1_8)
+    d2 = Device("d2", 0, "uid2", "mf", "md", ProtocolVersion.V1_8)
+    d3 = Device("d3", 1, "uid3", "mf", "md", ProtocolVersion.V1_8)
 
     l0 = DeviceRegistry.get(0)
     assert d1 in l0

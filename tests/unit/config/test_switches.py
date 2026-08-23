@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.common import Protocol  # noqa: E402
+from sigenergy2mqtt.common import ProtocolVersion  # noqa: E402
 from sigenergy2mqtt.config import active_config  # noqa: E402
 from sigenergy2mqtt.config.settings import HomeAssistantConfig  # noqa: E402
 from sigenergy2mqtt.sensors.base import AvailabilityMixin, Sensor  # noqa: E402
@@ -22,7 +22,7 @@ class MockSensor(Sensor):
             icon="mdi:icon",
             gain=1,
             precision=1,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
             **kwargs,
         )
 

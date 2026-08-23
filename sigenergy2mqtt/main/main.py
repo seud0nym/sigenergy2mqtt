@@ -16,7 +16,7 @@ from pymodbus import pymodbus_apply_logging_config
 from pymodbus.exceptions import ModbusException
 from pymodbus.pdu import ModbusPDU
 
-from sigenergy2mqtt.common import Constants, ConsumptionMethod, FirmwareVersion, HybridInverter, InputType, Protocol, ProtocolApplies, PVInverter, service_health_registry
+from sigenergy2mqtt.common import Constants, ConsumptionMethod, FirmwareVersion, HybridInverter, InputType, ProtocolApplies, ProtocolVersion, PVInverter, service_health_registry
 from sigenergy2mqtt.config import active_config, configure_root_logger, initialize_async, is_docker
 from sigenergy2mqtt.devices import PID, PSS, ACCharger, DCCharger, Device, Inverter, PowerPlant, bind_cross_device_sensors
 from sigenergy2mqtt.diagnostics import DiagnosticsService
@@ -191,11 +191,11 @@ async def read_registers(modbus_client: ModbusClient, register: int, count: int,
 
 
 # ---------------------------------------------------------------------------
-# Protocol probing
+# ProtocolVersion probing
 # ---------------------------------------------------------------------------
 
 
-async def probe_protocol(modbus_client: ModbusClient) -> Protocol:
+async def probe_protocol(modbus_client: ModbusClient) -> ProtocolVersion:
     """Interrogate the plant to determine the highest supported Modbus protocol version.
 
     Registers are probed in descending version order; the first successful read
@@ -204,11 +204,11 @@ async def probe_protocol(modbus_client: ModbusClient) -> Protocol:
     # Tuples of (register, count, protocol_version) — must be input registers
     # unique to each version, listed from newest to oldest.
     candidates = [
-        (PlantPVTotalGenerationToday.ADDRESS, 2, Protocol.V2_9),
-        (TotalLoadPower.ADDRESS, 2, Protocol.V2_8),
-        (ThirdPartyPVPower.ADDRESS, 2, Protocol.V2_7),
-        (TotalLoadDailyConsumption.ADDRESS, 2, Protocol.V2_6),
-        (PlantBatterySoH.ADDRESS, 1, Protocol.V2_5),
+        (PlantPVTotalGenerationToday.ADDRESS, 2, ProtocolVersion.V2_9),
+        (TotalLoadPower.ADDRESS, 2, ProtocolVersion.V2_8),
+        (ThirdPartyPVPower.ADDRESS, 2, ProtocolVersion.V2_7),
+        (TotalLoadDailyConsumption.ADDRESS, 2, ProtocolVersion.V2_6),
+        (PlantBatterySoH.ADDRESS, 1, ProtocolVersion.V2_5),
     ]
     for register, count, version in candidates:
         logger.debug(f"READING {get_modbus_url(modbus_client)} to probe V{version.value} register {register} ({count=} device_id={Constants.PLANT_DEVICE_ADDRESS})")
@@ -222,8 +222,8 @@ async def probe_protocol(modbus_client: ModbusClient) -> Protocol:
         except (ModbusException, TimeoutError, OSError, RuntimeError) as e:
             logger.debug(f"FAILURE {get_modbus_url(modbus_client)} {register=} {count=} device_id={Constants.PLANT_DEVICE_ADDRESS} -> {e}")
 
-    logger.debug(f"DEFAULT {get_modbus_url(modbus_client)} to Sigenergy Modbus Protocol V1.8")
-    return Protocol.V1_8
+    logger.debug(f"DEFAULT {get_modbus_url(modbus_client)} to Sigenergy Modbus ProtocolVersion V1.8")
+    return ProtocolVersion.V1_8
 
 
 async def probe_optional_interface(modbus_client: ModbusClient, register: int, interface_name: str) -> bool:
@@ -263,7 +263,7 @@ async def make_ac_charger(plant_index: int, modbus_client: ModbusClient, device_
     return charger
 
 
-async def make_dc_charger(plant_index: int, device_address: int, protocol_version: Protocol, inverter_unique_id: str, sequence_number: int | None = None, total_count: int | None = None) -> DCCharger:
+async def make_dc_charger(plant_index: int, device_address: int, protocol_version: ProtocolVersion, inverter_unique_id: str, sequence_number: int | None = None, total_count: int | None = None) -> DCCharger:
     """Create a DC charger device and associate it with its inverter.
 
     Side effects: performs async device initialisation and sets ``via_device``
@@ -350,13 +350,13 @@ async def make_plant_and_inverter(plant_index: int, modbus_client: ModbusClient,
     if plant is None:
         firmware = FirmwareVersion(cast(str, await get_state(InverterFirmwareVersion(plant_index, device_address), modbus_client, "plant/inverter")))
         protocol = await probe_protocol(modbus_client)
-        if protocol == Protocol.V2_8 and firmware.service_pack >= 114:
-            logger.debug(f"IGNORED {get_modbus_url(modbus_client)} detection of Protocol V{protocol.value} because Firmware {firmware} supports V2.9 features")
-            protocol = Protocol.V2_9
-        logger.info(f"Interrogated {get_modbus_url(modbus_client)} and found Sigenergy Modbus Protocol V{protocol.value} ({ProtocolApplies(protocol)})")
+        if protocol == ProtocolVersion.V2_8 and firmware.service_pack >= 114:
+            logger.debug(f"IGNORED {get_modbus_url(modbus_client)} detection of ProtocolVersion V{protocol.value} because Firmware {firmware} supports V2.9 features")
+            protocol = ProtocolVersion.V2_9
+        logger.info(f"Interrogated {get_modbus_url(modbus_client)} and found Sigenergy Modbus ProtocolVersion V{protocol.value} ({ProtocolApplies(protocol)})")
 
-        if protocol < Protocol.V2_8 and active_config.consumption != ConsumptionMethod.CALCULATED:
-            logger.warning(f"Resetting consumption configuration to {ConsumptionMethod.CALCULATED.name} because {active_config.consumption.name} is not supported on Modbus Protocol V{protocol.value}")
+        if protocol < ProtocolVersion.V2_8 and active_config.consumption != ConsumptionMethod.CALCULATED:
+            logger.warning(f"Resetting consumption configuration to {ConsumptionMethod.CALCULATED.name} because {active_config.consumption.name} is not supported on Modbus ProtocolVersion V{protocol.value}")
             active_config.consumption = ConsumptionMethod.CALCULATED
 
         ot = await get_state(OutputType(plant_index, device_address), modbus_client, "plant/inverter", raw=True)
@@ -411,9 +411,9 @@ async def make_pss(
 # ---------------------------------------------------------------------------
 
 
-async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfig], Protocol | None]:
+async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfig], ProtocolVersion | None]:
     """Iterate over all configured Modbus hosts, probe registers, and populate ThreadConfigs."""
-    protocol_version: Protocol | None = None
+    protocol_version: ProtocolVersion | None = None
     devices = active_config.modbus
     total_ac_chargers = sum(len(d.ac_chargers) if d.ac_chargers else 0 for d in devices)  # type: ignore[reportGeneralTypeIssues]
     total_dc_chargers = sum(len(d.dc_chargers) if d.dc_chargers else 0 for d in devices)  # type: ignore[reportGeneralTypeIssues]
@@ -560,7 +560,7 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
     return thread_config_registry.get_all(), protocol_version
 
 
-def setup_services(configs: list[ThreadConfig], protocol_version: Protocol | None) -> list[ThreadConfig]:
+def setup_services(configs: list[ThreadConfig], protocol_version: ProtocolVersion | None) -> list[ThreadConfig]:
     """Attach optional service/monitor threads to the discovered device configs.
 
     Side effects:
@@ -582,7 +582,7 @@ def setup_services(configs: list[ThreadConfig], protocol_version: Protocol | Non
 
     Metrics.commence()
     if active_config.metrics_enabled:
-        svc_thread_cfg.add_device(MetricsService(protocol_version if protocol_version is not None else Protocol.N_A))
+        svc_thread_cfg.add_device(MetricsService(protocol_version if protocol_version is not None else ProtocolVersion.N_A))
 
     if active_config.pvoutput.enabled and not active_config.clean:
         for service in get_pvoutput_services(configs):
@@ -666,7 +666,7 @@ async def _setup_ac_chargers(
     plant: PowerPlant,
     modbus_client: ModbusClient,
     config: ThreadConfig,
-    protocol_version: Protocol | None,
+    protocol_version: ProtocolVersion | None,
     sequence_start: int,
     total_count: int,
     inverter_firmware_versions: Mapping[int, str] | None = None,
@@ -681,8 +681,8 @@ async def _setup_ac_chargers(
             si_sensor.publishable = False
         return sequence_start
 
-    if protocol_version is not None and protocol_version < Protocol.V2_0:
-        logger.warning(f"AC Chargers are not supported on Sigenergy Modbus Protocol V{protocol_version.value} - skipping AC Charger device creation for modbus://{device.host}:{device.port}")
+    if protocol_version is not None and protocol_version < ProtocolVersion.V2_0:
+        logger.warning(f"AC Chargers are not supported on Sigenergy Modbus ProtocolVersion V{protocol_version.value} - skipping AC Charger device creation for modbus://{device.host}:{device.port}")
         return sequence_start
 
     sequence_number = sequence_start
@@ -764,7 +764,7 @@ async def _setup_pid(
     seen_serial_numbers: set[str],
     modbus_client: ModbusClient,
     config: ThreadConfig,
-    protocol_version: Protocol | None,
+    protocol_version: ProtocolVersion | None,
     sequence_start: int,
     total_count: int,
     inverter_firmware_versions: Mapping[int, str] | None = None,
@@ -772,8 +772,8 @@ async def _setup_pid(
     if not device.pid:
         return sequence_start
 
-    if protocol_version is not None and protocol_version < Protocol.V2_9:
-        logger.warning(f"PID devices are not supported on Sigenergy Modbus Protocol V{protocol_version.value} - skipping PID device creation for modbus://{device.host}:{device.port}")
+    if protocol_version is not None and protocol_version < ProtocolVersion.V2_9:
+        logger.warning(f"PID devices are not supported on Sigenergy Modbus ProtocolVersion V{protocol_version.value} - skipping PID device creation for modbus://{device.host}:{device.port}")
         return sequence_start
 
     sequence_number = sequence_start
@@ -815,7 +815,7 @@ async def _setup_pss(
     seen_serial_numbers: set[str],
     modbus_client: ModbusClient,
     config: ThreadConfig,
-    protocol_version: Protocol | None,
+    protocol_version: ProtocolVersion | None,
     sequence_start: int,
     total_count: int,
     inverter_firmware_versions: Mapping[int, str] | None = None,
@@ -823,8 +823,8 @@ async def _setup_pss(
     if not device.pss:
         return sequence_start
 
-    if protocol_version is not None and protocol_version < Protocol.V2_9:
-        logger.warning(f"PSS devices are not supported on Sigenergy Modbus Protocol V{protocol_version.value} - skipping PSS device creation for modbus://{device.host}:{device.port}")
+    if protocol_version is not None and protocol_version < ProtocolVersion.V2_9:
+        logger.warning(f"PSS devices are not supported on Sigenergy Modbus ProtocolVersion V{protocol_version.value} - skipping PSS device creation for modbus://{device.host}:{device.port}")
         return sequence_start
 
     sequence_number = sequence_start

@@ -6,7 +6,7 @@ import pytest
 
 import sigenergy2mqtt.sensors.plant_read_only as pro
 import sigenergy2mqtt.sensors.plant_read_write as prw
-from sigenergy2mqtt.common import ConsumptionMethod, Protocol, FirmwareVersion
+from sigenergy2mqtt.common import ConsumptionMethod, ProtocolVersion, FirmwareVersion
 from sigenergy2mqtt.devices.plant.plant import PowerPlant
 from sigenergy2mqtt.sensors.base import AvailabilityMixin, Sensor
 
@@ -36,7 +36,7 @@ class MockAvailabilitySensor(AvailabilityMixin):
         self.object_id = "sigen_mock_avail"
         self.get_state = AsyncMock(return_value=1)
         self.address = 30000
-        self._protocol_version = Protocol.V1_8
+        self._protocol_version = ProtocolVersion.V1_8
 
     def items(self):
         return [].items()
@@ -89,7 +89,7 @@ async def test_plant_read_only_coverage():
                     mock_alarm.device_address = 247
                     mock_alarm.address = 30000
                     mock_alarm.count = 1
-                    mock_alarm.protocol_version = Protocol.V1_8
+                    mock_alarm.protocol_version = ProtocolVersion.V1_8
                     kwargs[name] = [mock_alarm]
                 elif issubclass(param.annotation, AvailabilityMixin) if hasattr(param.annotation, "__mro__") else False:
                     kwargs[name] = MockAvailabilitySensor()
@@ -187,7 +187,7 @@ async def test_plant_read_write_coverage():
 
 
 def test_powerplant_register_sensors_calculated_consumption_uses_grid_sensors_by_type():
-    plant = PowerPlant(0, MagicMock(), Protocol.V2_8)
+    plant = PowerPlant(0, MagicMock(), ProtocolVersion.V2_8)
     plant._consumption_source = ConsumptionMethod.CALCULATED
 
     class FakeTotalPV:

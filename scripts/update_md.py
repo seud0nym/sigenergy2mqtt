@@ -20,7 +20,7 @@ os.environ["SIGENERGY2MQTT_MODBUS_HOST"] = "127.0.0.1"
 import requests
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 
-from sigenergy2mqtt.common import ConsumptionMethod, HybridInverter, Protocol, PVInverter
+from sigenergy2mqtt.common import ConsumptionMethod, HybridInverter, ProtocolVersion, PVInverter
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.metrics.service import MetricsService
 from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, ModbusSensorMixin, ReadableSensorMixin, ReservedSensor, Sensor, TypedSensorMixin, WriteableSensorMixin, WriteOnlySensor
@@ -151,7 +151,7 @@ async def sensor_index() -> None:
         if not index_only:
             f.write("| Metric | Interval | Unit | State Topic| Command Topic |\n")
             f.write("|--------|---------:|------|------------|---------------|\n")
-        metrics = MetricsService(Protocol.N_A)
+        metrics = MetricsService(ProtocolVersion.N_A)
         for metric in [s for s in sorted(metrics.all_sensors.values(), key=lambda x: x.name)]:
             count += 1
             if index_only:
@@ -177,7 +177,7 @@ async def sensor_index() -> None:
             if sensor_parent == device and sensor.publishable:
                 count += 1
                 string_number: int | None = getattr(sensor, "string_number", None)
-                protocol = "N/A" if sensor.protocol_version == Protocol.N_A else sensor.protocol_version.value
+                protocol = "N/A" if sensor.protocol_version == ProtocolVersion.N_A else sensor.protocol_version.value
                 if index_only:
                     f.write(f"<a href='#{sensor.unique_id}'>")
                     if string_number:
@@ -213,7 +213,7 @@ async def sensor_index() -> None:
                             source = sensor.get_attributes()["source"]
                             f.write(f"<dt>{method.name} Configuration Option:</dt><dd>{source}")
                             if method != ConsumptionMethod.CALCULATED:
-                                f.write(" (Protocol V2.8+ only)")
+                                f.write(" (ProtocolVersion V2.8+ only)")
                             f.write("</dd>")
                         f.write("</dl>")
                         protocol = "N/A"
@@ -264,7 +264,7 @@ async def sensor_index() -> None:
             sensor = mqtt_sensors[key]
             sensor_parent = None if not hasattr(sensor, "parent_device") else sensor.parent_device.__class__.__name__
             if sensor_parent == device:
-                protocol = "N/A" if sensor.protocol_version == Protocol.N_A else sensor.protocol_version.value
+                protocol = "N/A" if sensor.protocol_version == ProtocolVersion.N_A else sensor.protocol_version.value
                 count += 1
                 if index_only:
                     f.write(f"<a href='#{sensor.unique_id}_set'>{sensor['name']}</a><br>\n")
@@ -308,7 +308,7 @@ async def sensor_index() -> None:
                     elif isinstance(sensor, PVInverter):
                         f.write(" PV Inverter only")
                     f.write("</td></tr>\n")
-                f.write(f"<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>{protocol}</td></tr>\n")
+                f.write(f"<tr><td>Since&nbsp;ProtocolVersion&nbsp;Version</td><td>{protocol}</td></tr>\n")
                 f.write("</table>\n")
         return count
 

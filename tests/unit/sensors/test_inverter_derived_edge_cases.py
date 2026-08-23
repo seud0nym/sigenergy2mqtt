@@ -10,7 +10,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.sensors.base import Sensor
 from sigenergy2mqtt.sensors.inverter_derived import (
@@ -47,10 +47,10 @@ def _make_pv_string_power() -> PVStringPower:
     """Helper to create PVStringPower with mocked source sensors."""
     v = MagicMock(spec=PVVoltageSensor)
     v.gain = 10
-    v.protocol_version = Protocol.V2_4
+    v.protocol_version = ProtocolVersion.V2_4
     c = MagicMock(spec=PVCurrentSensor)
     c.gain = 100
-    c.protocol_version = Protocol.V2_4
+    c.protocol_version = ProtocolVersion.V2_4
     return PVStringPower(0, 1, 1, v, c)
 
 
@@ -66,7 +66,7 @@ class TestInverterBatteryChargingPowerNoneState:
             cdp = MagicMock(spec=ChargeDischargePower)
             cdp.device_class = "power"
             cdp.state_class = "measurement"
-            cdp.protocol_version = Protocol.V2_4
+            cdp.protocol_version = ProtocolVersion.V2_4
             sensor = InverterBatteryChargingPower(0, 1, cdp)
 
             source = MagicMock(spec=ChargeDischargePower)
@@ -80,7 +80,7 @@ class TestInverterBatteryChargingPowerNoneState:
             cdp = MagicMock(spec=ChargeDischargePower)
             cdp.device_class = "power"
             cdp.state_class = "measurement"
-            cdp.protocol_version = Protocol.V2_4
+            cdp.protocol_version = ProtocolVersion.V2_4
             sensor = InverterBatteryChargingPower(0, 1, cdp)
 
             source = MagicMock(spec=ChargeDischargePower)
@@ -102,7 +102,7 @@ class TestInverterBatteryDischargingPowerNoneState:
             cdp = MagicMock(spec=ChargeDischargePower)
             cdp.device_class = "power"
             cdp.state_class = "measurement"
-            cdp.protocol_version = Protocol.V2_4
+            cdp.protocol_version = ProtocolVersion.V2_4
             sensor = InverterBatteryDischargingPower(0, 1, cdp)
 
             source = MagicMock(spec=ChargeDischargePower)
@@ -222,12 +222,12 @@ class TestInverterSelfConsumedPowerEdgeCases:
         """Line 264: early-return when sensor.latest_raw_state is None."""
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             ap = MagicMock(spec=ActivePower)
-            ap.protocol_version = Protocol.V2_4
+            ap.protocol_version = ProtocolVersion.V2_4
             bp = MagicMock(spec=ChargeDischargePower)
-            bp.protocol_version = Protocol.V2_4
+            bp.protocol_version = ProtocolVersion.V2_4
             pv1 = MagicMock(spec=PVStringPower)
             pv1.string_number = 1
-            pv1.protocol_version = Protocol.V2_4
+            pv1.protocol_version = ProtocolVersion.V2_4
 
             sensor = InverterSelfConsumedPower(0, 1, ap, bp, pv1)
 
@@ -241,12 +241,12 @@ class TestInverterSelfConsumedPowerEdgeCases:
         caplog.set_level(logging.DEBUG)
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             ap = MagicMock(spec=ActivePower)
-            ap.protocol_version = Protocol.V2_4
+            ap.protocol_version = ProtocolVersion.V2_4
             bp = MagicMock(spec=ChargeDischargePower)
-            bp.protocol_version = Protocol.V2_4
+            bp.protocol_version = ProtocolVersion.V2_4
             pv1 = MagicMock(spec=PVStringPower)
             pv1.string_number = 1
-            pv1.protocol_version = Protocol.V2_4
+            pv1.protocol_version = ProtocolVersion.V2_4
 
             sensor = InverterSelfConsumedPower(0, 1, ap, bp, pv1)
             sensor.debug_logging = True
@@ -274,12 +274,12 @@ class TestInverterSelfConsumedPowerEdgeCases:
         caplog.set_level(logging.DEBUG)
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             ap = MagicMock(spec=ActivePower)
-            ap.protocol_version = Protocol.V2_4
+            ap.protocol_version = ProtocolVersion.V2_4
             bp = MagicMock(spec=ChargeDischargePower)
-            bp.protocol_version = Protocol.V2_4
+            bp.protocol_version = ProtocolVersion.V2_4
             pv1 = MagicMock(spec=PVStringPower)
             pv1.string_number = 1
-            pv1.protocol_version = Protocol.V2_4
+            pv1.protocol_version = ProtocolVersion.V2_4
 
             sensor = InverterSelfConsumedPower(0, 1, ap, bp, pv1)
             sensor.debug_logging = True

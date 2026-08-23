@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.sensors.base import (
     NumericSensorMixin,
@@ -66,7 +66,7 @@ def sensor_kwargs(name: str) -> dict:
         "icon": "mdi:test-tube",
         "gain": 1,
         "precision": 0,
-        "protocol_version": Protocol.V2_4,
+        "protocol_version": ProtocolVersion.V2_4,
     }
 
 

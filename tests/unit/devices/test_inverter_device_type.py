@@ -15,7 +15,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.common import HybridInverter, Protocol, PVInverter
+from sigenergy2mqtt.common import HybridInverter, ProtocolVersion, PVInverter
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.devices.inverter.inverter import Inverter
 from sigenergy2mqtt.sensors.base import Sensor
@@ -92,7 +92,7 @@ class TestInverterCreateWithDeviceType:
                 plant_index=0,
                 device_address=1,
                 device_type=device_type,
-                protocol_version=Protocol.V2_4,
+                protocol_version=ProtocolVersion.V2_4,
                 tz=timezone.utc,
                 modbus_client=mock_modbus,
             )
@@ -111,7 +111,7 @@ class TestInverterCreateWithDeviceType:
                 plant_index=0,
                 device_address=1,
                 device_type=device_type,
-                protocol_version=Protocol.V2_4,
+                protocol_version=ProtocolVersion.V2_4,
                 tz=timezone.utc,
                 modbus_client=mock_modbus,
             )
@@ -134,7 +134,7 @@ class TestInverterSensorDeviceTypeInheritance:
                 plant_index=0,
                 device_address=1,
                 device_type=device_type,
-                protocol_version=Protocol.V2_4,
+                protocol_version=ProtocolVersion.V2_4,
                 tz=timezone.utc,
                 modbus_client=mock_modbus,
             )
@@ -153,7 +153,7 @@ class TestInverterSensorDeviceTypeInheritance:
                 plant_index=0,
                 device_address=1,
                 device_type=device_type,
-                protocol_version=Protocol.V2_4,
+                protocol_version=ProtocolVersion.V2_4,
                 tz=timezone.utc,
                 modbus_client=mock_modbus,
             )
@@ -175,7 +175,7 @@ class TestInverterSensorDeviceTypeInheritance:
                 plant_index=0,
                 device_address=1,
                 device_type=HybridInverter(),
-                protocol_version=Protocol.V2_4,
+                protocol_version=ProtocolVersion.V2_4,
                 tz=timezone.utc,
                 modbus_client=mock_modbus,
             )
@@ -186,7 +186,7 @@ class TestInverterSensorDeviceTypeInheritance:
                     plant_index=0,
                     device_address=1,
                     device_type=PVInverter(),
-                    protocol_version=Protocol.V2_4,
+                    protocol_version=ProtocolVersion.V2_4,
                     tz=timezone.utc,
                     modbus_client=mock_modbus,
                 )
@@ -206,7 +206,7 @@ class TestInverterSensorDeviceTypeInheritance:
                 plant_index=0,
                 device_address=1,
                 device_type=HybridInverter(),
-                protocol_version=Protocol.V2_4,
+                protocol_version=ProtocolVersion.V2_4,
                 tz=timezone.utc,
                 modbus_client=mock_modbus,
             )
@@ -220,7 +220,7 @@ class TestInverterSensorDeviceTypeInheritance:
                     plant_index=0,
                     device_address=1,
                     device_type=PVInverter(),
-                    protocol_version=Protocol.V2_4,
+                    protocol_version=ProtocolVersion.V2_4,
                     tz=timezone.utc,
                     modbus_client=mock_modbus,
                 )

@@ -2441,7 +2441,7 @@ class:
     name: 'Impianto Sigenergy {plant_suffix}'
   ProtocolPublished:
     name: Protocollo Pubblicato
-  ProtocolVersion:
+  ProtocolVersionSensor:
     name: Versione Protocollo
   QSAdjustmentTargetValue:
     attributes:

@@ -23,7 +23,7 @@ def setup_configs():
         yield
 
 
-from sigenergy2mqtt.common import Protocol  # noqa: E402
+from sigenergy2mqtt.common import ProtocolVersion  # noqa: E402
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerAlarm1, ACChargerAlarm2, ACChargerAlarm3  # noqa: E402
 from sigenergy2mqtt.sensors.base import Alarm1Sensor, Alarm2Sensor, Alarm3Sensor, Alarm4Sensor, Alarm5Sensor, Sensor  # noqa: E402
 from sigenergy2mqtt.sensors.plant_read_only import Alarm6, Alarm7  # noqa: E402
@@ -52,7 +52,7 @@ def clear_sensor_registries():
     ],
 )
 def test_base_alarms(sensor_class, bit, expected):
-    sensor = sensor_class("Alarm", f"{ENTITY_PREFIX}_obj", 0, 1, 30001, Protocol.V2_5)
+    sensor = sensor_class("Alarm", f"{ENTITY_PREFIX}_obj", 0, 1, 30001, ProtocolVersion.V2_5)
     assert sensor.decode_alarm_bit(bit) == expected
 
 

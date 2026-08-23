@@ -10,7 +10,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.common import Constants, Protocol
+from sigenergy2mqtt.common import Constants, ProtocolVersion
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.sensors.base import AvailabilityMixin, Sensor
 from sigenergy2mqtt.sensors.plant_read_write import (

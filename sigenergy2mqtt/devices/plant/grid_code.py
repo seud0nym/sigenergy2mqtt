@@ -2,7 +2,7 @@ from typing import cast
 
 import sigenergy2mqtt.sensors.plant_read_only as ro
 import sigenergy2mqtt.sensors.plant_read_write as rw
-from sigenergy2mqtt.common import DeviceType, Protocol
+from sigenergy2mqtt.common import DeviceType, ProtocolVersion
 from sigenergy2mqtt.devices import ModbusDevice
 from sigenergy2mqtt.modbus import ModbusClient
 
@@ -12,14 +12,14 @@ class GridCode(ModbusDevice):
         self,
         plant_index: int,
         device_type: DeviceType,
-        protocol_version: Protocol,
+        protocol_version: ProtocolVersion,
     ):
         name = "Sigenergy Plant Grid Code"
         plant_suffix = "" if plant_index == 0 else str(plant_index + 1)
         super().__init__(device_type, name, plant_index, 247, "Grid Code", protocol_version, plant_suffix=plant_suffix)
 
     @classmethod
-    async def create(cls, plant_index: int, device_type: DeviceType, protocol_version: Protocol, modbus_client: ModbusClient) -> "GridCode":
+    async def create(cls, plant_index: int, device_type: DeviceType, protocol_version: ProtocolVersion, modbus_client: ModbusClient) -> "GridCode":
         grid_code = GridCode(plant_index, device_type, protocol_version)
         await grid_code._register_sensors(modbus_client)
         return grid_code

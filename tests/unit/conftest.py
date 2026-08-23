@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.i18n import _t
 from sigenergy2mqtt.persistence import state_store
 
@@ -14,7 +14,7 @@ mock_types = MagicMock()
 
 class MockHybridInverter:
     def __init__(self, *args, **kwargs):
-        self.protocol_version = kwargs.get("protocol_version", Protocol.N_A)
+        self.protocol_version = kwargs.get("protocol_version", ProtocolVersion.N_A)
 
     def __str__(self) -> str:
         return _t("HybridInverter.name", "Hybrid Inverter")
@@ -22,7 +22,7 @@ class MockHybridInverter:
 
 class MockPVInverter:
     def __init__(self, *args, **kwargs):
-        self.protocol_version = kwargs.get("protocol_version", Protocol.N_A)
+        self.protocol_version = kwargs.get("protocol_version", ProtocolVersion.N_A)
 
     def __str__(self) -> str:
         return _t("PVInverter.name", "PV Inverter")
@@ -30,7 +30,7 @@ class MockPVInverter:
 
 class MockNonInverter:
     def __init__(self, *args, **kwargs):
-        self.protocol_version = kwargs.get("protocol_version", Protocol.N_A)
+        self.protocol_version = kwargs.get("protocol_version", ProtocolVersion.N_A)
 
     def __str__(self) -> str:
         return ""

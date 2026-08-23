@@ -1,4 +1,4 @@
-from sigenergy2mqtt.common import DeviceClass, InputType, Protocol, UnitOfElectricCurrent
+from sigenergy2mqtt.common import DeviceClass, InputType, ProtocolVersion, UnitOfElectricCurrent
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus import ModbusDataType
 
@@ -17,7 +17,7 @@ class ACChargerStatus(WriteOnlySensor):
             plant_index=plant_index,
             device_address=device_address,
             address=self.ADDRESS,
-            protocol_version=Protocol.V2_0,
+            protocol_version=ProtocolVersion.V2_0,
             payload_off="stop",
             payload_on="start",
             name_off="Stop",
@@ -62,7 +62,7 @@ class ACChargerOutputCurrent(NumericSensor):
             icon="mdi:car-electric",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_0,
+            protocol_version=ProtocolVersion.V2_0,
             minimum=6.0,
             maximum=min(input_breaker, rated_current),
         )

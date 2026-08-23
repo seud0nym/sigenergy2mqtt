@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from sigenergy2mqtt.common import InputType, Protocol, StateClass, UnitOfPower
+from sigenergy2mqtt.common import InputType, ProtocolVersion, StateClass, UnitOfPower
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.devices import Device, DeviceRegistry
 from sigenergy2mqtt.modbus import ModbusDataType
@@ -644,7 +644,7 @@ def get_discovery_payload(mqtt_mock):
 
 
 def test_discovery_base_structure(mock_config):
-    dev = Device("TestDevice", 0, "sigen_uid", "Sigenergy", "SigenStor", Protocol.V1_8)
+    dev = Device("TestDevice", 0, "sigen_uid", "Sigenergy", "SigenStor", ProtocolVersion.V1_8)
     sensor = DummySensor("TestSensor", "sigen_s1", 100)
     dev._add_sensor(cast(Sensor, sensor))
 
@@ -666,7 +666,7 @@ def test_discovery_base_structure(mock_config):
 
 
 def test_energy_daily_accumulation_discovery(mock_config):
-    dev = Device("TestDevice", 0, "sigen_uid", "Sigenergy", "SigenStor", Protocol.V1_8)
+    dev = Device("TestDevice", 0, "sigen_uid", "Sigenergy", "SigenStor", ProtocolVersion.V1_8)
     source = DummySensor("Power", "sigen_power", 100)
     dev._add_sensor(cast(Sensor, source))
 
@@ -686,13 +686,13 @@ def test_energy_daily_accumulation_discovery(mock_config):
 
 
 def test_alarm_sensor_discovery(mock_config):
-    dev = Device("TestDevice", 0, "sigen_uid", "Sigenergy", "SigenStor", Protocol.V1_8)
+    dev = Device("TestDevice", 0, "sigen_uid", "Sigenergy", "SigenStor", ProtocolVersion.V1_8)
 
     class ConcreteAlarm(AlarmSensor):
         def decode_alarm_bit(self, bit):
             return "Error"
 
-    sensor = ConcreteAlarm("Alarm1", "sigen_alarm1", 0, 1, 30001, Protocol.V1_8, "Equipment")
+    sensor = ConcreteAlarm("Alarm1", "sigen_alarm1", 0, 1, 30001, ProtocolVersion.V1_8, "Equipment")
     dev._add_sensor(cast(Sensor, sensor))
 
     mqtt_client = MagicMock()
@@ -707,10 +707,10 @@ def test_alarm_sensor_discovery(mock_config):
 
 
 def test_timestamp_sensor_discovery(mock_config):
-    dev = Device("TestDevice", 0, "sigen_uid", "Sigenergy", "SigenStor", Protocol.V1_8)
+    dev = Device("TestDevice", 0, "sigen_uid", "Sigenergy", "SigenStor", ProtocolVersion.V1_8)
 
     # name, object_id, input_type, plant_index, device_address, address, scan_interval, protocol_version
-    sensor = TimestampSensor("UpdateTime", "sigen_ts1", InputType.INPUT, 0, 1, 30005, 60, Protocol.V1_8, tz=timezone.utc)
+    sensor = TimestampSensor("UpdateTime", "sigen_ts1", InputType.INPUT, 0, 1, 30005, 60, ProtocolVersion.V1_8, tz=timezone.utc)
     dev._add_sensor(cast(Sensor, sensor))
 
     mqtt_client = MagicMock()
@@ -728,7 +728,7 @@ def test_timestamp_sensor_discovery(mock_config):
 def test_simplified_topics_discovery(mock_config):
     mock_config.home_assistant.use_simplified_topics = True
 
-    dev = Device("TestDevice", 0, "sigen_uid", "Sigenergy", "SigenStor", Protocol.V1_8)
+    dev = Device("TestDevice", 0, "sigen_uid", "Sigenergy", "SigenStor", ProtocolVersion.V1_8)
     sensor = DummySensor("TestSensor", "sigen_s1", 100)
     dev._add_sensor(cast(Sensor, sensor))
 
@@ -742,7 +742,7 @@ def test_simplified_topics_discovery(mock_config):
 
 
 def test_discovery_keys_validity(mock_config):
-    dev = Device("TestDevice", 0, "sigen_uid", "Sigenergy", "SigenStor", Protocol.V1_8)
+    dev = Device("TestDevice", 0, "sigen_uid", "Sigenergy", "SigenStor", ProtocolVersion.V1_8)
     sensor = DummySensor("TestSensor", "sigen_s1", 100)
     dev._add_sensor(cast(Sensor, sensor))
 
@@ -751,7 +751,7 @@ def test_discovery_keys_validity(mock_config):
     dev._add_sensor(cast(Sensor, source))
     energy_sensor = EnergyDailyAccumulationSensor("Daily Energy", "sigen_daily", "sigen_daily", source)
     dev._add_to_all_sensors(energy_sensor)
-    ts_sensor = TimestampSensor("UpdateTime", "sigen_ts1", InputType.INPUT, 0, 1, 30005, 60, Protocol.V1_8, tz=timezone.utc)
+    ts_sensor = TimestampSensor("UpdateTime", "sigen_ts1", InputType.INPUT, 0, 1, 30005, 60, ProtocolVersion.V1_8, tz=timezone.utc)
     dev._add_sensor(cast(Sensor, ts_sensor))
 
     mqtt_client = MagicMock()

@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 # Imported here (no hacks needed for mqtt any more)
-from sigenergy2mqtt.common import InputType, Protocol
+from sigenergy2mqtt.common import InputType, ProtocolVersion
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.sensors.base import NumericSensor, SelectSensor, Sensor, SwitchSensor, WriteOnlySensor
@@ -74,7 +74,7 @@ class TestWriteableSensorMixin:
     @pytest.mark.asyncio
     async def test_write_registers_single_uint16(self, mock_lock_factory, mock_modbus):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            sensor = WriteOnlySensor("Test", "sigen_test", 0, 1, 30001, Protocol.V2_4)
+            sensor = WriteOnlySensor("Test", "sigen_test", 0, 1, 30001, ProtocolVersion.V2_4)
             mock_mqtt = MagicMock()
 
             mock_rr = MagicMock()
@@ -90,7 +90,7 @@ class TestWriteableSensorMixin:
     @pytest.mark.asyncio
     async def test_write_registers_multiple_registers(self, mock_lock_factory, mock_modbus):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            sensor = NumericSensor(None, "Test", "sigen_test", InputType.HOLDING, 0, 1, 30001, 2, ModbusClient.DATATYPE.UINT32, 10, "U", None, "mdi:power", 1.0, 2, Protocol.V2_4)
+            sensor = NumericSensor(None, "Test", "sigen_test", InputType.HOLDING, 0, 1, 30001, 2, ModbusClient.DATATYPE.UINT32, 10, "U", None, "mdi:power", 1.0, 2, ProtocolVersion.V2_4)
 
             mock_mqtt = MagicMock()
             # Disable side_effect to use return_value
@@ -109,7 +109,7 @@ class TestWriteableSensorMixin:
     @pytest.mark.asyncio
     async def test_write_registers_error_response(self, mock_lock_factory, mock_modbus):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            sensor = WriteOnlySensor("Test", "sigen_test", 0, 1, 30001, Protocol.V2_4)
+            sensor = WriteOnlySensor("Test", "sigen_test", 0, 1, 30001, ProtocolVersion.V2_4)
 
             mock_rr = MagicMock()
             mock_rr.isError.return_value = True
@@ -123,7 +123,7 @@ class TestWriteableSensorMixin:
     @pytest.mark.asyncio
     async def test_write_registers_timeout(self, mock_modbus):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            sensor = WriteOnlySensor("Test", "sigen_test", 0, 1, 30001, Protocol.V2_4)
+            sensor = WriteOnlySensor("Test", "sigen_test", 0, 1, 30001, ProtocolVersion.V2_4)
 
             with patch("sigenergy2mqtt.sensors.base.ModbusLockFactory.get") as mock_lock_factory_get:
                 mock_lock = MagicMock()
@@ -143,7 +143,7 @@ class TestWriteableSensorMixin:
     @pytest.mark.asyncio
     async def test_write_registers_cancelled(self, mock_lock_factory, mock_modbus):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            sensor = WriteOnlySensor("Test", "sigen_test", 0, 1, 30001, Protocol.V2_4)
+            sensor = WriteOnlySensor("Test", "sigen_test", 0, 1, 30001, ProtocolVersion.V2_4)
             mock_modbus.write_register.side_effect = asyncio.CancelledError()
 
             result = await sensor._write_registers(mock_modbus, 1, MagicMock())
@@ -155,7 +155,7 @@ class TestWriteOnlySensorLogic:
     @pytest.mark.asyncio
     async def test_write_only_sensor_set_value(self, mock_lock_factory, mock_modbus):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            sensor = WriteOnlySensor("Test", "sigen_test", 0, 1, 30001, Protocol.V2_4, payload_on="on", payload_off="off", value_on=1, value_off=0)
+            sensor = WriteOnlySensor("Test", "sigen_test", 0, 1, 30001, ProtocolVersion.V2_4, payload_on="on", payload_off="off", value_on=1, value_off=0)
             sensor.configure_mqtt_topics("test_device")
 
             mock_mqtt = MagicMock()
@@ -172,7 +172,7 @@ class TestNumericSensorWriteable:
     @pytest.mark.asyncio
     async def test_numeric_sensor_set_value_with_gain(self, mock_lock_factory, mock_modbus):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            sensor = NumericSensor(None, "Test", "sigen_test", InputType.HOLDING, 0, 1, 30100, 1, ModbusClient.DATATYPE.UINT16, 10, "W", None, "mdi:power", 10.0, 0, Protocol.V2_4, minimum=0, maximum=1000)
+            sensor = NumericSensor(None, "Test", "sigen_test", InputType.HOLDING, 0, 1, 30100, 1, ModbusClient.DATATYPE.UINT16, 10, "W", None, "mdi:power", 10.0, 0, ProtocolVersion.V2_4, minimum=0, maximum=1000)
             sensor.configure_mqtt_topics("test_device")
 
             mock_rr = MagicMock()
@@ -203,7 +203,7 @@ class TestNumericSensorWriteable:
                 "mdi:power",
                 1.0,
                 0,
-                Protocol.V2_4,
+                ProtocolVersion.V2_4,
                 minimum=0,
                 maximum=100,
             )
@@ -241,7 +241,7 @@ class TestNumericSensorWriteable:
                 "mdi:power",
                 10.0,
                 0,
-                Protocol.V2_4,
+                ProtocolVersion.V2_4,
                 minimum=0,
                 maximum=1000,
             )
@@ -261,7 +261,7 @@ class TestNumericSensorWriteable:
         """When raw=True and value is out-of-range the raw return should NOT include gain."""
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             sensor = NumericSensor(
-                None, "NumRaw", "sigen_numraw", InputType.HOLDING, 0, 1, 30103, 1, ModbusClient.DATATYPE.UINT16, 10, "W", None, "mdi:power", 2.0, 1, Protocol.V2_4, minimum=10.0, maximum=100.0
+                None, "NumRaw", "sigen_numraw", InputType.HOLDING, 0, 1, 30103, 1, ModbusClient.DATATYPE.UINT16, 10, "W", None, "mdi:power", 2.0, 1, ProtocolVersion.V2_4, minimum=10.0, maximum=100.0
             )
 
             with patch("sigenergy2mqtt.sensors.base.ReadWriteSensor.get_state", new_callable=AsyncMock) as mock_super:
@@ -276,7 +276,7 @@ class TestSelectSensorWriteable:
     async def test_select_sensor_set_value_index(self, mock_lock_factory, mock_modbus):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             options = ["Off", "On", "Auto"]
-            sensor = SelectSensor(None, "Test", "sigen_test", 0, 1, 30200, 10, options, Protocol.V2_4)
+            sensor = SelectSensor(None, "Test", "sigen_test", 0, 1, 30200, 10, options, ProtocolVersion.V2_4)
             sensor.configure_mqtt_topics("test_device")
 
             mock_rr = MagicMock()
@@ -292,7 +292,7 @@ class TestSelectSensorWriteable:
         """SelectSensor should accept numeric index strings and reject invalid values."""
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             options = ["Off", "On", "Auto"]
-            sensor = SelectSensor(None, "Test", "sigen_test", 0, 1, 30201, 10, options, Protocol.V2_4)
+            sensor = SelectSensor(None, "Test", "sigen_test", 0, 1, 30201, 10, options, ProtocolVersion.V2_4)
             sensor.configure_mqtt_topics("test_device")
 
             mock_rr = MagicMock()
@@ -320,7 +320,7 @@ class TestSelectSensorWriteable:
         """Covers translated-option matching and empty-option handling."""
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             options = ["Off", "", "Auto"]
-            sensor = SelectSensor(None, "Test", "sigen_test_trans", 0, 1, 30202, 10, options, Protocol.V2_4)
+            sensor = SelectSensor(None, "Test", "sigen_test_trans", 0, 1, 30202, 10, options, ProtocolVersion.V2_4)
             sensor.configure_mqtt_topics("test_device")
 
             # Empty option should be treated as unknown when reading
@@ -344,7 +344,7 @@ class TestSelectSensorWriteable:
         """SelectSensor should accept numeric float-strings (e.g. '1.0') and reject case-mismatched option strings."""
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             options = ["Off", "On", "Auto"]
-            sensor = SelectSensor(None, "Test", "sigen_test_case", 0, 1, 30203, 10, options, Protocol.V2_4)
+            sensor = SelectSensor(None, "Test", "sigen_test_case", 0, 1, 30203, 10, options, ProtocolVersion.V2_4)
             sensor.configure_mqtt_topics("test_device")
 
             mock_rr = MagicMock()
@@ -366,7 +366,7 @@ class TestSelectSensorWriteable:
     async def test_switch_accepts_boolean_values(self, mock_lock_factory, mock_modbus):
         """SwitchSensor should accept True/False and write 1/0 respectively."""
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            sensor = SwitchSensor(None, "Test", "sigen_switch_bool", 0, 1, 30302, 10, Protocol.V2_4)
+            sensor = SwitchSensor(None, "Test", "sigen_switch_bool", 0, 1, 30302, 10, ProtocolVersion.V2_4)
             sensor.configure_mqtt_topics("test_device")
 
             mock_rr = MagicMock()
@@ -386,7 +386,7 @@ class TestSelectSensorWriteable:
         """NumericSensor should accept decimal strings and (with precision=0) write the integer part."""
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             sensor = NumericSensor(
-                None, "Test", "sigen_num_decimal", InputType.HOLDING, 0, 1, 30104, 1, ModbusClient.DATATYPE.UINT16, 10, "W", None, "mdi:power", 1.0, 0, Protocol.V2_4, minimum=0, maximum=1000
+                None, "Test", "sigen_num_decimal", InputType.HOLDING, 0, 1, 30104, 1, ModbusClient.DATATYPE.UINT16, 10, "W", None, "mdi:power", 1.0, 0, ProtocolVersion.V2_4, minimum=0, maximum=1000
             )
             sensor.configure_mqtt_topics("test_device")
 
@@ -404,7 +404,7 @@ class TestSwitchSensorWriteable:
     @pytest.mark.asyncio
     async def test_switch_sensor_set_value(self, mock_lock_factory, mock_modbus):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            sensor = SwitchSensor(None, "Test", "sigen_test", 0, 1, 30300, 10, Protocol.V2_4)
+            sensor = SwitchSensor(None, "Test", "sigen_test", 0, 1, 30300, 10, ProtocolVersion.V2_4)
             sensor.configure_mqtt_topics("test_device")
 
             mock_rr = MagicMock()
@@ -419,7 +419,7 @@ class TestSwitchSensorWriteable:
     async def test_switch_sensor_set_value_string_and_bad(self, mock_lock_factory, mock_modbus, caplog):
         """SwitchSensor should accept numeric strings but raise on non-numeric input."""
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            sensor = SwitchSensor(None, "Test", "sigen_test2", 0, 1, 30301, 10, Protocol.V2_4)
+            sensor = SwitchSensor(None, "Test", "sigen_test2", 0, 1, 30301, 10, ProtocolVersion.V2_4)
             sensor.configure_mqtt_topics("test_device")
 
             mock_rr = MagicMock()

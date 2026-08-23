@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 
-from sigenergy2mqtt.common import DeviceClass, InputType, Protocol, StateClass, UnitOfPower
+from sigenergy2mqtt.common import DeviceClass, InputType, ProtocolVersion, StateClass, UnitOfPower
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.base import EnergyDailyAccumulationSensor, EnergyLifetimeAccumulationSensor, NumericSensor, ReadOnlySensor, SelectSensor, Sensor, TimestampSensor
@@ -58,7 +58,7 @@ class TestModbusSensor:
                     icon="mdi:power",
                     gain=1.0,
                     precision=0,
-                    protocol_version=Protocol.V2_4,
+                    protocol_version=ProtocolVersion.V2_4,
                 )
             # Invalid address
             with pytest.raises(AssertionError, match="Invalid address"):
@@ -78,7 +78,7 @@ class TestModbusSensor:
                     icon="mdi:power",
                     gain=1.0,
                     precision=0,
-                    protocol_version=Protocol.V2_4,
+                    protocol_version=ProtocolVersion.V2_4,
                 )
 
     def test_modbus_sensor_uses_sigenergy_local_modbus_mapping_when_enabled(self, mock_config_all):
@@ -105,7 +105,7 @@ class TestModbusSensor:
                     icon="mdi:power",
                     gain=1.0,
                     precision=0,
-                    protocol_version=Protocol.V2_4,
+                    protocol_version=ProtocolVersion.V2_4,
                     unique_id_override="sigen_override_uid",
                 )
 
@@ -138,7 +138,7 @@ class TestModbusSensor:
                     icon="mdi:power",
                     gain=1.0,
                     precision=0,
-                    protocol_version=Protocol.V2_4,
+                    protocol_version=ProtocolVersion.V2_4,
                     unique_id_override="sigen_override_uid",
                 )
 
@@ -172,7 +172,7 @@ class TestModbusSensor:
                     icon="mdi:power",
                     gain=1.0,
                     precision=2,
-                    protocol_version=Protocol.V2_4,
+                    protocol_version=ProtocolVersion.V2_4,
                 )
 
             assert sensor.object_id == "sigen_local_name"
@@ -204,7 +204,7 @@ class TestModbusSensor:
                     icon="mdi:power",
                     gain=1.0,
                     precision=2,
-                    protocol_version=Protocol.V2_4,
+                    protocol_version=ProtocolVersion.V2_4,
                 )
 
             assert sensor.object_id == "sigen_local_name"
@@ -235,7 +235,7 @@ class TestModbusSensor:
                     icon="mdi:power",
                     gain=1.0,
                     precision=2,
-                    protocol_version=Protocol.V2_4,
+                    protocol_version=ProtocolVersion.V2_4,
                 )
 
             assert sensor.object_id == "sigen_local_name"
@@ -250,7 +250,7 @@ class TestModbusSensor:
                 {30005: {"object_id": "sigen_local_ts_name", "gain": 1.0, "unit": "s"}},
                 clear=True,
             ):
-                sensor = TimestampSensor("TS", "sigen_ts", InputType.INPUT, 0, 1, 30005, 10, Protocol.V2_4, tz=datetime.timezone.utc)
+                sensor = TimestampSensor("TS", "sigen_ts", InputType.INPUT, 0, 1, 30005, 10, ProtocolVersion.V2_4, tz=datetime.timezone.utc)
 
             assert sensor.object_id == "sigen_local_ts_name"
             assert getattr(sensor, "unit", sensor.get("unit_of_measurement")) is None
@@ -276,7 +276,7 @@ class TestReadOnlySensor:
                 icon="mdi:power",
                 gain=1.0,
                 precision=2,
-                protocol_version=Protocol.V2_4,
+                protocol_version=ProtocolVersion.V2_4,
             )
 
             mock_modbus = AsyncMock()
@@ -297,7 +297,7 @@ class TestTimestampSensor:
     @pytest.mark.asyncio
     async def test_get_state_timestamp(self):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            sensor = TimestampSensor("TS", "sigen_ts", InputType.INPUT, 0, 1, 30005, 10, Protocol.V2_4, tz=datetime.timezone.utc)
+            sensor = TimestampSensor("TS", "sigen_ts", InputType.INPUT, 0, 1, 30005, 10, ProtocolVersion.V2_4, tz=datetime.timezone.utc)
 
             ts = 1700000000  # 2023-11-14 22:13:20 UTC
             with patch("sigenergy2mqtt.sensors.base.ReadOnlySensor.get_state", new_callable=AsyncMock) as mock_super_get:
@@ -309,7 +309,7 @@ class TestTimestampSensor:
 
     def test_state2raw_timestamp(self):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            sensor = TimestampSensor("TS", "sigen_ts", InputType.INPUT, 0, 1, 30005, 10, Protocol.V2_4, tz=datetime.timezone.utc)
+            sensor = TimestampSensor("TS", "sigen_ts", InputType.INPUT, 0, 1, 30005, 10, ProtocolVersion.V2_4, tz=datetime.timezone.utc)
             iso_str = "2023-11-14T22:13:20+00:00"
             raw = sensor.state2raw(iso_str)
             assert raw == 1700000000
@@ -335,7 +335,7 @@ class TestNumericSensor:
                 "mdi:power",
                 1.0,
                 2,
-                Protocol.V2_4,
+                ProtocolVersion.V2_4,
                 minimum=0,
                 maximum=100,
             )
@@ -350,7 +350,7 @@ class TestSelectSensor:
     async def test_select_sensor_logic(self):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             options = ["A", "B", "C"]
-            sensor = SelectSensor(None, "Sel", "sigen_sel", 0, 1, 30200, 10, options, Protocol.V2_4)
+            sensor = SelectSensor(None, "Sel", "sigen_sel", 0, 1, 30200, 10, options, ProtocolVersion.V2_4)
 
             with patch("sigenergy2mqtt.sensors.base.ReadOnlySensor.get_state", new_callable=AsyncMock) as mock_super_get:
                 mock_super_get.return_value = 1
@@ -395,7 +395,7 @@ class TestEnergyAccumulationSensors:
         cfg.persistent_state_path = tmp_path
         with _swap_active_config(cfg):
             source = ReadOnlySensor(
-                "Source", "sigen_source", InputType.HOLDING, 0, 1, 30001, 1, ModbusClient.DATATYPE.UINT32, 10, "kWh", DeviceClass.ENERGY, StateClass.TOTAL_INCREASING, "mdi:energy", 1.0, 2, Protocol.V2_4
+                "Source", "sigen_source", InputType.HOLDING, 0, 1, 30001, 1, ModbusClient.DATATYPE.UINT32, 10, "kWh", DeviceClass.ENERGY, StateClass.TOTAL_INCREASING, "mdi:energy", 1.0, 2, ProtocolVersion.V2_4
             )
 
             with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
@@ -431,12 +431,12 @@ class TestEnergyAccumulationSensors:
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             # name, object_id, input_type, plant_index, device_address, address, count, data_type, scan_interval, unit, device_class, state_class, icon, gain, precision, protocol_version
             with pytest.raises(AssertionError, match="Invalid data type UNKNOWN"):
-                ReadOnlySensor("RO", "sigen_ro", InputType.HOLDING, 0, 1, 30001, 1, "UNKNOWN", 10, "W", DeviceClass.POWER, StateClass.MEASUREMENT, "mdi:p", 1.0, 2, Protocol.V2_4)  # type: ignore
+                ReadOnlySensor("RO", "sigen_ro", InputType.HOLDING, 0, 1, 30001, 1, "UNKNOWN", 10, "W", DeviceClass.POWER, StateClass.MEASUREMENT, "mdi:p", 1.0, 2, ProtocolVersion.V2_4)  # type: ignore
 
     @pytest.mark.asyncio
     async def test_readonly_update_internal_state_failed(self):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            sensor = ReadOnlySensor("RO", "sigen_ro", InputType.HOLDING, 0, 1, 30001, 1, ModbusDataType.UINT16, 10, "W", DeviceClass.POWER, StateClass.MEASUREMENT, "mdi:p", 1.0, 2, Protocol.V2_4)
+            sensor = ReadOnlySensor("RO", "sigen_ro", InputType.HOLDING, 0, 1, 30001, 1, ModbusDataType.UINT16, 10, "W", DeviceClass.POWER, StateClass.MEASUREMENT, "mdi:p", 1.0, 2, ProtocolVersion.V2_4)
             client = AsyncMock()
             rr = MagicMock()
             rr.isError.return_value = False  # So it doesn't raise Exception from _check_register_response
@@ -452,7 +452,7 @@ class TestReadWriteSensor:
 
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             # availability, name, object_id, input_type, plant_index, device_address, address, count, data_type, scan_interval, unit, device_class, state_class, icon, gain, precision, protocol_version
-            sensor = ReadWriteSensor(None, "RW", "sigen_rw", InputType.HOLDING, 0, 1, 30001, 1, ModbusDataType.UINT16, 10, "W", DeviceClass.POWER, StateClass.MEASUREMENT, "mdi:p", 1.0, 2, Protocol.V2_4)
+            sensor = ReadWriteSensor(None, "RW", "sigen_rw", InputType.HOLDING, 0, 1, 30001, 1, ModbusDataType.UINT16, 10, "W", DeviceClass.POWER, StateClass.MEASUREMENT, "mdi:p", 1.0, 2, ProtocolVersion.V2_4)
             sensor.configure_mqtt_topics("sigen")
             client = AsyncMock()
             client.write_register.return_value = MagicMock(isError=lambda: False)

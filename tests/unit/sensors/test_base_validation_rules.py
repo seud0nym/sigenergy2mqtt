@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from pymodbus import ModbusException
 
-from sigenergy2mqtt.common import DeviceClass, Protocol, StateClass, UnitOfPower
+from sigenergy2mqtt.common import DeviceClass, ProtocolVersion, StateClass, UnitOfPower
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.base import (
@@ -45,7 +45,7 @@ def _make_sensor(name="Test", uid_suffix="x", debug=False, **kwargs):
             icon="mdi:solar-power",
             gain=1.0,
             precision=2,
-            protocol_version=Protocol.V2_4,
+            protocol_version=ProtocolVersion.V2_4,
             debug_logging=debug,
             **kwargs,
         )
@@ -85,7 +85,7 @@ class TestCheckRegisterResponse:
                 icon="mdi:flash",
                 gain=1.0,
                 precision=2,
-                protocol_version=Protocol.V2_4,
+                protocol_version=ProtocolVersion.V2_4,
             )
         return s
 
@@ -189,7 +189,7 @@ class TestReadOnlySensorUpdateInternalState:
                 icon="mdi:flash",
                 gain=1.0,
                 precision=2,
-                protocol_version=Protocol.V2_4,
+                protocol_version=ProtocolVersion.V2_4,
             )
 
     @pytest.mark.asyncio
@@ -243,7 +243,7 @@ class TestReadOnlySensorUpdateInternalState:
                 icon="mdi:flash",
                 gain=1.0,
                 precision=2,
-                protocol_version=Protocol.V2_4,
+                protocol_version=ProtocolVersion.V2_4,
             )
 
         rr = MagicMock()
@@ -393,6 +393,6 @@ class TestReadableSensorScanIntervalOverride:
                 icon="mdi:flash",
                 gain=1.0,
                 precision=2,
-                protocol_version=Protocol.V2_4,
+                protocol_version=ProtocolVersion.V2_4,
             )
         assert s.scan_interval == 99

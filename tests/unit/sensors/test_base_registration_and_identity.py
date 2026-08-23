@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.common import DeviceClass, Protocol, StateClass
+from sigenergy2mqtt.common import DeviceClass, ProtocolVersion, StateClass
 from sigenergy2mqtt.config.models.persistence import PersistenceConfig
 from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.persistence import state_store
@@ -51,7 +51,7 @@ class TestResettableAccumulationSensorCoverage:
             source.latest_interval = 3600.0
             source.__getitem__.side_effect = lambda x: "sigenergy2mqtt_source_obj" if x == DiscoveryKeys.OBJECT_ID else MagicMock()
             source.latest_raw_state = 0.0
-            source.protocol_version = Protocol.V1_8
+            source.protocol_version = ProtocolVersion.V1_8
             source.state_count = 2
             source.previous_time = now - 3600
             source.latest_time = now
@@ -191,7 +191,7 @@ class TestEnergyLifetimeAccumulationSensorCoverage:
         source.state_class = StateClass.TOTAL_INCREASING
         source.gain = 1.0
         source.precision = 2
-        source.protocol_version = Protocol.V1_8
+        source.protocol_version = ProtocolVersion.V1_8
         source.__getitem__.side_effect = lambda x: "sigenergy2mqtt_source_obj"
         sensor = EnergyLifetimeAccumulationSensor("Test", "sigen_life", "sigenergy2mqtt_obj", source)
         assert sensor.state_class == StateClass.TOTAL_INCREASING
@@ -201,7 +201,7 @@ class TestEnergyLifetimeAccumulationSensorCoverage:
         source = MagicMock()
         source.unique_id = "sigen_source"
         source.data_type = ModbusDataType.UINT32
-        source.protocol_version = Protocol.V1_8
+        source.protocol_version = ProtocolVersion.V1_8
         source.__getitem__.side_effect = lambda x: "sigenergy2mqtt_source_obj"
         with pytest.raises(AssertionError, match="does not start with"):
             EnergyLifetimeAccumulationSensor("Test", "sigen_life", "bad_prefix", source)
@@ -220,7 +220,7 @@ class TestEnergyDailyAccumulationSensorCoverageExtended:
             source.gain = 1.0
             source.precision = 2
             source.latest_raw_state = 100.0
-            source.protocol_version = Protocol.V1_8
+            source.protocol_version = ProtocolVersion.V1_8
             source.state_count = 2
 
         return EnergyDailyAccumulationSensor(name="Test Daily", unique_id=kwargs.pop("unique_id", "sigen_daily_uid"), object_id="sigenergy2mqtt_daily_obj", source=source, **kwargs)
@@ -230,7 +230,7 @@ class TestEnergyDailyAccumulationSensorCoverageExtended:
         source = MagicMock()
         source.unique_id = "sigen_source_id"
         source.data_type = ModbusDataType.UINT32
-        source.protocol_version = Protocol.V1_8
+        source.protocol_version = ProtocolVersion.V1_8
         source.__getitem__.side_effect = lambda x: "sigenergy2mqtt_source_obj"
         with pytest.raises(AssertionError, match="does not start with"):
             EnergyDailyAccumulationSensor("Test", "sigen_daily", "bad_prefix", source)

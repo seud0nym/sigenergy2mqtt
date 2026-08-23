@@ -17,7 +17,7 @@ from typing import Any
 
 import paho.mqtt.client as mqtt
 
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import Device
 
@@ -36,7 +36,7 @@ class DiagnosticsService(Device):
             f"{active_config.home_assistant.unique_id_prefix}_diagnostics",
             "sigenergy2mqtt",
             "Diagnostics",
-            Protocol.N_A,
+            ProtocolVersion.N_A,
         )
 
     def schedule(self, modbus_client: Any, mqtt_client: mqtt.Client) -> list[Awaitable[None]]:

@@ -11,7 +11,7 @@ from typing import Any
 import paho.mqtt.client as mqtt
 from paho.mqtt import MQTTException
 
-from sigenergy2mqtt.common import PERCENTAGE, Protocol, UnitOfTemperature, service_health_registry
+from sigenergy2mqtt.common import PERCENTAGE, ProtocolVersion, UnitOfTemperature, service_health_registry
 from sigenergy2mqtt.config import active_config, is_docker
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.diagnostics import diagnostics_registry
@@ -36,7 +36,7 @@ class MonitorService(Device):
             devices: Devices that expose sensors to subscribe to.
         """
 
-        super().__init__("Sigenergy Monitor", -1, f"{active_config.home_assistant.unique_id_prefix}_monitor", "sigenergy2mqtt", "Monitor", Protocol.N_A)
+        super().__init__("Sigenergy Monitor", -1, f"{active_config.home_assistant.unique_id_prefix}_monitor", "sigenergy2mqtt", "Monitor", ProtocolVersion.N_A)
         self._devices: list[Device] = devices
         self._lock = asyncio.Lock()
         self._topics: dict[str, MonitoredSensor] = {}

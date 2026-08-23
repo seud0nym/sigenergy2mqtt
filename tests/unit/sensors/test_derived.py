@@ -26,7 +26,7 @@ def mock_modules():
         yield
 
 
-from sigenergy2mqtt.common import ConsumptionMethod, DeviceClass, Protocol, StateClass  # noqa: E402
+from sigenergy2mqtt.common import ConsumptionMethod, DeviceClass, ProtocolVersion, StateClass  # noqa: E402
 from sigenergy2mqtt.config import Config, _swap_active_config  # noqa: E402
 from sigenergy2mqtt.sensors.base import PVPowerSensor, Sensor  # noqa: E402
 from sigenergy2mqtt.sensors.plant_derived import (  # noqa: E402
@@ -65,7 +65,7 @@ class TestBatteryDerivedPower:
         proxy_battery = MagicMock(spec=BatteryPower)
         proxy_battery.device_class = DeviceClass.POWER
         proxy_battery.state_class = StateClass.MEASUREMENT
-        proxy_battery.protocol_version = Protocol.V2_4
+        proxy_battery.protocol_version = ProtocolVersion.V2_4
         proxy_battery.latest_raw_state = 1000.5
 
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
@@ -80,7 +80,7 @@ class TestBatteryDerivedPower:
         proxy_battery = MagicMock(spec=BatteryPower)
         proxy_battery.device_class = DeviceClass.POWER
         proxy_battery.state_class = StateClass.MEASUREMENT
-        proxy_battery.protocol_version = Protocol.V2_4
+        proxy_battery.protocol_version = ProtocolVersion.V2_4
         proxy_battery.latest_raw_state = 100.5
 
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
@@ -97,7 +97,7 @@ class TestGridDerivedPower:
         proxy_grid = MagicMock(spec=GridSensorActivePower)
         proxy_grid.device_class = DeviceClass.POWER
         proxy_grid.state_class = StateClass.MEASUREMENT
-        proxy_grid.protocol_version = Protocol.V2_4
+        proxy_grid.protocol_version = ProtocolVersion.V2_4
         proxy_grid.precision = 1
         proxy_grid.latest_raw_state = -100.2
 
@@ -110,7 +110,7 @@ class TestGridDerivedPower:
         proxy_grid = MagicMock(spec=GridSensorActivePower)
         proxy_grid.device_class = DeviceClass.POWER
         proxy_grid.state_class = StateClass.MEASUREMENT
-        proxy_grid.protocol_version = Protocol.V2_4
+        proxy_grid.protocol_version = ProtocolVersion.V2_4
         proxy_grid.precision = 1
         proxy_grid.latest_raw_state = 100.2
 

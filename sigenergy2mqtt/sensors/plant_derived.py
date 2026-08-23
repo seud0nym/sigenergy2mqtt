@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 import paho.mqtt.client as mqtt
 
-from sigenergy2mqtt.common import ConsumptionMethod, DeviceClass, HybridInverter, Protocol, PVInverter, StateClass, UnitOfEnergy, UnitOfPower
+from sigenergy2mqtt.common import ConsumptionMethod, DeviceClass, HybridInverter, ProtocolVersion, PVInverter, StateClass, UnitOfEnergy, UnitOfPower
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus import ModbusClient, ModbusDataType
 
@@ -142,7 +142,7 @@ class BatteryStatus(DerivedSensor, HybridInverter):
             "Cutoff",  # 5
             "Idle",  # 6
         ]
-        self.protocol_version = Protocol.V2_9
+        self.protocol_version = ProtocolVersion.V2_9
         self._backup_soc: float | None = None
         self._charge_soc: float | None = None
         self._current_soc: float | None = None
@@ -304,7 +304,7 @@ class GridActivity(DerivedSensor, HybridInverter):
             "Unknown",  # 2
             "Idle",  # 3
         ]
-        self.protocol_version = Protocol.V2_9
+        self.protocol_version = ProtocolVersion.V2_9
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -449,13 +449,13 @@ class PlantConsumedPower(CrossDeviceDerivedSensor, HybridInverter, PVInverter):
         match self.method:
             case ConsumptionMethod.CALCULATED:
                 self._sources.update({"battery": PlantConsumedPower.Value(negate=True), "grid": PlantConsumedPower.Value(), "pv": PlantConsumedPower.Value()})
-                self.protocol_version = Protocol.N_A
+                self.protocol_version = ProtocolVersion.N_A
             case ConsumptionMethod.GENERAL:
                 self._sources.update({ConsumptionMethod.GENERAL.value: PlantConsumedPower.Value()})
-                self.protocol_version = Protocol.V2_8
+                self.protocol_version = ProtocolVersion.V2_8
             case ConsumptionMethod.TOTAL:
                 self._sources.update({ConsumptionMethod.TOTAL.value: PlantConsumedPower.Value()})
-                self.protocol_version = Protocol.V2_8
+                self.protocol_version = ProtocolVersion.V2_8
 
     def finalise_binding(self, plant_index: int, *sources: Sensor) -> bool:
         """Discover all publishable ACChargerChargingPower and DCChargerOutputPower sensors
@@ -597,7 +597,7 @@ class TotalLifetimePVEnergy(UnpublishResetSensorMixin, DerivedSensor, HybridInve
         super().__init__(
             name="Lifetime Total PV Production",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_lifetime_pv_energy",
-            object_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_lifetime_pv_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7, but need to keep the same object_id for backward compatibility
+            object_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_lifetime_pv_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus ProtocolVersion v2.7, but need to keep the same object_id for backward compatibility
             data_type=ModbusDataType.UINT32,
             unit=UnitOfEnergy.KILO_WATT_HOUR,
             device_class=DeviceClass.ENERGY,
@@ -608,7 +608,7 @@ class TotalLifetimePVEnergy(UnpublishResetSensorMixin, DerivedSensor, HybridInve
             source_sensors=(plant_pv_total_generation, third_party_lifetime_pv_energy),
         )
         self["enabled_by_default"] = True
-        self.protocol_version = Protocol.V2_7
+        self.protocol_version = ProtocolVersion.V2_7
         self.plant_lifetime_pv_energy: float | None = None
         self.plant_3rd_party_lifetime_pv_energy: float | None = None
 
@@ -734,7 +734,7 @@ class PlantSelfConsumedPower(CrossDeviceDerivedSensor, HybridInverter):
             icon="mdi:battery-unknown",
             gain=None,
             precision=0,  # Intentional rounding to nearest watt
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
         )
         # _values is populated in finalise_binding() once inverter sensors are known
         self._values: dict[str, int | None] = {}

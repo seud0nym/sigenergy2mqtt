@@ -2,6 +2,9 @@ import time
 from unittest.mock import patch
 
 import pytest
+
+from sigenergy2mqtt.common import ProtocolVersion
+from sigenergy2mqtt.metrics.metrics import Metrics
 from sigenergy2mqtt.metrics.sensors import (
     MetricsSensor,
     ModbusActiveLocks,
@@ -18,7 +21,7 @@ from sigenergy2mqtt.metrics.sensors import (
     ModbusWriteMean,
     ModbusWriteMin,
     ProtocolPublished,
-    ProtocolVersion,
+    ProtocolVersionSensor,
     Started,
     StateStoreLoads,
     StateStoreSaveErrors,
@@ -27,9 +30,6 @@ from sigenergy2mqtt.metrics.sensors import (
     StateStoreSaveMin,
     StateStoreSaves,
 )
-
-from sigenergy2mqtt.common import Protocol
-from sigenergy2mqtt.metrics.metrics import Metrics
 
 
 @pytest.fixture(autouse=True)
@@ -214,19 +214,19 @@ class TestStarted:
         assert sensor.latest_raw_state == "2023-01-01T00:00:00"
 
 
-class TestProtocolVersion:
+class TestProtocolVersionSensor:
     @pytest.mark.asyncio
     async def test_update_internal_state(self):
-        sensor = ProtocolVersion(Protocol.V1_8)
+        sensor = ProtocolVersionSensor(ProtocolVersion.V1_8)
         await sensor._update_internal_state()
-        assert sensor.latest_raw_state == str(Protocol.V1_8.value)
+        assert sensor.latest_raw_state == str(ProtocolVersion.V1_8.value)
 
 
 class TestProtocolPublished:
     @pytest.mark.asyncio
     async def test_update_internal_state(self):
         with patch("sigenergy2mqtt.metrics.sensors.ProtocolApplies", return_value="2024-08-05"):
-            sensor = ProtocolPublished(Protocol.V1_8)
+            sensor = ProtocolPublished(ProtocolVersion.V1_8)
             await sensor._update_internal_state()
             assert sensor.latest_raw_state == "2024-08-05"
 

@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from pymodbus import ModbusException
 
-from sigenergy2mqtt.common import DeviceClass, Protocol, StateClass, UnitOfPower
+from sigenergy2mqtt.common import DeviceClass, ProtocolVersion, StateClass, UnitOfPower
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.sensors.base import (
     Sensor,
@@ -43,7 +43,7 @@ def _make_sensor(name="Test", uid_suffix="x", debug=False, **kwargs):
             icon="mdi:solar-power",
             gain=1.0,
             precision=2,
-            protocol_version=Protocol.V2_4,
+            protocol_version=ProtocolVersion.V2_4,
             debug_logging=debug,
             **kwargs,
         )
@@ -388,7 +388,7 @@ class TestGetAttributes:
                 icon=None,
                 gain=None,
                 precision=None,
-                protocol_version=Protocol.V2_4,
+                protocol_version=ProtocolVersion.V2_4,
             )
         cfg = Config()
         cfg.home_assistant.enabled = False
@@ -397,10 +397,10 @@ class TestGetAttributes:
         assert "unit-of-measurement" not in attrs
 
     def test_get_attributes_protocol_na_omits_since_protocol(self):
-        """Protocol.N_A omits since-protocol from attributes."""
+        """ProtocolVersion.N_A omits since-protocol from attributes."""
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             s = ConcreteSensor(
-                name="NA Protocol",
+                name="NA ProtocolVersion",
                 unique_id="sigen_na_proto",
                 object_id="sigen_na_proto",
                 unit=None,
@@ -409,7 +409,7 @@ class TestGetAttributes:
                 icon=None,
                 gain=None,
                 precision=None,
-                protocol_version=Protocol.N_A,
+                protocol_version=ProtocolVersion.N_A,
             )
         attrs = s.get_attributes()
         assert "since-protocol" not in attrs
@@ -553,7 +553,7 @@ class TestGetDiscoveryComponents:
                 icon=None,
                 gain=None,
                 precision=None,
-                protocol_version=Protocol.V2_4,
+                protocol_version=ProtocolVersion.V2_4,
             )
         s["options"] = ["Option A", "Option B", ""]  # empty string should be filtered
         components = s.get_discovery_components()

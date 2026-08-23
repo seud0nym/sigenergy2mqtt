@@ -31,7 +31,7 @@ if __name__ == "__main__":
 from pymodbus.client.mixin import ModbusClientMixin
 from pymodbus.pdu import ExceptionResponse, ModbusPDU
 
-from sigenergy2mqtt.common import DeviceClass, FirmwareVersion, HybridInverter, Protocol, ProtocolApplies, PVInverter
+from sigenergy2mqtt.common import DeviceClass, FirmwareVersion, HybridInverter, ProtocolVersion, ProtocolApplies, PVInverter
 from sigenergy2mqtt.config import Config, _swap_active_config, active_config, initialize
 from sigenergy2mqtt.devices import PID, PSS, ACCharger, DCCharger, Device, Inverter, PowerPlant
 from sigenergy2mqtt.modbus import ModbusDataType
@@ -191,7 +191,7 @@ async def get_sensor_instances(
     dc_charger_device_address: int = 1,
     ac_charger_device_address: int = 2,
     firmware_version: str = FIRMWARE_VERSION,
-    protocol_version: Protocol | None = None,
+    protocol_version: ProtocolVersion | None = None,
     output_type: OutputType = OUTPUT_TYPE,
     concrete_sensor_check: bool = False,
 ) -> dict[str, Sensor]:
@@ -234,8 +234,8 @@ async def get_sensor_instances(
             Defaults to ``2``.
         firmware_version: The firmware version to use when creating inverters.
             Defaults to ``FIRMWARE_VERSION``.
-        protocol_version: The :class:`Protocol` version to use when creating devices.
-            Defaults to ``max(Protocol)`` (the latest known protocol version).
+        protocol_version: The :class:`ProtocolVersion` version to use when creating devices.
+            Defaults to ``max(ProtocolVersion)`` (the latest known protocol version).
         output_type: The :class:`OutputType` to use when creating devices.
             Defaults to ``OutputType.THREE_PHASE``.
         concrete_sensor_check: When ``True``, performs register gap, overlap, and
@@ -246,8 +246,8 @@ async def get_sensor_instances(
         A dictionary mapping each sensor's ``unique_id`` to its :class:`Sensor` instance.
     """
     if protocol_version is None:
-        protocol_version = max(Protocol)
-    logging.info(f"Sigenergy Modbus Protocol V{protocol_version.value} [{ProtocolApplies(protocol_version)}] ({home_assistant_enabled=})")
+        protocol_version = max(ProtocolVersion)
+    logging.info(f"Sigenergy Modbus ProtocolVersion V{protocol_version.value} [{ProtocolApplies(protocol_version)}] ({home_assistant_enabled=})")
 
     active_config.modbus[plant_index].dc_chargers.append(dc_charger_device_address)
     active_config.modbus[plant_index].ac_chargers.append(ac_charger_device_address)
@@ -270,7 +270,7 @@ async def get_sensor_instances(
     dc_charger = await DCCharger.create(plant_index, dc_charger_device_address, protocol_version)
     ac_charger = await ACCharger.create(plant_index, ac_charger_device_address, protocol_version, hi_modbus_client)
 
-    if protocol_version >= Protocol.V2_9:
+    if protocol_version >= ProtocolVersion.V2_9:
         pid = await PID.create(plant_index, 241, protocol_version, DummyPIDModbusClient("Sigen PID 1.0", "PID123A45BP678", "V100R001C00SPC113"))
         pss = await PSS.create(plant_index, 242, protocol_version, DummyPSSModbusClient("Sigen PSS 1.0", "PSS123A45BP678"))
     else:

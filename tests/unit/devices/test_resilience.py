@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, call, patch
 import pytest
 from pymodbus import ModbusException
 
-from sigenergy2mqtt.common import InputType, Protocol
+from sigenergy2mqtt.common import InputType, ProtocolVersion
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.devices import Device, DeviceRegistry
 from sigenergy2mqtt.devices.base.poller import SensorGroupPoller
@@ -87,7 +87,7 @@ async def fast_sleep(duration):
 
 @pytest.mark.asyncio
 async def test_modbus_exception_recovery(mock_config):
-    dev = Device("test", 0, "sigen_uid", "mf", "mdl", Protocol.V1_8)
+    dev = Device("test", 0, "sigen_uid", "mf", "mdl", ProtocolVersion.V1_8)
     sensor1 = DummyModbusSensor("sigen_s1", address=100)
     sensor2 = DummyModbusSensor("sigen_s1b", address=101)  # Add second sensor for multiple-sensor path
     dev._add_sensor(cast(Sensor, sensor1))
@@ -133,7 +133,7 @@ async def test_modbus_exception_recovery(mock_config):
 
 @pytest.mark.asyncio
 async def test_reconnection_interruption_on_offline(mock_config):
-    dev = Device("test", 0, "sigen_uid2", "mf", "mdl", Protocol.V1_8)
+    dev = Device("test", 0, "sigen_uid2", "mf", "mdl", ProtocolVersion.V1_8)
     sensor = DummyModbusSensor("sigen_s2", address=100)
     dev._add_sensor(cast(Sensor, sensor))
 

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import sigenergy2mqtt.sensors.plant_ess_preheating_read_write as rw
-from sigenergy2mqtt.common import DeviceType, Protocol
+from sigenergy2mqtt.common import DeviceType, ProtocolVersion
 from sigenergy2mqtt.devices import ModbusDevice
 
 
@@ -10,14 +10,14 @@ class ESSPreHeating(ModbusDevice):
         self,
         plant_index: int,
         device_type: DeviceType,
-        protocol_version: Protocol,
+        protocol_version: ProtocolVersion,
     ):
         name = "Sigenergy Plant ESS Pre-Heating"
         plant_suffix = "" if plant_index == 0 else str(plant_index + 1)
         super().__init__(device_type, name, plant_index, 247, "ESS Pre-Heating", protocol_version, plant_suffix=plant_suffix)
 
     @classmethod
-    async def create(cls, plant_index: int, device_type: DeviceType, rated_charging_power: float, rated_discharging_power: float, protocol_version: Protocol) -> ESSPreHeating:
+    async def create(cls, plant_index: int, device_type: DeviceType, rated_charging_power: float, rated_discharging_power: float, protocol_version: ProtocolVersion) -> ESSPreHeating:
         ess_preheating = ESSPreHeating(plant_index, device_type, protocol_version)
         await ess_preheating._register_sensors(rated_charging_power, rated_discharging_power)
         return ess_preheating

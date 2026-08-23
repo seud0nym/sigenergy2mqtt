@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.sensors.base import Sensor
 from sigenergy2mqtt.sensors.inverter_derived import (
@@ -42,7 +42,7 @@ class TestBatteryDerivedPowerCoverage:
             cdp = MagicMock(spec=ChargeDischargePower)
             cdp.device_class = "power"
             cdp.state_class = "measurement"
-            cdp.protocol_version = Protocol.V2_4
+            cdp.protocol_version = ProtocolVersion.V2_4
             sensor = InverterBatteryChargingPower(0, 1, cdp)
             assert "ChargeDischargePower > 0" in sensor.get_attributes()["source"]
 
@@ -51,7 +51,7 @@ class TestBatteryDerivedPowerCoverage:
             cdp = MagicMock(spec=ChargeDischargePower)
             cdp.device_class = "power"
             cdp.state_class = "measurement"
-            cdp.protocol_version = Protocol.V2_4
+            cdp.protocol_version = ProtocolVersion.V2_4
             sensor = InverterBatteryChargingPower(0, 1, cdp)
 
             # Wrong sensor type
@@ -63,7 +63,7 @@ class TestBatteryDerivedPowerCoverage:
             cdp = MagicMock(spec=ChargeDischargePower)
             cdp.device_class = "power"
             cdp.state_class = "measurement"
-            cdp.protocol_version = Protocol.V2_4
+            cdp.protocol_version = ProtocolVersion.V2_4
             sensor = InverterBatteryDischargingPower(0, 1, cdp)
             assert "ChargeDischargePower < 0" in sensor.get_attributes()["source"]
 
@@ -72,7 +72,7 @@ class TestBatteryDerivedPowerCoverage:
             cdp = MagicMock(spec=ChargeDischargePower)
             cdp.device_class = "power"
             cdp.state_class = "measurement"
-            cdp.protocol_version = Protocol.V2_4
+            cdp.protocol_version = ProtocolVersion.V2_4
             sensor = InverterBatteryDischargingPower(0, 1, cdp)
 
             # Wrong sensor type
@@ -85,10 +85,10 @@ class TestPVStringPowerCoverage:
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             v = MagicMock(spec=PVVoltageSensor)
             v.gain = 10
-            v.protocol_version = Protocol.V2_4
+            v.protocol_version = ProtocolVersion.V2_4
             c = MagicMock(spec=PVCurrentSensor)
             c.gain = 100
-            c.protocol_version = Protocol.V2_4
+            c.protocol_version = ProtocolVersion.V2_4
             sensor = PVStringPower(0, 1, 1, v, c)
             assert "PVVoltageSensor × PVCurrentSensor" in sensor.get_attributes()["source"]
 
@@ -98,10 +98,10 @@ class TestPVStringPowerCoverage:
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             v = MagicMock(spec=PVVoltageSensor)
             v.gain = 10
-            v.protocol_version = Protocol.V2_4
+            v.protocol_version = ProtocolVersion.V2_4
             c = MagicMock(spec=PVCurrentSensor)
             c.gain = 100
-            c.protocol_version = Protocol.V2_4
+            c.protocol_version = ProtocolVersion.V2_4
             sensor = PVStringPower(0, 1, 1, v, c)
             sensor.debug_logging = True
 
@@ -122,10 +122,10 @@ class TestPVStringPowerCoverage:
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             v = MagicMock(spec=PVVoltageSensor)
             v.gain = 10
-            v.protocol_version = Protocol.V2_4
+            v.protocol_version = ProtocolVersion.V2_4
             c = MagicMock(spec=PVCurrentSensor)
             c.gain = 100
-            c.protocol_version = Protocol.V2_4
+            c.protocol_version = ProtocolVersion.V2_4
             sensor = PVStringPower(0, 1, 1, v, c)
 
             # Wrong sensor type
@@ -138,10 +138,10 @@ class TestPVStringEnergyCoverage:
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             v = MagicMock(spec=PVVoltageSensor)
             v.gain = 10
-            v.protocol_version = Protocol.V2_4
+            v.protocol_version = ProtocolVersion.V2_4
             c = MagicMock(spec=PVCurrentSensor)
             c.gain = 100
-            c.protocol_version = Protocol.V2_4
+            c.protocol_version = ProtocolVersion.V2_4
 
             power = PVStringPower(0, 1, 1, v, c)
             power.unique_id = "power_uid"
@@ -164,12 +164,12 @@ class TestInverterSelfConsumedPowerCoverage:
 
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             ap = MagicMock(spec=ActivePower)
-            ap.protocol_version = Protocol.V2_4
+            ap.protocol_version = ProtocolVersion.V2_4
             bp = MagicMock(spec=ChargeDischargePower)
-            bp.protocol_version = Protocol.V2_4
+            bp.protocol_version = ProtocolVersion.V2_4
             pv1 = MagicMock(spec=PVStringPower)
             pv1.string_number = 1
-            pv1.protocol_version = Protocol.V2_4
+            pv1.protocol_version = ProtocolVersion.V2_4
 
             sensor = InverterSelfConsumedPower(0, 1, ap, bp, pv1)
             assert "ActivePower − ChargeDischargePower" in sensor.get_attributes()["source"]
@@ -184,12 +184,12 @@ class TestInverterSelfConsumedPowerCoverage:
         caplog.set_level(logging.DEBUG)
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             ap = MagicMock(spec=ActivePower)
-            ap.protocol_version = Protocol.V2_4
+            ap.protocol_version = ProtocolVersion.V2_4
             bp = MagicMock(spec=ChargeDischargePower)
-            bp.protocol_version = Protocol.V2_4
+            bp.protocol_version = ProtocolVersion.V2_4
             pv1 = MagicMock(spec=PVStringPower)
             pv1.string_number = 1
-            pv1.protocol_version = Protocol.V2_4
+            pv1.protocol_version = ProtocolVersion.V2_4
 
             sensor = InverterSelfConsumedPower(0, 1, ap, bp, pv1)
             sensor.debug_logging = True
@@ -215,12 +215,12 @@ class TestInverterSelfConsumedPowerCoverage:
 
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             ap = MagicMock(spec=ActivePower)
-            ap.protocol_version = Protocol.V2_4
+            ap.protocol_version = ProtocolVersion.V2_4
             bp = MagicMock(spec=ChargeDischargePower)
-            bp.protocol_version = Protocol.V2_4
+            bp.protocol_version = ProtocolVersion.V2_4
             pv1 = MagicMock(spec=PVStringPower)
             pv1.string_number = 1
-            pv1.protocol_version = Protocol.V2_4
+            pv1.protocol_version = ProtocolVersion.V2_4
 
             sensor = InverterSelfConsumedPower(0, 1, ap, bp, pv1)
             sensor.debug_logging = True

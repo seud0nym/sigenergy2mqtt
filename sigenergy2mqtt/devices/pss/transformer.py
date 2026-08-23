@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import sigenergy2mqtt.sensors.pss_read_only as ro
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.common.types import NonInverter
 from sigenergy2mqtt.devices import ModbusDevice
 
@@ -11,7 +11,7 @@ class Transformer(ModbusDevice):
         self,
         plant_index: int,
         device_address: int,
-        protocol_version: Protocol,
+        protocol_version: ProtocolVersion,
         model_id: str,
         serial: str,
     ):

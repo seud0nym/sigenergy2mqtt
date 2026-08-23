@@ -1,5 +1,5 @@
 import sigenergy2mqtt.sensors.plant_read_only as ro
-from sigenergy2mqtt.common import DeviceType, Protocol
+from sigenergy2mqtt.common import DeviceType, ProtocolVersion
 from sigenergy2mqtt.devices import ModbusDevice
 
 
@@ -8,14 +8,14 @@ class PlantStatistics(ModbusDevice):
         self,
         plant_index: int,
         device_type: DeviceType,
-        protocol_version: Protocol,
+        protocol_version: ProtocolVersion,
     ):
         name = "Sigenergy Plant Statistics"
         plant_suffix = "" if plant_index == 0 else str(plant_index + 1)
         super().__init__(device_type, name, plant_index, 247, "EMS Statistics", protocol_version, plant_suffix=plant_suffix)
 
     @classmethod
-    async def create(cls, plant_index: int, device_type: DeviceType, protocol_version: Protocol) -> "PlantStatistics":
+    async def create(cls, plant_index: int, device_type: DeviceType, protocol_version: ProtocolVersion) -> "PlantStatistics":
         plant_statistics = PlantStatistics(plant_index, device_type, protocol_version)
         await plant_statistics._register_sensors()
         return plant_statistics

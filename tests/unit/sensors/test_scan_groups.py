@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import paho.mqtt.client as mqtt
 import pytest
 
-from sigenergy2mqtt.common import Constants, InputType, Protocol
+from sigenergy2mqtt.common import Constants, InputType, ProtocolVersion
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices import Device, DeviceRegistry
 from sigenergy2mqtt.devices.base.poller import SensorGroupPoller
@@ -47,7 +47,7 @@ class DummyModbusSensor(ModbusSensorMixin, ReadableSensorMixin):
 
 
 class DummyAlarmSensor(ModbusSensorMixin, ReadableSensorMixin):
-    def __init__(self, name, plant_index, device_address, address, protocol_version=Protocol.V2_4):
+    def __init__(self, name, plant_index, device_address, address, protocol_version=ProtocolVersion.V2_4):
         super().__init__(
             input_type=InputType.INPUT,
             plant_index=plant_index,
@@ -140,7 +140,7 @@ class TestCreateSensorScanGroups:
 
     def test_ignores_scan_interval(self, mock_config):
         """Sensors with different scan_intervals but same device_address and contiguous addresses should be grouped together."""
-        dev = Device("test", 0, "uid", "mf", "mdl", Protocol.V1_8)
+        dev = Device("test", 0, "uid", "mf", "mdl", ProtocolVersion.V1_8)
 
         # Create sensors with different scan_intervals but contiguous addresses
         s1 = DummyModbusSensor("s1", address=100, count=1, device_address=1, scan_interval=5)
@@ -160,7 +160,7 @@ class TestCreateSensorScanGroups:
 
     def test_splits_by_device_address(self, mock_config):
         """Sensors with different device_address should be in separate groups."""
-        dev = Device("test", 0, "uid", "mf", "mdl", Protocol.V1_8)
+        dev = Device("test", 0, "uid", "mf", "mdl", ProtocolVersion.V1_8)
 
         s1 = DummyModbusSensor("s1", address=100, count=1, device_address=1, scan_interval=10)
         s2 = DummyModbusSensor("s2", address=101, count=1, device_address=2, scan_interval=10)
@@ -176,7 +176,7 @@ class TestCreateSensorScanGroups:
 
     def test_splits_on_address_gap(self, mock_config):
         """Sensors with non-contiguous addresses should be in separate groups."""
-        dev = Device("test", 0, "uid", "mf", "mdl", Protocol.V1_8)
+        dev = Device("test", 0, "uid", "mf", "mdl", ProtocolVersion.V1_8)
 
         s1 = DummyModbusSensor("s1", address=100, count=1, device_address=1, scan_interval=10)
         s2 = DummyModbusSensor("s2", address=200, count=1, device_address=1, scan_interval=10)  # Gap
@@ -192,7 +192,7 @@ class TestCreateSensorScanGroups:
 
     def test_respects_max_registers(self, mock_config):
         """Groups should be split when exceeding Constants.MAX_MODBUS_REGISTERS_PER_REQUEST."""
-        dev = Device("test", 0, "uid", "mf", "mdl", Protocol.V1_8)
+        dev = Device("test", 0, "uid", "mf", "mdl", ProtocolVersion.V1_8)
 
         # Create sensors that exceed the max register limit
         sensors = []
@@ -214,7 +214,7 @@ class TestCreateSensorScanGroups:
     def test_handles_reserved_sensors(self, mock_config):
         """Reserved sensors should not start or end a group."""
 
-        dev = Device("test", 0, "uid", "mf", "mdl", Protocol.V1_8)
+        dev = Device("test", 0, "uid", "mf", "mdl", ProtocolVersion.V1_8)
 
         # Create sequence: Reserved, Real, Reserved, Real, Reserved
         r1 = DummyReservedSensor(100)
@@ -246,7 +246,7 @@ class TestCreateSensorScanGroups:
     def test_respects_disable_chunking_true(self, mock_config):
         """Verify that contiguous sensors are NOT grouped when disable_chunking is True."""
         mock_config.modbus[0].disable_chunking = True
-        dev = Device("test", 0, "uid", "mf", "mdl", Protocol.V1_8)
+        dev = Device("test", 0, "uid", "mf", "mdl", ProtocolVersion.V1_8)
 
         s1 = DummyModbusSensor("s1", address=100, count=1, device_address=1)
         s2 = DummyModbusSensor("s2", address=101, count=1, device_address=1)
@@ -265,7 +265,7 @@ class TestCreateSensorScanGroups:
     def test_respects_disable_chunking_false(self, mock_config):
         """Verify that contiguous sensors ARE grouped when disable_chunking is False."""
         mock_config.modbus[0].disable_chunking = False
-        dev = Device("test", 0, "uid", "mf", "mdl", Protocol.V1_8)
+        dev = Device("test", 0, "uid", "mf", "mdl", ProtocolVersion.V1_8)
 
         s1 = DummyModbusSensor("s1", address=100, count=1, device_address=1)
         s2 = DummyModbusSensor("s2", address=101, count=1, device_address=1)
@@ -283,7 +283,7 @@ class TestCreateSensorScanGroups:
     def test_named_groups_ignore_disable_chunking(self, mock_config):
         """Verify that sensors in a named group REMAIN grouped even when disable_chunking is True."""
         mock_config.modbus[0].disable_chunking = True
-        dev = Device("test", 0, "uid", "mf", "mdl", Protocol.V1_8)
+        dev = Device("test", 0, "uid", "mf", "mdl", ProtocolVersion.V1_8)
 
         s1 = DummyModbusSensor("s1", address=100, count=1, device_address=1)
         s2 = DummyModbusSensor("s2", address=101, count=1, device_address=1)
@@ -307,7 +307,7 @@ class TestPublishUpdates:
     @pytest.mark.asyncio
     async def test_respects_individual_scan_intervals(self, mock_config):
         """Sensors with different scan_intervals should publish at their own rates."""
-        dev = Device("test", 0, "uid", "mf", "mdl", Protocol.V1_8)
+        dev = Device("test", 0, "uid", "mf", "mdl", ProtocolVersion.V1_8)
 
         # Fast sensor (1s) and slow sensor (5s) - both with force_publish to trigger immediate publish
         fast = DummyModbusSensor("fast", address=100, count=1, device_address=1, scan_interval=1)
@@ -354,7 +354,7 @@ class TestPublishUpdates:
     @pytest.mark.asyncio
     async def test_handles_force_publish(self, mock_config):
         """Setting force_publish should cause immediate publishing."""
-        dev = Device("test", 0, "uid", "mf", "mdl", Protocol.V1_8)
+        dev = Device("test", 0, "uid", "mf", "mdl", ProtocolVersion.V1_8)
 
         sensor = DummyModbusSensor("s1", address=100, count=1, device_address=1, scan_interval=60)
         sensor.force_publish = True  # Force immediate publish
@@ -396,9 +396,9 @@ class TestPublishUpdates:
 class TestSensorScanGroupsRecursion:
     def test_recursive_sensor_grouping(self, mock_config):
         """Verify that sensors from child and grandchild devices are grouped by the root device."""
-        root = Device("root", 0, "root_uid", "mf", "mdl", Protocol.V1_8)
-        child = Device("child", 0, "child_uid", "mf", "mdl", Protocol.V1_8)
-        grandchild = Device("grandchild", 0, "grandchild_uid", "mf", "mdl", Protocol.V1_8)
+        root = Device("root", 0, "root_uid", "mf", "mdl", ProtocolVersion.V1_8)
+        child = Device("child", 0, "child_uid", "mf", "mdl", ProtocolVersion.V1_8)
+        grandchild = Device("grandchild", 0, "grandchild_uid", "mf", "mdl", ProtocolVersion.V1_8)
 
         s_root = DummyModbusSensor("s_root", 30100)
         s_child = DummyModbusSensor("s_child", 30101)
@@ -426,7 +426,7 @@ class TestSensorScanGroupsRecursion:
     @pytest.mark.asyncio
     async def test_alarm_combined_sensor_read_ahead(self, mock_config):
         """Verify that AlarmCombinedSensor triggers read-ahead for its entire range."""
-        root = Device("root", 0, "root_uid", "mf", "mdl", Protocol.V1_8)
+        root = Device("root", 0, "root_uid", "mf", "mdl", ProtocolVersion.V1_8)
 
         a1 = DummyAlarmSensor("a1", 0, 1, 30605)
         a2 = DummyAlarmSensor("a2", 0, 1, 30606)
@@ -482,7 +482,7 @@ class TestSensorScanGroupsEdgeCases:
 
     def test_splits_on_single_register_gap(self, mock_config):
         """Verify that a gap of even 1 register causes a split."""
-        dev = Device("test", 0, "uid", "mf", "mdl", Protocol.V1_8)
+        dev = Device("test", 0, "uid", "mf", "mdl", ProtocolVersion.V1_8)
 
         # Gap of 1 register:
         # Sensor 1: 100 (count 1)
@@ -504,7 +504,7 @@ class TestSensorScanGroupsEdgeCases:
 
     def test_max_registers_boundary_exact(self, mock_config):
         """Verify grouping behavior exactly at and exceeding the MAX_MODBUS_REGISTERS_PER_REQUEST limit."""
-        dev = Device("test", 0, "uid", "mf", "mdl", Protocol.V1_8)
+        dev = Device("test", 0, "uid", "mf", "mdl", ProtocolVersion.V1_8)
 
         sensors_exact = []
         for i in range(Constants.MAX_MODBUS_REGISTERS_PER_REQUEST):
@@ -536,7 +536,7 @@ class TestSensorScanGroupsEdgeCases:
 
     def test_named_groups_interaction(self, mock_config):
         """Verify interaction between named groups and auto-grouped sensors."""
-        dev = Device("test", 0, "uid", "mf", "mdl", Protocol.V1_8)
+        dev = Device("test", 0, "uid", "mf", "mdl", ProtocolVersion.V1_8)
 
         # Define 3 contiguous sensors
         # s1: 100
@@ -575,7 +575,7 @@ class TestSensorScanGroupsEdgeCases:
     @pytest.mark.asyncio
     async def test_oversized_named_group_skips_preread(self, mock_config):
         """Verify that a named group exceeding MAX_MODBUS_REGISTERS_PER_REQUEST skips read_ahead_registers."""
-        dev = Device("test", 0, "uid", "mf", "mdl", Protocol.V1_8)
+        dev = Device("test", 0, "uid", "mf", "mdl", ProtocolVersion.V1_8)
 
         # Create sensors for a named group "BigGroup" that is oversized
         # MAX = 125, so let's make it 130 registers
@@ -636,7 +636,7 @@ class TestSensorScanGroupsEdgeCases:
 
     def test_named_sensors_bridge_gap_different_groups(self, mock_config):
         """Verify that sensors in DIFFERENT named groups bridge gaps for auto-grouped sensors."""
-        dev = Device("test", 0, "uid", "mf", "mdl", Protocol.V1_8)
+        dev = Device("test", 0, "uid", "mf", "mdl", ProtocolVersion.V1_8)
 
         # Scenario:
         # S1 (Auto) @ 100

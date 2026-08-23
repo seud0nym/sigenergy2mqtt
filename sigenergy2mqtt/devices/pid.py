@@ -5,7 +5,7 @@ from typing import cast
 
 import sigenergy2mqtt.sensors.pid_read_only as ro
 import sigenergy2mqtt.sensors.pid_read_write as rw
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.common.types import NonInverter
 from sigenergy2mqtt.devices import ModbusDevice
 from sigenergy2mqtt.modbus import ModbusClient
@@ -16,7 +16,7 @@ class PID(ModbusDevice):
         self,
         plant_index: int,
         device_address: int,
-        protocol_version: Protocol,
+        protocol_version: ProtocolVersion,
         model_id: str,
         serial: str,
         firmware: str,
@@ -36,7 +36,7 @@ class PID(ModbusDevice):
         )
 
     @classmethod
-    async def create(cls, plant_index: int, device_address: int, protocol_version: Protocol, modbus_client: ModbusClient) -> PID:
+    async def create(cls, plant_index: int, device_address: int, protocol_version: ProtocolVersion, modbus_client: ModbusClient) -> PID:
         model = ro.PIDModelType(plant_index, device_address)
         firmware_version = ro.PIDMachineFirmwareVersion(plant_index, device_address)
         serial_number = ro.PIDSerialNumber(plant_index, device_address)

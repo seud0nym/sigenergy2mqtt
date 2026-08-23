@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from pymodbus import ModbusException
 
-from sigenergy2mqtt.common import InputType, Protocol
+from sigenergy2mqtt.common import InputType, ProtocolVersion
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.main import main as main_mod
 
@@ -45,7 +45,7 @@ async def test_read_registers_holding():
 async def test_make_pid_duplicate_sn():
     mock_client = AsyncMock()
     mock_plant = MagicMock()
-    mock_plant.protocol_version = Protocol.V1_8
+    mock_plant.protocol_version = ProtocolVersion.V1_8
     mock_plant.unique_id = "plant_unique_id"
 
     mock_pid = MagicMock()
@@ -66,7 +66,7 @@ async def test_make_pid_duplicate_sn():
 async def test_make_pid_new_sn():
     mock_client = AsyncMock()
     mock_plant = MagicMock()
-    mock_plant.protocol_version = Protocol.V1_8
+    mock_plant.protocol_version = ProtocolVersion.V1_8
     mock_plant.unique_id = "plant_unique_id"
 
     mock_pid = MagicMock()
@@ -92,7 +92,7 @@ async def test_make_pid_new_sn():
 async def test_make_pss_duplicate_sn():
     mock_client = AsyncMock()
     mock_plant = MagicMock()
-    mock_plant.protocol_version = Protocol.V1_8
+    mock_plant.protocol_version = ProtocolVersion.V1_8
     mock_plant.unique_id = "plant_unique_id"
 
     mock_pss = MagicMock()
@@ -113,7 +113,7 @@ async def test_make_pss_duplicate_sn():
 async def test_make_pss_new_sn():
     mock_client = AsyncMock()
     mock_plant = MagicMock()
-    mock_plant.protocol_version = Protocol.V1_8
+    mock_plant.protocol_version = ProtocolVersion.V1_8
     mock_plant.unique_id = "plant_unique_id"
 
     mock_pss = MagicMock()
@@ -160,7 +160,7 @@ async def test_make_plant_and_inverter_missing_tz_offset():
     with (
         patch("sigenergy2mqtt.main.main.get_state", new_callable=AsyncMock, side_effect=mock_get_state_side_effect),
         patch("sigenergy2mqtt.main.main.probe_optional_interface", new_callable=AsyncMock, return_value=False),
-        patch("sigenergy2mqtt.main.main.probe_protocol", new_callable=AsyncMock, return_value=Protocol.V2_8),
+        patch("sigenergy2mqtt.main.main.probe_protocol", new_callable=AsyncMock, return_value=ProtocolVersion.V2_8),
         patch("sigenergy2mqtt.devices.PowerPlant.create", new_callable=AsyncMock) as mock_plant_create,
         patch("sigenergy2mqtt.devices.Inverter.create", new_callable=AsyncMock),
     ):
@@ -199,7 +199,7 @@ async def test_make_plant_and_inverter_tz_exception():
     with (
         patch("sigenergy2mqtt.main.main.get_state", new_callable=AsyncMock, side_effect=mock_get_state_side_effect),
         patch("sigenergy2mqtt.main.main.probe_optional_interface", new_callable=AsyncMock, return_value=False),
-        patch("sigenergy2mqtt.main.main.probe_protocol", new_callable=AsyncMock, return_value=Protocol.V2_8),
+        patch("sigenergy2mqtt.main.main.probe_protocol", new_callable=AsyncMock, return_value=ProtocolVersion.V2_8),
         patch("sigenergy2mqtt.devices.PowerPlant.create", new_callable=AsyncMock) as mock_plant_create,
         patch("sigenergy2mqtt.devices.Inverter.create", new_callable=AsyncMock),
     ):
@@ -238,7 +238,7 @@ async def test_make_plant_and_inverter_protocol_override():
     with (
         patch("sigenergy2mqtt.main.main.get_state", new_callable=AsyncMock, side_effect=mock_get_state_side_effect),
         patch("sigenergy2mqtt.main.main.probe_optional_interface", new_callable=AsyncMock, return_value=False),
-        patch("sigenergy2mqtt.main.main.probe_protocol", new_callable=AsyncMock, return_value=Protocol.V2_8),
+        patch("sigenergy2mqtt.main.main.probe_protocol", new_callable=AsyncMock, return_value=ProtocolVersion.V2_8),
         patch("sigenergy2mqtt.devices.PowerPlant.create", new_callable=AsyncMock) as mock_plant_create,
         patch("sigenergy2mqtt.devices.Inverter.create", new_callable=AsyncMock),
     ):
@@ -249,4 +249,4 @@ async def test_make_plant_and_inverter_protocol_override():
         await main_mod.make_plant_and_inverter(1, mock_client, 2, None, seen_sn)
 
         mock_plant_create.assert_called_once()
-        assert mock_plant_create.call_args[0][3] == Protocol.V2_9
+        assert mock_plant_create.call_args[0][3] == ProtocolVersion.V2_9

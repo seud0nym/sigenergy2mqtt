@@ -10,7 +10,7 @@ from typing import Any, cast
 from pymodbus.exceptions import ModbusException
 from pymodbus.pdu import ExceptionResponse
 
-from sigenergy2mqtt.common import DeviceClass, InputType, Protocol, StateClass
+from sigenergy2mqtt.common import DeviceClass, InputType, ProtocolVersion, StateClass
 from sigenergy2mqtt.config.models import RegisterAccess
 from sigenergy2mqtt.i18n import _t
 from sigenergy2mqtt.modbus import ModbusClient, ModbusDataType
@@ -46,7 +46,7 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
         icon: str | None,
         gain: float | None,
         precision: int | None,
-        protocol_version: Protocol,
+        protocol_version: ProtocolVersion,
         unique_id_override: str | None = None,
         **kwargs,
     ):
@@ -228,7 +228,7 @@ class UnpublishResetSensorMixin(Sensor):
 
 
 class ReservedSensor(ReadOnlySensor):
-    """Sensor for Modbus registers marked as Reserved in the Protocol document.
+    """Sensor for Modbus registers marked as Reserved in the ProtocolVersion document.
 
     Reserved sensors are never published but can be used for internal logic.
     """
@@ -250,7 +250,7 @@ class ReservedSensor(ReadOnlySensor):
         icon: str | None,
         gain: float | None,
         precision: int | None,
-        protocol_version: Protocol,
+        protocol_version: ProtocolVersion,
         unique_id_override: str | None = None,
         availability_control_sensor: AvailabilityMixin | None = None,
         **kwargs,

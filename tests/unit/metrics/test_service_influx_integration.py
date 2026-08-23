@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 import pytest
 from sigenergy2mqtt.metrics.service import MetricsService
 
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.config.config import _swap_active_config
 
@@ -11,7 +11,7 @@ from sigenergy2mqtt.config.config import _swap_active_config
 class TestMetricsServiceCoverage:
     @pytest.mark.asyncio
     async def test_init_without_influxdb(self):
-        protocol = Protocol.V2_0
+        protocol = ProtocolVersion.V2_0
         # Use _swap_active_config to ensure influxdb is disabled
         with _swap_active_config(Config()) as cfg:
             cfg.influxdb.enabled = False
@@ -25,7 +25,7 @@ class TestMetricsServiceCoverage:
 
     @pytest.mark.asyncio
     async def test_init_with_influxdb_enabled(self):
-        protocol = Protocol.V2_0
+        protocol = ProtocolVersion.V2_0
         with _swap_active_config(Config()) as cfg:
             cfg.home_assistant.unique_id_prefix = "test_prefix"
             cfg.influxdb.enabled = True
@@ -38,7 +38,7 @@ class TestMetricsServiceCoverage:
 
     @pytest.mark.asyncio
     async def test_publish_updates(self):
-        protocol = Protocol.V2_0
+        protocol = ProtocolVersion.V2_0
         with _swap_active_config(Config()) as cfg:
             cfg.home_assistant.unique_id_prefix = "test_prefix"
             cfg.influxdb.enabled = False

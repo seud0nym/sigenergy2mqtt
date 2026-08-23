@@ -45,7 +45,7 @@ def test_latest_state_and_interval():
         icon="mdi:test",
         gain=None,
         precision=None,
-        protocol_version=base.Protocol.N_A,
+        protocol_version=base.ProtocolVersion.N_A,
     )
 
     assert s.publishable is False
@@ -83,7 +83,7 @@ async def test_publish_state_calls_mqtt():
 
 
 def test_timestamp_sensor_conversion():
-    ts = base.TimestampSensor(name="t", object_id="sigen_ts", input_type=InputType.INPUT, plant_index=0, device_address=1, address=30010, scan_interval=1, protocol_version=base.Protocol.N_A, tz=UTC)
+    ts = base.TimestampSensor(name="t", object_id="sigen_ts", input_type=InputType.INPUT, plant_index=0, device_address=1, address=30010, scan_interval=1, protocol_version=base.ProtocolVersion.N_A, tz=UTC)
     assert ts.state2raw("--") == 0
     now = int(time.time())
     ts.set_latest_state(now)
@@ -94,7 +94,7 @@ def test_timestamp_sensor_conversion():
 
 
 def test_select_options_and_indexing():
-    sel = base.SelectSensor(None, name="sel", object_id="sigen_sel", plant_index=0, device_address=1, address=30020, scan_interval=1, options=["A", "B", "C"], protocol_version=base.Protocol.N_A)
+    sel = base.SelectSensor(None, name="sel", object_id="sigen_sel", plant_index=0, device_address=1, address=30020, scan_interval=1, options=["A", "B", "C"], protocol_version=base.ProtocolVersion.N_A)
     assert sel._get_option(1) == "B"
     assert sel._get_option_index("B") == 1
     assert sel._get_option_index(2) == 2
@@ -109,7 +109,7 @@ def test_state2raw_and_gain():
 
 
 def test_writeonly_get_discovery_components():
-    w = base.WriteOnlySensor(name="w", object_id="sigen_btn", plant_index=0, device_address=1, address=30030, protocol_version=base.Protocol.N_A)
+    w = base.WriteOnlySensor(name="w", object_id="sigen_btn", plant_index=0, device_address=1, address=30030, protocol_version=base.ProtocolVersion.N_A)
     comps = w.get_discovery_components()
     assert any(k.endswith("_on") for k in comps.keys())
 
@@ -131,7 +131,7 @@ def test_numeric_min_max_behavior():
         icon="mdi:test",
         gain=1,
         precision=0,
-        protocol_version=base.Protocol.N_A,
+        protocol_version=base.ProtocolVersion.N_A,
         minimum=0.0,
         maximum=100.0,
     )
@@ -143,7 +143,7 @@ def test_numeric_min_max_behavior():
 
 
 def test_alarm_decoding_and_truncate():
-    a = base.Alarm1Sensor(name="a1", object_id="sigen_a_obj", plant_index=0, device_address=1, address=30050, protocol_version=base.Protocol.N_A)
+    a = base.Alarm1Sensor(name="a1", object_id="sigen_a_obj", plant_index=0, device_address=1, address=30050, protocol_version=base.ProtocolVersion.N_A)
     bits = 1 << 2
     decoded = a._decode_alarm_bits(bits, bits)
     assert any("Over-temperature" in s or "Unknown" in s for s in decoded)
@@ -172,7 +172,7 @@ def test_numeric_min_max_tuple_validation():
             icon="mdi:test",
             gain=None,
             precision=None,
-            protocol_version=base.Protocol.N_A,
+            protocol_version=base.ProtocolVersion.N_A,
             minimum=(0, 1),
             maximum=(0, 1, 2),
         )
@@ -191,7 +191,7 @@ def test_get_base_topic_variants():
 
 
 def test_select_get_state_unknown_mode():
-    sel = base.SelectSensor(None, name="selx", object_id="sigen_selx", plant_index=0, device_address=1, address=30020, scan_interval=1, options=["A", "B"], protocol_version=base.Protocol.N_A)
+    sel = base.SelectSensor(None, name="selx", object_id="sigen_selx", plant_index=0, device_address=1, address=30020, scan_interval=1, options=["A", "B"], protocol_version=base.ProtocolVersion.N_A)
     sel.set_latest_state(0)
     loop = asyncio.new_event_loop()
     val = loop.run_until_complete(sel.get_state(raw=False, republish=True))
@@ -200,7 +200,7 @@ def test_select_get_state_unknown_mode():
 
 
 def test_switch_value_is_valid_and_set_value(monkeypatch):
-    sw = base.SwitchSensor(None, name="sw", object_id="sigen_sw", plant_index=0, device_address=1, address=30021, scan_interval=1, protocol_version=base.Protocol.N_A)
+    sw = base.SwitchSensor(None, name="sw", object_id="sigen_sw", plant_index=0, device_address=1, address=30021, scan_interval=1, protocol_version=base.ProtocolVersion.N_A)
     loop = asyncio.new_event_loop()
     res_invalid = loop.run_until_complete(sw.value_is_valid(None, 5))
     loop.close()
@@ -218,8 +218,8 @@ def test_switch_value_is_valid_and_set_value(monkeypatch):
 
 
 def test_alarmcombined_get_state_combines_alarms():
-    a1 = base.Alarm1Sensor("a1", "sigen_a1", plant_index=0, device_address=1, address=30050, protocol_version=base.Protocol.N_A)
-    a2 = base.Alarm2Sensor("a2", "sigen_a2", plant_index=0, device_address=1, address=30051, protocol_version=base.Protocol.N_A)
+    a1 = base.Alarm1Sensor("a1", "sigen_a1", plant_index=0, device_address=1, address=30050, protocol_version=base.ProtocolVersion.N_A)
+    a2 = base.Alarm2Sensor("a2", "sigen_a2", plant_index=0, device_address=1, address=30051, protocol_version=base.ProtocolVersion.N_A)
     a1.set_latest_state(1 << 2)
     a2.set_latest_state(1 << 1)
 

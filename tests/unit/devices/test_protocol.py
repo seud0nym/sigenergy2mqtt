@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.devices import Device, DeviceRegistry
 from sigenergy2mqtt.sensors.base import DerivedSensor, ReadableSensorMixin, SanityCheck
@@ -36,7 +36,7 @@ def cleanup_registry():
 
 
 class DummyDerived(DerivedSensor):
-    def __init__(self, unique_id, protocol_version=Protocol.N_A):
+    def __init__(self, unique_id, protocol_version=ProtocolVersion.N_A):
         dict.__init__(self)  # Initialize dict!
         self["unique_id"] = unique_id
         object.__setattr__(self, "unique_id", unique_id)
@@ -62,7 +62,7 @@ class DummyDerived(DerivedSensor):
 
 
 class DummySensor(ReadableSensorMixin):
-    def __init__(self, unique_id, protocol_version=Protocol.N_A):
+    def __init__(self, unique_id, protocol_version=ProtocolVersion.N_A):
         dict.__init__(self)  # Initialize dict!
         self["unique_id"] = unique_id
         object.__setattr__(self, "unique_id", unique_id)
@@ -97,11 +97,11 @@ def test_add_derived_sensor_skips_newer_protocol(caplog):
     """Test that a derived sensor with newer protocol version than device is skipped."""
     caplog.set_level(logging.DEBUG)
 
-    device = Device("test_dev", 0, "test_id", "manu", "model", protocol_version=Protocol.V1_8)
+    device = Device("test_dev", 0, "test_id", "manu", "model", protocol_version=ProtocolVersion.V1_8)
 
     # Create a sensor with newer protocol
-    sensor = DummyDerived("newer_sensor", protocol_version=Protocol.V2_0)
-    source = DummySensor("source", protocol_version=Protocol.V1_8)
+    sensor = DummyDerived("newer_sensor", protocol_version=ProtocolVersion.V2_0)
+    source = DummySensor("source", protocol_version=ProtocolVersion.V1_8)
 
     # Add source
     device._add_sensor(source)
@@ -115,17 +115,17 @@ def test_add_derived_sensor_skips_newer_protocol(caplog):
     if "newer_sensor" in device.all_sensors:
         pytest.fail("newer_sensor was added but should have been skipped due to protocol version mismatch")
 
-    assert "skipped adding DummyDerived - Protocol version" in caplog.text
+    assert "skipped adding DummyDerived - ProtocolVersion version" in caplog.text
 
 
 def test_add_derived_sensor_skips_newer_source_protocol(caplog):
     """Test that if a source sensor has newer protocol, the derived sensor is skipped."""
     caplog.set_level(logging.DEBUG)
 
-    device = Device("test_dev", 0, "test_id", "manu", "model", protocol_version=Protocol.V1_8)
+    device = Device("test_dev", 0, "test_id", "manu", "model", protocol_version=ProtocolVersion.V1_8)
 
-    sensor = DummyDerived("ok_sensor", protocol_version=Protocol.V1_8)
-    source = DummySensor("newer_source", protocol_version=Protocol.V2_0)
+    sensor = DummyDerived("ok_sensor", protocol_version=ProtocolVersion.V1_8)
+    source = DummySensor("newer_source", protocol_version=ProtocolVersion.V2_0)
 
     device._add_sensor(source)
 
@@ -135,15 +135,15 @@ def test_add_derived_sensor_skips_newer_source_protocol(caplog):
     if "ok_sensor" in device.all_sensors:
         pytest.fail("ok_sensor was added but should have been skipped due to source sensor protocol version mismatch")
 
-    assert "skipped adding DummyDerived - one or more source sensors have Protocol version" in caplog.text
+    assert "skipped adding DummyDerived - one or more source sensors have ProtocolVersion version" in caplog.text
 
 
 def test_add_derived_sensor_ok_protocol(caplog):
     """Test that compatible protocol versions allow adding."""
-    device = Device("test_dev", 0, "test_id", "manu", "model", protocol_version=Protocol.V2_0)
+    device = Device("test_dev", 0, "test_id", "manu", "model", protocol_version=ProtocolVersion.V2_0)
 
-    sensor = DummyDerived("ok_sensor", protocol_version=Protocol.V1_8)
-    source = DummySensor("source", protocol_version=Protocol.V1_8)
+    sensor = DummyDerived("ok_sensor", protocol_version=ProtocolVersion.V1_8)
+    source = DummySensor("source", protocol_version=ProtocolVersion.V1_8)
 
     device._add_sensor(source)
 

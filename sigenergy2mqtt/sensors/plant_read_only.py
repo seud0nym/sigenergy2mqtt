@@ -7,7 +7,7 @@ from sigenergy2mqtt.common import (
     DeviceClass,
     HybridInverter,
     InputType,
-    Protocol,
+    ProtocolVersion,
     PVInverter,
     StateClass,
     UnitOfApparentPower,
@@ -53,7 +53,7 @@ class SystemTime(TimestampSensor, HybridInverter, PVInverter):
             device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=self.ADDRESS,
             scan_interval=ScanInterval.medium(plant_index),
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
             tz=tz,
         )
         self.sanity_check.min_raw = 1640995200  # 1 January 2022 at 00:00:00 UTC
@@ -88,7 +88,7 @@ class SystemTimeZone(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:map-clock",
             gain=None,
             precision=None,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
         )
         self["entity_category"] = "diagnostic"
         self.sanity_check.min_raw = -1440  # -24 hours
@@ -139,7 +139,7 @@ class EMSWorkMode(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:pencil",
             gain=None,
             precision=None,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
         )
         self[DiscoveryKeys.OPTIONS] = [
             "Max Self Consumption",  # 0
@@ -190,7 +190,7 @@ class GridSensorStatus(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:meter-electric-outline",
             gain=None,
             precision=None,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
         )
         self["enabled_by_default"] = True
         self[DiscoveryKeys.OPTIONS] = [
@@ -229,13 +229,13 @@ class GridSensorActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             count=2,
             data_type=ModbusDataType.INT32,
             scan_interval=ScanInterval.realtime(plant_index),
-            unit=UnitOfPower.WATT,  # Protocol defines kW, but prefer the greater precision of watts
+            unit=UnitOfPower.WATT,  # ProtocolVersion defines kW, but prefer the greater precision of watts
             device_class=DeviceClass.POWER,
             state_class=StateClass.MEASUREMENT,
             icon="mdi:transmission-tower",
-            gain=None,  # Protocol defines kW, but prefer the greater precision of watts
+            gain=None,  # ProtocolVersion defines kW, but prefer the greater precision of watts
             precision=2,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
         )
         self["enabled_by_default"] = True
         self.sanity_check.max_raw = 100000  # 100kW
@@ -267,7 +267,7 @@ class GridSensorReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:transmission-tower",
             gain=None,  # Consistent with GridSensorActivePower
             precision=2,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
         )
 
     def get_attributes(self) -> dict[str, float | int | str]:
@@ -296,7 +296,7 @@ class GridStatus(ReadOnlySensor, HybridInverter):
             icon="mdi:meter-electric-outline",
             gain=None,
             precision=None,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
         )
         self["enabled_by_default"] = True
         self[DiscoveryKeys.OPTIONS] = [
@@ -337,7 +337,7 @@ class MaxActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
         )
         self["entity_category"] = "diagnostic"
 
@@ -367,7 +367,7 @@ class MaxApparentPower(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
         )
         self["entity_category"] = "diagnostic"
 
@@ -397,7 +397,7 @@ class PlantBatterySoC(ReadOnlySensor, HybridInverter):
             icon="mdi:home-battery-outline",
             gain=10,
             precision=1,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
         )
         self["enabled_by_default"] = True
 
@@ -431,7 +431,7 @@ class PlantPhaseActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
             phase_label=phase_label,
         )
 
@@ -465,7 +465,7 @@ class PlantPhaseReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
             phase_label=phase_label,
         )
 
@@ -478,7 +478,7 @@ class GeneralAlarm1(Alarm1Sensor, HybridInverter, PVInverter):
             plant_index,
             Constants.PLANT_DEVICE_ADDRESS,
             30027,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
         )
 
     def get_attributes(self) -> dict[str, float | int | str]:
@@ -495,7 +495,7 @@ class GeneralAlarm2(Alarm2Sensor, HybridInverter, PVInverter):
             plant_index,
             Constants.PLANT_DEVICE_ADDRESS,
             30028,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
         )
 
     def get_attributes(self) -> dict[str, float | int | str]:
@@ -527,7 +527,7 @@ class GeneralAlarm3(Alarm3Sensor, HybridInverter):
             plant_index,
             Constants.PLANT_DEVICE_ADDRESS,
             30029,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
         )
 
     def get_attributes(self) -> dict[str, float | int | str]:
@@ -544,7 +544,7 @@ class GeneralAlarm4(Alarm4Sensor, HybridInverter, PVInverter):
             plant_index,
             Constants.PLANT_DEVICE_ADDRESS,
             30030,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
         )
 
     def get_attributes(self) -> dict[str, float | int | str]:
@@ -573,7 +573,7 @@ class PlantActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
         )
 
 
@@ -597,7 +597,7 @@ class PlantReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
         )
 
 
@@ -615,13 +615,13 @@ class PlantPVPower(ReadOnlySensor, PVPowerSensor, HybridInverter, PVInverter):
             count=2,
             data_type=ModbusDataType.INT32,
             scan_interval=ScanInterval.realtime(plant_index),
-            unit=UnitOfPower.WATT,  # Protocol defines kW, but prefer the greater precision of watts
+            unit=UnitOfPower.WATT,  # ProtocolVersion defines kW, but prefer the greater precision of watts
             device_class=DeviceClass.POWER,
             state_class=StateClass.MEASUREMENT,
             icon="mdi:solar-power",
-            gain=None,  # Protocol defines kW, but prefer the greater precision of watts
+            gain=None,  # ProtocolVersion defines kW, but prefer the greater precision of watts
             precision=2,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
         )
         self["enabled_by_default"] = True
         self.sanity_check.min_raw = 0
@@ -641,13 +641,13 @@ class BatteryPower(ReadOnlySensor, HybridInverter):
             count=2,
             data_type=ModbusDataType.INT32,
             scan_interval=ScanInterval.realtime(plant_index),
-            unit=UnitOfPower.WATT,  # Protocol defines kW, but prefer the greater precision of watts
+            unit=UnitOfPower.WATT,  # ProtocolVersion defines kW, but prefer the greater precision of watts
             device_class=DeviceClass.POWER,
             state_class=StateClass.MEASUREMENT,
             icon="mdi:home-battery-outline",
-            gain=None,  # Protocol defines kW, but prefer the greater precision of watts
+            gain=None,  # ProtocolVersion defines kW, but prefer the greater precision of watts
             precision=2,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
         )
         self["enabled_by_default"] = True
 
@@ -677,7 +677,7 @@ class AvailableMaxActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
         )
         self.sanity_check.delta = False
         self["entity_category"] = "diagnostic"
@@ -708,7 +708,7 @@ class AvailableMinActivePower(ReadOnlySensor, HybridInverter):
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
         )
         self.sanity_check.delta = False
         self["entity_category"] = "diagnostic"
@@ -739,7 +739,7 @@ class AvailableMaxReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
         )
         self.sanity_check.delta = False
         self["entity_category"] = "diagnostic"
@@ -770,7 +770,7 @@ class AvailableMinReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
         )
         self.sanity_check.delta = False
         self["entity_category"] = "diagnostic"
@@ -801,7 +801,7 @@ class AvailableMaxChargingPower(ReadOnlySensor, HybridInverter):
             icon="mdi:battery-plus-outline",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
         )
         self.sanity_check.delta = False
 
@@ -831,7 +831,7 @@ class AvailableMaxDischargingPower(ReadOnlySensor, HybridInverter):
             icon="mdi:battery-minus-outline",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
         )
         self.sanity_check.delta = False
 
@@ -849,7 +849,7 @@ class PlantRunningState(RunningStateSensor, HybridInverter, PVInverter):
             plant_index,
             Constants.PLANT_DEVICE_ADDRESS,
             30051,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
         )
 
 
@@ -880,7 +880,7 @@ class GridPhaseActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
             phase=phase,
         )
 
@@ -917,7 +917,7 @@ class GridPhaseReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
             phase=phase,
         )
 
@@ -947,7 +947,7 @@ class AvailableMaxChargingCapacity(ReadOnlySensor, HybridInverter):
             icon="mdi:battery-plus",
             gain=100,
             precision=1,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
         )
         self.sanity_check.delta = False
 
@@ -977,7 +977,7 @@ class AvailableMaxDischargingCapacity(ReadOnlySensor, HybridInverter):
             icon="mdi:battery-minus",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
         )
         self.sanity_check.delta = False
 
@@ -1007,7 +1007,7 @@ class PlantRatedChargingPower(ReadOnlySensor, HybridInverter):
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
         )
         self.sanity_check.delta = False
         self["entity_category"] = "diagnostic"
@@ -1033,7 +1033,7 @@ class PlantRatedDischargingPower(ReadOnlySensor, HybridInverter):
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
         )
         self.sanity_check.delta = False
         self["entity_category"] = "diagnostic"
@@ -1047,7 +1047,7 @@ class GeneralAlarm5(Alarm5Sensor, HybridInverter):
             plant_index,
             Constants.PLANT_DEVICE_ADDRESS,
             30072,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
         )
 
     def get_attributes(self) -> dict[str, float | int | str]:
@@ -1076,7 +1076,7 @@ class Reserved30073(ReservedSensor, HybridInverter, PVInverter):
             icon="mdi:comment-question",
             gain=None,
             precision=None,
-            protocol_version=Protocol.V2_5,
+            protocol_version=ProtocolVersion.V2_5,
         )
 
 
@@ -1100,7 +1100,7 @@ class PlantRatedEnergyCapacity(ReadOnlySensor, HybridInverter):
             icon="mdi:battery-charging",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_5,
+            protocol_version=ProtocolVersion.V2_5,
         )
         self.sanity_check.delta = False
         self["entity_category"] = "diagnostic"
@@ -1126,7 +1126,7 @@ class ChargeCutOffSoC(ReadOnlySensor, HybridInverter):
             icon="mdi:battery-charging-high",
             gain=10,
             precision=1,
-            protocol_version=Protocol.V2_5,
+            protocol_version=ProtocolVersion.V2_5,
         )
 
 
@@ -1150,7 +1150,7 @@ class DischargeCutOffSoC(ReadOnlySensor, HybridInverter):
             icon="mdi:battery-charging-low",
             gain=10,
             precision=1,
-            protocol_version=Protocol.V2_5,
+            protocol_version=ProtocolVersion.V2_5,
         )
 
 
@@ -1174,7 +1174,7 @@ class PlantBatterySoH(ReadOnlySensor, HybridInverter):
             icon="mdi:battery-heart-variant",
             gain=10,
             precision=1,
-            protocol_version=Protocol.V2_5,
+            protocol_version=ProtocolVersion.V2_5,
         )
         self["enabled_by_default"] = True
 
@@ -1204,7 +1204,7 @@ class PlantPVTotalGeneration(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:solar-power-variant",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_6,
+            protocol_version=ProtocolVersion.V2_6,
         )
 
 
@@ -1214,7 +1214,7 @@ class TotalLoadDailyConsumption(UnpublishResetSensorMixin, ReadOnlySensor, Hybri
     def __init__(self, plant_index: int):
         super().__init__(
             name="Daily Consumption",
-            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_daily_consumed_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7, but need to keep the same object_id for backward compatibility
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_daily_consumed_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus ProtocolVersion v2.7, but need to keep the same object_id for backward compatibility
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
@@ -1228,8 +1228,8 @@ class TotalLoadDailyConsumption(UnpublishResetSensorMixin, ReadOnlySensor, Hybri
             icon="mdi:home-lightning-bolt-outline",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_6,
-            unique_id_override=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_daily_consumed_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7
+            protocol_version=ProtocolVersion.V2_6,
+            unique_id_override=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_daily_consumed_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus ProtocolVersion v2.7
         )
         self["enabled_by_default"] = True
         self.sanity_check.min_raw = None
@@ -1241,7 +1241,7 @@ class TotalLoadConsumption(UnpublishResetSensorMixin, ReadOnlySensor, HybridInve
     def __init__(self, plant_index: int):
         super().__init__(
             name="Lifetime Consumption",
-            object_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_lifetime_consumed_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7, but need to keep the same object_id for backward compatibility
+            object_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_lifetime_consumed_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus ProtocolVersion v2.7, but need to keep the same object_id for backward compatibility
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
@@ -1255,8 +1255,8 @@ class TotalLoadConsumption(UnpublishResetSensorMixin, ReadOnlySensor, HybridInve
             icon="mdi:home-lightning-bolt-outline",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_6,
-            unique_id_override=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_lifetime_consumed_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7
+            protocol_version=ProtocolVersion.V2_6,
+            unique_id_override=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_lifetime_consumed_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus ProtocolVersion v2.7
         )
         self["enabled_by_default"] = True
 
@@ -1281,7 +1281,7 @@ class SmartLoadTotalConsumption(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:lightning-bolt-circle",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_6,
+            protocol_version=ProtocolVersion.V2_6,
             smart_load_index=f"{smart_load_index:02}",
         )
 
@@ -1306,7 +1306,7 @@ class SmartLoadPower(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:lightning-bolt-outline",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_6,
+            protocol_version=ProtocolVersion.V2_6,
             smart_load_index=f"{smart_load_index:02}",
         )
 
@@ -1325,13 +1325,13 @@ class ThirdPartyPVPower(ReadOnlySensor, PVPowerSensor, HybridInverter, PVInverte
             count=2,
             data_type=ModbusDataType.INT32,
             scan_interval=ScanInterval.realtime(plant_index),
-            unit=UnitOfPower.WATT,  # Protocol defines kW, but prefer the greater precision of watts
+            unit=UnitOfPower.WATT,  # ProtocolVersion defines kW, but prefer the greater precision of watts
             device_class=DeviceClass.POWER,
             state_class=StateClass.MEASUREMENT,
             icon="mdi:solar-power",
-            gain=None,  # Protocol defines kW, but prefer the greater precision of watts
+            gain=None,  # ProtocolVersion defines kW, but prefer the greater precision of watts
             precision=2,
-            protocol_version=Protocol.V2_7,
+            protocol_version=ProtocolVersion.V2_7,
         )
         self.sanity_check.min_raw = 0
 
@@ -1356,7 +1356,7 @@ class ThirdPartyLifetimePVEnergy(ReadOnlySensor, PVPowerSensor, HybridInverter, 
             icon="mdi:solar-power-variant",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_7,
+            protocol_version=ProtocolVersion.V2_7,
         )
 
 
@@ -1366,7 +1366,7 @@ class ESSTotalChargedEnergy(UnpublishResetSensorMixin, ReadOnlySensor, HybridInv
     def __init__(self, plant_index: int):
         super().__init__(
             name="Lifetime Charge Energy",
-            object_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_accumulated_charge_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7, but need to keep the same object_id for backward compatibility
+            object_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_accumulated_charge_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus ProtocolVersion v2.7, but need to keep the same object_id for backward compatibility
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
@@ -1380,8 +1380,8 @@ class ESSTotalChargedEnergy(UnpublishResetSensorMixin, ReadOnlySensor, HybridInv
             icon="mdi:battery-arrow-up",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_7,
-            unique_id_override=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_accumulated_charge_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7
+            protocol_version=ProtocolVersion.V2_7,
+            unique_id_override=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_accumulated_charge_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus ProtocolVersion v2.7
         )
         self["enabled_by_default"] = True
 
@@ -1392,7 +1392,7 @@ class ESSTotalDischargedEnergy(UnpublishResetSensorMixin, ReadOnlySensor, Hybrid
     def __init__(self, plant_index: int):
         super().__init__(
             name="Lifetime Discharge Energy",
-            object_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_accumulated_discharge_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7, but need to keep the same object_id for backward compatibility
+            object_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_accumulated_discharge_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus ProtocolVersion v2.7, but need to keep the same object_id for backward compatibility
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
@@ -1406,8 +1406,8 @@ class ESSTotalDischargedEnergy(UnpublishResetSensorMixin, ReadOnlySensor, Hybrid
             icon="mdi:battery-arrow-down",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_7,
-            unique_id_override=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_accumulated_discharge_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7
+            protocol_version=ProtocolVersion.V2_7,
+            unique_id_override=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_accumulated_discharge_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus ProtocolVersion v2.7
         )
         self["enabled_by_default"] = True
 
@@ -1432,7 +1432,7 @@ class EVDCTotalChargedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:ev-station",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_7,
+            protocol_version=ProtocolVersion.V2_7,
         )
 
 
@@ -1456,7 +1456,7 @@ class EVDCTotalDischargedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:ev-station",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_7,
+            protocol_version=ProtocolVersion.V2_7,
         )
 
 
@@ -1466,7 +1466,7 @@ class PlantTotalImportedEnergy(UnpublishResetSensorMixin, ReadOnlySensor, Hybrid
     def __init__(self, plant_index: int):
         super().__init__(
             name="Lifetime Imported Energy",
-            object_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_grid_sensor_lifetime_import_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7, but need to keep the same object_id for backward compatibility
+            object_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_grid_sensor_lifetime_import_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus ProtocolVersion v2.7, but need to keep the same object_id for backward compatibility
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
@@ -1480,8 +1480,8 @@ class PlantTotalImportedEnergy(UnpublishResetSensorMixin, ReadOnlySensor, Hybrid
             icon="mdi:transmission-tower-import",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_7,
-            unique_id_override=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_grid_sensor_lifetime_import_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7
+            protocol_version=ProtocolVersion.V2_7,
+            unique_id_override=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_grid_sensor_lifetime_import_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus ProtocolVersion v2.7
         )
         self["enabled_by_default"] = True
 
@@ -1492,7 +1492,7 @@ class PlantTotalExportedEnergy(UnpublishResetSensorMixin, ReadOnlySensor, Hybrid
     def __init__(self, plant_index: int):
         super().__init__(
             name="Lifetime Exported Energy",
-            object_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_grid_sensor_lifetime_export_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7, but need to keep the same object_id for backward compatibility
+            object_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_grid_sensor_lifetime_export_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus ProtocolVersion v2.7, but need to keep the same object_id for backward compatibility
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=Constants.PLANT_DEVICE_ADDRESS,
@@ -1506,8 +1506,8 @@ class PlantTotalExportedEnergy(UnpublishResetSensorMixin, ReadOnlySensor, Hybrid
             icon="mdi:transmission-tower-export",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_7,
-            unique_id_override=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_grid_sensor_lifetime_export_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus Protocol v2.7
+            protocol_version=ProtocolVersion.V2_7,
+            unique_id_override=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_grid_sensor_lifetime_export_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus ProtocolVersion v2.7
         )
         self["enabled_by_default"] = True
 
@@ -1532,11 +1532,11 @@ class PlantTotalGeneratorOutputEnergy(ReadOnlySensor, HybridInverter, PVInverter
             icon="mdi:generator-stationary",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_7,
+            protocol_version=ProtocolVersion.V2_7,
         )
 
 
-# region New statistics interface (Modbus Protocol v2.7+)
+# region New statistics interface (Modbus ProtocolVersion v2.7+)
 
 
 class StatisticsInterfaceSensor(ReadOnlySensor, HybridInverter, PVInverter):
@@ -1565,7 +1565,7 @@ class StatisticsInterfaceSensor(ReadOnlySensor, HybridInverter, PVInverter):
             icon=icon,
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_7,
+            protocol_version=ProtocolVersion.V2_7,
         )
 
     def get_attributes(self) -> dict[str, float | int | str]:
@@ -1751,7 +1751,7 @@ class PlantPVTotalGenerationToday(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:solar-power-variant",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -1775,7 +1775,7 @@ class PlantPVTotalGenerationYesterday(ReadOnlySensor, HybridInverter, PVInverter
             icon="mdi:solar-power-variant",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -1799,7 +1799,7 @@ class GridCodeRatedFrequency(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:sine-wave",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_8,
+            protocol_version=ProtocolVersion.V2_8,
         )
         self.sanity_check.delta = False
         self["entity_category"] = "diagnostic"
@@ -1825,7 +1825,7 @@ class GridCodeRatedVoltage(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:flash",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_8,
+            protocol_version=ProtocolVersion.V2_8,
         )
         self.sanity_check.delta = False
         self["entity_category"] = "diagnostic"
@@ -1851,7 +1851,7 @@ class CurrentControlCommandValue(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:percent",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_8,
+            protocol_version=ProtocolVersion.V2_8,
         )
 
     def get_attributes(self) -> dict[str, float | int | str]:
@@ -1871,7 +1871,7 @@ class Alarm6(AlarmSensor):
             device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=self.ADDRESS,
             alarm_type="Plant",
-            protocol_version=Protocol.V2_8,
+            protocol_version=ProtocolVersion.V2_8,
         )
 
     def decode_alarm_bit(self, bit_position: int):
@@ -1903,7 +1903,7 @@ class Alarm7(AlarmSensor):
             device_address=Constants.PLANT_DEVICE_ADDRESS,
             address=self.ADDRESS,
             alarm_type="Plant",
-            protocol_version=Protocol.V2_8,
+            protocol_version=ProtocolVersion.V2_8,
         )
 
     def decode_alarm_bit(self, bit_position: int):
@@ -1940,13 +1940,13 @@ class GeneralLoadPower(ReadOnlySensor, HybridInverter, PVInverter):
             count=2,
             data_type=ModbusDataType.INT32,
             scan_interval=ScanInterval.realtime(plant_index),
-            unit=UnitOfPower.WATT,  # Protocol defines kW, but prefer the greater precision of watts
+            unit=UnitOfPower.WATT,  # ProtocolVersion defines kW, but prefer the greater precision of watts
             device_class=DeviceClass.POWER,
             state_class=StateClass.MEASUREMENT,
             icon="mdi:meter-electric-outline",
-            gain=None,  # Protocol defines kW, but prefer the greater precision of watts
+            gain=None,  # ProtocolVersion defines kW, but prefer the greater precision of watts
             precision=2,
-            protocol_version=Protocol.V2_8,
+            protocol_version=ProtocolVersion.V2_8,
         )
 
 
@@ -1964,13 +1964,13 @@ class TotalLoadPower(ReadOnlySensor, HybridInverter, PVInverter):
             count=2,
             data_type=ModbusDataType.INT32,
             scan_interval=ScanInterval.realtime(plant_index),
-            unit=UnitOfPower.WATT,  # Protocol defines kW, but prefer the greater precision of watts
+            unit=UnitOfPower.WATT,  # ProtocolVersion defines kW, but prefer the greater precision of watts
             device_class=DeviceClass.POWER,
             state_class=StateClass.MEASUREMENT,
             icon="mdi:meter-electric",
-            gain=None,  # Protocol defines kW, but prefer the greater precision of watts
+            gain=None,  # ProtocolVersion defines kW, but prefer the greater precision of watts
             precision=2,
-            protocol_version=Protocol.V2_8,
+            protocol_version=ProtocolVersion.V2_8,
         )
 
 
@@ -1994,7 +1994,7 @@ class ESSAverageCellTemperature(ReadOnlySensor, HybridInverter):
             icon="mdi:thermometer",
             gain=10,
             precision=1,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
         self["enabled_by_default"] = True
         self.sanity_check.min_raw = -400  # -40.0 °C

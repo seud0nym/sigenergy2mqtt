@@ -1,6 +1,6 @@
 import sigenergy2mqtt.sensors.inverter_read_only as ro
 import sigenergy2mqtt.sensors.inverter_read_write as rw
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.common.types import NonInverter
 from sigenergy2mqtt.devices import ModbusDevice
 
@@ -10,7 +10,7 @@ class DCCharger(ModbusDevice):
         self,
         plant_index: int,
         device_address: int,
-        protocol_version: Protocol,
+        protocol_version: ProtocolVersion,
         sequence_number: int | None = None,
         total_count: int | None = None,
     ):
@@ -33,7 +33,7 @@ class DCCharger(ModbusDevice):
         cls,
         plant_index: int,
         device_address: int,
-        protocol_version: Protocol,
+        protocol_version: ProtocolVersion,
         sequence_number: int | None = None,
         total_count: int | None = None,
     ) -> "DCCharger":
