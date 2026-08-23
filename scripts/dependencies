@@ -4,7 +4,7 @@ set -eo pipefail
 
 cd "$(cd $(dirname $0)/..; pwd)"
 if [[ -z "$VIRTUAL_ENV" ]]; then
-   source .venv/bin/activate
+   source $VIRTUAL_ENV/bin/activate
 fi
 
 install_only=0
