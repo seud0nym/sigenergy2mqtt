@@ -3,8 +3,8 @@
 set -eo pipefail
 
 cd "$(cd $(dirname $0)/..; pwd)"
-if [[ -z "$VIRTUAL_ENV" ]]; then
-   source $VIRTUAL_ENV/bin/activate
+if [[ -z "$VIRTUAL_ENV" && -d .venv ]]; then
+   source .venv/bin/activate
 fi
 
 install_only=0
