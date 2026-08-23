@@ -245,7 +245,7 @@ async def sensor_index() -> None:
                     elif isinstance(sensor, PVInverter):
                         f.write(" PV Inverter only")
                     f.write("</td></tr>\n")
-                f.write(f"<tr><td>Since&nbsp;ProtocolVersion&nbsp;Version</td><td>{protocol}</td></tr>\n")
+                f.write(f"<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>{protocol}</td></tr>\n")
                 if sensor.sanity_check.is_enabled:
                     f.write(f"<tr><td>Modbus&nbsp;Read&nbsp;Sanity&nbsp;Check</td><td>{sensor.sanity_check.description}</td></tr>\n")
                 f.write("</table>\n")
