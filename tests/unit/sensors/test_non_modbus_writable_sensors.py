@@ -1,0 +1,89 @@
+"""Tests for transport-independent writable sensor mixins."""
+
+from unittest.mock import MagicMock, patch
+
+import pytest
+
+from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.config import Config, _swap_active_config
+from sigenergy2mqtt.sensors.base import (
+    NumericSensorMixin,
+    SelectSensorMixin,
+    Sensor,
+    SwitchSensorMixin,
+    WritableSensorMixin,
+)
+
+
+class _NonModbusWritableSensor(WritableSensorMixin, Sensor):
+    """A writable sensor backed by an in-memory service rather than Modbus."""
+
+    async def _update_internal_state(self, **kwargs):
+        return False
+
+    async def _write_value(self, modbus_client, mqtt_client, value, source, handler):
+        self.written_value = value
+        self.written_source = source
+        return True
+
+
+class NonModbusNumericSensor(NumericSensorMixin, _NonModbusWritableSensor):
+    pass
+
+
+class NonModbusSelectSensor(SelectSensorMixin, _NonModbusWritableSensor):
+    pass
+
+
+class NonModbusSwitchSensor(SwitchSensorMixin, _NonModbusWritableSensor):
+    pass
+
+
+@pytest.fixture(autouse=True)
+def config():
+    cfg = Config()
+    cfg.home_assistant.unique_id_prefix = "sigen"
+    cfg.home_assistant.entity_id_prefix = "sigen"
+    cfg.sensor_overrides = {}
+    with _swap_active_config(cfg):
+        yield
+
+
+@pytest.fixture(autouse=True)
+def reset_sensor_ids():
+    with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+        yield
+
+
+def sensor_kwargs(name: str) -> dict:
+    return {
+        "name": name,
+        "unique_id": f"sigen_{name}",
+        "object_id": f"sigen_{name}",
+        "unit": None,
+        "device_class": None,
+        "state_class": None,
+        "icon": "mdi:test-tube",
+        "gain": 1,
+        "precision": 0,
+        "protocol_version": Protocol.V2_4,
+    }
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("sensor_class", "extra_kwargs", "command", "expected"),
+    [
+        (NonModbusNumericSensor, {"minimum": 0, "maximum": 100}, "12", 12),
+        (NonModbusSelectSensor, {"options": ["Automatic", "Manual"]}, "Manual", 1),
+        (NonModbusSwitchSensor, {}, "1", 1),
+    ],
+)
+async def test_writable_entity_mixins_dispatch_commands_without_modbus(sensor_class, extra_kwargs, command, expected):
+    sensor = sensor_class(**sensor_kwargs(sensor_class.__name__.lower()), **extra_kwargs)
+    sensor.configure_mqtt_topics("test-device")
+
+    assert await sensor.set_value(None, MagicMock(), command, sensor.command_topic, MagicMock()) is True
+    assert sensor.written_value == expected
+    assert sensor.written_source == sensor.command_topic
+    assert not hasattr(sensor, "address")
