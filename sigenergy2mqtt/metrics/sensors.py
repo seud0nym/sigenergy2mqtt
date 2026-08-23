@@ -1,5 +1,5 @@
 """
-Home Assistant sensor entities that expose :class:`~sigenergy2mqtt.metrics.Metrics`
+Sensor entities that expose :class:`~sigenergy2mqtt.metrics.Metrics`
 values over MQTT.
 
 Each sensor reads one or more class-level attributes from :class:`Metrics` on

@@ -1,5 +1,5 @@
 """
-MQTT service device that publishes sigenergy2mqtt runtime metrics to Home Assistant.
+MQTT service device that publishes sigenergy2mqtt runtime metrics to MQTT.
 
 :class:`MetricsService` wires together the individual :mod:`sensors`
 sensor entities and handles the service lifecycle: marking the broker status
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 class MetricsService(Device):
     """
-    Virtual device that exposes sigenergy2mqtt runtime metrics as Home Assistant sensors.
+    Virtual device that publishes sigenergy2mqtt runtime metrics to MQTT.
 
     All sensor entities are registered in ``__init__``.
 
