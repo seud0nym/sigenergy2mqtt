@@ -2441,7 +2441,7 @@ class:
     name: Sigenergy 발전소 {plant_suffix}
   ProtocolPublished:
     name: 프로토콜 게시됨
-  ProtocolVersion:
+  ProtocolVersionSensor:
     name: 프로토콜 버전
   QSAdjustmentTargetValue:
     attributes:

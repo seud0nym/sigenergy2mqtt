@@ -4,7 +4,7 @@ import paho.mqtt.client as mqtt
 import pytest
 from sigenergy2mqtt.metrics.service import MetricsService
 
-from sigenergy2mqtt.common import PERCENTAGE, Protocol
+from sigenergy2mqtt.common import PERCENTAGE, ProtocolVersion
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.metrics.metrics import Metrics
 
@@ -44,13 +44,13 @@ class TestMetricsService:
         Metrics._started = original_started
 
     def test_init(self):
-        service = MetricsService(Protocol.V2_4)
+        service = MetricsService(ProtocolVersion.V2_4)
         assert service.name == "Sigenergy Metrics"
         assert service.unique_id == "test_prefix_metrics"
         assert len(service.read_sensors) > 0
 
     def test_sensors_added(self):
-        service = MetricsService(Protocol.V2_4)
+        service = MetricsService(ProtocolVersion.V2_4)
         sensors = service.read_sensors
 
         # Verify key sensors are present
@@ -64,7 +64,7 @@ class TestMetricsService:
         assert "test_prefix_modbus_protocol" in sensors
 
     def test_sensor_config(self):
-        service = MetricsService(Protocol.V2_4)
+        service = MetricsService(ProtocolVersion.V2_4)
         sensor = service.read_sensors["test_prefix_modbus_cache_hit_percentage"]
 
         assert sensor.name == "Modbus Cache Hits"
@@ -73,7 +73,7 @@ class TestMetricsService:
         assert sensor.state_topic == "sigenergy2mqtt/metrics/modbus_cache_hit_percentage"
 
     def test_update_workflow(self):
-        service = MetricsService(Protocol.V2_4)
+        service = MetricsService(ProtocolVersion.V2_4)
 
         # Mock Metrics values
         Metrics.sigenergy2mqtt_modbus_reads = 100
@@ -96,7 +96,7 @@ class TestMetricsService:
             assert reads_sensor.latest_raw_state == 10.0  # 100 reads / 10 sec
 
     def test_lock_sensor(self):
-        service = MetricsService(Protocol.V2_4)
+        service = MetricsService(ProtocolVersion.V2_4)
         with patch("sigenergy2mqtt.modbus.lock_factory.ModbusLockFactory.get_waiter_count", return_value=5):
             lock_sensor = service.read_sensors["test_prefix_modbus_locks"]
 
@@ -107,7 +107,7 @@ class TestMetricsService:
             assert lock_sensor.latest_raw_state == 5
 
     def test_topics_structure(self):
-        service = MetricsService(Protocol.V2_4)
+        service = MetricsService(ProtocolVersion.V2_4)
 
         # Check a few specific topics to ensure they match old format
         # existing: sigenergy2mqtt/metrics/modbus_protocol

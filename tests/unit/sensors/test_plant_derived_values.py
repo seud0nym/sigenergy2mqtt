@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.common import ConsumptionMethod, DeviceClass, Protocol, StateClass
+from sigenergy2mqtt.common import ConsumptionMethod, DeviceClass, ProtocolVersion, StateClass
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.base import PVPowerSensor, Sensor
@@ -52,7 +52,7 @@ class TestBasicDerivedSensorsCoverage:
             bp = MagicMock(spec=BatteryPower)
             bp.device_class = DeviceClass.POWER
             bp.state_class = StateClass.MEASUREMENT
-            bp.protocol_version = Protocol.V2_4
+            bp.protocol_version = ProtocolVersion.V2_4
             sensor = BatteryChargingPower(0, bp)
             assert "BatteryPower > 0" in str(sensor.get_attributes()["source"])
 
@@ -67,7 +67,7 @@ class TestBasicDerivedSensorsCoverage:
             bp = MagicMock(spec=BatteryPower)
             bp.device_class = DeviceClass.POWER
             bp.state_class = StateClass.MEASUREMENT
-            bp.protocol_version = Protocol.V2_4
+            bp.protocol_version = ProtocolVersion.V2_4
             sensor = BatteryDischargingPower(0, bp)
             assert "BatteryPower < 0" in str(sensor.get_attributes()["source"])
 
@@ -83,7 +83,7 @@ class TestBasicDerivedSensorsCoverage:
             gp.device_class = DeviceClass.POWER
             gp.state_class = StateClass.MEASUREMENT
             gp.precision = 2
-            gp.protocol_version = Protocol.V2_4
+            gp.protocol_version = ProtocolVersion.V2_4
             sensor = GridSensorExportPower(0, gp)
             assert "GridSensorActivePower < 0" in str(sensor.get_attributes()["source"])
 
@@ -99,7 +99,7 @@ class TestBasicDerivedSensorsCoverage:
             gp.device_class = DeviceClass.POWER
             gp.state_class = StateClass.MEASUREMENT
             gp.precision = 2
-            gp.protocol_version = Protocol.V2_4
+            gp.protocol_version = ProtocolVersion.V2_4
             sensor = GridSensorImportPower(0, gp)
             assert "GridSensorActivePower > 0" in str(sensor.get_attributes()["source"])
 
@@ -116,7 +116,7 @@ class TestBasicDerivedSensorsCoverage:
             source_exp = MagicMock(spec=PlantTotalExportedEnergy)
             source_exp.unique_id = "exp_uid"
             source_exp.data_type = ModbusDataType.UINT32
-            source_exp.protocol_version = Protocol.V2_4
+            source_exp.protocol_version = ProtocolVersion.V2_4
             source_exp.unit = "kWh"
             source_exp.object_id = "exp_oid"
             source_exp.device_class = DeviceClass.ENERGY
@@ -129,7 +129,7 @@ class TestBasicDerivedSensorsCoverage:
             source_imp = MagicMock(spec=PlantTotalImportedEnergy)
             source_imp.unique_id = "imp_uid"
             source_imp.data_type = ModbusDataType.UINT32
-            source_imp.protocol_version = Protocol.V2_4
+            source_imp.protocol_version = ProtocolVersion.V2_4
             source_imp.unit = "kWh"
             source_imp.object_id = "imp_oid"
             source_imp.device_class = DeviceClass.ENERGY
@@ -142,7 +142,7 @@ class TestBasicDerivedSensorsCoverage:
             source_tpv = MagicMock(spec=PlantPVTotalGeneration)
             source_tpv.unique_id = "tpv_uid"
             source_tpv.data_type = ModbusDataType.UINT32
-            source_tpv.protocol_version = Protocol.V2_4
+            source_tpv.protocol_version = ProtocolVersion.V2_4
             source_tpv.unit = "kWh"
             source_tpv.object_id = "tpv_oid"
             source_tpv.device_class = DeviceClass.ENERGY
@@ -161,7 +161,7 @@ class TestBasicDerivedSensorsCoverage:
             source_charge = MagicMock(spec=ESSTotalChargedEnergy)
             source_charge.unique_id = "ch_uid"
             source_charge.data_type = ModbusDataType.UINT32
-            source_charge.protocol_version = Protocol.V2_4
+            source_charge.protocol_version = ProtocolVersion.V2_4
             source_charge.unit = "kWh"
             source_charge.object_id = "ch_oid"
             source_charge.device_class = DeviceClass.ENERGY
@@ -174,7 +174,7 @@ class TestBasicDerivedSensorsCoverage:
             source_discharge = MagicMock(spec=ESSTotalDischargedEnergy)
             source_discharge.unique_id = "dis_uid"
             source_discharge.data_type = ModbusDataType.UINT32
-            source_discharge.protocol_version = Protocol.V2_4
+            source_discharge.protocol_version = ProtocolVersion.V2_4
             source_discharge.unit = "kWh"
             source_discharge.object_id = "dis_oid"
             source_discharge.device_class = DeviceClass.ENERGY
@@ -248,14 +248,14 @@ class TestPlantConsumedPowerCoverage:
         ac_sensor.unique_id = "ac_uid"
         ac_sensor.gain = 1.0
         ac_sensor.scan_interval = 10
-        ac_sensor.protocol_version = Protocol.V1_8
+        ac_sensor.protocol_version = ProtocolVersion.V1_8
         ac_sensor._publishable = True
         charger.get_all_sensors = MagicMock(return_value={"ac_uid": ac_sensor})
         charger.get_sensor = MagicMock(return_value=ac_sensor)
 
         sensor = PlantConsumedPower(0, ConsumptionMethod.CALCULATED)
         sensor.debug_logging = True
-        sensor.parent_device = type("Parent", (), {"protocol_version": Protocol.V1_8})()
+        sensor.parent_device = type("Parent", (), {"protocol_version": ProtocolVersion.V1_8})()
 
         with patch("sigenergy2mqtt.devices.base.registry.DeviceRegistry.get", return_value=[charger]):
             result = sensor.finalise_binding(0)
@@ -409,7 +409,7 @@ class TestPlantSelfConsumedPowerCoverage:
             sensor = PlantSelfConsumedPower(0)
             DeviceRegistry.clear()
 
-            dev = Device(name="Dev", plant_index=0, unique_id="uid", manufacturer="m", model="m", protocol_version=Protocol.V1_8)
+            dev = Device(name="Dev", plant_index=0, unique_id="uid", manufacturer="m", model="m", protocol_version=ProtocolVersion.V1_8)
             DeviceRegistry.add(0, dev)
 
             inv_sensor = MagicMock(spec=InverterSelfConsumedPower)

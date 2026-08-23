@@ -2,7 +2,7 @@ import json
 import logging
 from pathlib import Path
 
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices import Device
 
@@ -39,7 +39,7 @@ def test_publish_discovery_empty(tmp_path, monkeypatch):
     cfg.home_assistant.discovery_prefix = "homeassistant"
 
     with _swap_active_config(cfg):
-        dev = Device("TestDevice", 0, "uid-123", "mf", "mdl", Protocol.N_A)
+        dev = Device("TestDevice", 0, "uid-123", "mf", "mdl", ProtocolVersion.N_A)
         dev.all_sensors = {}
         dev.publish_discovery(mqtt, clean=True)
 
@@ -63,7 +63,7 @@ def test_publish_discovery_populated_writes_file(tmp_path, monkeypatch):
     cfg.log_level = logging.DEBUG
 
     with _swap_active_config(cfg):
-        dev = Device("TestDevice2", 0, "uid-456", "mf", "mdl", Protocol.N_A)
+        dev = Device("TestDevice2", 0, "uid-456", "mf", "mdl", ProtocolVersion.N_A)
 
         # sensor returns a discovery component
         sensor = FakeSensor("s1", {"comp1": {"k": "v"}})

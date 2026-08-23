@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.common.types import NonInverter
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.sensors.base import WriteOnlySensor
@@ -16,7 +16,7 @@ class PIDStartStop(WriteOnlySensor, NonInverter):
             plant_index=plant_index,
             device_address=device_address,
             address=self.ADDRESS,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
             payload_off="stop",
             payload_on="start",
             name_off="Stop",

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.common.types import NonInverter
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.sensors.base import WriteOnlySensor
@@ -19,7 +19,7 @@ class PSSMVCabinetG3CircuitBreakerSwitchOn(WriteOnlySensor, NonInverter):
             plant_index=plant_index,
             device_address=device_address,
             address=self.ADDRESS,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
             payload_off="no-action",
             payload_on="on",
             name_off="",
@@ -40,7 +40,7 @@ class PSSMVCabinetG3CircuitBreakerSwitchOff(WriteOnlySensor, NonInverter):
             plant_index=plant_index,
             device_address=device_address,
             address=self.ADDRESS,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
             payload_off="no-action",
             payload_on="off",
             name_off="",
@@ -61,7 +61,7 @@ class PSSLALowVoltageCabinetCircuitBreakerSwitchOn(WriteOnlySensor, NonInverter)
             plant_index=plant_index,
             device_address=device_address,
             address=self.ADDRESS,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
             payload_off="no-action",
             payload_on="on",
             name_off="",
@@ -82,7 +82,7 @@ class PSSLALowVoltageCabinetCircuitBreakerSwitchOff(WriteOnlySensor, NonInverter
             plant_index=plant_index,
             device_address=device_address,
             address=self.ADDRESS,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
             payload_off="no-action",
             payload_on="off",
             name_off="",
@@ -103,7 +103,7 @@ class PSSLBLowVoltageCabinetCircuitBreakerSwitchOn(WriteOnlySensor, NonInverter)
             plant_index=plant_index,
             device_address=device_address,
             address=self.ADDRESS,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
             payload_off="no-action",
             payload_on="on",
             name_off="",
@@ -124,7 +124,7 @@ class PSSLBLowVoltageCabinetCircuitBreakerSwitchOff(WriteOnlySensor, NonInverter
             plant_index=plant_index,
             device_address=device_address,
             address=self.ADDRESS,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
             payload_off="no-action",
             payload_on="off",
             name_off="",

@@ -16,7 +16,7 @@ import paho.mqtt.client as mqtt
 from pymodbus.exceptions import ModbusException
 from pymodbus.pdu import ExceptionResponse
 
-from sigenergy2mqtt.common import DeviceClass, Protocol, StateClass
+from sigenergy2mqtt.common import DeviceClass, ProtocolVersion, StateClass
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.config.models import RegisterAccess
 from sigenergy2mqtt.i18n import _t
@@ -91,7 +91,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         icon: str | None,
         gain: float | None,
         precision: int | None,
-        protocol_version: Protocol = Protocol.V2_4,
+        protocol_version: ProtocolVersion = ProtocolVersion.V2_4,
         **kwargs,
     ):
         # Validate unique_id
@@ -105,7 +105,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
             raise AssertionError(f"{self.__class__.__name__} icon {icon} does not start with 'mdi:'")
 
         # Validate protocol version
-        if not isinstance(protocol_version, Protocol):
+        if not isinstance(protocol_version, ProtocolVersion):
             raise TypeError(f"{self.__class__.__name__} protocol_version '{protocol_version}' is invalid")
 
         super().__init__(**kwargs)
@@ -315,24 +315,24 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         return self._log_identity
 
     @property
-    def protocol_version(self) -> Protocol:
+    def protocol_version(self) -> ProtocolVersion:
         """Get the protocol version this sensor was introduced in."""
-        return self._protocol_version if self._protocol_version else Protocol.N_A
+        return self._protocol_version if self._protocol_version else ProtocolVersion.N_A
 
     @protocol_version.setter
-    def protocol_version(self, protocol_version: Protocol | float):
+    def protocol_version(self, protocol_version: ProtocolVersion | float):
         """Set the protocol version this sensor was introduced in."""
-        if isinstance(protocol_version, Protocol):
+        if isinstance(protocol_version, ProtocolVersion):
             self._protocol_version = protocol_version
         elif isinstance(protocol_version, float):
-            if protocol_version not in [p.value for p in Protocol]:
+            if protocol_version not in [p.value for p in ProtocolVersion]:
                 raise AssertionError(f"{self.log_identity}: Invalid protocol_version '{protocol_version}'")
-            protocol = {p.value: p for p in Protocol}.get(protocol_version)
+            protocol = {p.value: p for p in ProtocolVersion}.get(protocol_version)
             if protocol is None:
                 raise AssertionError(f"{self.log_identity}: Invalid protocol_version '{protocol_version}'")
             self._protocol_version = protocol
         else:
-            raise TypeError(f"{self.log_identity}: protocol_version must be Protocol or float, got {type(protocol_version)}")
+            raise TypeError(f"{self.log_identity}: protocol_version must be ProtocolVersion or float, got {type(protocol_version)}")
 
     @property
     def publishable(self) -> bool:
@@ -698,7 +698,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
 
         attributes[SensorAttributeKeys.SENSOR_CLASS] = self.__class__.__name__
 
-        if self.protocol_version and self.protocol_version != Protocol.N_A:
+        if self.protocol_version and self.protocol_version != ProtocolVersion.N_A:
             attributes[SensorAttributeKeys.SINCE_PROTOCOL] = f"V{self.protocol_version.value}"
 
         if self._gain:

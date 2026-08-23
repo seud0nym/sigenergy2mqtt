@@ -9,7 +9,7 @@ import sigenergy2mqtt.sensors.inverter_derived as idrv
 import sigenergy2mqtt.sensors.inverter_read_only as iro
 import sigenergy2mqtt.sensors.inverter_read_write as irw
 import sigenergy2mqtt.sensors.plant_derived as pdrv
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.sensors.base import AvailabilityMixin, Sensor
 
 
@@ -38,7 +38,7 @@ class MockAvailabilitySensor(AvailabilityMixin):
         self.object_id = "sigen_mock_avail"
         self.get_state = AsyncMock(return_value=1)
         self.address = 30000
-        self._protocol_version = Protocol.V1_8
+        self._protocol_version = ProtocolVersion.V1_8
         self.publishable = True
 
     def items(self):
@@ -105,7 +105,7 @@ async def run_coverage_on_module(module):
                     m.device_address = 247
                     m.address = 30000
                     m.count = 1
-                    m.protocol_version = Protocol.V1_8
+                    m.protocol_version = ProtocolVersion.V1_8
                     kwargs[name] = [m]
                 elif issubclass(param.annotation, AvailabilityMixin) if hasattr(param.annotation, "__mro__") else False:
                     kwargs[name] = MockAvailabilitySensor()

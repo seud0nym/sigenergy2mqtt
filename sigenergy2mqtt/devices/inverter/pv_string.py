@@ -1,4 +1,4 @@
-from sigenergy2mqtt.common import DeviceType, Protocol
+from sigenergy2mqtt.common import DeviceType, ProtocolVersion
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import ModbusDevice
 from sigenergy2mqtt.sensors.inverter_derived import PVStringDailyEnergy, PVStringLifetimeEnergy, PVStringPower
@@ -16,7 +16,7 @@ class PVString(ModbusDevice):
         string_number: int,
         voltage_address: int,
         current_address: int,
-        protocol_version: Protocol,
+        protocol_version: ProtocolVersion,
     ):
         self.string_number = string_number
         super().__init__(

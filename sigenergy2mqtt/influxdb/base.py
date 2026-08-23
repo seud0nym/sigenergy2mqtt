@@ -10,7 +10,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.exceptions import MaxRetryError
 from urllib3.util.retry import Retry
 
-from sigenergy2mqtt.common import Protocol, service_health_registry
+from sigenergy2mqtt.common import ProtocolVersion, service_health_registry
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.metrics import Metrics
@@ -93,7 +93,7 @@ class InfluxBase(Device):
             manufacturer: Manufacturer string for device registration.
             model: Model string for device registration.
         """
-        super().__init__(name, plant_index, unique, manufacturer, model, Protocol.N_A)
+        super().__init__(name, plant_index, unique, manufacturer, model, ProtocolVersion.N_A)
 
         self.plant_index = plant_index
 

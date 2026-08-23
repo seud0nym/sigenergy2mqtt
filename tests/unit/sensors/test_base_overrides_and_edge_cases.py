@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.common import DeviceClass, Protocol, RegisterAccess, StateClass, UnitOfPower
+from sigenergy2mqtt.common import DeviceClass, ProtocolVersion, RegisterAccess, StateClass, UnitOfPower
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.base import (
@@ -47,7 +47,7 @@ def _make_sensor(name="Test", uid_suffix="x", debug=False, **kwargs):
                 icon="mdi:solar-power",
                 gain=1.0,
                 precision=2,
-                protocol_version=Protocol.V2_4,
+                protocol_version=ProtocolVersion.V2_4,
                 debug_logging=debug,
                 **kwargs,
             )
@@ -150,7 +150,7 @@ class TestApplySensorOverrides:
                 icon="mdi:flash",
                 gain=1.0,
                 precision=2,
-                protocol_version=Protocol.V2_4,
+                protocol_version=ProtocolVersion.V2_4,
             )
         cfg = Config()
         cfg.sensor_overrides = {f"sigen_{suffix}": overrides}
@@ -232,7 +232,7 @@ class TestApplySensorOverrides:
                 icon="mdi:flash",
                 gain=1.0,
                 precision=2,
-                protocol_version=Protocol.V2_4,
+                protocol_version=ProtocolVersion.V2_4,
             )
         registers = MagicMock(spec=RegisterAccess)
         registers.no_remote_ems = False
@@ -257,7 +257,7 @@ class TestApplySensorOverrides:
                 icon="mdi:flash",
                 gain=1.0,
                 precision=2,
-                protocol_version=Protocol.V2_4,
+                protocol_version=ProtocolVersion.V2_4,
             )
         s._remote_ems = True  # mark as remote EMS sensor
         registers = MagicMock(spec=RegisterAccess)
@@ -281,7 +281,7 @@ class TestAlarmSensorBranches:
                 def decode_alarm_bit(self, bit_position: int):
                     return f"Error bit {bit_position}" if bit_position == 0 else None
 
-            return ConcreteAlarm("Alarm", f"sigen_{suffix}", 0, 1, 30001, Protocol.V2_4, "Equipment")
+            return ConcreteAlarm("Alarm", f"sigen_{suffix}", 0, 1, 30001, ProtocolVersion.V2_4, "Equipment")
 
     def test_alarm_state2raw_string_no_alarm(self):
         s = self._make_alarm("alrm_s2r_na")
@@ -412,7 +412,7 @@ class TestReservedSensor:
                 None,
                 None,
                 None,
-                Protocol.V2_4,
+                ProtocolVersion.V2_4,
             )
         return s
 
@@ -442,7 +442,7 @@ class TestWriteableSensorOverrides:
         """WriteableSensorMixin sensor becomes unpublishable when read_write=False."""
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             # WriteOnlySensor is a concrete WriteableSensorMixin subclass
-            wo = WriteOnlySensor("WO", "sigen_wo_rw", 0, 1, 30001, Protocol.V2_4)
+            wo = WriteOnlySensor("WO", "sigen_wo_rw", 0, 1, 30001, ProtocolVersion.V2_4)
         registers = MagicMock(spec=RegisterAccess)
         registers.no_remote_ems = False
         registers.write_only = False
@@ -453,7 +453,7 @@ class TestWriteableSensorOverrides:
     def test_write_only_sensor_write_only_false_unpublishable(self):
         """WriteOnlySensor (not WriteableSensorMixin ReadWrite) also respects write_only override."""
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            wo = WriteOnlySensor("WO2", "sigen_wo_wo", 0, 1, 30001, Protocol.V2_4)
+            wo = WriteOnlySensor("WO2", "sigen_wo_wo", 0, 1, 30001, ProtocolVersion.V2_4)
         registers = MagicMock(spec=RegisterAccess)
         registers.no_remote_ems = False
         registers.write_only = False
@@ -480,7 +480,7 @@ class TestSensorEqualityAndHash:
                 icon=None,
                 gain=None,
                 precision=None,
-                protocol_version=Protocol.V2_4,
+                protocol_version=ProtocolVersion.V2_4,
             )
             s2 = ConcreteSensor(
                 name="S2",
@@ -492,7 +492,7 @@ class TestSensorEqualityAndHash:
                 icon=None,
                 gain=None,
                 precision=None,
-                protocol_version=Protocol.V2_4,
+                protocol_version=ProtocolVersion.V2_4,
             )
         assert s1 == s2
 
@@ -508,7 +508,7 @@ class TestSensorEqualityAndHash:
                 icon=None,
                 gain=None,
                 precision=None,
-                protocol_version=Protocol.V2_4,
+                protocol_version=ProtocolVersion.V2_4,
             )
             s2 = ConcreteSensor(
                 name="S2",
@@ -520,7 +520,7 @@ class TestSensorEqualityAndHash:
                 icon=None,
                 gain=None,
                 precision=None,
-                protocol_version=Protocol.V2_4,
+                protocol_version=ProtocolVersion.V2_4,
             )
         assert s1 != s2
 

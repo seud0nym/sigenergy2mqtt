@@ -9,7 +9,7 @@ import sys  # noqa: F401
 import time  # noqa: F401
 from pathlib import Path  # noqa: F401
 
-from sigenergy2mqtt.common import DeviceType, Protocol  # noqa: F401
+from sigenergy2mqtt.common import DeviceType, ProtocolVersion  # noqa: F401
 from sigenergy2mqtt.config import active_config  # noqa: F401
 from sigenergy2mqtt.i18n import _t  # noqa: F401
 

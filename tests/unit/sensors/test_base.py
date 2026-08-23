@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.common import DeviceClass, Protocol, StateClass, UnitOfPower
+from sigenergy2mqtt.common import DeviceClass, ProtocolVersion, StateClass, UnitOfPower
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.sensors.base import Sensor
 
@@ -33,7 +33,7 @@ class TestSensorBase:
                     icon="mdi:solar-power",
                     gain=1.0,
                     precision=2,
-                    protocol_version=Protocol.V2_4,
+                    protocol_version=ProtocolVersion.V2_4,
                 )
                 yield s
 
@@ -42,7 +42,7 @@ class TestSensorBase:
         assert sensor["unique_id"] == "sigen_test_unique_id"
         assert sensor.gain == 1.0
         assert sensor.precision == 2
-        assert sensor.protocol_version == Protocol.V2_4.value
+        assert sensor.protocol_version == ProtocolVersion.V2_4.value
 
     def test_apply_gain_and_precision(self, sensor):
         # Default gain=1.0, precision=2
@@ -94,11 +94,11 @@ class TestSensorBase:
 
         # protocol_version setter
         # Accept enum
-        sensor.protocol_version = Protocol.V2_4
-        assert sensor.protocol_version == Protocol.V2_4.value
-        # Accept float value corresponding to Protocol
-        sensor.protocol_version = float(Protocol.V2_4.value)
-        assert sensor.protocol_version == Protocol.V2_4.value
+        sensor.protocol_version = ProtocolVersion.V2_4
+        assert sensor.protocol_version == ProtocolVersion.V2_4.value
+        # Accept float value corresponding to ProtocolVersion
+        sensor.protocol_version = float(ProtocolVersion.V2_4.value)
+        assert sensor.protocol_version == ProtocolVersion.V2_4.value
         # Invalid value
         with pytest.raises(TypeError):
             sensor.protocol_version = "invalid"  # type: ignore
@@ -165,7 +165,7 @@ class TestSensorLogic:
                     def decode_alarm_bit(self, bit_position: int) -> str | None:
                         return "Error"
 
-                sensor = ConcreteAlarm("Alarm", "sigen_alarm", 0, 1, 30001, Protocol.V2_4, "Equipment")
+                sensor = ConcreteAlarm("Alarm", "sigen_alarm", 0, 1, 30001, ProtocolVersion.V2_4, "Equipment")
                 assert sensor.state2raw("No Alarm") == 0
                 assert sensor.state2raw(1) == 1
 
@@ -250,7 +250,7 @@ class TestSensorLogic:
         with _swap_active_config(cfg):
             with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
                 # name, object_id, plant_index, device_address, address, protocol_version
-                s = WriteOnlySensor("WO", "sigen_wo", 0, 1, 30001, Protocol.V2_4)
+                s = WriteOnlySensor("WO", "sigen_wo", 0, 1, 30001, ProtocolVersion.V2_4)
                 assert s.publishable is True
                 assert s.publish_raw is False
 

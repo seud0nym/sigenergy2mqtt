@@ -6,7 +6,7 @@ import pytest
 
 from sigenergy2mqtt.main import main as main_mod
 from sigenergy2mqtt.config import active_config, Config
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.devices import Inverter
 from sigenergy2mqtt.sensors.plant_read_write import ActivePowerFixedAdjustmentTargetValue, ReactivePowerFixedAdjustmentTargetValue
 
@@ -80,7 +80,7 @@ async def test_setup_devices_active_power_bounds(caplog):
         mock_client.__aenter__.return_value = mock_client
         
         mock_plant = MagicMock()
-        mock_plant.protocol_version = Protocol.V1_8
+        mock_plant.protocol_version = ProtocolVersion.V1_8
         mock_plant.has_battery = True
         active_power_sensor = MagicMock(spec=ActivePowerFixedAdjustmentTargetValue)
         reactive_power_sensor = MagicMock(spec=ReactivePowerFixedAdjustmentTargetValue)
@@ -145,7 +145,7 @@ async def test_setup_devices_active_power_bounds_missing(caplog):
         mock_client.__aenter__.return_value = mock_client
         
         mock_plant = MagicMock()
-        mock_plant.protocol_version = Protocol.V1_8
+        mock_plant.protocol_version = ProtocolVersion.V1_8
         mock_plant.has_battery = True
         mock_plant.sensors = {}
         
@@ -306,7 +306,7 @@ async def test_setup_dc_chargers_normal():
     mock_config = MagicMock()
     mock_charger = MagicMock()
     mock_plant = MagicMock()
-    mock_plant.protocol_version = Protocol.V1_8
+    mock_plant.protocol_version = ProtocolVersion.V1_8
     
     with patch("sigenergy2mqtt.main.main.make_dc_charger", new_callable=AsyncMock) as mock_make, \
          patch("sigenergy2mqtt.main.main.validate_publishable_sensors", new_callable=AsyncMock) as mock_validate:
@@ -354,7 +354,7 @@ async def test_setup_pid_normal():
             seen_serial_numbers=set(),
             modbus_client=MagicMock(),
             config=mock_config,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
             sequence_start=0,
             total_count=1,
         )
@@ -378,7 +378,7 @@ async def test_setup_pid_exception_grid_outage(caplog):
         mock_outage.return_value = True
         
         res = await main_mod._setup_pid(
-            0, mock_device, MagicMock(), set(), MagicMock(), MagicMock(), Protocol.V2_9, 0, 1
+            0, mock_device, MagicMock(), set(), MagicMock(), MagicMock(), ProtocolVersion.V2_9, 0, 1
         )
         
         assert res == 1
@@ -399,7 +399,7 @@ async def test_setup_pid_exception_normal(caplog):
         mock_outage.return_value = False
         
         res = await main_mod._setup_pid(
-            0, mock_device, MagicMock(), set(), MagicMock(), MagicMock(), Protocol.V2_9, 0, 1
+            0, mock_device, MagicMock(), set(), MagicMock(), MagicMock(), ProtocolVersion.V2_9, 0, 1
         )
         
         assert res == 1

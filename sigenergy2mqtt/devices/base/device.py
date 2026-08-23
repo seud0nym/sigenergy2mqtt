@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Literal, cast
 
 import paho.mqtt.client as mqtt
 
-from sigenergy2mqtt.common import DeviceType, HybridInverter, Protocol, PVInverter
+from sigenergy2mqtt.common import DeviceType, HybridInverter, ProtocolVersion, PVInverter
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.config.models import RegisterAccess
 from sigenergy2mqtt.i18n import _t
@@ -46,7 +46,7 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
     _add_sensor helpers.
     """
 
-    def __init__(self, name: str, plant_index: int, unique_id: str, manufacturer: str, model: str, protocol_version: Protocol, **kwargs):
+    def __init__(self, name: str, plant_index: int, unique_id: str, manufacturer: str, model: str, protocol_version: ProtocolVersion, **kwargs):
         """Initialise the device and register it in the DeviceRegistry.
 
         Args:
@@ -364,29 +364,29 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
             # Cross-device sensors defer source binding to finalise_binding().
             # Only apply a protocol check on the sensor itself here; source
             # validation and bidirectional wiring happen in bind_cross_device_sensors().
-            sensor_protocol = getattr(sensor, "protocol_version", Protocol.N_A)
-            if self.protocol_version > Protocol.N_A and sensor_protocol > self.protocol_version:
+            sensor_protocol = getattr(sensor, "protocol_version", ProtocolVersion.N_A)
+            if self.protocol_version > ProtocolVersion.N_A and sensor_protocol > self.protocol_version:
                 if sensor.debug_logging:
-                    logger.debug(f"{self.log_identity} skipped adding {sensor.__class__.__name__} - Protocol version {sensor_protocol} > {self.protocol_version}")
+                    logger.debug(f"{self.log_identity} skipped adding {sensor.__class__.__name__} - ProtocolVersion version {sensor_protocol} > {self.protocol_version}")
                 return False
             self._add_to_all_sensors(sensor)
             return True
         if isinstance(sensor, DerivedSensor):
-            sensor_protocol = getattr(sensor, "protocol_version", Protocol.N_A)
-            if self.protocol_version > Protocol.N_A and sensor_protocol > self.protocol_version:
+            sensor_protocol = getattr(sensor, "protocol_version", ProtocolVersion.N_A)
+            if self.protocol_version > ProtocolVersion.N_A and sensor_protocol > self.protocol_version:
                 if sensor.debug_logging:
-                    logger.debug(f"{self.log_identity} skipped adding {sensor.__class__.__name__} - Protocol version {sensor_protocol} > {self.protocol_version}")
+                    logger.debug(f"{self.log_identity} skipped adding {sensor.__class__.__name__} - ProtocolVersion version {sensor_protocol} > {self.protocol_version}")
                 return False
             source_sensors = getattr(sensor, "source_sensors", [])
             if not source_sensors:
                 logger.error(f"{self.log_identity} cannot add {sensor.__class__.__name__} - no declared source sensors")
                 return False
-            if self.protocol_version > Protocol.N_A and any(getattr(s, "protocol_version", Protocol.N_A) > self.protocol_version for s in source_sensors):
-                logger.debug(f"{self.log_identity} skipped adding {sensor.__class__.__name__} - one or more source sensors have Protocol version > {self.protocol_version}")
+            if self.protocol_version > ProtocolVersion.N_A and any(getattr(s, "protocol_version", ProtocolVersion.N_A) > self.protocol_version for s in source_sensors):
+                logger.debug(f"{self.log_identity} skipped adding {sensor.__class__.__name__} - one or more source sensors have ProtocolVersion version > {self.protocol_version}")
                 return False
             added = False
             for source in source_sensors:
-                if self.protocol_version > Protocol.N_A and source.protocol_version > self.protocol_version:
+                if self.protocol_version > ProtocolVersion.N_A and source.protocol_version > self.protocol_version:
                     logger.debug(
                         f"{self.log_identity} skipped binding source {source.__class__.__name__} to {sensor.__class__.__name__} - "
                         f"source protocol {source.protocol_version} > device protocol {self.protocol_version}"
@@ -581,7 +581,7 @@ class ModbusDevice(Device, metaclass=abc.ABCMeta):
         plant_index: int,
         device_address: int,
         model: str,
-        protocol_version: Protocol,
+        protocol_version: ProtocolVersion,
         **kwargs,
     ):
         """Initialise a Modbus device and validate its address and unique_id.
@@ -643,7 +643,7 @@ class ModbusDevice(Device, metaclass=abc.ABCMeta):
             logger.debug(f"{self.log_identity} skipped adding {sensor.__class__.__name__} - not applicable to a {self._device_type.__class__.__name__}")
             return False
         elif sensor.protocol_version > self.protocol_version:
-            logger.debug(f"{self.log_identity} skipped adding {sensor.__class__.__name__} - Protocol version {sensor.protocol_version} > {self.protocol_version}")
+            logger.debug(f"{self.log_identity} skipped adding {sensor.__class__.__name__} - ProtocolVersion version {sensor.protocol_version} > {self.protocol_version}")
             return False
         else:
             return super()._add_sensor(sensor, group=group, search_children=search_children)

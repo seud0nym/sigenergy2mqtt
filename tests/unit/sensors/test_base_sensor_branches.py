@@ -10,7 +10,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.common import DeviceClass, InputType, Protocol, RegisterAccess, StateClass, UnitOfPower
+from sigenergy2mqtt.common import DeviceClass, InputType, ProtocolVersion, RegisterAccess, StateClass, UnitOfPower
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.base import ReadOnlySensor, Sensor
@@ -50,7 +50,7 @@ def _make_sensor(uid_suffix: str = "x", debug: bool = False, cfg: Config | None 
             icon="mdi:solar-power",
             gain=1.0,
             precision=2,
-            protocol_version=Protocol.V2_4,
+            protocol_version=ProtocolVersion.V2_4,
             debug_logging=debug,
         )
     return s
@@ -94,15 +94,15 @@ class TestSensorInitValidation:
                     icon="bad_icon",  # Triggers line 105
                     gain=None,
                     precision=None,
-                    protocol_version=Protocol.V2_4,
+                    protocol_version=ProtocolVersion.V2_4,
                 )
 
     def test_invalid_protocol_version_type_raises(self):
-        """Line 109: TypeError when protocol_version is not a Protocol instance."""
+        """Line 109: TypeError when protocol_version is not a ProtocolVersion instance."""
         cfg = _make_cfg()
         with _swap_active_config(cfg), patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True), pytest.raises(TypeError, match="protocol_version.*is invalid"):
             _ConcreteSensor(
-                name="Bad Protocol",
+                name="Bad ProtocolVersion",
                 unique_id="sigen_bad_proto",
                 object_id="sigen_bad_proto",
                 unit=None,
@@ -136,7 +136,7 @@ class TestSensorIDValidation:
                     icon=None,
                     gain=None,
                     precision=None,
-                    protocol_version=Protocol.V2_4,
+                    protocol_version=ProtocolVersion.V2_4,
                 )
 
     def test_object_id_wrong_prefix_raises(self):
@@ -154,7 +154,7 @@ class TestSensorIDValidation:
                     icon=None,
                     gain=None,
                     precision=None,
-                    protocol_version=Protocol.V2_4,
+                    protocol_version=ProtocolVersion.V2_4,
                 )
 
 
@@ -165,10 +165,10 @@ class TestSensorIDValidation:
 
 class TestProtocolVersionSetter:
     def test_float_invalid_protocol_version_raises(self):
-        """Line 328: AssertionError when float value not in Protocol enum."""
+        """Line 328: AssertionError when float value not in ProtocolVersion enum."""
         s = _make_sensor("proto_invalid")
         with pytest.raises(AssertionError, match="Invalid protocol_version"):
-            s.protocol_version = 999.9  # Not a valid Protocol value
+            s.protocol_version = 999.9  # Not a valid ProtocolVersion value
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -249,7 +249,7 @@ class TestApplyDeviceOverrides:
                 icon=None,
                 gain=None,
                 precision=None,
-                protocol_version=Protocol.V2_4,
+                protocol_version=ProtocolVersion.V2_4,
             )
             registers = MagicMock(spec=RegisterAccess)
             registers.no_remote_ems = False
@@ -287,7 +287,7 @@ class TestApplyDeviceOverrides:
                 icon=None,
                 gain=None,
                 precision=None,
-                protocol_version=Protocol.V2_4,
+                protocol_version=ProtocolVersion.V2_4,
                 debug_logging=True,
             )
 

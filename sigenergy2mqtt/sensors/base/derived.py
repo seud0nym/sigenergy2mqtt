@@ -10,7 +10,7 @@ from typing import Any
 
 from pymodbus.pdu import ExceptionResponse
 
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import ProtocolVersion
 
 from .constants import DiscoveryKeys
 from .sensor import Sensor, TypedSensorMixin
@@ -36,7 +36,7 @@ class DerivedSensor(TypedSensorMixin, Sensor):
             **kwargs: Forwarded to the Sensor base class.
         """
         if "protocol_version" not in kwargs:
-            kwargs["protocol_version"] = Protocol.N_A
+            kwargs["protocol_version"] = ProtocolVersion.N_A
 
         super().__init__(*args, **kwargs)
         self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
@@ -215,7 +215,7 @@ class CrossDeviceDerivedSensor(DerivedSensor):
         added = False
         for pending in pending_sources:
             # Skip sources that violate the owner device's protocol version
-            if owner_device.protocol_version > Protocol.N_A and pending.protocol_version > owner_device.protocol_version:
+            if owner_device.protocol_version > ProtocolVersion.N_A and pending.protocol_version > owner_device.protocol_version:
                 logger.debug(f"{self.log_identity} skipped cross-device binding of {pending.__class__.__name__} - source protocol {pending.protocol_version} > device protocol {owner_device.protocol_version}")
                 continue
 

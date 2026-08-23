@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, cast
 import paho.mqtt.client as mqtt
 from pymodbus.pdu import ExceptionResponse
 
-from sigenergy2mqtt.common import Constants, Protocol
+from sigenergy2mqtt.common import Constants, ProtocolVersion
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.i18n import _t
 from sigenergy2mqtt.modbus import ModbusClient, ModbusDataType
@@ -40,7 +40,7 @@ class WriteOnlySensor(ModbusWriteableSensorMixin, Sensor):
         plant_index: int,
         device_address: int,
         address: int,
-        protocol_version: Protocol,
+        protocol_version: ProtocolVersion,
         payload_off: str = "off",
         payload_on: str = "on",
         name_off: str = "Power Off",
@@ -200,7 +200,7 @@ class ReadWriteSensor(ModbusWriteableSensorMixin, ReadOnlySensor):
         icon: str | None,
         gain: float | None,
         precision: int | None,
-        protocol_version: Protocol,
+        protocol_version: ProtocolVersion,
         **kwargs,
     ):
         # Validate availability control sensor
@@ -375,7 +375,7 @@ class NumericSensor(ReadWriteSensor):
         icon: str | None,
         gain: float | None,
         precision: int | None,
-        protocol_version: Protocol,
+        protocol_version: ProtocolVersion,
         minimum: float | tuple[float, float] | None = None,
         maximum: float | tuple[float, float] | None = None,
         **kwargs,
@@ -691,7 +691,7 @@ class SelectSensor(ReadWriteSensor):
         address: int,
         scan_interval: int,
         options: list[str],
-        protocol_version: Protocol,
+        protocol_version: ProtocolVersion,
         **kwargs,
     ):
         # Validate options
@@ -812,7 +812,7 @@ class SwitchSensor(ReadWriteSensor):
         device_address: int,
         address: int,
         scan_interval: int,
-        protocol_version: Protocol,
+        protocol_version: ProtocolVersion,
         **kwargs,
     ):
         super().__init__(

@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import pytest
 
-from sigenergy2mqtt.common import InputType, Protocol, RegisterAccess
+from sigenergy2mqtt.common import InputType, ProtocolVersion, RegisterAccess
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.config.settings import ModbusConfig
 from sigenergy2mqtt.modbus.client import ModbusClient
@@ -66,7 +66,7 @@ class MockReadableSensor(ReadableSensorMixin, Sensor):
         kwargs.setdefault("icon", "mdi:test")
         kwargs.setdefault("gain", 1.0)
         kwargs.setdefault("precision", 1)
-        kwargs.setdefault("protocol_version", Protocol.V2_4)
+        kwargs.setdefault("protocol_version", ProtocolVersion.V2_4)
         kwargs.setdefault("scan_interval", 60)
         super().__init__(**kwargs)
 
@@ -85,7 +85,7 @@ class MockWriteableSensor(WriteableSensorMixin, Sensor):
         kwargs.setdefault("icon", "mdi:test")
         kwargs.setdefault("gain", 1.0)
         kwargs.setdefault("precision", 1)
-        kwargs.setdefault("protocol_version", Protocol.V2_4)
+        kwargs.setdefault("protocol_version", ProtocolVersion.V2_4)
         kwargs.setdefault("data_type", MODBUS_DATA_TYPE.UINT16)
         kwargs.setdefault("input_type", InputType.HOLDING)
         kwargs.setdefault("plant_index", 1)
@@ -108,7 +108,7 @@ class MockWriteOnlySensor(WriteOnlySensor):
         kwargs.setdefault("plant_index", 1)
         kwargs.setdefault("device_address", 1)
         kwargs.setdefault("address", 40001)
-        kwargs.setdefault("protocol_version", Protocol.V2_4)
+        kwargs.setdefault("protocol_version", ProtocolVersion.V2_4)
         # We don't want to pass data_type or other fields that WriteOnlySensor sets itself
         super().__init__(**kwargs)
 

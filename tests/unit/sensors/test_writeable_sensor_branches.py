@@ -11,7 +11,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.common import InputType, Protocol
+from sigenergy2mqtt.common import InputType, ProtocolVersion
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.modbus import ModbusClient, ModbusDataType
 from sigenergy2mqtt.sensors.base import (
@@ -95,7 +95,7 @@ class TestWriteOnlySensorIconValidation:
                 0,
                 1,
                 30001,
-                Protocol.V2_4,
+                ProtocolVersion.V2_4,
                 icon_on="bad_icon_on",  # Triggers line 56
             )
 
@@ -108,7 +108,7 @@ class TestWriteOnlySensorIconValidation:
                 0,
                 1,
                 30001,
-                Protocol.V2_4,
+                ProtocolVersion.V2_4,
                 icon_on="mdi:power-on",  # Valid
                 icon_off="bad_icon_off",  # Triggers line 58
             )
@@ -135,7 +135,7 @@ class TestWriteOnlySensorGetDiscoveryComponents:
                 0,
                 1,
                 30001,
-                Protocol.V2_4,
+                ProtocolVersion.V2_4,
                 name_on="",  # Empty name → no i18n key for this class, stays empty → skip
                 name_off="Power Off",
             )
@@ -147,7 +147,7 @@ class TestWriteOnlySensorGetDiscoveryComponents:
         """Line 131: debug log when debug_logging=True."""
         caplog.set_level(logging.DEBUG)
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            sensor = WriteOnlySensor("Test", "sigen_test_disc_debug", 0, 1, 30001, Protocol.V2_4)
+            sensor = WriteOnlySensor("Test", "sigen_test_disc_debug", 0, 1, 30001, ProtocolVersion.V2_4)
             sensor.debug_logging = True
             with patch("sigenergy2mqtt.sensors.base.writeable.logger") as mock_log:
                 sensor.get_discovery_components()
@@ -164,7 +164,7 @@ class TestWriteOnlySensorSetValue:
     async def test_set_value_off_payload(self, mock_lock_factory, mock_modbus):
         """Line 150: set_value translates 'off' payload to actual off value."""
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            sensor = WriteOnlySensor("Test", "sigen_sv_off", 0, 1, 30001, Protocol.V2_4)
+            sensor = WriteOnlySensor("Test", "sigen_sv_off", 0, 1, 30001, ProtocolVersion.V2_4)
             # Configure MQTT topics so COMMAND_TOPIC is set before calling set_value
             sensor.configure_mqtt_topics("test_device")
             # Now set the command topic explicitly so the source comparison succeeds
@@ -215,7 +215,7 @@ class TestReadWriteSensorConfigureMqttTopics:
                 "mdi:power",
                 None,
                 None,
-                Protocol.V2_4,
+                ProtocolVersion.V2_4,
                 minimum=0.0,
                 maximum=100.0,
             )
@@ -249,7 +249,7 @@ class TestNumericSensorValidateMinMaxRanges:
                 "mdi:power",
                 None,
                 None,
-                Protocol.V2_4,
+                ProtocolVersion.V2_4,
                 minimum=100.0,  # Triggers line 345
                 maximum=50.0,
             )
@@ -273,7 +273,7 @@ class TestNumericSensorValidateMinMaxRanges:
                 "mdi:power",
                 None,
                 None,
-                Protocol.V2_4,
+                ProtocolVersion.V2_4,
             )
             # Call _validate_min_max_ranges directly with non-numeric tuple values
             with pytest.raises(TypeError, match="must be numeric"):
@@ -298,7 +298,7 @@ class TestNumericSensorValidateMinMaxRanges:
                 "mdi:power",
                 None,
                 None,
-                Protocol.V2_4,
+                ProtocolVersion.V2_4,
             )
             with pytest.raises(ValueError, match="min must be < max"):
                 sensor._validate_min_max_ranges((10.0, 20.0), (5.0, 1.0))  # Triggers line 357
@@ -329,7 +329,7 @@ class TestNumericSensorGetDiscoveryComponents:
                 "mdi:power",
                 1000.0,
                 None,
-                Protocol.V2_4,
+                ProtocolVersion.V2_4,
                 minimum=(-1.0, -0.8),  # Tuple minimum
                 maximum=(0.8, 1.0),  # Tuple maximum
             )
@@ -370,7 +370,7 @@ class TestNumericSensorGetState:
                 "mdi:power",
                 None,
                 0,  # gain=None, precision=0
-                Protocol.V2_4,
+                ProtocolVersion.V2_4,
                 minimum=0.0,
                 maximum=100.0,
             )
@@ -400,7 +400,7 @@ class TestNumericSensorGetState:
                 "mdi:power",
                 None,
                 0,  # gain=None, precision=0
-                Protocol.V2_4,
+                ProtocolVersion.V2_4,
                 minimum=0.0,
                 maximum=100.0,
             )
@@ -428,7 +428,7 @@ class TestNumericSensorGetState:
                 "mdi:power",
                 None,
                 0,  # gain=None, precision=0
-                Protocol.V2_4,
+                ProtocolVersion.V2_4,
                 minimum=0.0,
                 maximum=100.0,
             )
@@ -470,6 +470,6 @@ class TestThreePhaseAdjustmentTargetValue:
                     icon="mdi:power",
                     gain=None,
                     precision=None,
-                    protocol_version=Protocol.V1_8,
+                    protocol_version=ProtocolVersion.V1_8,
                     # output_type intentionally omitted → triggers line 581
                 )

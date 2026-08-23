@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from pymodbus import ModbusException
 
-from sigenergy2mqtt.common import HybridInverter, InputType, Protocol
+from sigenergy2mqtt.common import HybridInverter, InputType, ProtocolVersion
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.devices import Device, DeviceRegistry, ModbusDevice
 from sigenergy2mqtt.devices.base.poller import SensorGroupPoller
@@ -22,7 +22,7 @@ from sigenergy2mqtt.sensors.base.sanity_check import SanityCheck
 
 
 class DummyReadable(ReadableSensorMixin, Sensor):
-    def __init__(self, unique_id, publishable=True, address=1, count=1, scan_interval=10, protocol_version=Protocol.V1_8):
+    def __init__(self, unique_id, publishable=True, address=1, count=1, scan_interval=10, protocol_version=ProtocolVersion.V1_8):
         self.unique_id = unique_id
         self["unique_id"] = unique_id
         object.__setattr__(self, "unique_id", unique_id)
@@ -84,7 +84,7 @@ class DummyWriteable(WriteableSensorMixin, Sensor):
         object.__setattr__(self, "debug_logging", False)
         object.__setattr__(self, "address", 1)
         object.__setattr__(self, "input_type", InputType.HOLDING)
-        object.__setattr__(self, "protocol_version", Protocol.V1_8)
+        object.__setattr__(self, "protocol_version", ProtocolVersion.V1_8)
         object.__setattr__(self, "parent_device", None)
         object.__setattr__(self, "_derived_sensors", {})
         object.__setattr__(self, "_publishable", True)
@@ -106,7 +106,7 @@ class DummyWriteable(WriteableSensorMixin, Sensor):
 
 
 class DummyWriteOnly(WriteOnlySensor):
-    def __init__(self, unique_id, protocol_version=Protocol.V1_8):
+    def __init__(self, unique_id, protocol_version=ProtocolVersion.V1_8):
         self.unique_id = unique_id
         self["unique_id"] = unique_id
         self["command_topic"] = f"cmd/{unique_id}"
@@ -147,7 +147,7 @@ class DummyObservable(ObservableMixin, ReadableSensorMixin, Sensor):
         object.__setattr__(self, "sleeper_task", None)
         object.__setattr__(self, "debug_logging", False)
         object.__setattr__(self, "scan_interval", 10)
-        object.__setattr__(self, "protocol_version", Protocol.V1_8)
+        object.__setattr__(self, "protocol_version", ProtocolVersion.V1_8)
 
     def observable_topics(self):
         return [self.topic]
@@ -177,7 +177,7 @@ class DummyObservable(ObservableMixin, ReadableSensorMixin, Sensor):
 class DummyDerived(DerivedSensor):
     """Minimal DerivedSensor stub."""
 
-    def __init__(self, unique_id, protocol_version=Protocol.V1_8):
+    def __init__(self, unique_id, protocol_version=ProtocolVersion.V1_8):
         self.unique_id = unique_id
         self["unique_id"] = unique_id
         object.__setattr__(self, "unique_id", unique_id)
@@ -202,7 +202,7 @@ class DummyDerived(DerivedSensor):
 class DummyModbusSensor(ModbusSensorMixin, DummyReadable):
     """A readable sensor that also looks like a Modbus sensor."""
 
-    def __init__(self, unique_id, address=10, count=1, device_address=1, publishable=True, protocol_version=Protocol.V1_8):
+    def __init__(self, unique_id, address=10, count=1, device_address=1, publishable=True, protocol_version=ProtocolVersion.V1_8):
         super().__init__(unique_id, publishable=publishable, address=address, count=count, protocol_version=protocol_version)
         object.__setattr__(self, "device_address", device_address)
         object.__setattr__(self, "input_type", InputType.HOLDING)
@@ -239,7 +239,7 @@ def mock_config(tmp_path):
 
 @pytest.fixture
 def device():
-    return Device("TestDev", 0, "uid_1", "mf", "model", Protocol.V1_8)
+    return Device("TestDev", 0, "uid_1", "mf", "model", ProtocolVersion.V1_8)
 
 
 # ===========================================================================
@@ -250,7 +250,7 @@ def device():
 def test_device_init_ignores_unknown_kwargs():
     """extra kwargs that are not recognised device attributes are logged and dropped."""
     with patch("sigenergy2mqtt.devices.base.device.logger") as mock_log:
-        _ = Device("TestDev", 0, "uid_extra", "mf", "model", Protocol.V1_8, unknown_kwarg="ignored")
+        _ = Device("TestDev", 0, "uid_extra", "mf", "model", ProtocolVersion.V1_8, unknown_kwarg="ignored")
         # 'unknown_kwarg' is not in the allowed set, so it should be logged as ignored
         mock_log.debug.assert_called()
     DeviceRegistry._devices.clear()
@@ -258,7 +258,7 @@ def test_device_init_ignores_unknown_kwargs():
 
 def test_device_log_identity_format_excludes_name():
     """Device log_identity should include plant/dev and not include name."""
-    dev = Device("TestDev", 0, "uid_logid", "mf", "model", Protocol.V1_8)
+    dev = Device("TestDev", 0, "uid_logid", "mf", "model", ProtocolVersion.V1_8)
     assert "plant=0" in dev.log_identity
     assert "dev=n/a" not in dev.log_identity
     assert "name=" not in dev.log_identity
@@ -267,7 +267,7 @@ def test_device_log_identity_format_excludes_name():
 
 def test_modbus_device_log_identity_refreshes_device_address():
     """ModbusDevice should refresh log_identity after setting device_address."""
-    dev = ConcreteModbusDevice(None, "TestModbusDev", 0, 7, "model", Protocol.V1_8)
+    dev = ConcreteModbusDevice(None, "TestModbusDev", 0, 7, "model", ProtocolVersion.V1_8)
     assert "plant=0,dev=7" in dev.log_identity
     assert "name=" not in dev.log_identity
     DeviceRegistry._devices.clear()
@@ -322,7 +322,7 @@ async def test_online_setter_false_cancels_future_and_propagates(device):
     """Line 116-119: setting False cancels the Future and propagates to children."""
     fut = asyncio.get_running_loop().create_future()
     device._online = fut
-    child = Device("Child", 0, "child_uid_x", "mf", "model", Protocol.V1_8)
+    child = Device("Child", 0, "child_uid_x", "mf", "model", ProtocolVersion.V1_8)
     child_fut = asyncio.get_running_loop().create_future()
     child._online = child_fut
     device.children.append(child)
@@ -341,7 +341,7 @@ async def test_online_setter_false_cancels_future_and_propagates(device):
 
 def test_add_child_device_no_publishable_sensors(device):
     """child without publishable sensors is not added to children list."""
-    child = Device("NoSensors", 0, "uid_no_sensors", "mf", "model", Protocol.V1_8)
+    child = Device("NoSensors", 0, "uid_no_sensors", "mf", "model", ProtocolVersion.V1_8)
     # No publishable sensors → child should not be appended
     device._add_child_device(child)
     assert child not in device.children
@@ -349,7 +349,7 @@ def test_add_child_device_no_publishable_sensors(device):
 
 def test_add_child_device_with_publishable_sensor(device):
     """Contrast: child with a publishable sensor IS added."""
-    child = Device("WithSensors", 0, "uid_with_sensors", "mf", "model", Protocol.V1_8)
+    child = Device("WithSensors", 0, "uid_with_sensors", "mf", "model", ProtocolVersion.V1_8)
     s = DummyReadable("s_pub", publishable=True)
     child._add_sensor(s)
     device._add_child_device(child)
@@ -363,12 +363,12 @@ def test_add_child_device_with_publishable_sensor(device):
 
 def test_add_derived_sensor_protocol_version_too_high(device):
     """Lines 323-326: derived sensor with protocol_version > device version is skipped."""
-    device.protocol_version = Protocol.V1_8
+    device.protocol_version = ProtocolVersion.V1_8
     src = DummyReadable("src_sensor")
-    src.protocol_version = Protocol.V1_8
+    src.protocol_version = ProtocolVersion.V1_8
     device._add_sensor(src)
 
-    derived = DummyDerived("derived_high_pv", protocol_version=Protocol.V2_4)
+    derived = DummyDerived("derived_high_pv", protocol_version=ProtocolVersion.V2_4)
     derived._declare_source_sensors(src)
     device._add_sensor(derived)
     # Should not be in all_sensors because its protocol_version > device's
@@ -377,12 +377,12 @@ def test_add_derived_sensor_protocol_version_too_high(device):
 
 def test_add_derived_sensor_source_protocol_version_too_high(device):
     """Lines 323-326: derived sensor skipped when source sensor has protocol_version > device."""
-    device.protocol_version = Protocol.V1_8
+    device.protocol_version = ProtocolVersion.V1_8
     src = DummyReadable("src_sensor_high")
-    src.protocol_version = Protocol.V2_4  # source too new
+    src.protocol_version = ProtocolVersion.V2_4  # source too new
     device._add_sensor(src)
 
-    derived = DummyDerived("derived_ok_pv", protocol_version=Protocol.V1_8)
+    derived = DummyDerived("derived_ok_pv", protocol_version=ProtocolVersion.V1_8)
     derived._declare_source_sensors(src)
     device._add_sensor(derived)
     assert "derived_ok_pv" not in device.all_sensors
@@ -390,7 +390,7 @@ def test_add_derived_sensor_source_protocol_version_too_high(device):
 
 def test_add_derived_sensor_source_not_found(device):
     """warning logged when source sensor is not found in device."""
-    device.protocol_version = Protocol.N_A  # skip protocol checks
+    device.protocol_version = ProtocolVersion.N_A  # skip protocol checks
     src = DummyReadable("nonexistent_src")  # never added to device
     derived = DummyDerived("derived_no_src")
 
@@ -403,7 +403,7 @@ def test_add_derived_sensor_source_not_found(device):
 def test_add_derived_sensor_no_source_sensors_after_none_removal(device):
     """error logged when all source sensors are None."""
     derived = DummyDerived("derived_none_src")
-    device.protocol_version = Protocol.N_A
+    device.protocol_version = ProtocolVersion.N_A
 
     with patch("sigenergy2mqtt.devices.base.device.logger") as mock_log:
         derived._declare_source_sensors()
@@ -764,22 +764,22 @@ def test_subscribe_observable_exception_logged(device):
 
 def test_modbus_device_explicit_unique_id():
     """unique_id kwarg is accepted and used directly."""
-    dev = ConcreteModbusDevice(None, "ExplicitUID", 0, 1, "model", Protocol.V1_8, unique_id="sigen_explicit_uid")
+    dev = ConcreteModbusDevice(None, "ExplicitUID", 0, 1, "model", ProtocolVersion.V1_8, unique_id="sigen_explicit_uid")
     assert dev.unique_id == "sigen_explicit_uid"
 
 
 def test_modbus_device_explicit_unique_id_wrong_prefix():
     """unique_id not starting with the prefix raises ValueError."""
     with pytest.raises(ValueError):
-        ConcreteModbusDevice(None, "BadUID", 0, 1, "model", Protocol.V1_8, unique_id="wrong_prefix_uid")
+        ConcreteModbusDevice(None, "BadUID", 0, 1, "model", ProtocolVersion.V1_8, unique_id="wrong_prefix_uid")
 
 
 def test_modbus_device_invalid_address():
     """ModbusDevice rejects device_address outside 1-247."""
     with pytest.raises(ValueError):
-        ConcreteModbusDevice(None, "Invalid", 0, 0, "model", Protocol.V1_8)
+        ConcreteModbusDevice(None, "Invalid", 0, 0, "model", ProtocolVersion.V1_8)
     with pytest.raises(ValueError):
-        ConcreteModbusDevice(None, "Invalid", 0, 248, "model", Protocol.V1_8)
+        ConcreteModbusDevice(None, "Invalid", 0, 248, "model", ProtocolVersion.V1_8)
 
 
 # ===========================================================================
@@ -789,16 +789,16 @@ def test_modbus_device_invalid_address():
 
 def test_modbus_device_add_read_sensor_protocol_too_high():
     """Lines 962-965: sensor with protocol_version > device is skipped."""
-    dev = ConcreteModbusDevice(None, "Dev", 0, 1, "model", Protocol.V1_8)
-    s = DummyReadable("s_high_pv", protocol_version=Protocol.V2_4)
+    dev = ConcreteModbusDevice(None, "Dev", 0, 1, "model", ProtocolVersion.V1_8)
+    s = DummyReadable("s_high_pv", protocol_version=ProtocolVersion.V2_4)
     result = dev._add_sensor(s)
     assert result is False
 
 
 def test_modbus_device_add_read_sensor_protocol_matches():
     """sensor with matching protocol_version is added."""
-    dev = ConcreteModbusDevice(None, "Dev2", 0, 2, "model", Protocol.V1_8)
-    s = DummyReadable("s_ok_pv", protocol_version=Protocol.V1_8)
+    dev = ConcreteModbusDevice(None, "Dev2", 0, 2, "model", ProtocolVersion.V1_8)
+    s = DummyReadable("s_ok_pv", protocol_version=ProtocolVersion.V1_8)
     result = dev._add_sensor(s)
     assert result is True
 
@@ -815,7 +815,7 @@ def test_modbus_device_add_writeonly_wrong_type():
         def __init__(self, *args, **kwargs):
             super().__init__(HybridInverter(), *args, **kwargs)
 
-    dev = InverterDevice("Inv2", 0, 3, "model", Protocol.V1_8)
+    dev = InverterDevice("Inv2", 0, 3, "model", ProtocolVersion.V1_8)
     wo = DummyWriteOnly("wo_wrong_type")  # Not a HybridInverter subclass
     dev._add_sensor(wo)
     assert "wo_wrong_type" not in dev.write_sensors
@@ -823,16 +823,16 @@ def test_modbus_device_add_writeonly_wrong_type():
 
 def test_modbus_device_add_writeonly_protocol_too_high():
     """Lines 1020-1025: WriteOnly sensor with too-high protocol version is skipped."""
-    dev = ConcreteModbusDevice(None, "Dev3", 0, 4, "model", Protocol.V1_8)
-    wo = DummyWriteOnly("wo_high_pv", protocol_version=Protocol.V2_4)
+    dev = ConcreteModbusDevice(None, "Dev3", 0, 4, "model", ProtocolVersion.V1_8)
+    wo = DummyWriteOnly("wo_high_pv", protocol_version=ProtocolVersion.V2_4)
     dev._add_sensor(wo)
     assert "wo_high_pv" not in dev.write_sensors
 
 
 def test_modbus_device_add_writeonly_valid():
     """Valid WriteOnly sensor is added."""
-    dev = ConcreteModbusDevice(None, "Dev4", 0, 5, "model", Protocol.V1_8)
-    wo = DummyWriteOnly("wo_valid", protocol_version=Protocol.V1_8)
+    dev = ConcreteModbusDevice(None, "Dev4", 0, 5, "model", ProtocolVersion.V1_8)
+    wo = DummyWriteOnly("wo_valid", protocol_version=ProtocolVersion.V1_8)
     dev._add_sensor(wo)
     assert "wo_valid" in dev.write_sensors
 
@@ -923,7 +923,7 @@ def test_add_to_all_sensors_debug_logging_enabled(device):
 
 def test_publish_availability_propagates_to_children(device):
     """publish_availability is called on each child device."""
-    child = Device("Child", 0, "uid_child_avail", "mf", "model", Protocol.V1_8)
+    child = Device("Child", 0, "uid_child_avail", "mf", "model", ProtocolVersion.V1_8)
     device.children.append(child)
 
     mqtt_client = MagicMock()
@@ -961,7 +961,7 @@ def test_publish_discovery_clean(device):
 
 def test_publish_discovery_with_components():
     """Lines 1167+: discovery JSON is published when sensors have components."""
-    dev = Device("Disco", 0, "uid_disco", "mf", "model", Protocol.V1_8)
+    dev = Device("Disco", 0, "uid_disco", "mf", "model", ProtocolVersion.V1_8)
     s = DummyReadable("s_disco")
     s.get_discovery = MagicMock(return_value={"s_disco": {"platform": "sensor"}})
     dev.all_sensors["s_disco"] = s
@@ -981,7 +981,7 @@ def test_publish_discovery_with_components():
 
 def test_publish_attributes_propagates_to_children(device):
     """publish_attributes propagates to child devices."""
-    child = Device("AttrChild", 0, "uid_attr_child", "mf", "model", Protocol.V1_8)
+    child = Device("AttrChild", 0, "uid_attr_child", "mf", "model", ProtocolVersion.V1_8)
     device.children.append(child)
     child.publish_attributes = MagicMock()
     device.publish_attributes(MagicMock(), propagate=True)
@@ -990,7 +990,7 @@ def test_publish_attributes_propagates_to_children(device):
 
 def test_publish_attributes_no_propagation(device):
     """propagate=False does not call children."""
-    child = Device("AttrChild2", 0, "uid_attr_child2", "mf", "model", Protocol.V1_8)
+    child = Device("AttrChild2", 0, "uid_attr_child2", "mf", "model", ProtocolVersion.V1_8)
     device.children.append(child)
     child.publish_attributes = MagicMock()
     device.publish_attributes(MagicMock(), propagate=False)
@@ -1004,8 +1004,8 @@ def test_publish_attributes_no_propagation(device):
 
 def test_device_registry_clear():
     """Lines 1266-1267: DeviceRegistry.clear removes all entries."""
-    Device("R1", 0, "uid_r1", "mf", "m", Protocol.V1_8)
-    Device("R2", 1, "uid_r2", "mf", "m", Protocol.V1_8)
+    Device("R1", 0, "uid_r1", "mf", "m", ProtocolVersion.V1_8)
+    Device("R2", 1, "uid_r2", "mf", "m", ProtocolVersion.V1_8)
     DeviceRegistry.clear()
     assert DeviceRegistry.get(0) == []
     assert DeviceRegistry.get(1) == []
@@ -1020,7 +1020,7 @@ def test_device_registry_get_missing_plant():
 def test_device_registry_returns_copy():
     """DeviceRegistry.get returns a copy so mutations don't affect registry."""
     DeviceRegistry.clear()
-    d = Device("Copy", 0, "uid_copy", "mf", "m", Protocol.V1_8)
+    d = Device("Copy", 0, "uid_copy", "mf", "m", ProtocolVersion.V1_8)
     lst = DeviceRegistry.get(0)
     lst.clear()
     assert d in DeviceRegistry.get(0)

@@ -25,12 +25,12 @@ def mock_modules():
         yield
 
 
-from sigenergy2mqtt.common import (  # noqa: E402
+from sigenergy2mqtt.common import (
     DeviceClass,
-    Protocol,  # noqa: E402
+    ProtocolVersion,
     StateClass,
 )
-from sigenergy2mqtt.sensors.base import Sensor  # noqa: E402
+from sigenergy2mqtt.sensors.base import Sensor
 
 
 # Concrete sensor for testing
@@ -47,7 +47,7 @@ class MockSensor(Sensor):
                 icon="mdi:power",
                 gain=1.0,
                 precision=2,
-                protocol_version=Protocol.V2_4,
+                protocol_version=ProtocolVersion.V2_4,
             )
             self._test_state = 100.5
 

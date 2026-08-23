@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.devices.base.poller import SensorGroupPoller
@@ -61,7 +61,7 @@ def mock_config():
 @pytest.mark.asyncio
 async def test_device_offline_exits_loop(mock_config):
     # Setup device and sensors
-    device = ConcreteDevice("Test Device 1", 0, "sigen_test_1", "Sigenergy", "Model", Protocol.V2_4)
+    device = ConcreteDevice("Test Device 1", 0, "sigen_test_1", "Sigenergy", "Model", ProtocolVersion.V2_4)
     sensor = MockSensor("sigen_test_sensor_1")
     device._add_sensor(sensor)
 
@@ -95,8 +95,8 @@ async def test_device_offline_exits_loop(mock_config):
 @pytest.mark.asyncio
 async def test_device_offline_cancels_child_sensors(mock_config):
     # Setup parent and child devices
-    parent = ConcreteDevice("Parent 2", 0, "sigen_parent_2", "Sigenergy", "Model", Protocol.V2_4)
-    child = ConcreteDevice("Child 2", 0, "sigen_child_2", "Sigenergy", "Model", Protocol.V2_4)
+    parent = ConcreteDevice("Parent 2", 0, "sigen_parent_2", "Sigenergy", "Model", ProtocolVersion.V2_4)
+    child = ConcreteDevice("Child 2", 0, "sigen_child_2", "Sigenergy", "Model", ProtocolVersion.V2_4)
 
     # Add child sensor
     child_sensor = MockSensor("sigen_child_sensor_2", scan_interval=60)
@@ -139,7 +139,7 @@ async def test_device_offline_cancels_child_sensors(mock_config):
 @pytest.mark.asyncio
 async def test_device_offline_exits_reconnect_loop(mock_config):
     # Setup device
-    device = ConcreteDevice("Test Device 3", 0, "sigen_test_3", "Sigenergy", "Model", Protocol.V2_4)
+    device = ConcreteDevice("Test Device 3", 0, "sigen_test_3", "Sigenergy", "Model", ProtocolVersion.V2_4)
     sensor = MockSensor("sigen_test_sensor_3")
     device._add_sensor(sensor)
     poller = SensorGroupPoller(device)
@@ -178,7 +178,7 @@ async def test_device_offline_exits_reconnect_loop(mock_config):
 @pytest.mark.asyncio
 async def test_device_offline_cancels_device_sleeper_task(mock_config):
     # Setup device
-    device = ConcreteDevice("Test Device 4", 0, "sigen_test_4", "Sigenergy", "Model", Protocol.V2_4)
+    device = ConcreteDevice("Test Device 4", 0, "sigen_test_4", "Sigenergy", "Model", ProtocolVersion.V2_4)
 
     # Set online
     device.online = asyncio.Future()

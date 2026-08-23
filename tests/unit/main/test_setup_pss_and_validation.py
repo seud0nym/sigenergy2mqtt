@@ -5,7 +5,7 @@ import paho.mqtt.client as paho_mqtt
 import pytest
 from pymodbus import ModbusException
 
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.config import Config, active_config
 from sigenergy2mqtt.main import main as main_mod
 
@@ -47,7 +47,7 @@ async def test_setup_pss_normal():
             seen_serial_numbers=set(),
             modbus_client=MagicMock(),
             config=mock_config,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
             sequence_start=0,
             total_count=1,
         )
@@ -72,7 +72,7 @@ async def test_setup_pss_exception_grid_outage(caplog):
         mock_make.side_effect = RuntimeError("Outage error")
         mock_outage.return_value = True
 
-        res = await main_mod._setup_pss(0, mock_device, MagicMock(), set(), MagicMock(), MagicMock(), Protocol.V2_9, 0, 1)
+        res = await main_mod._setup_pss(0, mock_device, MagicMock(), set(), MagicMock(), MagicMock(), ProtocolVersion.V2_9, 0, 1)
 
         assert res == 1
         mock_schedule.assert_called_once()
@@ -90,7 +90,7 @@ async def test_setup_pss_exception_normal(caplog):
         mock_make.side_effect = RuntimeError("Other error")
         mock_outage.return_value = False
 
-        res = await main_mod._setup_pss(0, mock_device, MagicMock(), set(), MagicMock(), MagicMock(), Protocol.V2_9, 0, 1)
+        res = await main_mod._setup_pss(0, mock_device, MagicMock(), set(), MagicMock(), MagicMock(), ProtocolVersion.V2_9, 0, 1)
 
         assert res == 1
         assert "Failed to initialize PSS device at address 1" in caplog.text

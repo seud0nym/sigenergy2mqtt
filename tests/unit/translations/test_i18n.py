@@ -3,7 +3,7 @@ from unittest.mock import patch
 import pytest
 
 from sigenergy2mqtt import i18n
-from sigenergy2mqtt.common import DeviceClass, InputType, Protocol, StateClass, UnitOfPower
+from sigenergy2mqtt.common import DeviceClass, InputType, ProtocolVersion, StateClass, UnitOfPower
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.modbus import ModbusDataType
@@ -35,7 +35,7 @@ class MockSensor(Sensor):
             icon="mdi:test",
             gain=1.0,
             precision=2,
-            protocol_version=Protocol.V2_4,
+            protocol_version=ProtocolVersion.V2_4,
         )
 
     async def _update_internal_state(self, **kwargs):
@@ -60,13 +60,13 @@ class MockReadOnlySensor(ReadOnlySensor):
             icon="mdi:test",
             gain=None,
             precision=None,
-            protocol_version=Protocol.V2_4,
+            protocol_version=ProtocolVersion.V2_4,
         )
 
 
 class MockAlarmSensor(AlarmSensor):
     def __init__(self):
-        super().__init__(name="Test Alarm", object_id="sigenergy_test_alarm", plant_index=0, device_address=1, address=30001, protocol_version=Protocol.V2_4, alarm_type="TEST")
+        super().__init__(name="Test Alarm", object_id="sigenergy_test_alarm", plant_index=0, device_address=1, address=30001, protocol_version=ProtocolVersion.V2_4, alarm_type="TEST")
 
     def decode_alarm_bit(self, bit_position):
         if bit_position == 0:
@@ -76,7 +76,7 @@ class MockAlarmSensor(AlarmSensor):
 
 class MockDevice(Device):
     def __init__(self):
-        super().__init__(name="Test Device", plant_index=0, unique_id="test_device_unique_id", manufacturer="Sigenergy", model="Test Model", protocol_version=Protocol.V2_4)
+        super().__init__(name="Test Device", plant_index=0, unique_id="test_device_unique_id", manufacturer="Sigenergy", model="Test Model", protocol_version=ProtocolVersion.V2_4)
 
 
 @pytest.fixture(autouse=True)

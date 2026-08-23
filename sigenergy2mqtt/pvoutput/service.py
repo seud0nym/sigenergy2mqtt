@@ -12,7 +12,7 @@ import paho.mqtt.client as mqtt
 import requests
 from requests.structures import CaseInsensitiveDict
 
-from sigenergy2mqtt.common import Protocol, service_health_registry
+from sigenergy2mqtt.common import ProtocolVersion, service_health_registry
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.metrics import Metrics
@@ -33,7 +33,7 @@ class Service(Device):
             unique_id: Stable unique identifier for this virtual device.
             model: Model string used for metadata/logging.
         """
-        super().__init__(name, -1, unique_id, "sigenergy2mqtt", model, Protocol.N_A)
+        super().__init__(name, -1, unique_id, "sigenergy2mqtt", model, ProtocolVersion.N_A)
         self._lock = asyncio.Lock()
         self._set_health_status(True)
 

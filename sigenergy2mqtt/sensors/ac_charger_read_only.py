@@ -1,4 +1,4 @@
-from sigenergy2mqtt.common import DeviceClass, InputType, Protocol, StateClass, UnitOfElectricCurrent, UnitOfElectricPotential, UnitOfEnergy, UnitOfPower
+from sigenergy2mqtt.common import DeviceClass, InputType, ProtocolVersion, StateClass, UnitOfElectricCurrent, UnitOfElectricPotential, UnitOfEnergy, UnitOfPower
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.base import DiscoveryKeys, ScanInterval
@@ -28,7 +28,7 @@ class ACChargerRunningState(ReadOnlySensor):
             icon="mdi:ev-station",
             gain=None,
             precision=None,
-            protocol_version=Protocol.V2_0,
+            protocol_version=ProtocolVersion.V2_0,
         )
         options: list[str] = [  # https://www.mathworks.com/help/autoblks/ug/charge-an-electric-vehicle.html
             "Initialising",  # 0: System init - System is initialising # Not part of the IEC 61851-1 standard
@@ -79,7 +79,7 @@ class ACChargerTotalEnergyConsumed(ReadOnlySensor):
             icon="mdi:car-electric",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_0,
+            protocol_version=ProtocolVersion.V2_0,
         )
         self["enabled_by_default"] = True
 
@@ -104,7 +104,7 @@ class ACChargerChargingPower(ReadOnlySensor):
             icon="mdi:car-electric",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_0,
+            protocol_version=ProtocolVersion.V2_0,
         )
         self["enabled_by_default"] = True
 
@@ -129,7 +129,7 @@ class ACChargerRatedPower(ReadOnlySensor):
             icon="mdi:car-electric",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_0,
+            protocol_version=ProtocolVersion.V2_0,
         )
         self["entity_category"] = "diagnostic"
 
@@ -154,7 +154,7 @@ class ACChargerRatedCurrent(ReadOnlySensor):
             icon="mdi:car-electric",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_0,
+            protocol_version=ProtocolVersion.V2_0,
         )
         self["entity_category"] = "diagnostic"
 
@@ -179,7 +179,7 @@ class ACChargerRatedVoltage(ReadOnlySensor):
             icon="mdi:car-electric",
             gain=10,
             precision=1,
-            protocol_version=Protocol.V2_0,
+            protocol_version=ProtocolVersion.V2_0,
         )
         self["entity_category"] = "diagnostic"
 
@@ -204,7 +204,7 @@ class ACChargerInputBreaker(ReadOnlySensor):
             icon="mdi:car-electric",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_0,
+            protocol_version=ProtocolVersion.V2_0,
         )
         self["entity_category"] = "diagnostic"
 
@@ -220,7 +220,7 @@ class ACChargerAlarm1(AlarmSensor):
             device_address=device_address,
             address=self.ADDRESS,
             alarm_type="EVAC",
-            protocol_version=Protocol.V2_0,
+            protocol_version=ProtocolVersion.V2_0,
         )
 
     def decode_alarm_bit(self, bit_position: int):
@@ -258,7 +258,7 @@ class ACChargerAlarm2(AlarmSensor):
             device_address=device_address,
             address=self.ADDRESS,
             alarm_type="EVAC",
-            protocol_version=Protocol.V2_0,
+            protocol_version=ProtocolVersion.V2_0,
         )
 
     def decode_alarm_bit(self, bit_position: int):
@@ -290,7 +290,7 @@ class ACChargerAlarm3(AlarmSensor):
             device_address=device_address,
             address=self.ADDRESS,
             alarm_type="EVAC",
-            protocol_version=Protocol.V2_0,
+            protocol_version=ProtocolVersion.V2_0,
         )
 
     def decode_alarm_bit(self, bit_position: int):

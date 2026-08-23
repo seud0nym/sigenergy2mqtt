@@ -1,4 +1,4 @@
-from sigenergy2mqtt.common import PERCENTAGE, DeviceClass, HybridInverter, InputType, Protocol, PVInverter, UnitOfPower, UnitOfReactivePower
+from sigenergy2mqtt.common import PERCENTAGE, DeviceClass, HybridInverter, InputType, ProtocolVersion, PVInverter, UnitOfPower, UnitOfReactivePower
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.base import NumericSensor, ReservedSensor, ScanInterval, WriteOnlySensor
@@ -16,7 +16,7 @@ class InverterStatus(WriteOnlySensor, HybridInverter, PVInverter):
             plant_index=plant_index,
             device_address=device_address,
             address=self.ADDRESS,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
         )
 
     def get_attributes(self) -> dict[str, float | int | str]:
@@ -45,7 +45,7 @@ class ReservedGridCode(ReservedSensor, HybridInverter):  # 40501 Marked as Reser
             icon="mdi:earth",
             gain=None,
             precision=None,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
         )
 
 
@@ -59,7 +59,7 @@ class DCChargerStatus(WriteOnlySensor, HybridInverter):
             plant_index=plant_index,
             device_address=device_address,
             address=self.ADDRESS,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
             payload_off="stop",
             payload_on="start",
             name_off="Stop",
@@ -96,7 +96,7 @@ class Reserved41001(ReservedSensor):
             icon="mdi:comment-question",
             gain=None,
             precision=None,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -120,7 +120,7 @@ class DCChargerMaxChargingPowerLimit(NumericSensor, HybridInverter):
             icon="mdi:ev-station",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
             minimum=0.0,
         )
 
@@ -150,7 +150,7 @@ class DCChargerMaxDischargingPowerLimit(NumericSensor, HybridInverter):
             icon="mdi:ev-station",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
             minimum=0.0,
         )
 
@@ -180,7 +180,7 @@ class ReservedInverterRemoteEMSDispatch(ReservedSensor, PVInverter):  # 41500 Ma
             icon="mdi:toggle-switch",
             gain=None,
             precision=None,
-            protocol_version=Protocol.V2_5,
+            protocol_version=ProtocolVersion.V2_5,
         )
 
 
@@ -204,7 +204,7 @@ class InverterActivePowerFixedValueAdjustment(NumericSensor, PVInverter):
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_5,
+            protocol_version=ProtocolVersion.V2_5,
         )
 
 
@@ -228,7 +228,7 @@ class InverterReactivePowerFixedValueAdjustment(NumericSensor, PVInverter):
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_5,
+            protocol_version=ProtocolVersion.V2_5,
         )
 
 
@@ -252,7 +252,7 @@ class InverterActivePowerPercentageAdjustment(NumericSensor, PVInverter):
             icon="mdi:percent",
             gain=100,
             precision=None,
-            protocol_version=Protocol.V2_5,
+            protocol_version=ProtocolVersion.V2_5,
             minimum=-100.00,
             maximum=100.00,
         )
@@ -278,7 +278,7 @@ class InverterReactivePowerQSAdjustment(NumericSensor, PVInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=None,
-            protocol_version=Protocol.V2_5,
+            protocol_version=ProtocolVersion.V2_5,
             minimum=-60.0,
             maximum=60.0,
         )
@@ -304,7 +304,7 @@ class InverterPowerFactorAdjustment(NumericSensor, PVInverter):
             icon="mdi:lightning-bolt",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_5,
+            protocol_version=ProtocolVersion.V2_5,
             minimum=-1.0,
             maximum=1.0,
         )

@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.sensors.base import Sensor
 from sigenergy2mqtt.sensors.inverter_derived import InverterBatteryChargingPower, InverterBatteryDischargingPower, PVStringPower
@@ -97,8 +97,8 @@ class TestInverterDerived:
 
     @pytest.mark.asyncio
     async def test_pv_string_power(self, mock_config):
-        v = PVVoltageSensor(0, 1, 31000, 1, Protocol.V1_8)
-        c = PVCurrentSensor(0, 1, 31001, 1, Protocol.V1_8)
+        v = PVVoltageSensor(0, 1, 31000, 1, ProtocolVersion.V1_8)
+        c = PVCurrentSensor(0, 1, 31001, 1, ProtocolVersion.V1_8)
 
         p = PVStringPower(0, 1, 1, v, c)
         assert "plant=0,dev=1,string=1" in p.log_identity

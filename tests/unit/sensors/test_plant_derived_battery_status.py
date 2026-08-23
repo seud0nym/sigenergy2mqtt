@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.common import DeviceClass, Protocol, StateClass
+from sigenergy2mqtt.common import DeviceClass, ProtocolVersion, StateClass
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.sensors.base import Sensor
 from sigenergy2mqtt.sensors.plant_derived import (
@@ -54,19 +54,19 @@ def _make_battery_status():
     bp = MagicMock(spec=BatteryPower)
     bp.device_class = DeviceClass.POWER
     bp.state_class = StateClass.MEASUREMENT
-    bp.protocol_version = Protocol.V2_9
+    bp.protocol_version = ProtocolVersion.V2_9
 
     backup_soc = MagicMock(spec=ESSBackupSOC)
-    backup_soc.protocol_version = Protocol.V2_9
+    backup_soc.protocol_version = ProtocolVersion.V2_9
 
     discharge_soc = MagicMock(spec=ESSDischargeCutOffSOC)
-    discharge_soc.protocol_version = Protocol.V2_9
+    discharge_soc.protocol_version = ProtocolVersion.V2_9
 
     charge_soc = MagicMock(spec=ESSChargeCutOffSOC)
-    charge_soc.protocol_version = Protocol.V2_9
+    charge_soc.protocol_version = ProtocolVersion.V2_9
 
     current_soc = MagicMock(spec=PlantBatterySoC)
-    current_soc.protocol_version = Protocol.V2_9
+    current_soc.protocol_version = ProtocolVersion.V2_9
 
     sensor = BatteryStatus(0, bp, current_soc, backup_soc, discharge_soc, charge_soc)
     return sensor, bp, backup_soc, discharge_soc, charge_soc, current_soc
@@ -80,7 +80,7 @@ class TestBatteryChargingPowerNoneState:
             bp = MagicMock(spec=BatteryPower)
             bp.device_class = DeviceClass.POWER
             bp.state_class = StateClass.MEASUREMENT
-            bp.protocol_version = Protocol.V2_4
+            bp.protocol_version = ProtocolVersion.V2_4
 
             sensor = BatteryChargingPower(0, bp)
             source = MagicMock(spec=BatteryPower)
@@ -97,7 +97,7 @@ class TestBatteryDischargingPowerNoneState:
             bp = MagicMock(spec=BatteryPower)
             bp.device_class = DeviceClass.POWER
             bp.state_class = StateClass.MEASUREMENT
-            bp.protocol_version = Protocol.V2_4
+            bp.protocol_version = ProtocolVersion.V2_4
 
             sensor = BatteryDischargingPower(0, bp)
             source = MagicMock(spec=BatteryPower)

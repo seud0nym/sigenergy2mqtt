@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, PropertyMock, patch
 
 import pytest
 
-from sigenergy2mqtt.common import InputType, Protocol, UnitOfPower
+from sigenergy2mqtt.common import InputType, ProtocolVersion, UnitOfPower
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.base import (
@@ -69,7 +69,7 @@ class TestValueIsValidBase:
             icon="mdi:test",
             gain=1.0,
             precision=2,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
             data_type=ModbusDataType.UINT16,
             input_type=InputType.HOLDING,
             plant_index=0,
@@ -88,7 +88,7 @@ class TestValueIsValidBase:
             plant_index=0,
             device_address=247,
             address=40000,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
             value_off=0,
             value_on=1,
         )
@@ -114,7 +114,7 @@ class TestValueIsValidBase:
             icon="mdi:test",
             gain=1.0,
             precision=1,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
             minimum=0.0,
             maximum=100.0,
         )
@@ -143,7 +143,7 @@ class TestValueIsValidBase:
             icon="mdi:test",
             gain=1.0,
             precision=1,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
             minimum=(-10.0, -5.0),
             maximum=(5.0, 10.0),
         )
@@ -166,7 +166,7 @@ class TestValueIsValidBase:
             address=40001,
             scan_interval=60,
             options=["A", "B", "C"],
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
         )
         assert await sensor.value_is_valid(None, "A") is True
         assert await sensor.value_is_valid(None, "B") is True
@@ -185,7 +185,7 @@ class TestValueIsValidBase:
             device_address=247,
             address=40001,
             scan_interval=60,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
         )
         assert await sensor.value_is_valid(None, 0) is True
         assert await sensor.value_is_valid(None, 1) is True
@@ -227,7 +227,7 @@ class TestValueIsValidPlant:
             address=40032,
             icon="mdi:test",
             maximum=10.0,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
         )
         assert await sensor.value_is_valid(None, 5) is True
 

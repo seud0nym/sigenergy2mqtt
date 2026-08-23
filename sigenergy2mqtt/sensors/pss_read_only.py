@@ -4,7 +4,7 @@ from sigenergy2mqtt.common import (
     PERCENTAGE,
     DeviceClass,
     InputType,
-    Protocol,
+    ProtocolVersion,
     UnitOfApparentPower,
     UnitOfElectricCurrent,
     UnitOfElectricPotential,
@@ -41,7 +41,7 @@ class PSSModelType(ReadOnlySensor, NonInverter):
             icon="mdi:information-outline",
             gain=None,
             precision=None,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
         self["entity_category"] = "diagnostic"
 
@@ -66,7 +66,7 @@ class PSSSerialNumber(ReadOnlySensor, NonInverter):
             icon="mdi:identifier",
             gain=None,
             precision=None,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
         self["entity_category"] = "diagnostic"
 
@@ -91,7 +91,7 @@ class PSSCommunicationStatus(ReadOnlySensor, NonInverter):
             icon="mdi:wifi",
             gain=None,
             precision=None,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
         options: list[str] = [
             "Loading",  # 0
@@ -114,7 +114,7 @@ class PSSTeleindication1(AlarmSensor):
             device_address=device_address,
             address=self.ADDRESS,
             alarm_type="PSS",
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
     def decode_alarm_bit(self, bit_position: int):
@@ -166,7 +166,7 @@ class PSSTeleindication2(AlarmSensor):
             device_address=device_address,
             address=self.ADDRESS,
             alarm_type="PSS",
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
     def decode_alarm_bit(self, bit_position: int):
@@ -218,7 +218,7 @@ class PSSTeleindication3(AlarmSensor):
             device_address=device_address,
             address=self.ADDRESS,
             alarm_type="PSS",
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
     def decode_alarm_bit(self, bit_position: int):
@@ -270,7 +270,7 @@ class PSSTeleindication4(AlarmSensor):
             device_address=device_address,
             address=self.ADDRESS,
             alarm_type="PSS",
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
     def decode_alarm_bit(self, bit_position: int):
@@ -322,7 +322,7 @@ class PSSTeleindication5(AlarmSensor):
             device_address=device_address,
             address=self.ADDRESS,
             alarm_type="PSS",
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
     def decode_alarm_bit(self, bit_position: int):
@@ -373,7 +373,7 @@ class PSSMVPhaseACurrent(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -397,7 +397,7 @@ class PSSMVPhaseBCurrent(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -421,7 +421,7 @@ class PSSMVPhaseCCurrent(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -445,7 +445,7 @@ class PSSMVZeroSequenceCurrent(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -469,7 +469,7 @@ class PSSMVFrequency(NumericSensor, NonInverter):
             icon="mdi:sine-wave",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -493,7 +493,7 @@ class PSSMVTemperature(NumericSensor, NonInverter):
             icon="mdi:thermometer",
             gain=10,
             precision=1,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -517,7 +517,7 @@ class PSSMVHumidity(NumericSensor, NonInverter):
             icon="mdi:water-percent",
             gain=10,
             precision=1,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -541,7 +541,7 @@ class PSSMVG1CableL1PhaseTemperature(NumericSensor, NonInverter):
             icon="mdi:thermometer",
             gain=10,
             precision=1,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -565,7 +565,7 @@ class PSSMVG1CableL2PhaseTemperature(NumericSensor, NonInverter):
             icon="mdi:thermometer",
             gain=10,
             precision=1,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -589,7 +589,7 @@ class PSSMVG1CableL3PhaseTemperature(NumericSensor, NonInverter):
             icon="mdi:thermometer",
             gain=10,
             precision=1,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -613,7 +613,7 @@ class PSSMVG2CableL1PhaseTemperature(NumericSensor, NonInverter):
             icon="mdi:thermometer",
             gain=10,
             precision=1,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -637,7 +637,7 @@ class PSSMVG2CableL2PhaseTemperature(NumericSensor, NonInverter):
             icon="mdi:thermometer",
             gain=10,
             precision=1,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -661,7 +661,7 @@ class PSSMVG2CableL3PhaseTemperature(NumericSensor, NonInverter):
             icon="mdi:thermometer",
             gain=10,
             precision=1,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -685,7 +685,7 @@ class PSSMVG3CableL1PhaseTemperature(NumericSensor, NonInverter):
             icon="mdi:thermometer",
             gain=10,
             precision=1,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -709,7 +709,7 @@ class PSSMVG3CableL2PhaseTemperature(NumericSensor, NonInverter):
             icon="mdi:thermometer",
             gain=10,
             precision=1,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -733,7 +733,7 @@ class PSSMVG3CableL3PhaseTemperature(NumericSensor, NonInverter):
             icon="mdi:thermometer",
             gain=10,
             precision=1,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -757,7 +757,7 @@ class PSSLATemperature(NumericSensor, NonInverter):
             icon="mdi:thermometer",
             gain=10,
             precision=1,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -781,7 +781,7 @@ class PSSLAHumidity(NumericSensor, NonInverter):
             icon="mdi:water-percent",
             gain=10,
             precision=1,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -805,7 +805,7 @@ class PSSLAPhaseAVoltage(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -829,7 +829,7 @@ class PSSLAPhaseBVoltage(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -853,7 +853,7 @@ class PSSLAPhaseCVoltage(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -877,7 +877,7 @@ class PSSLAABLineVoltage(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -901,7 +901,7 @@ class PSSLABCLineVoltage(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -925,7 +925,7 @@ class PSSLACALineVoltage(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -949,7 +949,7 @@ class PSSLAPhaseACurrent(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -973,7 +973,7 @@ class PSSLAPhaseBCurrent(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -997,7 +997,7 @@ class PSSLAPhaseCCurrent(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -1021,7 +1021,7 @@ class PSSLAPhaseAActivePower(NumericSensor, NonInverter):
             icon="mdi:flash",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -1045,7 +1045,7 @@ class PSSLAPhaseBActivePower(NumericSensor, NonInverter):
             icon="mdi:flash",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -1069,7 +1069,7 @@ class PSSLAPhaseCActivePower(NumericSensor, NonInverter):
             icon="mdi:flash",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -1093,7 +1093,7 @@ class PSSLATotalActivePower(NumericSensor, NonInverter):
             icon="mdi:flash",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -1117,7 +1117,7 @@ class PSSLAPhaseAReactivePower(NumericSensor, NonInverter):
             icon="mdi:flash",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -1141,7 +1141,7 @@ class PSSLAPhaseBReactivePower(NumericSensor, NonInverter):
             icon="mdi:flash",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -1165,7 +1165,7 @@ class PSSLAPhaseCReactivePower(NumericSensor, NonInverter):
             icon="mdi:flash",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -1189,7 +1189,7 @@ class PSSLATotalReactivePower(NumericSensor, NonInverter):
             icon="mdi:flash",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -1213,7 +1213,7 @@ class PSSLAPhaseAApparentPower(NumericSensor, NonInverter):
             icon="mdi:flash",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -1237,7 +1237,7 @@ class PSSLAPhaseBApparentPower(NumericSensor, NonInverter):
             icon="mdi:flash",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -1261,7 +1261,7 @@ class PSSLAPhaseCApparentPower(NumericSensor, NonInverter):
             icon="mdi:flash",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -1285,7 +1285,7 @@ class PSSLATotalApparentPower(NumericSensor, NonInverter):
             icon="mdi:flash",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -1309,7 +1309,7 @@ class PSSLAPhaseAPowerFactor(NumericSensor, NonInverter):
             icon="mdi:angle-acute",
             gain=1000,
             precision=3,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -1333,7 +1333,7 @@ class PSSLAPhaseBPowerFactor(NumericSensor, NonInverter):
             icon="mdi:angle-acute",
             gain=1000,
             precision=3,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -1357,7 +1357,7 @@ class PSSLAPhaseCPowerFactor(NumericSensor, NonInverter):
             icon="mdi:angle-acute",
             gain=1000,
             precision=3,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -1381,7 +1381,7 @@ class PSSLATotalPowerFactor(NumericSensor, NonInverter):
             icon="mdi:angle-acute",
             gain=1000,
             precision=3,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -1405,7 +1405,7 @@ class PSSLAFrequency(NumericSensor, NonInverter):
             icon="mdi:sine-wave",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -1429,7 +1429,7 @@ class PSSLAForwardActiveEnergy(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -1453,7 +1453,7 @@ class PSSLAReverseActiveEnergy(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -1477,7 +1477,7 @@ class PSSLAForwardReactiveEnergy(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -1501,7 +1501,7 @@ class PSSLAReverseReactiveEnergy(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -1525,7 +1525,7 @@ class PSSLBTemperature(NumericSensor, NonInverter):
             icon="mdi:thermometer",
             gain=10,
             precision=1,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -1549,7 +1549,7 @@ class PSSLBHumidity(NumericSensor, NonInverter):
             icon="mdi:water-percent",
             gain=10,
             precision=1,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -1573,7 +1573,7 @@ class PSSLBPhaseAVoltage(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -1597,7 +1597,7 @@ class PSSLBPhaseBVoltage(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -1621,7 +1621,7 @@ class PSSLBPhaseCVoltage(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -1645,7 +1645,7 @@ class PSSLBABLineVoltage(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -1669,7 +1669,7 @@ class PSSLBBCLineVoltage(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -1693,7 +1693,7 @@ class PSSLBCALineVoltage(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -1717,7 +1717,7 @@ class PSSLBPhaseACurrent(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -1741,7 +1741,7 @@ class PSSLBPhaseBCurrent(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -1765,7 +1765,7 @@ class PSSLBPhaseCCurrent(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -1789,7 +1789,7 @@ class PSSLBPhaseAActivePower(NumericSensor, NonInverter):
             icon="mdi:flash",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -1813,7 +1813,7 @@ class PSSLBPhaseBActivePower(NumericSensor, NonInverter):
             icon="mdi:flash",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -1837,7 +1837,7 @@ class PSSLBPhaseCActivePower(NumericSensor, NonInverter):
             icon="mdi:flash",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -1861,7 +1861,7 @@ class PSSLBTotalActivePower(NumericSensor, NonInverter):
             icon="mdi:flash",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -1885,7 +1885,7 @@ class PSSLBPhaseAReactivePower(NumericSensor, NonInverter):
             icon="mdi:flash",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -1909,7 +1909,7 @@ class PSSLBPhaseBReactivePower(NumericSensor, NonInverter):
             icon="mdi:flash",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -1933,7 +1933,7 @@ class PSSLBPhaseCReactivePower(NumericSensor, NonInverter):
             icon="mdi:flash",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -1957,7 +1957,7 @@ class PSSLBTotalReactivePower(NumericSensor, NonInverter):
             icon="mdi:flash",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -1981,7 +1981,7 @@ class PSSLBPhaseAApparentPower(NumericSensor, NonInverter):
             icon="mdi:flash",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -2005,7 +2005,7 @@ class PSSLBPhaseBApparentPower(NumericSensor, NonInverter):
             icon="mdi:flash",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -2029,7 +2029,7 @@ class PSSLBPhaseCApparentPower(NumericSensor, NonInverter):
             icon="mdi:flash",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -2053,7 +2053,7 @@ class PSSLBTotalApparentPower(NumericSensor, NonInverter):
             icon="mdi:flash",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -2077,7 +2077,7 @@ class PSSLBPhaseAPowerFactor(NumericSensor, NonInverter):
             icon="mdi:angle-acute",
             gain=1000,
             precision=3,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -2101,7 +2101,7 @@ class PSSLBPhaseBPowerFactor(NumericSensor, NonInverter):
             icon="mdi:angle-acute",
             gain=1000,
             precision=3,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -2125,7 +2125,7 @@ class PSSLBPhaseCPowerFactor(NumericSensor, NonInverter):
             icon="mdi:angle-acute",
             gain=1000,
             precision=3,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -2149,7 +2149,7 @@ class PSSLBTotalPowerFactor(NumericSensor, NonInverter):
             icon="mdi:angle-acute",
             gain=1000,
             precision=3,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -2173,7 +2173,7 @@ class PSSLBFrequency(NumericSensor, NonInverter):
             icon="mdi:sine-wave",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -2197,7 +2197,7 @@ class PSSLBForwardActiveEnergy(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -2221,7 +2221,7 @@ class PSSLBReverseActiveEnergy(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -2245,7 +2245,7 @@ class PSSLBForwardReactiveEnergy(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -2269,7 +2269,7 @@ class PSSLBReverseReactiveEnergy(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -2293,7 +2293,7 @@ class PSSTransformerOilSurfaceTemperature(NumericSensor, NonInverter):
             icon="mdi:thermometer",
             gain=10,
             precision=1,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -2317,7 +2317,7 @@ class PSSTransformerWindingTemperature(NumericSensor, NonInverter):
             icon="mdi:thermometer",
             gain=10,
             precision=1,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -2341,7 +2341,7 @@ class PSSDistributionCabinetTemperature(NumericSensor, NonInverter):
             icon="mdi:thermometer",
             gain=10,
             precision=1,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -2365,7 +2365,7 @@ class PSSDistributionCabinetHumidity(NumericSensor, NonInverter):
             icon="mdi:water-percent",
             gain=10,
             precision=1,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -2389,7 +2389,7 @@ class PSSDistributionCabinetPhaseAVoltage(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -2413,7 +2413,7 @@ class PSSDistributionCabinetPhaseBVoltage(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -2437,7 +2437,7 @@ class PSSDistributionCabinetPhaseCVoltage(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -2461,7 +2461,7 @@ class PSSDistributionCabinetABLineVoltage(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -2485,7 +2485,7 @@ class PSSDistributionCabinetBCLineVoltage(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -2509,7 +2509,7 @@ class PSSDistributionCabinetCALineVoltage(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -2533,7 +2533,7 @@ class PSSDistributionCabinetPhaseACurrent(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -2557,7 +2557,7 @@ class PSSDistributionCabinetPhaseBCurrent(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -2581,7 +2581,7 @@ class PSSDistributionCabinetPhaseCCurrent(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -2605,7 +2605,7 @@ class PSSDistributionCabinetPhaseAActivePower(NumericSensor, NonInverter):
             icon="mdi:flash",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -2629,7 +2629,7 @@ class PSSDistributionCabinetPhaseBActivePower(NumericSensor, NonInverter):
             icon="mdi:flash",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -2653,7 +2653,7 @@ class PSSDistributionCabinetPhaseCActivePower(NumericSensor, NonInverter):
             icon="mdi:flash",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -2677,7 +2677,7 @@ class PSSDistributionCabinetTotalActivePower(NumericSensor, NonInverter):
             icon="mdi:flash",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -2701,7 +2701,7 @@ class PSSDistributionCabinetPhaseAReactivePower(NumericSensor, NonInverter):
             icon="mdi:flash",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -2725,7 +2725,7 @@ class PSSDistributionCabinetPhaseBReactivePower(NumericSensor, NonInverter):
             icon="mdi:flash",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -2749,7 +2749,7 @@ class PSSDistributionCabinetPhaseCReactivePower(NumericSensor, NonInverter):
             icon="mdi:flash",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -2773,7 +2773,7 @@ class PSSDistributionCabinetTotalReactivePower(NumericSensor, NonInverter):
             icon="mdi:flash",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -2797,7 +2797,7 @@ class PSSDistributionCabinetPhaseAApparentPower(NumericSensor, NonInverter):
             icon="mdi:flash",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -2821,7 +2821,7 @@ class PSSDistributionCabinetPhaseBApparentPower(NumericSensor, NonInverter):
             icon="mdi:flash",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -2845,7 +2845,7 @@ class PSSDistributionCabinetPhaseCApparentPower(NumericSensor, NonInverter):
             icon="mdi:flash",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -2869,7 +2869,7 @@ class PSSDistributionCabinetTotalApparentPower(NumericSensor, NonInverter):
             icon="mdi:flash",
             gain=1000,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -2893,7 +2893,7 @@ class PSSDistributionCabinetPhaseAPowerFactor(NumericSensor, NonInverter):
             icon="mdi:angle-acute",
             gain=1000,
             precision=3,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -2917,7 +2917,7 @@ class PSSDistributionCabinetPhaseBPowerFactor(NumericSensor, NonInverter):
             icon="mdi:angle-acute",
             gain=1000,
             precision=3,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -2941,7 +2941,7 @@ class PSSDistributionCabinetPhaseCPowerFactor(NumericSensor, NonInverter):
             icon="mdi:angle-acute",
             gain=1000,
             precision=3,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -2965,7 +2965,7 @@ class PSSDistributionCabinetTotalPowerFactor(NumericSensor, NonInverter):
             icon="mdi:angle-acute",
             gain=1000,
             precision=3,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -2989,7 +2989,7 @@ class PSSDistributionCabinetFrequency(NumericSensor, NonInverter):
             icon="mdi:sine-wave",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -3013,7 +3013,7 @@ class PSSDistributionCabinetForwardActiveEnergy(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -3037,7 +3037,7 @@ class PSSDistributionCabinetReverseActiveEnergy(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -3061,7 +3061,7 @@ class PSSDistributionCabinetForwardReactiveEnergy(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -3085,5 +3085,5 @@ class PSSDistributionCabinetReverseReactiveEnergy(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )

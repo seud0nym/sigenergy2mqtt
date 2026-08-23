@@ -6,7 +6,7 @@ import logging
 from datetime import datetime, timezone
 from typing import cast
 
-from sigenergy2mqtt.common import DeviceClass, InputType, Protocol
+from sigenergy2mqtt.common import DeviceClass, InputType, ProtocolVersion
 from sigenergy2mqtt.modbus import ModbusDataType
 
 from .constants import DiscoveryKeys
@@ -31,7 +31,7 @@ class TimestampSensor(ReadOnlySensor):
         device_address: int,
         address: int,
         scan_interval: int,
-        protocol_version: Protocol,
+        protocol_version: ProtocolVersion,
         tz: timezone,
         **kwargs,
     ):

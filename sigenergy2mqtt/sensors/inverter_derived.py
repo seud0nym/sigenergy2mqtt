@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 
 import paho.mqtt.client as mqtt
 
-from sigenergy2mqtt.common import DeviceClass, HybridInverter, Protocol, PVInverter, StateClass, UnitOfPower
+from sigenergy2mqtt.common import DeviceClass, HybridInverter, ProtocolVersion, PVInverter, StateClass, UnitOfPower
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus import ModbusClient, ModbusDataType
 from sigenergy2mqtt.sensors.base import SanityCheckException
@@ -228,7 +228,7 @@ class InverterSelfConsumedPower(DerivedSensor, HybridInverter, PVInverter):
             icon="mdi:battery-unknown",
             gain=None,
             precision=0,  # Intentional rounding to nearest watt
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
             source_sensors=(active_power, battery_power, *pv_string_power),
         )
 

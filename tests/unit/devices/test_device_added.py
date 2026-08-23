@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.devices import Device, DeviceRegistry
 
@@ -23,7 +23,7 @@ def mock_config():
 
 @pytest.mark.asyncio
 async def test_device_online_future_cancel(mock_config):
-    dev = Device("TDev", 0, "uid123", "mf", "mdl", Protocol.V1_8)
+    dev = Device("TDev", 0, "uid123", "mf", "mdl", ProtocolVersion.V1_8)
 
     loop = asyncio.get_running_loop()
     fut = loop.create_future()
@@ -36,7 +36,7 @@ async def test_device_online_future_cancel(mock_config):
 
 
 def test_device_rediscover_setter_and_type_check(mock_config):
-    dev = Device("TDev", 0, "u_idx", "mf", "mdl", Protocol.V1_8)
+    dev = Device("TDev", 0, "u_idx", "mf", "mdl", ProtocolVersion.V1_8)
     dev.rediscover = True
     assert dev.rediscover is True
     dev.rediscover = False
@@ -46,8 +46,8 @@ def test_device_rediscover_setter_and_type_check(mock_config):
 
 
 def test_add_child_device_adds_when_publishable(mock_config):
-    parent = Device("Parent", 0, "p_uid", "mf", "mdl", Protocol.V1_8)
-    child = Device("Child", 0, "c_uid", "mf", "mdl", Protocol.V1_8)
+    parent = Device("Parent", 0, "p_uid", "mf", "mdl", ProtocolVersion.V1_8)
+    child = Device("Child", 0, "c_uid", "mf", "mdl", ProtocolVersion.V1_8)
 
     # create a fake publishable sensor in child's all_sensors
     class S:

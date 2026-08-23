@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock, patch
 
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.config import Config, _swap_active_config, active_config
 from sigenergy2mqtt.sensors.base.alarms import AlarmSensor, AlarmCombinedSensor, RunningStateSensor
 from sigenergy2mqtt.sensors.base import Sensor
@@ -41,7 +41,7 @@ class DummyAlarmSensor(AlarmSensor):
 
 @pytest.mark.asyncio
 async def test_alarm_sensor_coverage():
-    sensor = DummyAlarmSensor("Dummy", "sigen_dummy", 0, 1, 30000, Protocol.V2_5, "Dummy")
+    sensor = DummyAlarmSensor("Dummy", "sigen_dummy", 0, 1, 30000, ProtocolVersion.V2_5, "Dummy")
     
     # Test state2raw
     assert sensor.state2raw(AlarmSensor.NO_ALARM) == 0
@@ -67,18 +67,18 @@ async def test_alarm_sensor_coverage():
 
 @pytest.mark.asyncio
 async def test_alarm_combined_sensor_coverage():
-    alarm1 = DummyAlarmSensor("A1", "sigen_a1", 0, 1, 30000, Protocol.V2_5, "Dummy")
-    alarm2 = DummyAlarmSensor("A2", "sigen_a2", 0, 1, 30001, Protocol.V2_5, "Dummy")
+    alarm1 = DummyAlarmSensor("A1", "sigen_a1", 0, 1, 30000, ProtocolVersion.V2_5, "Dummy")
+    alarm2 = DummyAlarmSensor("A2", "sigen_a2", 0, 1, 30001, ProtocolVersion.V2_5, "Dummy")
     
     # Test init exceptions
     with pytest.raises(ValueError, match="At least one alarm sensor required"):
         AlarmCombinedSensor("Comb", "sigen_comb", "sigen_comb")
         
-    alarm_diff_dev = DummyAlarmSensor("A3", "sigen_a3", 0, 2, 30002, Protocol.V2_5, "Dummy")
+    alarm_diff_dev = DummyAlarmSensor("A3", "sigen_a3", 0, 2, 30002, ProtocolVersion.V2_5, "Dummy")
     with pytest.raises(ValueError, match="same device address"):
         AlarmCombinedSensor("Comb", "sigen_comb", "sigen_comb", alarm1, alarm_diff_dev)
         
-    alarm_non_contig = DummyAlarmSensor("A4", "sigen_a4", 0, 1, 30003, Protocol.V2_5, "Dummy")
+    alarm_non_contig = DummyAlarmSensor("A4", "sigen_a4", 0, 1, 30003, ProtocolVersion.V2_5, "Dummy")
     with pytest.raises(ValueError, match="contiguous address ranges"):
         AlarmCombinedSensor("Comb", "sigen_comb", "sigen_comb", alarm1, alarm_non_contig)
         
@@ -90,7 +90,7 @@ async def test_alarm_combined_sensor_coverage():
     
     # Test protocol_version setter
     with pytest.raises(NotImplementedError):
-        combined.protocol_version = Protocol.V2_5
+        combined.protocol_version = ProtocolVersion.V2_5
         
     # Test state2raw
     assert combined.state2raw(AlarmSensor.NO_ALARM) == 0
@@ -107,8 +107,8 @@ async def test_alarm_combined_sensor_coverage():
         def decode_alarm_bit(self, bit_position: int) -> str | None:
             return "Very long string with lots of text " * 10
             
-    long_alarm1 = LongAlarmSensor("LA1", "sigen_la1", 0, 1, 30100, Protocol.V2_5, "Dummy")
-    long_alarm2 = LongAlarmSensor("LA2", "sigen_la2", 0, 1, 30101, Protocol.V2_5, "Dummy")
+    long_alarm1 = LongAlarmSensor("LA1", "sigen_la1", 0, 1, 30100, ProtocolVersion.V2_5, "Dummy")
+    long_alarm2 = LongAlarmSensor("LA2", "sigen_la2", 0, 1, 30101, ProtocolVersion.V2_5, "Dummy")
     comb_long = AlarmCombinedSensor("CL", "sigen_cl", "sigen_cl", long_alarm1, long_alarm2)
     
     with patch("sigenergy2mqtt.sensors.base.readable.ReadOnlySensor.get_state") as mock_super_get_state:
@@ -119,7 +119,7 @@ async def test_alarm_combined_sensor_coverage():
 
 @pytest.mark.asyncio
 async def test_running_state_sensor_coverage():
-    sensor = RunningStateSensor("Run", "sigen_run", 0, 1, 30000, Protocol.V2_5)
+    sensor = RunningStateSensor("Run", "sigen_run", 0, 1, 30000, ProtocolVersion.V2_5)
     
     with patch("sigenergy2mqtt.sensors.base.readable.ReadOnlySensor.get_state") as mock_super_get_state:
         # Test raw=True

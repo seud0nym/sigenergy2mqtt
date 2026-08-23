@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.common import DeviceClass, Protocol, RegisterAccess, StateClass, UnitOfPower
+from sigenergy2mqtt.common import DeviceClass, ProtocolVersion, RegisterAccess, StateClass, UnitOfPower
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.base import (
@@ -48,7 +48,7 @@ def _make_sensor(name="Test", uid_suffix="x", debug=False, **kwargs):
                 icon="mdi:solar-power",
                 gain=1.0,
                 precision=2,
-                protocol_version=Protocol.V2_4,
+                protocol_version=ProtocolVersion.V2_4,
                 debug_logging=debug,
                 **kwargs,
             )
@@ -80,7 +80,7 @@ class TestState2Raw:
                 icon=None,
                 gain=None,
                 precision=None,
-                protocol_version=Protocol.V2_4,
+                protocol_version=ProtocolVersion.V2_4,
             )
         s["options"] = options
         return s
@@ -130,9 +130,9 @@ class TestState2Raw:
 class TestProtocolVersionSetter:
     def test_protocol_version_float_valid(self):
         s = _make_sensor(uid_suffix="pv_float")
-        valid_float = Protocol.V2_4.value
+        valid_float = ProtocolVersion.V2_4.value
         s.protocol_version = float(valid_float)
-        assert s.protocol_version == Protocol.V2_4
+        assert s.protocol_version == ProtocolVersion.V2_4
 
     def test_protocol_version_float_invalid_raises(self):
         s = _make_sensor(uid_suffix="pv_bad")

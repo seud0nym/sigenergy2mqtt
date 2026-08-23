@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from pymodbus.pdu import ExceptionResponse
 
-from sigenergy2mqtt.common import DeviceClass, InputType, Protocol
+from sigenergy2mqtt.common import DeviceClass, InputType, ProtocolVersion
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.base import DiscoveryKeys
@@ -32,7 +32,7 @@ class DummyReadable(ReadableSensorMixin, Sensor):
         kwargs.setdefault("icon", None)
         kwargs.setdefault("gain", 1)
         kwargs.setdefault("precision", 0)
-        kwargs.setdefault("protocol_version", Protocol.V2_9)
+        kwargs.setdefault("protocol_version", ProtocolVersion.V2_9)
         kwargs.setdefault("data_type", ModbusDataType.UINT16)
         super().__init__(**kwargs)
 
@@ -47,7 +47,7 @@ class DummyModbus(ModbusSensorMixin, Sensor):
         kwargs.setdefault("icon", None)
         kwargs.setdefault("gain", 1)
         kwargs.setdefault("precision", 0)
-        kwargs.setdefault("protocol_version", Protocol.V2_9)
+        kwargs.setdefault("protocol_version", ProtocolVersion.V2_9)
         kwargs.setdefault("data_type", ModbusDataType.UINT16)
         super().__init__(**kwargs)
 
@@ -145,7 +145,7 @@ def test_writable_sensor_mixin_raw2state_writeonly():
         plant_index=0,
         device_address=1,
         address=30000,
-        protocol_version=Protocol.V2_9
+        protocol_version=ProtocolVersion.V2_9
     )
     sensor._values = {"off": "0", "on": "1"}
     sensor._names = {"off": "Disabled", "on": "Enabled"}
@@ -164,7 +164,7 @@ def test_writable_sensor_mixin_raw2state_switch():
         device_address=1,
         address=30000,
         scan_interval=10,
-        protocol_version=Protocol.V2_9,
+        protocol_version=ProtocolVersion.V2_9,
         payload_off="OFF_VAL",
         payload_on="ON_VAL"
     )

@@ -1,7 +1,7 @@
 import sigenergy2mqtt.sensors.plant_derived as derived
 import sigenergy2mqtt.sensors.plant_read_only as ro
 import sigenergy2mqtt.sensors.plant_read_write as rw
-from sigenergy2mqtt.common import DeviceType, Protocol
+from sigenergy2mqtt.common import DeviceType, ProtocolVersion
 from sigenergy2mqtt.devices import ModbusDevice
 from sigenergy2mqtt.modbus import ModbusClient
 
@@ -11,14 +11,14 @@ class GridSensor(ModbusDevice):
         self,
         plant_index: int,
         device_type: DeviceType,
-        protocol_version: Protocol,
+        protocol_version: ProtocolVersion,
     ):
         name = "Sigenergy Plant Grid Sensor"
         plant_suffix = "" if plant_index == 0 else str(plant_index + 1)
         super().__init__(device_type, name, plant_index, 247, "Grid Sensor", protocol_version, plant_suffix=plant_suffix)
 
     @classmethod
-    async def create(cls, plant_index: int, device_type: DeviceType, protocol_version: Protocol, power_phases: int, consumption_group: str | None, modbus_client: ModbusClient) -> "GridSensor":
+    async def create(cls, plant_index: int, device_type: DeviceType, protocol_version: ProtocolVersion, power_phases: int, consumption_group: str | None, modbus_client: ModbusClient) -> "GridSensor":
         grid_sensor = GridSensor(plant_index, device_type, protocol_version)
         await grid_sensor._register_sensors(power_phases, consumption_group, modbus_client)
         return grid_sensor

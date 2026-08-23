@@ -9,7 +9,7 @@ from paho.mqtt.client import Client as MqttClient
 from pymodbus import ModbusException
 from pymodbus.pdu import ExceptionResponse
 
-from sigenergy2mqtt.common import Protocol
+from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.devices.base.poller import SensorGroupPoller
@@ -136,7 +136,7 @@ async def test_publish_updates_runs_one_iteration(monkeypatch):
     monkeypatch.setattr(asyncio, "sleep", mock_sleep)
     # ------------------------------
 
-    dev = Device("devpub", 0, "uidpub", "mf", "mdl", Protocol.V1_8)
+    dev = Device("devpub", 0, "uidpub", "mf", "mdl", ProtocolVersion.V1_8)
 
     # create two modbus sensors
     s1 = DummyModbusSensor("s1", address=1, count=2, device_address=5, scan_interval=1)
@@ -172,7 +172,7 @@ async def test_publish_updates_runs_one_iteration(monkeypatch):
 @pytest.mark.asyncio
 async def test_publish_updates_read_ahead_error_code_switch(monkeypatch):
     """If read_ahead_registers returns code 2 the code should disable multiple pre-reads and still publish sensors."""
-    dev = Device("devpub2", 0, "uidpub2", "mf", "mdl", Protocol.V1_8)
+    dev = Device("devpub2", 0, "uidpub2", "mf", "mdl", ProtocolVersion.V1_8)
     s1 = DummyModbusSensor("s1", address=10, count=2, device_address=7, scan_interval=1)
     s2 = DummyModbusSensor("s2", address=12, count=1, device_address=7, scan_interval=1)
     dev._add_sensor(s1)
@@ -211,7 +211,7 @@ async def test_publish_updates_read_ahead_error_code_switch(monkeypatch):
 async def test_publish_updates_handles_modbus_exception_and_reconnect(monkeypatch):
     """If ModbusException occurs the device attempts to reconnect via modbus.connect."""
 
-    dev = Device("devpub3", 0, "uidpub3", "mf", "mdl", Protocol.V1_8)
+    dev = Device("devpub3", 0, "uidpub3", "mf", "mdl", ProtocolVersion.V1_8)
     s1 = DummyModbusSensor("s1", address=1, count=1, device_address=2, scan_interval=1)
     s2 = DummyModbusSensor("s2", address=2, count=1, device_address=2, scan_interval=1)
     dev._add_sensor(s1)
@@ -275,7 +275,7 @@ async def test_publish_updates_day_change_forces_daily_sensor(monkeypatch):
     """When tm_yday changes between iterations, sensors with EnergyDailyAccumulationSensor
     derived sensors are forced to publish immediately (covers device.py lines 1017-1025)."""
 
-    dev = Device("devpub4", 0, "uidpub4", "mf", "mdl", Protocol.V1_8)
+    dev = Device("devpub4", 0, "uidpub4", "mf", "mdl", ProtocolVersion.V1_8)
 
     # A daily sensor whose derived_sensors include an EnergyDailyAccumulationSensor
     daily = DummyModbusSensor("daily1", address=1, count=1, device_address=3, scan_interval=60)
@@ -359,7 +359,7 @@ async def test_publish_updates_day_change_forces_daily_sensor(monkeypatch):
 @pytest.mark.asyncio
 async def test_poller_skips_unpublishable_sensors(monkeypatch):
     """Ensure _get_sensors_to_publish_now correctly skips sensors where publishable == False."""
-    dev = Device("devpub5", 0, "uidpub5", "mf", "mdl", Protocol.V1_8)
+    dev = Device("devpub5", 0, "uidpub5", "mf", "mdl", ProtocolVersion.V1_8)
 
     s1 = DummyModbusSensor("s1", address=1, count=1, device_address=1, scan_interval=1)
     s2 = DummyModbusSensor("s2", address=2, count=1, device_address=1, scan_interval=1)
@@ -403,7 +403,7 @@ async def test_poller_read_ahead_exception_codes(monkeypatch, caplog):
     import logging
 
     caplog.set_level(logging.WARNING)
-    dev = Device("devpub6", 0, "uidpub6", "mf", "mdl", Protocol.V1_8)
+    dev = Device("devpub6", 0, "uidpub6", "mf", "mdl", ProtocolVersion.V1_8)
     s1 = DummyModbusSensor("s1", address=10, count=2, device_address=7, scan_interval=1)
     s2 = DummyModbusSensor("s2", address=12, count=1, device_address=7, scan_interval=1)
     dev._add_sensor(s1)
@@ -479,7 +479,7 @@ async def test_poller_read_ahead_exception_codes(monkeypatch, caplog):
 @pytest.mark.asyncio
 async def test_poller_reconnect_cancellation(monkeypatch, caplog):
     """Mock modbus.connect to raise asyncio.CancelledError and ensure _reconnect_modbus_with_backoff returns False properly."""
-    dev = Device("devpub7", 0, "uidpub7", "mf", "mdl", Protocol.V1_8)
+    dev = Device("devpub7", 0, "uidpub7", "mf", "mdl", ProtocolVersion.V1_8)
     s1 = DummyModbusSensor("s1", address=10, count=2, device_address=7, scan_interval=1)
     dev._add_sensor(s1)
 
@@ -529,7 +529,7 @@ async def test_poller_run_sleep_cancelled(monkeypatch, caplog):
     """Raise asyncio.CancelledError from the sleep task in run and ensure it's caught."""
     import logging
 
-    dev = Device("devpub8", 0, "uidpub8", "mf", "mdl", Protocol.V1_8)
+    dev = Device("devpub8", 0, "uidpub8", "mf", "mdl", ProtocolVersion.V1_8)
     s1 = DummyModbusSensor("s1", address=10, count=2, device_address=7, scan_interval=1)
     dev._add_sensor(s1)
     dev._online = True
@@ -581,7 +581,7 @@ async def test_poller_run_sleep_cancelled(monkeypatch, caplog):
 @pytest.mark.asyncio
 async def test_poller_run_handles_generic_exception(monkeypatch, caplog):
     """Throw a generic Exception from sensor.publish and verify run catches it and logs an error without crashing."""
-    dev = Device("devpub9", 0, "uidpub9", "mf", "mdl", Protocol.V1_8)
+    dev = Device("devpub9", 0, "uidpub9", "mf", "mdl", ProtocolVersion.V1_8)
     s1 = DummyModbusSensor("s1", address=10, count=2, device_address=7, scan_interval=1)
     dev._add_sensor(s1)
 

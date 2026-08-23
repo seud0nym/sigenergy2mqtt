@@ -2441,7 +2441,7 @@ class:
     name: 'Sigenergy 电厂 {plant_suffix}'
   ProtocolPublished:
     name: 协议发布
-  ProtocolVersion:
+  ProtocolVersionSensor:
     name: 协议版本
   QSAdjustmentTargetValue:
     attributes:

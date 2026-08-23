@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from sigenergy2mqtt.common import DeviceClass, InputType, Protocol, UnitOfPower
+from sigenergy2mqtt.common import DeviceClass, InputType, ProtocolVersion, UnitOfPower
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, AlarmSensor, NumericSensor, RunningStateSensor, SelectSensor, Sensor
@@ -46,7 +46,7 @@ class TestSelectSensor:
             address=30000,
             scan_interval=60,
             options=["Option A", "Option B"],
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
         )
 
         # Valid cases
@@ -82,7 +82,7 @@ class TestNumericSensor:
             count=1,
             data_type=ModbusDataType.UINT16,
             scan_interval=60,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
             minimum=10.0,
             maximum=20.0,
             unit=UnitOfPower.WATT,
@@ -128,7 +128,7 @@ class TestNumericSensor:
             count=1,
             data_type=ModbusDataType.UINT16,
             scan_interval=60,
-            protocol_version=Protocol.V1_8,
+            protocol_version=ProtocolVersion.V1_8,
             minimum=(-20.0, -10.0),
             maximum=(10.0, 20.0),
             unit=UnitOfPower.WATT,
@@ -170,7 +170,7 @@ class ConcreteAlarmSensor(AlarmSensor):
 class TestAlarmSensor:
     @pytest.mark.asyncio
     async def test_get_state_logic(self):
-        sensor = ConcreteAlarmSensor(name="Test Alarm", object_id="sigen_test_alarm", plant_index=0, device_address=1, address=30000, protocol_version=Protocol.V1_8, alarm_type="TestType")
+        sensor = ConcreteAlarmSensor(name="Test Alarm", object_id="sigen_test_alarm", plant_index=0, device_address=1, address=30000, protocol_version=ProtocolVersion.V1_8, alarm_type="TestType")
         with patch("sigenergy2mqtt.sensors.base.Sensor.get_state", new_callable=AsyncMock) as mock_super:
             # 1. No Alarm cases
             mock_super.return_value = 0
@@ -220,8 +220,8 @@ class TestAlarmCombinedSensor:
     @pytest.mark.asyncio
     async def test_get_state_aggregation(self):
         # Create child sensors with mocked get_state
-        a1 = ConcreteAlarmSensor("A1", "sigen_a1", 0, 1, 30000, Protocol.V1_8, alarm_type="TypeA")
-        a2 = ConcreteAlarmSensor("A2", "sigen_a2", 0, 1, 30001, Protocol.V1_8, alarm_type="TypeB")
+        a1 = ConcreteAlarmSensor("A1", "sigen_a1", 0, 1, 30000, ProtocolVersion.V1_8, alarm_type="TypeA")
+        a2 = ConcreteAlarmSensor("A2", "sigen_a2", 0, 1, 30001, ProtocolVersion.V1_8, alarm_type="TypeB")
 
         combined = AlarmCombinedSensor("Combined", "sigen_combined_uid", "sigen_combined_oid", a1, a2)
         # Test 1: All No Alarm
@@ -249,7 +249,7 @@ class TestAlarmCombinedSensor:
 class TestRunningStateSensor:
     @pytest.mark.asyncio
     async def test_get_state_invalid_index(self):
-        sensor = RunningStateSensor(name="Run State", object_id="sigen_run_state", plant_index=0, device_address=1, address=30000, protocol_version=Protocol.V1_8)
+        sensor = RunningStateSensor(name="Run State", object_id="sigen_run_state", plant_index=0, device_address=1, address=30000, protocol_version=ProtocolVersion.V1_8)
         # RunningStateSensor defines options in __init__
 
         with patch("sigenergy2mqtt.sensors.base.ReadOnlySensor.get_state", new_callable=AsyncMock) as mock_super:

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from sigenergy2mqtt.common import DeviceClass, InputType, Protocol, UnitOfElectricCurrent, UnitOfElectricPotential, UnitOfFrequency, UnitOfTemperature
+from sigenergy2mqtt.common import DeviceClass, InputType, ProtocolVersion, UnitOfElectricCurrent, UnitOfElectricPotential, UnitOfFrequency, UnitOfTemperature
 from sigenergy2mqtt.common.types import NonInverter
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus import ModbusDataType
@@ -27,7 +27,7 @@ class PIDModelType(ReadOnlySensor, NonInverter):
             icon="mdi:information-outline",
             gain=None,
             precision=None,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
         self["entity_category"] = "diagnostic"
 
@@ -52,7 +52,7 @@ class PIDSerialNumber(ReadOnlySensor, NonInverter):
             icon="mdi:identifier",
             gain=None,
             precision=None,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
         self["entity_category"] = "diagnostic"
 
@@ -77,7 +77,7 @@ class PIDMachineFirmwareVersion(ReadOnlySensor, NonInverter):
             icon="mdi:information-outline",
             gain=None,
             precision=None,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
         self["entity_category"] = "diagnostic"
 
@@ -102,7 +102,7 @@ class PIDCommunicationStatus(ReadOnlySensor, NonInverter):
             icon="mdi:wifi",
             gain=None,
             precision=None,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
         options: list[str] = [
             "Loading",  # 0
@@ -134,7 +134,7 @@ class PIDRunningStatus(ReadOnlySensor, NonInverter):
             icon="mdi:run",
             gain=None,
             precision=None,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
         options: list[str] = [
             "Idle",  # 0
@@ -167,7 +167,7 @@ class PIDABLineVoltage(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -191,7 +191,7 @@ class PIDBCLineVoltage(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -215,7 +215,7 @@ class PIDCALineVoltage(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -239,7 +239,7 @@ class PIDPhaseAVoltage(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -263,7 +263,7 @@ class PIDPhaseBVoltage(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -287,7 +287,7 @@ class PIDPhaseCVoltage(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -311,7 +311,7 @@ class PIDGridFrequency(NumericSensor, NonInverter):
             icon="mdi:sine-wave",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -335,7 +335,7 @@ class PIDOutputVoltage(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=10,
             precision=1,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -359,7 +359,7 @@ class PIDBusVoltage(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=10,
             precision=1,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -383,7 +383,7 @@ class PIDInverterVoltage(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -407,7 +407,7 @@ class PIDInverterCurrent(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -431,7 +431,7 @@ class PIDOutputCurrent(NumericSensor, NonInverter):
             icon="mdi:lightning-bolt",
             gain=100,
             precision=2,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -455,7 +455,7 @@ class PIDInternalTemperature1(NumericSensor, NonInverter):
             icon="mdi:thermometer",
             gain=10,
             precision=1,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -479,7 +479,7 @@ class PIDInternalTemperature2(NumericSensor, NonInverter):
             icon="mdi:thermometer",
             gain=10,
             precision=1,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -503,7 +503,7 @@ class PIDInternalTemperature3(NumericSensor, NonInverter):
             icon="mdi:thermometer",
             gain=10,
             precision=1,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -527,7 +527,7 @@ class PIDInternalTemperature4(NumericSensor, NonInverter):
             icon="mdi:thermometer",
             gain=10,
             precision=1,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -551,7 +551,7 @@ class PIDInternalTemperature5(NumericSensor, NonInverter):
             icon="mdi:thermometer",
             gain=10,
             precision=1,
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
 
@@ -566,7 +566,7 @@ class PIDAlarm1(AlarmSensor):
             device_address=device_address,
             address=self.ADDRESS,
             alarm_type="PID",
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
     def decode_alarm_bit(self, bit_position: int):
@@ -618,7 +618,7 @@ class PIDAlarm2(AlarmSensor):
             device_address=device_address,
             address=self.ADDRESS,
             alarm_type="PID",
-            protocol_version=Protocol.V2_9,
+            protocol_version=ProtocolVersion.V2_9,
         )
 
     def decode_alarm_bit(self, bit_position: int):

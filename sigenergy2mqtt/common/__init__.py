@@ -7,7 +7,7 @@ from .firmware_version import FirmwareVersion
 from .health import ServiceHealthRegistry, service_health_registry
 from .input_type import InputType
 from .output_field import OutputField
-from .protocol import Protocol, ProtocolApplies
+from .protocol import ProtocolApplies, ProtocolVersion
 from .register_access import RegisterAccess
 from .scan_interval_default import ScanIntervalDefault
 from .state_class import StateClass
@@ -45,8 +45,8 @@ __all__ = [
     "InputType",
     "OutputField",
     "PVInverter",
-    "Protocol",
     "ProtocolApplies",
+    "ProtocolVersion",
     "RegisterAccess",
     "ScanIntervalDefault",
     "ServiceHealthRegistry",

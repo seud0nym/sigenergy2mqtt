@@ -10,7 +10,7 @@ from typing import Any, Final, cast
 
 from pymodbus.pdu import ExceptionResponse
 
-from sigenergy2mqtt.common import DeviceClass, HybridInverter, InputType, Protocol, PVInverter
+from sigenergy2mqtt.common import DeviceClass, HybridInverter, InputType, ProtocolVersion, PVInverter
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.i18n import _t
 from sigenergy2mqtt.modbus import ModbusDataType
@@ -37,7 +37,7 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
         plant_index: int,
         device_address: int,
         address: int,
-        protocol_version: Protocol,
+        protocol_version: ProtocolVersion,
         alarm_type: str,
         **kwargs,
     ):
@@ -217,7 +217,7 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
 class Alarm1Sensor(AlarmSensor):
     """PCS (Power Conversion System) alarms - Register 1."""
 
-    def __init__(self, name: str, object_id: str, plant_index: int, device_address: int, address: int, protocol_version: Protocol):
+    def __init__(self, name: str, object_id: str, plant_index: int, device_address: int, address: int, protocol_version: ProtocolVersion):
         super().__init__(name, object_id, plant_index, device_address, address, protocol_version, "PCS")
 
     def decode_alarm_bit(self, bit_position: int) -> str | None:
@@ -246,7 +246,7 @@ class Alarm1Sensor(AlarmSensor):
 class Alarm2Sensor(AlarmSensor):
     """PCS (Power Conversion System) alarms - Register 2."""
 
-    def __init__(self, name: str, object_id: str, plant_index: int, device_address: int, address: int, protocol_version: Protocol):
+    def __init__(self, name: str, object_id: str, plant_index: int, device_address: int, address: int, protocol_version: ProtocolVersion):
         super().__init__(name, object_id, plant_index, device_address, address, protocol_version, "PCS")
 
     def decode_alarm_bit(self, bit_position: int) -> str | None:
@@ -268,7 +268,7 @@ class Alarm2Sensor(AlarmSensor):
 class Alarm3Sensor(AlarmSensor):
     """ESS (Energy Storage System) alarms."""
 
-    def __init__(self, name: str, object_id: str, plant_index: int, device_address: int, address: int, protocol_version: Protocol):
+    def __init__(self, name: str, object_id: str, plant_index: int, device_address: int, address: int, protocol_version: ProtocolVersion):
         super().__init__(name, object_id, plant_index, device_address, address, protocol_version, "ESS")
         self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
@@ -296,7 +296,7 @@ class Alarm4Sensor(AlarmSensor):
         plant_index: int,
         device_address: int,
         address: int,
-        protocol_version: Protocol,
+        protocol_version: ProtocolVersion,
     ):
         super().__init__(name, object_id, plant_index, device_address, address, protocol_version, "GW")
         self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
@@ -319,7 +319,7 @@ class Alarm4Sensor(AlarmSensor):
 class Alarm5Sensor(AlarmSensor):
     """EV DC Charger alarms."""
 
-    def __init__(self, name: str, object_id: str, plant_index: int, device_address: int, address: int, protocol_version: Protocol):
+    def __init__(self, name: str, object_id: str, plant_index: int, device_address: int, address: int, protocol_version: ProtocolVersion):
         super().__init__(name, object_id, plant_index, device_address, address, protocol_version, "EVDC")
         self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
@@ -385,7 +385,7 @@ class AlarmCombinedSensor(ReadOnlySensor, HybridInverter, PVInverter):
             icon="mdi:flash-triangle",
             gain=None,
             precision=None,
-            protocol_version=Protocol.N_A,
+            protocol_version=ProtocolVersion.N_A,
             input_type=InputType.INPUT,
             plant_index=plant_index,
             device_address=next(iter(device_addresses)),
@@ -398,7 +398,7 @@ class AlarmCombinedSensor(ReadOnlySensor, HybridInverter, PVInverter):
         self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
     @property
-    def protocol_version(self) -> Protocol:
+    def protocol_version(self) -> ProtocolVersion:
         """Get the highest protocol version from all alarms."""
         protocol = super().protocol_version
         for alarm in self.alarms:
@@ -406,8 +406,8 @@ class AlarmCombinedSensor(ReadOnlySensor, HybridInverter, PVInverter):
         return protocol
 
     @protocol_version.setter
-    def protocol_version(self, protocol_version: Protocol | float):
-        """Protocol version is read-only for combined sensors."""
+    def protocol_version(self, protocol_version: ProtocolVersion | float):
+        """ProtocolVersion version is read-only for combined sensors."""
         raise NotImplementedError("protocol_version is read-only for AlarmCombinedSensor")
 
     async def _update_internal_state(self, **kwargs) -> bool | Exception | ExceptionResponse:
@@ -508,7 +508,7 @@ class RunningStateSensor(ReadOnlySensor):
         plant_index: int,
         device_address: int,
         address: int,
-        protocol_version: Protocol,
+        protocol_version: ProtocolVersion,
         **kwargs,
     ):
         super().__init__(

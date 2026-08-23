@@ -11,7 +11,7 @@ import logging
 import time
 from typing import Any, cast
 
-from sigenergy2mqtt.common import PERCENTAGE, DeviceClass, Protocol, ProtocolApplies
+from sigenergy2mqtt.common import PERCENTAGE, DeviceClass, ProtocolApplies, ProtocolVersion
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.sensors.base import DiscoveryKeys, ReadableSensorMixin, WriteOnlySensor
 
@@ -411,12 +411,12 @@ class Started(MetricsSensor):
         return True
 
 
-class ProtocolVersion(MetricsSensor):
+class ProtocolVersionSensor(MetricsSensor):
     """The Sigenergy modbus protocol version in use."""
 
-    def __init__(self, protocol_version: Protocol):
+    def __init__(self, protocol_version: ProtocolVersion):
         super().__init__(
-            name="Protocol Version",
+            name="ProtocolVersion Version",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_modbus_protocol",
             object_id="sigenergy2mqtt_modbus_protocol",
             icon="mdi:book-information-variant",
@@ -433,9 +433,9 @@ class ProtocolVersion(MetricsSensor):
 class ProtocolPublished(MetricsSensor):
     """The date from which the active Sigenergy modbus protocol applies."""
 
-    def __init__(self, protocol_version: Protocol):
+    def __init__(self, protocol_version: ProtocolVersion):
         super().__init__(
-            name="Protocol Published",
+            name="ProtocolVersion Published",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_modbus_protocol_published",
             object_id="sigenergy2mqtt_modbus_protocol_published",
             icon="mdi:book-clock",
@@ -982,7 +982,7 @@ class ResetMetrics(WriteOnlySensor):
             plant_index=0,  # Required for assertions, but not used
             device_address=1,  # Required for assertions, but not used
             address=99999,  # Required for assertions, but not used
-            protocol_version=Protocol.N_A,
+            protocol_version=ProtocolVersion.N_A,
             icon_off="mdi:reload",
             icon_on="mdi:reload",
             name_off="Reset Metrics",
