@@ -79,6 +79,7 @@ from .sensor import (  # noqa: F401
     AvailabilityMixin,
     Sensor,
     SensorDebuggingMixin,
+    SensorProtocol,
     TypedSensorMixin,
 )
 

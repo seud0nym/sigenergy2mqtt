@@ -10,7 +10,7 @@ import logging
 import re
 import time
 from collections import deque
-from typing import TYPE_CHECKING, Any, ClassVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Protocol, cast
 
 import paho.mqtt.client as mqtt
 from pymodbus.exceptions import ModbusException
@@ -31,6 +31,16 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 # =============================================================================
+
+
+class SensorProtocol(Protocol):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def __getitem__(self, key: str) -> Any: ...
+    def __setitem__(self, key: str, value: Any) -> None: ...
+    def _log_configured_topics(self) -> None: ...
+    def set_latest_state(self, state: float | str | list[bool] | list[int] | list[float]) -> bool: ...
 
 
 class SensorDebuggingMixin:
@@ -64,7 +74,7 @@ class TypedSensorMixin:
 # =============================================================================
 
 
-class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABCMeta):
+class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], SensorProtocol, metaclass=abc.ABCMeta):
     """Base class for all sensors in the Sigenergy2MQTT system.
 
     This class provides core functionality for:
@@ -189,7 +199,6 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
                 logger.error(f"{self.log_identity} state class '{state_class.name}' is not valid for device class '{device_class.name}'")
             if not DeviceClass.is_valid_unit(device_class, unit):
                 logger.error(f"{self.log_identity} unit '{unit}' is not valid for device class '{device_class.name}'")
-        
 
     def _validate_unique_id(self, unique_id: str) -> None:
         """Validate that unique_id is not duplicated and has correct prefix.
@@ -649,8 +658,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
             self[DiscoveryKeys.AVAILABILITY_MODE] = "all"
             self[DiscoveryKeys.AVAILABILITY] = [{"topic": f"{active_config.home_assistant.discovery_prefix}/device/{device_id}/availability"}]
 
-        if self.debug_logging:
-            self._log_configured_topics()
+        self._log_configured_topics()
 
         return base
 
@@ -675,10 +683,11 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
 
     def _log_configured_topics(self) -> None:
         """Log the configured MQTT topics for debugging."""
-        logger.debug(f"{self.log_identity} Configured MQTT topics (HA={active_config.home_assistant.enabled} simplified={active_config.home_assistant.use_simplified_topics})")
-        for key in (DiscoveryKeys.STATE_TOPIC, DiscoveryKeys.RAW_STATE_TOPIC, DiscoveryKeys.JSON_ATTRIBUTES_TOPIC, DiscoveryKeys.AVAILABILITY):
-            if key in self:
-                logger.debug(f"{self.log_identity} >>> {key}={self[key]})")
+        if self.debug_logging:
+            logger.debug(f"{self.log_identity} Configured MQTT topics (HA={active_config.home_assistant.enabled} simplified={active_config.home_assistant.use_simplified_topics})")
+            for key in (DiscoveryKeys.STATE_TOPIC, DiscoveryKeys.RAW_STATE_TOPIC, DiscoveryKeys.JSON_ATTRIBUTES_TOPIC, DiscoveryKeys.AVAILABILITY):
+                if key in self:
+                    logger.debug(f"{self.log_identity} >>> {key}={self[key]})")
 
     def get_attributes(self) -> dict[str, float | int | str]:
         """Get sensor attributes for MQTT publishing.
