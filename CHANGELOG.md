@@ -12,6 +12,7 @@
 
 - Added plant active power and third-party PV power to dashboard
 - Refactored writeable sensor mixins to separate transport from entity behaviour
+- Refactored Protocol class name to ProtocolVersion because it shadowed typing.Protocol
 - Upgraded `pydantic-settings` from 2.14.2 to 2.15.0
 - Upgraded `pymodbus` from 3.14.0 to 3.15.0
 
