@@ -209,7 +209,7 @@ def test_switch_value_is_valid_and_set_value(monkeypatch):
     async def fake_write(self, modbus_client, raw_value, mqtt_client):
         return True
 
-    monkeypatch.setattr(base.WritableSensorMixin, "_write_registers", fake_write)
+    monkeypatch.setattr(base.ModbusWritableSensorMixin, "_write_registers", fake_write)
     sw.configure_mqtt_topics("dev")
     loop = asyncio.new_event_loop()
     res = loop.run_until_complete(sw.set_value(Mock(), Mock(), 1, sw[base.DiscoveryKeys.COMMAND_TOPIC], Mock()))

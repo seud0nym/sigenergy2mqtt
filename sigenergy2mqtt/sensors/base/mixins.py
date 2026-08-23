@@ -335,44 +335,6 @@ class WritableSensorMixin(Sensor):
             return False
         return await self._write_value(modbus_client, mqtt_client, value, source, handler)
 
-    async def _write_registers(self, modbus_client: ModbusClient, raw_value: float | str, mqtt_client: mqtt.Client) -> bool:
-        """Write value to Modbus registers.
-
-        Args:
-            modbus_client: Modbus client for writing
-            raw_value: Raw value to write
-            mqtt_client: MQTT client for status updates
-
-        Returns:
-            True if write was successful
-        """
-        max_wait = 2
-        device_id = self.device_address
-        no_response_expected = False
-
-        logger.info(f"{self.log_identity} _write_registers value={self._raw2state(raw_value)} (raw={raw_value} latest_raw_state={self.latest_raw_state} address={self.address} device_id={device_id})")
-
-        # Convert value to registers
-        registers = self._convert_value_to_registers(modbus_client, raw_value)
-        method = "write_register" if len(registers) == 1 else "write_registers"
-
-        self.force_publish = True
-
-        try:
-            return await self._perform_modbus_write(modbus_client, registers, device_id, no_response_expected, method)
-        except asyncio.CancelledError:
-            logger.warning(f"{self.log_identity} Modbus write interrupted")
-            return False
-        except TimeoutError:
-            logger.warning(f"{self.log_identity} Modbus write failed to acquire lock within {max_wait}s")
-            return False
-        except ModbusException as e:
-            from sigenergy2mqtt.metrics import Metrics
-
-            logger.error(f"{self.log_identity} write_registers: {e!r}")
-            await Metrics.modbus_write_error()
-            raise
-
     @abc.abstractmethod
     async def _write_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
         """Deliver a validated command value using the sensor's transport."""
@@ -431,6 +393,44 @@ class ModbusWritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, WritableSen
             return raw_value
 
         return raw_value
+
+    async def _write_registers(self, modbus_client: ModbusClient, raw_value: float | str, mqtt_client: mqtt.Client) -> bool:
+        """Write value to Modbus registers.
+
+        Args:
+            modbus_client: Modbus client for writing
+            raw_value: Raw value to write
+            mqtt_client: MQTT client for status updates
+
+        Returns:
+            True if write was successful
+        """
+        max_wait = 2
+        device_id = self.device_address
+        no_response_expected = False
+
+        logger.info(f"{self.log_identity} _write_registers value={self._raw2state(raw_value)} (raw={raw_value} latest_raw_state={self.latest_raw_state} address={self.address} device_id={device_id})")
+
+        # Convert value to registers
+        registers = self._convert_value_to_registers(modbus_client, raw_value)
+        method = "write_register" if len(registers) == 1 else "write_registers"
+
+        self.force_publish = True
+
+        try:
+            return await self._perform_modbus_write(modbus_client, registers, device_id, no_response_expected, method)
+        except asyncio.CancelledError:
+            logger.warning(f"{self.log_identity} Modbus write interrupted")
+            return False
+        except TimeoutError:
+            logger.warning(f"{self.log_identity} Modbus write failed to acquire lock within {max_wait}s")
+            return False
+        except ModbusException as e:
+            from sigenergy2mqtt.metrics import Metrics
+
+            logger.error(f"{self.log_identity} write_registers: {e!r}")
+            await Metrics.modbus_write_error()
+            raise
 
     def _convert_value_to_registers(self, modbus_client: ModbusClient, raw_value: float | str) -> list[int]:
         """Convert a value to Modbus register format.
