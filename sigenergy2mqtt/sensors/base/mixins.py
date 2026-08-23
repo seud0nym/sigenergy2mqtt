@@ -319,6 +319,8 @@ class WriteableSensorMixin(Sensor):
         """Configure the command topic in addition to normal sensor topics."""
         base = super().configure_mqtt_topics(device_id)
         self[DiscoveryKeys.COMMAND_TOPIC] = f"{base}/set"
+        if self.debug_logging:
+            logger.debug(f"{self.log_identity} >>> {DiscoveryKeys.COMMAND_TOPIC}={self[DiscoveryKeys.COMMAND_TOPIC]})")
         return base
 
     async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
