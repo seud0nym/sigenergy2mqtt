@@ -65,6 +65,7 @@
         "Initialising",
         "keepalive",
         "kvar",
+        "kwargs",
         "lastindex",
         "levelname",
         "libc",

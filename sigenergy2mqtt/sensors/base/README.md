@@ -2,7 +2,7 @@
 
 This package contains the reusable sensor model used by `sigenergy2mqtt`.  A
 sensor is a Home Assistant discovery dictionary as well as an object that owns
-state history, MQTT topics, validation, availability, and publishing behavior.
+state history, MQTT topics, validation, availability, and publishing behaviour.
 The hierarchy deliberately separates **entity behaviour** from the transport
 that supplies or accepts values.
 
@@ -76,7 +76,7 @@ They mirror the command-facing behaviour of `NumericSensor`, `SelectSensor`,
 and `SwitchSensor`, and each inherits `WriteableSensorMixin`. Subclass the
 appropriate presentation mixin directly when the backing service is not Modbus.
 
-## Creating a non-Modbus writable sensor
+## Creating a non-Modbus writeable sensor
 
 Implement `_write_value` for the target transport and `_update_internal_state`
 required by `Sensor`.  A write-only service-backed numeric entity can be
@@ -102,4 +102,4 @@ MQTT handler interface and may be `None` for non-Modbus sensors.
 For a select or switch, replace `NumericSensorMixin` with `SelectSensorMixin`
 (and provide `options`) or `SwitchSensorMixin`.  A custom transport can also
 subclass `WriteableSensorMixin` directly when it needs no number/select/switch
-presentation behavior.
+presentation behaviour.
