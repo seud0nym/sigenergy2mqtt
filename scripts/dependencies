@@ -17,7 +17,7 @@ if [[ -z "$VIRTUAL_ENV" ]]; then
     if [[ -z "$UV" ]]; then
       python3 -m venv .venv
     else
-      uv venv create .venv
+      uv venv .venv
     fi
   fi 
   source .venv/bin/activate
