@@ -2,9 +2,25 @@
 
 set -eo pipefail
 
+[ -z "$quiet" ] && python3 --version
+if which -s uv; then
+  UV=uv
+  [ -z "$quiet" ] && uv --version
+else
+  ROOT_USER_ACTION="--root-user-action=ignore"
+  [ -z "$quiet" ] && pip --version
+fi
+
 cd "$(cd $(dirname $0)/..; pwd)"
-if [[ -z "$VIRTUAL_ENV" && -d .venv ]]; then
-   source .venv/bin/activate
+if [[ -z "$VIRTUAL_ENV" ]]; then
+  if [[ ! -d .venv ]]; then
+    if [[ -z "$UV" ]]; then
+      python3 -m venv .venv
+    else
+      uv venv create .venv
+    fi
+  fi 
+  source .venv/bin/activate
 fi
 
 install_only=0
