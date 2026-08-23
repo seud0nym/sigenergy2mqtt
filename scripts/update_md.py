@@ -23,7 +23,7 @@ from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 from sigenergy2mqtt.common import ConsumptionMethod, HybridInverter, Protocol, PVInverter
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.metrics.service import MetricsService
-from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, ModbusSensorMixin, ReadableSensorMixin, ReservedSensor, Sensor, TypedSensorMixin, WritableSensorMixin, WriteOnlySensor
+from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, ModbusSensorMixin, ReadableSensorMixin, ReservedSensor, Sensor, TypedSensorMixin, WriteableSensorMixin, WriteOnlySensor
 from sigenergy2mqtt.sensors.plant_derived import PlantConsumedPower
 from sigenergy2mqtt.sensors.plant_read_write import RemoteEMSLimit
 from tests.utils import get_sensor_instances
@@ -276,8 +276,8 @@ async def sensor_index() -> None:
                 f.write("\n")
                 f.write("</a></h5>\n")
                 f.write("<table>\n")
-                f.write(f"<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>{cast(WritableSensorMixin, hass_sensors[key]).command_topic}</td></tr>\n")
-                f.write(f"<tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>{cast(WritableSensorMixin, sensor).command_topic}</td></tr>\n")
+                f.write(f"<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>{cast(WriteableSensorMixin, hass_sensors[key]).command_topic}</td></tr>\n")
+                f.write(f"<tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>{cast(WriteableSensorMixin, sensor).command_topic}</td></tr>\n")
                 attributes = sensor.get_attributes()
                 min, max = None, None
                 if "comment" in attributes:

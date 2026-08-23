@@ -70,7 +70,7 @@ def mock_lock_factory():
         yield mock_get
 
 
-class TestWritableSensorMixin:
+class TestWriteableSensorMixin:
     @pytest.mark.asyncio
     async def test_write_registers_single_uint16(self, mock_lock_factory, mock_modbus):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
@@ -168,7 +168,7 @@ class TestWriteOnlySensorLogic:
             mock_modbus.write_register.assert_called_with(30001, 1, device_id=1, no_response_expected=False)
 
 
-class TestNumericSensorWritable:
+class TestNumericSensorWriteable:
     @pytest.mark.asyncio
     async def test_numeric_sensor_set_value_with_gain(self, mock_lock_factory, mock_modbus):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
@@ -271,7 +271,7 @@ class TestNumericSensorWritable:
                 assert val == 10.0 * 2.0
 
 
-class TestSelectSensorWritable:
+class TestSelectSensorWriteable:
     @pytest.mark.asyncio
     async def test_select_sensor_set_value_index(self, mock_lock_factory, mock_modbus):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
@@ -400,7 +400,7 @@ class TestSelectSensorWritable:
             mock_modbus.write_register.assert_called_with(30104, 3.0, device_id=1, no_response_expected=False)
 
 
-class TestSwitchSensorWritable:
+class TestSwitchSensorWriteable:
     @pytest.mark.asyncio
     async def test_switch_sensor_set_value(self, mock_lock_factory, mock_modbus):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):

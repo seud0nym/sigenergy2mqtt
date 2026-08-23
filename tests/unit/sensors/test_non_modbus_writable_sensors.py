@@ -11,11 +11,11 @@ from sigenergy2mqtt.sensors.base import (
     SelectSensorMixin,
     Sensor,
     SwitchSensorMixin,
-    WritableSensorMixin,
+    WriteableSensorMixin,
 )
 
 
-class _NonModbusWritableSensor(WritableSensorMixin, Sensor):
+class _NonModbusWriteableSensor(WriteableSensorMixin, Sensor):
     """A writable sensor backed by an in-memory service rather than Modbus."""
 
     async def _update_internal_state(self, **kwargs):
@@ -27,15 +27,15 @@ class _NonModbusWritableSensor(WritableSensorMixin, Sensor):
         return True
 
 
-class NonModbusNumericSensor(NumericSensorMixin, _NonModbusWritableSensor):
+class NonModbusNumericSensor(NumericSensorMixin, _NonModbusWriteableSensor):
     pass
 
 
-class NonModbusSelectSensor(SelectSensorMixin, _NonModbusWritableSensor):
+class NonModbusSelectSensor(SelectSensorMixin, _NonModbusWriteableSensor):
     pass
 
 
-class NonModbusSwitchSensor(SwitchSensorMixin, _NonModbusWritableSensor):
+class NonModbusSwitchSensor(SwitchSensorMixin, _NonModbusWriteableSensor):
     pass
 
 

@@ -52,11 +52,11 @@ from .derived import CrossDeviceDerivedSensor, DerivedSensor  # noqa: F401
 # Behaviour mixins
 from .mixins import (  # noqa: F401
     ModbusSensorMixin,
-    ModbusWritableSensorMixin,
+    ModbusWriteableSensorMixin,
     ObservableMixin,
     PVPowerSensor,
     ReadableSensorMixin,
-    WritableSensorMixin,
+    WriteableSensorMixin,
 )
 
 # Readable sensors
@@ -85,7 +85,7 @@ from .sensor import (  # noqa: F401
 # Timestamp sensors
 from .timestamp import TimestampSensor  # noqa: F401
 
-# Writable sensors
+# Writeable sensors
 from .writable import (  # noqa: F401
     NumericSensor,
     NumericSensorMixin,

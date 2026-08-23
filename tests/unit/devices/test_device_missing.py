@@ -11,7 +11,7 @@ from sigenergy2mqtt.sensors.base import (
     ObservableMixin,
     ReadableSensorMixin,
     Sensor,
-    WritableSensorMixin,
+    WriteableSensorMixin,
     WriteOnlySensor,
 )
 
@@ -49,7 +49,7 @@ class DummyReadable(ReadableSensorMixin, Sensor):
         return []
 
 
-class DummyWritable(WritableSensorMixin, Sensor):
+class DummyWriteable(WriteableSensorMixin, Sensor):
     def __init__(self, unique_id, command_topic="cmd"):
         self.unique_id = unique_id
         self["unique_id"] = unique_id
@@ -186,7 +186,7 @@ def test_device_subscribe(device):
     handler = MagicMock()
     mqtt_client = MagicMock()
 
-    writable = DummyWritable("w1", command_topic="cmd/w1")
+    writable = DummyWriteable("w1", command_topic="cmd/w1")
     device.all_sensors[writable.unique_id] = writable
 
     observable = DummyObservable("o1", topic="obs/o1")
@@ -293,7 +293,7 @@ def test_device_add_sensor(device):
     assert "wo1" in device.write_sensors
     assert "wo1" in device.all_sensors
 
-    not_wo = DummyWritable("not_wo")
+    not_wo = DummyWriteable("not_wo")
     device._add_sensor(not_wo)
     assert "not_wo" not in device.write_sensors
 

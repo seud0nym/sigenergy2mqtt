@@ -292,18 +292,18 @@ Merge with base_refactored.py and base_refactored_part2.py for the complete modu
 """
 
 # =============================================================================
-# Writable Sensor Mixin
+# Writeable Sensor Mixin
 
 
 # =============================================================================
 
 
-class WritableSensorMixin(Sensor):
+class WriteableSensorMixin(Sensor):
     """Mixin for sensors that accept MQTT commands independently of transport.
 
     Subclasses implement :meth:`_write_value` to deliver a validated command to
     their backing service.  The implementation may use Modbus, HTTP, an API, or
-    no external transport at all.  Use :class:`ModbusWritableSensorMixin` for
+    no external transport at all.  Use :class:`ModbusWriteableSensorMixin` for
     the existing Modbus register implementation.
     """
 
@@ -344,8 +344,8 @@ class WritableSensorMixin(Sensor):
         return True
 
 
-class ModbusWritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, WritableSensorMixin):
-    """WritableSensorMixin implementation that writes values to Modbus registers."""
+class ModbusWriteableSensorMixin(TypedSensorMixin, ModbusSensorMixin, WriteableSensorMixin):
+    """WriteableSensorMixin implementation that writes values to Modbus registers."""
 
     def _raw2state(self, raw_value: float | str) -> float | int | str:
         """Convert raw value to display state.

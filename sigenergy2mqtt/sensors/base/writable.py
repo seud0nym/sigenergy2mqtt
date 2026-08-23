@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 from sigenergy2mqtt.common import PERCENTAGE, DeviceClass, InputType, StateClass
 
 from .constants import DiscoveryKeys
-from .mixins import ModbusWritableSensorMixin, WritableSensorMixin
+from .mixins import ModbusWriteableSensorMixin, WriteableSensorMixin
 from .readable import ReadOnlySensor
 from .sensor import AvailabilityMixin, Sensor
 
@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 # =============================================================================
 
 
-class WriteOnlySensor(ModbusWritableSensorMixin, Sensor):
+class WriteOnlySensor(ModbusWriteableSensorMixin, Sensor):
     """Sensor that can only write values (e.g., buttons, triggers).
 
     Write-only sensors appear as buttons in Home Assistant and don't
@@ -176,7 +176,7 @@ class WriteOnlySensor(ModbusWritableSensorMixin, Sensor):
 # =============================================================================
 
 
-class ReadWriteSensor(ModbusWritableSensorMixin, ReadOnlySensor):
+class ReadWriteSensor(ModbusWriteableSensorMixin, ReadOnlySensor):
     """Sensor that can both read and write values.
 
     This combines readable sensor capabilities with writable control.
@@ -265,10 +265,10 @@ class ReadWriteSensor(ModbusWritableSensorMixin, ReadOnlySensor):
 # =============================================================================
 
 
-class NumericSensorMixin(WritableSensorMixin):
+class NumericSensorMixin(WriteableSensorMixin):
     """Add Home Assistant number configuration and range validation.
 
-    This inherits :class:`WritableSensorMixin`; provide ``_write_value`` in a
+    This inherits :class:`WriteableSensorMixin`; provide ``_write_value`` in a
     subclass when the value is not backed by Modbus.
     """
 
@@ -303,7 +303,7 @@ class NumericSensorMixin(WritableSensorMixin):
         return (not isinstance(minimum, (int, float)) or value >= minimum) and (not isinstance(maximum, (int, float)) or value <= maximum)
 
 
-class SelectSensorMixin(WritableSensorMixin):
+class SelectSensorMixin(WriteableSensorMixin):
     """Add Home Assistant select configuration and option validation."""
 
     def __init__(self, options: list[str], **kwargs):
@@ -329,7 +329,7 @@ class SelectSensorMixin(WritableSensorMixin):
         return True
 
 
-class SwitchSensorMixin(WritableSensorMixin):
+class SwitchSensorMixin(WriteableSensorMixin):
     """Add Home Assistant switch configuration and binary value validation."""
 
     def __init__(self, **kwargs):

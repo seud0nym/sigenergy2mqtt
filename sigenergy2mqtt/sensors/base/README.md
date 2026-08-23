@@ -48,11 +48,11 @@ entities.
 * `ModbusSensorMixin` supplies register identity, register-response handling,
   and Sigenergy Local Modbus naming.  It should be used only when a sensor has
   a Modbus address.
-* `WritableSensorMixin` is transport independent.  It creates the command
+* `WriteableSensorMixin` is transport independent.  It creates the command
   topic, validates the command through `value_is_valid`, and dispatches it to
   the required `_write_value` coroutine.  It does **not** require a Modbus
   client, address, data type, or scan interval.
-* `ModbusWritableSensorMixin` combines `WritableSensorMixin`,
+* `ModbusWriteableSensorMixin` combines `WriteableSensorMixin`,
   `TypedSensorMixin`, and `ModbusSensorMixin` and implements `_write_value`
   using Modbus register writes.  It powers the existing write-only and
   read-write classes.
@@ -60,7 +60,7 @@ entities.
   changes; `PVPowerSensor` is its current implementation.
 * `UnpublishResetSensorMixin` removes obsolete reset entities.
 
-## Writable entity presentation mixins
+## Writeable entity presentation mixins
 
 The following mixins add the Home Assistant platform shape and value conversion
 without choosing a transport:
@@ -73,7 +73,7 @@ without choosing a transport:
   `1` commands.
 
 They mirror the command-facing behaviour of `NumericSensor`, `SelectSensor`,
-and `SwitchSensor`, and each inherits `WritableSensorMixin`. Subclass the
+and `SwitchSensor`, and each inherits `WriteableSensorMixin`. Subclass the
 appropriate presentation mixin directly when the backing service is not Modbus.
 
 ## Creating a non-Modbus writable sensor
@@ -101,5 +101,5 @@ MQTT handler interface and may be `None` for non-Modbus sensors.
 
 For a select or switch, replace `NumericSensorMixin` with `SelectSensorMixin`
 (and provide `options`) or `SwitchSensorMixin`.  A custom transport can also
-subclass `WritableSensorMixin` directly when it needs no number/select/switch
+subclass `WriteableSensorMixin` directly when it needs no number/select/switch
 presentation behavior.

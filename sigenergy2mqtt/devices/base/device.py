@@ -13,7 +13,7 @@ from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.config.models import RegisterAccess
 from sigenergy2mqtt.i18n import _t
 from sigenergy2mqtt.mqtt import MqttHandler
-from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, CrossDeviceDerivedSensor, DerivedSensor, ObservableMixin, ReadableSensorMixin, Sensor, WritableSensorMixin, WriteOnlySensor
+from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, CrossDeviceDerivedSensor, DerivedSensor, ObservableMixin, ReadableSensorMixin, Sensor, WriteableSensorMixin, WriteOnlySensor
 
 if TYPE_CHECKING:
     from sigenergy2mqtt.modbus import ModbusClient
@@ -74,7 +74,7 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
         self.all_sensors: dict[str, Sensor] = {}
         self.group_sensors: dict[str, list[ReadableSensorMixin]] = {}
         self.read_sensors: dict[str, ReadableSensorMixin] = {}
-        self.write_sensors: dict[str, WritableSensorMixin] = {}
+        self.write_sensors: dict[str, WriteableSensorMixin] = {}
 
         self._rediscover = False
         self._online: asyncio.Future | bool | None = None
@@ -532,7 +532,7 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
 
         Registers:
         - The HA status topic for online/offline state change notifications.
-        - Each WritableSensorMixin's command topic for receiving set-value commands.
+        - Each WriteableSensorMixin's command topic for receiving set-value commands.
         - Each ObservableMixin sensor's observable topics for state notifications.
 
         Recursively subscribes child devices.
@@ -545,7 +545,7 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
             result = mqtt_handler.register(mqtt_client, f"{active_config.home_assistant.discovery_prefix}/status", self.on_ha_state_change)
             logger.debug(f"{self.log_identity} subscribed to topic {active_config.home_assistant.discovery_prefix}/status for Home Assistant state changes ({result=})")
         for sensor in self.sensors.values():
-            if isinstance(sensor, WritableSensorMixin):
+            if isinstance(sensor, WriteableSensorMixin):
                 try:
                     result = mqtt_handler.register(mqtt_client, sensor.command_topic, sensor.set_value)
                     if sensor.debug_logging:

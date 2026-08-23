@@ -14,7 +14,7 @@ from sigenergy2mqtt.common import DeviceClass, InputType, Protocol, RegisterAcce
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.base import ReadOnlySensor, Sensor
-from sigenergy2mqtt.sensors.base.mixins import WritableSensorMixin
+from sigenergy2mqtt.sensors.base.mixins import WriteableSensorMixin
 from sigenergy2mqtt.sensors.base.sensor import TypedSensorMixin
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -226,14 +226,14 @@ class TestApplyDeviceOverrides:
     def test_read_write_override_disables_when_not_read_write(self, caplog):
         """Lines 449-452: writable sensor set to not-publishable when registers.read_write=False."""
 
-        class _MockWritable(WritableSensorMixin, ReadOnlySensor):
+        class _MockWriteable(WriteableSensorMixin, ReadOnlySensor):
             async def value_is_valid(self, modbus_client, raw_value):
                 return True
 
         cfg = _make_cfg()
         with _swap_active_config(cfg), patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            # Use a real _MockWritable instance so WritableSensorMixin is genuinely in the MRO
-            s = _MockWritable(
+            # Use a real _MockWriteable instance so WriteableSensorMixin is genuinely in the MRO
+            s = _MockWriteable(
                 name="RW Test",
                 object_id="sigen_ado_rw_test",
                 input_type=InputType.HOLDING,
@@ -256,7 +256,7 @@ class TestApplyDeviceOverrides:
             registers.read_write = False
             registers.read_only = True
             registers.write_only = True
-            # WritableSensorMixin is genuinely in MRO — publishable should be set to False
+            # WriteableSensorMixin is genuinely in MRO — publishable should be set to False
             s.apply_device_overrides(registers)
             assert s.publishable is False
 
