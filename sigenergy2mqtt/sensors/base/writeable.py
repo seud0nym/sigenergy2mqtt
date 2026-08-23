@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 from sigenergy2mqtt.common import PERCENTAGE, DeviceClass, InputType, StateClass
 
 from .constants import DiscoveryKeys
-from .mixins import WritableSensorMixin
+from .mixins import ModbusWriteableSensorMixin, WriteableSensorMixin
 from .readable import ReadOnlySensor
 from .sensor import AvailabilityMixin, Sensor
 
@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 # =============================================================================
 
 
-class WriteOnlySensor(WritableSensorMixin, Sensor):
+class WriteOnlySensor(ModbusWriteableSensorMixin, Sensor):
     """Sensor that can only write values (e.g., buttons, triggers).
 
     Write-only sensors appear as buttons in Home Assistant and don't
@@ -176,7 +176,7 @@ class WriteOnlySensor(WritableSensorMixin, Sensor):
 # =============================================================================
 
 
-class ReadWriteSensor(WritableSensorMixin, ReadOnlySensor):
+class ReadWriteSensor(ModbusWriteableSensorMixin, ReadOnlySensor):
     """Sensor that can both read and write values.
 
     This combines readable sensor capabilities with writable control.
@@ -258,6 +258,93 @@ class ReadWriteSensor(WritableSensorMixin, ReadOnlySensor):
             availability_list.append({"topic": control_topic, "payload_available": self._payload_available, "payload_not_available": self._payload_not_available})
 
         return base
+
+
+# =============================================================================
+# Transport-independent writable entity mixins
+# =============================================================================
+
+
+class NumericSensorMixin(WriteableSensorMixin):
+    """Add Home Assistant number configuration and range validation.
+
+    This inherits :class:`WriteableSensorMixin`; provide ``_write_value`` in a
+    subclass when the value is not backed by Modbus.
+    """
+
+    def __init__(self, minimum: float | None = None, maximum: float | None = None, **kwargs):
+        if minimum is not None and maximum is not None and minimum >= maximum:
+            raise AssertionError(f"{self.__class__.__name__}: min must be less than max")
+        super().__init__(**kwargs)
+        self[DiscoveryKeys.PLATFORM] = "number"
+        self[DiscoveryKeys.MODE] = "slider" if (self.unit == PERCENTAGE and not active_config.home_assistant.edit_percentage_with_box) else "box"
+        self[DiscoveryKeys.STEP] = 1 if self.precision is None else 10**-self.precision
+        if minimum is None and maximum is None and self.unit == PERCENTAGE:
+            minimum, maximum = 0.0, 100.0
+        if minimum is not None:
+            self[DiscoveryKeys.MIN] = float(minimum)
+        if maximum is not None:
+            self[DiscoveryKeys.MAX] = float(maximum)
+
+    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
+        try:
+            raw_value = float(value) * self.gain
+        except (TypeError, ValueError) as exc:
+            logger.warning(f"{self.log_identity} Attempt to set value to '{value}' FAILED: {exc!r}")
+            return False
+        return await super().set_value(modbus_client, mqtt_client, raw_value, source, handler)
+
+    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | str) -> bool:
+        try:
+            value = float(raw_value) / self.gain
+        except (TypeError, ValueError):
+            return False
+        minimum, maximum = self.get(DiscoveryKeys.MIN), self.get(DiscoveryKeys.MAX)
+        return (not isinstance(minimum, (int, float)) or value >= minimum) and (not isinstance(maximum, (int, float)) or value <= maximum)
+
+
+class SelectSensorMixin(WriteableSensorMixin):
+    """Add Home Assistant select configuration and option validation."""
+
+    def __init__(self, options: list[str], **kwargs):
+        if not options or not all(isinstance(option, str) for option in options):
+            raise ValueError(f"{self.__class__.__name__}: options must be a non-empty list of strings")
+        super().__init__(**kwargs)
+        self[DiscoveryKeys.PLATFORM] = "select"
+        self[DiscoveryKeys.OPTIONS] = options
+
+    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
+        try:
+            value = self._get_option_index(value)
+        except ValueError:
+            self.force_publish = True
+            return False
+        return await super().set_value(modbus_client, mqtt_client, value, source, handler)
+
+    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | str) -> bool:
+        try:
+            self._get_option_index(raw_value)
+        except ValueError:
+            return False
+        return True
+
+
+class SwitchSensorMixin(WriteableSensorMixin):
+    """Add Home Assistant switch configuration and binary value validation."""
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self[DiscoveryKeys.PLATFORM] = "switch"
+        self[DiscoveryKeys.PAYLOAD_OFF] = 0
+        self[DiscoveryKeys.PAYLOAD_ON] = 1
+        self[DiscoveryKeys.STATE_OFF] = 0
+        self[DiscoveryKeys.STATE_ON] = 1
+
+    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
+        return await super().set_value(modbus_client, mqtt_client, int(value), source, handler)
+
+    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | str) -> bool:
+        return raw_value in (self[DiscoveryKeys.PAYLOAD_OFF], self[DiscoveryKeys.PAYLOAD_ON])
 
 
 # =============================================================================

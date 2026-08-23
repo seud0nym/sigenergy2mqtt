@@ -13,7 +13,7 @@ from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.devices import Device, DeviceRegistry, ModbusDevice
 from sigenergy2mqtt.devices.base.poller import SensorGroupPoller
 from sigenergy2mqtt.devices.base.scan_groups import create_sensor_scan_groups
-from sigenergy2mqtt.sensors.base import DerivedSensor, ModbusSensorMixin, ObservableMixin, ReadableSensorMixin, Sensor, WritableSensorMixin, WriteOnlySensor
+from sigenergy2mqtt.sensors.base import DerivedSensor, ModbusSensorMixin, ObservableMixin, ReadableSensorMixin, Sensor, WriteableSensorMixin, WriteOnlySensor
 from sigenergy2mqtt.sensors.base.sanity_check import SanityCheck
 
 # ---------------------------------------------------------------------------
@@ -73,7 +73,7 @@ class DummyReadable(ReadableSensorMixin, Sensor):
         return []
 
 
-class DummyWritable(WritableSensorMixin, Sensor):
+class DummyWriteable(WriteableSensorMixin, Sensor):
     def __init__(self, unique_id, command_topic="cmd"):
         self.unique_id = unique_id
         self._log_identity = unique_id
@@ -731,7 +731,7 @@ def test_schedule_skips_non_publishable_group(device):
 
 def test_subscribe_writable_sensor_exception_logged(device):
     """Lines 872-874: exception during writable sensor subscription is logged."""
-    w = DummyWritable("w_fail", command_topic="cmd/fail")
+    w = DummyWriteable("w_fail", command_topic="cmd/fail")
     device.all_sensors[w.unique_id] = w
 
     handler = MagicMock()

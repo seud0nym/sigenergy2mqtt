@@ -11,7 +11,7 @@ from sigenergy2mqtt.sensors.base import (
     SelectSensor,
     Sensor,
     SwitchSensor,
-    WritableSensorMixin,
+    WriteableSensorMixin,
     WriteOnlySensor,
 )
 from sigenergy2mqtt.sensors.plant_read_write import (
@@ -23,7 +23,7 @@ from sigenergy2mqtt.sensors.plant_read_write import (
 )
 
 
-class ConcreteWritableSensor(WritableSensorMixin, Sensor):
+class ConcreteWriteableSensor(WriteableSensorMixin, Sensor):
     async def _update_internal_state(self, **kwargs):
         return True
 
@@ -59,7 +59,7 @@ def mock_config():
 class TestValueIsValidBase:
     @pytest.mark.asyncio
     async def test_writable_sensor_mixin_default(self, mock_config):
-        sensor = ConcreteWritableSensor(
+        sensor = ConcreteWriteableSensor(
             name="Test",
             unique_id="sigen_test",
             object_id="sigen_test",

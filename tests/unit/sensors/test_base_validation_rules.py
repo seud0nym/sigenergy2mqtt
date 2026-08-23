@@ -360,7 +360,7 @@ class TestSanityCheckFailureIncrement:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 18. WritableSensorMixin publishable via apply_sensor_overrides
+# 18. WriteableSensorMixin publishable via apply_sensor_overrides
 # ─────────────────────────────────────────────────────────────────────────────
 
 

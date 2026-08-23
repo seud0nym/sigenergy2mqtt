@@ -292,32 +292,60 @@ Merge with base_refactored.py and base_refactored_part2.py for the complete modu
 """
 
 # =============================================================================
-# Writable Sensor Mixin
+# Writeable Sensor Mixin
 
 
 # =============================================================================
 
 
-class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
-    """Mixin for sensors that can write values to Modbus registers.
+class WriteableSensorMixin(Sensor):
+    """Mixin for sensors that accept MQTT commands independently of transport.
 
-    Provides command topic configuration and value writing capabilities.
+    Subclasses implement :meth:`_write_value` to deliver a validated command to
+    their backing service.  The implementation may use Modbus, HTTP, an API, or
+    no external transport at all.  Use :class:`ModbusWriteableSensorMixin` for
+    the existing Modbus register implementation.
     """
 
     @property
     def command_topic(self) -> str:
-        """Get the MQTT topic for receiving commands.
-
-        Returns:
-            Command topic string
-
-        Raises:
-            RuntimeError: If command topic is not configured
-        """
+        """Get the MQTT topic used to receive commands."""
         topic = cast(str, self.get(DiscoveryKeys.COMMAND_TOPIC))
         if not topic or topic.isspace():
             raise RuntimeError(f"{self.log_identity} command topic is not defined")
         return topic
+
+    def configure_mqtt_topics(self, device_id: str) -> str:
+        """Configure the command topic in addition to normal sensor topics."""
+        base = super().configure_mqtt_topics(device_id)
+        self[DiscoveryKeys.COMMAND_TOPIC] = f"{base}/set"
+        return base
+
+    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
+        """Validate and dispatch an MQTT command through ``_write_value``."""
+        self.force_publish = True
+        try:
+            if not await self.value_is_valid(modbus_client, value):
+                return False
+        except ModbusException as exc:
+            logger.error(f"{self.log_identity} value_is_valid check of value '{value}' FAILED: {exc!r}")
+            raise
+        if source != self.command_topic:
+            logger.error(f"{self.log_identity} Attempt to set value '{value}' from unknown topic {source}")
+            return False
+        return await self._write_value(modbus_client, mqtt_client, value, source, handler)
+
+    @abc.abstractmethod
+    async def _write_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
+        """Deliver a validated command value using the sensor's transport."""
+
+    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | str) -> bool:
+        """Return whether a command value is accepted by this sensor."""
+        return True
+
+
+class ModbusWriteableSensorMixin(TypedSensorMixin, ModbusSensorMixin, WriteableSensorMixin):
+    """WriteableSensorMixin implementation that writes values to Modbus registers."""
 
     def _raw2state(self, raw_value: float | str) -> float | int | str:
         """Convert raw value to display state.
@@ -331,7 +359,7 @@ class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
         # Early return removed to allow string processing below
 
         # Lazy import to avoid circular dependencies
-        from .writable import SwitchSensor, WriteOnlySensor
+        from .writeable import SwitchSensor, WriteOnlySensor
 
         # Handle Option-based sensors
         if DiscoveryKeys.OPTIONS in self and isinstance(raw_value, (int, float)):
@@ -460,49 +488,11 @@ class WritableSensorMixin(TypedSensorMixin, ModbusSensorMixin, Sensor):
 
         return self._check_register_response(rr, method)
 
-    def configure_mqtt_topics(self, device_id: str) -> str:
-        """Configure MQTT topics including command topic.
-
-        Args:
-            device_id: The device identifier
-
-        Returns:
-            Base topic path
-        """
-        base = super().configure_mqtt_topics(device_id)
-        self[DiscoveryKeys.COMMAND_TOPIC] = f"{base}/set"
-        return base
-
-    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
-        """Set sensor value from MQTT command.
-
-        Args:
-            modbus_client: Modbus client for writing (required)
-            mqtt_client: MQTT client
-            value: New value to set
-            source: Source topic of the command
-            handler: MQTT handler
-
-        Returns:
-            True if value was set successfully
-        """
-        self.force_publish = True
-
+    async def _write_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
+        """Write a validated command value to this sensor's Modbus register."""
         if modbus_client is None:
             raise ValueError(f"{self.log_identity}: ModbusClient cannot be None")
-
-        try:
-            if not await self.value_is_valid(modbus_client, value):
-                return False
-        except ModbusException as e:
-            logger.error(f"{self.log_identity} value_is_valid check of value '{value if isinstance(value, str) else self._apply_gain_and_precision(value)}' (raw={value}) FAILED: {e!r}")
-            raise
-
-        if source == self[DiscoveryKeys.COMMAND_TOPIC]:
-            return await self._write_registers(modbus_client, value, mqtt_client)
-        else:
-            logger.error(f"{self.log_identity} Attempt to set value '{value if isinstance(value, str) else self._apply_gain_and_precision(value)}' (raw={value}) from unknown topic {source}")
-            return False
+        return await self._write_registers(modbus_client, value, mqtt_client)
 
     async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | str) -> bool:
         """Validate that a value is acceptable for this sensor.

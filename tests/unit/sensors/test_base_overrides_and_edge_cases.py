@@ -437,11 +437,11 @@ class TestReservedSensor:
 # ─────────────────────────────────────────────────────────────────────────────
 
 
-class TestWritableSensorOverrides:
+class TestWriteableSensorOverrides:
     def test_writable_sensor_read_write_false_sets_unpublishable(self):
-        """WritableSensorMixin sensor becomes unpublishable when read_write=False."""
+        """WriteableSensorMixin sensor becomes unpublishable when read_write=False."""
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            # WriteOnlySensor is a concrete WritableSensorMixin subclass
+            # WriteOnlySensor is a concrete WriteableSensorMixin subclass
             wo = WriteOnlySensor("WO", "sigen_wo_rw", 0, 1, 30001, Protocol.V2_4)
         registers = MagicMock(spec=RegisterAccess)
         registers.no_remote_ems = False
@@ -451,7 +451,7 @@ class TestWritableSensorOverrides:
         assert wo.publishable is False
 
     def test_write_only_sensor_write_only_false_unpublishable(self):
-        """WriteOnlySensor (not WritableSensorMixin ReadWrite) also respects write_only override."""
+        """WriteOnlySensor (not WriteableSensorMixin ReadWrite) also respects write_only override."""
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             wo = WriteOnlySensor("WO2", "sigen_wo_wo", 0, 1, 30001, Protocol.V2_4)
         registers = MagicMock(spec=RegisterAccess)

@@ -68,7 +68,7 @@ class TestSelectSensor:
 class TestNumericSensor:
     @pytest.mark.asyncio
     async def test_get_state_clamping(self):
-        # NumericSensor is usually initialized via subclasses or mixins like WritableSensorMixin/ReadWriteSensor
+        # NumericSensor is usually initialized via subclasses or mixins like WriteableSensorMixin/ReadWriteSensor
         # We need to construct it carefully or use a concrete implementation.
 
         sensor = NumericSensor(

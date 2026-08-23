@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, MagicMock
 from pymodbus.client.mixin import ModbusClientMixin
 
 from sigenergy2mqtt.config import Config, _swap_active_config
-from sigenergy2mqtt.sensors.base import NumericSensor, SelectSensor, SwitchSensor, WritableSensorMixin, WriteOnlySensor
+from sigenergy2mqtt.sensors.base import NumericSensor, SelectSensor, SwitchSensor, WriteableSensorMixin, WriteOnlySensor
 from sigenergy2mqtt.sensors.base.constants import DiscoveryKeys
 from sigenergy2mqtt.sensors.plant_read_write import MaxChargingLimit, MaxDischargingLimit, PVMaxPowerLimit, RemoteEMSLimit
 from tests.utils.modbus_sensors import get_sensor_instances
@@ -17,7 +17,7 @@ from tests.utils.modbus_sensors import get_sensor_instances
 REMOTE_EMS_LIMIT_TYPES = (MaxChargingLimit, MaxDischargingLimit, PVMaxPowerLimit)
 
 
-async def _get_writable_sensors() -> list[WritableSensorMixin]:
+async def _get_writable_sensors() -> list[WriteableSensorMixin]:
     cfg = Config()
     cfg.home_assistant.enabled = True
     cfg.home_assistant.unique_id_prefix = "sigen"
@@ -27,7 +27,7 @@ async def _get_writable_sensors() -> list[WritableSensorMixin]:
     with _swap_active_config(cfg):
         sensors = await get_sensor_instances(home_assistant_enabled=True, concrete_sensor_check=False)
 
-    return [sensor for sensor in sensors.values() if isinstance(sensor, WritableSensorMixin)]
+    return [sensor for sensor in sensors.values() if isinstance(sensor, WriteableSensorMixin)]
 
 
 def _build_modbus() -> MagicMock:
@@ -41,7 +41,7 @@ def _build_modbus() -> MagicMock:
     return modbus
 
 
-def _ensure_command_topic(sensor: WritableSensorMixin) -> str:
+def _ensure_command_topic(sensor: WriteableSensorMixin) -> str:
     if DiscoveryKeys.COMMAND_TOPIC not in sensor:
         sensor.configure_mqtt_topics("e2e")
     return str(sensor[DiscoveryKeys.COMMAND_TOPIC])
@@ -85,7 +85,7 @@ async def _find_invalid_numeric_value(sensor: NumericSensor, valid: float, topic
     return None
 
 
-def _prepare_sensor_for_valid_write(sensor: WritableSensorMixin) -> None:
+def _prepare_sensor_for_valid_write(sensor: WriteableSensorMixin) -> None:
     control = getattr(sensor, "_availability_control_sensor", None)
     if control is not None:
         _set_latest_raw_state(control, 1)

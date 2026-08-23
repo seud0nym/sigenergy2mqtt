@@ -10,7 +10,7 @@ from sigenergy2mqtt.sensors.base import (
     DerivedSensor,
     ReadableSensorMixin,
     Sensor,
-    WritableSensorMixin,
+    WriteableSensorMixin,
     WriteOnlySensor,
 )
 
@@ -74,7 +74,7 @@ class MockReadableSensor(ReadableSensorMixin, Sensor):
         return True
 
 
-class MockWritableSensor(WritableSensorMixin, Sensor):
+class MockWriteableSensor(WriteableSensorMixin, Sensor):
     def __init__(self, **kwargs):
         kwargs.setdefault("name", "test")
         kwargs.setdefault("unique_id", "sigen_test_w")
@@ -174,7 +174,7 @@ class TestSensorPublishableState:
 
     def test_read_write_override(self):
         reg_access = RegisterAccess(read_write=False)
-        sensor = MockWritableSensor()
+        sensor = MockWriteableSensor()
         sensor.apply_device_overrides(reg_access)
         assert sensor.publishable is False
 
@@ -187,7 +187,7 @@ class TestSensorPublishableState:
     def test_publishable_remains_true_if_access_allowed(self):
         reg_access = RegisterAccess(read_only=True, read_write=True, write_only=True, no_remote_ems=False)
 
-        sensors = [MockReadableSensor(), MockWritableSensor(), MockWriteOnlySensor(), MockDerivedSensor()]
+        sensors = [MockReadableSensor(), MockWriteableSensor(), MockWriteOnlySensor(), MockDerivedSensor()]
         for s in sensors:
             s.apply_device_overrides(reg_access)
             assert s.publishable is True
@@ -197,13 +197,13 @@ class TestSensorPublishableState:
 
         This test ensures that the class names checked as string literals inside
         sensor.apply_device_overrides() method match the actual class names
-        (WritableSensorMixin, ReadableSensorMixin, DerivedSensor, and WriteOnlySensor).
+        (WriteableSensorMixin, ReadableSensorMixin, DerivedSensor, and WriteOnlySensor).
 
         If any of these classes are renamed in the future, this test will fail
         immediately at the import or assertion stage, preventing any silent
         regressions or untracked override failures.
         """
-        assert WritableSensorMixin.__name__ == "WritableSensorMixin"
+        assert WriteableSensorMixin.__name__ == "WriteableSensorMixin"
         assert ReadableSensorMixin.__name__ == "ReadableSensorMixin"
         assert DerivedSensor.__name__ == "DerivedSensor"
         assert WriteOnlySensor.__name__ == "WriteOnlySensor"

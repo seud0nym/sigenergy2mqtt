@@ -15,10 +15,10 @@ from sigenergy2mqtt.sensors.base.mixins import (
     ModbusSensorMixin,
     ObservableMixin,
     ReadableSensorMixin,
-    WritableSensorMixin,
+    WriteableSensorMixin,
 )
 from sigenergy2mqtt.sensors.base.sensor import Sensor
-from sigenergy2mqtt.sensors.base.writable import SwitchSensor, WriteOnlySensor
+from sigenergy2mqtt.sensors.base.writeable import SwitchSensor, WriteOnlySensor
 
 
 class DummyReadable(ReadableSensorMixin, Sensor):
@@ -123,14 +123,14 @@ async def test_observable_mixin_notify():
     await d.notify(None, None, 0, "", None)
 
 
-class DummyWritable(WritableSensorMixin, DummyModbus):
+class DummyWriteable(WriteableSensorMixin, DummyModbus):
     def __init__(self, **kwargs):
         kwargs.setdefault("data_type", ModbusDataType.UINT16)
         super().__init__(**kwargs)
 
 
 def test_writable_sensor_mixin_command_topic():
-    sensor = DummyWritable(input_type=InputType.HOLDING, plant_index=0, device_address=1, address=30000, count=1)
+    sensor = DummyWriteable(input_type=InputType.HOLDING, plant_index=0, device_address=1, address=30000, count=1)
     sensor[DiscoveryKeys.COMMAND_TOPIC] = "   "
     
     # Line 319

@@ -445,7 +445,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
 
             # Check read/write permissions via MRO class names to be robust against reimports and test mocks
             mro_names = {base.__name__ for base in self.__class__.__mro__}
-            is_writable = "WritableSensorMixin" in mro_names
+            is_writable = "WriteableSensorMixin" in mro_names
             is_readable = "ReadableSensorMixin" in mro_names or "DerivedSensor" in mro_names
             is_write_only = "WriteOnlySensor" in mro_names
 
@@ -689,7 +689,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         attributes: dict[str, float | int | str] = {}
 
         # Lazy imports to avoid circular dependencies
-        from .mixins import ReadableSensorMixin, WritableSensorMixin
+        from .mixins import ReadableSensorMixin, WriteableSensorMixin
 
         if not active_config.home_assistant.enabled:
             attributes[SensorAttributeKeys.NAME] = self.name
@@ -707,7 +707,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], metaclass=abc.ABC
         if isinstance(self, ReadableSensorMixin):
             attributes[SensorAttributeKeys.SCAN_INTERVAL] = self.scan_interval
 
-        if isinstance(self, WritableSensorMixin):
+        if isinstance(self, WriteableSensorMixin):
             attributes[SensorAttributeKeys.UPDATE_TOPIC] = self.command_topic
 
         return attributes
