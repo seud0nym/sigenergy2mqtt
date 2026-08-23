@@ -307,9 +307,15 @@ class SelectSensorMixin(WriteableSensorMixin):
     """Add Home Assistant select configuration and option validation."""
 
     def __init__(self, options: list[str], **kwargs):
-        if not options or not all(isinstance(option, str) for option in options):
-            raise ValueError(f"{self.__class__.__name__}: options must be a non-empty list of strings")
+        # Validate options
+        if not options or not isinstance(options, list):
+            raise ValueError(f"{self.__class__.__name__}: options must be a non-empty list")
+
+        if not all(isinstance(o, str) for o in options):
+            raise ValueError(f"{self.__class__.__name__}: all options must be strings")
+
         super().__init__(**kwargs)
+
         self[DiscoveryKeys.PLATFORM] = "select"
         self[DiscoveryKeys.OPTIONS] = options
 
