@@ -35,6 +35,7 @@ class MonitorService(Device):
         Args:
             devices: Devices that expose sensors to subscribe to.
         """
+        logger.setLevel(active_config.diagnostics.log_level)
 
         super().__init__("Sigenergy Monitor", -1, f"{active_config.home_assistant.unique_id_prefix}_monitor", "sigenergy2mqtt", "Monitor", ProtocolVersion.N_A)
         self._devices: list[Device] = devices
