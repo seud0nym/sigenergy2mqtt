@@ -431,7 +431,7 @@ class DailyChargeEnergy(ReadOnlySensor, HybridInverter):
             precision=2,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
         self.sanity_check.min_raw = None
 
 
@@ -457,7 +457,7 @@ class AccumulatedChargeEnergy(ReadOnlySensor, HybridInverter):
             precision=2,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
 
 class DailyDischargeEnergy(ReadOnlySensor, HybridInverter):
@@ -482,7 +482,7 @@ class DailyDischargeEnergy(ReadOnlySensor, HybridInverter):
             precision=2,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
         self.sanity_check.min_raw = None
 
 
@@ -508,7 +508,7 @@ class AccumulatedDischargeEnergy(ReadOnlySensor, HybridInverter):
             precision=2,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
 
 class InverterRunningState(RunningStateSensor, HybridInverter, PVInverter):
@@ -744,7 +744,7 @@ class AvailableBatteryChargeEnergy(ReadOnlySensor, HybridInverter):
             protocol_version=ProtocolVersion.V1_8,
         )
         self.sanity_check.delta = False
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
 
 class AvailableBatteryDischargeEnergy(ReadOnlySensor, HybridInverter):
@@ -770,7 +770,7 @@ class AvailableBatteryDischargeEnergy(ReadOnlySensor, HybridInverter):
             protocol_version=ProtocolVersion.V1_8,
         )
         self.sanity_check.delta = False
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
 
 class ChargeDischargePower(ReadOnlySensor, HybridInverter):
@@ -795,7 +795,7 @@ class ChargeDischargePower(ReadOnlySensor, HybridInverter):
             precision=2,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
 
 class InverterBatterySoC(ReadOnlySensor, HybridInverter):
@@ -820,7 +820,7 @@ class InverterBatterySoC(ReadOnlySensor, HybridInverter):
             precision=1,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
 
 class InverterBatterySoH(ReadOnlySensor, HybridInverter):
@@ -845,7 +845,7 @@ class InverterBatterySoH(ReadOnlySensor, HybridInverter):
             precision=1,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
 
 class AverageCellTemperature(ReadOnlySensor, HybridInverter):
@@ -870,7 +870,7 @@ class AverageCellTemperature(ReadOnlySensor, HybridInverter):
             precision=1,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
         self.sanity_check.min_raw = -400  # -40.0 °C
         self.sanity_check.max_raw = 2000  # 200.0 °C
 
@@ -897,7 +897,7 @@ class AverageCellVoltage(ReadOnlySensor, HybridInverter):
             precision=2,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
 
 class InverterAlarm1(Alarm1Sensor, HybridInverter, PVInverter):
@@ -1146,7 +1146,7 @@ class InverterMaxBatteryTemperature(ReadOnlySensor, HybridInverter):
             precision=1,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
         self.sanity_check.min_raw = -400  # -40.0 °C
         self.sanity_check.max_raw = 2000  # 200.0 °C
 
@@ -1173,7 +1173,7 @@ class InverterMinBatteryTemperature(ReadOnlySensor, HybridInverter):
             precision=1,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
         self.sanity_check.min_raw = -400  # -40.0 °C
         self.sanity_check.max_raw = 2000  # 200.0 °C
 
@@ -1200,7 +1200,7 @@ class InverterMaxCellVoltage(ReadOnlySensor, HybridInverter):
             precision=2,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
 
 class InverterMinCellVoltage(ReadOnlySensor, HybridInverter):
@@ -1225,7 +1225,7 @@ class InverterMinCellVoltage(ReadOnlySensor, HybridInverter):
             precision=2,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
 
 class RatedGridVoltage(ReadOnlySensor, HybridInverter, PVInverter):
@@ -1324,7 +1324,7 @@ class InverterTemperature(ReadOnlySensor, HybridInverter, PVInverter):
             precision=1,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
         self.sanity_check.min_raw = -400  # -40.0 °C
         self.sanity_check.max_raw = 2000  # 200.0 °C
 
@@ -1722,7 +1722,7 @@ class InverterPVPower(ReadOnlySensor, HybridInverter, PVInverter):
             precision=2,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
         self.sanity_check.min_raw = 0
 
 
@@ -1962,7 +1962,7 @@ class InverterPVDailyGeneration(UnpublishResetSensorMixin, ReadOnlySensor, Hybri
             protocol_version=ProtocolVersion.V2_6,
             unique_id_override=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_daily_pv_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus ProtocolVersion v2.7
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
         self.sanity_check.min_raw = None
 
 
@@ -1989,7 +1989,7 @@ class InverterPVLifetimeGeneration(UnpublishResetSensorMixin, ReadOnlySensor, Hy
             protocol_version=ProtocolVersion.V2_6,
             unique_id_override=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_inverter_{device_address}_lifetime_pv_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus ProtocolVersion v2.7
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
 
 class DCChargerRunningState(ReadOnlySensor, HybridInverter):  # Not applicable to PVInverter as per ProtocolVersion V2.9
@@ -2014,7 +2014,7 @@ class DCChargerRunningState(ReadOnlySensor, HybridInverter):  # Not applicable t
             precision=None,
             protocol_version=ProtocolVersion.V2_8,
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
         self[DiscoveryKeys.OPTIONS] = [
             "Idle",  # 0
             "Occupied (Charging Gun plugged in but not detected)",  # 1

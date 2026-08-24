@@ -58,7 +58,7 @@ class MetricsSensor(ReadableSensorMixin):
             scan_interval=scan_interval,
             **kwargs,
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
     async def _update_internal_state(self, **kwargs) -> bool:
         raise NotImplementedError

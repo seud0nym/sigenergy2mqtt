@@ -192,7 +192,7 @@ class GridSensorStatus(ReadOnlySensor, HybridInverter, PVInverter):
             precision=None,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
         self[DiscoveryKeys.OPTIONS] = [
             "Not Connected",  # 0
             "Connected",  # 1
@@ -237,7 +237,7 @@ class GridSensorActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             precision=2,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
         self.sanity_check.max_raw = 100000  # 100kW
         self.sanity_check.min_raw = -100000  # -100kW
 
@@ -298,7 +298,7 @@ class GridStatus(ReadOnlySensor, HybridInverter):
             precision=None,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
         self[DiscoveryKeys.OPTIONS] = [
             "On Grid",  # 0
             "Off Grid (auto)",  # 1
@@ -399,7 +399,7 @@ class PlantBatterySoC(ReadOnlySensor, HybridInverter):
             precision=1,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
 
 class PlantPhaseActivePower(ReadOnlySensor, HybridInverter, PVInverter):
@@ -623,7 +623,7 @@ class PlantPVPower(ReadOnlySensor, PVPowerSensor, HybridInverter, PVInverter):
             precision=2,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
         self.sanity_check.min_raw = 0
 
 
@@ -649,7 +649,7 @@ class BatteryPower(ReadOnlySensor, HybridInverter):
             precision=2,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -1176,7 +1176,7 @@ class PlantBatterySoH(ReadOnlySensor, HybridInverter):
             precision=1,
             protocol_version=ProtocolVersion.V2_5,
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -1231,7 +1231,7 @@ class TotalLoadDailyConsumption(UnpublishResetSensorMixin, ReadOnlySensor, Hybri
             protocol_version=ProtocolVersion.V2_6,
             unique_id_override=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_daily_consumed_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus ProtocolVersion v2.7
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
         self.sanity_check.min_raw = None
 
 
@@ -1258,7 +1258,7 @@ class TotalLoadConsumption(UnpublishResetSensorMixin, ReadOnlySensor, HybridInve
             protocol_version=ProtocolVersion.V2_6,
             unique_id_override=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_lifetime_consumed_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus ProtocolVersion v2.7
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
 
 class SmartLoadTotalConsumption(ReadOnlySensor, HybridInverter, PVInverter):
@@ -1383,7 +1383,7 @@ class ESSTotalChargedEnergy(UnpublishResetSensorMixin, ReadOnlySensor, HybridInv
             protocol_version=ProtocolVersion.V2_7,
             unique_id_override=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_accumulated_charge_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus ProtocolVersion v2.7
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
 
 class ESSTotalDischargedEnergy(UnpublishResetSensorMixin, ReadOnlySensor, HybridInverter, PVInverter):
@@ -1409,7 +1409,7 @@ class ESSTotalDischargedEnergy(UnpublishResetSensorMixin, ReadOnlySensor, Hybrid
             protocol_version=ProtocolVersion.V2_7,
             unique_id_override=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_accumulated_discharge_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus ProtocolVersion v2.7
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
 
 class EVDCTotalChargedEnergy(ReadOnlySensor, HybridInverter, PVInverter):
@@ -1483,7 +1483,7 @@ class PlantTotalImportedEnergy(UnpublishResetSensorMixin, ReadOnlySensor, Hybrid
             protocol_version=ProtocolVersion.V2_7,
             unique_id_override=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_grid_sensor_lifetime_import_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus ProtocolVersion v2.7
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
 
 class PlantTotalExportedEnergy(UnpublishResetSensorMixin, ReadOnlySensor, HybridInverter, PVInverter):
@@ -1509,7 +1509,7 @@ class PlantTotalExportedEnergy(UnpublishResetSensorMixin, ReadOnlySensor, Hybrid
             protocol_version=ProtocolVersion.V2_7,
             unique_id_override=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_grid_sensor_lifetime_export_energy",  # Originally was a ResettableAccumulationSensor prior to Modbus ProtocolVersion v2.7
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
 
 class PlantTotalGeneratorOutputEnergy(ReadOnlySensor, HybridInverter, PVInverter):
@@ -1996,6 +1996,6 @@ class ESSAverageCellTemperature(ReadOnlySensor, HybridInverter):
             precision=1,
             protocol_version=ProtocolVersion.V2_9,
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
         self.sanity_check.min_raw = -400  # -40.0 °C
         self.sanity_check.max_raw = 2000  # 200.0 °C

@@ -607,7 +607,7 @@ class TotalLifetimePVEnergy(UnpublishResetSensorMixin, DerivedSensor, HybridInve
             precision=2,
             source_sensors=(plant_pv_total_generation, third_party_lifetime_pv_energy),
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
         self.protocol_version = ProtocolVersion.V2_7
         self.plant_lifetime_pv_energy: float | None = None
         self.plant_3rd_party_lifetime_pv_energy: float | None = None

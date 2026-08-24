@@ -40,7 +40,7 @@ class ACChargerRunningState(ReadOnlySensor):
             "Fault",  # 6: F - Fault Other Charger problem (can be intentionally set by the Charger, for example, that maintenance is required)
             "Error",  # 7: E - Error Charger disconnected from vehicle / Charger disconnected from utility, Charger loss of utility power or control pilot short to control pilot reference
         ]
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
         self[DiscoveryKeys.OPTIONS] = options
         self.sanity_check.min_raw = 0
         self.sanity_check.max_raw = len(options) - 1
@@ -81,7 +81,7 @@ class ACChargerTotalEnergyConsumed(ReadOnlySensor):
             precision=2,
             protocol_version=ProtocolVersion.V2_0,
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
 
 class ACChargerChargingPower(ReadOnlySensor):
@@ -106,7 +106,7 @@ class ACChargerChargingPower(ReadOnlySensor):
             precision=2,
             protocol_version=ProtocolVersion.V2_0,
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
 
 class ACChargerRatedPower(ReadOnlySensor):

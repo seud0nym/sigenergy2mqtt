@@ -1047,7 +1047,7 @@ class ESSBackupSOC(NumericSensor, HybridInverter):
             precision=None,
             protocol_version=ProtocolVersion.V2_6,
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -1077,7 +1077,7 @@ class ESSChargeCutOffSOC(NumericSensor, HybridInverter):
             precision=None,
             protocol_version=ProtocolVersion.V2_6,
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -1107,7 +1107,7 @@ class ESSDischargeCutOffSOC(NumericSensor, HybridInverter):
             precision=None,
             protocol_version=ProtocolVersion.V2_6,
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -1159,7 +1159,7 @@ class GridCodeLVRT(SwitchSensor, HybridInverter, PVInverter):
             scan_interval=ScanInterval.medium(plant_index),
             protocol_version=ProtocolVersion.V2_8,
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
 
 class GridCodeLVRTReactivePowerCompensationFactor(NumericSensor, HybridInverter):
@@ -1244,7 +1244,7 @@ class GridCodeLVRTMode(SelectSensor, HybridInverter, PVInverter):
             ],
             protocol_version=ProtocolVersion.V2_8,
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
 
 class GridCodeLVRTVoltageProtectionBlocking(SwitchSensor, HybridInverter, PVInverter):
@@ -1277,7 +1277,7 @@ class GridCodeHVRT(SwitchSensor, HybridInverter, PVInverter):
             scan_interval=ScanInterval.medium(plant_index),
             protocol_version=ProtocolVersion.V2_8,
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
 
 class GridCodeHVRTReactivePowerCompensationFactor(NumericSensor, HybridInverter):
@@ -1362,7 +1362,7 @@ class GridCodeHVRTMode(SelectSensor, HybridInverter, PVInverter):
             ],
             protocol_version=ProtocolVersion.V2_8,
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
 
 class GridCodeHVRTVoltageProtectionBlocking(SwitchSensor, HybridInverter, PVInverter):
@@ -1395,7 +1395,7 @@ class GridCodeOverFrequencyDerating(SwitchSensor, HybridInverter, PVInverter):
             scan_interval=ScanInterval.medium(plant_index),
             protocol_version=ProtocolVersion.V2_8,
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
 
 class GridCodeOverFrequencyDeratingPowerRampRate(NumericSensor, HybridInverter):
@@ -1503,7 +1503,7 @@ class GridCodeUnderFrequencyPowerBoost(SwitchSensor, HybridInverter, PVInverter)
             scan_interval=ScanInterval.medium(plant_index),
             protocol_version=ProtocolVersion.V2_8,
         )
-        self["enabled_by_default"] = True
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
 
 class GridCodeUnderFrequencyPowerBoostPowerRampRate(NumericSensor, HybridInverter):
