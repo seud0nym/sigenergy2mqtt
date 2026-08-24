@@ -148,8 +148,13 @@ class HaPublisherMixin(abc.ABC):
                          or None to clear the retained message).
             qos:         MQTT QoS level. Defaults to 2.
         """
-        logger.debug(f"{self.log_identity} publishing {ha_state} availability")
-        mqtt_client.publish(f"{active_config.home_assistant.discovery_prefix}/device/{self.unique_id}/availability", ha_state, qos, True)
+        topic = f"{active_config.home_assistant.discovery_prefix}/device/{self.unique_id}/availability"
+        if logger.isEnabledFor(logging.DEBUG):
+            if ha_state == b"":
+                logger.debug(f"{self.log_identity} cleaning availability ({topic=})")
+            else:
+                logger.debug(f"{self.log_identity} publishing {ha_state} availability ({topic=})")
+        mqtt_client.publish(topic, ha_state, qos, True)
         for device in self.children:
             device.publish_availability(mqtt_client, ha_state)
 
@@ -182,9 +187,8 @@ class HaPublisherMixin(abc.ABC):
         """
         topic = f"{active_config.home_assistant.discovery_prefix}/device/{self.unique_id}/config"
         if clean:
-            logger.debug(f"{self.log_identity} cleaning availability")
             self.publish_availability(mqtt_client, b"", qos=0)  # Availability is always retained
-            logger.debug(f"{self.log_identity} cleaning discovery")
+            logger.debug(f"{self.log_identity} cleaning discovery ({topic=})")
             info = mqtt_client.publish(topic, b"", qos=0, retain=True)  # Clear retained messages
         else:
             components: dict[str, Any] = {}
@@ -196,7 +200,7 @@ class HaPublisherMixin(abc.ABC):
                 discovery["o"] = active_config.origin
                 discovery["cmps"] = components
                 discovery_json = json.dumps(discovery, allow_nan=False, indent=2, sort_keys=False)
-                logger.debug(f"{self.log_identity} publishing discovery")
+                logger.debug(f"{self.log_identity} publishing discovery ({topic=})")
                 if active_config.log_level == logging.DEBUG:
                     discovery_dump = Path(active_config.persistent_state_path, f"{self.unique_id}.discovery.json")
                     with discovery_dump.open("w") as f:
@@ -204,9 +208,9 @@ class HaPublisherMixin(abc.ABC):
                     logger.debug(f"{self.log_identity} discovery JSON dumped to {discovery_dump.resolve()}")
                 info = mqtt_client.publish(topic, discovery_json, qos=2, retain=True)
             else:
-                logger.debug(f"{self.log_identity} publishing empty availability (No components found)")
+                logger.debug(f"{self.log_identity} publishing empty availability because no components found ({topic=})")
                 self.publish_availability(mqtt_client, b"", qos=0)
-                logger.debug(f"{self.log_identity} publishing empty discovery (No components found)")
+                logger.debug(f"{self.log_identity} publishing empty discovery because no components found ({topic=})")
                 info = mqtt_client.publish(topic, b"", qos=0, retain=True)  # Clear retained messages
         self.publish_attributes(mqtt_client, clean, propagate=False)  # Don't propagate to children because it will happen automatically when child discovery is published
         for device in self.children:
