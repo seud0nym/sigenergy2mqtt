@@ -253,8 +253,6 @@ class ModbusSensorMixin(SensorDebuggingMixin):
 
 # =============================================================================
 # Read-Only Sensor
-
-
 # =============================================================================
 
 
@@ -293,8 +291,6 @@ Merge with base_refactored.py and base_refactored_part2.py for the complete modu
 
 # =============================================================================
 # Writeable Sensor Mixin
-
-
 # =============================================================================
 
 
@@ -314,6 +310,62 @@ class WriteableSensorMixin(Sensor):
         if not topic or topic.isspace():
             raise RuntimeError(f"{self.log_identity} command topic is not defined")
         return topic
+
+    def _raw2state(self, raw_value: float | str) -> float | int | str:
+        """Convert raw value to display state.
+
+        Args:
+            raw_value: Raw value from device
+
+        Returns:
+            Display-friendly state value
+        """
+        # Early return removed to allow string processing below
+
+        # Lazy import to avoid circular dependencies
+        from .writeable import SelectSensorMixin, SwitchSensorMixin, WriteOnlySensor
+
+        # Handle Option-based sensors
+        if DiscoveryKeys.OPTIONS in self and isinstance(raw_value, (int, float)):
+            option = self._get_option(int(raw_value))
+            if option:
+                return option
+
+        # Handle WriteOnlySensor states
+        if isinstance(self, WriteOnlySensor) and isinstance(raw_value, str):
+            if self._values["off"] == raw_value:
+                return self._names["off"]
+            elif self._values["on"] == raw_value:
+                return self._names["on"]
+            return raw_value
+
+        # Handle SwitchSensorMixin states
+        if isinstance(self, SwitchSensorMixin) and isinstance(raw_value, str):
+            if self[DiscoveryKeys.PAYLOAD_OFF] == raw_value:
+                return "Off"
+            elif self[DiscoveryKeys.PAYLOAD_ON] == raw_value:
+                return "On"
+            return raw_value
+
+        # Handle SelectSensorMixin states
+        if isinstance(self, SelectSensorMixin) and isinstance(raw_value, int):
+            options = cast(list[str], self[DiscoveryKeys.OPTIONS])
+            if raw_value < len(options):
+                state = options[raw_value]
+                if state not in ("", None):
+                    return state
+            return raw_value
+
+        # Apply gain and precision
+        if isinstance(raw_value, (float, int)):
+            state = self._apply_gain_and_precision(raw_value)
+            if state is not None:
+                return state
+
+        if isinstance(raw_value, str):
+            return raw_value
+
+        return raw_value
 
     def configure_mqtt_topics(self, device_id: str) -> str:
         """Configure the command topic in addition to normal sensor topics."""
@@ -348,53 +400,6 @@ class WriteableSensorMixin(Sensor):
 
 class ModbusWriteableSensorMixin(TypedSensorMixin, ModbusSensorMixin, WriteableSensorMixin):
     """WriteableSensorMixin implementation that writes values to Modbus registers."""
-
-    def _raw2state(self, raw_value: float | str) -> float | int | str:
-        """Convert raw value to display state.
-
-        Args:
-            raw_value: Raw value from device
-
-        Returns:
-            Display-friendly state value
-        """
-        # Early return removed to allow string processing below
-
-        # Lazy import to avoid circular dependencies
-        from .writeable import SwitchSensor, WriteOnlySensor
-
-        # Handle Option-based sensors
-        if DiscoveryKeys.OPTIONS in self and isinstance(raw_value, (int, float)):
-            option = self._get_option(int(raw_value))
-            if option:
-                return option
-
-        # Handle WriteOnlySensor states
-        if isinstance(self, WriteOnlySensor) and isinstance(raw_value, str):
-            if self._values["off"] == raw_value:
-                return self._names["off"]
-            elif self._values["on"] == raw_value:
-                return self._names["on"]
-            return raw_value
-
-        # Handle SwitchSensor states
-        if isinstance(self, SwitchSensor) and isinstance(raw_value, str):
-            if self[DiscoveryKeys.PAYLOAD_OFF] == raw_value:
-                return "Off"
-            elif self[DiscoveryKeys.PAYLOAD_ON] == raw_value:
-                return "On"
-            return raw_value
-
-        # Apply gain and precision
-        if isinstance(raw_value, (float, int)):
-            state = self._apply_gain_and_precision(raw_value)
-            if state is not None:
-                return state
-
-        if isinstance(raw_value, str):
-            return raw_value
-
-        return raw_value
 
     async def _write_registers(self, modbus_client: ModbusClient, raw_value: float | str, mqtt_client: mqtt.Client) -> bool:
         """Write value to Modbus registers.
