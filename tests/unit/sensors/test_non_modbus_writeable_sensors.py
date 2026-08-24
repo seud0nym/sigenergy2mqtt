@@ -87,3 +87,31 @@ async def test_writable_entity_mixins_dispatch_commands_without_modbus(sensor_cl
     assert sensor.written_value == expected
     assert sensor.written_source == sensor.command_topic
     assert not hasattr(sensor, "address")
+
+
+def test_switch_mixin_sets_binary_raw_sanity_bounds():
+    sensor = NonModbusSwitchSensor(**sensor_kwargs("switch_bounds"))
+
+    assert sensor.sanity_check.min_raw == 0
+    assert sensor.sanity_check.max_raw == 1
+
+
+@pytest.mark.asyncio
+async def test_numeric_mixin_matches_modbus_range_validation_and_state_clamping():
+    sensor = NonModbusNumericSensor(**sensor_kwargs("numeric_range"), minimum=(-10.0, -5.0), maximum=(5.0, 10.0))
+    sensor.set_latest_state(-4.0)
+
+    assert await sensor.value_is_valid(None, -7) is True
+    assert await sensor.value_is_valid(None, -4) is False
+    assert await sensor.value_is_valid(None, 7) is True
+    assert await sensor.value_is_valid(None, 4) is False
+    assert await sensor.get_state(republish=True) == -10.0
+
+
+@pytest.mark.asyncio
+async def test_select_mixin_matches_modbus_state_conversion():
+    sensor = NonModbusSelectSensor(**sensor_kwargs("select_state"), options=["Automatic", "Manual"])
+    sensor.set_latest_state(1)
+
+    assert await sensor.get_state(republish=True) == "Manual"
+    assert await sensor.get_state(raw=True, republish=True) == 1
