@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.monitor.service import MonitorService
 from sigenergy2mqtt.mqtt.registry import MqttClientHealth
 
@@ -37,14 +38,16 @@ async def test_monitor_cancelled_error(caplog):
     """Handle asyncio.CancelledError during initial sleep."""
     import logging
 
-    caplog.set_level(logging.DEBUG)
-    svc = MonitorService([])
+    with _swap_active_config(Config()) as cfg:
+        cfg.diagnostics.log_level = logging.DEBUG
+        caplog.set_level(logging.DEBUG)
+        svc = MonitorService([])
 
-    # We want to mock asyncio.sleep to raise CancelledError
-    with patch("asyncio.sleep", side_effect=asyncio.CancelledError):
-        await svc._monitor(FakeMqttClient())
+        # We want to mock asyncio.sleep to raise CancelledError
+        with patch("asyncio.sleep", side_effect=asyncio.CancelledError):
+            await svc._monitor(FakeMqttClient())
 
-    assert "sleep interrupted" in caplog.text
+        assert "sleep interrupted" in caplog.text
 
 
 def test_check_modbus_no_reads(monkeypatch, caplog):
@@ -89,15 +92,17 @@ def test_check_mqtt_healthy_ack_msg(monkeypatch, caplog):
     """MQTT healthy branch."""
     import logging
 
-    caplog.set_level(logging.DEBUG)
-    health = MqttClientHealth(client_id="other_client", connected=True, last_publish_ack_at=time.monotonic(), last_message_at=time.monotonic(), connect_count=3)
-    monkeypatch.setattr("sigenergy2mqtt.mqtt.mqtt_health_registry.snapshot", lambda: {"other_client": health}, raising=False)
+    with _swap_active_config(Config()) as cfg:
+        cfg.diagnostics.log_level = logging.DEBUG
+        caplog.set_level(logging.DEBUG)
+        health = MqttClientHealth(client_id="other_client", connected=True, last_publish_ack_at=time.monotonic(), last_message_at=time.monotonic(), connect_count=3)
+        monkeypatch.setattr("sigenergy2mqtt.mqtt.mqtt_health_registry.snapshot", lambda: {"other_client": health}, raising=False)
 
-    svc = MonitorService([])
-    result = svc._check_mqtt(FakeMqttClient())
+        svc = MonitorService([])
+        result = svc._check_mqtt(FakeMqttClient())
 
-    assert "healthy (connected 3x" in caplog.text
-    assert result[0] is True
+        assert "healthy (connected 3x" in caplog.text
+        assert result[0] is True
 
 
 @pytest.mark.asyncio
