@@ -450,6 +450,8 @@ class SwitchSensorMixin(WriteableSensorMixin):
         self[DiscoveryKeys.PAYLOAD_ON] = 1
         self[DiscoveryKeys.STATE_OFF] = 0
         self[DiscoveryKeys.STATE_ON] = 1
+        self.sanity_check.min_raw = 0
+        self.sanity_check.max_raw = 1
 
     async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
         return await super().set_value(modbus_client, mqtt_client, int(value), source, handler)

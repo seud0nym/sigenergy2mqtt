@@ -89,6 +89,13 @@ async def test_writable_entity_mixins_dispatch_commands_without_modbus(sensor_cl
     assert not hasattr(sensor, "address")
 
 
+def test_switch_mixin_sets_binary_raw_sanity_bounds():
+    sensor = NonModbusSwitchSensor(**sensor_kwargs("switch_bounds"))
+
+    assert sensor.sanity_check.min_raw == 0
+    assert sensor.sanity_check.max_raw == 1
+
+
 @pytest.mark.asyncio
 async def test_numeric_mixin_matches_modbus_range_validation_and_state_clamping():
     sensor = NonModbusNumericSensor(**sensor_kwargs("numeric_range"), minimum=(-10.0, -5.0), maximum=(5.0, 10.0))
