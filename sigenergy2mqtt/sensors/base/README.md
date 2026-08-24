@@ -27,10 +27,10 @@ Sensor (abstract; discovery, state, publishing, overrides)
 │           └── SimpleEnergyDailyAccumulationSensor
 ├── WriteOnlySensor (Modbus command/button)
 └── ReadWriteSensor (Modbus polling + commands)
-    ├── NumericSensor
+    ├── NumericSensor (NumericSensorMixin + ReadWriteSensor)
     │   └── ThreePhaseAdjustmentTargetValue
-    ├── SelectSensor
-    └── SwitchSensor
+    ├── SelectSensor (SelectSensorMixin + ReadWriteSensor)
+    └── SwitchSensor (SwitchSensorMixin + ReadWriteSensor)
 ```
 
 `ReadOnlySensor`, `WriteOnlySensor`, and `ReadWriteSensor` retain their public
@@ -39,6 +39,34 @@ below; applications normally use these concrete classes for register-backed
 entities.
 
 ## Foundation and transport mixins
+
+The mixins form independent capability layers rather than one linear class
+tree.  The important relationships are:
+
+```text
+Sensor
+├── ReadableSensorMixin
+│   └── adds scan_interval validation
+├── ModbusSensorMixin
+│   └── adds register identity and Modbus response handling
+└── WriteableSensorMixin
+    ├── NumericSensorMixin
+    ├── SelectSensorMixin
+    └── SwitchSensorMixin
+
+TypedSensorMixin + ModbusSensorMixin + WriteableSensorMixin
+└── ModbusWriteableSensorMixin
+    ├── WriteOnlySensor
+    └── ReadWriteSensor
+        ├── NumericSensorMixin + ReadWriteSensor -> NumericSensor
+        ├── SelectSensorMixin + ReadWriteSensor  -> SelectSensor
+        └── SwitchSensorMixin + ReadWriteSensor  -> SwitchSensor
+```
+
+In the second branch, `+` means multiple inheritance: the presentation mixin
+supplies entity-specific discovery, conversion, validation, and state shaping,
+while `ReadWriteSensor` supplies the Modbus-backed read/write transport.  The
+presentation mixins do not inherit from or depend on `ModbusSensorMixin`.
 
 * `SensorDebuggingMixin` supplies the `debug_logging` option.
 * `TypedSensorMixin` validates and stores a `ModbusDataType`; use it only for
