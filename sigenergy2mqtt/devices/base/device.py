@@ -547,11 +547,12 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
         for sensor in self.sensors.values():
             if isinstance(sensor, WriteableSensorMixin):
                 try:
-                    result = mqtt_handler.register(mqtt_client, sensor.command_topic, sensor.set_value)
+                    command_topic = sensor.command_topic
+                    result = mqtt_handler.register(mqtt_client, command_topic, sensor.set_value)
                     if sensor.debug_logging:
-                        logger.debug(f"{sensor.log_identity} subscribed to topic {sensor.command_topic} for writing (result={result!r})")
+                        logger.debug(f"{sensor.log_identity} subscribed to topic {command_topic} for writing (result={result!r})")
                 except (ValueError, TypeError, AttributeError, RuntimeError) as e:
-                    logger.error(f"{sensor.log_identity} failed to subscribe to topic {sensor.command_topic}: {e!r}")
+                    logger.error(f"{sensor.log_identity} failed to subscribe to writable topic: {e!r}")
             if isinstance(sensor, ObservableMixin):
                 for topic in sensor.observable_topics():
                     try:
