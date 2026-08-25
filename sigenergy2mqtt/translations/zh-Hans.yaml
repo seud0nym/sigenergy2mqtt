@@ -238,6 +238,10 @@ class:
       source_range: Modbus 寄存器 {start}-{end}
     no_alarm: 无告警
     unknown_alarm: 未知 (bit{bit}∈{value})
+  ApplicationLogLevel:
+    attributes:
+      comment: sigenergy2mqtt 应用程序的日志级别
+    name: 应用程序日志级别
   AvailableBatteryChargeEnergy:
     attributes:
       source: Modbus 寄存器 {address}
@@ -465,6 +469,10 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 日放电电量
+  DiagnosticsLogLevel:
+    attributes:
+      comment: sigenergy2mqtt 诊断模块的日志级别
+    name: 诊断日志级别
   DiagnosticsService:
     name: 诊断
   DischargeCutOffSoC:
@@ -905,6 +913,10 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 独立相功率控制
+  InfluxDBLogLevel:
+    attributes:
+      comment: InfluxDB 接口的日志级别
+    name: InfluxDB 日志级别
   InfluxDBQueries:
     name: InfluxDB 查询
   InfluxDBQueryErrors:
@@ -1176,6 +1188,10 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: MPPT数量
+  MQTTLogLevel:
+    attributes:
+      comment: MQTT 接口日志级别
+    name: MQTT 日志级别
   MQTTPhysicalPublishes:
     name: MQTT 物理发布
   MQTTPublishFailures:
@@ -1237,7 +1253,7 @@ class:
       source_range: Modbus 寄存器 {start}-{end}
     name: 最大无功功率调节
   MetricsService:
-    name: Sigenergy 指标
+    name: Sigenergy2MQTT 指标
   MinActivePowerAdjustment:
     attributes:
       source: Modbus 寄存器 {address}
@@ -1252,6 +1268,10 @@ class:
     name: Modbus 活动锁
   ModbusCacheHits:
     name: Modbus 缓存命中
+  ModbusLogLevel:
+    attributes:
+      comment: Modbus 接口日志级别
+    name: Modbus 日志级别
   ModbusPhysicalReads:
     name: Modbus 物理读取
   ModbusReadErrors:
@@ -2220,12 +2240,28 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: PV最大功率限制
+  PVOutputCalcDebugLogging:
+    attributes:
+      comment: 如果启用此功能，将以 `DEBUG` 级别记录用于上传至 PVOutput 的数值聚合操作。仅当 PVOutput 日志级别设置为 DEBUG 时才适用。
+    name: PVOutput 值计算调试
+  PVOutputLogLevel:
+    attributes:
+      comment: PVOutput 接口的日志级别
+    name: PVOutput 日志级别
   PVOutputOutputService:
     name: 添加PVOutput输出服务
   PVOutputStatusService:
     name: 添加PVOutput状态服务
+  PVOutputUpdateDebugLogging:
+    attributes:
+      comment: 若启用此功能，将以 DEBUG 级别记录上传至 PVOutput 的数值更新日志。仅当 PVOutput 日志级别设置为 DEBUG 时才适用。
+    name: PVOutput 值更新调试
   PVOutputUploadErrors:
     name: PVOutput 上传错误
+  PVOutputUploadLogLevel:
+    attributes:
+      comment: PVOutput 上传有效负载的日志级别。如果 PVOutput 的整体日志级别设置为高于此选项所指定的级别（例如，此选项设置为 INFO，而 PVOutput 日志级别设置为 WARNING），则上传日志消息将被抑制。
+    name: PVOutput 上传日志级别
   PVOutputUploadMax:
     name: PV输出上传最大值
   PVOutputUploadMean:
@@ -2262,6 +2298,10 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 电压
+  PersistenceDebugging:
+    attributes:
+      comment: 启用所有状态存储（持久化）操作的调试功能
+    name: 持久化调试
   PhaseActivePowerFixedAdjustmentTargetValue:
     attributes:
       comment: 仅当输出类型为 L1/L2/L3/N 时有效。必须使能远程 EMS，并且 EMS 必须处于 PCS 远程控制模式，该寄存器才能生效。
@@ -2440,7 +2480,7 @@ class:
   PowerPlant:
     name: 'Sigenergy 电厂 {plant_suffix}'
   ProtocolPublished:
-    name: 协议发布
+    name: 协议已发布
   ProtocolVersionSensor:
     name: 协议版本
   QSAdjustmentTargetValue:
@@ -2523,6 +2563,10 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 远程EMS限制
+  RepeatedStatePublishInterval:
+    attributes:
+      comment: 发布重复状态的间隔（单位：秒）。（当获取的状态与上次读取的状态完全一致时，会触发重复状态。）<0=从不 0=始终 >0=间隔
+    name: 状态发布间隔（重复）
   Reserved30073:
     attributes:
       source: Modbus 寄存器 {address}
@@ -2664,10 +2708,20 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 第三方PV总发电量
+  SanityCheckDefaultKW:
+    attributes:
+      comment: 用于合理性检查的默认 kW 值，用于验证功率和能量传感器的最大值和最小值。指定的值被视为最大 kW 值，最小值则通过将其乘以 -1 得出（例如，如果选项值为 500，则最小值将为 -500）。 该值按每秒应用，因此对传感器实际执行的合理性检查结果是扫描间隔的倍数。超出该范围的读数将被忽略，并作为警告日志消息报告。
+    name: 默认值合理性检查
+  SanityCheckFailuresIncrement:
+    attributes:
+      comment: 若启用此功能，当一致性检查失败时，传感器读取失败次数将递增。若传感器读取失败次数超过允许的错误阈值，该传感器将被禁用，直至下次重启。
+    name: 一致性检查失败增量
   SelectSensor:
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
+  SettingsService:
+    name: Sigenergy2MQTT 运行时配置
   ShutdownTime:
     attributes:
       source: Modbus 寄存器 {address}

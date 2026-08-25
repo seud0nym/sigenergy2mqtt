@@ -238,6 +238,10 @@ class:
       source_range: Registros Modbus {start}-{end}
     no_alarm: Sin Alarma
     unknown_alarm: Desconocido (bit{bit}∈{value})
+  ApplicationLogLevel:
+    attributes:
+      comment: El nivel de registro de la aplicación sigenergy2mqtt
+    name: Nivel de registro de la aplicación
   AvailableBatteryChargeEnergy:
     attributes:
       source: Registro Modbus {address}
@@ -465,6 +469,10 @@ class:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
     name: Energía de Descarga Diaria
+  DiagnosticsLogLevel:
+    attributes:
+      comment: El nivel de registro del módulo de diagnóstico sigenergy2mqtt
+    name: Nivel de registro de diagnóstico
   DiagnosticsService:
     name: Diagnóstico
   DischargeCutOffSoC:
@@ -905,6 +913,10 @@ class:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
     name: Control de Potencia de Fase Independiente
+  InfluxDBLogLevel:
+    attributes:
+      comment: El nivel de registro de la interfaz de InfluxDB
+    name: Nivel de registro de InfluxDB
   InfluxDBQueries:
     name: Consultas InfluxDB
   InfluxDBQueryErrors:
@@ -1176,6 +1188,10 @@ class:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
     name: Cantidad MPPT
+  MQTTLogLevel:
+    attributes:
+      comment: El nivel de registro de la interfaz MQTT
+    name: Nivel de registro MQTT
   MQTTPhysicalPublishes:
     name: Publicaciones Físicas MQTT
   MQTTPublishFailures:
@@ -1237,7 +1253,7 @@ class:
       source_range: Registros Modbus {start}-{end}
     name: Ajuste de Potencia Reactiva Máx
   MetricsService:
-    name: Métricas Sigenergy
+    name: Métricas de Sigenergy2MQTT
   MinActivePowerAdjustment:
     attributes:
       source: Registro Modbus {address}
@@ -1252,6 +1268,10 @@ class:
     name: Bloqueos Modbus Activos
   ModbusCacheHits:
     name: Aciertos de Caché Modbus
+  ModbusLogLevel:
+    attributes:
+      comment: El nivel de registro de la interfaz Modbus
+    name: Nivel de registro de Modbus
   ModbusPhysicalReads:
     name: Lecturas Físicas Modbus
   ModbusReadErrors:
@@ -2220,12 +2240,28 @@ class:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
     name: Límite Máx de Potencia PV
+  PVOutputCalcDebugLogging:
+    attributes:
+      comment: Si se habilita, la agregación de valores para su envío a PVOutput se registrará en el nivel `DEBUG`. Solo es aplicable si el nivel de registro de PVOutput está configurado en DEBUG.
+    name: Depuración del cálculo del valor de PVOutput
+  PVOutputLogLevel:
+    attributes:
+      comment: El nivel de registro de la interfaz PVOutput
+    name: Nivel de registro de PVOutput
   PVOutputOutputService:
     name: Agregar Servicio de Salida PVOutput
   PVOutputStatusService:
     name: Agregar Servicio de Estado PVOutput
+  PVOutputUpdateDebugLogging:
+    attributes:
+      comment: Si se habilita, la actualización de los valores para su envío a PVOutput se registrará en el nivel DEBUG. Solo es aplicable si el nivel de registro de PVOutput está establecido en DEBUG.
+    name: Depuración de la actualización del valor de PVOutput
   PVOutputUploadErrors:
     name: Errores de carga de PVOutput
+  PVOutputUploadLogLevel:
+    attributes:
+      comment: El nivel de registro de la carga útil de la carga en PVOutput. Si el nivel de registro general de PVOutput está establecido en un nivel superior al especificado para esta opción (por ejemplo, si esta opción está establecida en INFO y el nivel de registro de PVOutput está establecido en WARNING), los mensajes de registro de la carga se suprimirán.
+    name: Nivel de registro de carga de PVOutput
   PVOutputUploadMax:
     name: Carga máxima de salida PV
   PVOutputUploadMean:
@@ -2262,6 +2298,10 @@ class:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
     name: Voltaje
+  PersistenceDebugging:
+    attributes:
+      comment: Habilitar la depuración de todas las operaciones de almacenamiento de estado (persistencia)
+    name: Depuración de la persistencia
   PhaseActivePowerFixedAdjustmentTargetValue:
     attributes:
       comment: Válido sólo cuando el tipo de salida es L1/L2/L3/N. El EMS remoto debe estar habilitado y el EMS debe estar en modo de control remoto PCS para que este registro surta efecto.
@@ -2440,7 +2480,7 @@ class:
   PowerPlant:
     name: 'Planta Sigenergy {plant_suffix}'
   ProtocolPublished:
-    name: Protocolo Publicado
+    name: Protocolo publicado
   ProtocolVersionSensor:
     name: Versión del Protocolo
   QSAdjustmentTargetValue:
@@ -2523,6 +2563,10 @@ class:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
     name: Límite de EMS remoto
+  RepeatedStatePublishInterval:
+    attributes:
+      comment: El intervalo, en segundos, con el que se publican los estados repetidos. (Los estados repetidos se producen cuando el estado adquirido es idéntico al de la lectura anterior.) <0 = Nunca 0 = Siempre >0 = Intervalo
+    name: Intervalo de publicación de estado repetido
   Reserved30073:
     attributes:
       source: Registro Modbus {address}
@@ -2664,10 +2708,20 @@ class:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
     name: Producción PV de Terceros Total
+  SanityCheckDefaultKW:
+    attributes:
+      comment: El valor predeterminado en kW utilizado para las comprobaciones de validez con el fin de validar los valores máximos y mínimos de los sensores de potencia y energía. El valor especificado se toma como el máximo en kW, y el valor mínimo se obtiene multiplicándolo por -1 (por ejemplo, si el valor de la opción es 500, el valor mínimo será -500). El valor se aplica por segundo, por lo que la comprobación de validez real aplicada a un sensor es un múltiplo del intervalo de exploración. Las lecturas fuera del rango se ignoran y se registran como un mensaje de advertencia en el registro.
+    name: Comprobación de coherencia predeterminada
+  SanityCheckFailuresIncrement:
+    attributes:
+      comment: Si se activa esta opción, el recuento de fallos de lectura del sensor se incrementará cuando falle una comprobación de integridad. Si los fallos de lectura del sensor superan el umbral de errores permitido, el sensor se desactivará hasta el siguiente reinicio.
+    name: Incremento de los fallos en las comprobaciones de validez
   SelectSensor:
     attributes:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
+  SettingsService:
+    name: Configuración en tiempo de ejecución de Sigenergy2MQTT
   ShutdownTime:
     attributes:
       source: Registro Modbus {address}

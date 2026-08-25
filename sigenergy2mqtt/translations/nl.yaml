@@ -238,6 +238,10 @@ class:
       source_range: Modbus-registers {start}-{end}
     no_alarm: Geen Alarm
     unknown_alarm: Onbekend (bit{bit}∈{value})
+  ApplicationLogLevel:
+    attributes:
+      comment: Het logniveau van de sigenergy2mqtt-applicatie
+    name: Logboekniveau van de applicatie
   AvailableBatteryChargeEnergy:
     attributes:
       source: Modbus-register {address}
@@ -465,6 +469,10 @@ class:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Dagelijkse Ontlaadenergie
+  DiagnosticsLogLevel:
+    attributes:
+      comment: Het logniveau van de sigenergy2mqtt-diagnosemodule
+    name: Diagnostisch logboekniveau
   DiagnosticsService:
     name: Diagnostiek
   DischargeCutOffSoC:
@@ -905,6 +913,10 @@ class:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Onafhankelijke Fasevermogensregeling
+  InfluxDBLogLevel:
+    attributes:
+      comment: Het logniveau van de InfluxDB-interface
+    name: InfluxDB-logniveau
   InfluxDBQueries:
     name: InfluxDB-queries
   InfluxDBQueryErrors:
@@ -1176,6 +1188,10 @@ class:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: MPPT Aantal
+  MQTTLogLevel:
+    attributes:
+      comment: Het logniveau van de MQTT-interface
+    name: MQTT-logniveau
   MQTTPhysicalPublishes:
     name: MQTT Fysieke Publicaties
   MQTTPublishFailures:
@@ -1237,7 +1253,7 @@ class:
       source_range: Modbus-registers {start}-{end}
     name: Max Reactief Vermogen Aanpassing
   MetricsService:
-    name: Sigenergy Statistieken
+    name: Sigenergy2MQTT-statistieken
   MinActivePowerAdjustment:
     attributes:
       source: Modbus-register {address}
@@ -1252,6 +1268,10 @@ class:
     name: Actieve Modbus Vergrendelingen
   ModbusCacheHits:
     name: Modbus Cache Treffers
+  ModbusLogLevel:
+    attributes:
+      comment: Het logniveau van de Modbus-interface
+    name: Modbus-logniveau
   ModbusPhysicalReads:
     name: Modbus Fysieke Lezingen
   ModbusReadErrors:
@@ -2220,12 +2240,28 @@ class:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: PV Max Vermogenslimiet
+  PVOutputCalcDebugLogging:
+    attributes:
+      comment: Indien ingeschakeld, wordt het samenvoegen van waarden voor het uploaden naar PVOutput geregistreerd op het `DEBUG`-niveau. Dit is alleen van toepassing als het PVOutput-logniveau is ingesteld op DEBUG.
+    name: Foutopsporing bij de berekening van PVOutput-waarden
+  PVOutputLogLevel:
+    attributes:
+      comment: Het logniveau van de PVOutput-interface
+    name: PVOutput-logniveau
   PVOutputOutputService:
     name: PVOutput Uitgang Service Toevoegen
   PVOutputStatusService:
     name: PVOutput Status Service Toevoegen
+  PVOutputUpdateDebugLogging:
+    attributes:
+      comment: Indien ingeschakeld, wordt het bijwerken van waarden voor het uploaden naar PVOutput geregistreerd op het DEBUG-niveau. Dit is alleen van toepassing als het PVOutput-logniveau is ingesteld op DEBUG.
+    name: Foutopsporing bij het bijwerken van PVOutput-waarden
   PVOutputUploadErrors:
     name: PVOutput-uploadfouten
+  PVOutputUploadLogLevel:
+    attributes:
+      comment: 'Het logniveau voor de PVOutput-upload. Als het algemene PVOutput-logniveau is ingesteld op een hoger niveau dan het niveau dat voor deze optie is opgegeven (bijvoorbeeld: deze optie is ingesteld op INFO en het PVOutput-logniveau is ingesteld op WARNING), dan worden de logberichten van de upload onderdrukt.'
+    name: PVOutput-uploadlogboekniveau
   PVOutputUploadMax:
     name: PV-uitgang uploaden Max
   PVOutputUploadMean:
@@ -2262,6 +2298,10 @@ class:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Spanning
+  PersistenceDebugging:
+    attributes:
+      comment: Schakel foutopsporing in voor alle bewerkingen met betrekking tot het opslaan van statussen (persistentie)
+    name: Foutopsporing bij persistentie
   PhaseActivePowerFixedAdjustmentTargetValue:
     attributes:
       comment: Alleen geldig als Uitvoertype L1/L2/L3/N is. Om dit register in werking te laten treden, moet het externe EMS zijn ingeschakeld en moet het EMS in de PCS-afstandsbedieningsmodus staan.
@@ -2440,7 +2480,7 @@ class:
   PowerPlant:
     name: 'Sigenergy-installatie {plant_suffix}'
   ProtocolPublished:
-    name: Protocol Gepubliceerd
+    name: Protocol gepubliceerd
   ProtocolVersionSensor:
     name: Protocolversie
   QSAdjustmentTargetValue:
@@ -2523,6 +2563,10 @@ class:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Limiet van externe EMS
+  RepeatedStatePublishInterval:
+    attributes:
+      comment: Het interval in seconden waarmee herhaalde statussen worden gepubliceerd. (Herhaalde statussen doen zich voor wanneer de vastgestelde status identiek is aan de vorige meting.) <0=Nooit 0=Altijd >0=Interval
+    name: Interval voor het herhaaldelijk publiceren van de status
   Reserved30073:
     attributes:
       source: Modbus-register {address}
@@ -2664,10 +2708,20 @@ class:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Totale Derde Partij PV Productie
+  SanityCheckDefaultKW:
+    attributes:
+      comment: 'De standaardwaarde in kW die wordt gebruikt voor validatiecontroles om de maximum- en minimumwaarden voor vermogens- en energiesensoren te valideren. De opgegeven waarde wordt beschouwd als het maximum in kW, en de minimumwaarde wordt afgeleid door deze met -1 te vermenigvuldigen (bijvoorbeeld: als de optiewaarde 500 is, is de minimumwaarde -500). De waarde wordt per seconde toegepast, dus de daadwerkelijke validatiecontrole die op een sensor wordt uitgevoerd, is een veelvoud van het scaninterval. Meetwaarden buiten het bereik worden genegeerd en gerapporteerd als een waarschuwingsbericht in het logboek.'
+    name: Standaard saniteitscontrole
+  SanityCheckFailuresIncrement:
+    attributes:
+      comment: Indien ingeschakeld, wordt het aantal mislukte sensoruitlezingen verhoogd wanneer een controle mislukt. Als het aantal mislukte sensoruitlezingen de toegestane foutdrempel overschrijdt, wordt de sensor uitgeschakeld tot de volgende herstart.
+    name: Toename van het aantal mislukte sanity checks
   SelectSensor:
     attributes:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
+  SettingsService:
+    name: Sigenergy2MQTT-runtime-configuratie
   ShutdownTime:
     attributes:
       source: Modbus-register {address}

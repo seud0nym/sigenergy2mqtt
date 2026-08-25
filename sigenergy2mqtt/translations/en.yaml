@@ -238,6 +238,10 @@ class:
       source_range: Modbus Registers {start}-{end}
     no_alarm: No Alarm
     unknown_alarm: Unknown (bit{bit}∈{value})
+  ApplicationLogLevel:
+    attributes:
+      comment: The sigenergy2mqtt application logging level
+    name: Application Log Level
   AvailableBatteryChargeEnergy:
     attributes:
       source: Modbus Register {address}
@@ -465,6 +469,10 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Daily Discharge Energy
+  DiagnosticsLogLevel:
+    attributes:
+      comment: The sigenergy2mqtt diagnostics module logging level
+    name: Diagnostics Log Level
   DiagnosticsService:
     name: Diagnostics
   DischargeCutOffSoC:
@@ -905,6 +913,10 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Independent Phase Power Control
+  InfluxDBLogLevel:
+    attributes:
+      comment: The InfluxDB interface logging level
+    name: InfluxDB Log Level
   InfluxDBQueries:
     name: InfluxDB Queries
   InfluxDBQueryErrors:
@@ -1176,6 +1188,10 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: MPPT Count
+  MQTTLogLevel:
+    attributes:
+      comment: The MQTT interface logging level
+    name: MQTT Log Level
   MQTTPhysicalPublishes:
     name: MQTT Physical Publishes
   MQTTPublishFailures:
@@ -1237,7 +1253,7 @@ class:
       source_range: Modbus Registers {start}-{end}
     name: Max Reactive Power Adjustment
   MetricsService:
-    name: Sigenergy Metrics
+    name: Sigenergy2MQTT Metrics
   MinActivePowerAdjustment:
     attributes:
       source: Modbus Register {address}
@@ -1252,6 +1268,10 @@ class:
     name: Modbus Active Locks
   ModbusCacheHits:
     name: Modbus Cache Hits
+  ModbusLogLevel:
+    attributes:
+      comment: The Modbus interface logging level
+    name: Modbus Log Level
   ModbusPhysicalReads:
     name: Modbus Physical Reads
   ModbusReadErrors:
@@ -2220,12 +2240,28 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: PV Max Power Limit
+  PVOutputCalcDebugLogging:
+    attributes:
+      comment: If enabled the aggregation of values for uploading to PVOutput will be logged at the `DEBUG` level.  Only applicable if the PVOutput Log Level is set to DEBUG.
+    name: PVOutput Value Calculation Debugging
+  PVOutputLogLevel:
+    attributes:
+      comment: The PVOutput interface logging level
+    name: PVOutput Log Level
   PVOutputOutputService:
     name: PVOutput Add Output Service
   PVOutputStatusService:
     name: PVOutput Add Status Service
+  PVOutputUpdateDebugLogging:
+    attributes:
+      comment: If enabled the updating of values for uploading to PVOutput will be logged at the DEBUG level. Only applicable if PVOutput Log Level is set to DEBUG.
+    name: PVOutput Value Update Debugging
   PVOutputUploadErrors:
     name: PVOutput Upload Errors
+  PVOutputUploadLogLevel:
+    attributes:
+      comment: The PVOutput upload payload logging level. If the overall PVOutput Log Level is set to a level higher than the level specified for this option (e.g. this option is set to INFO and PVOutput Log Level is set to WARNING), then the upload log messages will be suppressed.
+    name: PVOutput Upload Log Level
   PVOutputUploadMax:
     name: PVOutput Upload Max
   PVOutputUploadMean:
@@ -2262,6 +2298,10 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Voltage
+  PersistenceDebugging:
+    attributes:
+      comment: Enable debugging of all state store (persistence) operations
+    name: Persistence Debugging
   PhaseActivePowerFixedAdjustmentTargetValue:
     attributes:
       comment: Valid only when Output Type is L1/L2/L3/N. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect.
@@ -2523,6 +2563,10 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Hybrid Inverter
+  RepeatedStatePublishInterval:
+    attributes:
+      comment: The interval in seconds at which repeated states are published. (Repeated states occur when the state that is acquired is identical to the previous read.) <0=Never 0=Always >0=Interval
+    name: Repeated State Publish Interval
   Reserved30073:
     attributes:
       source: Modbus Register {address}
@@ -2664,10 +2708,20 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Total Third-Party PV Production
+  SanityCheckDefaultKW:
+    attributes:
+      comment: The default kW used for sanity checks to validate the maximum and minimum values for power and energy sensors. The specified value is taken as the maximum in kW, and the minimum value is derived by multiplying by -1 (e.g. if the option value is 500, the minimum value will be -500). The value is applied per second, so the actual sanity check applied to a sensor is a multiple of the scan-interval. Readings outside of the range are ignored and reported as a warning log message.
+    name: Sanity Check Default
+  SanityCheckFailuresIncrement:
+    attributes:
+      comment: If enabled, the number of sensor read failures will be incremented when a sanity check fails. If sensor read failures pass the allowed threshold for errors, the sensor will be disabled until the next restart.
+    name: Sanity Check Failures Increment
   SelectSensor:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
+  SettingsService:
+    name: Sigenergy2MQTT Runtime Configuration
   ShutdownTime:
     attributes:
       source: Modbus Register {address}
