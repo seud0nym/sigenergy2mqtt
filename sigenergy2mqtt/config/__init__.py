@@ -11,6 +11,7 @@ from sigenergy2mqtt.common.voltage_source import VoltageSource
 
 from . import cli, const
 from .config import Config, ConfigurationError, _create_persistent_state_path, _swap_active_config, active_config, configure_root_logger, is_docker
+from .service import SettingsService
 from .settings import Settings
 
 __all__ = [
@@ -19,6 +20,7 @@ __all__ = [
     "ConsumptionSource",
     "OutputField",
     "Settings",
+    "SettingsService",
     "StatusField",
     "VoltageSource",
     "_swap_active_config",
