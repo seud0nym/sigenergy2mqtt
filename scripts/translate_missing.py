@@ -678,7 +678,7 @@ def main() -> None:
     parser.add_argument("--formality", choices=["default", "more", "less", "prefer_more", "prefer_less"], default="default", help="Formality level for languages that support it.")
     parser.add_argument("--max-chars", type=int, default=None, help="Hard cap on new characters billed this run, in addition to your DeepL account quota.")
     parser.add_argument("--force", action="store_true", help="Proceed even if the pre-flight estimate exceeds remaining quota or --max-chars.")
-    parser.add_argument("--batch-size", type=int, default=_DEFAULT_BATCH_SIZE, help=f"Strings per DeepL API call (default: {_DEFAULT_BATCH_SIZE}).")
+    parser.add_argument("--batch-size", type=lambda value: int(value) if int(value) > 0 else parser.error("--batch-size must be a positive integer"), default=_DEFAULT_BATCH_SIZE, help=f"Strings per DeepL API call (default: {_DEFAULT_BATCH_SIZE}).")
     args = parser.parse_args()
 
     en_path = TRANSLATIONS_DIR / "en.yaml"
