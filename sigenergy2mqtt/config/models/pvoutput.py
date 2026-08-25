@@ -46,7 +46,7 @@ class PvOutputConfig(BaseModel):
         },
         alias="extended",
     )
-    log_level: int = Field(logging.CRITICAL, alias="log-level")
+    log_level: int = Field(logging.WARNING, alias="log-level")
     _validate_log_level = field_validator("log_level", mode="before")(validate_log_level)
     upload_log_level: int = Field(logging.INFO, alias="upload-log-level")
     _validate_upload_log_level = field_validator("upload_log_level", mode="before")(validate_log_level)
