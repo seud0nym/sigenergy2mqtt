@@ -31,9 +31,10 @@ if __name__ == "__main__":
 from pymodbus.client.mixin import ModbusClientMixin
 from pymodbus.pdu import ExceptionResponse, ModbusPDU
 
-from sigenergy2mqtt.common import DeviceClass, FirmwareVersion, HybridInverter, ProtocolVersion, ProtocolApplies, PVInverter
-from sigenergy2mqtt.config import Config, _swap_active_config, active_config, initialize
+from sigenergy2mqtt.common import DeviceClass, FirmwareVersion, HybridInverter, ProtocolApplies, ProtocolVersion, PVInverter
+from sigenergy2mqtt.config import Config, SettingsService, _swap_active_config, active_config, initialize
 from sigenergy2mqtt.devices import PID, PSS, ACCharger, DCCharger, Device, Inverter, PowerPlant
+from sigenergy2mqtt.metrics import MetricsService
 from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerInputBreaker, ACChargerRatedCurrent, ACChargerRunningState
 from sigenergy2mqtt.sensors.ac_charger_read_write import ACChargerStatus
@@ -63,6 +64,8 @@ from sigenergy2mqtt.sensors.plant_read_write import (
 )
 from sigenergy2mqtt.sensors.pss_read_only import PSSModelType, PSSSerialNumber
 from sigenergy2mqtt.sensors.pss_read_write import PSSMVCabinetG3CircuitBreakerSwitchOn
+
+logger = logging.getLogger(__name__)
 
 initialize()
 
@@ -113,7 +116,7 @@ class DummyModbusClient(ModbusClientMixin):
         """
         result = self.data.get(address, None)
         if result is None:
-            logging.warning(f"Address {address} not found in dummy Modbus client data store")
+            logger.warning(f"Address {address} not found in dummy Modbus client data store")
             return ExceptionResponse(function_code=0x03, exception_code=0x02, device_id=device_id)  # Modbus exception response for "Illegal Data Address"
         return ModbusPDU(registers=result)
 
@@ -247,7 +250,7 @@ async def get_sensor_instances(
     """
     if protocol_version is None:
         protocol_version = max(ProtocolVersion)
-    logging.info(f"Sigenergy Modbus ProtocolVersion V{protocol_version.value} [{ProtocolApplies(protocol_version)}] ({home_assistant_enabled=})")
+    logger.info(f"Sigenergy Modbus ProtocolVersion V{protocol_version.value} [{ProtocolApplies(protocol_version)}] ({home_assistant_enabled=})")
 
     active_config.modbus[plant_index].dc_chargers.append(dc_charger_device_address)
     active_config.modbus[plant_index].ac_chargers.append(ac_charger_device_address)
@@ -290,7 +293,7 @@ async def get_sensor_instances(
         for c in superclass.__subclasses__():
             if len(c.__subclasses__()) == 0:
                 classes[c.__name__] = 0
-            elif c.__name__ != "MetricsSensor":  # MetricsSensor classes are sigenergy2mqtt internal sensors, and we are only searching for Sigenergy sensors
+            else:
                 find_concrete_classes(c)
 
     def add_sensor_instance(s):
@@ -303,13 +306,13 @@ async def get_sensor_instances(
                 and not (isinstance(s, AlarmSensor) and isinstance(registers[s.address], AlarmCombinedSensor))
                 and not (isinstance(s, AlarmCombinedSensor) and isinstance(registers[s.address], AlarmSensor))
             ):
-                logging.warning(f"Register {s.address} in {s.__class__.__name__} already defined in {registers[s.address].__class__.__name__}")
+                logger.warning(f"Register {s.address} in {s.__class__.__name__} already defined in {registers[s.address].__class__.__name__}")
             else:
                 registers[s.address] = s
         if key not in sensors:
             sensors[key] = s
         elif s.__class__.__name__ != sensors[key].__class__.__name__:
-            logging.warning(f"Register {key} in {s.__class__.__name__} already defined in {sensors[key].__class__.__name__}")
+            logger.warning(f"Register {key} in {s.__class__.__name__} already defined in {sensors[key].__class__.__name__}")
         if s.__class__.__name__ not in classes:
             classes[s.__class__.__name__] = 0
         classes[s.__class__.__name__] += 1
@@ -320,21 +323,21 @@ async def get_sensor_instances(
             and (s.device_class is not None and s.device_class not in (DeviceClass.ENUM))
             and "Factor" not in s.__class__.__name__
         ):
-            logging.warning(f"{s.__class__.__name__} has no Unit of Measurement")
+            logger.warning(f"{s.__class__.__name__} has no Unit of Measurement")
         # Check for missing device_class and state_class on concrete sensor classes, excluding known exceptions
         if (
             not isinstance(s, (AlarmCombinedSensor, AlarmSensor, CurrentControlCommandValue, ESSPreHeatingTOUTime, InsulationResistance, ReservedSensor, SystemTimeZone, SwitchSensor, WriteOnlySensor))
             and getattr(s, "data_type", ModbusDataType.STRING) is not ModbusDataType.STRING
         ):
             if s.device_class is None and not any(sub in s.__class__.__name__ for sub in ["Count", "Gradient"]):
-                logging.warning(f"{s.__class__.__name__} has no Device Class")
+                logger.warning(f"{s.__class__.__name__} has no Device Class")
             if (
                 s.state_class is None
                 and s.device_class not in (DeviceClass.ENUM, DeviceClass.TIMESTAMP)
                 and not isinstance(s, (ACChargerInputBreaker, ChargeCutOffSoC, DischargeCutOffSoC, NumericSensor, SwitchSensor, SystemTimeZone))
                 and not any(sub in s.__class__.__name__ for sub in ["Max", "Min", "Available", "Rated", "Adjustment", "Target", "Factor", "Count"])
             ):
-                logging.warning(f"{s.__class__.__name__} has no State Class")
+                logger.warning(f"{s.__class__.__name__} has no State Class")
 
         for d in s.derived_sensors.values():
             add_sensor_instance(d)
@@ -343,7 +346,7 @@ async def get_sensor_instances(
                 add_sensor_instance(alarm)
 
     find_concrete_classes(Sensor)
-    for parent in [plant, hybrid_inverter, dc_charger, ac_charger, pv_inverter, pid, pss]:
+    for parent in [MetricsService(plant.protocol_version), SettingsService(), plant, hybrid_inverter, dc_charger, ac_charger, pv_inverter, pid, pss]:
         if parent is None:
             continue
         devices: list[Device] = [parent]
@@ -379,21 +382,21 @@ async def get_sensor_instances(
                     )
                     and last_address + last_count < address
                 ):
-                    logging.warning(
+                    logger.warning(
                         f"Gap detected between register {last_address} (count={last_count} class={registers[last_address].__class__.__name__}) and register {address} (class={registers[address].__class__.__name__})"
                     )
             for i in range(address + 1, address + count):
                 if i in registers:
-                    logging.warning(f"Register {i} in {sensor.__class__.__name__} overlaps {registers[i].__class__.__name__}")
+                    logger.warning(f"Register {i} in {sensor.__class__.__name__} overlaps {registers[i].__class__.__name__}")
             previous = (address, count)
         for classname, count in classes.items():
-            if count == 0 and classname != "ResetMetrics":  # ResetMetrics is a sigenergy2mqtt internal sensor, and we are only checking Sigenergy Modbus sensors
-                logging.warning(f"Class {classname} has not been used?")
+            if count == 0:
+                logger.warning(f"Class {classname} has not been used?")
 
     return sensors
 
 
 if __name__ == "__main__":
-    logging.getLogger().setLevel(logging.INFO)
+    logger.setLevel(logging.INFO)
     with _swap_active_config(Config()):
         asyncio.run(get_sensor_instances())

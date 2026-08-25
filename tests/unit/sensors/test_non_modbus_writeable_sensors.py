@@ -6,6 +6,7 @@ import pytest
 
 from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.config import Config, _swap_active_config
+from sigenergy2mqtt.config.sensors import ApplicationLogLevel
 from sigenergy2mqtt.sensors.base import (
     NumericSensorMixin,
     SelectSensorMixin,
@@ -94,6 +95,14 @@ def test_switch_mixin_sets_binary_raw_sanity_bounds():
 
     assert sensor.sanity_check.min_raw == 0
     assert sensor.sanity_check.max_raw == 1
+
+
+def test_settings_writeable_sensor_configures_command_topic():
+    sensor = ApplicationLogLevel()
+
+    sensor.configure_mqtt_topics("test-device")
+
+    assert sensor.command_topic == "sigenergy2mqtt/config/log_level/set"
 
 
 @pytest.mark.asyncio

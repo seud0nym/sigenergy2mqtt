@@ -8,11 +8,11 @@ from unittest.mock import AsyncMock, MagicMock
 from pymodbus.client.mixin import ModbusClientMixin
 
 from sigenergy2mqtt.config import Config, _swap_active_config
+from sigenergy2mqtt.metrics.sensors import ResetMetrics
 from sigenergy2mqtt.sensors.base import NumericSensor, SelectSensor, SwitchSensor, WriteableSensorMixin, WriteOnlySensor
 from sigenergy2mqtt.sensors.base.constants import DiscoveryKeys
 from sigenergy2mqtt.sensors.plant_read_write import MaxChargingLimit, MaxDischargingLimit, PVMaxPowerLimit, RemoteEMSLimit
 from tests.utils.modbus_sensors import get_sensor_instances
-
 
 REMOTE_EMS_LIMIT_TYPES = (MaxChargingLimit, MaxDischargingLimit, PVMaxPowerLimit)
 
@@ -66,12 +66,9 @@ def _pick_numeric_values(sensor: NumericSensor) -> tuple[float, float]:
     return 1.0, -1.0
 
 
-
-
-
-
-def _set_latest_raw_state(sensor: Any, value: float | int | str) -> None:
+def _set_latest_raw_state(sensor: Any, value: float | str) -> None:
     sensor._states = [(0.0, value)]
+
 
 async def _find_invalid_numeric_value(sensor: NumericSensor, valid: float, topic: str, mqtt: MagicMock, handler: MagicMock) -> float | None:
     minimum = sensor.get(DiscoveryKeys.MIN)
@@ -97,6 +94,7 @@ def _prepare_sensor_for_valid_write(sensor: WriteableSensorMixin) -> None:
                 _set_latest_raw_state(mode, 3)
             else:
                 _set_latest_raw_state(mode, 5)
+
 
 def test_all_writable_sensor_types_write_expected_registers_and_set_force_publish() -> None:
     async def _run() -> None:
@@ -159,6 +157,16 @@ def test_all_writable_sensor_types_write_expected_registers_and_set_force_publis
                 assert await sensor.set_value(modbus, mqtt, 2, topic, handler) is False
                 assert sensor.force_publish is True
 
+            elif isinstance(sensor, ResetMetrics):
+                assert await sensor.set_value(modbus, mqtt, sensor._PAYLOAD_PRESS, topic, handler) is True
+                assert modbus.write_register.await_count == 0
+                assert modbus.write_registers.await_count == 0
+
+                assert sensor.force_publish is True
+                sensor.force_publish = False
+                assert await sensor.set_value(modbus, mqtt, "__invalid_payload__", topic, handler) is False
+                assert sensor.force_publish is True
+
             elif isinstance(sensor, WriteOnlySensor):
                 valid = sensor._payloads["on"]
                 assert await sensor.set_value(modbus, mqtt, valid, topic, handler) is True
@@ -178,10 +186,7 @@ def test_availability_control_sensor_gates_writes_for_non_remote_ems_sensors() -
         targets = [
             sensor
             for sensor in writable
-            if isinstance(sensor, SelectSensor)
-            and hasattr(sensor, "_availability_control_sensor")
-            and getattr(sensor, "_availability_control_sensor") is not None
-            and not isinstance(sensor, RemoteEMSLimit)
+            if isinstance(sensor, SelectSensor) and hasattr(sensor, "_availability_control_sensor") and sensor._availability_control_sensor is not None and not isinstance(sensor, RemoteEMSLimit)
         ]
         assert targets
 
@@ -189,7 +194,7 @@ def test_availability_control_sensor_gates_writes_for_non_remote_ems_sensors() -
         handler = MagicMock()
 
         for sensor in targets:
-            control = getattr(sensor, "_availability_control_sensor")
+            control = sensor._availability_control_sensor
             assert control is not None
             valid = sensor[DiscoveryKeys.OPTIONS][0] if sensor[DiscoveryKeys.OPTIONS][0] != "" else sensor[DiscoveryKeys.OPTIONS][1]
             topic = _ensure_command_topic(sensor)
@@ -222,8 +227,8 @@ def test_remote_ems_limit_requires_both_checks_when_availability_control_is_set(
             valid, _ = _pick_numeric_values(sensor)
             topic = _ensure_command_topic(sensor)
 
-            control = getattr(sensor, "_availability_control_sensor")
-            mode = getattr(sensor, "_remote_ems_mode")
+            control = sensor._availability_control_sensor
+            mode = sensor._remote_ems_mode
             assert control is not None
             assert mode is not None
 
