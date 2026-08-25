@@ -435,7 +435,7 @@ class ProtocolPublished(MetricsSensor):
 
     def __init__(self, protocol_version: ProtocolVersion):
         super().__init__(
-            name="ProtocolVersion Published",
+            name="Protocol Published",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_modbus_protocol_published",
             object_id="sigenergy2mqtt_modbus_protocol_published",
             icon="mdi:book-clock",

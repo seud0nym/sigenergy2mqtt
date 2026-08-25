@@ -33,7 +33,7 @@ class MetricsService(Device):
 
     def __init__(self, protocol_version: ProtocolVersion):
         unique_id = f"{active_config.home_assistant.unique_id_prefix}_metrics"
-        super().__init__("Sigenergy Metrics", -1, unique_id, "sigenergy2mqtt", "Metrics", protocol_version)
+        super().__init__("Sigenergy2MQTT Metrics", -1, unique_id, "sigenergy2mqtt", "Performance Metrics", ProtocolVersion.N_A)
 
         self._add_sensor(sensors.InfluxDBWrites())
         self._add_sensor(sensors.InfluxDBWriteErrors())
