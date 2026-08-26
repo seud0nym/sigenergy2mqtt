@@ -69,6 +69,7 @@ class DiagnosticsServer:
         self._app.router.add_get("/diagnostics/solar", self._handle_solar_dashboard)
         self._app.router.add_get("/diagnostics/ws", self._handle_websocket)
         self._app.router.add_get("/diagnostics/export", self._handle_export)
+        self._app.router.add_post("/diagnostics/config/{endpoint}", self._handle_config_update)
         self._app.router.add_static("/diagnostics/static/", STATIC_DIR, name="static")
 
     @staticmethod
@@ -227,6 +228,77 @@ class DiagnosticsServer:
             content_type="application/json",
             headers={"Content-Disposition": 'attachment; filename="sigenergy2mqtt-diagnostics.json"'},
         )
+
+    async def _handle_config_update(self, request: web.Request) -> web.Response:
+        """Apply a runtime configuration change posted from the diagnostics UI.
+
+        Finds the matching :class:`~sigenergy2mqtt.config.sensors.SettingsSensor`
+        in the :class:`~sigenergy2mqtt.config.service.SettingsService` via
+        ``DeviceRegistry.get(-1)``, then calls its ``set_value`` method so that
+        the normal ``WriteableSensorMixin`` validation path is exercised — the
+        same path used when a change arrives over MQTT.
+
+        ``sensor.command_topic`` is passed as *source* to satisfy the guard in
+        :meth:`~sigenergy2mqtt.sensors.base.mixins.WriteableSensorMixin.set_value`
+        that rejects writes whose source does not match the command topic.
+        ``modbus_client``, ``mqtt_client``, and ``handler`` are all ``None``;
+        ``SettingsSensor._write_value`` only calls ``setattr`` (and
+        ``logging.getLogger().setLevel()`` for log-level sensors), so these
+        are safe to omit.
+        """
+        from sigenergy2mqtt.config.sensors import SettingsSensor
+        from sigenergy2mqtt.devices.base.registry import DeviceRegistry
+        from sigenergy2mqtt.sensors.base.writeable import NumericSensorMixin, SelectSensorMixin, SwitchSensorMixin
+
+        endpoint = request.match_info["endpoint"]
+
+        # Parse body
+        try:
+            body = await request.json()
+            raw_value = body["value"]
+        except (json.JSONDecodeError, KeyError, TypeError, ValueError, UnicodeDecodeError) as exc:
+            return web.json_response({"ok": False, "error": f"Invalid request body: {exc}"}, status=400)
+
+        # Find the sensor matching this endpoint in SettingsService (plant_index=-1)
+        matched_sensor: SettingsSensor | None = None
+        for device in DeviceRegistry.get(-1):
+            for sensor in device.sensors.values():
+                if not isinstance(sensor, SettingsSensor):
+                    continue
+                if sensor.unique_id.removeprefix("sigenergy2mqtt_config_") == endpoint:
+                    matched_sensor = sensor
+                    break
+            if matched_sensor is not None:
+                break
+
+        if matched_sensor is None:
+            return web.json_response({"ok": False, "error": f"Unknown config endpoint: {endpoint!r}"}, status=404)
+
+        # Coerce value to the type expected by the sensor kind
+        try:
+            if isinstance(matched_sensor, SwitchSensorMixin):
+                coerced: float | str = 1 if raw_value else 0
+            elif isinstance(matched_sensor, NumericSensorMixin):
+                coerced = float(raw_value)
+            elif isinstance(matched_sensor, SelectSensorMixin):
+                coerced = str(raw_value)
+            else:
+                coerced = raw_value
+        except (TypeError, ValueError) as exc:
+            return web.json_response({"ok": False, "error": f"Invalid value: {exc}"}, status=422)
+
+        # Delegate to set_value — this runs validation and _write_value
+        try:
+            ok = await matched_sensor.set_value(None, None, coerced, matched_sensor.command_topic, None)  # type: ignore[arg-type]
+        except (KeyError, RuntimeError, TypeError, ValueError) as exc:
+            logger.warning(f"DiagnosticsServer config update for {endpoint!r} raised: {exc}")
+            return web.json_response({"ok": False, "error": str(exc)}, status=500)
+
+        if ok:
+            logger.info(f"DiagnosticsServer Config updated via HTTP: {endpoint!r} = {raw_value!r}")
+            return web.json_response({"ok": True})
+        return web.json_response({"ok": False, "error": "Update rejected by sensor validation"}, status=422)
+
 
     async def _handle_websocket(self, request: web.Request) -> web.WebSocketResponse:
         ws = web.WebSocketResponse(heartbeat=30)

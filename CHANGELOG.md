@@ -6,6 +6,7 @@
 ### Added
 
 - Added MQTT-configurable runtime settings sensors
+- Added configuration of runtime settings via diagnostics web UI
 
 ### Fixed
 

@@ -59,3 +59,24 @@ async def test_collect_pvoutput_metrics(monkeypatch):
     assert "PVOutput Upload Errors" in metrics
     assert "config" in metrics
     assert metrics["config"]["end_of_day"] == "@ status interval"
+
+
+@pytest.mark.asyncio
+async def test_collect_runtime_config():
+    from sigenergy2mqtt.config.service import SettingsService
+    from sigenergy2mqtt.devices.base.registry import DeviceRegistry
+
+    DeviceRegistry.clear()
+    try:
+        _ = SettingsService()
+        payload = await DiagnosticsCollectors._diagnostics_collect_runtime_config()
+        assert "controls" in payload
+        controls = payload["controls"]
+        assert "log_level" in controls
+        assert controls["log_level"]["type"] == "select"
+        assert "repeated_state_publish_interval" in controls
+        assert controls["repeated_state_publish_interval"]["type"] == "number"
+        assert "persistence_debug" in controls
+        assert controls["persistence_debug"]["type"] == "switch"
+    finally:
+        DeviceRegistry.clear()

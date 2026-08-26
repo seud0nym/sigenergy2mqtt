@@ -334,3 +334,64 @@ async def test_ip_filter_middleware_health_not_exempt_outside_docker(server: Dia
             await server._ip_filter_middleware(request, handler)
             
     handler.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_handle_config_update_success(server: DiagnosticsServer) -> None:
+    from sigenergy2mqtt.config.service import SettingsService
+    from sigenergy2mqtt.devices.base.registry import DeviceRegistry
+    DeviceRegistry.clear()
+    try:
+        _ = SettingsService()
+        request = make_mocked_request("POST", "/diagnostics/config/log_level", match_info={"endpoint": "log_level"})
+        request.json = AsyncMock(return_value={"value": "DEBUG"})
+
+        response = await server._handle_config_update(request)
+        assert response.status == 200
+        body = json.loads(response.text)
+        assert body["ok"] is True
+    finally:
+        DeviceRegistry.clear()
+
+
+@pytest.mark.asyncio
+async def test_handle_config_update_unknown_endpoint(server: DiagnosticsServer) -> None:
+    from sigenergy2mqtt.devices.base.registry import DeviceRegistry
+    DeviceRegistry.clear()
+
+    request = make_mocked_request("POST", "/diagnostics/config/non_existent", match_info={"endpoint": "non_existent"})
+    request.json = AsyncMock(return_value={"value": "foo"})
+
+    response = await server._handle_config_update(request)
+    assert response.status == 404
+    body = json.loads(response.text)
+    assert body["ok"] is False
+
+
+@pytest.mark.asyncio
+async def test_handle_config_update_invalid_json(server: DiagnosticsServer) -> None:
+    request = make_mocked_request("POST", "/diagnostics/config/log_level", match_info={"endpoint": "log_level"})
+    request.json = AsyncMock(side_effect=json.JSONDecodeError("msg", "doc", 0))
+
+    response = await server._handle_config_update(request)
+    assert response.status == 400
+    body = json.loads(response.text)
+    assert body["ok"] is False
+
+
+@pytest.mark.asyncio
+async def test_handle_config_update_validation_rejected(server: DiagnosticsServer) -> None:
+    from sigenergy2mqtt.config.service import SettingsService
+    from sigenergy2mqtt.devices.base.registry import DeviceRegistry
+    DeviceRegistry.clear()
+    try:
+        _ = SettingsService()
+        request = make_mocked_request("POST", "/diagnostics/config/log_level", match_info={"endpoint": "log_level"})
+        request.json = AsyncMock(return_value={"value": "INVALID_LEVEL"})
+
+        response = await server._handle_config_update(request)
+        assert response.status == 422
+        body = json.loads(response.text)
+        assert body["ok"] is False
+    finally:
+        DeviceRegistry.clear()
