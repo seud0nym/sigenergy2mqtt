@@ -15,7 +15,13 @@ python3 scripts/update_en_translation.py || exit
 
 if git diff --name-only | grep -qE 'sigenergy2mqtt/translations/.+\.yaml'; then
     echo -e "${GREEN}>>> Updating native translations...${NC}"
-    python3 scripts/translate_missing.py --dry-run || exit
+    if [[ -e scripts/.deepl ]]; then
+        source scripts/.deepl
+        export DEEPL_AUTH_KEY
+    else
+        echo -e "${RED}>>> ERROR: DeepL API key not available!${NC}"
+    fi
+    python3 scripts/translate_missing.py || exit
 
     if git diff --name-only | grep -qE 'sigenergy2mqtt/translations/.+\.yaml'; then
         echo -e "${GREEN}>>> Checking translations...${NC}"
