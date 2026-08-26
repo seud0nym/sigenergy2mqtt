@@ -107,7 +107,7 @@ eval $UV pip install --upgrade $UV pip $quiet
 if [[ "$install_build_deps" -eq 1 ]]; then
   for spec in \
       "build(>=1.3.0,<2.0.0)" \
-      "twine(>=6.2.0,<7.0.0)" \
+      "twine(>=6.2.0,<8.0.0)" \
       "pytest" \
       "pytest-asyncio" \
       "pytest-cov" \
