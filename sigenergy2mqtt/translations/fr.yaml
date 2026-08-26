@@ -238,6 +238,10 @@ class:
       source_range: Registres Modbus {start}-{end}
     no_alarm: Aucune Alarme
     unknown_alarm: Inconnu (bit{bit}∈{value})
+  ApplicationLogLevel:
+    attributes:
+      comment: Niveau de journalisation de l'application sigenergy2mqtt
+    name: Niveau de journalisation de l'application
   AvailableBatteryChargeEnergy:
     attributes:
       source: Registre Modbus {address}
@@ -465,6 +469,10 @@ class:
       source: Registre Modbus {address}
       source_range: Registres Modbus {start}-{end}
     name: Énergie de Décharge Quotidienne
+  DiagnosticsLogLevel:
+    attributes:
+      comment: Niveau de journalisation du module de diagnostic sigenergy2mqtt
+    name: Niveau du journal de diagnostic
   DiagnosticsService:
     name: Diagnostic
   DischargeCutOffSoC:
@@ -905,6 +913,10 @@ class:
       source: Registre Modbus {address}
       source_range: Registres Modbus {start}-{end}
     name: Contrôle de Puissance par Phase Indépendante
+  InfluxDBLogLevel:
+    attributes:
+      comment: Niveau de journalisation de l'interface InfluxDB
+    name: Niveau de journalisation InfluxDB
   InfluxDBQueries:
     name: Requêtes InfluxDB
   InfluxDBQueryErrors:
@@ -1176,6 +1188,10 @@ class:
       source: Registre Modbus {address}
       source_range: Registres Modbus {start}-{end}
     name: Nombre MPPT
+  MQTTLogLevel:
+    attributes:
+      comment: Niveau de journalisation de l'interface MQTT
+    name: Niveau de journalisation MQTT
   MQTTPhysicalPublishes:
     name: Publications Physiques MQTT
   MQTTPublishFailures:
@@ -1237,7 +1253,7 @@ class:
       source_range: Registres Modbus {start}-{end}
     name: Ajustement Puissance Réactive Max
   MetricsService:
-    name: Métriques Sigenergy
+    name: Métriques Sigenergy2MQTT
   MinActivePowerAdjustment:
     attributes:
       source: Registre Modbus {address}
@@ -1252,6 +1268,10 @@ class:
     name: Verrous Modbus Actifs
   ModbusCacheHits:
     name: Succès Cache Modbus
+  ModbusLogLevel:
+    attributes:
+      comment: Niveau de journalisation de l'interface Modbus
+    name: Niveau de journalisation Modbus
   ModbusPhysicalReads:
     name: Lectures Physiques Modbus
   ModbusReadErrors:
@@ -2220,12 +2240,28 @@ class:
       source: Registre Modbus {address}
       source_range: Registres Modbus {start}-{end}
     name: Limite de Puissance Max PV
+  PVOutputCalcDebugLogging:
+    attributes:
+      comment: Si cette option est activée, l'agrégation des valeurs destinées à être transmises à PVOutput sera consignée au niveau `DEBUG`.  Ceci ne s'applique que si le niveau de journalisation PVOutput est défini sur DEBUG.
+    name: Débogage du calcul de la valeur PVOutput
+  PVOutputLogLevel:
+    attributes:
+      comment: Niveau de journalisation de l'interface PVOutput
+    name: Niveau de journalisation PVOutput
   PVOutputOutputService:
     name: Ajouter Service de Sortie PVOutput
   PVOutputStatusService:
     name: Ajouter Service de Statut PVOutput
+  PVOutputUpdateDebugLogging:
+    attributes:
+      comment: Si cette option est activée, la mise à jour des valeurs destinées à être transmises à PVOutput sera consignée au niveau DEBUG. Applicable uniquement si le niveau de journalisation PVOutput est défini sur DEBUG.
+    name: Débogage de la mise à jour de la valeur PVOutput
   PVOutputUploadErrors:
     name: Erreurs de téléchargement PVOutput
+  PVOutputUploadLogLevel:
+    attributes:
+      comment: Niveau de journalisation des données de transfert vers PVOutput. Si le niveau global de journalisation PVOutput est défini sur un niveau supérieur à celui spécifié pour cette option (par exemple, si cette option est réglée sur INFO et que le niveau de journalisation PVOutput est réglé sur WARNING), les messages de journalisation relatifs au transfert seront alors supprimés.
+    name: Niveau de journalisation des envois PVOutput
   PVOutputUploadMax:
     name: PVSortie Téléchargement Max.
   PVOutputUploadMean:
@@ -2262,6 +2298,10 @@ class:
       source: Registre Modbus {address}
       source_range: Registres Modbus {start}-{end}
     name: Tension
+  PersistenceDebugging:
+    attributes:
+      comment: Activer le débogage de toutes les opérations de stockage d'état (persistance)
+    name: Débogage de la persistance
   PhaseActivePowerFixedAdjustmentTargetValue:
     attributes:
       comment: Valable uniquement lorsque le type de sortie est L1/L2/L3/N. L'EMS distant doit être activé et l'EMS doit être en mode de contrôle à distance PCS pour que ce registre prenne effet.
@@ -2440,7 +2480,7 @@ class:
   PowerPlant:
     name: 'Centrale Sigenergy {plant_suffix}'
   ProtocolPublished:
-    name: Protocole Publié
+    name: Protocole publié
   ProtocolVersionSensor:
     name: Version du Protocole
   QSAdjustmentTargetValue:
@@ -2523,6 +2563,10 @@ class:
       source: Registre Modbus {address}
       source_range: Registres Modbus {start}-{end}
     name: Limite de l'EMS à distance
+  RepeatedStatePublishInterval:
+    attributes:
+      comment: Intervalle en secondes à l'issue duquel les états répétés sont publiés. (Les états répétés se produisent lorsque l'état acquis est identique à la lecture précédente.) <0 = Jamais 0 = Toujours >0 = Intervalle
+    name: Intervalle de publication de l'état répété
   Reserved30073:
     attributes:
       source: Registre Modbus {address}
@@ -2664,10 +2708,20 @@ class:
       source: Registre Modbus {address}
       source_range: Registres Modbus {start}-{end}
     name: Production PV Tierce Totale
+  SanityCheckDefaultKW:
+    attributes:
+      comment: Valeur par défaut en kW utilisée pour les contrôles de cohérence visant à valider les valeurs maximales et minimales des capteurs de puissance et d’énergie. La valeur spécifiée est considérée comme la valeur maximale en kW, et la valeur minimale est obtenue en la multipliant par -1 (par exemple, si la valeur de l’option est 500, la valeur minimale sera -500). Cette valeur s’applique toutes les secondes ; le contrôle de cohérence effectif appliqué à un capteur correspond donc à un multiple de l’intervalle d’échantillonnage. Les mesures hors de cette plage sont ignorées et signalées sous forme de message d’avertissement dans le journal.
+    name: Vérification de cohérence par défaut
+  SanityCheckFailuresIncrement:
+    attributes:
+      comment: Si cette option est activée, le nombre d'échecs de lecture du capteur sera incrémenté lorsqu'un contrôle de cohérence échoue. Si le nombre d'échecs de lecture du capteur dépasse le seuil d'erreurs autorisé, le capteur sera désactivé jusqu'au prochain redémarrage.
+    name: Incrément des échecs aux contrôles de cohérence
   SelectSensor:
     attributes:
       source: Registre Modbus {address}
       source_range: Registres Modbus {start}-{end}
+  SettingsService:
+    name: Configuration d'exécution de Sigenergy2MQTT
   ShutdownTime:
     attributes:
       source: Registre Modbus {address}

@@ -238,6 +238,10 @@ class:
       source_range: Modbus-Register {start}-{end}
     no_alarm: Kein Alarm
     unknown_alarm: Unbekannt (bit{bit}∈{value})
+  ApplicationLogLevel:
+    attributes:
+      comment: Die Protokollierungsstufe der Anwendung „sigenergy2mqtt“
+    name: Protokollierungsstufe der Anwendung
   AvailableBatteryChargeEnergy:
     attributes:
       source: Modbus-Register {address}
@@ -465,6 +469,10 @@ class:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
     name: Tägliche Entladeenergie
+  DiagnosticsLogLevel:
+    attributes:
+      comment: Die Protokollierungsstufe des sigenergy2mqtt-Diagnosemoduls
+    name: Protokollierungsstufe für die Diagnose
   DiagnosticsService:
     name: Diagnose
   DischargeCutOffSoC:
@@ -905,6 +913,10 @@ class:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
     name: Unabhängige Phasenleistungssteuerung
+  InfluxDBLogLevel:
+    attributes:
+      comment: Die Protokollierungsstufe der InfluxDB-Schnittstelle
+    name: InfluxDB-Protokollstufe
   InfluxDBQueries:
     name: InfluxDB-Abfragen
   InfluxDBQueryErrors:
@@ -1176,6 +1188,10 @@ class:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
     name: MPPT-Anzahl
+  MQTTLogLevel:
+    attributes:
+      comment: Die Protokollierungsstufe der MQTT-Schnittstelle
+    name: MQTT-Protokollstufe
   MQTTPhysicalPublishes:
     name: MQTT Physische Veröffentlichungen
   MQTTPublishFailures:
@@ -1237,7 +1253,7 @@ class:
       source_range: Modbus-Register {start}-{end}
     name: Max. Blindleistungsanpassung
   MetricsService:
-    name: Sigenergy-Metriken
+    name: Sigenergy2MQTT-Metriken
   MinActivePowerAdjustment:
     attributes:
       source: Modbus-Register {address}
@@ -1252,6 +1268,10 @@ class:
     name: Aktive Modbus-Sperren
   ModbusCacheHits:
     name: Modbus-Cache-Treffer
+  ModbusLogLevel:
+    attributes:
+      comment: Die Protokollierungsstufe der Modbus-Schnittstelle
+    name: Modbus-Protokollstufe
   ModbusPhysicalReads:
     name: Physikalische Modbus-Lesevorgänge
   ModbusReadErrors:
@@ -2220,12 +2240,28 @@ class:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
     name: PV Max. Leistungsgrenze
+  PVOutputCalcDebugLogging:
+    attributes:
+      comment: Wenn diese Option aktiviert ist, wird die Aggregation der Werte für den Upload zu PVOutput auf der Ebene `DEBUG` protokolliert. Dies gilt nur, wenn die PVOutput-Protokollstufe auf DEBUG eingestellt ist.
+    name: Fehlerbehebung bei der Berechnung des PVOutput-Werts
+  PVOutputLogLevel:
+    attributes:
+      comment: Die Protokollierungsstufe der PVOutput-Schnittstelle
+    name: PVOutput-Protokollierungsstufe
   PVOutputOutputService:
     name: PVOutput Ausgabe-Service hinzufügen
   PVOutputStatusService:
     name: PVOutput Status-Service hinzufügen
+  PVOutputUpdateDebugLogging:
+    attributes:
+      comment: Wenn diese Option aktiviert ist, wird die Aktualisierung der Werte für den Upload an PVOutput auf der DEBUG-Ebene protokolliert. Gilt nur, wenn die PVOutput-Protokollstufe auf DEBUG eingestellt ist.
+    name: Fehlerbehebung bei der Aktualisierung des PVOutput-Werts
   PVOutputUploadErrors:
     name: PVOutput-Upload-Fehler
+  PVOutputUploadLogLevel:
+    attributes:
+      comment: Die Protokollierungsstufe für die PVOutput-Upload-Nutzdaten. Wenn die allgemeine PVOutput-Protokollierungsstufe auf einen höheren Wert als den für diese Option festgelegten Wert eingestellt ist (z. B. wenn diese Option auf „INFO“ und die PVOutput-Protokollierungsstufe auf „WARNING“ eingestellt ist), werden die Upload-Protokollmeldungen unterdrückt.
+    name: Protokollierungsstufe für den PVOutput-Upload
   PVOutputUploadMax:
     name: PVOutput Hochladen Max
   PVOutputUploadMean:
@@ -2262,6 +2298,10 @@ class:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
     name: Spannung
+  PersistenceDebugging:
+    attributes:
+      comment: Debugging aller Vorgänge zur Speicherung des Zustands (Persistenz) aktivieren
+    name: Debugging der Persistenz
   PhaseActivePowerFixedAdjustmentTargetValue:
     attributes:
       comment: Nur gültig, wenn der Ausgabetyp L1/L2/L3/N ist. Remote EMS muss aktiviert sein und das EMS muss sich im PCS-Fernsteuerungsmodus befinden, damit dieses Register wirksam wird.
@@ -2523,6 +2563,10 @@ class:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
     name: Remote-EMS-Grenzwert
+  RepeatedStatePublishInterval:
+    attributes:
+      comment: Das Intervall in Sekunden, in dem wiederholte Zustände veröffentlicht werden. (Wiederholte Zustände treten auf, wenn der erfasste Zustand mit dem zuvor gelesenen identisch ist.) <0=Nie 0=Immer >0=Intervall
+    name: Intervall für die wiederholte Statusübermittlung
   Reserved30073:
     attributes:
       source: Modbus-Register {address}
@@ -2664,10 +2708,20 @@ class:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
     name: Gesamte Drittanbieter-PV-Produktion
+  SanityCheckDefaultKW:
+    attributes:
+      comment: Der Standardwert in kW, der für Plausibilitätsprüfungen verwendet wird, um die Maximal- und Minimalwerte für Leistungs- und Energiesensoren zu validieren. Der angegebene Wert gilt als Maximalwert in kW, und der Minimalwert wird durch Multiplikation mit -1 abgeleitet (wenn der Optionswert beispielsweise 500 beträgt, beträgt der Minimalwert -500). Der Wert wird pro Sekunde angewendet, sodass die tatsächliche Plausibilitätsprüfung für einen Sensor ein Vielfaches des Abtastintervalls beträgt. Messwerte außerhalb des Bereichs werden ignoriert und als Warnmeldung im Protokoll gemeldet.
+    name: Standard-Plausibilitätsprüfung
+  SanityCheckFailuresIncrement:
+    attributes:
+      comment: Wenn diese Option aktiviert ist, wird die Anzahl der Sensor-Auslesefehler erhöht, sobald eine Plausibilitätsprüfung fehlschlägt. Überschreiten die Sensor-Auslesefehler den zulässigen Schwellenwert für Fehler, wird der Sensor bis zum nächsten Neustart deaktiviert.
+    name: Anstieg der Fehler bei der Plausibilitätsprüfung
   SelectSensor:
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+  SettingsService:
+    name: Sigenergy2MQTT-Laufzeitkonfiguration
   ShutdownTime:
     attributes:
       source: Modbus-Register {address}

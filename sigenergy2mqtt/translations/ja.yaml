@@ -238,6 +238,10 @@ class:
       source_range: Modbusレジスタ {start}-{end}
     no_alarm: アラームなし
     unknown_alarm: 不明 (bit{bit}∈{value})
+  ApplicationLogLevel:
+    attributes:
+      comment: sigenergy2mqtt アプリケーションのロギングレベル
+    name: アプリケーションのログレベル
   AvailableBatteryChargeEnergy:
     attributes:
       source: Modbusレジスタ {address}
@@ -465,6 +469,10 @@ class:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: 日次放電電力量
+  DiagnosticsLogLevel:
+    attributes:
+      comment: sigenergy2mqtt 診断モジュールのロギングレベル
+    name: 診断ログレベル
   DiagnosticsService:
     name: 診断
   DischargeCutOffSoC:
@@ -905,6 +913,10 @@ class:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: 独立相電力制御
+  InfluxDBLogLevel:
+    attributes:
+      comment: InfluxDB インターフェースのロギングレベル
+    name: InfluxDBのログレベル
   InfluxDBQueries:
     name: InfluxDB クエリ
   InfluxDBQueryErrors:
@@ -1176,6 +1188,10 @@ class:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: MPPT数
+  MQTTLogLevel:
+    attributes:
+      comment: MQTTインターフェースのロギングレベル
+    name: MQTT ログレベル
   MQTTPhysicalPublishes:
     name: MQTT 物理パブリッシュ
   MQTTPublishFailures:
@@ -1237,7 +1253,7 @@ class:
       source_range: Modbusレジスタ {start}-{end}
     name: 最大無効電力調整
   MetricsService:
-    name: Sigenergyメトリクス
+    name: Sigenergy2MQTT メトリクス
   MinActivePowerAdjustment:
     attributes:
       source: Modbusレジスタ {address}
@@ -1252,6 +1268,10 @@ class:
     name: Modbusアクティブロック
   ModbusCacheHits:
     name: Modbusキャッシュヒット
+  ModbusLogLevel:
+    attributes:
+      comment: Modbusインターフェースのロギングレベル
+    name: Modbus ログレベル
   ModbusPhysicalReads:
     name: Modbus物理読み取り
   ModbusReadErrors:
@@ -2220,12 +2240,28 @@ class:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: PV最大電力制限
+  PVOutputCalcDebugLogging:
+    attributes:
+      comment: 有効にすると、PVOutput へのアップロード用の値の集計が `DEBUG` レベルでログに記録されます。これは、PVOutput のログレベルが DEBUG に設定されている場合にのみ適用されます。
+    name: PVOutput 値の計算に関するデバッグ
+  PVOutputLogLevel:
+    attributes:
+      comment: PVOutput インターフェースのロギングレベル
+    name: PVOutput ログレベル
   PVOutputOutputService:
     name: PVOutput出力サービス追加
   PVOutputStatusService:
     name: PVOutputステータスサービス追加
+  PVOutputUpdateDebugLogging:
+    attributes:
+      comment: 有効にすると、PVOutputへのアップロード用の値の更新がDEBUGレベルでログに記録されます。これは、PVOutputのログレベルがDEBUGに設定されている場合にのみ適用されます。
+    name: PVOutput 値の更新に関するデバッグ
   PVOutputUploadErrors:
     name: PV出力アップロードエラー
+  PVOutputUploadLogLevel:
+    attributes:
+      comment: PVOutput アップロードのペイロードのログレベル。PVOutput の全体的なログレベルが、このオプションで指定されたレベルよりも高いレベルに設定されている場合（例：このオプションが INFO に設定され、PVOutput のログレベルが WARNING に設定されている場合）、アップロードのログメッセージは非表示になります。
+    name: PVOutput アップロードのログレベル
   PVOutputUploadMax:
     name: PV出力アップロード最大値
   PVOutputUploadMean:
@@ -2262,6 +2298,10 @@ class:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: 電圧
+  PersistenceDebugging:
+    attributes:
+      comment: すべてのステートストア（永続化）操作のデバッグを有効にする
+    name: 永続性のデバッグ
   PhaseActivePowerFixedAdjustmentTargetValue:
     attributes:
       comment: 出力タイプが L1/L2/L3/N の場合のみ有効です。このレジスタを有効にするには、リモート EMS が有効になっており、EMS が PCS リモート制御モードになっている必要があります。
@@ -2440,7 +2480,7 @@ class:
   PowerPlant:
     name: 'Sigenergy システム {plant_suffix}'
   ProtocolPublished:
-    name: プロトコル公開
+    name: プロトコルの公開
   ProtocolVersionSensor:
     name: プロトコルバージョン
   QSAdjustmentTargetValue:
@@ -2523,6 +2563,10 @@ class:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: リモートEMS制限
+  RepeatedStatePublishInterval:
+    attributes:
+      comment: 繰り返し状態が公開される間隔（秒単位）。（繰り返し状態は、取得された状態が前回の読み取り結果と同一である場合に発生します。）<0= nunca 0=常に >0=間隔
+    name: 状態の更新間隔（繰り返し）
   Reserved30073:
     attributes:
       source: Modbusレジスタ {address}
@@ -2664,10 +2708,20 @@ class:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: サードパーティPV合計発電量
+  SanityCheckDefaultKW:
+    attributes:
+      comment: 電力およびエネルギーセンサーの最大値と最小値を検証するための妥当性チェックに使用されるデフォルトのkW値。指定された値はkW単位の最大値として扱われ、最小値はこれに-1を乗じて算出されます（例：オプション値が500の場合、最小値は-500となります）。 この値は1秒ごとに適用されるため、センサーに対して実際に適用される妥当性チェックは、スキャン間隔の倍数となります。範囲外の測定値は無視され、警告ログメッセージとして報告されます。
+    name: デフォルト設定の妥当性チェック
+  SanityCheckFailuresIncrement:
+    attributes:
+      comment: この機能を有効にすると、サニティチェックに失敗した際にセンサー読み取り失敗の回数が加算されます。センサー読み取り失敗の回数が許容エラー閾値を超えた場合、そのセンサーは次回の再起動まで無効化されます。
+    name: サニティチェックの失敗件数の増加
   SelectSensor:
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
+  SettingsService:
+    name: Sigenergy2MQTT ランタイム設定
   ShutdownTime:
     attributes:
       source: Modbusレジスタ {address}

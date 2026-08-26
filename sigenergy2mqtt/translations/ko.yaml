@@ -238,6 +238,10 @@ class:
       source_range: Modbus 레지스터 {start}-{end}
     no_alarm: 알람 없음
     unknown_alarm: 알 수 없음 (bit{bit}∈{value})
+  ApplicationLogLevel:
+    attributes:
+      comment: sigenergy2mqtt 애플리케이션의 로깅 수준
+    name: 애플리케이션 로그 수준
   AvailableBatteryChargeEnergy:
     attributes:
       source: Modbus 레지스터 {address}
@@ -465,6 +469,10 @@ class:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: 일일 방전 에너지
+  DiagnosticsLogLevel:
+    attributes:
+      comment: sigenergy2mqtt 진단 모듈의 로깅 수준
+    name: 진단 로그 수준
   DiagnosticsService:
     name: 진단
   DischargeCutOffSoC:
@@ -905,6 +913,10 @@ class:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: 독립 상 전력 제어
+  InfluxDBLogLevel:
+    attributes:
+      comment: InfluxDB 인터페이스의 로깅 수준
+    name: InfluxDB 로그 수준
   InfluxDBQueries:
     name: InfluxDB 쿼리
   InfluxDBQueryErrors:
@@ -1176,6 +1188,10 @@ class:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: MPPT 수
+  MQTTLogLevel:
+    attributes:
+      comment: MQTT 인터페이스 로깅 수준
+    name: MQTT 로그 수준
   MQTTPhysicalPublishes:
     name: MQTT 물리 패블리시
   MQTTPublishFailures:
@@ -1237,7 +1253,7 @@ class:
       source_range: Modbus 레지스터 {start}-{end}
     name: 최대 무효 전력 조정
   MetricsService:
-    name: Sigenergy 메트릭
+    name: Sigenergy2MQTT 메트릭스
   MinActivePowerAdjustment:
     attributes:
       source: Modbus 레지스터 {address}
@@ -1252,6 +1268,10 @@ class:
     name: Modbus 활성 잠금
   ModbusCacheHits:
     name: Modbus 캐시 적중
+  ModbusLogLevel:
+    attributes:
+      comment: Modbus 인터페이스 로깅 수준
+    name: Modbus 로그 수준
   ModbusPhysicalReads:
     name: Modbus 물리적 읽기
   ModbusReadErrors:
@@ -2220,12 +2240,28 @@ class:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: PV 최대 전력 제한
+  PVOutputCalcDebugLogging:
+    attributes:
+      comment: 이 기능이 활성화되면 PVOutput에 업로드하기 위한 값의 집계 과정이 `DEBUG` 수준으로 기록됩니다. PVOutput 로그 수준이 DEBUG로 설정된 경우에만 적용됩니다.
+    name: PVOutput 값 계산 디버깅
+  PVOutputLogLevel:
+    attributes:
+      comment: PVOutput 인터페이스 로깅 수준
+    name: PVOutput 로그 수준
   PVOutputOutputService:
     name: PVOutput 출력 서비스 추가
   PVOutputStatusService:
     name: PVOutput 상태 서비스 추가
+  PVOutputUpdateDebugLogging:
+    attributes:
+      comment: 이 기능이 활성화되면 PVOutput에 업로드하기 위한 값 업데이트 내역이 DEBUG 수준으로 기록됩니다. PVOutput 로그 수준이 DEBUG로 설정된 경우에만 적용됩니다.
+    name: PVOutput 값 업데이트 디버깅
   PVOutputUploadErrors:
     name: PVOutput 업로드 오류
+  PVOutputUploadLogLevel:
+    attributes:
+      comment: 'PVOutput 업로드 페이로드 로깅 수준. 전체 PVOutput 로깅 수준이 이 옵션에 지정된 수준보다 높게 설정된 경우(예: 이 옵션이 INFO로 설정되어 있고 PVOutput 로깅 수준이 WARNING으로 설정된 경우), 업로드 로그 메시지가 표시되지 않습니다.'
+    name: PVOutput 업로드 로그 수준
   PVOutputUploadMax:
     name: PVOutput 업로드 최대
   PVOutputUploadMean:
@@ -2262,6 +2298,10 @@ class:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: 전압
+  PersistenceDebugging:
+    attributes:
+      comment: 모든 상태 저장(퍼시스턴스) 작업에 대한 디버깅 활성화
+    name: 지속성 디버깅
   PhaseActivePowerFixedAdjustmentTargetValue:
     attributes:
       comment: 출력 유형이 L1/L2/L3/N인 경우에만 유효합니다. 이 레지스터가 적용되려면 원격 EMS가 활성화되어야 하고 EMS가 PCS 원격 제어 모드에 있어야 합니다.
@@ -2440,7 +2480,7 @@ class:
   PowerPlant:
     name: Sigenergy 발전소 {plant_suffix}
   ProtocolPublished:
-    name: 프로토콜 게시됨
+    name: 프로토콜 공개됨
   ProtocolVersionSensor:
     name: 프로토콜 버전
   QSAdjustmentTargetValue:
@@ -2523,6 +2563,10 @@ class:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: 원격 EMS 제한
+  RepeatedStatePublishInterval:
+    attributes:
+      comment: 반복 상태가 게시되는 간격(초 단위). (반복 상태는 수집된 상태가 이전에 읽은 상태와 동일할 때 발생합니다.) <0=절대 안 함 0=항상 >0=간격
+    name: 상태 업데이트 간격(반복)
   Reserved30073:
     attributes:
       source: Modbus 레지스터 {address}
@@ -2664,10 +2708,20 @@ class:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: 제3자 PV 총 생산량
+  SanityCheckDefaultKW:
+    attributes:
+      comment: '전력 및 에너지 센서의 최대값과 최소값을 검증하기 위한 타당성 검사에 사용되는 기본 kW 값입니다. 지정된 값은 kW 단위의 최대값으로 간주되며, 최소값은 해당 값에 -1을 곱하여 산출됩니다(예: 옵션 값이 500인 경우, 최소값은 -500이 됩니다). 이 값은 초 단위로 적용되므로, 센서에 실제로 적용되는 타당성 검사는 스캔 간격의 배수가 됩니다. 범위 밖의 측정값은 무시되며 경고 로그 메시지로 보고됩니다.'
+    name: 기본값 유효성 검사
+  SanityCheckFailuresIncrement:
+    attributes:
+      comment: 이 기능이 활성화되어 있는 경우, 정상성 검사(sanity check)에 실패하면 센서 판독 실패 횟수가 증가합니다. 센서 판독 실패 횟수가 허용된 오류 임계값을 초과하면, 다음 재시작 시까지 해당 센서가 비활성화됩니다.
+    name: 정상성 검사 실패 증가
   SelectSensor:
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+  SettingsService:
+    name: Sigenergy2MQTT 런타임 구성
   ShutdownTime:
     attributes:
       source: Modbus 레지스터 {address}

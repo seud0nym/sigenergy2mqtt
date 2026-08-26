@@ -17,7 +17,7 @@ from pymodbus.exceptions import ModbusException
 from pymodbus.pdu import ModbusPDU
 
 from sigenergy2mqtt.common import Constants, ConsumptionMethod, FirmwareVersion, HybridInverter, InputType, ProtocolApplies, ProtocolVersion, PVInverter, service_health_registry
-from sigenergy2mqtt.config import active_config, configure_root_logger, initialize_async, is_docker
+from sigenergy2mqtt.config import SettingsService, active_config, configure_root_logger, initialize_async, is_docker
 from sigenergy2mqtt.devices import PID, PSS, ACCharger, DCCharger, Device, Inverter, PowerPlant, bind_cross_device_sensors
 from sigenergy2mqtt.diagnostics import DiagnosticsService
 from sigenergy2mqtt.influxdb import get_influxdb_services
@@ -576,6 +576,8 @@ def setup_services(configs: list[ThreadConfig], protocol_version: ProtocolVersio
         configs.insert(0, mon_thread_cfg)
 
     svc_thread_cfg = ThreadConfig.create(name="Services", host=None, port=None)
+
+    svc_thread_cfg.add_device(SettingsService())
 
     if active_config.diagnostics.enabled or is_docker():
         svc_thread_cfg.add_device(DiagnosticsService())

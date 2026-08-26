@@ -8,165 +8,202 @@ Combined reference for CLI flags, environment variables, and YAML configuration 
 ## General
 
 <a id="opt_config_path"></a>
-### Config Path
-- CLI: `-c, --config`
-- ENV: `SIGENERGY2MQTT_CONFIG`
-- Config key: `config-path`
-
-The path to the YAML configuration file. The defaults are: 
+### Configuration File Path
+<table>
+<tr><td><small>CLI</small></td><td><small><code>-c, --config</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_CONFIG</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
+The path to the YAML configuration file. The defaults are:
 
 - `/etc/sigenergy2mqtt.yaml` for Linux
 - `/data/sigenergy2mqtt.yaml` for Docker
 - `/config/sigenergy2mqtt.yaml` for Home Assistant (for the Home Assistant app, it should be placed in the `addon_configs/4cee8162_sigenergy2mqtt/` directory)
-
-
 <a id="opt_consumption"></a>
 ### Consumption
-- CLI: `--consumption`
-- ENV: `SIGENERGY2MQTT_CONSUMPTION`
-- Config key: `consumption`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--consumption</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_CONSUMPTION</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>consumption</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 Set the method of calculating the Plant Consumed Power sensor. Valid values are:
 
 - `calculated` - calculate the consumed power from the other sensors
 - `total` - use the Total Load Power register
 - `general` - use the General Load Power register
-
 The default is `total`. This option is ignored on firmware earlier than that supporting Modbus Protocol V2.8.
 
 <a id="opt_language"></a>
 ### Language
-- CLI: `--language`
-- ENV: `SIGENERGY2MQTT_LANGUAGE`
-- Config key: `language`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--language</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_LANGUAGE</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>language</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The language to use for translations. Valid values are determined from the translation files available in the 'translations' directory.
 
 <a id="opt_log_level"></a>
 ### Log Level
-- CLI: `-l, --log-level`
-- ENV: `SIGENERGY2MQTT_LOG_LEVEL`
-- Config key: `log-level`
-
-The sigenergy2mqtt default logging level. Must be one of:
+<table>
+<tr><td><small>CLI</small></td><td><small><code>-l, --log-level</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_LOG_LEVEL</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>log-level</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>sigenergy2mqtt/config/log_level/set</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>select.sigenergy2mqtt_config_log_level</code></small></td></tr>
+</table>
+The sigenergy2mqtt application logging level. Must be one of:
 
 - `DEBUG`
 - `INFO`
 - `WARNING`
 - `ERROR`
 - `CRITICAL`
-
 The default is `INFO`.
 
 <a id="opt_log_fmt"></a>
 ### Log Format
-- CLI: `--log-fmt`
-- ENV: `SIGENERGY2MQTT_LOG_FMT`
-- Config key: `log-fmt`
-
-Set the log format. 
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--log-fmt</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_LOG_FMT</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>log-fmt</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
+Set the log format.
 
 e.g "{asctime} {levelname:<8} sigenergy2mqtt:{module:.<15.15}{lineno:04d} {message}"
 
-If not specified, the default depends on the runtime environment: 
-- includes timestamp and 'sigenergy2mqtt:' prefix for interactive use; 
-- includes timestamp but no prefix for structured container log collectors; 
+If not specified, the default depends on the runtime environment:
+- includes timestamp and 'sigenergy2mqtt:' prefix for interactive use;
+- includes timestamp but no prefix for structured container log collectors;
 - no timestamp for init systems (systemd, etc.) that add their own.
-
 <a id="opt_no_ems_mode_check"></a>
 ### No Ems Mode Check
-- CLI: `--no-ems-mode-check`
-- ENV: `SIGENERGY2MQTT_NO_EMS_MODE_CHECK`
-- Config key: `no-ems-mode-check`
-
-Turn off the validation that disables ESS Max Charging Discharging Limits and PV Max Power Limits when Remote EMS Control Mode is not Command Charging/Discharging. 
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--no-ems-mode-check</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_NO_EMS_MODE_CHECK</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>no-ems-mode-check</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
+Turn off the validation that disables ESS Max Charging Discharging Limits and PV Max Power Limits when Remote EMS Control Mode is not Command Charging/Discharging.
 
 Ignored for firmware SPC113 and later as these limits are globally available in those versions.
 
 <a id="opt_no_metrics"></a>
 ### No Metrics
-- CLI: `--no-metrics`
-- ENV: `SIGENERGY2MQTT_NO_METRICS`
-- Config key: `no-metrics`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--no-metrics</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_NO_METRICS</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>no-metrics</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 If true, sigenergy2mqtt will not publish any metrics to MQTT. However, metrics will still be recorded for publishing to the the diagnostics web UI.
 
 <a id="opt_repeated_state_publish_interval"></a>
 ### Repeated State Publish Interval
-- CLI: `--repeated-state-publish-interval`
-- ENV: `SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL`
-- Config key: `repeated-state-publish-interval`
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--repeated-state-publish-interval</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>repeated-state-publish-interval</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>sigenergy2mqtt/config/repeated_state_publish_interval/set</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>number.sigenergy2mqtt_config_repeated_state_publish_interval</code></small></td></tr>
+</table>
+The interval in seconds at which repeated states are published. (Repeated states occur when the state that is acquired is identical to the previous read.)
 
-The interval in seconds at which repeated states are published. (Repeated states occur when the state that is acquired is identical to the previous read.) 
-
-- If < 0, repeated states are never published. 
-- If 0, repeated states are always published. 
+- If < 0, repeated states are never published.
+- If 0, repeated states are always published.
 - If > 0, repeated states are published at the specified interval.
-
 The default is 0 (always publish). Setting to a non-zero number can reduce network traffic and the load on the MQTT server.
 
 <a id="opt_monitor_topic_updates"></a>
 ### Monitor Topic Updates
-- CLI: `--no-topic-update-monitoring`
-- ENV: `SIGENERGY2MQTT_TOPIC_UPDATE_MONITORING`
-- Config key: `monitor-topic-updates`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--no-topic-update-monitoring</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_TOPIC_UPDATE_MONITORING</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>monitor-topic-updates</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 If `false`, the monitor service will not track expected MQTT topic updates and raise health warnings when topics are overdue. The default is `true`.
 
 <a id="opt_sanity_check_default_kw"></a>
 ### Sanity Check Default Kw
-- CLI: `--sanity-check-default-kw`
-- ENV: `SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW`
-- Config key: `sanity-check-default-kw`
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--sanity-check-default-kw</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>sanity-check-default-kw</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>sigenergy2mqtt/config/sanity_check_default_kw/set</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>number.sigenergy2mqtt_config_sanity_check_default_kw</code></small></td></tr>
+</table>
+The default value used for sanity checks to validate the maximum and minimum values for power and energy sensors.
 
-The default value used for sanity checks to validate the maximum and minimum values for power and energy sensors. 
+The specified value is taken as the maximum in kW, and the minimum value is derived by multiplying by -1 (e.g. if the option value is 500, the minimum value will be -500).
 
-The specified value is taken as the maximum in kW, and the minimum value is derived by multiplying by -1 (e.g. if the option value is 500, the minimum value will be -500). 
-
-The value is applied per second, so the actual sanity check applied to a sensor is a multiple of the scan-interval. 
+The value is applied per second, so the actual sanity check applied to a sensor is a multiple of the scan-interval.
 
 For energy sensors, the check is applied to the delta value. Readings outside of the range are ignored and reported as a warning log message.
 
 <a id="opt_sanity_check_failures_increment"></a>
 ### Sanity Check Failures Increment
-- CLI: `n/a`
-- ENV: `SIGENERGY2MQTT_SANITY_CHECK_FAILURES_INCREMENT`
-- Config key: `sanity-check-failures-increment`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_SANITY_CHECK_FAILURES_INCREMENT</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>sanity-check-failures-increment</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>sigenergy2mqtt/config/sanity_check_failures_increment/set</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>switch.sigenergy2mqtt_config_sanity_check_failures_increment</code></small></td></tr>
+</table>
 If true, the number of sensor read failures will be incremented when a sanity check fails. If false, the number of sensor read failures will not be incremented.
+
+If sensor read failures pass the allowed threshold for errors, the sensor will be disabled until the next restart.
 
 <a id="opt_sensor_debug_logging"></a>
 ### Sensor Debug Logging
-- CLI: `n/a`
-- ENV: `n/a`
-- Config key: `sensor-debug-logging`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>sensor-debug-logging</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 When log-level is `DEBUG`, controls whether individual individual sensors debugging messages are displayed. If false, individual sensor debugging may be enabled through sensor-overrides.
 
 <a id="opt_debug_sensor"></a>
 ### Debug Logging
-- CLI: `-d, --debug-sensor`
-- ENV: `SIGENERGY2MQTT_DEBUG_SENSOR`
-- Config key: `n/a`
+<table>
+<tr><td><small>CLI</small></td><td><small><code>-d, --debug-sensor</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_DEBUG_SENSOR</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
+Specify a sensor to be debugged using either the full entity id, a partial entity id, the full sensor class name, or a partial sensor class name.
 
-Specify a sensor to be debugged using either the full entity id, a partial entity id, the full sensor class name, or a partial sensor class name. 
-
-For example, specifying `daily` would match all sensors with daily in their entity id. From 2026.1.5, the sensor may also be specified as a regular expression (e.g. ^PowerFactor$ will match *only* the PowerFactor class name, but not InverterPowerFactorAdjustmentFeedback). 
+For example, specifying `daily` would match all sensors with daily in their entity id. From 2026.1.5, the sensor may also be specified as a regular expression (e.g. ^PowerFactor$ will match *only* the PowerFactor class name, but not InverterPowerFactorAdjustmentFeedback).
 
 If specified, [Log Level](#opt_log_level) is also forced to `DEBUG`.
 
 <a id="opt_state_dir"></a>
 ### State Dir
-- CLI: `n/a`
-- ENV: `SIGENERGY2MQTT_STATE_DIR`
-- Config key: `state-dir`
-
-The directory in which to store persistent state files. The defaults are: 
+<table>
+<tr><td><small>CLI</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_STATE_DIR</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>state-dir</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
+The directory in which to store persistent state files. The defaults are:
 
 - `/var/lib/` for Linux
 - `/data/` for Docker
 - `/config/` for Home Assistant
-
 A sub-directory will be created in the specified directory called `sigenergy2mqtt` to store the files.
 
 
@@ -175,69 +212,89 @@ A sub-directory will be created in the specified directory called `sigenergy2mqt
 
 <a id="opt_diagnostics_enabled"></a>
 ### Enabled
-- CLI: `--no-diagnostics`
-- ENV: `SIGENERGY2MQTT_DIAGNOSTICS_ENABLED`
-- Config key: `diagnostics.enabled`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--no-diagnostics</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_DIAGNOSTICS_ENABLED</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>diagnostics.enabled</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 Set to `false` to disable the diagnostics and health check web server. Note: If running  within Docker, this flag is ignored and treated as true.
 
 <a id="opt_diagnostics_host"></a>
 ### Host
-- CLI: `--diagnostics-host`
-- ENV: `SIGENERGY2MQTT_DIAGNOSTICS_HOST`
-- Config key: `diagnostics.host`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--diagnostics-host</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_DIAGNOSTICS_HOST</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>diagnostics.host</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The address to which the diagnostics and health check web server is to be bound. Default is `127.0.0.1` (localhost).
 
 <a id="opt_diagnostics_port"></a>
 ### Port
-- CLI: `--diagnostics-port`
-- ENV: `SIGENERGY2MQTT_DIAGNOSTICS_PORT`
-- Config key: `diagnostics.port`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--diagnostics-port</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_DIAGNOSTICS_PORT</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>diagnostics.port</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The diagnostics and health check web server listening port. Must be between `1` and `65535`. Default is `8502`. Note: If running  within Docker, this setting is ignored and always uses the default to facilitate the Dockerfile HEALTHCHECK.
 
 <a id="opt_diagnostics_refresh_interval"></a>
 ### Refresh Interval
-- CLI: `--diagnostics-refresh-interval`
-- ENV: `SIGENERGY2MQTT_DIAGNOSTICS_REFRESH_INTERVAL`
-- Config key: `diagnostics.refresh-interval`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--diagnostics-refresh-interval</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_DIAGNOSTICS_REFRESH_INTERVAL</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>diagnostics.refresh-interval</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The diagnostics web page refresh interval in seconds. Must be greater than `0`. Default is `5.0`.
 
 <a id="opt_diagnostics_allowed_ips"></a>
 ### Allowed IPs
-- CLI: `--diagnostics-allowed-ips`
-- ENV: `SIGENERGY2MQTT_DIAGNOSTICS_ALLOWED_IPS`
-- Config key: `diagnostics.allowed-ips`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--diagnostics-allowed-ips</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_DIAGNOSTICS_ALLOWED_IPS</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>diagnostics.allowed-ips</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 List of allowed IP addresses for the diagnostics web server. If not specified, all IP addresses are allowed.
 
 <a id="opt_diagnostics_log_level"></a>
 ### Log Level
-- CLI: `-l, --diagnostics-log-level`
-- ENV: `SIGENERGY2MQTT_DIAGNOSTICS_LOG_LEVEL`
-- Config key: `diagnostics.log-level`
-
-The sigenergy2mqtt default logging level. Must be one of:
+<table>
+<tr><td><small>CLI</small></td><td><small><code>-l, --diagnostics-log-level</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_DIAGNOSTICS_LOG_LEVEL</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>diagnostics.log-level</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>sigenergy2mqtt/config/diagnostics/log_level/set</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>select.sigenergy2mqtt_config_diagnostics_log_level</code></small></td></tr>
+</table>
+The sigenergy2mqtt diagnostics module logging level. Must be one of:
 
 - `DEBUG`
 - `INFO`
 - `WARNING`
 - `ERROR`
 - `CRITICAL`
-
-The default is `WARNING`.
+The default is `INFO`.
 
 
 ## Health Check
 
 <a id="opt_health_check_enabled"></a>
 ### Enabled
-- CLI: `n/a`
-- ENV: `SIGENERGY2MQTT_HEALTH_CHECK_ENABLED`
-- Config key: `health-check.enabled`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_HEALTH_CHECK_ENABLED</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>health-check.enabled</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 Set to false to disable health checks and automatic restarts.
 
 > [!IMPORTANT]
@@ -245,34 +302,46 @@ Set to false to disable health checks and automatic restarts.
 
 <a id="opt_health_check_interval"></a>
 ### Interval
-- CLI: `n/a`
-- ENV: `SIGENERGY2MQTT_HEALTH_CHECK_INTERVAL`
-- Config key: `health-check.interval`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_HEALTH_CHECK_INTERVAL</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>health-check.interval</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The interval in seconds at which the health check runs. Default is `30`.
 
 <a id="opt_health_check_timeout"></a>
 ### Timeout
-- CLI: `n/a`
-- ENV: `SIGENERGY2MQTT_HEALTH_CHECK_TIMEOUT`
-- Config key: `health-check.timeout`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_HEALTH_CHECK_TIMEOUT</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>health-check.timeout</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The timeout in seconds for checking health states. Default is `5`.
 
 <a id="opt_health_check_start_period"></a>
 ### Start Period
-- CLI: `n/a`
-- ENV: `SIGENERGY2MQTT_HEALTH_CHECK_START_PERIOD`
-- Config key: `health-check.start-period`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_HEALTH_CHECK_START_PERIOD</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>health-check.start-period</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 Initial start period in seconds during which health check failures do not count towards retries. Default is `45`.
 
 <a id="opt_health_check_retries"></a>
 ### Retries
-- CLI: `n/a`
-- ENV: `SIGENERGY2MQTT_HEALTH_CHECK_RETRIES`
-- Config key: `health-check.retries`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_HEALTH_CHECK_RETRIES</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>health-check.retries</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 Number of consecutive health check failures allowed before a restart is requested. Default is `3`.
 
 
@@ -280,93 +349,123 @@ Number of consecutive health check failures allowed before a restart is requeste
 
 <a id="opt_home_assistant_device_name_prefix"></a>
 ### Device Name Prefix
-- CLI: `--hass-device-name-prefix`
-- ENV: `SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX`
-- Config key: `home-assistant.device-name-prefix`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--hass-device-name-prefix</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>home-assistant.device-name-prefix</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 An optional prefix to be prepended to MQTT device names.
 
 <a id="opt_home_assistant_discovery_prefix"></a>
 ### Discovery Prefix
-- CLI: `--hass-discovery-prefix`
-- ENV: `SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX`
-- Config key: `home-assistant.discovery-prefix`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--hass-discovery-prefix</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>home-assistant.discovery-prefix</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The Home Assistant discovery prefix. Only specify this option if you have changed the prefix in Home Assistant.
 
 <a id="opt_home_assistant_edit_pct_box"></a>
 ### Edit Pct Box
-- CLI: `--hass-edit-pct-box`
-- ENV: `SIGENERGY2MQTT_HASS_EDIT_PCT_BOX`
-- Config key: `home-assistant.edit-pct-box`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--hass-edit-pct-box</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_HASS_EDIT_PCT_BOX</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>home-assistant.edit-pct-box</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 When editing percentage sensors, use a numeric entry box to change the value (true) or use a slider to change the value (false).
 
 <a id="opt_home_assistant_enabled"></a>
 ### Enabled
-- CLI: `--hass-enabled`
-- ENV: `SIGENERGY2MQTT_HASS_ENABLED`
-- Config key: `home-assistant.enabled`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--hass-enabled</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_HASS_ENABLED</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>home-assistant.enabled</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 If true, sigenergy2mqtt will publish auto-discovery messages for Home Assistant to automatically configure the devices and entities.
 
 <a id="opt_home_assistant_entity_id_prefix"></a>
 ### Entity Id Prefix
-- CLI: `--hass-entity-id-prefix`
-- ENV: `SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX`
-- Config key: `home-assistant.entity-id-prefix`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--hass-entity-id-prefix</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>home-assistant.entity-id-prefix</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The prefix that will be applied to all entity ids.
 
 <a id="opt_home_assistant_republish_discovery_interval"></a>
 ### Republish Discovery Interval
-- CLI: `n/a`
-- ENV: `n/a`
-- Config key: `home-assistant.republish-discovery-interval`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>home-assistant.republish-discovery-interval</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The interval (in seconds) at which the Home Assistant discovery will be automatically republished. If not specified, discovery is only published at start-up.
 
 <a id="opt_home_assistant_sensors_enabled_by_default"></a>
 ### Sensors Enabled By Default
-- CLI: `n/a`
-- ENV: `SIGENERGY2MQTT_HASS_SENSORS_ENABLED_BY_DEFAULT`
-- Config key: `home-assistant.sensors-enabled-by-default`
-
-When sensors are initially discovered by Home Assistant, the majority will be disabled in the UI. If you want all sensors to be enabled, set this to true. 
+<table>
+<tr><td><small>CLI</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_HASS_SENSORS_ENABLED_BY_DEFAULT</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>home-assistant.sensors-enabled-by-default</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
+When sensors are initially discovered by Home Assistant, the majority will be disabled in the UI. If you want all sensors to be enabled, set this to true.
 
 Note that this setting is only applicable to the first time that the entity is discovered by Home Assistant. Once it has been discovered, you must control enabled/disabled through Home Assistant (unless you make the sensor unpublishable).
 
 <a id="opt_home_assistant_unique_id_prefix"></a>
 ### Unique Id Prefix
-- CLI: `--hass-unique-id-prefix`
-- ENV: `SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX`
-- Config key: `home-assistant.unique-id-prefix`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--hass-unique-id-prefix</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_HASS_UNIQUE_ID_PREFIX</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>home-assistant.unique-id-prefix</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The prefix string that will be prepended to the Home Assistant MQTT unique id. This should **NEVER** be changed after initial discovery has been published.
 
 <a id="opt_home_assistant_use_sigenergy_local_modbus_naming"></a>
 ### Use Sigenergy Local Modbus Naming
-- CLI: `--hass-sigenergy-local-modbus-naming`
-- ENV: `SIGENERGY2MQTT_HASS_SIGENERGY_LOCAL_MODBUS_NAMING`
-- Config key: `home-assistant.sigenergy-local-modbus-naming`
-
-If true, apply Sigenergy-Local-Modbus entity id, gain and unit mappings where available to help migration. 
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--hass-sigenergy-local-modbus-naming</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_HASS_SIGENERGY_LOCAL_MODBUS_NAMING</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>home-assistant.sigenergy-local-modbus-naming</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
+If true, apply Sigenergy-Local-Modbus entity id, gain and unit mappings where available to help migration.
 
 If enabled, [Entity Id Prefix](#opt_home_assistant_entity_id_prefix) must be `sigen` (the default).
 If enabled, [Use Simplified Topics](#opt_home_assistant_use_simplified_topics) is automatically forced to `false`.
 
 > [!IMPORTANT]
-> Note that this _only_ affects the **naming** of the entity id. The underlying unique id is unchanged and will be different from the unique id used by Sigenergy-Local-Modbus, so you will need to **remove** the old entities from Home Assistant before enabling this option. This also means that it is not possible to migrate historical data from Sigenergy-Local-Modbus to sigenergy2mqtt. 
+> Note that this _only_ affects the **naming** of the entity id. The underlying unique id is unchanged and will be different from the unique id used by Sigenergy-Local-Modbus, so you will need to **remove** the old entities from Home Assistant before enabling this option. This also means that it is not possible to migrate historical data from Sigenergy-Local-Modbus to sigenergy2mqtt.
 >
 > In addition, if you have previously run `sigenergy2mqtt` without this option enabled, then you will need to remove the existing MQTT devices from Home Assistant before enabling this option.
 
 <a id="opt_home_assistant_use_simplified_topics"></a>
 ### Use Simplified Topics
-- CLI: `--hass-use-simplified-topics`
-- ENV: `SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS`
-- Config key: `home-assistant.use-simplified-topics`
-
-If true, sigenergy2mqtt will use a simplified topic structure for Home Assistant entities. 
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--hass-use-simplified-topics</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>home-assistant.use-simplified-topics</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
+If true, sigenergy2mqtt will use a simplified topic structure for Home Assistant entities.
 
 The topic will be sigenergy2mqtt/object_id/state instead of the full Home Assistant topic structure of homeassistant/platform/device_id/object_id/state.
 
@@ -375,217 +474,293 @@ This setting is automatically forced to `false` when [Use Sigenergy Local Modbus
 
 ## InfluxDB
 
-The configuration for sending sensor data to InfluxDB. 
+The configuration for sending sensor data to InfluxDB.
 
 Both InfluxDB v2 (token/org/bucket) and v1 (username/password, retention-policy) authentication modes are supported; if a token is supplied the v2 API will be used.
 
 
 <a id="opt_influxdb_batch_size"></a>
 ### Batch Size
-- CLI: `--influxdb-batch-size`
-- ENV: `SIGENERGY2MQTT_INFLUX_BATCH_SIZE`
-- Config key: `influxdb.batch-size`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--influxdb-batch-size</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_INFLUX_BATCH_SIZE</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>influxdb.batch-size</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The maximum number of records to buffer before flushing to InfluxDB.
 
 <a id="opt_influxdb_bucket"></a>
 ### Bucket
-- CLI: `--influxdb-bucket`
-- ENV: `SIGENERGY2MQTT_INFLUX_BUCKET`
-- Config key: `influxdb.bucket`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--influxdb-bucket</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_INFLUX_BUCKET</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>influxdb.bucket</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The InfluxDB v2 bucket name. If not specified, the value of [Database](#opt_influxdb_database) will be used as the v2 bucket name.
 
 <a id="opt_influxdb_database"></a>
 ### Database
-- CLI: `--influxdb-database`
-- ENV: `SIGENERGY2MQTT_INFLUX_DATABASE`
-- Config key: `influxdb.database`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--influxdb-database</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_INFLUX_DATABASE</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>influxdb.database</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The name of the database to use. The default is sigenergy.
 
 <a id="opt_influxdb_default_measurement"></a>
 ### Default Measurement
-- CLI: `--influxdb-default-measurement`
-- ENV: `SIGENERGY2MQTT_INFLUX_DEFAULT_MEASUREMENT`
-- Config key: `influxdb.default-measurement`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--influxdb-default-measurement</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_INFLUX_DEFAULT_MEASUREMENT</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>influxdb.default-measurement</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The default measurement name to use for InfluxDB updates if a sensor does not have a Unit of Measurement defined. The default value is `state`.
 
 <a id="opt_influxdb_enabled"></a>
 ### Enabled
-- CLI: `--influxdb-enabled`
-- ENV: `SIGENERGY2MQTT_INFLUX_ENABLED`
-- Config key: `influxdb.enabled`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--influxdb-enabled</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_INFLUX_ENABLED</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>influxdb.enabled</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 If true, sigenergy2mqtt will publish the sensor data to InfluxDB.
 
 <a id="opt_influxdb_exclude"></a>
 ### Exclude
-- CLI: `--influxdb-exclude`
-- ENV: `SIGENERGY2MQTT_INFLUX_EXCLUDE`
-- Config key: `influxdb.exclude`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--influxdb-exclude</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_INFLUX_EXCLUDE</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>influxdb.exclude</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 A list of sensors to include when publishing to InfluxDB, using either the full or partial entity id or sensor class name, or a regular expression to be matched against the entity id or sensor class name. If not specified, no sensors will be excluded.
 
 <a id="opt_influxdb_flush_interval"></a>
 ### Flush Interval
-- CLI: `--influxdb-flush-interval`
-- ENV: `SIGENERGY2MQTT_INFLUX_FLUSH_INTERVAL`
-- Config key: `influxdb.flush-interval`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--influxdb-flush-interval</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_INFLUX_FLUSH_INTERVAL</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>influxdb.flush-interval</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The maximum interval (in seconds) between buffer flushes.
 
 <a id="opt_influxdb_host"></a>
 ### Host
-- CLI: `--influxdb-host`
-- ENV: `SIGENERGY2MQTT_INFLUX_HOST`
-- Config key: `influxdb.host`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--influxdb-host</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_INFLUX_HOST</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>influxdb.host</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The hostname or IP address of your InfluxDB database.
 
 <a id="opt_influxdb_include"></a>
 ### Include
-- CLI: `--influxdb-include`
-- ENV: `SIGENERGY2MQTT_INFLUX_INCLUDE`
-- Config key: `influxdb.include`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--influxdb-include</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_INFLUX_INCLUDE</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>influxdb.include</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 A list of sensors to include when publishing to InfluxDB, using either the full or partial entity id or sensor class name, or a regular expression to be matched against the entity id or sensor class name. If not specified, all sensors will be included.
 
 <a id="opt_influxdb_load_hass_history"></a>
 ### Load Home Assistant History
-- CLI: `--influxdb-load-hass-history`
-- ENV: `SIGENERGY2MQTT_INFLUX_LOAD_HASS_HISTORY`
-- Config key: `influxdb.load-hass-history`
-
-If true, sigenergy2mqtt will attempt to load historical data from the Home Assistant InfluxDB database. 
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--influxdb-load-hass-history</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_INFLUX_LOAD_HASS_HISTORY</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>influxdb.load-hass-history</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
+If true, sigenergy2mqtt will attempt to load historical data from the Home Assistant InfluxDB database.
 
 This will only work if sigenergy2mqtt is configured to use the same InfluxDB server as Home Assistant with the same credentials, and with a database name of `homeassistant`.
 
 <a id="opt_influxdb_log_level"></a>
 ### Log Level
-- CLI: `--influxdb-log-level`
-- ENV: `SIGENERGY2MQTT_INFLUX_LOG_LEVEL`
-- Config key: `influxdb.log-level`
-
-The InfluxDB interface logging level. Must be one of: 
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--influxdb-log-level</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_INFLUX_LOG_LEVEL</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>influxdb.log-level</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>sigenergy2mqtt/config/influxdb/log_level/set</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>select.sigenergy2mqtt_config_influxdb_log_level</code></small></td></tr>
+</table>
+The InfluxDB interface logging level. Must be one of:
 
 - `DEBUG`
 - `INFO`
 - `WARNING`
 - `ERROR`
 - `CRITICAL`
+The default is `WARNING` (warnings, errors and critical failures).
 
 <a id="opt_influxdb_max_retries"></a>
 ### Max Retries
-- CLI: `--influxdb-max-retries`
-- ENV: `SIGENERGY2MQTT_INFLUX_MAX_RETRIES`
-- Config key: `influxdb.max-retries`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--influxdb-max-retries</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_INFLUX_MAX_RETRIES</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>influxdb.max-retries</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The maximum number of retry attempts for failed operations.
 
 <a id="opt_influxdb_health_monitoring"></a>
 ### Health Monitoring
-- CLI: `--no-influxdb-health-monitoring`
-- ENV: `SIGENERGY2MQTT_INFLUX_HEALTH_MONITORING`
-- Config key: `influxdb.health-monitoring`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--no-influxdb-health-monitoring</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_INFLUX_HEALTH_MONITORING</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>influxdb.health-monitoring</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 If `false`, failures while writing to InfluxDB will not affect overall health status. The default is `true`.
 
 <a id="opt_influxdb_max_sync_workers"></a>
 ### Max Sync Workers
-- CLI: `--influxdb-max-sync-workers`
-- ENV: `SIGENERGY2MQTT_INFLUX_MAX_SYNC_WORKERS`
-- Config key: `influxdb.max-sync-workers`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--influxdb-max-sync-workers</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_INFLUX_MAX_SYNC_WORKERS</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>influxdb.max-sync-workers</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The maximum number of parallel sync operations.
 
 <a id="opt_influxdb_org"></a>
 ### Org
-- CLI: `--influxdb-org`
-- ENV: `SIGENERGY2MQTT_INFLUX_ORG`
-- Config key: `influxdb.org`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--influxdb-org</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_INFLUX_ORG</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>influxdb.org</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The InfluxDB v2 organization name or ID. If not specified, the v1 API will be used.
 
 <a id="opt_influxdb_password"></a>
 ### Password
-- CLI: `--influxdb-password`
-- ENV: `SIGENERGY2MQTT_INFLUX_PASSWORD`
-- Config key: `influxdb.password`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--influxdb-password</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_INFLUX_PASSWORD</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>influxdb.password</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The password for your InfluxDB database.
 
 <a id="opt_influxdb_pool_connections"></a>
 ### Pool Connections
-- CLI: `--influxdb-pool-connections`
-- ENV: `SIGENERGY2MQTT_INFLUX_POOL_CONNECTIONS`
-- Config key: `influxdb.pool-connections`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--influxdb-pool-connections</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_INFLUX_POOL_CONNECTIONS</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>influxdb.pool-connections</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The number of connections to cache in the pool.
 
 <a id="opt_influxdb_pool_maxsize"></a>
 ### Pool Maxsize
-- CLI: `--influxdb-pool-maxsize`
-- ENV: `SIGENERGY2MQTT_INFLUX_POOL_MAXSIZE`
-- Config key: `influxdb.pool-maxsize`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--influxdb-pool-maxsize</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_INFLUX_POOL_MAXSIZE</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>influxdb.pool-maxsize</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The maximum number of connections to allow in the pool.
 
 <a id="opt_influxdb_port"></a>
 ### Port
-- CLI: `--influxdb-port`
-- ENV: `SIGENERGY2MQTT_INFLUX_PORT`
-- Config key: `influxdb.port`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--influxdb-port</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_INFLUX_PORT</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>influxdb.port</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The listening port of the InfluxDB database. The default is 8086.
 
 <a id="opt_influxdb_query_interval"></a>
 ### Query Interval
-- CLI: `--influxdb-query-interval`
-- ENV: `SIGENERGY2MQTT_INFLUX_QUERY_INTERVAL`
-- Config key: `influxdb.query-interval`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--influxdb-query-interval</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_INFLUX_QUERY_INTERVAL</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>influxdb.query-interval</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The minimum interval (in seconds) between subsequent queries (rate limiting).
 
 <a id="opt_influxdb_read_timeout"></a>
 ### Read Timeout
-- CLI: `--influxdb-read-timeout`
-- ENV: `SIGENERGY2MQTT_INFLUX_READ_TIMEOUT`
-- Config key: `influxdb.read-timeout`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--influxdb-read-timeout</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_INFLUX_READ_TIMEOUT</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>influxdb.read-timeout</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The timeout for query and sync operations, in seconds.
 
 <a id="opt_influxdb_sync_chunk_size"></a>
 ### Sync Chunk Size
-- CLI: `--influxdb-sync-chunk-size`
-- ENV: `SIGENERGY2MQTT_INFLUX_SYNC_CHUNK_SIZE`
-- Config key: `influxdb.sync-chunk-size`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--influxdb-sync-chunk-size</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_INFLUX_SYNC_CHUNK_SIZE</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>influxdb.sync-chunk-size</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The maximum number of records to buffer before flushing to InfluxDB.
 
 <a id="opt_influxdb_token"></a>
 ### Token
-- CLI: `--influxdb-token`
-- ENV: `SIGENERGY2MQTT_INFLUX_TOKEN`
-- Config key: `influxdb.token`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--influxdb-token</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_INFLUX_TOKEN</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>influxdb.token</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The InfluxDB v2 authentication token. If supplied, v2 APIs (client or HTTP) will be used in preference to v1.
 
 <a id="opt_influxdb_username"></a>
 ### Username
-- CLI: `--influxdb-username`
-- ENV: `SIGENERGY2MQTT_INFLUX_USERNAME`
-- Config key: `influxdb.username`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--influxdb-username</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_INFLUX_USERNAME</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>influxdb.username</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The username for your InfluxDB database.
 
 <a id="opt_influxdb_write_timeout"></a>
 ### Write Timeout
-- CLI: `--influxdb-write-timeout`
-- ENV: `SIGENERGY2MQTT_INFLUX_WRITE_TIMEOUT`
-- Config key: `influxdb.write-timeout`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--influxdb-write-timeout</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_INFLUX_WRITE_TIMEOUT</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>influxdb.write-timeout</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The timeout for write operations to InfluxDB, in seconds.
 
 
@@ -593,28 +768,33 @@ The timeout for write operations to InfluxDB, in seconds.
 
 <a id="opt_modbus"></a>
 ### Modbus
-- CLI: `n/a`
-- ENV: `n/a`
-- Config key: `modbus`
+<table>
+<tr><td><small>CLI</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>modbus</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
+The array of Modbus device configurations.
 
-The array of Modbus device configurations. 
-
-Each device configuration must contain a host, and may optionally contain the port, inverters, ac-chargers, dc-chargers, log-level, read-only, read-write, write-only, no-remote-ems, scan-interval-low, scan-interval-medium, scan-interval-high, and scan-interval-realtime configurations. If you have multiple Sigenergy devices, you may specify multiple host/port configurations. 
+Each device configuration must contain a host, and may optionally contain the port, inverters, ac-chargers, dc-chargers, log-level, read-only, read-write, write-only, no-remote-ems, scan-interval-low, scan-interval-medium, scan-interval-high, and scan-interval-realtime configurations. If you have multiple Sigenergy devices, you may specify multiple host/port configurations.
 
 You can also automatically discover Sigenergy devices on your network, using either the command line option `[--modbus-auto-discovery](#opt_modbus_auto_discovery)=once` or the environment variable `[SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY](#opt_modbus_auto_discovery)=once`.
 
 <a id="opt_modbus_auto_discovery"></a>
 ### Modbus Auto Discovery
-- CLI: `--modbus-auto-discovery`
-- ENV: `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY`
-- Config key: `n\a`
-
-Controls auto-discovery of Sigenergy Modbus hosts and device IDs. 
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--modbus-auto-discovery</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>n\a</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
+Controls auto-discovery of Sigenergy Modbus hosts and device IDs.
 These settings are parsed in a preflight configuration pass before full Modbus validation, so discovery can run even when no `modbus` host entries are present yet.
 
-- If `once` is specified, auto-discovery will only occur if no existing auto-discovery results are found. 
-- If `force`, auto-discovery will overwrite any previously discovered Modbus hosts and device IDs. 
-
+- If `once` is specified, auto-discovery will only occur if no existing auto-discovery results are found.
+- If `force`, auto-discovery will overwrite any previously discovered Modbus hosts and device IDs.
 If not specified, auto-discovery is disabled unless [Host](#opt_modbus_host) is also _NOT_ specified.
 
 When auto-discovery is enabled and modbus hosts are already configured (via YAML or environment variable), those hosts are automatically included as `/32` networks at the start of the scan list, before any [Modbus Auto Discovery Networks](#opt_modbus_auto_discovery_networks). If a host is configured by hostname rather than IP address, it will be resolved to its IPv4 address.
@@ -623,26 +803,31 @@ Device IDs found during auto-discovery are **cumulative** with any manually conf
 
 <a id="opt_modbus_auto_discovery_exclude"></a>
 ### Modbus Auto Discovery Exclude
-- CLI: `--modbus-auto-discovery-exclude`
-- ENV: `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_EXCLUDE`
-- Config key: `n\a`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--modbus-auto-discovery-exclude</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_EXCLUDE</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>n\a</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 A comma-delimited list of Device class names to be excluded from auto-discovery. Valid class names are "ACCharger", "DCCharger", "PID", and "PSS". You cannot exclude Plant or Inverter.
 
 The default is "PID,PSS".
 
 <a id="opt_modbus_auto_discovery_networks"></a>
 ### Modbus Auto Discovery Networks
-- CLI: `--modbus-auto-discovery-networks`
-- ENV: `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_NETWORKS`
-- Config key: `n\a`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--modbus-auto-discovery-networks</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_NETWORKS</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>n\a</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 A list of IPv4 networks in CIDR notation to scan during auto-discovery. Use this setting to include networks that are accessible via routing but not directly attached to a network interface on the host running sigenergy2mqtt.
 
 Example values:
 - `192.168.1.0/24` — scan the entire 192.168.1.x subnet
 - `10.0.0.5/32` — scan a single specific host
-
 When specified via environment variable or CLI, networks should be comma-separated (e.g. `192.168.1.0/24,10.0.0.0/24`). In the YAML configuration file, use an array:
 
 ```yaml
@@ -656,184 +841,249 @@ modbus-auto-discovery-networks:
 
 <a id="opt_modbus_auto_discovery_max_device_id"></a>
 ### Modbus Auto Discovery Max Device ID
-- CLI: `--modbus-auto-discovery-max-device-id`
-- ENV: `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_MAX_DEVICE_ID`
-- Config key: `n/a`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--modbus-auto-discovery-max-device-id</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_MAX_DEVICE_ID</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The maximum device ID to use when performing auto-discovery of Sigenergy devices on the network. The default is `10`, and it must be between 1 and 246 (inclusive).
 
 This option can significantly speed up auto-discovery, at the risk of not finding devices that have been configured with a higher Device ID than the maximum allowed by this setting.
 
 <a id="opt_modbus_auto_discovery_ping_timeout"></a>
 ### Modbus Auto Discovery Ping Timeout
-- CLI: `--modbus-auto-discovery-ping-timeout`
-- ENV: `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_PING_TIMEOUT`
-- Config key: `n/a`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--modbus-auto-discovery-ping-timeout</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_PING_TIMEOUT</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The ping timeout, in seconds, to use when performing auto-discovery of Sigenergy devices on the network. The default is `0.5` seconds.
 
 <a id="opt_modbus_auto_discovery_retries"></a>
 ### Modbus Auto Discovery Retries
-- CLI: `--modbus-auto-discovery-retries`
-- ENV: `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_RETRIES`
-- Config key: `n/a`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--modbus-auto-discovery-retries</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_RETRIES</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The Modbus maximum retry count to use when performing auto-discovery of Sigenergy devices on the network. The default is `0`.
 
 <a id="opt_modbus_auto_discovery_timeout"></a>
 ### Modbus Auto Discovery Timeout
-- CLI: `--modbus-auto-discovery-timeout`
-- ENV: `SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_TIMEOUT`
-- Config key: `n/a`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--modbus-auto-discovery-timeout</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_TIMEOUT</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The Modbus timeout, in seconds, to use when performing auto-discovery of Sigenergy devices on the network. The default is `0.5` seconds.
 
 <a id="opt_modbus_inverter_device_id"></a>
 ### Inverter Device Id
-- CLI: `--modbus-inverter-device-id`
-- ENV: `SIGENERGY2MQTT_MODBUS_INVERTER_DEVICE_ID`
-- Config key: `modbus[].inverters`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--modbus-inverter-device-id</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_MODBUS_INVERTER_DEVICE_ID</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>modbus[].inverters</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The Sigenergy device Modbus Device ID(s).
 
 <a id="opt_modbus_accharger_device_id"></a>
 ### AC  Charger Device Id
-- CLI: `--modbus-accharger-device-id`
-- ENV: `SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID`
-- Config key: `modbus[].ac-chargers`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--modbus-accharger-device-id</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>modbus[].ac-chargers</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The Sigenergy AC Charger Modbus Device ID(s).
 
 <a id="opt_modbus_dccharger_device_id"></a>
 ### DC Charger Device Id
-- CLI: `--modbus-dccharger-device-id`
-- ENV: `SIGENERGY2MQTT_MODBUS_DCCHARGER_DEVICE_ID`
-- Config key: `modbus[].dc-chargers`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--modbus-dccharger-device-id</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_MODBUS_DCCHARGER_DEVICE_ID</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>modbus[].dc-chargers</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The Sigenergy DC Charger Modbus Device ID(s).
 
 <a id="opt_modbus_pid_device_id"></a>
 ### PID Device Id
-- CLI: `--modbus-pid-device-id`
-- ENV: `SIGENERGY2MQTT_MODBUS_PID_DEVICE_ID`
-- Config key: `modbus[].pid`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--modbus-pid-device-id</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_MODBUS_PID_DEVICE_ID</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>modbus[].pid</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The Sigenergy PID Modbus Device ID(s).
 
 <a id="opt_modbus_pss_device_id"></a>
 ### PSS Device Id
-- CLI: `--modbus-pss-device-id`
-- ENV: `SIGENERGY2MQTT_MODBUS_PSS_DEVICE_ID`
-- Config key: `modbus[].pss`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--modbus-pss-device-id</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_MODBUS_PSS_DEVICE_ID</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>modbus[].pss</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The Sigenergy PSS Modbus Device ID(s).
 
 <a id="opt_modbus_disable_chunking"></a>
 ### Disable Chunking
-- CLI: `--modbus-disable-chunking`
-- ENV: `SIGENERGY2MQTT_MODBUS_DISABLE_CHUNKING`
-- Config key: `modbus[].disable-chunking`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--modbus-disable-chunking</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_MODBUS_DISABLE_CHUNKING</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>modbus[].disable-chunking</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 If `true`, chunking of Modbus reads will be disabled and each register will be read individually. This is **NOT** recommended for production use.
 
 <a id="opt_modbus_host"></a>
 ### Host
-- CLI: `-m, --modbus-host`
-- ENV: `SIGENERGY2MQTT_MODBUS_HOST`
-- Config key: `modbus[].host`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>-m, --modbus-host</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_MODBUS_HOST</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>modbus[].host</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The host name or IP address of a Sigenergy Modbus interface. There may be multiple hosts defined if there are multiple Sigenergy devices.
 
 <a id="opt_modbus_log_level"></a>
 ### Log Level
-- CLI: `--modbus-log-level`
-- ENV: `SIGENERGY2MQTT_MODBUS_LOG_LEVEL`
-- Config key: `modbus[].host.log-level`
-
-The Modbus interface logging level. Must be one of: 
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--modbus-log-level</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_MODBUS_LOG_LEVEL</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>modbus[].host.log-level</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>sigenergy2mqtt/config/modbus/log_level/set</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>select.sigenergy2mqtt_config_modbus_log_level</code></small></td></tr>
+</table>
+The Modbus interface logging level. Must be one of:
 
 - `DEBUG`
 - `INFO`
 - `WARNING`
 - `ERROR`
 - `CRITICAL`
-
 The default is `WARNING` (warnings, errors and critical failures).
 
 <a id="opt_modbus_log_skipped"></a>
 ### Log Skipped
-- CLI: `--modbus-log-skipped`
-- ENV: `SIGENERGY2MQTT_MODBUS_LOG_SKIPPED`
-- Config key: `modbus[].host.log-skipped`
-
-If `false`, Modbus errors like "ERROR: request ask for transaction_id=x but got id=y, Skipping" and "ERROR: request ask for id=x but got id=y, Skipping" will **NOT** be logged. 
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--modbus-log-skipped</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_MODBUS_LOG_SKIPPED</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>modbus[].host.log-skipped</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
+If `false`, Modbus errors like "ERROR: request ask for transaction_id=x but got id=y, Skipping" and "ERROR: request ask for id=x but got id=y, Skipping" will **NOT** be logged.
 
 The default is `false`.
 
 <a id="opt_modbus_no_remote_ems"></a>
 ### No Remote EMS
-- CLI: `--modbus-no-remote-ems`
-- ENV: `SIGENERGY2MQTT_MODBUS_NO_REMOTE_EMS`
-- Config key: `modbus[].host.no-remote-ems`
-
-If true, read-write entities related to remote Energy Management System (EMS) integration will **NOT** be published to MQTT. 
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--modbus-no-remote-ems</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_MODBUS_NO_REMOTE_EMS</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>modbus[].host.no-remote-ems</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
+If true, read-write entities related to remote Energy Management System (EMS) integration will **NOT** be published to MQTT.
 
 Ignored if [Read Write](#opt_modbus_read_write) option is false.
 
 <a id="opt_modbus_port"></a>
 ### Port
-- CLI: `--modbus-port`
-- ENV: `SIGENERGY2MQTT_MODBUS_PORT`
-- Config key: `modbus[].host.port`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--modbus-port</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_MODBUS_PORT</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>modbus[].host.port</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The port number used by the Sigenergy Modbus interface.
 
 Defaults to `502`.
 
 <a id="opt_modbus_read_only"></a>
 ### Read Only
-- CLI: `--modbus-readonly`
-- ENV: `SIGENERGY2MQTT_MODBUS_READ_ONLY`
-- Config key: `modbus[].host.read-only`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--modbus-readonly</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_MODBUS_READ_ONLY</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>modbus[].host.read-only</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 If the `--modbus-readonly` command line option is specified, then **ONLY** read-only entities will be published to MQTT.
 
 For the environment variable and configuration file entry, if true, all read-only entities _will be_ published to MQTT. This is the default. If false, read-only entities will _not_ be published to MQTT.
 
 <a id="opt_modbus_read_write"></a>
 ### Read Write
-- CLI: `n/a`
-- ENV: `SIGENERGY2MQTT_MODBUS_READ_WRITE`
-- Config key: `modbus[].host.read-write`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_MODBUS_READ_WRITE</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>modbus[].host.read-write</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 If true, all read-write entities will be published to MQTT. Specify false to disable read-write entities.
 
 <a id="opt_modbus_retries"></a>
 ### Retries
-- CLI: `--modbus-retries`
-- ENV: `SIGENERGY2MQTT_MODBUS_RETRIES`
-- Config key: `modbus[].host.retries`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--modbus-retries</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_MODBUS_RETRIES</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>modbus[].host.retries</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The maximum number of times to retry a Modbus operation if it fails. The default is `3`.
 
 <a id="opt_modbus_timeout"></a>
 ### Timeout
-- CLI: `--modbus-timeout`
-- ENV: `SIGENERGY2MQTT_MODBUS_TIMEOUT`
-- Config key: `modbus[].host.timeout`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--modbus-timeout</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_MODBUS_TIMEOUT</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>modbus[].host.timeout</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The timeout for connecting and receiving Modbus data, in seconds (use decimals for milliseconds). The default is 1.0.
 
 <a id="opt_modbus_write_only"></a>
 ### Write Only
-- CLI: `n/a`
-- ENV: `SIGENERGY2MQTT_MODBUS_WRITE_ONLY`
-- Config key: `modbus[].host.write-only`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_MODBUS_WRITE_ONLY</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>modbus[].host.write-only</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 If true, all write-only entities (usually power on/off buttons) will be published to MQTT. Specify false to disable write-only entities.
 
 ### Scan Intervals
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 Scan intervals control how often Modbus registers are read from the Sigenergy device, and how often the values are published to MQTT.
 
 However, because of the way that the Modbus read optimisation works, registers will be read at the _minimum_ scan interval, but only published to MQTT at the _configured_ scan interval. This means that if you have a mix of scan intervals, the _minimum_ scan interval will be used for all reads.
@@ -846,7 +1096,6 @@ You can also use the [Repeated State Publish Interval](#opt_repeated_state_publi
 - CLI: `--scan-interval-high`
 - ENV: `SIGENERGY2MQTT_SCAN_INTERVAL_HIGH`
 - Config key: `modbus[].host.scan-interval-high`
-
 The scan interval in seconds for Modbus registers that are to be scanned at a high frequency. Default is 10 (seconds), and the minimum value is 1.
 
 <a id="opt_modbus_scan_interval_low"></a>
@@ -854,7 +1103,6 @@ The scan interval in seconds for Modbus registers that are to be scanned at a hi
 - CLI: `--scan-interval-low`
 - ENV: `SIGENERGY2MQTT_SCAN_INTERVAL_LOW`
 - Config key: `modbus[].host.scan-interval-low`
-
 The scan interval in seconds for Modbus registers that are to be scanned at a low frequency. Default is 600 (seconds), and the minimum value is 1.
 
 <a id="opt_modbus_scan_interval_medium"></a>
@@ -862,7 +1110,6 @@ The scan interval in seconds for Modbus registers that are to be scanned at a lo
 - CLI: `--scan-interval-medium`
 - ENV: `SIGENERGY2MQTT_SCAN_INTERVAL_MEDIUM`
 - Config key: `modbus[].host.scan-interval-medium`
-
 The scan interval in seconds for Modbus registers that are to be scanned at a medium frequency. Default is 60 (seconds), and the minimum value is 1.
 
 <a id="opt_modbus_scan_interval_realtime"></a>
@@ -870,7 +1117,6 @@ The scan interval in seconds for Modbus registers that are to be scanned at a me
 - CLI: `--scan-interval-realtime`
 - ENV: `SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME`
 - Config key: `modbus[].host.scan-interval-realtime`
-
 The scan interval in seconds for Modbus registers that are to be scanned in near-real time. Default is 5 (seconds), and the minimum value is 1.
 
 
@@ -878,50 +1124,68 @@ The scan interval in seconds for Modbus registers that are to be scanned in near
 
 <a id="opt_persistence_mqtt_redundancy"></a>
 ### Persistence MQTT Redundancy
-- CLI: `--persistence-mqtt-redundancy / --no-persistence-mqtt-redundancy`
-- ENV: `SIGENERGY2MQTT_PERSISTENCE_MQTT_REDUNDANCY`
-- Config key: `persistence.mqtt-redundancy`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--persistence-mqtt-redundancy / --no-persistence-mqtt-redundancy</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_PERSISTENCE_MQTT_REDUNDANCY</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>persistence.mqtt-redundancy</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 Set to `true` (default) to enable off-host state redundancy using MQTT retained messages (QoS 2). This allows the application to recover critical state (like daily energy totals or auto-discovery results) even after a clean install or hardware failure.
 
 <a id="opt_persistence_mqtt_state_prefix"></a>
 ### Persistence MQTT State Prefix
-- CLI: `--persistence-mqtt-state-prefix`
-- ENV: `SIGENERGY2MQTT_PERSISTENCE_MQTT_STATE_PREFIX`
-- Config key: `persistence.mqtt-state-prefix`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--persistence-mqtt-state-prefix</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_PERSISTENCE_MQTT_STATE_PREFIX</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>persistence.mqtt-state-prefix</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The MQTT topic prefix used for storing persisted state. (default: `sigenergy2mqtt/_state`)
 
 <a id="opt_persistence_disk_primary"></a>
 ### Persistence Disk Primary
-- CLI: `--persistence-disk-primary / --no-persistence-disk-primary`
-- ENV: `SIGENERGY2MQTT_PERSISTENCE_DISK_PRIMARY`
-- Config key: `persistence.disk-primary`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--persistence-disk-primary / --no-persistence-disk-primary</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_PERSISTENCE_DISK_PRIMARY</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>persistence.disk-primary</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 Set to `true` (default) to prefer local disk-based state over MQTT if both are available. If set to `false`, MQTT state will be preferred.
 
 <a id="opt_persistence_cache_warmup_timeout"></a>
 ### Persistence Cache Warmup Timeout
-- CLI: `--persistence-cache-warmup-timeout`
-- ENV: `SIGENERGY2MQTT_PERSISTENCE_CACHE_WARMUP_TIMEOUT`
-- Config key: `persistence.cache-warmup-timeout`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--persistence-cache-warmup-timeout</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_PERSISTENCE_CACHE_WARMUP_TIMEOUT</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>persistence.cache-warmup-timeout</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The maximum time in seconds to wait for the MQTT state cache to warm up from retained messages on startup. (default: `5.0`)
 
 <a id="opt_persistence_sync_timeout"></a>
 ### Persistence Sync Timeout
-- CLI: `--persistence-sync-timeout`
-- ENV: `SIGENERGY2MQTT_PERSISTENCE_SYNC_TIMEOUT`
-- Config key: `persistence.sync-timeout`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--persistence-sync-timeout</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_PERSISTENCE_SYNC_TIMEOUT</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>persistence.sync-timeout</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The timeout in seconds for synchronous persistence operations when called from a non-asyncio thread. (default: `5.0`)
 
 <a id="opt_persistence_debug"></a>
 ### Persistence Debug
-- CLI: `--persistence-debug`
-- ENV: `SIGENERGY2MQTT_PERSISTENCE_DEBUG`
-- Config key: `persistence.debug`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--persistence-debug</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_PERSISTENCE_DEBUG</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>persistence.debug</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>sigenergy2mqtt/config/persistence/debug/set</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>switch.sigenergy2mqtt_config_persistence/debug</code></small></td></tr>
+</table>
 Set to `true` to enable debug logging for the state persistence system. (default: `false`)
 
 
@@ -929,96 +1193,125 @@ Set to `true` to enable debug logging for the state persistence system. (default
 
 <a id="opt_mqtt_anonymous"></a>
 ### Anonymous Authentication
-- CLI: `--mqtt-anonymous`
-- ENV: `SIGENERGY2MQTT_MQTT_ANONYMOUS`
-- Config key: `mqtt.anonymous`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--mqtt-anonymous</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_MQTT_ANONYMOUS</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>mqtt.anonymous</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 If true, the MQTT broker does not require authentication. If false, username and password must be supplied.
 
 <a id="opt_mqtt_broker"></a>
 ### MQTT Broker Address
-- CLI: `-b, --mqtt-broker`
-- ENV: `SIGENERGY2MQTT_MQTT_BROKER`
-- Config key: `mqtt.broker`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>-b, --mqtt-broker</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_MQTT_BROKER</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>mqtt.broker</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The host name or IP address of the MQTT broker.
 
 <a id="opt_mqtt_keepalive"></a>
 ### Keepalive
-- CLI: `--mqtt-keepalive`
-- ENV: `SIGENERGY2MQTT_MQTT_KEEPALIVE`
-- Config key: `mqtt.keepalive`
-
-The maximum period in seconds between communications with the broker. If no other messages are being exchanged, this controls the rate at which the client will send ping messages to the broker. 
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--mqtt-keepalive</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_MQTT_KEEPALIVE</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>mqtt.keepalive</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
+The maximum period in seconds between communications with the broker. If no other messages are being exchanged, this controls the rate at which the client will send ping messages to the broker.
 
 The default is `60` and minimum is `1`.
 
 <a id="opt_mqtt_log_level"></a>
 ### Log Level
-- CLI: `--mqtt-log-level`
-- ENV: `SIGENERGY2MQTT_MQTT_LOG_LEVEL`
-- Config key: `mqtt.log-level`
-
-The MQTT interface logging level. Must be one of: 
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--mqtt-log-level</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_MQTT_LOG_LEVEL</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>mqtt.log-level</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>sigenergy2mqtt/config/mqtt/log_level/set</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>select.sigenergy2mqtt_config_mqtt_log_level</code></small></td></tr>
+</table>
+The MQTT interface logging level. Must be one of:
 
 - `DEBUG`
 - `INFO`
 - `WARNING`
 - `ERROR`
 - `CRITICAL`
-
 The default is `WARNING`.
 
 <a id="opt_mqtt_password"></a>
 ### Password
-- CLI: `-p, --mqtt-password`
-- ENV: `SIGENERGY2MQTT_MQTT_PASSWORD`
-- Config key: `mqtt.password`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>-p, --mqtt-password</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_MQTT_PASSWORD</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>mqtt.password</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The password for authenticating to the MQTT broker. Not required if [Anonymous Authentication](#opt_mqtt_anonymous) is `true`.
 
 <a id="opt_mqtt_port"></a>
 ### Port
-- CLI: `--mqtt-port`
-- ENV: `SIGENERGY2MQTT_MQTT_PORT`
-- Config key: `mqtt.port`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--mqtt-port</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_MQTT_PORT</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>mqtt.port</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The port number used by the MQTT broker.
 
 <a id="opt_mqtt_tls"></a>
 ### TLS Enabled
-- CLI: `--mqtt-tls`
-- ENV: `SIGENERGY2MQTT_MQTT_TLS`
-- Config key: `mqtt.tls`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--mqtt-tls</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_MQTT_TLS</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>mqtt.tls</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 If true, secure communication to the broker over TLS/SSL is enabled.
 
 <a id="opt_mqtt_tls_insecure"></a>
 ### TLS Insecure Enabled
-- CLI: `--mqtt-tls-insecure`
-- ENV: `SIGENERGY2MQTT_MQTT_TLS_INSECURE`
-- Config key: `mqtt.tls-insecure`
-
-If true, allows insecure communication over TLS. If your broker is using a self-signed certificate, you must set this to true. If you are using a valid certificate, set this to false. 
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--mqtt-tls-insecure</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_MQTT_TLS_INSECURE</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>mqtt.tls-insecure</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
+If true, allows insecure communication over TLS. If your broker is using a self-signed certificate, you must set this to true. If you are using a valid certificate, set this to false.
 
 Ignored unless [TLS Enabled](#opt_mqtt_tls) is also true.
 
 <a id="opt_mqtt_transport"></a>
 ### Transport
-- CLI: `--mqtt-transport`
-- ENV: `SIGENERGY2MQTT_MQTT_TRANSPORT`
-- Config key: `mqtt.transport`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--mqtt-transport</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_MQTT_TRANSPORT</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>mqtt.transport</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 Sets the MQTT transport mechanism. Must be one of `websockets` or `tcp`.
 
 The default is `tcp`.
 
 <a id="opt_mqtt_username"></a>
 ### Username
-- CLI: `-u, --mqtt-username`
-- ENV: `SIGENERGY2MQTT_MQTT_USERNAME`
-- Config key: `mqtt.username`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>-u, --mqtt-username</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_MQTT_USERNAME</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>mqtt.username</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The username for authenticating to the MQTT broker. Not required if if [Anonymous Authentication](#opt_mqtt_anonymous) is `true`.
 
 
@@ -1026,151 +1319,185 @@ The username for authenticating to the MQTT broker. Not required if if [Anonymou
 
 <a id="opt_pvoutput_api_key"></a>
 ### Api Key
-- CLI: `--pvoutput-api-key`
-- ENV: `SIGENERGY2MQTT_PVOUTPUT_API_KEY`
-- Config key: `pvoutput.api-key`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--pvoutput-api-key</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_PVOUTPUT_API_KEY</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>pvoutput.api-key</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The PVOutput API key (create/find your key under https://pvoutput.org/account.jsp).
 
 <a id="opt_pvoutput_calc_debug_logging"></a>
 ### Calc Debug Logging
-- CLI: `n/a`
-- ENV: `SIGENERGY2MQTT_PVOUTPUT_CALC_DEBUG_LOGGING`
-- Config key: `pvoutput.calc-debug-logging`
+<table>
+<tr><td><small>CLI</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_PVOUTPUT_CALC_DEBUG_LOGGING</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>pvoutput.calc-debug-logging</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>sigenergy2mqtt/config/pvoutput/calc_debug_logging/set</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>switch.sigenergy2mqtt_config_pvoutput_calc_debug_logging</code></small></td></tr>
+</table>
+If true, the aggregation of values for uploading to PVOutput will be logged at the `DEBUG` level.
 
-If true, the aggregation of values for uploading to PVOutput will be logged at the `DEBUG` level. 
-
-Only applicable if PVOUTPUT [Log Level](#opt_pvoutput_log_level) is set to `DEBUG`.
+Only applicable if PVOutput [Log Level](#opt_pvoutput_log_level) is set to `DEBUG`.
 
 <a id="opt_pvoutput_consumption"></a>
 ### Consumption
-- CLI: `--pvoutput-consumption`
-- ENV: `SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION`
-- Config key: `pvoutput.consumption`
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--pvoutput-consumption</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>pvoutput.consumption</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
+If specified with a value of `true` or `consumption`, consumption data will be sent to PVOutput.
 
-If specified with a value of `true` or `consumption`, consumption data will be sent to PVOutput. 
-
-With a value of `imported`, the energy imported from the grid will be sent as consumption. 
+With a value of `imported`, the energy imported from the grid will be sent as consumption.
 
 If not specified, or the value is `false`, no consumption data will be sent.
 
 <a id="opt_pvoutput_enabled"></a>
 ### Enabled
-- CLI: `--pvoutput-enabled`
-- ENV: `SIGENERGY2MQTT_PVOUTPUT_ENABLED`
-- Config key: `pvoutput.enabled`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--pvoutput-enabled</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_PVOUTPUT_ENABLED</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>pvoutput.enabled</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 If true, sigenergy2mqtt will upload generation and other data to pvoutput.org.
 
 <a id="opt_pvoutput_exports"></a>
 ### Exports
-- CLI: `--pvoutput-exports`
-- ENV: `SIGENERGY2MQTT_PVOUTPUT_EXPORTS`
-- Config key: `pvoutput.exports`
-
-If true, the energy exported to the grid will be sent to PVOutput. If false, exports will not be uploaded. 
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--pvoutput-exports</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_PVOUTPUT_EXPORTS</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>pvoutput.exports</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
+If true, the energy exported to the grid will be sent to PVOutput. If false, exports will not be uploaded.
 
 If consumption is enabled, then PVOutput may ignore uploaded exports.
 
 <a id="opt_pvoutput_imports"></a>
 ### Imports
-- CLI: `--pvoutput-imports`
-- ENV: `SIGENERGY2MQTT_PVOUTPUT_IMPORTS`
-- Config key: `pvoutput.imports`
-
-If true, the energy imported from the grid will be sent to PVOutput. If false, imports will not be uploaded. 
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--pvoutput-imports</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_PVOUTPUT_IMPORTS</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>pvoutput.imports</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
+If true, the energy imported from the grid will be sent to PVOutput. If false, imports will not be uploaded.
 
 If consumption is enabled, then PVOutput may ignore uploaded imports.
 
 <a id="opt_pvoutput_log_level"></a>
 ### Log Level
-- CLI: `--pvoutput-log-level`
-- ENV: `SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL`
-- Config key: `pvoutput.log-level`
-
-The PVOutput interface logging level. Must be one of: 
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--pvoutput-log-level</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_PVOUTPUT_LOG_LEVEL</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>pvoutput.log-level</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>sigenergy2mqtt/config/pvoutput/log_level/set</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>select.sigenergy2mqtt_config_pvoutput_log_level</code></small></td></tr>
+</table>
+The PVOutput interface logging level. Must be one of:
 
 - `DEBUG`
 - `INFO`
 - `WARNING`
 - `ERROR`
 - `CRITICAL`
-
 The default is `WARNING` (warnings, errors and critical failures).
 
 <a id="opt_pvoutput_upload_log_level"></a>
 ### Upload Log Level
-- CLI: `--pvoutput-upload-log-level`
-- ENV: `SIGENERGY2MQTT_PVOUTPUT_UPLOAD_LOG_LEVEL`
-- Config key: `pvoutput.upload-log-level`
-
-The PVOutput upload payload logging level. Must be one of: 
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--pvoutput-upload-log-level</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_PVOUTPUT_UPLOAD_LOG_LEVEL</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>pvoutput.upload-log-level</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>sigenergy2mqtt/config/pvoutput/upload_log_level/set</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>select.sigenergy2mqtt_config_pvoutput_upload_log_level</code></small></td></tr>
+</table>
+The PVOutput upload payload logging level. Must be one of:
 
 - `DEBUG`
 - `INFO`
 - `WARNING`
 - `ERROR`
 - `CRITICAL`
-
 The default is `INFO`.
 
-If the overall [PVOutput Log Level](#opt_pvoutput_log_level) is set to a value higher than the value specified for this option (e.g. this option set to INFO and [PVOutput Log Level](#opt_pvoutput_log_level) set to WARNING), then the upload log messages will be suppressed.
+If the overall [PVOutput Log Level](#opt_pvoutput_log_level) is set to a level higher than the level specified for this option (e.g. this option set to INFO and [PVOutput Log Level](#opt_pvoutput_log_level) set to WARNING), then the upload log messages will be suppressed.
 
 
 <a id="opt_pvoutput_output_hour"></a>
 ### Output Hour
-- CLI: `--pvoutput-output-hour`
-- ENV: `SIGENERGY2MQTT_PVOUTPUT_OUTPUT_HOUR`
-- Config key: `pvoutput.output-hour`
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--pvoutput-output-hour</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_PVOUTPUT_OUTPUT_HOUR</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>pvoutput.output-hour</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
+The hour of the day (20-23) at which the daily totals are sent to PVOutput. The default is `23` (11pm). Valid values are `20` to `23`. The minute is randomly chosen between 56 and 59.
 
-The hour of the day (20-23) at which the daily totals are sent to PVOutput. The default is `23` (11pm). Valid values are `20` to `23`. The minute is randomly chosen between 56 and 59.  
-
-You can also specify `-1` to send daily uploads at the same frequency as status updates. 
+You can also specify `-1` to send daily uploads at the same frequency as status updates.
 
 If uploaded at the same interval as status updates, PVOutput can overwrite the uploaded values during the day. If this occurs, it will be fixed at end of day.
 
 <a id="opt_pvoutput_system_id"></a>
 ### System Id
-- CLI: `--pvoutput-system-id`
-- ENV: `SIGENERGY2MQTT_PVOUTPUT_SYSTEM_ID`
-- Config key: `pvoutput.system-id`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--pvoutput-system-id</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_PVOUTPUT_SYSTEM_ID</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>pvoutput.system-id</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The PVOutput System ID (create/find your System id under https://pvoutput.org/account.jsp)
 
 <a id="opt_pvoutput_temperature_topic"></a>
 ### Temperature Topic
-- CLI: `--pvoutput-temp-topic`
-- ENV: `SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC`
-- Config key: `pvoutput.temperature-topic`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--pvoutput-temp-topic</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>pvoutput.temperature-topic</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 An MQTT topic from which the current temperature can be read. This is used to send the temperature to PVOutput. If not specified, the temperature will not be sent to PVOutput.
 
 <a id="opt_pvoutput_time_periods"></a>
 ### Time Periods
-- CLI: `n/a`
-- ENV: `SIGENERGY2MQTT_PVOUTPUT_PERIODS_JSON`
-- Config key: `pvoutput.time-periods`
+<table>
+<tr><td><small>CLI</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_PVOUTPUT_PERIODS_JSON</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>pvoutput.time-periods</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
+You can define time periods so that `sigenergy2mqtt` can upload exports and imports into their correct tariff time slots. This option specifies an array of time periods that describe the peak, shoulder, high-shoulder and off-peak periods for a specific date range.
 
-You can define time periods so that `sigenergy2mqtt` can upload exports and imports into their correct tariff time slots. This option specifies an array of time periods that describe the peak, shoulder, high-shoulder and off-peak periods for a specific date range. 
+**NOTE: The time periods specified must match the time periods configured in your PVOutput tariff definitions.**
 
-**NOTE: The time periods specified must match the time periods configured in your PVOutput tariff definitions.** 
+Multiple date ranges may be specified, and each will have the following attributes:
 
-Multiple date ranges may be specified, and each will have the following attributes: 
-
-- plan:      
+- plan:
   - An optional name for the time period. Duplicates are permitted.
-- from-date: 
+- from-date:
   - The start date for the time period in YYYY-MM-DD format. If not specified, the time period is effective immediately.
   - **NOTE**: When initially configuring time-periods, it is _strongly_ recommended that you configure the from-date as _tomorrows date_, so that there is no mismatch between the total exports and the sum of the off-peak/peak/shoulder/high-shoulder export figures today.
 - to-date:
   - The end date for the time period in YYYY-MM-DD format. If not specified, the time period is effective indefinitely.
 - default:
   - One of off-peak, peak, shoulder, or high-shoulder that will be used for all other times not specifically defined in the `periods` array (below). If not specified, the default is `shoulder`.
-- periods: 
+- periods:
   - An array of time period definitions. At least one must be specified. Each period has the following attributes:
-    - type:  
+    - type:
       - One of off-peak, peak, shoulder, or high-shoulder.
-    - start: 
+    - start:
       - The period start time in H:MM format.
     - end:
       - The period end time in H:MM format. 24:00 may be specified for the end of the day.
@@ -1186,7 +1513,7 @@ Multiple date ranges may be specified, and each will have the following attribut
           - Weekdays
           - Weekends
           - All
-                                   
+
 If plans or time periods overlap, the first match will be used.
 
 #### Example
@@ -1194,8 +1521,6 @@ If plans or time periods overlap, the first match will be used.
 This example configuration defines two time periods:
   - The first will be active until 2026-05-31, and defines off-peak and peak time ranges. At all other times, shoulder will be applied.
   - The second takes effect from 2026.06.01, and defines only the off-peak period. At all other times, the overridden default of peak will be applied.
-
-
 ```yaml
 pvoutput:
   enabled: true
@@ -1228,92 +1553,115 @@ SIGENERGY2MQTT_PVOUTPUT_PERIODS_JSON=[{"plan":"Zero Hero","to-date":"2026-05-31"
 
 <a id="opt_pvoutput_health_monitoring"></a>
 ### Health Monitoring
-- CLI: `--no-pvoutput-health-monitoring`
-- ENV: `SIGENERGY2MQTT_PVOUTPUT_HEALTH_MONITORING`
-- Config key: `pvoutput.health-monitoring`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--no-pvoutput-health-monitoring</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_PVOUTPUT_HEALTH_MONITORING</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>pvoutput.health-monitoring</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 If `true`, failures while uploading to PVOutput will affect overall health status. The default is `true`.
 
 <a id="opt_pvoutput_update_debug_logging"></a>
 ### Update Debug Logging
-- CLI: `n/a`
-- ENV: `SIGENERGY2MQTT_PVOUTPUT_UPDATE_DEBUG_LOGGING`
-- Config key: `pvoutput.update-debug-logging`
-
-If true, the updating of values for uploading to PVOutput will be logged at the DEBUG level. Only applicable if PVOUTPUT log-level is set to DEBUG.
+<table>
+<tr><td><small>CLI</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_PVOUTPUT_UPDATE_DEBUG_LOGGING</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>pvoutput.update-debug-logging</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>sigenergy2mqtt/config/pvoutput/update_debug_logging/set</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>switch.sigenergy2mqtt_config_pvoutput_update_debug_logging</code></small></td></tr>
+</table>
+If true, the updating of values for uploading to PVOutput will be logged at the DEBUG level. Only applicable if PVOutput log-level is set to DEBUG.
 
 <a id="opt_pvoutput_v7"></a>
 ### Extended Field V7
-- CLI: `--pvoutput-ext-v7`
-- ENV: `SIGENERGY2MQTT_PVOUTPUT_EXT_V7`
-- Config key: `pvoutput.v7`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--pvoutput-ext-v7</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_PVOUTPUT_EXT_V7</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>pvoutput.v7</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 A sensor class name that will be used to populate the v7 extended field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value. Classes that can be used for multiple sensors (e.g. PVVoltageSensor) will be averaged to determine a single value.
 
 <a id="opt_pvoutput_v8"></a>
 ### Extended Field V8
-- CLI: `--pvoutput-ext-v8`
-- ENV: `SIGENERGY2MQTT_PVOUTPUT_EXT_V8`
-- Config key: `pvoutput.v8`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--pvoutput-ext-v8</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_PVOUTPUT_EXT_V8</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>pvoutput.v8</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 A sensor class name that will be used to populate the v8 extended field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value. Classes that can be used for multiple sensors (e.g. PVVoltageSensor) will be averaged to determine a single value.
 
 <a id="opt_pvoutput_v9"></a>
 ### Extended Field V9
-- CLI: `--pvoutput-ext-v9`
-- ENV: `SIGENERGY2MQTT_PVOUTPUT_EXT_V9`
-- Config key: `pvoutput.v9`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--pvoutput-ext-v9</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_PVOUTPUT_EXT_V9</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>pvoutput.v9</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 A sensor class name that will be used to populate the v9 extended field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value. Classes that can be used for multiple sensors (e.g. PVVoltageSensor) will be averaged to determine a single value.
 
 <a id="opt_pvoutput_v10"></a>
 ### Extended Field V10
-- CLI: `--pvoutput-ext-v10`
-- ENV: `SIGENERGY2MQTT_PVOUTPUT_EXT_V10`
-- Config key: `pvoutput.v10`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--pvoutput-ext-v10</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_PVOUTPUT_EXT_V10</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>pvoutput.v10</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 A sensor class name that will be used to populate the v10 extended field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value. Classes that can be used for multiple sensors (e.g. PVVoltageSensor) will be averaged to determine a single value.
 
 <a id="opt_pvoutput_v11"></a>
 ### Extended Field V11
-- CLI: `--pvoutput-ext-v11`
-- ENV: `SIGENERGY2MQTT_PVOUTPUT_EXT_V11`
-- Config key: `pvoutput.v11`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--pvoutput-ext-v11</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_PVOUTPUT_EXT_V11</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>pvoutput.v11</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 A sensor class name that will be used to populate the v11 extended field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value. Classes that can be used for multiple sensors (e.g. PVVoltageSensor) will be averaged to determine a single value.
 
 <a id="opt_pvoutput_v12"></a>
 ### Extended Field V12
-- CLI: `--pvoutput-ext-v12`
-- ENV: `SIGENERGY2MQTT_PVOUTPUT_EXT_V12`
-- Config key: `pvoutput.v12`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--pvoutput-ext-v12</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_PVOUTPUT_EXT_V12</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>pvoutput.v12</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 A sensor class name that will be used to populate the v12 extended field in PVOutput. If not specified, OR your donation status is not current, this field will not be sent to PVOutput. You can use any sensor with a numeric value. Classes that can be used for multiple sensors (e.g. PVVoltageSensor) will be averaged to determine a single value.
 
 <a id="opt_pvoutput_voltage"></a>
 ### Voltage
-- CLI: `--pvoutput-voltage`
-- ENV: `SIGENERGY2MQTT_PVOUTPUT_VOLTAGE`
-- Config key: `pvoutput.voltage`
-
-The source of the voltage value to be sent to PVOutput. Valid values are: 
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--pvoutput-voltage</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_PVOUTPUT_VOLTAGE</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>pvoutput.voltage</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
+The source of the voltage value to be sent to PVOutput. Valid values are:
 - `phase-a`
 - `phase-b`
 - `phase-c`
 - `l/n-avg` (line to neutral average)
 - `l/l-avg` (line to line average)
 - `pv` (average across PV strings)
-
 If not specified, defaults to `l/n-avg`.
 
 
 <a id="opt_sensor_overrides"></a>
 ## Sensor Overrides
-- CLI: `n/a`
-- ENV: `SIGENERGY2MQTT_SENSOR_OVERRIDES_JSON`
-- Config key: `sensor-overrides`
 
-Sensor Overrides allow you to specify options for individual sensors. 
+Sensor Overrides allow you to specify options for individual sensors. They can only be specified in the YAML configuration file, or in JSON format in the environment variable `SIGENERGY2MQTT_SENSOR_OVERRIDES_JSON`.
 
 You can specify the sensor to be overridden by either by the full entity id, a partial entity id, the full sensor class name, or a partial sensor class name. For example, specifying `Reactive` would match all sensors with `Reactive` in their class name.
 
@@ -1345,108 +1693,147 @@ For each sensor specifier, you can specify one or more of the following options:
 
 <a id="opt_sensor_overrides_debug_logging"></a>
 ### Debug Logging
-- CLI: `n/a`
-- ENV: `n/a`
-- Config key: `sensor-overrides.{sensor_spec}.debug-logging`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>sensor-overrides.{sensor_spec}.debug-logging</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 If true, then debug messages will be logged when log-level is set to DEBUG.
 
 <a id="opt_sensor_overrides_gain"></a>
 ### Gain
-- CLI: `n/a`
-- ENV: `n/a`
-- Config key: `sensor-overrides.{sensor_spec}.gain`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>sensor-overrides.{sensor_spec}.gain</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The Sigenergy Modbus Protocol defines a gain to be applied to the raw value read from the interface. e.g. an energy register may have a gain of 1000 to be expressed in kWh. If the gain is over-ridden, you must also over-ride the [Unit of Measurement](#opt_sensor_overrides_unit_of_measurement) with a correct, corresponding unit.
 
 <a id="opt_sensor_overrides_icon"></a>
 ### Icon
-- CLI: `n/a`
-- ENV: `n/a`
-- Config key: `sensor-overrides.{sensor_spec}.icon`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>sensor-overrides.{sensor_spec}.icon</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 Specify a different icon for the sensor.
 
 <a id="opt_sensor_overrides_max_failures"></a>
 ### Max Failures
-- CLI: `n/a`
-- ENV: `n/a`
-- Config key: `sensor-overrides.{sensor_spec}.max-failures`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>sensor-overrides.{sensor_spec}.max-failures</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 The maximum number of failures before attempts to read the state of the sensor are tapered off.
 
 <a id="opt_sensor_overrides_max_failures_retry_interval"></a>
 ### Max Failures Retry Interval
-- CLI: `n/a`
-- ENV: `n/a`
-- Config key: `sensor-overrides.{sensor_spec}.max-failures-retry-interval`
-
-After max-failures are reached, this option specifies how long (in seconds) to wait before retrying. The default is to not retry. 
+<table>
+<tr><td><small>CLI</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>sensor-overrides.{sensor_spec}.max-failures-retry-interval</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
+After max-failures are reached, this option specifies how long (in seconds) to wait before retrying. The default is to not retry.
 
 If specified, this interval will increase by the same amount after each subsequent failure above max-failures.
 
 <a id="opt_sensor_overrides_precision"></a>
 ### Precision
-- CLI: `n/a`
-- ENV: `n/a`
-- Config key: `sensor-overrides.{sensor_spec}.precision`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>sensor-overrides.{sensor_spec}.precision</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 Specify the display precision (number of decimal places) for this sensor.
 
 <a id="opt_sensor_overrides_publish_raw"></a>
 ### Publish Raw
-- CLI: `n/a`
-- ENV: `n/a`
-- Config key: `sensor-overrides.{sensor_spec}.publish-raw`
-
-If true, the raw state will be published in addition to the state with gain and precision applied. The raw state topic is NOT included in Home Assistant discovery. 
+<table>
+<tr><td><small>CLI</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>sensor-overrides.{sensor_spec}.publish-raw</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
+If true, the raw state will be published in addition to the state with gain and precision applied. The raw state topic is NOT included in Home Assistant discovery.
 
 Ignored if the sensor is not publishable.
 
 <a id="opt_sensor_overrides_publishable"></a>
 ### Publishable
-- CLI: `n/a`
-- ENV: `n/a`
-- Config key: `sensor-overrides.{sensor_spec}.publishable`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>sensor-overrides.{sensor_spec}.publishable</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 If false, the sensor will not be published to MQTT and will not appear in the Home Assistant discovery.
 
 <a id="opt_sensor_overrides_sanity_check_delta"></a>
 ### Sanity Check Delta
-- CLI: `n/a`
-- ENV: `n/a`
-- Config key: `sensor-overrides.{sensor_spec}.sanity-check-delta`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>sensor-overrides.{sensor_spec}.sanity-check-delta</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 If true, the sanity check will be applied to the change in value since the last reading, rather than the value itself. This is useful for sensors that are expected to change rapidly, such as power sensors.
 
 <a id="opt_sensor_overrides_sanity_check_max_value"></a>
 ### Sanity Check Max Value
-- CLI: `n/a`
-- ENV: `n/a`
-- Config key: `sensor-overrides.{sensor_spec}.sanity-check-max-value`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>sensor-overrides.{sensor_spec}.sanity-check-max-value</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 Sets a maximum allowable value for this sensor to allow anomalous readings to be ignored. This value must be a RAW value read from, for example, the Modbus interface, BEFORE the gain is applied.
 
 <a id="opt_sensor_overrides_sanity_check_min_value"></a>
 ### Sanity Check Min Value
-- CLI: `n/a`
-- ENV: `n/a`
-- Config key: `sensor-overrides.{sensor_spec}.sanity-check-min-value`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>sensor-overrides.{sensor_spec}.sanity-check-min-value</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 Sets a minimum allowable value for this sensor to allow anomalous readings to be ignored. This value must be a RAW value read from, for example, the Modbus interface, BEFORE the gain is applied.
 
 <a id="opt_sensor_overrides_scan_interval"></a>
 ### Scan Interval
-- CLI: `n/a`
-- ENV: `n/a`
-- Config key: `sensor-overrides.{sensor_spec}.scan-interval`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>sensor-overrides.{sensor_spec}.scan-interval</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 Change the default [scan interval](#scan-interval) in seconds at which the state of this sensor is read.
 
 <a id="opt_sensor_overrides_unit_of_measurement"></a>
 ### Unit Of Measurement
-- CLI: `n/a`
-- ENV: `n/a`
-- Config key: `sensor-overrides.{sensor_spec}.unit-of-measurement`
-
+<table>
+<tr><td><small>CLI</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>sensor-overrides.{sensor_spec}.unit-of-measurement</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
 Change the unit of this sensor. If you change the Unit of Measurement, you must also change the [Gain](#opt_sensor_overrides_gain) to a corresponding value.

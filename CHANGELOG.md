@@ -1,7 +1,11 @@
 <!-- git log [since tag]..HEAD --oneline -->
 # Changelog 
 
-## [2026.8.9a3] - 2026-08-09
+## [Unreleased]
+
+### Added
+
+- Added MQTT-configurable runtime settings sensors
 
 ### Fixed
 

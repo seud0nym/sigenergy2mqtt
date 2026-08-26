@@ -2,11 +2,11 @@ from unittest.mock import MagicMock, patch
 
 import paho.mqtt.client as mqtt
 import pytest
-from sigenergy2mqtt.metrics.service import MetricsService
 
 from sigenergy2mqtt.common import PERCENTAGE, ProtocolVersion
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.metrics.metrics import Metrics
+from sigenergy2mqtt.metrics.service import MetricsService
 
 
 @pytest.fixture
@@ -45,7 +45,7 @@ class TestMetricsService:
 
     def test_init(self):
         service = MetricsService(ProtocolVersion.V2_4)
-        assert service.name == "Sigenergy Metrics"
+        assert service.name == "Sigenergy2MQTT Metrics"
         assert service.unique_id == "test_prefix_metrics"
         assert len(service.read_sensors) > 0
 
