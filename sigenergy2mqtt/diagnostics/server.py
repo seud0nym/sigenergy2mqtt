@@ -277,6 +277,8 @@ class DiagnosticsServer:
         # Coerce value to the type expected by the sensor kind
         try:
             if isinstance(matched_sensor, SwitchSensorMixin):
+                if not isinstance(raw_value, bool):
+                    return web.json_response({"ok": False, "error": "Switch value must be a boolean"}, status=422)
                 coerced: float | str = 1 if raw_value else 0
             elif isinstance(matched_sensor, NumericSensorMixin):
                 coerced = float(raw_value)
