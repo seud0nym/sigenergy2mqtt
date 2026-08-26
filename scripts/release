@@ -29,6 +29,7 @@ fi
 
 for file in \
     CHANGELOG.md \
+    Dockerfile \
     pyproject.toml\
     resources/configuration/CLI.md \
     resources/sensors/SENSORS.md \
