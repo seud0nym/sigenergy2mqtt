@@ -9,7 +9,7 @@
 
 ### Fixed
 
-- Fixed state class validation for energy sensors and update DC Charger capacity sensors to remove state class (#238)
+- Fixed state class validation for energy sensors and update DC Charger capacity sensors to correct state class (#238)
 - Fixed index out of range error during MQTT state store retries drain
 - Fixed bug that allowed derived sensors to bind to stale devices on restart, causing them to fail to update
 
