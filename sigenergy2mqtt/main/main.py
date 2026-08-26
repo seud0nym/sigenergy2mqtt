@@ -19,7 +19,8 @@ from pymodbus.pdu import ModbusPDU
 from sigenergy2mqtt.common import Constants, ConsumptionMethod, FirmwareVersion, HybridInverter, InputType, ProtocolApplies, ProtocolVersion, PVInverter, service_health_registry
 from sigenergy2mqtt.config import SettingsService, active_config, configure_root_logger, initialize_async, is_docker
 from sigenergy2mqtt.devices import PID, PSS, ACCharger, DCCharger, Device, Inverter, PowerPlant, bind_cross_device_sensors
-from sigenergy2mqtt.diagnostics import DiagnosticsService
+from sigenergy2mqtt.devices import DeviceRegistry as device_registry
+from sigenergy2mqtt.diagnostics import DiagnosticsService, diagnostics_registry
 from sigenergy2mqtt.influxdb import get_influxdb_services
 from sigenergy2mqtt.metrics import Metrics, MetricsService
 from sigenergy2mqtt.modbus import ModbusClient
@@ -1235,8 +1236,10 @@ async def async_main() -> None:
 
         restart_controller.reset()
         thread_config_registry.clear()
+        device_registry.clear()
         mqtt_health_registry.clear()
         service_health_registry.clear()
+        diagnostics_registry.clear()
 
         # Phase 2 config load — must run before StateStore so that the correct
         # MQTT broker address (and other settings) from the YAML config file are

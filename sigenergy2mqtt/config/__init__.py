@@ -3,6 +3,7 @@
 import logging
 import os
 import sys
+from typing import TYPE_CHECKING
 
 from sigenergy2mqtt.common.consumption_source import ConsumptionSource
 from sigenergy2mqtt.common.output_field import OutputField
@@ -11,8 +12,10 @@ from sigenergy2mqtt.common.voltage_source import VoltageSource
 
 from . import cli, const
 from .config import Config, ConfigurationError, _create_persistent_state_path, _swap_active_config, active_config, configure_root_logger, is_docker
-from .service import SettingsService
 from .settings import Settings
+
+if TYPE_CHECKING:
+    from .service import SettingsService
 
 __all__ = [
     "Config",
@@ -32,6 +35,14 @@ __all__ = [
 ]
 
 logger = logging.getLogger(__name__)
+
+
+def __getattr__(name: str):
+    if name == "SettingsService":
+        from .service import SettingsService
+
+        return SettingsService
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 # ---------------------------------------------------------------------------

@@ -146,12 +146,14 @@ class PVStringPower(DerivedSensor, HybridInverter, PVInverter):
             logger.debug(f"{self.log_identity} Publishing READY   - current={self.amperes.value} voltage={self.volts.value} gap={gap:.2f}s")
             if gap > _MAX_PV_STRING_POWER_GAP_WARNING_SECONDS:
                 logger.debug(f"{self.log_identity} Publishing WARNING - gap between acquiring current and voltage was {gap:.2f}s")
-        await super().publish(mqtt_client, modbus_client, republish=republish)  # Publish even if gap exceeds warning threshold
+        published = await super().publish(mqtt_client, modbus_client, republish=republish)  # Publish even if gap exceeds warning threshold
+        if published is False:
+            return False
         if not republish:
             # reset internal values to missing for next calculation
             self.volts.value = None
             self.amperes.value = None
-        return True
+        return bool(published)
 
     def update_from_source_sensor(self, sensor: Sensor) -> bool:
         if sensor.latest_raw_state is None:
@@ -251,13 +253,15 @@ class InverterSelfConsumedPower(DerivedSensor, HybridInverter, PVInverter):
             return False
         if self.debug_logging:
             logger.debug(f"{self.log_identity} Publishing READY   - active_power={self.active_power} battery_power={self.battery_power} pv_string_power={[p for p in self.pv_string_power.values()]}")
-        await super().publish(mqtt_client, modbus_client, republish=republish)  # Publish even if gap exceeds warning threshold
+        published = await super().publish(mqtt_client, modbus_client, republish=republish)  # Publish even if gap exceeds warning threshold
+        if published is False:
+            return False
         if not republish:
             # reset internal values to missing for next calculation
             self.active_power = None
             self.battery_power = None
             self.pv_string_power = {p: None for p in self.pv_string_power}
-        return True
+        return bool(published)
 
     def update_from_source_sensor(self, sensor: Sensor) -> bool:
         if sensor.latest_raw_state is None:

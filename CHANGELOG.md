@@ -11,12 +11,15 @@
 
 - Fixed state class validation for energy sensors and update DC Charger capacity sensors to remove state class (#238)
 - Fixed index out of range error during MQTT state store retries drain
+- Fixed bug that allowed derived sensors to bind to stale devices on restart, causing them to fail to update
 
 ### Changed
 
 - Added plant active power and third-party PV power to dashboard
 - Refactored writeable sensor mixins to separate transport from entity behaviour
 - Refactored Protocol class name to ProtocolVersion because it shadowed typing.Protocol
+- Implemented improved firmware update detection and subsequent restart policy
+- Implemented stale state solutions for Derived Sensors
 - Upgraded `pydantic-settings` from 2.14.2 to 2.15.0
 - Upgraded `pymodbus` from 3.14.0 to 3.15.0
 

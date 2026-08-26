@@ -1555,9 +1555,9 @@ class PowerFactor(ReadOnlySensor, HybridInverter, PVInverter):
                 return None
             raise
 
-    def set_state(self, state: float | str | list[bool] | list[int] | list[float]) -> None:
+    def set_state(self, state: float | str | list[bool] | list[int] | list[float]) -> bool:
         try:
-            super().set_state(state)
+            return super().set_state(state)
         except SanityCheckException as e:
             if self._active_power.publishable and self._reactive_power.publishable:
                 active_power = cast(float, self._active_power.latest_raw_state)
@@ -1571,8 +1571,7 @@ class PowerFactor(ReadOnlySensor, HybridInverter, PVInverter):
                         logger.debug(
                             f"{self.log_identity} Using calculated {power_factor=} from active_power={active_power} @ {time.strftime('%H:%M:%S', time.localtime(active_power_time))} reactive_power={reactive_power} @ {time.strftime('%H:%M:%S', time.localtime(reactive_power_time))} -> {apparent_power=} because {e}"
                         )
-                    super().set_state(power_factor)
-                    return
+                    return super().set_state(power_factor)
                 elif self.debug_logging:
                     logger.debug(f"{self.log_identity} {e} but unable to calculate actual power factor because active_power={active_power} and reactive_power={reactive_power}")
             elif self.debug_logging:

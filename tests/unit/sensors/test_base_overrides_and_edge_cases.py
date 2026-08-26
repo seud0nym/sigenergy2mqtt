@@ -6,10 +6,11 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from sigenergy2mqtt.common import DeviceClass, ProtocolVersion, RegisterAccess, StateClass, UnitOfPower
-from sigenergy2mqtt.config import Config, _swap_active_config
+from sigenergy2mqtt.config import Config, _swap_active_config, active_config
 from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.base import (
     AlarmSensor,
+    DerivedSensor,
     ReadOnlySensor,
     Sensor,
     WriteOnlySensor,
@@ -35,22 +36,21 @@ def _make_sensor(name="Test", uid_suffix="x", debug=False, **kwargs):
     cfg.home_assistant.unique_id_prefix = "sigen"
     cfg.home_assistant.entity_id_prefix = "sigen"
 
-    with _swap_active_config(cfg):
-        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            s = ConcreteSensor(
-                name=name,
-                unique_id=uid,
-                object_id=oid,
-                unit=UnitOfPower.WATT,
-                device_class=DeviceClass.POWER,
-                state_class=StateClass.MEASUREMENT,
-                icon="mdi:solar-power",
-                gain=1.0,
-                precision=2,
-                protocol_version=ProtocolVersion.V2_4,
-                debug_logging=debug,
-                **kwargs,
-            )
+    with _swap_active_config(cfg), patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+        s = ConcreteSensor(
+            name=name,
+            unique_id=uid,
+            object_id=oid,
+            unit=UnitOfPower.WATT,
+            device_class=DeviceClass.POWER,
+            state_class=StateClass.MEASUREMENT,
+            icon="mdi:solar-power",
+            gain=1.0,
+            precision=2,
+            protocol_version=ProtocolVersion.V2_4,
+            debug_logging=debug,
+            **kwargs,
+        )
     return s
 
 
@@ -358,6 +358,28 @@ class TestDerivedSensorBranches:
 
 
 class TestSetLatestState:
+    def test_set_latest_state_reports_sanity_rejection(self):
+        sensor = _make_sensor(uid_suffix="sls_sanity")
+        sensor.sanity_check.max_raw = 10
+
+        from sigenergy2mqtt.sensors.base import SanityCheckException
+
+        with pytest.raises(SanityCheckException):
+            sensor.set_latest_state(11)
+        assert sensor.latest_raw_state is None
+
+    def test_successful_read_metadata_is_independent_of_state_history(self):
+        sensor = _make_sensor(uid_suffix="sls_generation")
+
+        sensor.mark_successful_read()
+        first_generation = sensor.update_generation
+        sensor.mark_successful_read()
+
+        assert first_generation == 1
+        assert sensor.update_generation == 2
+        assert sensor.last_successful_read_time is not None
+        assert sensor.successful_read_interval is not None
+
     def test_set_latest_state_propagates_to_derived(self):
         """set_latest_state calls update_from_source_sensor on derived sensors."""
         s = _make_sensor(uid_suffix="sls_derived")
@@ -365,6 +387,32 @@ class TestSetLatestState:
         s.derived_sensors["Mock"] = derived
         s.set_latest_state(100.0)
         derived.update_from_source_sensor.assert_called_once_with(s)
+
+    def test_derived_set_latest_state_propagates_unchanged_recomputation(self):
+        """Unchanged derived values still update downstream derived sensors."""
+        source = _make_sensor(uid_suffix="sls_chain_source")
+        derived = DerivedSensor(
+            name="derived",
+            unique_id="sigen_sls_chain_derived",
+            object_id="sigen_sls_chain_derived",
+            data_type=ModbusDataType.INT32,
+            unit=UnitOfPower.WATT,
+            device_class=DeviceClass.POWER,
+            state_class=StateClass.MEASUREMENT,
+            icon="mdi:test",
+            gain=None,
+            precision=0,
+            source_sensors=(source,),
+        )
+        downstream = MagicMock()
+        derived.derived_sensors["downstream"] = downstream
+
+        with patch.object(active_config, "repeated_state_publish_interval", -1):
+            derived.set_latest_state(100.0)
+            downstream.update_from_source_sensor.reset_mock()
+
+            assert derived.set_latest_state(100.0) is False
+        downstream.update_from_source_sensor.assert_called_once_with(derived)
 
     def test_set_state_respects_max_states(self):
         """set_state trims state history to _max_states."""

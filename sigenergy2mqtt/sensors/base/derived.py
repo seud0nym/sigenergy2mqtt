@@ -81,14 +81,22 @@ class DerivedSensor(TypedSensorMixin, Sensor):
         updated = super().set_latest_state(state)
         if updated:
             self._pending_update = True
+        else:
+            # A successful re-computation can produce the same value. The state
+            # publication is suppressed, but downstream derived sensors still
+            # need the fresh source value.
+            self._update_derived_sensors()
         return updated
+
+    async def publish(self, mqtt_client, modbus_client, republish: bool = False) -> bool:
+        published = await super().publish(mqtt_client, modbus_client, republish=republish)
+        if published and not republish:
+            self._pending_update = False
+        return published
 
     async def _update_internal_state(self, **kwargs) -> bool | Exception | ExceptionResponse:
         """Derived sensors check if they were updated by source sensors."""
-        if getattr(self, "_pending_update", False):
-            self._pending_update = False
-            return True
-        return False
+        return bool(getattr(self, "_pending_update", False))
 
     def run_persistence_coroutine(self, coro: Coroutine[Any, Any, None]) -> None:
         """Run a coroutine in the background to persist state.

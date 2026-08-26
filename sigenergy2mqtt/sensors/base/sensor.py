@@ -151,6 +151,10 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], SensorProtocol, m
 
         # State history - use deque for efficient bounded collection
         self._states: deque[tuple[float, Any]] = deque(maxlen=_DEFAULT_STATE_HISTORY_SIZE)
+        self._last_successful_read_time: float | None = None
+        self._previous_successful_read_time: float | None = None
+        self._update_generation: int = 0
+        self._last_propagated_generation: int = 0
 
         # Failure tracking
         self._failures: int = 0
@@ -253,6 +257,30 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], SensorProtocol, m
     def latest_interval(self) -> float | None:
         """Get time interval between last two states in seconds."""
         return None if len(self._states) < 2 else self._states[-1][0] - self._states[-2][0]
+
+    @property
+    def last_successful_read_time(self) -> float | None:
+        """Get the timestamp of the most recent successful source read."""
+        return self._last_successful_read_time
+
+    @property
+    def successful_read_interval(self) -> float | None:
+        """Get the interval between the two most recent successful reads."""
+        if self._last_successful_read_time is None or self._previous_successful_read_time is None:
+            return None
+        return self._last_successful_read_time - self._previous_successful_read_time
+
+    @property
+    def update_generation(self) -> int:
+        """Get the monotonically increasing successful-update generation."""
+        return self._update_generation
+
+    def mark_successful_read(self) -> None:
+        """Record a successful acquisition, including unchanged values."""
+        now = time.time()
+        self._previous_successful_read_time = self._last_successful_read_time
+        self._last_successful_read_time = now
+        self._update_generation += 1
 
     @property
     def latest_raw_state(self) -> float | int | str | None:
@@ -1120,8 +1148,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], SensorProtocol, m
 
         if not state_is_repeated:
             # Value has changed – always record and publish.
-            self.set_state(state)
-            updated = True
+            updated = self.set_state(state)
         else:
             interval = active_config.repeated_state_publish_interval
             if interval == 0:
@@ -1140,16 +1167,18 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], SensorProtocol, m
                 if elapsed >= interval:
                     if self.debug_logging:
                         logger.debug(f"{self.log_identity} Repeated state republished after {elapsed:.1f}s (repeated_state_publish_interval={interval}): {state=}")
-                    self.set_state(state)
-                    updated = True
+                    updated = self.set_state(state)
                 else:
                     if self.debug_logging:
                         logger.debug(f"{self.log_identity} Repeated state suppressed ({elapsed:.1f}s < repeated_state_publish_interval={interval}): {state=}")
                     updated = False
 
-        # Always pass the current state to derived sensors regardless of suppression,
-        # so they can make their own publishing decisions.
-        self._update_derived_sensors()
+        # Propagate accepted state changes and successful repeated reads. A
+        # suppressed callback without a new acquisition must not be consumed by
+        # accumulators as another sample.
+        if updated or self._update_generation > self._last_propagated_generation:
+            self._update_derived_sensors()
+            self._last_propagated_generation = self._update_generation
 
         return updated
 
@@ -1167,7 +1196,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], SensorProtocol, m
             return active_config.sensor_overrides[identifier]
         return None
 
-    def set_state(self, state: float | str | list[bool] | list[int] | list[float]) -> None:
+    def set_state(self, state: float | str | list[bool] | list[int] | list[float]) -> bool:
         """Update latest state without propagating to derived sensors.
 
         Args:
@@ -1178,6 +1207,8 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], SensorProtocol, m
                 logger.debug(f"{self.log_identity} Acquired raw state={state}")
 
             self._states.append((time.time(), state))
+            return True
+        return False
 
     # =========================================================================
     # Helper Methods
