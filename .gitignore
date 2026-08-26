@@ -4,6 +4,7 @@
 .python-version
 data/
 resources/modbusregisterdefinitions.py
+scripts/.deepl
 
 # Python
 

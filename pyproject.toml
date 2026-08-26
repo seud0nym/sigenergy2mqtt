@@ -22,7 +22,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 
 [project.optional-dependencies]
-test = ["jsonschema", "pytest", "pytest-asyncio", "pytest-cov", "pytest-xdist"]
+test = ["deepl", "jsonschema", "pytest", "pytest-asyncio", "pytest-cov", "pytest-xdist"]
 
 [project.scripts]
 sigenergy2mqtt = "sigenergy2mqtt.__main__:main"

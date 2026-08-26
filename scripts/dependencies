@@ -113,6 +113,7 @@ if [[ "$install_build_deps" -eq 1 ]]; then
       "pytest-cov" \
       "pytest-xdist" \
       "jsonschema" \
+      "deepl" \
   ; do
     check_pkg "$spec"
   done
