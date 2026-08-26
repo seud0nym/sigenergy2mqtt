@@ -321,7 +321,7 @@ class TestGetState:
 
     @pytest.mark.asyncio
     async def test_inverter_firmware_version_triggers_restart_on_service_pack_change(self):
-        """Test that firmware service-pack change triggers full restart."""
+        """Test that any parsed firmware identity change triggers full restart."""
         with (
             patch.dict(Sensor._used_unique_ids, clear=True),
             patch.dict(Sensor._used_object_ids, clear=True),
@@ -352,6 +352,68 @@ class TestGetState:
             assert restart_controller.requested is False
 
             mock_super.return_value = "V1R1C1SPC2"
+            await sensor.get_state()
+            assert restart_controller.requested is True
+
+    @pytest.mark.asyncio
+    async def test_inverter_firmware_version_triggers_restart_on_non_service_pack_change(self):
+        """Test that build changes trigger a full restart."""
+        with (
+            patch.dict(Sensor._used_unique_ids, clear=True),
+            patch.dict(Sensor._used_object_ids, clear=True),
+            patch("sigenergy2mqtt.sensors.base.ReadOnlySensor.get_state", new_callable=AsyncMock) as mock_super,
+        ):
+            sensor = InverterFirmwareVersion(plant_index=0, device_address=1)
+            mock_device = MagicMock()
+            hw = {"value": "V1R1C1SPC1B1"}
+
+            def _getitem(key):
+                if key == "hw":
+                    return hw["value"]
+                return None
+
+            def _setitem(key, value):
+                if key == "hw":
+                    hw["value"] = value
+
+            mock_device.__getitem__.side_effect = _getitem
+            mock_device.__setitem__.side_effect = _setitem
+            mock_device.device_address = 1
+            sensor.parent_device = mock_device
+
+            restart_controller.reset()
+            mock_super.return_value = "V1R1C1SPC1B2"
+            await sensor.get_state()
+            assert restart_controller.requested is True
+
+    @pytest.mark.asyncio
+    async def test_inverter_firmware_version_triggers_restart_on_unparseable_change(self):
+        """Test that an unparseable changed firmware value triggers recovery."""
+        with (
+            patch.dict(Sensor._used_unique_ids, clear=True),
+            patch.dict(Sensor._used_object_ids, clear=True),
+            patch("sigenergy2mqtt.sensors.base.ReadOnlySensor.get_state", new_callable=AsyncMock) as mock_super,
+        ):
+            sensor = InverterFirmwareVersion(plant_index=0, device_address=1)
+            mock_device = MagicMock()
+            hw = {"value": "V1R1C1SPC1"}
+
+            def _getitem(key):
+                if key == "hw":
+                    return hw["value"]
+                return None
+
+            def _setitem(key, value):
+                if key == "hw":
+                    hw["value"] = value
+
+            mock_device.__getitem__.side_effect = _getitem
+            mock_device.__setitem__.side_effect = _setitem
+            mock_device.device_address = 1
+            sensor.parent_device = mock_device
+
+            restart_controller.reset()
+            mock_super.return_value = "firmware-not-parseable"
             await sensor.get_state()
             assert restart_controller.requested is True
 

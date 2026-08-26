@@ -14,7 +14,7 @@ class FirmwareVersion:
     PATTERN = r"V(\d+)R(\d+)C(\d+)SPC(\d+)(?:B(\d+))?([A-Z])?"
 
     def __init__(self, version_string: str):
-        match = re.search(self.PATTERN, version_string)
+        match = re.fullmatch(self.PATTERN, version_string.strip())
 
         if not match:
             raise ValueError(f"Invalid firmware format: {version_string}")

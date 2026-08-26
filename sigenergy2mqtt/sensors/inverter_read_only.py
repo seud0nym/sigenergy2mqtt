@@ -127,12 +127,31 @@ class InverterFirmwareVersion(ReadOnlySensor, HybridInverter, PVInverter):
                 try:
                     previous_version = FirmwareVersion(device["hw"])
                     current_version = FirmwareVersion(cast(str, value))
-                    if previous_version.service_pack != current_version.service_pack:
+                    previous_identity = (
+                        previous_version.platform,
+                        previous_version.release,
+                        previous_version.variant,
+                        previous_version.service_pack,
+                        previous_version.build,
+                        previous_version.special_id,
+                    )
+                    current_identity = (
+                        current_version.platform,
+                        current_version.release,
+                        current_version.variant,
+                        current_version.service_pack,
+                        current_version.build,
+                        current_version.special_id,
+                    )
+                    if previous_identity != current_identity:
                         from sigenergy2mqtt.main import restart_controller
 
-                        restart_controller.request(f"firmware service pack change on inverter {device.device_address}")
+                        restart_controller.request(f"firmware version change on inverter {device.device_address}")
                 except ValueError:
-                    logger.debug(f"Unable to parse firmware versions for restart decision: old={device['hw']} new={value}")
+                    from sigenergy2mqtt.main import restart_controller
+
+                    logger.warning(f"Unable to parse firmware versions for restart decision: old={device['hw']} new={value}")
+                    restart_controller.request(f"unparseable firmware version change on inverter {device.device_address}")
                 device["hw"] = value
         return value
 
