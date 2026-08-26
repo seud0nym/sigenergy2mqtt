@@ -152,6 +152,7 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
             value = modbus_client.convert_from_registers(rr.registers, cast(Any, self.data_type))
             if self.debug_logging:
                 logger.debug(f"{self.log_identity} Converted registers {rr.registers} to {self.data_type.name} raw state value: {value}")
+            self.mark_successful_read()
             # set_latest_state returns True only when self._states was updated
             # (i.e. the value changed, or the repeat-publish interval has elapsed).
             # Returning False here causes get_state() to return None, which

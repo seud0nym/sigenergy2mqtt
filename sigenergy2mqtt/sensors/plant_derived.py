@@ -375,12 +375,14 @@ class TotalPVPower(DerivedSensor, HybridInverter, PVInverter):
                 return False  # until all values populated, can't do calculation
             if self.debug_logging:
                 logger.debug(f"{self.log_identity} Publishing READY   - {self._sources=}")
-        await super().publish(mqtt_client, modbus_client, republish=republish)
+        published = await super().publish(mqtt_client, modbus_client, republish=republish)
+        if published is False:
+            return False
         if not republish:
             # reset internal values to missing for next calculation
             for value in self._sources.values():
                 value.state = None
-        return True
+        return bool(published)
 
     def update_from_source_sensor(self, sensor: Sensor) -> bool:
         source = sensor.unique_id
@@ -516,11 +518,13 @@ class PlantConsumedPower(CrossDeviceDerivedSensor, HybridInverter, PVInverter):
                     logger.debug(f"{self.log_identity} Publishing SKIPPED - {self._sources}")
                 return False  # until all values populated, can't do calculation
             republish = True  # if we got here, we have a valid value to publish
-        await super().publish(mqtt_client, modbus_client, republish=republish)
+        published = await super().publish(mqtt_client, modbus_client, republish=republish)
+        if published is False:
+            return False
         # reset internal values to missing for next calculation
         for value in self._sources.values():
             value.state = None
-        return True
+        return bool(published)
 
     def update_from_source_sensor(self, sensor: Sensor) -> bool:
         if sensor.latest_raw_state is None:
@@ -624,11 +628,13 @@ class TotalLifetimePVEnergy(UnpublishResetSensorMixin, DerivedSensor, HybridInve
             return False  # until all values populated, can't do calculation
         if self.debug_logging:
             logger.debug(f"{self.log_identity} Publishing READY   - plant_lifetime_pv_energy={self.plant_lifetime_pv_energy} plant_3rd_party_lifetime_pv_energy={self.plant_3rd_party_lifetime_pv_energy}")
-        await super().publish(mqtt_client, modbus_client, republish=republish)
+        published = await super().publish(mqtt_client, modbus_client, republish=republish)
+        if published is False:
+            return False
         # reset internal values to missing for next calculation
         self.plant_lifetime_pv_energy = None
         self.plant_3rd_party_lifetime_pv_energy = None
-        return True
+        return bool(published)
 
     def update_from_source_sensor(self, sensor: Sensor) -> bool:
         if sensor.latest_raw_state is None:
@@ -775,11 +781,13 @@ class PlantSelfConsumedPower(CrossDeviceDerivedSensor, HybridInverter):
             return False  # until all values populated, can't do calculation
         if self.debug_logging:
             logger.debug(f"{self.log_identity} Publishing READY   - values={self._values}")
-        await super().publish(mqtt_client, modbus_client, republish=republish)
+        published = await super().publish(mqtt_client, modbus_client, republish=republish)
+        if published is False:
+            return False
         # reset internal values to missing for next calculation
         for k in self._values:
             self._values[k] = None
-        return True
+        return bool(published)
 
     def update_from_source_sensor(self, sensor: Sensor) -> bool:
         if sensor.latest_raw_state is None:

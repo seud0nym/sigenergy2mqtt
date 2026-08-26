@@ -58,14 +58,15 @@ class SystemTime(TimestampSensor, HybridInverter, PVInverter):
         )
         self.sanity_check.min_raw = 1640995200  # 1 January 2022 at 00:00:00 UTC
 
-    def set_state(self, state: float | str | list[bool] | list[int] | list[float]) -> None:
+    def set_state(self, state: float | str | list[bool] | list[int] | list[float]) -> bool:
         min_raw: float | int | None = None
         if isinstance(state, (int, float)) and state == 0 and self.sanity_check.min_raw is not None and self.sanity_check.min_raw > 0:
             min_raw = self.sanity_check.min_raw
             self.sanity_check.min_raw = 0
-        super().set_state(state)
+        updated = super().set_state(state)
         if min_raw is not None:
             self.sanity_check.min_raw = min_raw
+        return updated
 
 
 class SystemTimeZone(ReadOnlySensor, HybridInverter, PVInverter):
