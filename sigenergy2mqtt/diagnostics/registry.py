@@ -64,6 +64,14 @@ class DiagnosticsRegistry:
         self._providers: dict[str, _RegisteredProvider] = {}
         self._lock = asyncio.Lock()
 
+    def clear(self) -> None:
+        """Clear all registered providers.
+
+        This is useful for resetting the registry during restarts or cleanup.
+        """
+        self._providers.clear()
+        logger.debug("DiagnosticsRegistry cleared")
+
     def register(self, name: str, collect: CollectFn) -> None:
         """Register (or replace) a provider under ``name``.
 
