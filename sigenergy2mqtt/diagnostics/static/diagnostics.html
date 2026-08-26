@@ -453,6 +453,148 @@
     .pulsing {
       animation: pulse 1.6s ease-in-out infinite;
     }
+
+    /* ── Runtime config controls card ─────────────────────────────────────── */
+
+    .control-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+      color: var(--text-dim);
+      padding: 6px 0;
+      border-bottom: 1px dashed var(--dash-border);
+    }
+
+    .control-row:last-child {
+      border-bottom: none;
+    }
+
+    .control-row > .ctrl-label {
+      flex-shrink: 0;
+      max-width: 55%;
+    }
+
+    .control-row > .ctrl-widget {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .ctrl-select,
+    .ctrl-number {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 4px 8px;
+      transition: border-color 0.15s;
+      outline: none;
+      min-width: 0;
+    }
+
+    .ctrl-select:focus,
+    .ctrl-number:focus {
+      border-color: var(--accent);
+    }
+
+    .ctrl-number {
+      width: 7ch;
+    }
+
+    .ctrl-unit {
+      font-size: 11px;
+      color: var(--text-dim);
+      white-space: nowrap;
+    }
+
+    /* Toggle switch */
+    .ctrl-switch {
+      position: relative;
+      display: inline-block;
+      width: 36px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    .ctrl-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .ctrl-slider {
+      position: absolute;
+      inset: 0;
+      background: var(--border);
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .ctrl-slider::before {
+      content: '';
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      left: 3px;
+      top: 3px;
+      background: var(--text);
+      border-radius: 50%;
+      transition: transform 0.2s;
+    }
+
+    .ctrl-switch input:checked + .ctrl-slider {
+      background: var(--accent);
+    }
+
+    .ctrl-switch input:checked + .ctrl-slider::before {
+      transform: translateX(16px);
+    }
+
+    /* Flash feedback */
+    @keyframes flashOk {
+      0%, 100% { border-color: var(--border); }
+      40% { border-color: var(--accent); box-shadow: 0 0 6px var(--accent); }
+    }
+
+    @keyframes flashErr {
+      0%, 100% { border-color: var(--border); }
+      40% { border-color: var(--bad); box-shadow: 0 0 6px var(--bad); }
+    }
+
+    .flash-ok {
+      animation: flashOk 0.7s ease;
+    }
+
+    .flash-err {
+      animation: flashErr 0.7s ease;
+    }
+
+    .card-controls-divider {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-dim);
+    }
+
+    .card-controls-divider svg {
+      width: 13px;
+      height: 13px;
+      opacity: 0.75;
+      flex-shrink: 0;
+    }
   </style>
 </head>
 
@@ -645,6 +787,18 @@
           pill.className = 'pill bad';
           pill.textContent = 'error';
           title.appendChild(pill);
+        } else if (name === 'runtime_config') {
+          // Gear icon instead of a status pill for the editable config card
+          const gear = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+          gear.setAttribute('viewBox', '0 0 24 24');
+          gear.setAttribute('fill', 'none');
+          gear.setAttribute('stroke', 'currentColor');
+          gear.setAttribute('stroke-width', '2');
+          gear.setAttribute('stroke-linecap', 'round');
+          gear.setAttribute('stroke-linejoin', 'round');
+          gear.style.cssText = 'width:15px;height:15px;opacity:0.6;';
+          gear.innerHTML = '<circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>';
+          title.appendChild(gear);
         }
         card.appendChild(title);
 
@@ -654,7 +808,7 @@
         // them being mixed into the regular metric flattening.
         function buildRows(obj, prefix, container) {
           Object.entries(obj).forEach(([k, v]) => {
-            if (k === 'status' || k === 'config') return;
+            if (k === 'status' || k === 'config' || k === 'controls') return;
             if (v && typeof v === 'object' && !Array.isArray(v)) {
               buildRows(v, prefix ? `${prefix}.${k}` : k, container);
               return;
@@ -684,6 +838,13 @@
         if (data && typeof data === 'object') buildRows(data, '', rows);
         card.appendChild(rows);
 
+        // Reserved "controls" key: interactive controls for runtime configuration
+        if (data && typeof data === 'object' && data.controls && typeof data.controls === 'object' && !Array.isArray(data.controls) && Object.keys(data.controls).length > 0) {
+          const controlsContainer = document.createElement('div');
+          buildControls(data.controls, controlsContainer);
+          card.appendChild(controlsContainer);
+        }
+
         // Reserved "config" key: any provider can attach a "config": {...}
         // sub-object with whatever static settings it wants, no schema
         // required. Rendered in the same card, under a small divider, with
@@ -702,6 +863,182 @@
         }
 
         return card;
+      }
+
+      function debounce(fn, delay) {
+        let timer;
+        return function (...args) {
+          clearTimeout(timer);
+          timer = setTimeout(() => fn.apply(this, args), delay);
+        };
+      }
+
+      async function sendConfigUpdate(endpoint, value, flashEl, prevValue, revertCb) {
+        try {
+          const res = await fetch(`config/${encodeURIComponent(endpoint)}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ value })
+          });
+          const result = await res.json();
+          if (res.ok && result.ok) {
+            flashEl.classList.remove('flash-ok', 'flash-err');
+            void flashEl.offsetWidth;
+            flashEl.classList.add('flash-ok');
+            return true;
+          } else {
+            throw new Error(result.error || 'Update failed');
+          }
+        } catch (err) {
+          console.error(`Config update failed for ${endpoint}:`, err);
+          flashEl.classList.remove('flash-ok', 'flash-err');
+          void flashEl.offsetWidth;
+          flashEl.classList.add('flash-err');
+          if (revertCb) revertCb(prevValue);
+          return false;
+        }
+      }
+
+      function buildControls(controls, container) {
+        Object.entries(controls).forEach(([endpoint, ctrl]) => {
+          const row = document.createElement('div');
+          row.className = 'control-row';
+          if (ctrl.comment) {
+            row.title = ctrl.comment;
+          }
+
+          const label = document.createElement('span');
+          label.className = 'ctrl-label';
+          label.textContent = ctrl.label || humanKey(endpoint);
+          row.appendChild(label);
+
+          const widgetWrap = document.createElement('div');
+          widgetWrap.className = 'ctrl-widget';
+
+          if (ctrl.type === 'select') {
+            const select = document.createElement('select');
+            select.className = 'ctrl-select';
+            select.dataset.endpoint = endpoint;
+            let currentVal = ctrl.value;
+
+            (ctrl.options || []).forEach(opt => {
+              const optionEl = document.createElement('option');
+              optionEl.value = opt;
+              optionEl.textContent = opt;
+              if (opt === currentVal) optionEl.selected = true;
+              select.appendChild(optionEl);
+            });
+
+            select.addEventListener('change', () => {
+              const newVal = select.value;
+              sendConfigUpdate(endpoint, newVal, select, currentVal, (prev) => {
+                select.value = prev;
+              }).then(ok => {
+                if (ok) currentVal = newVal;
+              });
+            });
+
+            widgetWrap.appendChild(select);
+          } else if (ctrl.type === 'number') {
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.className = 'ctrl-number';
+            input.dataset.endpoint = endpoint;
+            input.value = ctrl.value;
+            if (ctrl.min !== undefined && ctrl.min !== null) input.min = ctrl.min;
+            if (ctrl.max !== undefined && ctrl.max !== null) input.max = ctrl.max;
+
+            let currentVal = ctrl.value;
+            const debouncedSend = debounce((val) => {
+              const num = parseFloat(val);
+              if (!isNaN(num) && num !== currentVal) {
+                sendConfigUpdate(endpoint, num, input, currentVal, (prev) => {
+                  input.value = prev;
+                }).then(ok => {
+                  if (ok) currentVal = num;
+                });
+              }
+            }, 500);
+
+            input.addEventListener('input', (e) => debouncedSend(e.target.value));
+            input.addEventListener('change', (e) => {
+              const num = parseFloat(e.target.value);
+              if (!isNaN(num) && num !== currentVal) {
+                sendConfigUpdate(endpoint, num, input, currentVal, (prev) => {
+                  input.value = prev;
+                }).then(ok => {
+                  if (ok) currentVal = num;
+                });
+              }
+            });
+
+            widgetWrap.appendChild(input);
+
+            if (ctrl.unit) {
+              const unit = document.createElement('span');
+              unit.className = 'ctrl-unit';
+              unit.textContent = ctrl.unit;
+              widgetWrap.appendChild(unit);
+            }
+          } else if (ctrl.type === 'switch') {
+            const labelEl = document.createElement('label');
+            labelEl.className = 'ctrl-switch';
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.dataset.endpoint = endpoint;
+            checkbox.checked = Boolean(ctrl.value);
+
+            const slider = document.createElement('span');
+            slider.className = 'ctrl-slider';
+
+            labelEl.appendChild(checkbox);
+            labelEl.appendChild(slider);
+
+            let currentVal = Boolean(ctrl.value);
+            checkbox.addEventListener('change', () => {
+              const newVal = checkbox.checked;
+              sendConfigUpdate(endpoint, newVal, slider, currentVal, (prev) => {
+                checkbox.checked = prev;
+              }).then(ok => {
+                if (ok) currentVal = newVal;
+              });
+            });
+
+            widgetWrap.appendChild(labelEl);
+          } else {
+            const val = document.createElement('span');
+            val.className = 'v';
+            val.textContent = fmtVal(ctrl.value);
+            widgetWrap.appendChild(val);
+          }
+
+          row.appendChild(widgetWrap);
+          container.appendChild(row);
+        });
+      }
+
+      function updateControlsCard(card, controls) {
+        Object.entries(controls).forEach(([endpoint, ctrl]) => {
+          const widget = card.querySelector(`[data-endpoint="${endpoint}"]`);
+          if (!widget) return;
+          if (document.activeElement === widget || widget.contains(document.activeElement)) return;
+
+          if (ctrl.type === 'select') {
+            if (widget.value !== ctrl.value) {
+              widget.value = ctrl.value;
+            }
+          } else if (ctrl.type === 'switch') {
+            const checked = Boolean(ctrl.value);
+            if (widget.checked !== checked) {
+              widget.checked = checked;
+            }
+          } else if (ctrl.type === 'number') {
+            if (String(widget.value) !== String(ctrl.value)) {
+              widget.value = ctrl.value;
+            }
+          }
+        });
       }
 
       // Providers listed here have their own dedicated page (e.g. "solar" ->
@@ -726,13 +1063,36 @@
         const ts = snapshot.timestamp ? new Date(snapshot.timestamp * 1000).toLocaleString() : '—';
         statusMeta.textContent = `last updated ${ts}`;
 
-        cardGrid.innerHTML = '';
         const keys = Object.keys(snapshot).filter(k => k !== 'timestamp' && !DEDICATED_PAGE_PROVIDERS.has(k));
         if (keys.length === 0) {
           cardGrid.innerHTML = '<div class="empty-state">No diagnostics providers registered.</div>';
           return;
         }
-        keys.forEach(key => cardGrid.appendChild(buildCard(key, snapshot[key])));
+
+        const emptyState = cardGrid.querySelector('.empty-state');
+        if (emptyState) cardGrid.innerHTML = '';
+
+        keys.forEach(key => {
+          const existingCard = cardGrid.querySelector(`[data-provider="${key}"]`);
+          const data = snapshot[key];
+          if (key === 'runtime_config' && existingCard && data && data.controls) {
+            updateControlsCard(existingCard, data.controls);
+          } else if (existingCard) {
+            const newCard = buildCard(key, data);
+            newCard.dataset.provider = key;
+            cardGrid.replaceChild(newCard, existingCard);
+          } else {
+            const newCard = buildCard(key, data);
+            newCard.dataset.provider = key;
+            cardGrid.appendChild(newCard);
+          }
+        });
+
+        cardGrid.querySelectorAll('[data-provider]').forEach(c => {
+          if (!keys.includes(c.dataset.provider)) {
+            c.remove();
+          }
+        });
       }
 
       function setConn(state) {

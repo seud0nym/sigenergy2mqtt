@@ -1,10 +1,15 @@
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 
 from sigenergy2mqtt.config import ConsumptionSource, active_config
 from sigenergy2mqtt.i18n import _t
 from sigenergy2mqtt.metrics.metrics import Metrics
+from sigenergy2mqtt.sensors.base.constants import DiscoveryKeys
+from sigenergy2mqtt.sensors.base.writeable import NumericSensorMixin, SelectSensorMixin, SwitchSensorMixin
 
 from .registry import diagnostics_registry
+
+if TYPE_CHECKING:
+    from sigenergy2mqtt.config.sensors import SettingsSensor
 
 
 class DiagnosticsCollectors:
@@ -18,6 +23,66 @@ class DiagnosticsCollectors:
             diagnostics_registry.register("influxdb", cls._diagnostics_collect_influxdb_metrics)
         if active_config.pvoutput.enabled:
             diagnostics_registry.register("pvoutput", cls._diagnostics_collect_pvoutput_metrics)
+        diagnostics_registry.register("runtime_config", cls._diagnostics_collect_runtime_config)
+
+    @classmethod
+    async def _diagnostics_collect_runtime_config(cls) -> dict[str, Any]:
+        """Diagnostics provider callback: exposes live SettingsService sensor values as editable controls."""
+        from sigenergy2mqtt.config.sensors import SettingsSensor
+        from sigenergy2mqtt.devices.base.registry import DeviceRegistry
+
+        controls: dict[str, Any] = {}
+
+        # Find the SettingsService device (registered at plant_index=-1)
+        for device in DeviceRegistry.get(-1):
+            for sensor in device.sensors.values():
+                if not isinstance(sensor, SettingsSensor):
+                    continue
+                settings_sensor = cast("SettingsSensor", sensor)
+
+                # Derive a URL-safe endpoint key from the unique_id
+                # e.g. "sigenergy2mqtt_config_log_level" -> "log_level"
+                endpoint = settings_sensor.unique_id.removeprefix("sigenergy2mqtt_config_")
+
+                # Read the current display value via get_state()
+                state = await settings_sensor.get_state()
+
+                # Build the descriptor based on the sensor's mixin type
+                descriptor: dict[str, Any] = {
+                    "label": settings_sensor.name,
+                    "comment": settings_sensor.get_attributes().get("comment", ""),
+                    "endpoint": endpoint,
+                }
+
+                if isinstance(settings_sensor, SelectSensorMixin):
+                    options = cast(list[str], settings_sensor[DiscoveryKeys.OPTIONS])
+                    # Filter out empty placeholder slots (log-level list has empty strings)
+                    visible_options = [o for o in options if o]
+                    descriptor.update({
+                        "type": "select",
+                        "value": str(state) if state is not None else "",
+                        "options": visible_options,
+                    })
+                elif isinstance(settings_sensor, NumericSensorMixin):
+                    descriptor.update({
+                        "type": "number",
+                        "value": state,
+                        "min": settings_sensor.get(DiscoveryKeys.MIN),
+                        "max": settings_sensor.get(DiscoveryKeys.MAX),
+                        "unit": settings_sensor.unit or "",
+                    })
+                elif isinstance(settings_sensor, SwitchSensorMixin):
+                    descriptor.update({
+                        "type": "switch",
+                        "value": bool(state),
+                    })
+                else:
+                    # Fallback: surface as a read-only string
+                    descriptor.update({"type": "readonly", "value": str(state)})
+
+                controls[endpoint] = descriptor
+
+        return {"controls": controls}
 
     @classmethod
     async def _diagnostics_collect_influxdb_metrics(cls) -> dict[str, Any]:
