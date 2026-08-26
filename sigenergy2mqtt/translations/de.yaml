@@ -2708,10 +2708,6 @@ class:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
     name: Gesamte Drittanbieter-PV-Produktion
-  SanityCheckDefaultKW:
-    attributes:
-      comment: Der Standardwert in kW, der für Plausibilitätsprüfungen verwendet wird, um die Maximal- und Minimalwerte für Leistungs- und Energiesensoren zu validieren. Der angegebene Wert gilt als Maximalwert in kW, und der Minimalwert wird durch Multiplikation mit -1 abgeleitet (wenn der Optionswert beispielsweise 500 beträgt, beträgt der Minimalwert -500). Der Wert wird pro Sekunde angewendet, sodass die tatsächliche Plausibilitätsprüfung für einen Sensor ein Vielfaches des Abtastintervalls beträgt. Messwerte außerhalb des Bereichs werden ignoriert und als Warnmeldung im Protokoll gemeldet.
-    name: Standard-Plausibilitätsprüfung
   SanityCheckFailuresIncrement:
     attributes:
       comment: Wenn diese Option aktiviert ist, wird die Anzahl der Sensor-Auslesefehler erhöht, sobald eine Plausibilitätsprüfung fehlschlägt. Überschreiten die Sensor-Auslesefehler den zulässigen Schwellenwert für Fehler, wird der Sensor bis zum nächsten Neustart deaktiviert.

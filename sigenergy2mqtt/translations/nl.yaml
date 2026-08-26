@@ -2708,10 +2708,6 @@ class:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Totale Derde Partij PV Productie
-  SanityCheckDefaultKW:
-    attributes:
-      comment: 'De standaardwaarde in kW die wordt gebruikt voor validatiecontroles om de maximum- en minimumwaarden voor vermogens- en energiesensoren te valideren. De opgegeven waarde wordt beschouwd als het maximum in kW, en de minimumwaarde wordt afgeleid door deze met -1 te vermenigvuldigen (bijvoorbeeld: als de optiewaarde 500 is, is de minimumwaarde -500). De waarde wordt per seconde toegepast, dus de daadwerkelijke validatiecontrole die op een sensor wordt uitgevoerd, is een veelvoud van het scaninterval. Meetwaarden buiten het bereik worden genegeerd en gerapporteerd als een waarschuwingsbericht in het logboek.'
-    name: Standaard saniteitscontrole
   SanityCheckFailuresIncrement:
     attributes:
       comment: Indien ingeschakeld, wordt het aantal mislukte sensoruitlezingen verhoogd wanneer een controle mislukt. Als het aantal mislukte sensoruitlezingen de toegestane foutdrempel overschrijdt, wordt de sensor uitgeschakeld tot de volgende herstart.

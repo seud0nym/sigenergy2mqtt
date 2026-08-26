@@ -2708,10 +2708,6 @@ class:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: 제3자 PV 총 생산량
-  SanityCheckDefaultKW:
-    attributes:
-      comment: '전력 및 에너지 센서의 최대값과 최소값을 검증하기 위한 타당성 검사에 사용되는 기본 kW 값입니다. 지정된 값은 kW 단위의 최대값으로 간주되며, 최소값은 해당 값에 -1을 곱하여 산출됩니다(예: 옵션 값이 500인 경우, 최소값은 -500이 됩니다). 이 값은 초 단위로 적용되므로, 센서에 실제로 적용되는 타당성 검사는 스캔 간격의 배수가 됩니다. 범위 밖의 측정값은 무시되며 경고 로그 메시지로 보고됩니다.'
-    name: 기본값 유효성 검사
   SanityCheckFailuresIncrement:
     attributes:
       comment: 이 기능이 활성화되어 있는 경우, 정상성 검사(sanity check)에 실패하면 센서 판독 실패 횟수가 증가합니다. 센서 판독 실패 횟수가 허용된 오류 임계값을 초과하면, 다음 재시작 시까지 해당 센서가 비활성화됩니다.

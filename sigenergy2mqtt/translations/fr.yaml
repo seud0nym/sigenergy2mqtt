@@ -2708,10 +2708,6 @@ class:
       source: Registre Modbus {address}
       source_range: Registres Modbus {start}-{end}
     name: Production PV Tierce Totale
-  SanityCheckDefaultKW:
-    attributes:
-      comment: Valeur par défaut en kW utilisée pour les contrôles de cohérence visant à valider les valeurs maximales et minimales des capteurs de puissance et d’énergie. La valeur spécifiée est considérée comme la valeur maximale en kW, et la valeur minimale est obtenue en la multipliant par -1 (par exemple, si la valeur de l’option est 500, la valeur minimale sera -500). Cette valeur s’applique toutes les secondes ; le contrôle de cohérence effectif appliqué à un capteur correspond donc à un multiple de l’intervalle d’échantillonnage. Les mesures hors de cette plage sont ignorées et signalées sous forme de message d’avertissement dans le journal.
-    name: Vérification de cohérence par défaut
   SanityCheckFailuresIncrement:
     attributes:
       comment: Si cette option est activée, le nombre d'échecs de lecture du capteur sera incrémenté lorsqu'un contrôle de cohérence échoue. Si le nombre d'échecs de lecture du capteur dépasse le seuil d'erreurs autorisé, le capteur sera désactivé jusqu'au prochain redémarrage.

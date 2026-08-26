@@ -2708,10 +2708,6 @@ class:
       source: Registo Modbus {address}
       source_range: Registos Modbus {start}-{end}
     name: Produção PV de Terceiros Total
-  SanityCheckDefaultKW:
-    attributes:
-      comment: O valor padrão em kW utilizado para verificações de validade, com o objetivo de validar os valores máximos e mínimos dos sensores de potência e energia. O valor especificado é considerado como o máximo em kW, e o valor mínimo é obtido multiplicando-o por -1 (por exemplo, se o valor da opção for 500, o valor mínimo será -500). O valor é aplicado por segundo, pelo que a verificação de validade efetivamente aplicada a um sensor é um múltiplo do intervalo de varredura. As leituras fora do intervalo são ignoradas e registadas como uma mensagem de aviso no registo.
-    name: Verificação de consistência (predefinição)
   SanityCheckFailuresIncrement:
     attributes:
       comment: Se esta opção estiver ativada, o número de falhas de leitura do sensor será incrementado sempre que uma verificação de integridade falhar. Se as falhas de leitura do sensor ultrapassarem o limite permitido de erros, o sensor será desativado até ao próximo reinício.

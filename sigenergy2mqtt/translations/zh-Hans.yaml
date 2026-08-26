@@ -2708,10 +2708,6 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 第三方PV总发电量
-  SanityCheckDefaultKW:
-    attributes:
-      comment: 用于合理性检查的默认 kW 值，用于验证功率和能量传感器的最大值和最小值。指定的值被视为最大 kW 值，最小值则通过将其乘以 -1 得出（例如，如果选项值为 500，则最小值将为 -500）。 该值按每秒应用，因此对传感器实际执行的合理性检查结果是扫描间隔的倍数。超出该范围的读数将被忽略，并作为警告日志消息报告。
-    name: 默认值合理性检查
   SanityCheckFailuresIncrement:
     attributes:
       comment: 若启用此功能，当一致性检查失败时，传感器读取失败次数将递增。若传感器读取失败次数超过允许的错误阈值，该传感器将被禁用，直至下次重启。

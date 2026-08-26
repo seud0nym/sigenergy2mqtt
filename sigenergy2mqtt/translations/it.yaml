@@ -2708,10 +2708,6 @@ class:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Produzione PV di Terze Parti Totale
-  SanityCheckDefaultKW:
-    attributes:
-      comment: Il valore predefinito in kW utilizzato per i controlli di validità volti a verificare i valori massimi e minimi dei sensori di potenza ed energia. Il valore specificato viene considerato come il massimo in kW, mentre il valore minimo si ottiene moltiplicandolo per -1 (ad esempio, se il valore dell’opzione è 500, il valore minimo sarà -500). Il valore viene applicato ogni secondo, pertanto il controllo di validità effettivamente applicato a un sensore è un multiplo dell’intervallo di scansione. Le letture al di fuori dell’intervallo vengono ignorate e segnalate come messaggio di avviso nel log.
-    name: Controllo di validità predefinito
   SanityCheckFailuresIncrement:
     attributes:
       comment: Se abilitata, il conteggio degli errori di lettura del sensore verrà incrementato in caso di esito negativo di un controllo di integrità. Se il numero di errori di lettura del sensore supera la soglia consentita, il sensore verrà disabilitato fino al prossimo riavvio.
