@@ -6,7 +6,7 @@ values over MQTT.
 import logging
 from typing import Any, cast
 
-from sigenergy2mqtt.common import DeviceClass, ProtocolVersion, ScanIntervalDefault, UnitOfPower, UnitOfTime
+from sigenergy2mqtt.common import DeviceClass, ProtocolVersion, ScanIntervalDefault, UnitOfTime
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.sensors.base import DiscoveryKeys, NumericSensorMixin, ReadableSensorMixin, SelectSensorMixin, SwitchSensorMixin, WriteableSensorMixin
 
@@ -233,30 +233,6 @@ class RepeatedStatePublishInterval(SettingsSensor, NumericSensorMixin):
         attributes = super().get_attributes()
         attributes["comment"] = (
             "The interval in seconds at which repeated states are published. (Repeated states occur when the state that is acquired is identical to the previous read.) <0=Never 0=Always >0=Interval"
-        )
-        return attributes
-
-
-class SanityCheckDefaultKW(SettingsSensor, NumericSensorMixin):
-    def __init__(self):
-        super().__init__(
-            setting="active_config.sanity_check_default_kw",
-            name="Sanity Check Default",
-            unit=UnitOfPower.KILO_WATT,
-            device_class=DeviceClass.POWER,
-            state_class=None,
-            icon="mdi:square-edit-outline",
-            precision=0,
-            gain=None,
-            minimum=0,
-            maximum=1000,
-        )
-        self[DiscoveryKeys.STEP] = 100
-
-    def get_attributes(self) -> dict[str, float | int | str]:
-        attributes = super().get_attributes()
-        attributes["comment"] = (
-            "The default kW used for sanity checks to validate the maximum and minimum values for power and energy sensors. The specified value is taken as the maximum in kW, and the minimum value is derived by multiplying by -1 (e.g. if the option value is 500, the minimum value will be -500). The value is applied per second, so the actual sanity check applied to a sensor is a multiple of the scan-interval. Readings outside of the range are ignored and reported as a warning log message."
         )
         return attributes
 

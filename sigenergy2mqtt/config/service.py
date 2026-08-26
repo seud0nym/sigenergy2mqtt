@@ -26,7 +26,6 @@ from .sensors import (
     PVOutputUpdateDebugLogging,
     PVOutputUploadLogLevel,
     RepeatedStatePublishInterval,
-    SanityCheckDefaultKW,
     SanityCheckFailuresIncrement,
 )
 
@@ -46,7 +45,6 @@ class SettingsService(Device):
         self._add_sensor(PersistenceDebugging())
 
         self._add_sensor(RepeatedStatePublishInterval())
-        self._add_sensor(SanityCheckDefaultKW())
         self._add_sensor(SanityCheckFailuresIncrement())
 
         if active_config.diagnostics.enabled:
