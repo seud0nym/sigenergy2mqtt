@@ -4,7 +4,7 @@ import logging
 import os
 import signal
 import sys
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
 
 import pytest
 from pymodbus import ModbusException
@@ -161,7 +161,7 @@ class TestConfigureLogging:
         """Test that configure_logging sets the root logger level."""
         with (
             patch.object(active_config, "log_level", logging.DEBUG),
-            patch.object(active_config, "get_modbus_log_level", return_value=logging.INFO),
+            patch.object(type(active_config), "modbus_log_level", new_callable=PropertyMock, return_value=logging.INFO),
             patch.object(active_config.mqtt, "log_level", logging.WARNING),
             patch.object(active_config.pvoutput, "log_level", logging.ERROR),
         ):
@@ -220,7 +220,7 @@ class TestConfigureLogging:
 
         with (
             patch.object(active_config, "log_level", logging.DEBUG),
-            patch.object(active_config, "get_modbus_log_level", return_value=logging.ERROR),
+            patch.object(type(active_config), "modbus_log_level", new_callable=PropertyMock, return_value=logging.ERROR),
             patch.object(active_config.mqtt, "log_level", logging.WARNING),
             patch.object(active_config.pvoutput, "log_level", logging.ERROR),
             patch.object(active_config, "modbus", [mock_device]),

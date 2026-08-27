@@ -102,7 +102,7 @@ def configure_logging() -> None:
     _configure_logger("paho.mqtt", active_config.mqtt.log_level)
 
     # We have to configure root logging before pymodbus so basicConfig wins the handler race
-    modbus_log_level = active_config.get_modbus_log_level()
+    modbus_log_level = active_config.modbus_log_level
     pymodbus_apply_logging_config(modbus_log_level)
 
     logger.debug("Applying skipped error logging filter to pymodbus.logging logger (modbus.log_skipped evaluated at message time)")
