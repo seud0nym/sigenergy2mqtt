@@ -242,6 +242,7 @@ class InverterSelfConsumedPower(DerivedSensor, HybridInverter, PVInverter):
         self.battery_power: int | None = None
         self.pv_string_power: dict[int, int | None] = {p.string_number: None for p in pv_string_power}
         self._source_timestamps: dict[str, float | None] = {"active_power": None, "battery_power": None, **{f"pv_string_power_{p.string_number}": None for p in pv_string_power}}
+        self._source_sensors: dict[str, Sensor] = {"active_power": active_power, "battery_power": battery_power, **{f"pv_string_power_{p.string_number}": p for p in pv_string_power}}
         self._incomplete_snapshot_logged = False
 
         self.sanity_check.min_raw = 0  # Watts
@@ -275,6 +276,7 @@ class InverterSelfConsumedPower(DerivedSensor, HybridInverter, PVInverter):
     def update_from_source_sensor(self, sensor: Sensor) -> bool:
         if sensor.latest_raw_state is None:
             return False
+        self._discard_stale_snapshot()
         if isinstance(sensor, ActivePower):
             self._log_unconsumed_source_value("active_power", self.active_power, self._source_timestamps["active_power"], sensor)
             self.active_power = int(sensor.latest_raw_state)
@@ -313,3 +315,25 @@ class InverterSelfConsumedPower(DerivedSensor, HybridInverter, PVInverter):
             if self.debug_logging:
                 logger.debug(f"{self.log_identity} set_latest_state({state}) FAILED - {e}")
         return True
+
+    def _discard_stale_snapshot(self) -> None:
+        """Discard partial source values that survived beyond their source cadence."""
+        now = time.time()
+        stale_sources = []
+        for source_name, value in self._source_timestamps.items():
+            if value is None:
+                continue
+            source_sensor = self._source_sensors.get(source_name)
+            expected_interval = self._source_expected_interval(source_sensor) if source_sensor is not None else None
+            if expected_interval is not None and now - value > expected_interval:
+                stale_sources.append(source_name)
+
+        if not stale_sources:
+            return
+
+        logger.warning(f"{self.log_identity} Discarding stale incomplete source snapshot - stale={stale_sources}")
+        self.active_power = None
+        self.battery_power = None
+        self.pv_string_power = {string_number: None for string_number in self.pv_string_power}
+        self._source_timestamps = {name: None for name in self._source_timestamps}
+        self._incomplete_snapshot_logged = False
