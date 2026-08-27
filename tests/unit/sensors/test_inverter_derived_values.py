@@ -9,6 +9,7 @@ from sigenergy2mqtt.sensors.base import Sensor
 from sigenergy2mqtt.sensors.inverter_derived import (
     InverterBatteryChargingPower,
     InverterBatteryDischargingPower,
+    InverterSelfConsumedPower,
     PVStringDailyEnergy,
     PVStringLifetimeEnergy,
     PVStringPower,
@@ -37,6 +38,32 @@ def mock_config():
 
 
 class TestBatteryDerivedPowerCoverage:
+    @pytest.mark.asyncio
+    async def test_repeated_state_suppression_clears_consumed_inputs(self):
+        ap = MagicMock(spec=Sensor)
+        ap.protocol_version = ProtocolVersion.V2_4
+        bp = MagicMock(spec=Sensor)
+        bp.protocol_version = ProtocolVersion.V2_4
+        pv = MagicMock(spec=PVStringPower)
+        pv.string_number = 1
+        pv.protocol_version = ProtocolVersion.V2_4
+
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            sensor = InverterSelfConsumedPower(0, 1, ap, bp, pv)
+            sensor.active_power = 100
+            sensor.battery_power = -50
+            sensor.pv_string_power[1] = 500
+            sensor._states.append((0.0, 450.0))
+
+            cfg = Config()
+            cfg.repeated_state_publish_interval = 60
+            with _swap_active_config(cfg), patch("sigenergy2mqtt.sensors.base.DerivedSensor.publish", new_callable=AsyncMock, return_value=False):
+                assert await sensor.publish(MagicMock(), None) is False
+
+            assert sensor.active_power is None
+            assert sensor.battery_power is None
+            assert sensor.pv_string_power[1] is None
+
     def test_get_attributes_charging(self):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             cdp = MagicMock(spec=ChargeDischargePower)

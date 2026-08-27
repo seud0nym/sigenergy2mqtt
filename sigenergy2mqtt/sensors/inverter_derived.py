@@ -255,10 +255,11 @@ class InverterSelfConsumedPower(DerivedSensor, HybridInverter, PVInverter):
             if self.debug_logging:
                 logger.debug(f"{self.log_identity} Publishing SKIPPED - active_power={self.active_power} battery_power={self.battery_power} pv_string_power={[p for p in self.pv_string_power.values()]}")
             return False
+        pending_update = self._pending_update
         if self.debug_logging:
             logger.debug(f"{self.log_identity} Publishing READY   - active_power={self.active_power} battery_power={self.battery_power} pv_string_power={[p for p in self.pv_string_power.values()]}")
         published = await super().publish(mqtt_client, modbus_client, republish=republish)  # Publish even if gap exceeds warning threshold
-        if published is False:
+        if published is False and pending_update:
             return False
         if not republish:
             # reset internal values to missing for next calculation
