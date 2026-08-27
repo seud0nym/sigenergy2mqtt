@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from dataclasses import dataclass, field
 
 import paho.mqtt.client as mqtt
@@ -241,6 +242,7 @@ class InverterSelfConsumedPower(DerivedSensor, HybridInverter, PVInverter):
         self.battery_power: int | None = None
         self.pv_string_power: dict[int, int | None] = {p.string_number: None for p in pv_string_power}
         self._source_timestamps: dict[str, float | None] = {"active_power": None, "battery_power": None, **{f"pv_string_power_{p.string_number}": None for p in pv_string_power}}
+        self._incomplete_snapshot_logged = False
 
         self.sanity_check.min_raw = 0  # Watts
         self.sanity_check.max_raw = 3000  # Watts
@@ -266,6 +268,8 @@ class InverterSelfConsumedPower(DerivedSensor, HybridInverter, PVInverter):
             self.active_power = None
             self.battery_power = None
             self.pv_string_power = {p: None for p in self.pv_string_power}
+            self._source_timestamps = {name: None for name in self._source_timestamps}
+            self._incomplete_snapshot_logged = False
         return bool(published)
 
     def update_from_source_sensor(self, sensor: Sensor) -> bool:
@@ -290,6 +294,12 @@ class InverterSelfConsumedPower(DerivedSensor, HybridInverter, PVInverter):
         if self.active_power is None or self.battery_power is None or any(p is None for p in self.pv_string_power.values()):
             if self.debug_logging:
                 logger.debug(f"{self.log_identity} Publishing SKIPPED - active_power={self.active_power} battery_power={self.battery_power} pv_string_power={[p for p in self.pv_string_power.values()]}")
+            if not self._incomplete_snapshot_logged:
+                missing = [name for name, value in (("active_power", self.active_power), ("battery_power", self.battery_power)) if value is None]
+                missing.extend(f"pv_string_power_{string_number}" for string_number, value in self.pv_string_power.items() if value is None)
+                cached_ages = {name: round(time.time() - timestamp, 2) for name, timestamp in self._source_timestamps.items() if timestamp is not None}
+                logger.debug(f"{self.log_identity} Incomplete source snapshot - missing={missing} cached_ages={cached_ages}")
+                self._incomplete_snapshot_logged = True
             return False  # until all values populated, can't do calculation
         total_pv_power = sum([p for p in self.pv_string_power.values() if p is not None])
         state = total_pv_power - self.active_power - self.battery_power
