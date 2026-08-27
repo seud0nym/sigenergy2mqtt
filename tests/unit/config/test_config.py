@@ -24,7 +24,7 @@ class TestConfigStaticMethods:
             active_config.modbus.clear()
             active_config.modbus.append(device)
 
-            level = active_config.get_modbus_log_level()
+            level = active_config.modbus_log_level
 
             assert level == logging.DEBUG
         finally:
@@ -45,7 +45,7 @@ class TestConfigStaticMethods:
             active_config.modbus.clear()
             active_config.modbus.extend([device1, device2, device3])
 
-            level = active_config.get_modbus_log_level()
+            level = active_config.modbus_log_level
 
             # Should return minimum (DEBUG=10 < INFO=20 < WARNING=30)
             assert level == logging.DEBUG
@@ -64,7 +64,7 @@ class TestConfigStaticMethods:
             cfg._settings = MagicMock()
             cfg._settings.modbus = [device1, device2]
 
-            cfg.set_modbus_log_level(logging.INFO)
+            cfg.modbus_log_level = logging.INFO
 
             assert device1.log_level == logging.INFO
             assert device2.log_level == logging.INFO
@@ -533,19 +533,19 @@ class TestConfigCoverageAugmentation:
     def test_get_modbus_log_level_no_settings(self):
         cfg = Config()
         cfg._settings = None
-        assert cfg.get_modbus_log_level() == logging.WARNING
+        assert cfg.modbus_log_level == logging.WARNING
 
     def test_get_modbus_log_level_no_modbus_devices(self):
         cfg = Config()
         cfg._settings = MagicMock()
         cfg._settings.modbus = []
-        assert cfg.get_modbus_log_level() == logging.WARNING
+        assert cfg.modbus_log_level == logging.WARNING
 
     def test_set_modbus_log_level_no_settings(self):
         cfg = Config()
         cfg._settings = None
         with pytest.raises(AttributeError):
-            cfg.set_modbus_log_level(logging.DEBUG)
+            cfg.modbus_log_level = logging.DEBUG
 
     def test_property_setters_no_settings(self):
         cfg = Config()

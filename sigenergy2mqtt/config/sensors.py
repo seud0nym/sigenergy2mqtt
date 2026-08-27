@@ -59,9 +59,20 @@ class SettingsSensor(ReadableSensorMixin, WriteableSensorMixin):
         )
         self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
+    def get_value(self) -> Any:
+        """Get the current display value for this configuration setting."""
+        val = getattr(self._parent, self._attribute)
+        if callable(val):
+            val = val()
+        if isinstance(self, SwitchSensorMixin):
+            return bool(val)
+        return self._raw2state(cast(float | str, val))
+
     async def _update_internal_state(self, **kwargs) -> bool:
         state = getattr(self._parent, self._attribute)
-        return self.set_latest_state(state if not isinstance(self, SwitchSensorMixin) else (1 if state else 0))
+        if callable(state):
+            state = state()
+        return self.set_latest_state(cast(float | str, state) if not isinstance(self, SwitchSensorMixin) else (1 if state else 0))
 
     async def _write_value(self, modbus_client, mqtt_client, value, source, handler) -> bool:
         logger.info(f"{self.log_identity} Updated '{self._setting}' to '{self._raw2state(value)}'")
@@ -181,17 +192,8 @@ class PVOutputUploadLogLevel(LogLevelSensor):
 
 class ModbusLogLevel(LogLevelSensor):
     def __init__(self):
-        super().__init__(setting="active_config.get_modbus_log_level", name="Modbus Log Level", logger="pymodbus.logging")
+        super().__init__(setting="active_config.modbus_log_level", name="Modbus Log Level", logger="pymodbus.logging")
         self._base_mqtt_topic = "sigenergy2mqtt/config/modbus/log_level"
-
-    async def _update_internal_state(self, **kwargs) -> bool:
-        return self.set_latest_state(active_config.get_modbus_log_level())
-
-    async def _write_value(self, modbus_client, mqtt_client, value, source, handler) -> bool:
-        logger.info(f"{self.log_identity} Called active_config.set_modbus_log_level({value})")
-        active_config.set_modbus_log_level(value)
-        self.apply_log_level(value)
-        return True
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()

@@ -17,7 +17,7 @@ async def test_main_clean_disables_pvoutput(monkeypatch):
     monkeypatch.setattr(active_config, "clean", True, raising=False)
     monkeypatch.setattr(active_config, "metrics_enabled", False, raising=False)
     monkeypatch.setattr(active_config, "validate", lambda: None, raising=False)
-    monkeypatch.setattr(active_config, "get_modbus_log_level", lambda: logging.INFO, raising=False)
+    monkeypatch.setattr(active_config, "modbus_log_level", lambda: logging.INFO, raising=False)
 
     mock_get_pvoutput = MagicMock(return_value=[MagicMock()])
     monkeypatch.setattr(main_mod, "get_pvoutput_services", mock_get_pvoutput)

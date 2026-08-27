@@ -189,7 +189,8 @@ class Config:
         """Return the current sigenergy2mqtt version string."""
         return version.__version__
 
-    def get_modbus_log_level(self) -> int:
+    @property
+    def modbus_log_level(self) -> int:
         """Return the minimum log level across all configured Modbus devices.
 
         This is used to set the log level of the underlying Modbus library so that
@@ -200,7 +201,8 @@ class Config:
             return logging.WARNING
         return min(device.log_level for device in self._settings.modbus)
 
-    def set_modbus_log_level(self, level: int) -> None:
+    @modbus_log_level.setter
+    def modbus_log_level(self, level: int) -> None:
         """Set the log level on every configured Modbus device.
 
         Args:
@@ -534,7 +536,7 @@ class Config:
             return
 
         # Delegate to settings if it's a known field
-        if self._settings and name in type(self._settings).model_fields:
+        if self._settings and name in getattr(type(self._settings), "model_fields", ()):
             setattr(self._settings, name, value)
         else:
             super().__setattr__(name, value)
@@ -544,7 +546,7 @@ class Config:
             super().__delattr__(name)
             return
 
-        if self._settings and name in type(self._settings).model_fields:
+        if self._settings and name in getattr(type(self._settings), "model_fields", ()):
             try:
                 delattr(self._settings, name)
             except AttributeError:
@@ -785,6 +787,14 @@ class _ConfigProxy:
             super().__delattr__(name)
         else:
             delattr(self._config, name)
+
+    @property
+    def modbus_log_level(self) -> int:
+        return self._config.modbus_log_level
+
+    @modbus_log_level.setter
+    def modbus_log_level(self, level: int) -> None:
+        self._config.modbus_log_level = level
 
     def __repr__(self) -> str:
         return f"{self._config!r}"
