@@ -1222,11 +1222,12 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], SensorProtocol, m
                     state = False
         if state is not None:
             if self.debug_logging != state:
-                logger.info(f"{self.log_identity} changed debug logging setting to {self.debug_logging} ({value=})")
                 self.debug_logging = state
+                logger.info(f"{self.log_identity} changed debug logging setting to {self.debug_logging} ({value=})")
                 return True
             else:
                 logger.info(f"{self.log_identity} ignored attempt to change debug logging setting with value '{value}' - setting is already {self.debug_logging}")
+                return False
         logger.warning(f"{self.log_identity} ignored attempt to change debug logging setting with value '{value}'")
         return False
 
