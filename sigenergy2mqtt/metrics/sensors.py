@@ -60,6 +60,20 @@ class MetricsSensor(ReadableSensorMixin):
         )
         self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
+    def _get_base_topic(self, device_id: str) -> str:
+        """Get the base MQTT topic for this sensor.
+
+        Args:
+            device_id: The device identifier
+
+        Returns:
+            Base topic path
+        """
+        base = "sigenergy2mqtt/metrics"
+        object_id = cast(str, self[DiscoveryKeys.OBJECT_ID])
+        suffix = object_id.replace("sigenergy2mqtt_", "")
+        return f"{base}/{suffix}"
+
     async def _update_internal_state(self, **kwargs) -> bool:
         raise NotImplementedError
 
@@ -71,15 +85,12 @@ class MetricsSensor(ReadableSensorMixin):
         ``sigenergy2mqtt_`` prefix: e.g. ``sigenergy2mqtt_modbus_locks``
         becomes ``sigenergy2mqtt/metrics/modbus_locks``.
         """
-        # Override to match existing topic structure: sigenergy2mqtt/metrics/{id}
-        base = "sigenergy2mqtt/metrics"
-        object_id = cast(str, self[DiscoveryKeys.OBJECT_ID])
-        suffix = object_id.replace("sigenergy2mqtt_", "")
-        self[DiscoveryKeys.STATE_TOPIC] = f"{base}/{suffix}"
+        topic = self._get_base_topic(device_id)
+        self[DiscoveryKeys.STATE_TOPIC] = topic
         self[DiscoveryKeys.AVAILABILITY_TOPIC] = "sigenergy2mqtt/status"
         if self.debug_logging:
             logger.debug(f"{self.log_identity} Configured MQTT topics >>> state_topic={self[DiscoveryKeys.STATE_TOPIC]})")
-        return base
+        return topic
 
     def publish_attributes(self, mqtt_client: Any, clean: bool = False, **kwargs) -> None:
         """Metrics sensors do not publish extra MQTT attributes."""
@@ -995,16 +1006,29 @@ class ResetMetrics(WriteOnlySensor):
         )
         self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
+    def _get_base_topic(self, device_id: str) -> str:
+        """Get the base MQTT topic for this sensor.
+
+        Args:
+            device_id: The device identifier
+
+        Returns:
+            Base topic path
+        """
+        base = "sigenergy2mqtt/metrics"
+        object_id = cast(str, self[DiscoveryKeys.OBJECT_ID])
+        suffix = object_id.replace("sigenergy2mqtt_", "")
+        return f"{base}/{suffix}"
+
     def configure_mqtt_topics(self, device_id: str) -> str:
         """Place command and availability topics inside the metrics namespace."""
-        base = "sigenergy2mqtt/metrics"
-        suffix = cast(str, self[DiscoveryKeys.OBJECT_ID]).replace("sigenergy2mqtt_", "")
-        self[DiscoveryKeys.STATE_TOPIC] = f"{base}/{suffix}"
-        self[DiscoveryKeys.COMMAND_TOPIC] = f"{base}/{suffix}/set"
+        topic = self._get_base_topic(device_id)
+        self[DiscoveryKeys.STATE_TOPIC] = topic
+        self[DiscoveryKeys.COMMAND_TOPIC] = f"{topic}/set"
         self[DiscoveryKeys.AVAILABILITY_TOPIC] = "sigenergy2mqtt/status"
         if self.debug_logging:
             logger.debug(f"{self.log_identity} Configured MQTT topics >>> command_topic={self[DiscoveryKeys.COMMAND_TOPIC]})")
-        return base
+        return topic
 
     def get_discovery_components(self) -> dict[str, dict[str, Any]]:
         """Return a single button component instead of the default On/Off pair."""

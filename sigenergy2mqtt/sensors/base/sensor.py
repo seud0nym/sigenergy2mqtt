@@ -21,6 +21,7 @@ from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.config.models import RegisterAccess
 from sigenergy2mqtt.i18n import _t
 from sigenergy2mqtt.modbus import ModbusClient, ModbusDataType
+from sigenergy2mqtt.mqtt import MqttHandler
 from sigenergy2mqtt.persistence import Category, state_store
 
 from .constants import _DEFAULT_STATE_HISTORY_SIZE, DiscoveryKeys, SensorAttribute, SensorAttributeKeys, _sanitize_path_component
@@ -701,11 +702,12 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], SensorProtocol, m
         """
         object_id = (
             getattr(  # Use original object_id for topic generation when active_config.home_assistant.enabled and active_config.home_assistant.sigenergy_local_modbus_naming, otherwise dashboard will be broken
-                self, "_original_object_id", self[DiscoveryKeys.OBJECT_ID]
+                self, "_original_object_id", self.get(DiscoveryKeys.OBJECT_ID, getattr(self, "unique_id", ""))
             )
         )
         if active_config.home_assistant.enabled and not active_config.home_assistant.use_simplified_topics:
-            return f"{active_config.home_assistant.discovery_prefix}/{self[DiscoveryKeys.PLATFORM]}/{device_id}/{object_id}"
+            platform = self.get(DiscoveryKeys.PLATFORM, "sensor")
+            return f"{active_config.home_assistant.discovery_prefix}/{platform}/{device_id}/{object_id}"
         else:
             return f"sigenergy2mqtt/{object_id}"
 
@@ -1195,6 +1197,39 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], SensorProtocol, m
         if self._matches_override_pattern(pattern):
             return active_config.sensor_overrides[identifier]
         return None
+
+    async def set_debug_logging(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
+        """Set debug logging value via MQTT.
+
+        Args:
+            modbus_client: Modbus client for reading values
+            mqtt_client: MQTT client for publishing
+            value: The new debug logging value
+            source: The source of the value
+            handler: MQTT handler for publishing
+
+        Returns:
+            True if value was updated and should be published, False if value was suppressed as a repeated
+        """
+        state: bool | None = None
+        if isinstance(value, float) and value == 0 or value == 1:
+            state = bool(value)
+        elif isinstance(value, str):
+            match value.lower():
+                case "y" | "true" | "1" | "yes":
+                    state = True
+                case "n" | "false" | "0" | "no":
+                    state = False
+        if state is not None:
+            if self.debug_logging != state:
+                self.debug_logging = state
+                logger.info(f"{self.log_identity} changed debug logging setting to {self.debug_logging} ({value=})")
+                return True
+            else:
+                logger.info(f"{self.log_identity} ignored attempt to change debug logging setting with value '{value}' - setting is already {self.debug_logging}")
+                return False
+        logger.warning(f"{self.log_identity} ignored attempt to change debug logging setting with value '{value}'")
+        return False
 
     def set_state(self, state: float | str | list[bool] | list[int] | list[float]) -> bool:
         """Update latest state without propagating to derived sensors.

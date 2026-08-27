@@ -57,7 +57,7 @@ class TestMetricsSensor:
     def test_configure_mqtt_topics(self):
         sensor = MetricsSensor("name", "sigen_uid", "sigenergy2mqtt_test_object")
         base = sensor.configure_mqtt_topics("device_id")
-        assert base == "sigenergy2mqtt/metrics"
+        assert base == "sigenergy2mqtt/metrics/test_object"
         assert sensor["state_topic"] == "sigenergy2mqtt/metrics/test_object"
         assert sensor["availability_topic"] == "sigenergy2mqtt/status"
 

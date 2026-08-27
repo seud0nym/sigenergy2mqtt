@@ -53,6 +53,7 @@ class DummyWriteable(WriteableSensorMixin, Sensor):
     def __init__(self, unique_id, command_topic="cmd"):
         self.unique_id = unique_id
         self["unique_id"] = unique_id
+        self["object_id"] = unique_id
         self["command_topic"] = command_topic
         object.__setattr__(self, "unique_id", unique_id)
         object.__setattr__(self, "debug_logging", False)
@@ -60,6 +61,7 @@ class DummyWriteable(WriteableSensorMixin, Sensor):
         object.__setattr__(self, "input_type", "holding")
         object.__setattr__(self, "protocol_version", ProtocolVersion.V1_8)
         object.__setattr__(self, "parent_device", None)
+        object.__setattr__(self, "_publishable", True)
 
     async def set_value(self, client, userdata, message):
         pass
@@ -75,6 +77,7 @@ class DummyWriteOnly(WriteOnlySensor):
     def __init__(self, unique_id):
         self.unique_id = unique_id
         self["unique_id"] = unique_id
+        self["object_id"] = unique_id
         self["command_topic"] = f"cmd/{unique_id}"
         object.__setattr__(self, "unique_id", unique_id)
         object.__setattr__(self, "address", 1)
@@ -98,6 +101,7 @@ class DummyObservable(ObservableMixin, ReadableSensorMixin, Sensor):
     def __init__(self, unique_id, topic):
         self.unique_id = unique_id
         self["unique_id"] = unique_id
+        self["object_id"] = unique_id
         self.topic = topic
         object.__setattr__(self, "unique_id", unique_id)
         object.__setattr__(self, "_publishable", False)
