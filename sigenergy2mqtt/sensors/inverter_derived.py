@@ -99,15 +99,17 @@ class PVStringPower(DerivedSensor, HybridInverter, PVInverter):
         divisor: float
         value: float | None = None
         timestamp: float = 0
+        owner: PVStringPower | None = field(default=None, compare=False, repr=False)
 
         def apply(self, sensor: Sensor) -> None:
-            if self.value is not None:
-                logger.warning(f"{self.name} Overwriting unconsumed value {self.value} (age={(sensor.latest_time - self.timestamp):.2f}s)")
+            if self.owner is not None:
+                self.owner._log_unconsumed_source_value(self.name, self.value, self.timestamp, sensor)
             raw = sensor.latest_raw_state
             if raw is None:
                 return
             self.value = float(raw) / self.divisor
-            self.timestamp = sensor.latest_time
+            source_timestamp = self.owner._source_timestamp(sensor) if self.owner is not None else sensor.latest_time
+            self.timestamp = source_timestamp if source_timestamp is not None else 0
 
     def __init__(self, plant_index: int, device_address: int, string_number: int, voltage: PVVoltageSensor, current: PVCurrentSensor):
         # Set properties before super().__init__ so that log_identity is correctly generated
@@ -127,8 +129,8 @@ class PVStringPower(DerivedSensor, HybridInverter, PVInverter):
             precision=0,  # Intentional rounding to nearest watt
             source_sensors=(voltage, current),
         )
-        self.amperes: PVStringPower.Value = PVStringPower.Value(f"{self.log_identity[:-1]},value=amperes]", PVCurrentSensor.raw2amps)
-        self.volts: PVStringPower.Value = PVStringPower.Value(f"{self.log_identity[:-1]},value=volts]", PVVoltageSensor.raw2volts)
+        self.amperes: PVStringPower.Value = PVStringPower.Value(f"{self.log_identity[:-1]},value=amperes]", PVCurrentSensor.raw2amps, owner=self)
+        self.volts: PVStringPower.Value = PVStringPower.Value(f"{self.log_identity[:-1]},value=volts]", PVVoltageSensor.raw2volts, owner=self)
         self.protocol_version = max(voltage.protocol_version, current.protocol_version)
 
     def get_attributes(self) -> dict[str, float | int | str]:
@@ -141,13 +143,14 @@ class PVStringPower(DerivedSensor, HybridInverter, PVInverter):
             if self.debug_logging:
                 logger.debug(f"{self.log_identity} Publishing SKIPPED - current={self.amperes.value} voltage={self.volts.value}")
             return False  # until all values populated, can't do calculation
+        pending_update = self._pending_update
         gap = abs(self.volts.timestamp - self.amperes.timestamp)
         if self.debug_logging:
             logger.debug(f"{self.log_identity} Publishing READY   - current={self.amperes.value} voltage={self.volts.value} gap={gap:.2f}s")
             if gap > _MAX_PV_STRING_POWER_GAP_WARNING_SECONDS:
                 logger.debug(f"{self.log_identity} Publishing WARNING - gap between acquiring current and voltage was {gap:.2f}s")
         published = await super().publish(mqtt_client, modbus_client, republish=republish)  # Publish even if gap exceeds warning threshold
-        if published is False:
+        if published is False and pending_update:
             return False
         if not republish:
             # reset internal values to missing for next calculation
@@ -237,6 +240,7 @@ class InverterSelfConsumedPower(DerivedSensor, HybridInverter, PVInverter):
         self.active_power: int | None = None
         self.battery_power: int | None = None
         self.pv_string_power: dict[int, int | None] = {p.string_number: None for p in pv_string_power}
+        self._source_timestamps: dict[str, float | None] = {"active_power": None, "battery_power": None, **{f"pv_string_power_{p.string_number}": None for p in pv_string_power}}
 
         self.sanity_check.min_raw = 0  # Watts
         self.sanity_check.max_raw = 3000  # Watts
@@ -267,11 +271,18 @@ class InverterSelfConsumedPower(DerivedSensor, HybridInverter, PVInverter):
         if sensor.latest_raw_state is None:
             return False
         if isinstance(sensor, ActivePower):
+            self._log_unconsumed_source_value("active_power", self.active_power, self._source_timestamps["active_power"], sensor)
             self.active_power = int(sensor.latest_raw_state)
+            self._source_timestamps["active_power"] = self._source_timestamp(sensor)
         elif isinstance(sensor, ChargeDischargePower):
+            self._log_unconsumed_source_value("battery_power", self.battery_power, self._source_timestamps["battery_power"], sensor)
             self.battery_power = int(sensor.latest_raw_state)
+            self._source_timestamps["battery_power"] = self._source_timestamp(sensor)
         elif isinstance(sensor, PVStringPower):
+            source_name = f"pv_string_power_{sensor.string_number}"
+            self._log_unconsumed_source_value(source_name, self.pv_string_power[sensor.string_number], self._source_timestamps[source_name], sensor)
             self.pv_string_power[sensor.string_number] = int(sensor.latest_raw_state)
+            self._source_timestamps[source_name] = self._source_timestamp(sensor)
         else:
             logger.warning(f"{self.log_identity} Attempt to call update_from_source_sensor from {sensor.log_identity}")
             return False

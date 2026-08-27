@@ -118,19 +118,20 @@ class TestInverterBatteryDischargingPowerNoneState:
 
 class TestPVStringPowerValueApply:
     def test_overwriting_unconsumed_value_logs_warning(self, caplog):
-        """Line 105: warning when overwriting an unconsumed value."""
+        """Overwriting an unconsumed value uses shared derived diagnostics."""
         caplog.set_level(logging.WARNING)
-        v = PVStringPower.Value(name="test_value", divisor=1.0)
+        sensor = _make_pv_string_power()
+        v = PVStringPower.Value(name="test_value", divisor=1.0, owner=sensor)
         v.value = 100.0  # Already has a value
         v.timestamp = time.time()
 
         mock_sensor = MagicMock(spec=Sensor)
         mock_sensor.latest_time = time.time()
 
-        with patch("sigenergy2mqtt.sensors.inverter_derived.logger") as mock_log:
+        with patch("sigenergy2mqtt.sensors.base.derived.logger") as mock_log:
             v.apply(mock_sensor)  # Overwrites → triggers line 105
             mock_log.warning.assert_called_once()
-            assert "Overwriting unconsumed value" in mock_log.warning.call_args[0][0]
+            assert "Overwriting unconsumed source value" in mock_log.warning.call_args[0][0]
 
     def test_none_raw_state_returns_early(self):
         """Line 108: early-return when sensor.latest_raw_state is None."""
@@ -165,13 +166,40 @@ class TestPVStringPowerPublishGapWarning:
             sensor.amperes.value = 10.0
             sensor.amperes.timestamp = now
 
-            with patch("sigenergy2mqtt.sensors.base.DerivedSensor.publish", new_callable=AsyncMock):
-                with patch("sigenergy2mqtt.sensors.inverter_derived.logger") as mock_log:
-                    result = await sensor.publish(MagicMock(), None)
-                    assert result is True
-                    # Should have logged the gap warning (line 148)
-                    debug_calls = [str(c) for c in mock_log.debug.call_args_list]
-                    assert any("WARNING" in c for c in debug_calls)
+            with patch("sigenergy2mqtt.sensors.base.DerivedSensor.publish", new_callable=AsyncMock), patch("sigenergy2mqtt.sensors.inverter_derived.logger") as mock_log:
+                result = await sensor.publish(MagicMock(), None)
+                assert result is True
+                # Should have logged the gap warning (line 148)
+                debug_calls = [str(c) for c in mock_log.debug.call_args_list]
+                assert any("WARNING" in c for c in debug_calls)
+
+    @pytest.mark.asyncio
+    async def test_completed_pair_is_cleared_when_unchanged_publish_is_skipped(self):
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            sensor = _make_pv_string_power()
+            sensor.volts.value = 400.0
+            sensor.amperes.value = 10.0
+            sensor._states.append((time.time(), 4000.0))
+
+            with patch("sigenergy2mqtt.sensors.base.DerivedSensor.publish", new_callable=AsyncMock, return_value=False):
+                assert await sensor.publish(MagicMock(), None) is False
+
+            assert sensor.volts.value is None
+            assert sensor.amperes.value is None
+
+    @pytest.mark.asyncio
+    async def test_completed_pair_is_retained_when_pending_publish_fails(self):
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            sensor = _make_pv_string_power()
+            sensor.volts.value = 400.0
+            sensor.amperes.value = 10.0
+            sensor._pending_update = True
+
+            with patch("sigenergy2mqtt.sensors.base.DerivedSensor.publish", new_callable=AsyncMock, return_value=False):
+                assert await sensor.publish(MagicMock(), None) is False
+
+            assert sensor.volts.value == 400.0
+            assert sensor.amperes.value == 10.0
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -290,12 +318,12 @@ class TestInverterSelfConsumedPowerEdgeCases:
             sensor.update_from_source_sensor(bp)
 
             from sigenergy2mqtt.sensors.base import SanityCheckException
+
             pv1.latest_raw_state = 100
 
             # Patch set_latest_state to raise SanityCheckException
-            with patch.object(sensor, "set_latest_state", side_effect=SanityCheckException("test sanity check")):
-                with patch("sigenergy2mqtt.sensors.inverter_derived.logger") as mock_log:
-                    result = sensor.update_from_source_sensor(pv1)
-                    assert result is True  # Returns True even when SanityCheckException is caught
-                    debug_calls = [str(c) for c in mock_log.debug.call_args_list]
-                    assert any("FAILED" in c for c in debug_calls)
+            with patch.object(sensor, "set_latest_state", side_effect=SanityCheckException("test sanity check")), patch("sigenergy2mqtt.sensors.inverter_derived.logger") as mock_log:
+                result = sensor.update_from_source_sensor(pv1)
+                assert result is True  # Returns True even when SanityCheckException is caught
+                debug_calls = [str(c) for c in mock_log.debug.call_args_list]
+                assert any("FAILED" in c for c in debug_calls)
