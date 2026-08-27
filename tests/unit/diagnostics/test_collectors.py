@@ -74,6 +74,9 @@ async def test_collect_runtime_config():
         controls = payload["controls"]
         assert "log_level" in controls
         assert controls["log_level"]["type"] == "select"
+        assert "modbus_log_level" in controls
+        assert controls["modbus_log_level"]["type"] == "select"
+        assert controls["modbus_log_level"]["value"] != ""
         assert "repeated_state_publish_interval" in controls
         assert controls["repeated_state_publish_interval"]["type"] == "number"
         assert "persistence_debug" in controls

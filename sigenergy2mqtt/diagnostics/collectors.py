@@ -44,8 +44,8 @@ class DiagnosticsCollectors:
                 # e.g. "sigenergy2mqtt_config_log_level" -> "log_level"
                 endpoint = settings_sensor.unique_id.removeprefix("sigenergy2mqtt_config_")
 
-                # Read the current display value via get_state()
-                state = await settings_sensor.get_state()
+                # Read the current display value via get_value()
+                value = settings_sensor.get_value()
 
                 # Build the descriptor based on the sensor's mixin type
                 descriptor: dict[str, Any] = {
@@ -60,13 +60,13 @@ class DiagnosticsCollectors:
                     visible_options = [o for o in options if o]
                     descriptor.update({
                         "type": "select",
-                        "value": str(state) if state is not None else "",
+                        "value": str(value) if value is not None else "",
                         "options": visible_options,
                     })
                 elif isinstance(settings_sensor, NumericSensorMixin):
                     descriptor.update({
                         "type": "number",
-                        "value": state,
+                        "value": value,
                         "min": settings_sensor.get(DiscoveryKeys.MIN),
                         "max": settings_sensor.get(DiscoveryKeys.MAX),
                         "unit": settings_sensor.unit or "",
@@ -74,11 +74,11 @@ class DiagnosticsCollectors:
                 elif isinstance(settings_sensor, SwitchSensorMixin):
                     descriptor.update({
                         "type": "switch",
-                        "value": bool(state),
+                        "value": bool(value),
                     })
                 else:
                     # Fallback: surface as a read-only string
-                    descriptor.update({"type": "readonly", "value": str(state)})
+                    descriptor.update({"type": "readonly", "value": str(value)})
 
                 controls[endpoint] = descriptor
 

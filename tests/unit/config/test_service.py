@@ -54,3 +54,22 @@ async def test_application_log_level_write_updates_config_and_logger(config):
 
     assert config.log_level == logging.DEBUG
     set_level.assert_called_once_with(logging.DEBUG)
+
+
+def test_settings_sensor_get_value(config):
+    from sigenergy2mqtt.config.sensors import ModbusLogLevel, PersistenceDebugging, RepeatedStatePublishInterval
+
+    config.log_level = logging.DEBUG
+    app_log = ApplicationLogLevel()
+    assert app_log.get_value() == "DEBUG"
+
+    modbus_log = ModbusLogLevel()
+    assert modbus_log.get_value() in ("INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL")
+
+    config.persistence.debug = True
+    persistence_debug = PersistenceDebugging()
+    assert persistence_debug.get_value() is True
+
+    config.repeated_state_publish_interval = 42
+    interval_sensor = RepeatedStatePublishInterval()
+    assert interval_sensor.get_value() == 42

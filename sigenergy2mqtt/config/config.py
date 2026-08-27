@@ -211,6 +211,16 @@ class Config:
         for device in self._settings.modbus:
             device.log_level = level
 
+    @property
+    def modbus_log_level(self) -> int:
+        """Return the minimum log level across all configured Modbus devices."""
+        return self.get_modbus_log_level()
+
+    @modbus_log_level.setter
+    def modbus_log_level(self, level: int) -> None:
+        """Set the log level on every configured Modbus device."""
+        self.set_modbus_log_level(level)
+
     async def load(self, filename: str) -> None:
         """Load configuration from a file.
 
