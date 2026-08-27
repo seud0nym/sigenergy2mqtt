@@ -85,15 +85,28 @@ class DerivedSensor(TypedSensorMixin, Sensor):
         if not isinstance(source_timestamp, (int, float)):
             source_timestamp = getattr(sensor, "latest_time", None)
         age = max(0.0, source_timestamp - timestamp) if isinstance(source_timestamp, (int, float)) and isinstance(timestamp, (int, float)) else None
-        scan_interval = getattr(sensor, "scan_interval", None)
-        expected_interval = max(1, 2 * scan_interval) if isinstance(scan_interval, int) else None
+        expected_interval = self._source_expected_interval(sensor)
         message = f"{self.log_identity} Overwriting unconsumed source value {source_name}={value}"
-        if age is not None and expected_interval is not None:
-            message += f" (age={age:.2f}s expected_interval={expected_interval}s)"
+        if age is not None:
+            message += f" (age={age:.2f}s"
+            if expected_interval is not None:
+                message += f" expected_interval={expected_interval}s"
+            message += ")"
         if age is None or expected_interval is None or age > expected_interval:
             logger.warning(message)
         else:
             logger.debug(message)
+
+    @staticmethod
+    def _source_expected_interval(sensor: Sensor) -> int | None:
+        scan_interval = getattr(sensor, "scan_interval", None)
+        if isinstance(scan_interval, int):
+            return max(1, 2 * scan_interval)
+
+        source_sensors = getattr(sensor, "source_sensors", ())
+        intervals = [getattr(source, "scan_interval", None) for source in source_sensors]
+        intervals = [interval for interval in intervals if isinstance(interval, int)]
+        return max(1, 2 * max(intervals)) if intervals else None
 
     @staticmethod
     def _source_timestamp(sensor: Sensor) -> float | None:
