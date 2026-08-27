@@ -6922,11 +6922,11 @@ InfluxDB and PVOutput settings are only published when those options are enabled
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
 <tr><td>Sanity&nbsp;Check</td><td>The value must be between 0  and 50  (0 ≦ raw value ≦ 50)</td></tr>
 </table>
-<h5><a id='sigenergy2mqtt_config_get_modbus_log_level'>Modbus Log Level</a></h5>
+<h5><a id='sigenergy2mqtt_config_modbus_log_level'>Modbus Log Level</a></h5>
 <table>
 <tr><td>Sensor&nbsp;Class</td><td>ModbusLogLevel</td></tr>
 <tr><td>Scan&nbsp;Interval</td><td>60s</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_config_get_modbus_log_level</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_config_modbus_log_level</td></tr>
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/modbus/log_level/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/modbus/log_level/state</td></tr>
 <tr><td>Raw&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/modbus/log_level/raw</td></tr>
@@ -7011,7 +7011,7 @@ InfluxDB and PVOutput settings are only published when those options are enabled
 <tr><td>Valid&nbsp;Values</td><td><ul><li value='10'>"DEBUG"</li><li value='20'>"INFO"</li><li value='30'>"WARNING"</li><li value='40'>"ERROR"</li><li value='50'>"CRITICAL"</li></ol></td></tr>
 <tr><td>Since&nbsp;ProtocolVersion&nbsp;Version</td><td>N/A</td></tr>
 </table>
-<h5><a id='sigenergy2mqtt_config_get_modbus_log_level_set'>Modbus Log Level
+<h5><a id='sigenergy2mqtt_config_modbus_log_level_set'>Modbus Log Level
 </a></h5>
 <table>
 <tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/modbus/log_level/set</td></tr>
@@ -7586,7 +7586,7 @@ The attributes payload currently includes:
 <a href='#sigenergy2mqtt_config_diagnostics_log_level'>Diagnostics Log Level</a><br>
 <a href='#sigenergy2mqtt_config_influxdb_log_level'>InfluxDB Log Level</a><br>
 <a href='#sigenergy2mqtt_config_mqtt_log_level'>MQTT Log Level</a><br>
-<a href='#sigenergy2mqtt_config_get_modbus_log_level'>Modbus Log Level</a><br>
+<a href='#sigenergy2mqtt_config_modbus_log_level'>Modbus Log Level</a><br>
 <a href='#sigenergy2mqtt_config_persistence_debug'>Persistence Debugging</a><br>
 <a href='#sigenergy2mqtt_config_repeated_state_publish_interval'>Repeated State Publish Interval</a><br>
 <a href='#sigenergy2mqtt_config_sanity_check_failures_increment'>Sanity Check Failures Increment</a><br>
@@ -7651,7 +7651,7 @@ The attributes payload currently includes:
 <a href='#sigenergy2mqtt_config_diagnostics_log_level_set'>Diagnostics Log Level</a><br>
 <a href='#sigenergy2mqtt_config_influxdb_log_level_set'>InfluxDB Log Level</a><br>
 <a href='#sigenergy2mqtt_config_mqtt_log_level_set'>MQTT Log Level</a><br>
-<a href='#sigenergy2mqtt_config_get_modbus_log_level_set'>Modbus Log Level</a><br>
+<a href='#sigenergy2mqtt_config_modbus_log_level_set'>Modbus Log Level</a><br>
 <a href='#sigenergy2mqtt_config_persistence_debug_set'>Persistence Debugging</a><br>
 <a href='#sigenergy2mqtt_config_repeated_state_publish_interval_set'>Repeated State Publish Interval</a><br>
 <a href='#sigenergy2mqtt_config_sanity_check_failures_increment_set'>Sanity Check Failures Increment</a><br>
