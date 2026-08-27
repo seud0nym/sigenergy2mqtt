@@ -76,6 +76,33 @@ class DerivedSensor(TypedSensorMixin, Sensor):
             # Re-apply sensor overrides so that an explicit debug-logging=False override will be respected
             self.apply_sensor_overrides()
 
+    def _log_unconsumed_source_value(self, source_name: str, value: Any, timestamp: float | None, sensor: Sensor) -> None:
+        """Log when a cached source value is replaced before being consumed."""
+        if value is None:
+            return
+
+        source_timestamp = getattr(sensor, "last_successful_read_time", None)
+        if not isinstance(source_timestamp, (int, float)):
+            source_timestamp = getattr(sensor, "latest_time", None)
+        age = max(0.0, source_timestamp - timestamp) if isinstance(source_timestamp, (int, float)) and isinstance(timestamp, (int, float)) else None
+        scan_interval = getattr(sensor, "scan_interval", None)
+        expected_interval = max(1, 2 * scan_interval) if isinstance(scan_interval, int) else None
+        message = f"{self.log_identity} Overwriting unconsumed source value {source_name}={value}"
+        if age is not None and expected_interval is not None:
+            message += f" (age={age:.2f}s expected_interval={expected_interval}s)"
+        if age is None or expected_interval is None or age > expected_interval:
+            logger.warning(message)
+        else:
+            logger.debug(message)
+
+    @staticmethod
+    def _source_timestamp(sensor: Sensor) -> float | None:
+        timestamp = getattr(sensor, "last_successful_read_time", None)
+        if isinstance(timestamp, (int, float)):
+            return timestamp
+        timestamp = getattr(sensor, "latest_time", None)
+        return timestamp if isinstance(timestamp, (int, float)) and timestamp > 0 else None
+
     def set_latest_state(self, state: float | str | list[bool] | list[int] | list[float]) -> bool:
         """Update latest state and track pending updates for publishing."""
         updated = super().set_latest_state(state)

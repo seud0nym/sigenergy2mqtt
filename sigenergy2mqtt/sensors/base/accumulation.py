@@ -75,6 +75,7 @@ class AccumulationSensor(DerivedSensor):
         self._source = source
         self._current_total_lock = asyncio.Lock()
         self._current_total: float = 0.0
+        self._last_source_generation: int | None = None
 
         # Inherit discriminator fields from source early so init-time persistence
         # logs use the real identity rather than plant/dev=n/a.
@@ -143,14 +144,23 @@ class AccumulationSensor(DerivedSensor):
         if sensor.latest_raw_state is None or sensor.state_count < 2:
             return False  # Need at least two points
 
+        source_generation = getattr(sensor, "update_generation", None)
+        if isinstance(source_generation, int) and source_generation > 0:
+            if source_generation == self._last_source_generation:
+                return False
+            self._last_source_generation = source_generation
+
         # Calculate time difference in hours
-        interval_hours = sensor.latest_interval / 3600 if sensor.latest_interval else 0
+        source_interval = getattr(sensor, "successful_read_interval", None)
+        if not isinstance(source_interval, (int, float)):
+            source_interval = sensor.latest_interval
+        interval_hours = source_interval / 3600 if source_interval else 0
 
         if interval_hours < 0:
-            logger.warning(f"{self.log_identity} negative interval IGNORED (interval={sensor.latest_interval})")
+            logger.warning(f"{self.log_identity} negative interval IGNORED (interval={source_interval})")
             return False
         if interval_hours >= 2:
-            logger.warning(f"{self.log_identity} 2+ hour interval IGNORED (interval={sensor.latest_interval})")
+            logger.warning(f"{self.log_identity} 2+ hour interval IGNORED (interval={source_interval})")
             return False
 
         # Convert negative power to zero
@@ -163,9 +173,7 @@ class AccumulationSensor(DerivedSensor):
 
         # Check for decreasing total
         if new_total < self._current_total and self.state_class == StateClass.TOTAL_INCREASING:
-            logger.debug(
-                f"{self.log_identity} negative increase IGNORED (current={self._current_total} prev={previous} curr={current} increase={increase} new={new_total} interval={sensor.latest_interval:.2f}s)"
-            )
+            logger.debug(f"{self.log_identity} negative increase IGNORED (current={self._current_total} prev={previous} curr={current} increase={increase} new={new_total} interval={source_interval:.2f}s)")
             return False
 
         # Update total

@@ -16,6 +16,44 @@ def mock_state_store():
 
 class TestAccumulationLogic:
     @pytest.mark.asyncio
+    async def test_repeated_successful_read_is_integrated_once_per_generation(self):
+        source = MagicMock(spec=Sensor)
+        source.unique_id = "source_uid"
+        source.log_identity = "source"
+        source.latest_raw_state = 20.0
+        source.previous_raw_state = 10.0
+        source.state_count = 2
+        source.update_generation = 1
+        source.successful_read_interval = 3600.0
+        source.latest_interval = 3600.0
+
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            sensor = ResettableAccumulationSensor(
+                name="Accumulator",
+                unique_id="sigen_accumulator_generation",
+                object_id="sigen_accumulator_generation",
+                source=source,
+                data_type=ModbusDataType.UINT32,
+                unit="kWh",
+                device_class=DeviceClass.ENERGY,
+                state_class=StateClass.TOTAL_INCREASING,
+                icon="mdi:battery",
+                gain=1.0,
+                precision=2,
+            )
+
+            with patch.object(sensor, "run_persistence_coroutine", side_effect=lambda coro: coro.close()):
+                assert sensor.update_from_source_sensor(source) is True
+                assert sensor._current_total == 15.0
+                assert sensor.update_from_source_sensor(source) is False
+                assert sensor._current_total == 15.0
+
+                source.update_generation = 2
+                source.successful_read_interval = 1800.0
+                assert sensor.update_from_source_sensor(source) is True
+                assert sensor._current_total == 22.5
+
+    @pytest.mark.asyncio
     async def test_riemann_sum_accumulation(self):
         """Test the basic Riemann sum (trapezoidal) accumulation logic."""
         source = MagicMock(spec=Sensor)

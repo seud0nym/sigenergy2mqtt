@@ -1,12 +1,13 @@
 <!-- git log [since tag]..HEAD --oneline -->
 # Changelog 
 
-## [2026.8.26a3] - 2026-08-26
+## [Unreleased]
 
 ### Added
 
 - Added MQTT-configurable runtime settings sensors
 - Added configuration of runtime settings via diagnostics web UI
+- Added enhanced logging for unconsumed source values in derived sensors
 
 ### Fixed
 
