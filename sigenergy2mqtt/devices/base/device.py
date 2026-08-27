@@ -534,6 +534,7 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
         - The HA status topic for online/offline state change notifications.
         - Each WriteableSensorMixin's command topic for receiving set-value commands.
         - Each ObservableMixin sensor's observable topics for state notifications.
+        - Every sensor to allow changing the sensor debug logging setting via MQTT.
 
         Recursively subscribes child devices.
 
@@ -545,6 +546,13 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
             result = mqtt_handler.register(mqtt_client, f"{active_config.home_assistant.discovery_prefix}/status", self.on_ha_state_change)
             logger.debug(f"{self.log_identity} subscribed to topic {active_config.home_assistant.discovery_prefix}/status for Home Assistant state changes ({result=})")
         for sensor in self.sensors.values():
+            try:
+                debug_topic = f"{sensor._get_base_topic(self.unique_id)}/debug"
+                result = mqtt_handler.register(mqtt_client, debug_topic, sensor.set_debug_logging)
+                if sensor.debug_logging:
+                    logger.debug(f"{sensor.log_identity} subscribed to topic {debug_topic} for debug logging configuration (result={result!r})")
+            except (ValueError, TypeError, AttributeError, RuntimeError) as e:
+                logger.error(f"{sensor.log_identity} failed to subscribe to debug topic: {e!r}")
             if isinstance(sensor, WriteableSensorMixin):
                 try:
                     command_topic = sensor.command_topic

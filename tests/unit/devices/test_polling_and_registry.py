@@ -735,8 +735,8 @@ def test_subscribe_writable_sensor_exception_logged(device):
     device.all_sensors[w.unique_id] = w
 
     handler = MagicMock()
-    # First call registers HA status (must succeed), second raises for writable sensor
-    handler.register.side_effect = [MagicMock(), RuntimeError("subscribe failed")]
+    # First call registers HA status (must succeed), second registers debug topic (must succeed), third raises for writable sensor
+    handler.register.side_effect = [MagicMock(), MagicMock(), RuntimeError("subscribe failed")]
 
     with patch("sigenergy2mqtt.devices.base.device.logger") as mock_log:
         device.subscribe(MagicMock(), handler)
@@ -749,8 +749,22 @@ def test_subscribe_observable_exception_logged(device):
     device.all_sensors[obs.unique_id] = obs
 
     handler = MagicMock()
-    # First call (HA status) succeeds; second (observable topic) raises
-    handler.register.side_effect = [MagicMock(), RuntimeError("obs fail")]
+    # First call (HA status) succeeds; second (debug topic) succeeds; third (observable topic) raises
+    handler.register.side_effect = [MagicMock(), MagicMock(), RuntimeError("obs fail")]
+
+    with patch("sigenergy2mqtt.devices.base.device.logger") as mock_log:
+        device.subscribe(MagicMock(), handler)
+        mock_log.error.assert_called()
+
+
+def test_subscribe_debug_exception_logged(device):
+    """Exception during debug topic subscription is logged."""
+    w = DummyWriteable("w_debug_fail", command_topic="cmd/debug_fail")
+    device.all_sensors[w.unique_id] = w
+
+    handler = MagicMock()
+    # First call registers HA status (must succeed), second raises for debug topic
+    handler.register.side_effect = [MagicMock(), RuntimeError("debug subscribe failed"), MagicMock()]
 
     with patch("sigenergy2mqtt.devices.base.device.logger") as mock_log:
         device.subscribe(MagicMock(), handler)

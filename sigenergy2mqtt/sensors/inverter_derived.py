@@ -294,12 +294,12 @@ class InverterSelfConsumedPower(DerivedSensor, HybridInverter, PVInverter):
         if self.active_power is None or self.battery_power is None or any(p is None for p in self.pv_string_power.values()):
             if self.debug_logging:
                 logger.debug(f"{self.log_identity} Publishing SKIPPED - active_power={self.active_power} battery_power={self.battery_power} pv_string_power={[p for p in self.pv_string_power.values()]}")
-            if not self._incomplete_snapshot_logged:
-                missing = [name for name, value in (("active_power", self.active_power), ("battery_power", self.battery_power)) if value is None]
-                missing.extend(f"pv_string_power_{string_number}" for string_number, value in self.pv_string_power.items() if value is None)
-                cached_ages = {name: round(time.time() - timestamp, 2) for name, timestamp in self._source_timestamps.items() if timestamp is not None}
-                logger.debug(f"{self.log_identity} Incomplete source snapshot - missing={missing} cached_ages={cached_ages}")
-                self._incomplete_snapshot_logged = True
+                if not self._incomplete_snapshot_logged:
+                    missing = [name for name, value in (("active_power", self.active_power), ("battery_power", self.battery_power)) if value is None]
+                    missing.extend(f"pv_string_power_{string_number}" for string_number, value in self.pv_string_power.items() if value is None)
+                    cached_ages = {name: round(time.time() - timestamp, 2) for name, timestamp in self._source_timestamps.items() if timestamp is not None}
+                    logger.debug(f"{self.log_identity} Incomplete source snapshot - missing={missing} cached_ages={cached_ages}")
+                    self._incomplete_snapshot_logged = True
             return False  # until all values populated, can't do calculation
         total_pv_power = sum([p for p in self.pv_string_power.values() if p is not None])
         state = total_pv_power - self.active_power - self.battery_power

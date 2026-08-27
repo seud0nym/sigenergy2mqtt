@@ -283,12 +283,6 @@ class ObservableMixin(abc.ABC):
         return set()
 
 
-"""Continuation of base sensor classes (Part 3).
-
-This file contains writable sensors, alarm sensors, and accumulation sensors.
-Merge with base_refactored.py and base_refactored_part2.py for the complete module.
-"""
-
 # =============================================================================
 # Writeable Sensor Mixin
 # =============================================================================
