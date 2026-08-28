@@ -1,7 +1,7 @@
 <!-- git log [since tag]..HEAD --oneline -->
 # Changelog 
 
-## [2026.8.28a1] - 2026-08-28
+## [2026.8.28a2] - 2026-08-28
 
 ### Added
 
@@ -18,7 +18,7 @@
 
 ### Changed
 
-- Added plant active power and third-party PV power to dashboard
+- Added Lifetime RTE, Plant Active Power, Plant PV power and Third-party PV Power gauges to dashboard
 - Refactored writeable sensor mixins to separate transport from entity behaviour
 - Refactored Protocol class name to ProtocolVersion because it shadowed typing.Protocol
 - Implemented improved firmware update detection and subsequent restart policy
