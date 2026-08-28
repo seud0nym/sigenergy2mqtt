@@ -49,8 +49,8 @@ from pymodbus.simulator import DataType, SimData, SimDevice
 
 from sigenergy2mqtt.common import Constants, DeviceClass, ProtocolVersion
 from sigenergy2mqtt.modbus.client import ModbusClient
-from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerInputBreaker, ACChargerRatedCurrent
-from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, OutputType, PhaseCurrent, PhaseVoltage, PowerFactor
+from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerChargingPower, ACChargerInputBreaker, ACChargerRatedCurrent
+from sigenergy2mqtt.sensors.inverter_read_only import DCChargerOutputPower, InverterFirmwareVersion, OutputType, PhaseCurrent, PhaseVoltage, PowerFactor
 from sigenergy2mqtt.sensors.plant_read_only import GridStatus
 from sigenergy2mqtt.sensors.plant_read_write import RemoteEMS
 from tests.utils import get_sensor_instances
@@ -731,7 +731,10 @@ class CustomDataBlock:
             return (64, "input_breaker")
         if hasattr(sensor, "decode_alarm_bit"):  # AlarmSensor
             return (0, "alarm_sensor")
-
+        if sensor.address == ACChargerChargingPower.ADDRESS:
+            return (randint(0, 7000) / sensor.gain, "charging_power")
+        if sensor.address == DCChargerOutputPower.ADDRESS:
+            return (randint(0, 11000) / sensor.gain, "output_power")
         if sensor.latest_raw_state is not None and isinstance(sensor.latest_raw_state, (int, float)):
             return (sensor.latest_raw_state / sensor.gain, "latest_raw_state")
         if sensor.device_class == DeviceClass.TIMESTAMP:
@@ -748,12 +751,13 @@ class CustomDataBlock:
             lo = max(0, int(sensor.sanity_check.min_raw)) if sensor.data_type in UNSIGNED_DATA_TYPES else int(sensor.sanity_check.min_raw)
             hi = int(sensor.sanity_check.max_raw)
             half_hi = lo + (hi - lo) // 2
-            
             if sensor.sanity_check.delta:
                 raw = lo + randint(0, (hi - lo) // 2)
             else:
                 raw = randint(lo, half_hi)
             return (raw / sensor.gain, "sanity_check")
+        if sensor.unit == "kWh" in sensor.name:
+            return (randint(0, 26000) / 1000, "kwh")
 
         # Fall back to a sensible subset of the sensor's data type, capped at half the
         # available range to prevent derived summing sensors from exceeding their limits.
