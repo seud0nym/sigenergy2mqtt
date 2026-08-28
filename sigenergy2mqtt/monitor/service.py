@@ -220,6 +220,8 @@ class MonitorService(Device):
         _updates_states("GridStatus")
         _updates_states("GridActivity")
         _updates_states("TotalLifetimePVEnergy")
+        _updates_states("PlantPVPower")
+        _updates_states("ThirdPartyPVPower")
         _updates_states("TotalLoadConsumption")
         _updates_states("InverterTemperature")
         _updates_states("ESSAverageCellTemperature")

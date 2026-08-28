@@ -56,6 +56,7 @@ PLANT_LIVE_FIELDS = {
     "lifetime_charged_energy": "accumulated_charge_energy",
     "lifetime_discharged_energy": "accumulated_discharge_energy",
     "pv_power": "total_pv_power",
+    "plant_pv_power": "plant_pv_power",
     "third_party_pv_power": "third_party_pv_power",
     "load_power": "total_load_power",
     "grid_import_power": "grid_sensor_import_power",

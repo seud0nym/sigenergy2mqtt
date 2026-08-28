@@ -13,6 +13,38 @@ def test_extract_dashboard_state_full_plant():
             unit="%",
             last_state=95.5
         ),
+        "sigenergy2mqtt/sigen_0_accumulated_charge_energy/state": MonitoredSensor(
+            device_name="PowerPlant[plant=0,dev=1]",
+            sensor_name="ESSTotalChargedEnergy",
+            description="Lifetime Charge Energy",
+            scan_interval=60,
+            unit="kWh",
+            last_state=1000.0,
+        ),
+        "sigenergy2mqtt/sigen_0_accumulated_discharge_energy/state": MonitoredSensor(
+            device_name="PowerPlant[plant=0,dev=1]",
+            sensor_name="ESSTotalDischargedEnergy",
+            description="Lifetime Discharge Energy",
+            scan_interval=60,
+            unit="kWh",
+            last_state=900.0,
+        ),
+        "sigenergy2mqtt/sigen_0_plant_pv_power/state": MonitoredSensor(
+            device_name="PowerPlant[plant=0,dev=1]",
+            sensor_name="PlantPVPower",
+            description="PV Power",
+            scan_interval=5,
+            unit="W",
+            last_state=3500.0,
+        ),
+        "sigenergy2mqtt/sigen_0_third_party_pv_power/state": MonitoredSensor(
+            device_name="PowerPlant[plant=0,dev=1]",
+            sensor_name="ThirdPartyPVPower",
+            description="Third-Party PV Power",
+            scan_interval=5,
+            unit="W",
+            last_state=500.0,
+        ),
         "sigenergy2mqtt/sigen_0_plant_rated_energy_capacity/state": MonitoredSensor(
             device_name="PowerPlant[plant=0,dev=1]",
             sensor_name="PlantRatedEnergyCapacity",
@@ -65,6 +97,12 @@ def test_extract_dashboard_state_full_plant():
     assert result["plant"]["battery_soc"]["unit"] == "%"
     assert result["plant"]["has_battery"] is True
     assert result["plant"]["config"]["rated_energy_capacity"]["value"] == 10.0
+    assert result["plant"]["plant_pv_power"]["value"] == 3500.0
+    assert result["plant"]["plant_pv_power"]["unit"] == "W"
+    assert result["plant"]["third_party_pv_power"]["value"] == 500.0
+    assert result["plant"]["third_party_pv_power"]["unit"] == "W"
+    assert result["plant"]["lifetime_charged_energy"]["value"] == 1000.0
+    assert result["plant"]["lifetime_discharged_energy"]["value"] == 900.0
     
     assert result["inverters"]["1"]["active_power"]["value"] == 1500
     assert "config" in result["inverters"]["1"]
