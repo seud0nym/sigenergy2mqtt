@@ -23,7 +23,7 @@ class DiagnosticsCollectors:
             diagnostics_registry.register("influxdb", cls._diagnostics_collect_influxdb_metrics)
         if active_config.pvoutput.enabled:
             diagnostics_registry.register("pvoutput", cls._diagnostics_collect_pvoutput_metrics)
-        diagnostics_registry.register("runtime_config", cls._diagnostics_collect_runtime_config)
+        diagnostics_registry.register("runtime_configuration", cls._diagnostics_collect_runtime_config)
 
     @classmethod
     async def _diagnostics_collect_runtime_config(cls) -> dict[str, Any]:

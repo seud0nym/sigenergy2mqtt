@@ -471,12 +471,12 @@
       border-bottom: none;
     }
 
-    .control-row > .ctrl-label {
+    .control-row>.ctrl-label {
       flex-shrink: 0;
       max-width: 55%;
     }
 
-    .control-row > .ctrl-widget {
+    .control-row>.ctrl-widget {
       display: flex;
       align-items: center;
       gap: 6px;
@@ -548,23 +548,39 @@
       transition: transform 0.2s;
     }
 
-    .ctrl-switch input:checked + .ctrl-slider {
+    .ctrl-switch input:checked+.ctrl-slider {
       background: var(--accent);
     }
 
-    .ctrl-switch input:checked + .ctrl-slider::before {
+    .ctrl-switch input:checked+.ctrl-slider::before {
       transform: translateX(16px);
     }
 
     /* Flash feedback */
     @keyframes flashOk {
-      0%, 100% { border-color: var(--border); }
-      40% { border-color: var(--accent); box-shadow: 0 0 6px var(--accent); }
+
+      0%,
+      100% {
+        border-color: var(--border);
+      }
+
+      40% {
+        border-color: var(--accent);
+        box-shadow: 0 0 6px var(--accent);
+      }
     }
 
     @keyframes flashErr {
-      0%, 100% { border-color: var(--border); }
-      40% { border-color: var(--bad); box-shadow: 0 0 6px var(--bad); }
+
+      0%,
+      100% {
+        border-color: var(--border);
+      }
+
+      40% {
+        border-color: var(--bad);
+        box-shadow: 0 0 6px var(--bad);
+      }
     }
 
     .flash-ok {
@@ -787,7 +803,7 @@
           pill.className = 'pill bad';
           pill.textContent = 'error';
           title.appendChild(pill);
-        } else if (name === 'runtime_config') {
+        } else if (name === 'runtime_configuration') {
           // Gear icon instead of a status pill for the editable config card
           const gear = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
           gear.setAttribute('viewBox', '0 0 24 24');
@@ -1075,7 +1091,7 @@
         keys.forEach(key => {
           const existingCard = cardGrid.querySelector(`[data-provider="${key}"]`);
           const data = snapshot[key];
-          if (key === 'runtime_config' && existingCard && data && data.controls) {
+          if (key === 'runtime_configuration' && existingCard && data && data.controls) {
             updateControlsCard(existingCard, data.controls);
           } else if (existingCard) {
             const newCard = buildCard(key, data);
