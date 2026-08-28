@@ -36,7 +36,7 @@ if __name__ == "__main__":
     sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
 from datetime import datetime
-from random import randint
+from random import randint, uniform
 
 import paho.mqtt.client as mqtt
 from paho.mqtt.enums import CallbackAPIVersion, MQTTErrorCode
@@ -740,41 +740,51 @@ class CustomDataBlock:
             return (0, "options")
         if hasattr(sensor, "state_off") and hasattr(sensor, "state_on"):  # SwitchSensor
             return (0, "switch_sensor")
-        if hasattr(sensor, "min") and hasattr(sensor, "max"):
+        if "min" in sensor and "max" in sensor:
             lo = sensor["min"][0] if isinstance(sensor["min"], (tuple, list)) else sensor["min"]
             hi = sensor["max"][1] if isinstance(sensor["max"], (tuple, list)) else sensor["max"]
-            return (randint(lo, hi), "min_max")
+            return (uniform(float(lo), float(hi)), "min_max")
         if sensor.sanity_check.min_raw is not None and sensor.sanity_check.max_raw is not None:
+            lo = max(0, int(sensor.sanity_check.min_raw)) if sensor.data_type in UNSIGNED_DATA_TYPES else int(sensor.sanity_check.min_raw)
+            hi = int(sensor.sanity_check.max_raw)
+            half_hi = lo + (hi - lo) // 2
+            
             if sensor.sanity_check.delta:
-                if sensor.data_type in UNSIGNED_DATA_TYPES:
-                    raw = randint(0, int(sensor.sanity_check.max_raw))
-                else:
-                    raw = sensor.sanity_check.min_raw + randint(0, int(sensor.sanity_check.max_raw - sensor.sanity_check.min_raw) // sensor.sanity_check.delta) * sensor.sanity_check.delta
+                raw = lo + randint(0, (hi - lo) // 2)
             else:
-                raw = randint(
-                    0 if sensor.data_type in UNSIGNED_DATA_TYPES else int(sensor.sanity_check.min_raw),
-                    int(sensor.sanity_check.max_raw),
-                )
+                raw = randint(lo, half_hi)
             return (raw / sensor.gain, "sanity_check")
 
-        # Fall back to the full range of the sensor's data type.
+        # Fall back to a sensible subset of the sensor's data type, capped at half the
+        # available range to prevent derived summing sensors from exceeding their limits.
+        # To prevent unreasonably large energy values and always-negative temperatures
+        # when sanity limits are missing, we apply sensible defaults for the test server.
         lo_raw = sensor.sanity_check.min_raw
         hi_raw = sensor.sanity_check.max_raw
         match sensor.data_type:
             case ModbusClientMixin.DATATYPE.INT16:
-                raw = randint(-32768 if lo_raw is None else int(lo_raw), 32767 if hi_raw is None else int(hi_raw))
+                lo = 0 if lo_raw is None else int(lo_raw)
+                hi = 10000 if hi_raw is None else int(hi_raw)
+                raw = randint(lo, lo + (hi - lo) // 2)
             case ModbusClientMixin.DATATYPE.UINT16:
-                raw = randint(0, 65535 if hi_raw is None else int(hi_raw))
+                hi = 10000 if hi_raw is None else int(hi_raw)
+                raw = randint(0, hi // 2)
             case ModbusClientMixin.DATATYPE.INT32:
-                raw = randint(-2147483648 if lo_raw is None else int(lo_raw), 2147483647 if hi_raw is None else int(hi_raw))
+                lo = 0 if lo_raw is None else int(lo_raw)
+                hi = 1000000 if hi_raw is None else int(hi_raw)
+                raw = randint(lo, lo + (hi - lo) // 2)
             case ModbusClientMixin.DATATYPE.UINT32:
-                raw = randint(0, 4294967295 if hi_raw is None else int(hi_raw))
+                hi = 1000000 if hi_raw is None else int(hi_raw)
+                raw = randint(0, hi // 2)
             case ModbusClientMixin.DATATYPE.INT64:
-                raw = randint(-9223372036854775808 if lo_raw is None else int(lo_raw), 9223372036854775807 if hi_raw is None else int(hi_raw))
+                lo = 0 if lo_raw is None else int(lo_raw)
+                hi = 10000000 if hi_raw is None else int(hi_raw)
+                raw = randint(lo, lo + (hi - lo) // 2)
             case ModbusClientMixin.DATATYPE.UINT64:
-                raw = randint(0, 18446744073709551615 if hi_raw is None else int(hi_raw))
+                hi = 10000000 if hi_raw is None else int(hi_raw)
+                raw = randint(0, hi // 2)
             case _:
-                raw = randint(0, 255)
+                raw = randint(0, 127)
         return (raw / sensor.gain, "data_type_default")
 
     def _register_mqtt_topic(self, sensor: Any, source: str) -> None:
