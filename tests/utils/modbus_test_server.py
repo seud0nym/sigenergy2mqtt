@@ -764,24 +764,24 @@ class CustomDataBlock:
         match sensor.data_type:
             case ModbusClientMixin.DATATYPE.INT16:
                 lo = 0 if lo_raw is None else int(lo_raw)
-                hi = 10000 if hi_raw is None else int(hi_raw)
+                hi = 1000 if hi_raw is None else int(hi_raw)
                 raw = randint(lo, lo + (hi - lo) // 2)
             case ModbusClientMixin.DATATYPE.UINT16:
-                hi = 10000 if hi_raw is None else int(hi_raw)
+                hi = 1000 if hi_raw is None else int(hi_raw)
                 raw = randint(0, hi // 2)
             case ModbusClientMixin.DATATYPE.INT32:
                 lo = 0 if lo_raw is None else int(lo_raw)
-                hi = 1000000 if hi_raw is None else int(hi_raw)
+                hi = 100000 if hi_raw is None else int(hi_raw)
                 raw = randint(lo, lo + (hi - lo) // 2)
             case ModbusClientMixin.DATATYPE.UINT32:
-                hi = 1000000 if hi_raw is None else int(hi_raw)
+                hi = 100000 if hi_raw is None else int(hi_raw)
                 raw = randint(0, hi // 2)
             case ModbusClientMixin.DATATYPE.INT64:
                 lo = 0 if lo_raw is None else int(lo_raw)
-                hi = 10000000 if hi_raw is None else int(hi_raw)
+                hi = 1000000 if hi_raw is None else int(hi_raw)
                 raw = randint(lo, lo + (hi - lo) // 2)
             case ModbusClientMixin.DATATYPE.UINT64:
-                hi = 10000000 if hi_raw is None else int(hi_raw)
+                hi = 1000000 if hi_raw is None else int(hi_raw)
                 raw = randint(0, hi // 2)
             case _:
                 raw = randint(0, 127)
