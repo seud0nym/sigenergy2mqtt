@@ -1252,19 +1252,20 @@
                 }
 
                 if (plant.plant_pv_power && typeof plant.plant_pv_power.value === 'number') {
+                    const plantPvKw = funit(plant.plant_pv_power) === 'W'
+                        ? fval(plant.plant_pv_power) / 1000
+                        : fval(plant.plant_pv_power);
                     let maxPlantPv = maxActivePower;
-                    if (funit(plant.config && plant.config.max_active_power) === 'kW' && funit(plant.plant_pv_power) === 'W') {
-                        maxPlantPv = maxActivePower * 1000;
-                    } else if (funit(plant.config && plant.config.max_active_power) === 'W' && funit(plant.plant_pv_power) === 'kW') {
+                    if (funit(plant.config && plant.config.max_active_power) === 'W') {
                         maxPlantPv = maxActivePower / 1000;
                     } else if (!plant.config || !plant.config.max_active_power) {
-                        maxPlantPv = funit(plant.plant_pv_power) === 'W' ? 100000 : 100;
+                        maxPlantPv = 100;
                     }
-                    maxPlantPv = Math.max(maxPlantPv, fval(plant.plant_pv_power) || 0);
+                    maxPlantPv = Math.max(maxPlantPv, plantPvKw || 0);
                     powerGr.appendChild(buildGauge({
                         label: 'Plant PV Power',
-                        value: fval(plant.plant_pv_power),
-                        unit: funit(plant.plant_pv_power),
+                        value: plantPvKw,
+                        unit: 'kW',
                         min: 0,
                         max: maxPlantPv,
                         mode: 'neutral',
@@ -1272,19 +1273,20 @@
                 }
 
                 if (plant.third_party_pv_power && typeof plant.third_party_pv_power.value === 'number') {
+                    const thirdPartyPvKw = funit(plant.third_party_pv_power) === 'W'
+                        ? fval(plant.third_party_pv_power) / 1000
+                        : fval(plant.third_party_pv_power);
                     let maxThirdPartyPv = maxActivePower;
-                    if (funit(plant.config && plant.config.max_active_power) === 'kW' && funit(plant.third_party_pv_power) === 'W') {
-                        maxThirdPartyPv = maxActivePower * 1000;
-                    } else if (funit(plant.config && plant.config.max_active_power) === 'W' && funit(plant.third_party_pv_power) === 'kW') {
+                    if (funit(plant.config && plant.config.max_active_power) === 'W') {
                         maxThirdPartyPv = maxActivePower / 1000;
                     } else if (!plant.config || !plant.config.max_active_power) {
-                        maxThirdPartyPv = funit(plant.third_party_pv_power) === 'W' ? 100000 : 100;
+                        maxThirdPartyPv = 100;
                     }
-                    maxThirdPartyPv = Math.max(maxThirdPartyPv, fval(plant.third_party_pv_power) || 0);
+                    maxThirdPartyPv = Math.max(maxThirdPartyPv, thirdPartyPvKw || 0);
                     powerGr.appendChild(buildGauge({
                         label: 'Third-Party PV Power',
-                        value: fval(plant.third_party_pv_power),
-                        unit: funit(plant.third_party_pv_power),
+                        value: thirdPartyPvKw,
+                        unit: 'kW',
                         min: 0,
                         max: maxThirdPartyPv,
                         mode: 'neutral',
