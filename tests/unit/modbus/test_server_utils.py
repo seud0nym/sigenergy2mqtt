@@ -138,6 +138,7 @@ def test_get_initial_value_covers_primary_branches(monkeypatch):
     assert block._get_initial_value(s2) == ("abc", "string")
 
     monkeypatch.setattr(server, "randint", lambda lo, hi: lo)
+    monkeypatch.setattr(server, "uniform", lambda lo, hi: lo)
     server.TestConfig.simulate_power_factor_errors = True
     try:
         pf = FakeSensor(address=PowerFactor.ADDRESS, gain=100)
