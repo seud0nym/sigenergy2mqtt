@@ -18,9 +18,6 @@ In addition, `sigenergy2mqtt` has several optional features:
 1. Production and consumption data can automatically be uploaded to PVOutput. 
 1. It can directly publish the Modbus data to an InfluxDB (v1/2) time series database for long-term storage and analysis.
 
-
-<img src="resources/screenshots/dashboard.jpg" alt="dashboard"><br>
-
 ## Pre-requisites
 
 - Sigenergy ESS or PV Inverter, with Modbus-TCP enabled by your installer or through the mySigen app
@@ -48,6 +45,16 @@ This means, for example, that the options specified in the configuration file ca
 The combined reference for CLI flags, environment variables, and YAML configuration keys can be found [here](resources/configuration/README.md).
 
 <sup>1</sup> <sub>Not applicable to the Home Assistant App</sub>
+
+## Screenshots
+
+### Dashboard
+
+<img src="resources/screenshots/dashboard.jpg" alt="dashboard"><br>
+
+### Diagnostics
+
+<img src="resources/screenshots/diagnostics.jpg" alt="diagnostics"><br>
 
 ## MQTT Publish and Subscribe Topics
 
