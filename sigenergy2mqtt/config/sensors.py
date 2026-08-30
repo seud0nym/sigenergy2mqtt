@@ -182,6 +182,9 @@ class PVOutputUploadLogLevel(LogLevelSensor):
     def __init__(self):
         super().__init__(setting="active_config.pvoutput.upload_log_level", name="PVOutput Upload Log Level", logger="sigenergy2mqtt.pvoutput")
 
+    def apply_log_level(self, log_level: int) -> None:
+        logging.getLogger(self._logger).debug(f"{self.log_identity} active_config.pvoutput.upload_log_level set to '{logging.getLevelName(log_level)}' - logger level has NOT been updated as per documentation")
+
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = (
