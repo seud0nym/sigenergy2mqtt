@@ -634,7 +634,7 @@
 
         // Add new rows and update existing ones
         Object.entries(sensors).forEach(function ([sensorId, ctrl]) {
-          const row = card.querySelector('.control-row[data-sensor-id="' + sensorId + '"]');
+          const row = card.querySelector('.control-row[data-sensor-id="' + CSS.escape(sensorId) + '"]');
           if (row) {
             const checkbox = row.querySelector('input[type="checkbox"]');
             if (checkbox && document.activeElement !== checkbox) {
@@ -658,7 +658,7 @@
         const deviceIds = Object.keys(data);
 
         deviceIds.forEach(function (deviceId) {
-          const existingCard = cardGrid.querySelector('[data-device="' + deviceId + '"]');
+          const existingCard = cardGrid.querySelector('[data-device="' + CSS.escape(deviceId) + '"]');
           if (existingCard) {
             updateCard(existingCard, data[deviceId]);
           } else {
