@@ -319,14 +319,27 @@ class InverterSelfConsumedPower(DerivedSensor, HybridInverter, PVInverter):
     def _discard_stale_snapshot(self) -> None:
         """Discard partial source values that survived beyond their source cadence."""
         now = time.time()
-        stale_sources = []
+        stale_sources = {}
         for source_name, value in self._source_timestamps.items():
             if value is None:
                 continue
             source_sensor = self._source_sensors.get(source_name)
             expected_interval = self._source_expected_interval(source_sensor) if source_sensor is not None else None
             if expected_interval is not None and now - value > expected_interval:
-                stale_sources.append(source_name)
+                cached_val = None
+                if source_name == "active_power":
+                    cached_val = self.active_power
+                elif source_name == "battery_power":
+                    cached_val = self.battery_power
+                elif source_name.startswith("pv_string_power_"):
+                    try:
+                        string_number = int(source_name.split("_")[-1])
+                        cached_val = self.pv_string_power.get(string_number)
+                    except ValueError:
+                        pass
+                if cached_val == 0: # A zero value contributes nothing, so ignore stale zero values
+                    continue
+                stale_sources[source_name] = cached_val
 
         if not stale_sources:
             return

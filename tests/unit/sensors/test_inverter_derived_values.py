@@ -206,6 +206,25 @@ class TestInverterSelfConsumedPowerCoverage:
             assert sensor.pv_string_power[1] is None
             assert all(timestamp is None for timestamp in sensor._source_timestamps.values())
 
+    def test_stale_partial_snapshot_with_zero_is_not_discarded(self):
+        ap = MagicMock(spec=Sensor)
+        bp = MagicMock(spec=Sensor)
+        pv = MagicMock(spec=PVStringPower)
+        pv.string_number = 1
+        pv.protocol_version = ProtocolVersion.V2_4
+        pv.scan_interval = 2
+
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            sensor = InverterSelfConsumedPower(0, 1, ap, bp, pv)
+            sensor.pv_string_power[1] = 0
+            sensor._source_timestamps["pv_string_power_1"] = 100.0
+
+            with patch("sigenergy2mqtt.sensors.inverter_derived.time.time", return_value=110.0):
+                sensor._discard_stale_snapshot()
+
+            assert sensor.pv_string_power[1] == 0
+            assert sensor._source_timestamps["pv_string_power_1"] == 100.0
+
     def test_get_attributes(self):
         from sigenergy2mqtt.sensors.inverter_derived import InverterSelfConsumedPower, PVStringPower
         from sigenergy2mqtt.sensors.inverter_read_only import ActivePower, ChargeDischargePower
