@@ -684,13 +684,6 @@
       const connLabel = document.getElementById('connLabel');
       const themeToggle = document.getElementById('themeToggle');
 
-      // Server-authoritative ordering for runtime_configuration writes vs.
-      // snapshots — same purpose and mechanism as the equivalent counter on
-      // the debug-logging page. Bumped by the server on every successful
-      // config POST; echoed in that POST's response and in every WS
-      // snapshot's "_revisions.runtime_configuration".
-      let lastKnownConfigRevision = 0;
-
       themeToggle.addEventListener('click', () => {
         const isLight = document.documentElement.getAttribute('data-theme') === 'light';
         const next = isLight ? 'dark' : 'light';
@@ -810,7 +803,7 @@
       // Renders one provider's dict as a card. Nested dicts (e.g. per-client
       // connection maps) get flattened one level with a "group.key" label so
       // any future provider "just works" without UI changes.
-      function buildCard(name, data) {
+      function buildCard(name, data, revision) {
         const card = document.createElement('div');
         card.className = 'card';
 
@@ -889,7 +882,7 @@
           card.appendChild(notice);
 
           const controlsContainer = document.createElement('div');
-          buildControls(data.controls, controlsContainer);
+          buildControls(data.controls, controlsContainer, revision);
           card.appendChild(controlsContainer);
         }
 
@@ -947,7 +940,7 @@
         }
       }
 
-      function buildControls(controls, container) {
+      function buildControls(controls, container, revision) {
         Object.entries(controls).forEach(([endpoint, ctrl]) => {
           const row = document.createElement('div');
           row.className = 'control-row';
@@ -968,6 +961,12 @@
             select.className = 'ctrl-select';
             select.dataset.endpoint = endpoint;
             select._currentVal = ctrl.value;
+            // Per-widget, NOT shared across controls: the revision counter is
+            // provider-wide (covers every runtime_configuration endpoint), so
+            // gating on a page-level "last known revision" would let one
+            // control's write completion fence out a different, unrelated
+            // control's own legitimate completion.
+            select._lastKnownRevision = revision || 0;
 
             (ctrl.options || []).forEach(opt => {
               const optionEl = document.createElement('option');
@@ -983,9 +982,9 @@
               sendConfigUpdate(endpoint, newVal, select, prevVal, (prev) => {
                 select.value = prev;
               }).then(result => {
-                if (result.ok && result.revision > lastKnownConfigRevision) {
+                if (result.ok && result.revision > select._lastKnownRevision) {
                   select._currentVal = newVal;
-                  lastKnownConfigRevision = result.revision;
+                  select._lastKnownRevision = result.revision;
                 }
               });
             });
@@ -1001,6 +1000,7 @@
             if (ctrl.max !== undefined && ctrl.max !== null) input.max = ctrl.max;
 
             input._currentVal = ctrl.value;
+            input._lastKnownRevision = revision || 0;
             const trySend = (val) => {
               const num = parseFloat(val);
               if (!isNaN(num) && num !== input._currentVal) {
@@ -1008,9 +1008,9 @@
                 sendConfigUpdate(endpoint, num, input, prevVal, (prev) => {
                   input.value = prev;
                 }).then(result => {
-                  if (result.ok && result.revision > lastKnownConfigRevision) {
+                  if (result.ok && result.revision > input._lastKnownRevision) {
                     input._currentVal = num;
-                    lastKnownConfigRevision = result.revision;
+                    input._lastKnownRevision = result.revision;
                   }
                 });
               }
@@ -1044,15 +1044,16 @@
             labelEl.appendChild(slider);
 
             checkbox._currentVal = Boolean(ctrl.value);
+            checkbox._lastKnownRevision = revision || 0;
             checkbox.addEventListener('change', () => {
               const newVal = checkbox.checked;
               const prevVal = checkbox._currentVal;
               sendConfigUpdate(endpoint, newVal, slider, prevVal, (prev) => {
                 checkbox.checked = prev;
               }).then(result => {
-                if (result.ok && result.revision > lastKnownConfigRevision) {
+                if (result.ok && result.revision > checkbox._lastKnownRevision) {
                   checkbox._currentVal = newVal;
-                  lastKnownConfigRevision = result.revision;
+                  checkbox._lastKnownRevision = result.revision;
                 }
               });
             });
@@ -1070,18 +1071,24 @@
         });
       }
 
-      function updateControlsCard(card, controls) {
+      function updateControlsCard(card, controls, revision) {
         Object.entries(controls).forEach(([endpoint, ctrl]) => {
           const widget = card.querySelector(`[data-endpoint="${endpoint}"]`);
           if (!widget) return;
 
           // Keep the tracked "confirmed" value current regardless of focus —
           // it's what a future revert or write-completion compares against,
-          // not what's currently displayed.
+          // not what's currently displayed. Same for the revision baseline:
+          // this snapshot's revision genuinely confirms this control's value
+          // too (a snapshot is a full picture of every control at that
+          // revision), so it's safe to advance.
           if (ctrl.type === 'switch') {
             widget._currentVal = Boolean(ctrl.value);
           } else {
             widget._currentVal = ctrl.value;
+          }
+          if (typeof revision === 'number') {
+            widget._lastKnownRevision = Math.max(widget._lastKnownRevision || 0, revision);
           }
 
           if (document.activeElement === widget || widget.contains(document.activeElement)) return;
@@ -1119,9 +1126,7 @@
 
       function render(snapshot) {
         const revisions = snapshot._revisions || {};
-        if (typeof revisions.runtime_configuration === 'number') {
-          lastKnownConfigRevision = Math.max(lastKnownConfigRevision, revisions.runtime_configuration);
-        }
+        const configRevision = typeof revisions.runtime_configuration === 'number' ? revisions.runtime_configuration : 0;
 
         const monitor = snapshot.monitor || {};
         const status = monitor.status || 'unknown';
@@ -1143,13 +1148,13 @@
           const existingCard = cardGrid.querySelector(`[data-provider="${key}"]`);
           const data = snapshot[key];
           if (key === 'runtime_configuration' && existingCard && data && data.controls) {
-            updateControlsCard(existingCard, data.controls);
+            updateControlsCard(existingCard, data.controls, configRevision);
           } else if (existingCard) {
-            const newCard = buildCard(key, data);
+            const newCard = buildCard(key, data, configRevision);
             newCard.dataset.provider = key;
             cardGrid.replaceChild(newCard, existingCard);
           } else {
-            const newCard = buildCard(key, data);
+            const newCard = buildCard(key, data, configRevision);
             newCard.dataset.provider = key;
             cardGrid.appendChild(newCard);
           }
