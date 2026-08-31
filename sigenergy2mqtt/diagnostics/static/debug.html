@@ -586,13 +586,14 @@
         switchLabel.appendChild(slider);
         row.appendChild(switchLabel);
 
-        let currentVal = Boolean(ctrl.value);
+        checkbox._currentVal = Boolean(ctrl.value);
         checkbox.addEventListener('change', function () {
           const newVal = checkbox.checked;
+          const currentVal = checkbox._currentVal;
           sendDebugUpdate(sensorId, newVal, slider, currentVal, function (prev) {
             checkbox.checked = prev;
           }).then(function (ok) {
-            if (ok) currentVal = newVal;
+            if (ok) checkbox._currentVal = newVal;
           });
         });
 
@@ -639,6 +640,7 @@
             const checkbox = row.querySelector('input[type="checkbox"]');
             if (checkbox && document.activeElement !== checkbox) {
               const newVal = Boolean(ctrl.value);
+              checkbox._currentVal = newVal;
               if (checkbox.checked !== newVal) checkbox.checked = newVal;
             }
           } else {
