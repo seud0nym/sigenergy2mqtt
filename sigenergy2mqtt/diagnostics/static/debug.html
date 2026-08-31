@@ -648,11 +648,13 @@
             const checkbox = row.querySelector('input[type="checkbox"]');
             if (checkbox) {
               const newVal = Boolean(ctrl.value);
-              checkbox._currentVal = newVal;
-              if (checkbox._pendingRequests === 0) {
-                if (checkbox.checked !== newVal) checkbox.checked = newVal;
-              } else {
-                checkbox._snapshotMissed = true;
+              if (checkbox._currentVal !== newVal) {
+                checkbox._currentVal = newVal;
+                if (checkbox._pendingRequests === 0) {
+                  if (checkbox.checked !== newVal) checkbox.checked = newVal;
+                } else {
+                  checkbox._snapshotMissed = true;
+                }
               }
             }
           } else {
