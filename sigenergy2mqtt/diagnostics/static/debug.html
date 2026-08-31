@@ -496,6 +496,16 @@
       const filterInput = document.getElementById('filterInput');
       const filterCount = document.getElementById('filterCount');
 
+      // Server-authoritative ordering for sensor_debug_logging writes vs.
+      // snapshots. Bumped by the server on every successful debug POST;
+      // echoed in that POST's response and in every WS snapshot's
+      // "_revisions.sensor_debug_logging". A write's own value is only kept
+      // if its revision is strictly newer than the last one we've seen —
+      // this settles both completion-order races (two toggles in flight)
+      // and snapshot-vs-write races, using the server's own ordering
+      // instead of guessing from client-side timing.
+      let lastKnownRevision = 0;
+
       // Theme toggle
       themeToggle.addEventListener('click', () => {
         const isLight = document.documentElement.getAttribute('data-theme') === 'light';
@@ -545,7 +555,7 @@
             slider.classList.remove('flash-ok', 'flash-err');
             void slider.offsetWidth;
             slider.classList.add('flash-ok');
-            return true;
+            return { ok: true, revision: result.revision };
           } else {
             throw new Error(result.error || 'Update failed');
           }
@@ -555,7 +565,7 @@
           void slider.offsetWidth;
           slider.classList.add('flash-err');
           if (revertCb) revertCb(prevValue);
-          return false;
+          return { ok: false };
         }
       }
 
@@ -588,21 +598,19 @@
 
         checkbox._currentVal = Boolean(ctrl.value);
         checkbox._pendingRequests = 0;
-        checkbox._sendSeq = 0;    // counts requests sent; each request's id is its post-increment value
-        checkbox._appliedSeq = 0; // send-id boundary of the most recent authoritative update
         checkbox.addEventListener('change', function () {
           const newVal = checkbox.checked;
-          const sendId = ++checkbox._sendSeq;
           checkbox._pendingRequests++;
           sendDebugUpdate(sensorId, newVal, slider, null, function () {
             checkbox.checked = checkbox._currentVal;
-          }).then(function (ok) {
-            // Apply only if this request is newer (by send order) than whatever
-            // last set _currentVal — a later-sent write always wins over an
-            // earlier one, regardless of which completes first.
-            if (ok && sendId > checkbox._appliedSeq) {
+          }).then(function (result) {
+            // Apply only if the server says this write is newer than the last
+            // thing we've seen (another completion or a snapshot). If a
+            // snapshot already caught up to (or past) this write, trust that
+            // instead — it's already authoritative and already rendered.
+            if (result.ok && result.revision > lastKnownRevision) {
               checkbox._currentVal = newVal;
-              checkbox._appliedSeq = sendId;
+              lastKnownRevision = result.revision;
             }
           }).finally(function () {
             checkbox._pendingRequests--;
@@ -656,11 +664,6 @@
             if (checkbox) {
               const newVal = Boolean(ctrl.value);
               checkbox._currentVal = newVal;
-              // Invalidate any request sent up to now (it can no longer override this
-              // snapshot), but leave requests sent after this point still eligible.
-              if (checkbox._sendSeq > checkbox._appliedSeq) {
-                checkbox._appliedSeq = checkbox._sendSeq;
-              }
 
               if (checkbox._pendingRequests === 0 && checkbox.checked !== newVal) {
                 checkbox.checked = newVal;
@@ -676,6 +679,11 @@
 
       // Render/update the grid from a snapshot
       function render(snapshot) {
+        const revisions = snapshot._revisions || {};
+        if (typeof revisions.sensor_debug_logging === 'number') {
+          lastKnownRevision = Math.max(lastKnownRevision, revisions.sensor_debug_logging);
+        }
+
         const data = snapshot.sensor_debug_logging;
         if (!data || typeof data !== 'object') return;
 

@@ -306,8 +306,9 @@ class DiagnosticsServer:
             return web.json_response({"ok": False, "error": str(exc)}, status=500)
 
         if ok:
+            revision = diagnostics_registry.bump_revision("runtime_configuration")
             logger.info(f"DiagnosticsServer Config updated via HTTP: {endpoint!r} = {raw_value!r}")
-            return web.json_response({"ok": True})
+            return web.json_response({"ok": True, "revision": revision})
         return web.json_response({"ok": False, "error": "Update rejected by sensor validation"}, status=422)
 
     async def _handle_debug_update(self, request: web.Request) -> web.Response:
@@ -366,8 +367,9 @@ class DiagnosticsServer:
             return web.json_response({"ok": False, "error": str(exc)}, status=500)
 
         if ok:
+            revision = diagnostics_registry.bump_revision("sensor_debug_logging")
             logger.info(f"DiagnosticsServer debug_logging toggled via HTTP: {sensor_id!r} = {raw_value!r}")
-            return web.json_response({"ok": True})
+            return web.json_response({"ok": True, "revision": revision})
         return web.json_response({"ok": False, "error": "Update had no effect (value unchanged)"})
 
 

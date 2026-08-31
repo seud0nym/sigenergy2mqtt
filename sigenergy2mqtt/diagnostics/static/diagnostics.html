@@ -684,6 +684,13 @@
       const connLabel = document.getElementById('connLabel');
       const themeToggle = document.getElementById('themeToggle');
 
+      // Server-authoritative ordering for runtime_configuration writes vs.
+      // snapshots — same purpose and mechanism as the equivalent counter on
+      // the debug-logging page. Bumped by the server on every successful
+      // config POST; echoed in that POST's response and in every WS
+      // snapshot's "_revisions.runtime_configuration".
+      let lastKnownConfigRevision = 0;
+
       themeToggle.addEventListener('click', () => {
         const isLight = document.documentElement.getAttribute('data-theme') === 'light';
         const next = isLight ? 'dark' : 'light';
@@ -926,7 +933,7 @@
             flashEl.classList.remove('flash-ok', 'flash-err');
             void flashEl.offsetWidth;
             flashEl.classList.add('flash-ok');
-            return true;
+            return { ok: true, revision: result.revision };
           } else {
             throw new Error(result.error || 'Update failed');
           }
@@ -936,7 +943,7 @@
           void flashEl.offsetWidth;
           flashEl.classList.add('flash-err');
           if (revertCb) revertCb(prevValue);
-          return false;
+          return { ok: false };
         }
       }
 
@@ -960,22 +967,26 @@
             const select = document.createElement('select');
             select.className = 'ctrl-select';
             select.dataset.endpoint = endpoint;
-            let currentVal = ctrl.value;
+            select._currentVal = ctrl.value;
 
             (ctrl.options || []).forEach(opt => {
               const optionEl = document.createElement('option');
               optionEl.value = opt;
               optionEl.textContent = opt;
-              if (opt === currentVal) optionEl.selected = true;
+              if (opt === select._currentVal) optionEl.selected = true;
               select.appendChild(optionEl);
             });
 
             select.addEventListener('change', () => {
               const newVal = select.value;
-              sendConfigUpdate(endpoint, newVal, select, currentVal, (prev) => {
+              const prevVal = select._currentVal;
+              sendConfigUpdate(endpoint, newVal, select, prevVal, (prev) => {
                 select.value = prev;
-              }).then(ok => {
-                if (ok) currentVal = newVal;
+              }).then(result => {
+                if (result.ok && result.revision > lastKnownConfigRevision) {
+                  select._currentVal = newVal;
+                  lastKnownConfigRevision = result.revision;
+                }
               });
             });
 
@@ -989,29 +1000,25 @@
             if (ctrl.min !== undefined && ctrl.min !== null) input.min = ctrl.min;
             if (ctrl.max !== undefined && ctrl.max !== null) input.max = ctrl.max;
 
-            let currentVal = ctrl.value;
-            const debouncedSend = debounce((val) => {
+            input._currentVal = ctrl.value;
+            const trySend = (val) => {
               const num = parseFloat(val);
-              if (!isNaN(num) && num !== currentVal) {
-                sendConfigUpdate(endpoint, num, input, currentVal, (prev) => {
+              if (!isNaN(num) && num !== input._currentVal) {
+                const prevVal = input._currentVal;
+                sendConfigUpdate(endpoint, num, input, prevVal, (prev) => {
                   input.value = prev;
-                }).then(ok => {
-                  if (ok) currentVal = num;
+                }).then(result => {
+                  if (result.ok && result.revision > lastKnownConfigRevision) {
+                    input._currentVal = num;
+                    lastKnownConfigRevision = result.revision;
+                  }
                 });
               }
-            }, 500);
+            };
+            const debouncedSend = debounce(trySend, 500);
 
             input.addEventListener('input', (e) => debouncedSend(e.target.value));
-            input.addEventListener('change', (e) => {
-              const num = parseFloat(e.target.value);
-              if (!isNaN(num) && num !== currentVal) {
-                sendConfigUpdate(endpoint, num, input, currentVal, (prev) => {
-                  input.value = prev;
-                }).then(ok => {
-                  if (ok) currentVal = num;
-                });
-              }
-            });
+            input.addEventListener('change', (e) => trySend(e.target.value));
 
             widgetWrap.appendChild(input);
 
@@ -1036,13 +1043,17 @@
             labelEl.appendChild(checkbox);
             labelEl.appendChild(slider);
 
-            let currentVal = Boolean(ctrl.value);
+            checkbox._currentVal = Boolean(ctrl.value);
             checkbox.addEventListener('change', () => {
               const newVal = checkbox.checked;
-              sendConfigUpdate(endpoint, newVal, slider, currentVal, (prev) => {
+              const prevVal = checkbox._currentVal;
+              sendConfigUpdate(endpoint, newVal, slider, prevVal, (prev) => {
                 checkbox.checked = prev;
-              }).then(ok => {
-                if (ok) currentVal = newVal;
+              }).then(result => {
+                if (result.ok && result.revision > lastKnownConfigRevision) {
+                  checkbox._currentVal = newVal;
+                  lastKnownConfigRevision = result.revision;
+                }
               });
             });
 
@@ -1063,6 +1074,16 @@
         Object.entries(controls).forEach(([endpoint, ctrl]) => {
           const widget = card.querySelector(`[data-endpoint="${endpoint}"]`);
           if (!widget) return;
+
+          // Keep the tracked "confirmed" value current regardless of focus —
+          // it's what a future revert or write-completion compares against,
+          // not what's currently displayed.
+          if (ctrl.type === 'switch') {
+            widget._currentVal = Boolean(ctrl.value);
+          } else {
+            widget._currentVal = ctrl.value;
+          }
+
           if (document.activeElement === widget || widget.contains(document.activeElement)) return;
 
           if (ctrl.type === 'select') {
@@ -1097,6 +1118,11 @@
       const DEDICATED_PAGE_PROVIDERS = new Set(['solar', 'sensor_debug_logging']);
 
       function render(snapshot) {
+        const revisions = snapshot._revisions || {};
+        if (typeof revisions.runtime_configuration === 'number') {
+          lastKnownConfigRevision = Math.max(lastKnownConfigRevision, revisions.runtime_configuration);
+        }
+
         const monitor = snapshot.monitor || {};
         const status = monitor.status || 'unknown';
         statusBanner.className = 'status-banner ' + (status === 'healthy' ? 'healthy' : status === 'degraded' ? 'degraded' : 'unknown');
@@ -1104,7 +1130,7 @@
         const ts = snapshot.timestamp ? new Date(snapshot.timestamp * 1000).toLocaleString() : '—';
         statusMeta.textContent = `last updated ${ts}`;
 
-        const keys = Object.keys(snapshot).filter(k => k !== 'timestamp' && !DEDICATED_PAGE_PROVIDERS.has(k));
+        const keys = Object.keys(snapshot).filter(k => k !== 'timestamp' && k !== '_revisions' && !DEDICATED_PAGE_PROVIDERS.has(k));
         if (keys.length === 0) {
           cardGrid.innerHTML = '<div class="empty-state">No diagnostics providers registered.</div>';
           return;

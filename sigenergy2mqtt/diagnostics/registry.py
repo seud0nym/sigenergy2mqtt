@@ -62,6 +62,7 @@ class DiagnosticsRegistry:
 
     def __init__(self) -> None:
         self._providers: dict[str, _RegisteredProvider] = {}
+        self._revisions: dict[str, int] = {}
         self._lock = asyncio.Lock()
 
     def clear(self) -> None:
@@ -88,6 +89,30 @@ class DiagnosticsRegistry:
         if self._providers.pop(name, None) is not None:
             logger.debug(f"DiagnosticsRegistry Unregistered provider '{name}'")
 
+    def bump_revision(self, name: str) -> int:
+        """Atomically advance and return the revision counter for a named section.
+
+        Used by write endpoints (e.g. the debug-logging and runtime-config
+        HTTP handlers) to give clients a total order for "did a write I sent
+        actually take effect, and is it still the most recent thing that's
+        happened" — independent of HTTP response arrival order or WS
+        broadcast timing.
+
+        Deliberately synchronous and lock-free: callers must invoke this
+        immediately after ``await``-ing the value's actual commit, with no
+        further ``await`` in between. asyncio only switches tasks at await
+        points, so that gap-free sequence is what guarantees a broadcast can
+        never observe the new value with a stale revision (or vice versa).
+        Wrapping this in ``asyncio.Lock`` would require ``async with``,
+        reintroducing an await point and the exact race this exists to close.
+        """
+        self._revisions[name] = self._revisions.get(name, 0) + 1
+        return self._revisions[name]
+
+    def revision(self, name: str) -> int:
+        """Current revision counter for a named section (0 if never bumped)."""
+        return self._revisions.get(name, 0)
+
     async def snapshot(self) -> dict[str, Any]:
         """Collect every registered provider's data into one payload."""
 
@@ -107,6 +132,7 @@ class DiagnosticsRegistry:
         results = await asyncio.gather(*(_run(p) for p in providers)) if providers else []
 
         payload: dict[str, Any] = {"timestamp": int(time.time())}
+        payload["_revisions"] = dict(self._revisions)
         payload.update({name: data for name, data in results})
         return payload
 
