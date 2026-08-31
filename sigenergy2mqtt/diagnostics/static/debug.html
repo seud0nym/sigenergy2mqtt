@@ -659,9 +659,11 @@
             const checkbox = row.querySelector('input[type="checkbox"]');
             if (checkbox) {
               const newVal = Boolean(ctrl.value);
-              if (checkbox._currentVal !== newVal) {
+              const valueChanged = checkbox._currentVal !== newVal;
+
+              if (valueChanged || checkbox._pendingRequests > 0) {
                 checkbox._currentVal = newVal;
-                
+
                 if (checkbox._pendingValues && checkbox._pendingValues.length > 0) {
                   const idx = checkbox._pendingValues.indexOf(newVal);
                   if (idx !== -1) {
