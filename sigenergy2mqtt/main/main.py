@@ -354,7 +354,7 @@ async def make_plant_and_inverter(plant_index: int, modbus_client: ModbusClient,
         if protocol == ProtocolVersion.V2_8 and firmware.service_pack >= 114:
             logger.debug(f"IGNORED {get_modbus_url(modbus_client)} detection of ProtocolVersion V{protocol.value} because Firmware {firmware} supports V2.9 features")
             protocol = ProtocolVersion.V2_9
-        logger.info(f"Interrogated {get_modbus_url(modbus_client)} and found Sigenergy Modbus ProtocolVersion V{protocol.value} ({ProtocolApplies(protocol)})")
+        logger.info(f"Interrogated {get_modbus_url(modbus_client)} and found Sigenergy Modbus Protocol V{protocol.value} ({ProtocolApplies(protocol)})")
 
         if protocol < ProtocolVersion.V2_8 and active_config.consumption != ConsumptionMethod.CALCULATED:
             logger.warning(f"Resetting consumption configuration to {ConsumptionMethod.CALCULATED.name} because {active_config.consumption.name} is not supported on Modbus ProtocolVersion V{protocol.value}")
