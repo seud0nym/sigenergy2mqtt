@@ -129,10 +129,24 @@ class DiagnosticsRegistry:
         async with self._lock:
             providers = list(self._providers.values())
 
+        # Snapshot revisions BEFORE collecting provider data, not after. A
+        # write that commits (and bumps its revision — see bump_revision)
+        # while the gather below is in flight will have already committed
+        # its value by then; that provider's collect() call will see the new
+        # value even though this "_revisions" dict, captured earlier, won't
+        # yet include the bump. That's a safe kind of staleness — a lower
+        # revision number paired with a value that's actually already
+        # current — and self-corrects via the write's own HTTP response.
+        # The reverse ordering (revisions captured after data) can instead
+        # pair a *newer* revision with a *stale* value when a write commits
+        # mid-gather, which a client's "revision > lastKnownRevision" check
+        # would wrongly trust as authoritative.
+        revisions = dict(self._revisions)
+
         results = await asyncio.gather(*(_run(p) for p in providers)) if providers else []
 
         payload: dict[str, Any] = {"timestamp": int(time.time())}
-        payload["_revisions"] = dict(self._revisions)
+        payload["_revisions"] = revisions
         payload.update({name: data for name, data in results})
         return payload
 
