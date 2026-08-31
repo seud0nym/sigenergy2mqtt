@@ -588,19 +588,21 @@
 
         checkbox._currentVal = Boolean(ctrl.value);
         checkbox._pendingRequests = 0;
-        checkbox._seq = 0; // bumps on every applied authoritative update (snapshot or confirmed write)
+        checkbox._sendSeq = 0;    // counts requests sent; each request's id is its post-increment value
+        checkbox._appliedSeq = 0; // send-id boundary of the most recent authoritative update
         checkbox.addEventListener('change', function () {
           const newVal = checkbox.checked;
-          const seqAtSend = checkbox._seq;
+          const sendId = ++checkbox._sendSeq;
           checkbox._pendingRequests++;
           sendDebugUpdate(sensorId, newVal, slider, null, function () {
             checkbox.checked = checkbox._currentVal;
           }).then(function (ok) {
-            // Only apply if nothing newer (a snapshot, or another completed write)
-            // has landed since this request was sent.
-            if (ok && checkbox._seq === seqAtSend) {
+            // Apply only if this request is newer (by send order) than whatever
+            // last set _currentVal — a later-sent write always wins over an
+            // earlier one, regardless of which completes first.
+            if (ok && sendId > checkbox._appliedSeq) {
               checkbox._currentVal = newVal;
-              checkbox._seq++;
+              checkbox._appliedSeq = sendId;
             }
           }).finally(function () {
             checkbox._pendingRequests--;
@@ -654,7 +656,11 @@
             if (checkbox) {
               const newVal = Boolean(ctrl.value);
               checkbox._currentVal = newVal;
-              checkbox._seq++; // every snapshot is authoritative, whether or not the value changed
+              // Invalidate any request sent up to now (it can no longer override this
+              // snapshot), but leave requests sent after this point still eligible.
+              if (checkbox._sendSeq > checkbox._appliedSeq) {
+                checkbox._appliedSeq = checkbox._sendSeq;
+              }
 
               if (checkbox._pendingRequests === 0 && checkbox.checked !== newVal) {
                 checkbox.checked = newVal;
