@@ -626,7 +626,7 @@
       // Update an existing card in-place
       function updateCard(card, deviceData) {
         const sensors = deviceData.sensors || {};
-        
+
         // Remove stale rows
         card.querySelectorAll('.control-row').forEach(function (row) {
           if (!sensors[row.dataset.sensorId]) row.remove();
@@ -640,8 +640,8 @@
             if (checkbox) {
               const newVal = Boolean(ctrl.value);
               checkbox._currentVal = newVal;
-              if (document.activeElement !== checkbox) {
-                if (checkbox.checked !== newVal) checkbox.checked = newVal;
+              if (document.activeElement !== checkbox && checkbox.checked !== newVal) {
+                checkbox.checked = newVal;
               }
             }
           } else {
