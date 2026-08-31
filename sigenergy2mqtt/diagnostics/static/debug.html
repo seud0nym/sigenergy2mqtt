@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>sigenergy2mqtt — Debug Logging</title>
+  <link rel="icon" type="image/x-icon" href="static/favicon.ico">
+  <script>
+    (function () {
+      try {
+        const saved = localStorage.getItem('s2m-theme');
+        const theme = saved || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        if (theme === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      } catch (e) { /* localStorage unavailable — default to dark */ }
+    })();
+  </script>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --bg-panel: #121b2e;
+      --bg-card: #16223a;
+      --border: #24314d;
+      --text: #e6ebf5;
+      --text-dim: #8b98b3;
+      --accent: #3ddc97;
+      --accent-dim: rgba(61, 220, 151, 0.15);
+      --warn: #f5a623;
+      --warn-dim: rgba(245, 166, 35, 0.15);
+      --bad: #ef4b5f;
+      --bad-dim: rgba(239, 75, 95, 0.15);
+      --unknown: #6b7794;
+      --mono: "SF Mono", "JetBrains Mono", Consolas, monospace;
+      --glow-1: rgba(61, 220, 151, 0.07);
+      --glow-2: rgba(58, 123, 213, 0.08);
+      --dash-border: rgba(255, 255, 255, 0.05);
+      --header-bg: rgba(18, 27, 46, 0.6);
+      --scheme: dark;
+    }
+
+    :root[data-theme="light"] {
+      --bg: #f4f6fb;
+      --bg-panel: #ffffff;
+      --bg-card: #ffffff;
+      --border: #dde3ee;
+      --text: #1a2233;
+      --text-dim: #5b6579;
+      --accent: #1f9d6f;
+      --accent-dim: rgba(31, 157, 111, 0.12);
+      --warn: #b1720a;
+      --warn-dim: rgba(177, 114, 10, 0.12);
+      --bad: #c8293e;
+      --bad-dim: rgba(200, 41, 62, 0.1);
+      --unknown: #7a8499;
+      --glow-1: rgba(31, 157, 111, 0.06);
+      --glow-2: rgba(58, 123, 213, 0.06);
+      --header-bg: rgba(255, 255, 255, 0.7);
+      --scheme: light;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      color-scheme: var(--scheme);
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(1200px 600px at 15% -10%, var(--glow-1), transparent 60%),
+        radial-gradient(900px 500px at 90% 0%, var(--glow-2), transparent 55%),
+        var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      transition: background-color 0.2s, color 0.2s;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 32px;
+      border-bottom: 1px solid var(--border);
+      background: var(--header-bg);
+      backdrop-filter: blur(6px);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .brand img {
+      height: 50px;
+      width: auto;
+      display: block;
+    }
+
+    .brand-sub {
+      font-size: 13px;
+      color: var(--text-dim);
+      letter-spacing: 0.02em;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .conn-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+    }
+
+    .conn-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--unknown);
+      transition: background 0.3s;
+    }
+
+    .conn-pill.live .conn-dot {
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+    }
+
+    .conn-pill.down .conn-dot {
+      background: var(--bad);
+      box-shadow: 0 0 8px var(--bad);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text);
+      cursor: pointer;
+      text-decoration: none;
+      transition: border-color 0.15s, transform 0.1s;
+    }
+
+    .btn:hover {
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+
+    .theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-dim);
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .theme-toggle:hover {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+
+    .theme-toggle svg {
+      width: 16px;
+      height: 16px;
+      display: block;
+    }
+
+    .theme-toggle .icon-moon {
+      display: none;
+    }
+
+    :root[data-theme="light"] .theme-toggle .icon-sun {
+      display: none;
+    }
+
+    :root[data-theme="light"] .theme-toggle .icon-moon {
+      display: block;
+    }
+
+    main {
+      padding: 28px 32px 60px;
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+
+    /* Filter bar */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .filter-input {
+      flex: 1;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 13px;
+      padding: 10px 16px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .filter-input:focus {
+      border-color: var(--accent);
+    }
+
+    .filter-input::placeholder {
+      color: var(--text-dim);
+    }
+
+    .filter-count {
+      font-size: 12px;
+      color: var(--text-dim);
+      white-space: nowrap;
+    }
+
+    /* Transient notice */
+    .transient-notice {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      background: var(--warn-dim);
+      color: var(--warn);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 10px;
+      line-height: 1.4;
+      margin-bottom: 20px;
+    }
+
+    .transient-notice svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    /* Card grid */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 18px;
+    }
+
+    .card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      gap: 12px;
+    }
+
+    .card-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    /* Control rows */
+    .control-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+      color: var(--text-dim);
+      padding: 5px 0;
+      border-bottom: 1px dashed var(--dash-border);
+    }
+
+    .control-row:last-child {
+      border-bottom: none;
+    }
+
+    .control-row.hidden-by-filter {
+      display: none;
+    }
+
+    .ctrl-label {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Toggle switch */
+    .ctrl-switch {
+      position: relative;
+      display: inline-block;
+      width: 36px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    .ctrl-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .ctrl-slider {
+      position: absolute;
+      inset: 0;
+      background: var(--border);
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .ctrl-slider::before {
+      content: '';
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      left: 3px;
+      top: 3px;
+      background: var(--text);
+      border-radius: 50%;
+      transition: transform 0.2s;
+    }
+
+    .ctrl-switch input:checked+.ctrl-slider {
+      background: var(--accent);
+    }
+
+    .ctrl-switch input:checked+.ctrl-slider::before {
+      transform: translateX(16px);
+    }
+
+    /* Flash feedback */
+    @keyframes flashOk {
+
+      0%,
+      100% {
+        box-shadow: none;
+      }
+
+      40% {
+        box-shadow: 0 0 8px var(--accent);
+      }
+    }
+
+    @keyframes flashErr {
+
+      0%,
+      100% {
+        box-shadow: none;
+      }
+
+      40% {
+        box-shadow: 0 0 8px var(--bad);
+      }
+    }
+
+    .flash-ok {
+      animation: flashOk 0.7s ease;
+    }
+
+    .flash-err {
+      animation: flashErr 0.7s ease;
+    }
+
+    /* Empty / loading */
+    .empty-state {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-dim);
+      font-size: 14px;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.4;
+      }
+    }
+
+    .pulsing {
+      animation: pulse 1.6s ease-in-out infinite;
+    }
+
+    .footer-note {
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 12px;
+      margin-top: 40px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <div class="brand">
+      <img src="static/logo.png" alt="sigenergy2mqtt">
+      <span class="brand-sub">Debug Logging</span>
+    </div>
+    <div class="header-right">
+      <span class="conn-pill" id="connPill"><span class="conn-dot"></span><span id="connLabel">Connecting…</span></span>
+      <a class="btn" href="./">← Diagnostics</a>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle light/dark theme"
+        title="Toggle theme">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="4"></circle>
+          <path
+            d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41">
+          </path>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <div class="transient-notice">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+        stroke-linejoin="round">
+        <path d="M12 9v4"></path>
+        <path d="M12 17h.01"></path>
+        <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"></path>
+      </svg>
+      <span>Changes apply immediately but are <strong>not saved</strong> and will revert to configured values on
+        restart. <i>Application Log Level</i> must be set to <strong>DEBUG</strong> for the effects of changes to be
+        seen in the logs.</span>
+    </div>
+
+    <div class="filter-bar">
+      <input class="filter-input" id="filterInput" type="search" placeholder="Filter sensors by name…"
+        autocomplete="off">
+      <span class="filter-count" id="filterCount"></span>
+    </div>
+
+    <div class="grid" id="cardGrid">
+      <div class="empty-state pulsing">Waiting for the first diagnostics snapshot…</div>
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      const cardGrid = document.getElementById('cardGrid');
+      const connPill = document.getElementById('connPill');
+      const connLabel = document.getElementById('connLabel');
+      const themeToggle = document.getElementById('themeToggle');
+      const filterInput = document.getElementById('filterInput');
+      const filterCount = document.getElementById('filterCount');
+
+      // Theme toggle
+      themeToggle.addEventListener('click', () => {
+        const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+        const next = isLight ? 'dark' : 'light';
+        if (next === 'light') {
+          document.documentElement.setAttribute('data-theme', 'light');
+        } else {
+          document.documentElement.removeAttribute('data-theme');
+        }
+        try { localStorage.setItem('s2m-theme', next); } catch (e) { /* ignore */ }
+      });
+
+      // Filter — show/hide rows and update per-card active counts
+      function applyFilter() {
+        const q = filterInput.value.trim().toLowerCase();
+        let visible = 0, total = 0;
+        cardGrid.querySelectorAll('.control-row').forEach(row => {
+          const label = (row.dataset.label || '').toLowerCase();
+          const show = !q || label.includes(q);
+          row.classList.toggle('hidden-by-filter', !show);
+          if (show) visible++;
+          total++;
+        });
+        cardGrid.querySelectorAll('.card').forEach(card => {
+          const visibleRows = card.querySelectorAll('.control-row:not(.hidden-by-filter)');
+          card.style.display = visibleRows.length === 0 ? 'none' : '';
+        });
+        filterCount.textContent = q ? (visible + ' of ' + total + ' sensors') : (total > 0 ? total + ' sensors' : '');
+      }
+
+      filterInput.addEventListener('input', applyFilter);
+
+      // POST a debug toggle to the server
+      async function sendDebugUpdate(sensorId, value, slider, prevValue, revertCb) {
+        try {
+          // This page is at .../diagnostics/debug (no trailing slash).
+          // Resolving "debug/<id>" against location.href correctly yields
+          // .../diagnostics/debug/<id>
+          const url = new URL('debug/' + encodeURIComponent(sensorId), location.href);
+          const res = await fetch(url.href, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ value }),
+          });
+          const result = await res.json();
+          if (res.ok && result.ok) {
+            slider.classList.remove('flash-ok', 'flash-err');
+            void slider.offsetWidth;
+            slider.classList.add('flash-ok');
+            return true;
+          } else {
+            throw new Error(result.error || 'Update failed');
+          }
+        } catch (err) {
+          console.error('Debug toggle failed for ' + sensorId + ':', err);
+          slider.classList.remove('flash-ok', 'flash-err');
+          void slider.offsetWidth;
+          slider.classList.add('flash-err');
+          if (revertCb) revertCb(prevValue);
+          return false;
+        }
+      }
+
+      // Build a device card with one switch row per sensor
+      function buildCard(deviceId, deviceData) {
+        const sensors = deviceData.sensors || {};
+
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.dataset.device = deviceId;
+
+        const title = document.createElement('div');
+        title.className = 'card-title';
+
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = deviceData.device_name || deviceId;
+        title.appendChild(nameSpan);
+
+        card.appendChild(title);
+
+        Object.entries(sensors).forEach(function ([sensorId, ctrl]) {
+          const row = document.createElement('div');
+          row.className = 'control-row';
+          row.dataset.sensorId = sensorId;
+          row.dataset.label = ctrl.label || sensorId;
+
+          const labelEl = document.createElement('span');
+          labelEl.className = 'ctrl-label';
+          labelEl.textContent = ctrl.label || sensorId;
+          labelEl.title = sensorId;  // full unique_id as tooltip
+          row.appendChild(labelEl);
+
+          const switchLabel = document.createElement('label');
+          switchLabel.className = 'ctrl-switch';
+
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.checked = Boolean(ctrl.value);
+          checkbox.dataset.sensorId = sensorId;
+
+          const slider = document.createElement('span');
+          slider.className = 'ctrl-slider';
+
+          switchLabel.appendChild(checkbox);
+          switchLabel.appendChild(slider);
+          row.appendChild(switchLabel);
+          card.appendChild(row);
+
+          let currentVal = Boolean(ctrl.value);
+          checkbox.addEventListener('change', function () {
+            const newVal = checkbox.checked;
+            sendDebugUpdate(sensorId, newVal, slider, currentVal, function (prev) {
+              checkbox.checked = prev;
+            }).then(function (ok) {
+              if (ok) currentVal = newVal;
+            });
+          });
+        });
+
+        return card;
+      }
+
+      // Update an existing card in-place without rebuilding DOM
+      function updateCard(card, deviceData) {
+        const sensors = deviceData.sensors || {};
+        Object.entries(sensors).forEach(function ([sensorId, ctrl]) {
+          const checkbox = card.querySelector('[data-sensor-id="' + sensorId + '"]');
+          if (!checkbox) return;
+          if (document.activeElement === checkbox) return;
+          const newVal = Boolean(ctrl.value);
+          if (checkbox.checked !== newVal) checkbox.checked = newVal;
+        });
+      }
+
+      // Render/update the grid from a snapshot
+      function render(snapshot) {
+        const data = snapshot.sensor_debug_logging;
+        if (!data || typeof data !== 'object') return;
+
+        const emptyState = cardGrid.querySelector('.empty-state');
+        if (emptyState) cardGrid.innerHTML = '';
+
+        const deviceIds = Object.keys(data);
+
+        deviceIds.forEach(function (deviceId) {
+          const existingCard = cardGrid.querySelector('[data-device="' + deviceId + '"]');
+          if (existingCard) {
+            updateCard(existingCard, data[deviceId]);
+          } else {
+            cardGrid.appendChild(buildCard(deviceId, data[deviceId]));
+          }
+        });
+
+        // Remove stale cards
+        cardGrid.querySelectorAll('[data-device]').forEach(function (c) {
+          if (!deviceIds.includes(c.dataset.device)) c.remove();
+        });
+
+        applyFilter();
+      }
+
+      // WebSocket connection
+      function setConn(state) {
+        connPill.className = 'conn-pill ' + state;
+        connLabel.textContent = state === 'live' ? 'Live' : state === 'down' ? 'Disconnected' : 'Connecting…';
+      }
+
+      let retryDelay = 1000;
+
+      function connect() {
+        // This page is at .../diagnostics/debug
+        // Relative "ws" resolves to .../diagnostics/ws — the shared WebSocket feed.
+        const wsUrl = new URL('ws', location.href);
+        wsUrl.protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const socket = new WebSocket(wsUrl.href);
+
+        socket.onopen = function () { setConn('live'); retryDelay = 1000; };
+        socket.onmessage = function (evt) {
+          try { render(JSON.parse(evt.data)); } catch (e) { console.error('Bad diagnostics payload', e); }
+        };
+        socket.onclose = function () {
+          setConn('down');
+          setTimeout(connect, retryDelay);
+          retryDelay = Math.min(retryDelay * 1.5, 15000);
+        };
+        socket.onerror = function () { socket.close(); };
+      }
+
+      connect();
+    })();
+  </script>
+
+</body>
+
+</html>

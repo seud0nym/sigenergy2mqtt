@@ -24,6 +24,7 @@ class DiagnosticsCollectors:
         if active_config.pvoutput.enabled:
             diagnostics_registry.register("pvoutput", cls._diagnostics_collect_pvoutput_metrics)
         diagnostics_registry.register("runtime_configuration", cls._diagnostics_collect_runtime_config)
+        diagnostics_registry.register("sensor_debug_logging", cls._diagnostics_collect_sensor_debug)
 
     @classmethod
     async def _diagnostics_collect_runtime_config(cls) -> dict[str, Any]:
@@ -83,6 +84,35 @@ class DiagnosticsCollectors:
                 controls[endpoint] = descriptor
 
         return {"controls": controls}
+
+    @classmethod
+    async def _diagnostics_collect_sensor_debug(cls) -> dict[str, Any]:
+        """Diagnostics provider callback: exposes all sensor debug_logging flags, grouped by device."""
+        from sigenergy2mqtt.config.sensors import SettingsSensor
+        from sigenergy2mqtt.devices.base.registry import DeviceRegistry
+
+        devices_data: dict[str, Any] = {}
+
+        for plant_index, device_list in sorted(DeviceRegistry._devices.items()):
+            if plant_index < 0:
+                continue
+            for device in device_list:
+                sensors_data: dict[str, Any] = {}
+                for sensor in device.sensors.values():
+                    if isinstance(sensor, SettingsSensor) or not sensor.publishable:
+                        continue
+                    sensors_data[sensor.unique_id] = {
+                        "label": sensor.name,
+                        "type": "switch",
+                        "value": sensor.debug_logging,
+                    }
+                if sensors_data:
+                    devices_data[device.unique_id] = {
+                        "device_name": device.name,
+                        "sensors": sensors_data,
+                    }
+
+        return devices_data
 
     @classmethod
     async def _diagnostics_collect_influxdb_metrics(cls) -> dict[str, Any]:
