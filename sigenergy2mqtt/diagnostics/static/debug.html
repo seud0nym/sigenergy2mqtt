@@ -587,17 +587,16 @@
         row.appendChild(switchLabel);
 
         checkbox._currentVal = Boolean(ctrl.value);
-        checkbox._reqSeq = 0;
-        checkbox._ackSeq = 0;
+        checkbox._pendingRequests = 0;
         checkbox.addEventListener('change', function () {
           const newVal = checkbox.checked;
-          const seq = ++checkbox._reqSeq;
+          checkbox._pendingRequests++;
           sendDebugUpdate(sensorId, newVal, slider, null, function () {
             checkbox.checked = checkbox._currentVal;
-          }).then(function (ok) {
-            if (ok && seq > checkbox._ackSeq) {
-              checkbox._currentVal = newVal;
-              checkbox._ackSeq = seq;
+          }).finally(function () {
+            checkbox._pendingRequests--;
+            if (checkbox._pendingRequests === 0 && checkbox.checked !== checkbox._currentVal) {
+              checkbox.checked = checkbox._currentVal;
             }
           });
         });
@@ -645,11 +644,8 @@
             const checkbox = row.querySelector('input[type="checkbox"]');
             if (checkbox) {
               const newVal = Boolean(ctrl.value);
-              if (newVal !== checkbox._currentVal) {
-                checkbox._currentVal = newVal;
-                checkbox._ackSeq = checkbox._reqSeq;
-              }
-              if (document.activeElement !== checkbox && checkbox.checked !== newVal) {
+              checkbox._currentVal = newVal;
+              if (checkbox._pendingRequests === 0 && checkbox.checked !== newVal) {
                 checkbox.checked = newVal;
               }
             }
