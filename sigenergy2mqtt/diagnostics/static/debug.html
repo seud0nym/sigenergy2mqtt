@@ -590,10 +590,12 @@
         checkbox._pendingRequests = 0;
         checkbox._snapshotMissed = false;
         checkbox._lastSnapshot = Date.now();
+        checkbox._pendingValues = [];
         checkbox.addEventListener('change', function () {
           const newVal = checkbox.checked;
           const reqTime = Date.now();
           checkbox._pendingRequests++;
+          checkbox._pendingValues.push(newVal);
           sendDebugUpdate(sensorId, newVal, slider, null, function () {
             checkbox.checked = checkbox._currentVal;
           }).then(function (ok) {
@@ -602,10 +604,13 @@
             }
           }).finally(function () {
             checkbox._pendingRequests--;
-            if (checkbox._pendingRequests === 0 && checkbox._snapshotMissed) {
-              checkbox._snapshotMissed = false;
-              if (checkbox.checked !== checkbox._currentVal) {
-                checkbox.checked = checkbox._currentVal;
+            if (checkbox._pendingRequests === 0) {
+              checkbox._pendingValues.length = 0;
+              if (checkbox._snapshotMissed) {
+                checkbox._snapshotMissed = false;
+                if (checkbox.checked !== checkbox._currentVal) {
+                  checkbox.checked = checkbox._currentVal;
+                }
               }
             }
           });
@@ -656,7 +661,19 @@
               const newVal = Boolean(ctrl.value);
               if (checkbox._currentVal !== newVal) {
                 checkbox._currentVal = newVal;
-                checkbox._lastSnapshot = Date.now();
+                
+                if (checkbox._pendingValues && checkbox._pendingValues.length > 0) {
+                  const idx = checkbox._pendingValues.indexOf(newVal);
+                  if (idx !== -1) {
+                    checkbox._pendingValues.splice(0, idx + 1);
+                  } else {
+                    checkbox._pendingValues.length = 0;
+                    checkbox._lastSnapshot = Date.now();
+                  }
+                } else {
+                  checkbox._lastSnapshot = Date.now();
+                }
+
                 if (checkbox._pendingRequests === 0) {
                   if (checkbox.checked !== newVal) checkbox.checked = newVal;
                 } else {
