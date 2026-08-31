@@ -5,10 +5,9 @@
 
 ### Added
 
-- Added MQTT-configurable runtime settings sensors
-- Added configuration of runtime settings via diagnostics web UI
+- Added configuration of runtime settings via MQTT and the diagnostics web UI
+- Added ability to set sensor debug logging state via MQTT and the diagnostics web UI
 - Added enhanced logging for unconsumed source values in derived sensors
-- Added ability to set sensor debug logging state via MQTT
 
 ### Fixed
 

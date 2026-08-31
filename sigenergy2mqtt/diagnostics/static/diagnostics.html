@@ -644,6 +644,7 @@
       <span class="conn-pill" id="connPill"><span class="conn-dot"></span><span id="connLabel">Connecting…</span></span>
       <a class="btn" href="export" download>⬇ Export JSON</a>
       <a class="btn" href="solar">☀ Solar &amp; Battery</a>
+      <a class="btn" href="debug">🐛 Debug Logging</a>
       <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle light/dark theme"
         title="Toggle theme">
         <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -802,7 +803,7 @@
       // Renders one provider's dict as a card. Nested dicts (e.g. per-client
       // connection maps) get flattened one level with a "group.key" label so
       // any future provider "just works" without UI changes.
-      function buildCard(name, data) {
+      function buildCard(name, data, revision) {
         const card = document.createElement('div');
         card.className = 'card';
 
@@ -881,7 +882,7 @@
           card.appendChild(notice);
 
           const controlsContainer = document.createElement('div');
-          buildControls(data.controls, controlsContainer);
+          buildControls(data.controls, controlsContainer, revision);
           card.appendChild(controlsContainer);
         }
 
@@ -925,7 +926,7 @@
             flashEl.classList.remove('flash-ok', 'flash-err');
             void flashEl.offsetWidth;
             flashEl.classList.add('flash-ok');
-            return true;
+            return { ok: true, revision: result.revision };
           } else {
             throw new Error(result.error || 'Update failed');
           }
@@ -935,11 +936,11 @@
           void flashEl.offsetWidth;
           flashEl.classList.add('flash-err');
           if (revertCb) revertCb(prevValue);
-          return false;
+          return { ok: false };
         }
       }
 
-      function buildControls(controls, container) {
+      function buildControls(controls, container, revision) {
         Object.entries(controls).forEach(([endpoint, ctrl]) => {
           const row = document.createElement('div');
           row.className = 'control-row';
@@ -959,22 +960,32 @@
             const select = document.createElement('select');
             select.className = 'ctrl-select';
             select.dataset.endpoint = endpoint;
-            let currentVal = ctrl.value;
+            select._currentVal = ctrl.value;
+            // Per-widget, NOT shared across controls: the revision counter is
+            // provider-wide (covers every runtime_configuration endpoint), so
+            // gating on a page-level "last known revision" would let one
+            // control's write completion fence out a different, unrelated
+            // control's own legitimate completion.
+            select._lastKnownRevision = revision || 0;
 
             (ctrl.options || []).forEach(opt => {
               const optionEl = document.createElement('option');
               optionEl.value = opt;
               optionEl.textContent = opt;
-              if (opt === currentVal) optionEl.selected = true;
+              if (opt === select._currentVal) optionEl.selected = true;
               select.appendChild(optionEl);
             });
 
             select.addEventListener('change', () => {
               const newVal = select.value;
-              sendConfigUpdate(endpoint, newVal, select, currentVal, (prev) => {
+              const prevVal = select._currentVal;
+              sendConfigUpdate(endpoint, newVal, select, prevVal, (prev) => {
                 select.value = prev;
-              }).then(ok => {
-                if (ok) currentVal = newVal;
+              }).then(result => {
+                if (result.ok && result.revision > select._lastKnownRevision) {
+                  select._currentVal = newVal;
+                  select._lastKnownRevision = result.revision;
+                }
               });
             });
 
@@ -988,29 +999,26 @@
             if (ctrl.min !== undefined && ctrl.min !== null) input.min = ctrl.min;
             if (ctrl.max !== undefined && ctrl.max !== null) input.max = ctrl.max;
 
-            let currentVal = ctrl.value;
-            const debouncedSend = debounce((val) => {
+            input._currentVal = ctrl.value;
+            input._lastKnownRevision = revision || 0;
+            const trySend = (val) => {
               const num = parseFloat(val);
-              if (!isNaN(num) && num !== currentVal) {
-                sendConfigUpdate(endpoint, num, input, currentVal, (prev) => {
+              if (!isNaN(num) && num !== input._currentVal) {
+                const prevVal = input._currentVal;
+                sendConfigUpdate(endpoint, num, input, prevVal, (prev) => {
                   input.value = prev;
-                }).then(ok => {
-                  if (ok) currentVal = num;
+                }).then(result => {
+                  if (result.ok && result.revision > input._lastKnownRevision) {
+                    input._currentVal = num;
+                    input._lastKnownRevision = result.revision;
+                  }
                 });
               }
-            }, 500);
+            };
+            const debouncedSend = debounce(trySend, 500);
 
             input.addEventListener('input', (e) => debouncedSend(e.target.value));
-            input.addEventListener('change', (e) => {
-              const num = parseFloat(e.target.value);
-              if (!isNaN(num) && num !== currentVal) {
-                sendConfigUpdate(endpoint, num, input, currentVal, (prev) => {
-                  input.value = prev;
-                }).then(ok => {
-                  if (ok) currentVal = num;
-                });
-              }
-            });
+            input.addEventListener('change', (e) => trySend(e.target.value));
 
             widgetWrap.appendChild(input);
 
@@ -1035,13 +1043,18 @@
             labelEl.appendChild(checkbox);
             labelEl.appendChild(slider);
 
-            let currentVal = Boolean(ctrl.value);
+            checkbox._currentVal = Boolean(ctrl.value);
+            checkbox._lastKnownRevision = revision || 0;
             checkbox.addEventListener('change', () => {
               const newVal = checkbox.checked;
-              sendConfigUpdate(endpoint, newVal, slider, currentVal, (prev) => {
+              const prevVal = checkbox._currentVal;
+              sendConfigUpdate(endpoint, newVal, slider, prevVal, (prev) => {
                 checkbox.checked = prev;
-              }).then(ok => {
-                if (ok) currentVal = newVal;
+              }).then(result => {
+                if (result.ok && result.revision > checkbox._lastKnownRevision) {
+                  checkbox._currentVal = newVal;
+                  checkbox._lastKnownRevision = result.revision;
+                }
               });
             });
 
@@ -1058,10 +1071,26 @@
         });
       }
 
-      function updateControlsCard(card, controls) {
+      function updateControlsCard(card, controls, revision) {
         Object.entries(controls).forEach(([endpoint, ctrl]) => {
           const widget = card.querySelector(`[data-endpoint="${endpoint}"]`);
           if (!widget) return;
+
+          // Keep the tracked "confirmed" value current regardless of focus —
+          // it's what a future revert or write-completion compares against,
+          // not what's currently displayed. Same for the revision baseline:
+          // this snapshot's revision genuinely confirms this control's value
+          // too (a snapshot is a full picture of every control at that
+          // revision), so it's safe to advance.
+          if (ctrl.type === 'switch') {
+            widget._currentVal = Boolean(ctrl.value);
+          } else {
+            widget._currentVal = ctrl.value;
+          }
+          if (typeof revision === 'number') {
+            widget._lastKnownRevision = Math.max(widget._lastKnownRevision || 0, revision);
+          }
+
           if (document.activeElement === widget || widget.contains(document.activeElement)) return;
 
           if (ctrl.type === 'select') {
@@ -1093,9 +1122,12 @@
       // Both dashboards still read from the same /diagnostics/ws feed and
       // the provider's data still appears in /diagnostics/export — this only
       // hides it from this page's auto-generated grid.
-      const DEDICATED_PAGE_PROVIDERS = new Set(['solar']);
+      const DEDICATED_PAGE_PROVIDERS = new Set(['solar', 'sensor_debug_logging']);
 
       function render(snapshot) {
+        const revisions = snapshot._revisions || {};
+        const configRevision = typeof revisions.runtime_configuration === 'number' ? revisions.runtime_configuration : 0;
+
         const monitor = snapshot.monitor || {};
         const status = monitor.status || 'unknown';
         statusBanner.className = 'status-banner ' + (status === 'healthy' ? 'healthy' : status === 'degraded' ? 'degraded' : 'unknown');
@@ -1103,7 +1135,7 @@
         const ts = snapshot.timestamp ? new Date(snapshot.timestamp * 1000).toLocaleString() : '—';
         statusMeta.textContent = `last updated ${ts}`;
 
-        const keys = Object.keys(snapshot).filter(k => k !== 'timestamp' && !DEDICATED_PAGE_PROVIDERS.has(k));
+        const keys = Object.keys(snapshot).filter(k => k !== 'timestamp' && k !== '_revisions' && !DEDICATED_PAGE_PROVIDERS.has(k));
         if (keys.length === 0) {
           cardGrid.innerHTML = '<div class="empty-state">No diagnostics providers registered.</div>';
           return;
@@ -1116,13 +1148,13 @@
           const existingCard = cardGrid.querySelector(`[data-provider="${key}"]`);
           const data = snapshot[key];
           if (key === 'runtime_configuration' && existingCard && data && data.controls) {
-            updateControlsCard(existingCard, data.controls);
+            updateControlsCard(existingCard, data.controls, configRevision);
           } else if (existingCard) {
-            const newCard = buildCard(key, data);
+            const newCard = buildCard(key, data, configRevision);
             newCard.dataset.provider = key;
             cardGrid.replaceChild(newCard, existingCard);
           } else {
-            const newCard = buildCard(key, data);
+            const newCard = buildCard(key, data, configRevision);
             newCard.dataset.provider = key;
             cardGrid.appendChild(newCard);
           }

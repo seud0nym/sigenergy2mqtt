@@ -70,6 +70,8 @@ class DiagnosticsServer:
         self._app.router.add_get("/diagnostics/ws", self._handle_websocket)
         self._app.router.add_get("/diagnostics/export", self._handle_export)
         self._app.router.add_post("/diagnostics/config/{endpoint}", self._handle_config_update)
+        self._app.router.add_get("/diagnostics/debug", self._handle_debug_dashboard)
+        self._app.router.add_post("/diagnostics/debug/{sensor_id}", self._handle_debug_update)
         self._app.router.add_static("/diagnostics/static/", STATIC_DIR, name="static")
 
     @staticmethod
@@ -218,6 +220,13 @@ class DiagnosticsServer:
         """
         return web.FileResponse(STATIC_DIR / "dashboard.html")
 
+    async def _handle_debug_dashboard(self, request: web.Request) -> web.FileResponse:
+        """Debug-logging dashboard — same pattern as ``_handle_solar_dashboard``:
+        served at ".../diagnostics/debug" (no trailing slash) so relative
+        "ws" and "static/..." URLs resolve against ".../diagnostics/".
+        """
+        return web.FileResponse(STATIC_DIR / "debug.html")
+
     async def _handle_export(self, request: web.Request) -> web.Response:
         """Full, freshly-collected diagnostics payload as a downloadable file."""
         logger.debug("DiagnosticsServer fetching fresh snapshot for export")
@@ -297,9 +306,71 @@ class DiagnosticsServer:
             return web.json_response({"ok": False, "error": str(exc)}, status=500)
 
         if ok:
+            revision = diagnostics_registry.bump_revision("runtime_configuration")
             logger.info(f"DiagnosticsServer Config updated via HTTP: {endpoint!r} = {raw_value!r}")
-            return web.json_response({"ok": True})
+            return web.json_response({"ok": True, "revision": revision})
         return web.json_response({"ok": False, "error": "Update rejected by sensor validation"}, status=422)
+
+    async def _handle_debug_update(self, request: web.Request) -> web.Response:
+        """Toggle a sensor's ``debug_logging`` flag via HTTP.
+
+        Finds the sensor whose ``unique_id`` matches the ``{sensor_id}`` path
+        parameter across all real-device plant indices (≥ 0) in
+        :class:`~sigenergy2mqtt.devices.base.registry.DeviceRegistry`, then
+        calls :meth:`~sigenergy2mqtt.sensors.base.sensor.Sensor.set_debug_logging`
+        — the same method used by the MQTT debug topic.
+
+        ``modbus_client``, ``mqtt_client``, and ``handler`` are all ``None``;
+        ``set_debug_logging`` only reads ``value`` and does not use the others.
+        """
+        from sigenergy2mqtt.config.sensors import SettingsSensor
+        from sigenergy2mqtt.devices.base.registry import DeviceRegistry
+
+        sensor_id = request.match_info["sensor_id"]
+
+        # Parse body
+        try:
+            body = await request.json()
+            raw_value = body["value"]
+        except (json.JSONDecodeError, KeyError, TypeError, ValueError, UnicodeDecodeError) as exc:
+            return web.json_response({"ok": False, "error": f"Invalid request body: {exc}"}, status=400)
+
+        if not isinstance(raw_value, bool):
+            return web.json_response({"ok": False, "error": "Debug value must be a boolean"}, status=422)
+
+        # Find the sensor across all real-device plant indices
+        from sigenergy2mqtt.sensors.base.sensor import Sensor
+        matched_sensor: Sensor | None = None
+        for plant_index, device_list in DeviceRegistry._devices.items():
+            if plant_index < 0:
+                continue
+            for device in device_list:
+                for sensor in device.sensors.values():
+                    if isinstance(sensor, SettingsSensor):
+                        continue
+                    if sensor.unique_id == sensor_id:
+                        matched_sensor = sensor
+                        break
+                if matched_sensor is not None:
+                    break
+            if matched_sensor is not None:
+                break
+
+        if matched_sensor is None:
+            return web.json_response({"ok": False, "error": f"Unknown sensor: {sensor_id!r}"}, status=404)
+
+        coerced: float = 1.0 if raw_value else 0.0
+        try:
+            ok = await matched_sensor.set_debug_logging(None, None, coerced, "diagnostics", None)  # type: ignore[arg-type]
+        except (KeyError, RuntimeError, TypeError, ValueError) as exc:
+            logger.warning(f"DiagnosticsServer debug update for {sensor_id!r} raised: {exc}")
+            return web.json_response({"ok": False, "error": str(exc)}, status=500)
+
+        if ok:
+            revision = diagnostics_registry.bump_revision("sensor_debug_logging")
+            logger.info(f"DiagnosticsServer debug_logging toggled via HTTP: {sensor_id!r} = {raw_value!r}")
+            return web.json_response({"ok": True, "revision": revision})
+        return web.json_response({"ok": False, "error": "Update had no effect (value unchanged)"})
 
 
     async def _handle_websocket(self, request: web.Request) -> web.WebSocketResponse:
