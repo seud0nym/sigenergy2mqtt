@@ -429,15 +429,15 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
 
     for plant_index, device in enumerate(devices):
         if not (device.registers.read_only or device.registers.read_write or device.registers.write_only):
-            logger.info(f"Ignored configured host modbus://{device.host}:{device.port} (Plant Index = {plant_index}): All registers are disabled (read-only=false read-write=false write-only=false)")
+            logger.info(f"Ignored modbus://{device.host}:{device.port} (Plant Index = {plant_index}): All registers are disabled (read-only=false read-write=false write-only=false)")
             continue
         if device.pss or device.pid:
             logger.info(
-                f"Creating devices from configured host modbus://{device.host}:{device.port} (Plant: {plant_index}, Device IDs: Inverter={device.inverters} AC Charger={device.ac_chargers} DC Charger={device.dc_chargers} PSS={device.pss} PID={device.pid})"
+                f"Creating devices from modbus://{device.host}:{device.port} (Plant: {plant_index}, Device IDs: Inverter={device.inverters} AC Charger={device.ac_chargers} DC Charger={device.dc_chargers} PSS={device.pss} PID={device.pid})"
             )
         else:
             logger.info(
-                f"Creating devices from configured host modbus://{device.host}:{device.port} (Plant: {plant_index}, Device IDs: Inverter={device.inverters} AC Charger={device.ac_chargers} DC Charger={device.dc_chargers})"
+                f"Creating devices from modbus://{device.host}:{device.port} (Plant: {plant_index}, Device IDs: Inverter={device.inverters} AC Charger={device.ac_chargers} DC Charger={device.dc_chargers})"
             )
 
         config: ThreadConfig = ThreadConfig.create(device.host, device.port, device.timeout, device.retries)
@@ -448,7 +448,7 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
                 logger.fatal(f"Failed to connect to modbus://{device.host}:{device.port}")
                 sys.exit(1)
 
-            logger.info(f"Connected to modbus://{device.host}:{device.port} for register probing")
+            logger.debug(f"Connected to modbus://{device.host}:{device.port} for register probing")
 
             plant: PowerPlant | None = None
             inverters: dict[int, str] = {}
@@ -556,7 +556,7 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
                     for sensor in [s for s in plant.sensors.values() if isinstance(s, (ReactivePowerFixedAdjustmentTargetValue, PhaseReactivePowerFixedAdjustmentTargetValue))]:
                         sensor.apply_min_max(-60 * total_rated_active_power, 60 * total_rated_active_power)
 
-            logger.info(f"Disconnecting from modbus://{device.host}:{device.port} - register probing complete")
+            logger.debug(f"Disconnecting from modbus://{device.host}:{device.port} - register probing complete")
 
     return thread_config_registry.get_all(), protocol_version
 
