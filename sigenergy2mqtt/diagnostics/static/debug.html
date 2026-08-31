@@ -587,12 +587,16 @@
         row.appendChild(switchLabel);
 
         checkbox._currentVal = Boolean(ctrl.value);
+        checkbox._lastSnapshot = Date.now();
         checkbox.addEventListener('change', function () {
           const newVal = checkbox.checked;
+          const reqTime = Date.now();
           sendDebugUpdate(sensorId, newVal, slider, null, function () {
             checkbox.checked = checkbox._currentVal;
           }).then(function (ok) {
-            if (ok) checkbox._currentVal = newVal;
+            if (ok && checkbox._lastSnapshot <= reqTime) {
+              checkbox._currentVal = newVal;
+            }
           });
         });
 
@@ -640,6 +644,7 @@
             if (checkbox) {
               const newVal = Boolean(ctrl.value);
               checkbox._currentVal = newVal;
+              checkbox._lastSnapshot = Date.now();
               if (document.activeElement !== checkbox && checkbox.checked !== newVal) {
                 checkbox.checked = newVal;
               }
