@@ -559,6 +559,46 @@
         }
       }
 
+      function buildRow(sensorId, ctrl) {
+        const row = document.createElement('div');
+        row.className = 'control-row';
+        row.dataset.sensorId = sensorId;
+        row.dataset.label = ctrl.label || sensorId;
+
+        const labelEl = document.createElement('span');
+        labelEl.className = 'ctrl-label';
+        labelEl.textContent = ctrl.label || sensorId;
+        labelEl.title = sensorId;  // full unique_id as tooltip
+        row.appendChild(labelEl);
+
+        const switchLabel = document.createElement('label');
+        switchLabel.className = 'ctrl-switch';
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = Boolean(ctrl.value);
+        checkbox.dataset.sensorId = sensorId;
+
+        const slider = document.createElement('span');
+        slider.className = 'ctrl-slider';
+
+        switchLabel.appendChild(checkbox);
+        switchLabel.appendChild(slider);
+        row.appendChild(switchLabel);
+
+        let currentVal = Boolean(ctrl.value);
+        checkbox.addEventListener('change', function () {
+          const newVal = checkbox.checked;
+          sendDebugUpdate(sensorId, newVal, slider, currentVal, function (prev) {
+            checkbox.checked = prev;
+          }).then(function (ok) {
+            if (ok) currentVal = newVal;
+          });
+        });
+
+        return row;
+      }
+
       // Build a device card with one switch row per sensor
       function buildCard(deviceId, deviceData) {
         const sensors = deviceData.sensors || {};
@@ -577,56 +617,33 @@
         card.appendChild(title);
 
         Object.entries(sensors).forEach(function ([sensorId, ctrl]) {
-          const row = document.createElement('div');
-          row.className = 'control-row';
-          row.dataset.sensorId = sensorId;
-          row.dataset.label = ctrl.label || sensorId;
-
-          const labelEl = document.createElement('span');
-          labelEl.className = 'ctrl-label';
-          labelEl.textContent = ctrl.label || sensorId;
-          labelEl.title = sensorId;  // full unique_id as tooltip
-          row.appendChild(labelEl);
-
-          const switchLabel = document.createElement('label');
-          switchLabel.className = 'ctrl-switch';
-
-          const checkbox = document.createElement('input');
-          checkbox.type = 'checkbox';
-          checkbox.checked = Boolean(ctrl.value);
-          checkbox.dataset.sensorId = sensorId;
-
-          const slider = document.createElement('span');
-          slider.className = 'ctrl-slider';
-
-          switchLabel.appendChild(checkbox);
-          switchLabel.appendChild(slider);
-          row.appendChild(switchLabel);
-          card.appendChild(row);
-
-          let currentVal = Boolean(ctrl.value);
-          checkbox.addEventListener('change', function () {
-            const newVal = checkbox.checked;
-            sendDebugUpdate(sensorId, newVal, slider, currentVal, function (prev) {
-              checkbox.checked = prev;
-            }).then(function (ok) {
-              if (ok) currentVal = newVal;
-            });
-          });
+          card.appendChild(buildRow(sensorId, ctrl));
         });
 
         return card;
       }
 
-      // Update an existing card in-place without rebuilding DOM
+      // Update an existing card in-place
       function updateCard(card, deviceData) {
         const sensors = deviceData.sensors || {};
+        
+        // Remove stale rows
+        card.querySelectorAll('.control-row').forEach(function (row) {
+          if (!sensors[row.dataset.sensorId]) row.remove();
+        });
+
+        // Add new rows and update existing ones
         Object.entries(sensors).forEach(function ([sensorId, ctrl]) {
-          const checkbox = card.querySelector('[data-sensor-id="' + sensorId + '"]');
-          if (!checkbox) return;
-          if (document.activeElement === checkbox) return;
-          const newVal = Boolean(ctrl.value);
-          if (checkbox.checked !== newVal) checkbox.checked = newVal;
+          const row = card.querySelector('.control-row[data-sensor-id="' + sensorId + '"]');
+          if (row) {
+            const checkbox = row.querySelector('input[type="checkbox"]');
+            if (checkbox && document.activeElement !== checkbox) {
+              const newVal = Boolean(ctrl.value);
+              if (checkbox.checked !== newVal) checkbox.checked = newVal;
+            }
+          } else {
+            card.appendChild(buildRow(sensorId, ctrl));
+          }
         });
       }
 
