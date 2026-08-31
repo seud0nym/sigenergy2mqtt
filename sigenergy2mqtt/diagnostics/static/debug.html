@@ -638,10 +638,12 @@
           const row = card.querySelector('.control-row[data-sensor-id="' + CSS.escape(sensorId) + '"]');
           if (row) {
             const checkbox = row.querySelector('input[type="checkbox"]');
-            if (checkbox && document.activeElement !== checkbox) {
+            if (checkbox) {
               const newVal = Boolean(ctrl.value);
               checkbox._currentVal = newVal;
-              if (checkbox.checked !== newVal) checkbox.checked = newVal;
+              if (document.activeElement !== checkbox && checkbox.checked !== newVal) {
+                checkbox.checked = newVal;
+              }
             }
           } else {
             card.appendChild(buildRow(sensorId, ctrl));
