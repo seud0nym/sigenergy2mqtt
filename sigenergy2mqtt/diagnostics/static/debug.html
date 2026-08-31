@@ -588,6 +588,7 @@
 
         checkbox._currentVal = Boolean(ctrl.value);
         checkbox._pendingRequests = 0;
+        checkbox._snapshotMissed = false;
         checkbox.addEventListener('change', function () {
           const newVal = checkbox.checked;
           checkbox._pendingRequests++;
@@ -595,8 +596,11 @@
             checkbox.checked = checkbox._currentVal;
           }).finally(function () {
             checkbox._pendingRequests--;
-            if (checkbox._pendingRequests === 0 && checkbox.checked !== checkbox._currentVal) {
-              checkbox.checked = checkbox._currentVal;
+            if (checkbox._pendingRequests === 0 && checkbox._snapshotMissed) {
+              checkbox._snapshotMissed = false;
+              if (checkbox.checked !== checkbox._currentVal) {
+                checkbox.checked = checkbox._currentVal;
+              }
             }
           });
         });
@@ -645,8 +649,10 @@
             if (checkbox) {
               const newVal = Boolean(ctrl.value);
               checkbox._currentVal = newVal;
-              if (checkbox._pendingRequests === 0 && checkbox.checked !== newVal) {
-                checkbox.checked = newVal;
+              if (checkbox._pendingRequests === 0) {
+                if (checkbox.checked !== newVal) checkbox.checked = newVal;
+              } else {
+                checkbox._snapshotMissed = true;
               }
             }
           } else {
