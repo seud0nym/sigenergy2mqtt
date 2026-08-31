@@ -588,30 +588,24 @@
 
         checkbox._currentVal = Boolean(ctrl.value);
         checkbox._pendingRequests = 0;
-        checkbox._snapshotMissed = false;
-        checkbox._lastSnapshot = Date.now();
-        checkbox._pendingValues = [];
+        checkbox._seq = 0; // bumps on every applied authoritative update (snapshot or confirmed write)
         checkbox.addEventListener('change', function () {
           const newVal = checkbox.checked;
-          const reqTime = Date.now();
+          const seqAtSend = checkbox._seq;
           checkbox._pendingRequests++;
-          checkbox._pendingValues.push(newVal);
           sendDebugUpdate(sensorId, newVal, slider, null, function () {
             checkbox.checked = checkbox._currentVal;
           }).then(function (ok) {
-            if (ok && checkbox._lastSnapshot <= reqTime) {
+            // Only apply if nothing newer (a snapshot, or another completed write)
+            // has landed since this request was sent.
+            if (ok && checkbox._seq === seqAtSend) {
               checkbox._currentVal = newVal;
+              checkbox._seq++;
             }
           }).finally(function () {
             checkbox._pendingRequests--;
-            if (checkbox._pendingRequests === 0) {
-              checkbox._pendingValues.length = 0;
-              if (checkbox._snapshotMissed) {
-                checkbox._snapshotMissed = false;
-                if (checkbox.checked !== checkbox._currentVal) {
-                  checkbox.checked = checkbox._currentVal;
-                }
-              }
+            if (checkbox._pendingRequests === 0 && checkbox.checked !== checkbox._currentVal) {
+              checkbox.checked = checkbox._currentVal;
             }
           });
         });
@@ -659,29 +653,14 @@
             const checkbox = row.querySelector('input[type="checkbox"]');
             if (checkbox) {
               const newVal = Boolean(ctrl.value);
-              const valueChanged = checkbox._currentVal !== newVal;
+              checkbox._currentVal = newVal;
+              checkbox._seq++; // every snapshot is authoritative, whether or not the value changed
 
-              if (valueChanged || checkbox._pendingRequests > 0) {
-                checkbox._currentVal = newVal;
-
-                if (checkbox._pendingValues && checkbox._pendingValues.length > 0) {
-                  const idx = checkbox._pendingValues.indexOf(newVal);
-                  if (idx !== -1) {
-                    checkbox._pendingValues.splice(0, idx + 1);
-                  } else {
-                    checkbox._pendingValues.length = 0;
-                    checkbox._lastSnapshot = Date.now();
-                  }
-                } else {
-                  checkbox._lastSnapshot = Date.now();
-                }
-
-                if (checkbox._pendingRequests === 0) {
-                  if (checkbox.checked !== newVal) checkbox.checked = newVal;
-                } else {
-                  checkbox._snapshotMissed = true;
-                }
+              if (checkbox._pendingRequests === 0 && checkbox.checked !== newVal) {
+                checkbox.checked = newVal;
               }
+              // if requests are still pending, leave checkbox.checked alone —
+              // the finally() in the change handler reconciles it once they all settle
             }
           } else {
             card.appendChild(buildRow(sensorId, ctrl));
