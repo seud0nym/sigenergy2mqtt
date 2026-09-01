@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="static/shared.css">
     <script src="static/shared.js"></script>
     <style>
-
         .status-banner {
             display: flex;
             align-items: center;
@@ -1391,15 +1390,11 @@
                 // plain {plant, inverters, dc_chargers, ac_chargers, timestamp}
                 // shape) doesn't need to know about the wrapping.
                 if (!full.solar || full.solar.error) return;
-                
+
                 const solarPayload = Object.assign({}, full.solar, { timestamp: full.timestamp });
-                try {
-                    render(solarPayload);
-                    gotLiveData = true;
-                    return true; // Signal to initWebSocket that real data was rendered
-                } catch (err) {
-                    console.error("Dashboard render error:", err);
-                }
+                render(solarPayload);
+                gotLiveData = true;
+                return true; // Signal to initWebSocket that real data was rendered
             }, setConnState);
         })();
     </script>
