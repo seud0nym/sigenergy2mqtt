@@ -432,6 +432,11 @@ class TestDashboardPage:
         """dashboard.html must have card elements."""
         assert ".card" in dashboard_html or "card" in dashboard_html
 
+    def test_dashboard_ignores_invalid_solar_data(self, dashboard_html: str) -> None:
+        """dashboard.html must ignore invalid solar data in WebSocket payload."""
+        # Ensure it checks for missing solar data or solar data with an error before marking live
+        assert "if (!full.solar || full.solar.error) return;" in dashboard_html
+
 
 class TestDebugPage:
     """Test debug.html specific content."""

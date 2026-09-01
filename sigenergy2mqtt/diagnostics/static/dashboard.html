@@ -1390,6 +1390,8 @@
                 // top-level timestamp onto it so render() (written against the
                 // plain {plant, inverters, dc_chargers, ac_chargers, timestamp}
                 // shape) doesn't need to know about the wrapping.
+                if (!full.solar || full.solar.error) return;
+                
                 const solarPayload = Object.assign({}, full.solar, { timestamp: full.timestamp });
                 render(solarPayload);
                 gotLiveData = true;
