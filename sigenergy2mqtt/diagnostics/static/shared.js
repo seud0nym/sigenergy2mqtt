@@ -55,13 +55,13 @@ function initWebSocket(wsUrl, onMessage, setConnState) {
     socket.onmessage = (evt) => {
       try {
         const data = JSON.parse(evt.data);
-        // On first message, mark connection as live and reset backoff
+        onMessage(data);
+        // On first successfully processed message, mark connection as live and reset backoff
         if (!firstMessage) {
           firstMessage = true;
           setConnState('live');
           retryDelay = 1000;
         }
-        onMessage(data);
       } catch (e) {
         console.error('Bad WS payload', e);
       }
@@ -103,7 +103,7 @@ async function postJSON(url, body, flashElement, onRevert) {
       body: JSON.stringify(body)
     });
     const result = await res.json();
-    
+
     if (res.ok && result.ok) {
       // Flash green
       flashElement.classList.remove('flash-ok', 'flash-err');
