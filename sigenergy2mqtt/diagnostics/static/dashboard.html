@@ -1393,8 +1393,12 @@
                 if (!full.solar || full.solar.error) return;
                 
                 const solarPayload = Object.assign({}, full.solar, { timestamp: full.timestamp });
-                render(solarPayload);
-                gotLiveData = true;
+                try {
+                    render(solarPayload);
+                    gotLiveData = true;
+                } catch (err) {
+                    console.error("Dashboard render error:", err);
+                }
             }, setConnState);
         })();
     </script>
