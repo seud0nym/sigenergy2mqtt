@@ -1008,7 +1008,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], SensorProtocol, m
             message.wait_for_publish(timeout=timeout)
         if message.is_published():
             if self.debug_logging:
-                logger.debug(f"{self.log_identity} Published  state={payload} to topic {topic} result={message.rc}")
+                logger.debug(f"{self.log_identity} Published  state={payload} to topic {topic} ({qos=} {retain=}) result={message.rc}")
         else:
             logger.warning(f"{self.log_identity} Failed to publish state={payload} to topic {topic} result={message.rc}")
         return message.is_published()
