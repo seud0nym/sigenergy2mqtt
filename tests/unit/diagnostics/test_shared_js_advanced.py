@@ -367,12 +367,10 @@ class TestEventHandling:
         assert "addEventListener('click'" in shared_js or 'addEventListener("click"' in shared_js
 
     def test_websocket_onopen_updates_state(self, shared_js: str) -> None:
-        """WebSocket onopen must update connection state."""
+        """WebSocket onopen must exist (state update moved to onmessage for demo mode fix)."""
+        # onopen exists but state is set on first message, not immediately on connection.
+        # This prevents marking 'live' before demo data is replaced with real data.
         assert "socket.onopen" in shared_js
-        onopen_match = re.search(r"socket\.onopen\s*=.*?{(.*?)};", shared_js, re.DOTALL)
-        if onopen_match:
-            handler = onopen_match.group(1)
-            assert "setConnState" in handler
 
 
 # ============================================================================
@@ -397,8 +395,15 @@ class TestAPIContract:
 
     def test_on_message_callback_receives_parsed_json(self, shared_js: str) -> None:
         """onMessage callback must receive parsed JSON data."""
-        # Should call onMessage(JSON.parse(...))
-        assert "onMessage(JSON.parse" in shared_js or "onMessage( JSON.parse" in shared_js
+        # Should parse JSON and pass to onMessage callback
+        assert "JSON.parse" in shared_js
+        assert "onMessage(" in shared_js
+        # Verify they're in the same handler
+        msg_match = re.search(r"socket\.onmessage\s*=.*?{(.*?)};", shared_js, re.DOTALL)
+        if msg_match:
+            handler = msg_match.group(1)
+            assert "JSON.parse" in handler
+            assert "onMessage" in handler
 
     def test_set_conn_state_called_with_string(self, shared_js: str) -> None:
         """setConnState callback must be called with string state."""
@@ -411,3 +416,22 @@ class TestAPIContract:
                 break
         # More lenient check - just verify setConnState is called multiple times
         assert shared_js.count("setConnState(") >= 2, "setConnState should be called multiple times"
+
+    def test_websocket_marks_live_on_first_message(self, shared_js: str) -> None:
+        """WebSocket must mark 'live' on first message, not on connection open.
+        
+        This prevents showing demo values with a 'Live' indicator, which could
+        confuse operators. The connection shows 'Connecting...' until real data
+        arrives, or 'Demo' if it disconnects before receiving data.
+        """
+        # Verify firstMessage flag exists
+        assert "firstMessage" in shared_js
+        
+        # Verify onmessage handler sets live on first message
+        msg_match = re.search(r"socket\.onmessage\s*=.*?{(.*?)};", shared_js, re.DOTALL)
+        if msg_match:
+            handler = msg_match.group(1)
+            # Should check if first message and call setConnState('live')
+            assert "firstMessage" in handler, "onmessage must check firstMessage flag"
+            assert "setConnState('live')" in handler or 'setConnState("live")' in handler
+

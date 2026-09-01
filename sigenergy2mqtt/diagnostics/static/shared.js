@@ -36,6 +36,7 @@ function initWebSocket(wsUrl, onMessage, setConnState) {
   let socket = null;
   let retryDelay = 1000;
   let closed = false;
+  let firstMessage = false;
 
   function connect() {
     if (closed) return;
@@ -46,13 +47,21 @@ function initWebSocket(wsUrl, onMessage, setConnState) {
       return;
     }
 
+    firstMessage = false;
     socket.onopen = () => {
-      setConnState('live');
-      retryDelay = 1000;
+      // Don't mark as 'live' yet — wait for first real data to avoid showing
+      // demo values with a 'Live' indicator.
     };
     socket.onmessage = (evt) => {
       try {
-        onMessage(JSON.parse(evt.data));
+        const data = JSON.parse(evt.data);
+        // On first message, mark connection as live and reset backoff
+        if (!firstMessage) {
+          firstMessage = true;
+          setConnState('live');
+          retryDelay = 1000;
+        }
+        onMessage(data);
       } catch (e) {
         console.error('Bad WS payload', e);
       }
