@@ -6,215 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>sigenergy2mqtt — Diagnostics</title>
   <link rel="icon" type="image/x-icon" href="static/favicon.ico">
-  <script>
-    (function () {
-      try {
-        const saved = localStorage.getItem('s2m-theme');
-        const theme = saved || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
-        if (theme === 'light') document.documentElement.setAttribute('data-theme', 'light');
-      } catch (e) { /* localStorage unavailable — default to dark */ }
-    })();
-  </script>
+  <link rel="stylesheet" href="static/shared.css">
+  <script src="static/shared.js"></script>
   <style>
-    :root {
-      --bg: #0b1220;
-      --bg-panel: #121b2e;
-      --bg-card: #16223a;
-      --border: #24314d;
-      --text: #e6ebf5;
-      --text-dim: #8b98b3;
-      --accent: #3ddc97;
-      --accent-dim: rgba(61, 220, 151, 0.15);
-      --warn: #f5a623;
-      --warn-dim: rgba(245, 166, 35, 0.15);
-      --bad: #ef4b5f;
-      --bad-dim: rgba(239, 75, 95, 0.15);
-      --unknown: #6b7794;
-      --mono: "SF Mono", "JetBrains Mono", Consolas, monospace;
-      --glow-1: rgba(61, 220, 151, 0.07);
-      --glow-2: rgba(58, 123, 213, 0.08);
-      --dash-border: rgba(255, 255, 255, 0.05);
-      --dash-border-strong: rgba(255, 255, 255, 0.04);
-      --header-bg: rgba(18, 27, 46, 0.6);
-      --scheme: dark;
-    }
-
-    :root[data-theme="light"] {
-      --bg: #f4f6fb;
-      --bg-panel: #ffffff;
-      --bg-card: #ffffff;
-      --border: #dde3ee;
-      --text: #1a2233;
-      --text-dim: #5b6579;
-      --accent: #1f9d6f;
-      --accent-dim: rgba(31, 157, 111, 0.12);
-      --warn: #b1720a;
-      --warn-dim: rgba(177, 114, 10, 0.12);
-      --bad: #c8293e;
-      --bad-dim: rgba(200, 41, 62, 0.1);
-      --unknown: #7a8499;
-      --glow-1: rgba(31, 157, 111, 0.06);
-      --glow-2: rgba(58, 123, 213, 0.06);
-      --dash-border: rgba(0, 0, 0, 0.06);
-      --dash-border-strong: rgba(0, 0, 0, 0.05);
-      --header-bg: rgba(255, 255, 255, 0.7);
-      --scheme: light;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    html {
-      color-scheme: var(--scheme);
-    }
-
-    body {
-      margin: 0;
-      background:
-        radial-gradient(1200px 600px at 15% -10%, var(--glow-1), transparent 60%),
-        radial-gradient(900px 500px at 90% 0%, var(--glow-2), transparent 55%),
-        var(--bg);
-      color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      min-height: 100vh;
-      transition: background-color 0.2s, color 0.2s;
-    }
-
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 20px 32px;
-      border-bottom: 1px solid var(--border);
-      background: var(--header-bg);
-      backdrop-filter: blur(6px);
-      position: sticky;
-      top: 0;
-      z-index: 10;
-      gap: 20px;
-      flex-wrap: wrap;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .brand img {
-      height: 50px;
-      width: auto;
-      display: block;
-    }
-
-    .brand-sub {
-      font-size: 13px;
-      color: var(--text-dim);
-      letter-spacing: 0.02em;
-    }
-
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      flex-wrap: wrap;
-    }
-
-    .conn-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 12px;
-      padding: 6px 12px;
-      border-radius: 999px;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      color: var(--text-dim);
-    }
-
-    .conn-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--unknown);
-      transition: background 0.3s;
-    }
-
-    .conn-pill.live .conn-dot {
-      background: var(--accent);
-      box-shadow: 0 0 8px var(--accent);
-    }
-
-    .conn-pill.down .conn-dot {
-      background: var(--bad);
-      box-shadow: 0 0 8px var(--bad);
-    }
-
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 13px;
-      padding: 8px 16px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: var(--bg-card);
-      color: var(--text);
-      cursor: pointer;
-      text-decoration: none;
-      transition: border-color 0.15s, transform 0.1s;
-    }
-
-    .btn:hover {
-      border-color: var(--accent);
-      transform: translateY(-1px);
-    }
-
-    .theme-toggle {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 34px;
-      height: 34px;
-      padding: 0;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: var(--bg-card);
-      color: var(--text-dim);
-      cursor: pointer;
-      transition: border-color 0.15s, color 0.15s;
-    }
-
-    .theme-toggle:hover {
-      border-color: var(--accent);
-      color: var(--text);
-    }
-
-    .theme-toggle svg {
-      width: 16px;
-      height: 16px;
-      display: block;
-    }
-
-    .theme-toggle .icon-moon {
-      display: none;
-    }
-
-    :root[data-theme="light"] .theme-toggle .icon-sun {
-      display: none;
-    }
-
-    :root[data-theme="light"] .theme-toggle .icon-moon {
-      display: block;
-    }
-
-    main {
-      padding: 28px 32px 60px;
-      max-width: 1280px;
-      margin: 0 auto;
-    }
-
     .status-banner {
       display: flex;
       align-items: center;
@@ -684,16 +478,7 @@
       const connLabel = document.getElementById('connLabel');
       const themeToggle = document.getElementById('themeToggle');
 
-      themeToggle.addEventListener('click', () => {
-        const isLight = document.documentElement.getAttribute('data-theme') === 'light';
-        const next = isLight ? 'dark' : 'light';
-        if (next === 'light') {
-          document.documentElement.setAttribute('data-theme', 'light');
-        } else {
-          document.documentElement.removeAttribute('data-theme');
-        }
-        try { localStorage.setItem('s2m-theme', next); } catch (e) { /* ignore */ }
-      });
+      initThemeToggle(themeToggle);
 
       function pillClassFor(value) {
         if (value === true || value === 'healthy') return 'ok';
@@ -915,29 +700,7 @@
       }
 
       async function sendConfigUpdate(endpoint, value, flashEl, prevValue, revertCb) {
-        try {
-          const res = await fetch(`config/${encodeURIComponent(endpoint)}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ value })
-          });
-          const result = await res.json();
-          if (res.ok && result.ok) {
-            flashEl.classList.remove('flash-ok', 'flash-err');
-            void flashEl.offsetWidth;
-            flashEl.classList.add('flash-ok');
-            return { ok: true, revision: result.revision };
-          } else {
-            throw new Error(result.error || 'Update failed');
-          }
-        } catch (err) {
-          console.error(`Config update failed for ${endpoint}:`, err);
-          flashEl.classList.remove('flash-ok', 'flash-err');
-          void flashEl.offsetWidth;
-          flashEl.classList.add('flash-err');
-          if (revertCb) revertCb(prevValue);
-          return { ok: false };
-        }
+        return postJSON(`config/${encodeURIComponent(endpoint)}`, { value }, flashEl, revertCb ? () => revertCb(prevValue) : undefined);
       }
 
       function buildControls(controls, container, revision) {
@@ -1167,37 +930,23 @@
         });
       }
 
-      function setConn(state) {
+      function setConnState(state) {
         connPill.className = 'conn-pill ' + state;
         connLabel.textContent = state === 'live' ? 'Live' : state === 'down' ? 'Disconnected' : 'Connecting…';
       }
 
-      let socket = null;
-      let retryDelay = 1000;
+      // Resolve "ws" relative to the current document location rather than
+      // hardcoding an absolute "/diagnostics/ws". This page may be served
+      // directly (http://host:8502/diagnostics/) or via Home Assistant's
+      // ingress proxy (https://ha/api/hassio_ingress/<token>/diagnostics/) —
+      // the relative resolution lands correctly on both.
+      const wsUrl = new URL('ws', location.href);
+      wsUrl.protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
 
-      function connect() {
-        // Resolve "ws" relative to the current document location rather than
-        // hardcoding an absolute "/diagnostics/ws". This page may be served
-        // directly (http://host:8502/diagnostics/) or via Home Assistant's
-        // ingress proxy (https://ha/api/hassio_ingress/<token>/diagnostics/) —
-        // the relative resolution lands correctly on both.
-        const wsUrl = new URL('ws', location.href);
-        wsUrl.protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-        socket = new WebSocket(wsUrl.href);
-
-        socket.onopen = () => { setConn('live'); retryDelay = 1000; };
-        socket.onmessage = (evt) => {
-          try { render(JSON.parse(evt.data)); } catch (e) { console.error('Bad diagnostics payload', e); }
-        };
-        socket.onclose = () => {
-          setConn('down');
-          setTimeout(connect, retryDelay);
-          retryDelay = Math.min(retryDelay * 1.5, 15000);
-        };
-        socket.onerror = () => socket.close();
-      }
-
-      connect();
+      initWebSocket(wsUrl.href, (snapshot) => {
+        render(snapshot);
+        return true;
+      }, setConnState);
     })();
   </script>
 

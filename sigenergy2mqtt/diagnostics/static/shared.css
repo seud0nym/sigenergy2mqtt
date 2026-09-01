@@ -1,0 +1,207 @@
+/* Shared theme and page chrome for all diagnostic pages */
+
+/* Theme initialization: if saved or system preference is light, set data-theme
+   attribute before rendering to avoid a flash. This script runs synchronously
+   in the head before any CSS or layout. */
+:root {
+  --bg: #0b1220;
+  --bg-panel: #121b2e;
+  --bg-card: #16223a;
+  --border: #24314d;
+  --text: #e6ebf5;
+  --text-dim: #8b98b3;
+  --accent: #3ddc97;
+  --accent-dim: rgba(61, 220, 151, 0.15);
+  --warn: #f5a623;
+  --warn-dim: rgba(245, 166, 35, 0.15);
+  --bad: #ef4b5f;
+  --bad-dim: rgba(239, 75, 95, 0.15);
+  --unknown: #6b7794;
+  --mono: "SF Mono", "JetBrains Mono", Consolas, monospace;
+  --glow-1: rgba(61, 220, 151, 0.07);
+  --glow-2: rgba(58, 123, 213, 0.08);
+  --dash-border: rgba(255, 255, 255, 0.05);
+  --dash-border-strong: rgba(255, 255, 255, 0.04);
+  --header-bg: rgba(18, 27, 46, 0.6);
+  --scheme: dark;
+}
+
+:root[data-theme="light"] {
+  --bg: #f4f6fb;
+  --bg-panel: #ffffff;
+  --bg-card: #ffffff;
+  --border: #dde3ee;
+  --text: #1a2233;
+  --text-dim: #5b6579;
+  --accent: #1f9d6f;
+  --accent-dim: rgba(31, 157, 111, 0.12);
+  --warn: #b1720a;
+  --warn-dim: rgba(177, 114, 10, 0.12);
+  --bad: #c8293e;
+  --bad-dim: rgba(200, 41, 62, 0.1);
+  --unknown: #7a8499;
+  --glow-1: rgba(31, 157, 111, 0.06);
+  --glow-2: rgba(58, 123, 213, 0.06);
+  --dash-border: rgba(0, 0, 0, 0.06);
+  --dash-border-strong: rgba(0, 0, 0, 0.05);
+  --header-bg: rgba(255, 255, 255, 0.7);
+  --scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: var(--scheme);
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(1200px 600px at 15% -10%, var(--glow-1), transparent 60%),
+    radial-gradient(900px 500px at 90% 0%, var(--glow-2), transparent 55%),
+    var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  min-height: 100vh;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 32px;
+  border-bottom: 1px solid var(--border);
+  background: var(--header-bg);
+  backdrop-filter: blur(6px);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.brand img {
+  height: 50px;
+  width: auto;
+  display: block;
+}
+
+.brand-sub {
+  font-size: 13px;
+  color: var(--text-dim);
+  letter-spacing: 0.02em;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.conn-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+}
+
+.conn-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--unknown);
+  transition: background 0.3s;
+}
+
+.conn-pill.live .conn-dot {
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+}
+
+.conn-pill.down .conn-dot {
+  background: var(--bad);
+  box-shadow: 0 0 8px var(--bad);
+}
+
+.conn-pill.demo .conn-dot {
+  background: var(--warn);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text);
+  cursor: pointer;
+  text-decoration: none;
+  transition: border-color 0.15s, transform 0.1s;
+}
+
+.btn:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.theme-toggle:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.theme-toggle svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+.theme-toggle .icon-moon {
+  display: none;
+}
+
+:root[data-theme="light"] .theme-toggle .icon-sun {
+  display: none;
+}
+
+:root[data-theme="light"] .theme-toggle .icon-moon {
+  display: block;
+}
+
+main {
+  padding: 28px 32px 60px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
