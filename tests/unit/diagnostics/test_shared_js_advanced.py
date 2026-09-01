@@ -418,20 +418,66 @@ class TestAPIContract:
         assert shared_js.count("setConnState(") >= 2, "setConnState should be called multiple times"
 
     def test_websocket_marks_live_on_first_message(self, shared_js: str) -> None:
-        """WebSocket must mark 'live' on first message, not on connection open.
-        
+        """WebSocket must mark 'live' only when onMessage signals real data was consumed.
+
         This prevents showing demo values with a 'Live' indicator, which could
         confuse operators. The connection shows 'Connecting...' until real data
         arrives, or 'Demo' if it disconnects before receiving data.
         """
         # Verify firstMessage flag exists
         assert "firstMessage" in shared_js
-        
-        # Verify onmessage handler sets live on first message
+
+        # Verify onmessage handler gates live on both the consumed flag AND firstMessage
         msg_match = re.search(r"socket\.onmessage\s*=.*?{(.*?)};", shared_js, re.DOTALL)
         if msg_match:
             handler = msg_match.group(1)
-            # Should check if first message and call setConnState('live')
+            # Must capture the return value of onMessage
+            assert "consumed" in handler, "onmessage must capture onMessage return value"
+            # Must gate setConnState('live') on consumed being truthy
+            assert "consumed &&" in handler or "consumed&&" in handler, (
+                "setConnState('live') must be gated on callback return value"
+            )
             assert "firstMessage" in handler, "onmessage must check firstMessage flag"
             assert "setConnState('live')" in handler or 'setConnState("live")' in handler
 
+
+@pytest.fixture
+def dashboard_html_content() -> str:
+    """Load dashboard.html content for advanced JS tests."""
+    html_file = STATIC_DIR / "dashboard.html"
+    return html_file.read_text(encoding="utf-8")
+
+
+class TestDashboardCallbackContract:
+    """Verify the initWebSocket callback in dashboard.html honours the consumed-return protocol."""
+
+    def test_callback_returns_true_after_successful_render(self, dashboard_html_content: str) -> None:
+        """Callback must return true to signal real data was rendered successfully."""
+        # The try block must contain 'return true' so initWebSocket knows to flip Live
+        assert "return true;" in dashboard_html_content, (
+            "initWebSocket callback must return true after a successful render()"
+        )
+
+    def test_callback_does_not_return_true_when_solar_missing(self, dashboard_html_content: str) -> None:
+        """Callback must not return true when solar data is absent or errored."""
+        # The early-return guard must precede the 'return true' so missing/errored
+        # solar data causes an implicit undefined (falsy) return, not true.
+        guard_pos = dashboard_html_content.find("if (!full.solar || full.solar.error) return;")
+        return_true_pos = dashboard_html_content.find("return true;")
+        assert guard_pos != -1, "Early-return guard for invalid solar data must be present"
+        assert return_true_pos != -1, "'return true' must be present inside the success path"
+        assert guard_pos < return_true_pos, (
+            "Guard for missing/errored solar data must appear before 'return true'"
+        )
+
+    def test_callback_does_not_return_true_on_render_error(self, dashboard_html_content: str) -> None:
+        """Callback must not return true if render() throws."""
+        # 'return true' must be inside the try block, before the catch — confirmed
+        # by checking that 'return true' appears before 'catch' in the callback.
+        try_pos = dashboard_html_content.find("return true;")
+        catch_pos = dashboard_html_content.find("} catch (err) {")
+        assert try_pos != -1, "'return true' must be present"
+        assert catch_pos != -1, "catch block must be present"
+        assert try_pos < catch_pos, (
+            "'return true' must be inside the try block, not after the catch"
+        )

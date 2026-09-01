@@ -488,6 +488,7 @@
 
       initWebSocket(wsUrl.href, (snapshot) => {
         render(snapshot);
+        return true;
       }, setConnState);
     })();
   </script>

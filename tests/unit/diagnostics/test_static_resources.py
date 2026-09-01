@@ -517,6 +517,18 @@ class TestIntegration:
         # HTML pages should not duplicate it
         assert "localStorage.getItem('s2m-theme')" not in dashboard_html
 
+    def test_websocket_callbacks_return_true(self, dashboard_html: str, debug_html: str, diagnostics_html: str) -> None:
+        """All initWebSocket callbacks must return true to signal successful render.
+
+        shared.js only calls setConnState('live') when the callback returns a
+        truthy value. A callback that returns undefined (implicit JS default)
+        will keep the pill stuck on 'Connecting…' forever.
+        """
+        for html_content in [dashboard_html, debug_html, diagnostics_html]:
+            assert "return true;" in html_content, (
+                "initWebSocket callback must return true so shared.js can flip the connection pill to Live"
+            )
+
 
 # ============================================================================
 # Accessibility and Standards Tests

@@ -1396,6 +1396,7 @@
                 try {
                     render(solarPayload);
                     gotLiveData = true;
+                    return true; // Signal to initWebSocket that real data was rendered
                 } catch (err) {
                     console.error("Dashboard render error:", err);
                 }

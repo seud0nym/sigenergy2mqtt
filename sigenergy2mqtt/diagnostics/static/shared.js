@@ -55,9 +55,11 @@ function initWebSocket(wsUrl, onMessage, setConnState) {
     socket.onmessage = (evt) => {
       try {
         const data = JSON.parse(evt.data);
-        onMessage(data);
-        // On first successfully processed message, mark connection as live and reset backoff
-        if (!firstMessage) {
+        // onMessage returns true to signal that real data was rendered.
+        // Frames the callback silently ignores (e.g. missing/errored provider)
+        // must not flip the connection pill to 'live'.
+        const consumed = onMessage(data);
+        if (consumed && !firstMessage) {
           firstMessage = true;
           setConnState('live');
           retryDelay = 1000;
