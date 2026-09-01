@@ -470,14 +470,26 @@ class TestDashboardCallbackContract:
             "Guard for missing/errored solar data must appear before 'return true'"
         )
 
-    def test_callback_does_not_return_true_on_render_error(self, dashboard_html_content: str) -> None:
-        """Callback must not return true if render() throws."""
-        # 'return true' must be inside the try block, before the catch — confirmed
-        # by checking that 'return true' appears before 'catch' in the callback.
-        try_pos = dashboard_html_content.find("return true;")
-        catch_pos = dashboard_html_content.find("} catch (err) {")
-        assert try_pos != -1, "'return true' must be present"
-        assert catch_pos != -1, "catch block must be present"
-        assert try_pos < catch_pos, (
-            "'return true' must be inside the try block, not after the catch"
+    def test_render_errors_caught_by_shared_js(self, shared_js: str) -> None:
+        """Render errors that bubble up from the callback must be caught by shared.js.
+
+        The dashboard callback does not have its own try-catch; if render()
+        throws the exception propagates to the onmessage handler in shared.js.
+        shared.js must catch it there so that gotLiveData / setConnState('live')
+        are never reached on a failed render.
+        """
+        # The onmessage handler in shared.js must have a try-catch that wraps
+        # the onMessage call so any exception from the callback is swallowed
+        # and 'consumed' is never set to true.
+        msg_match = re.search(r"socket\.onmessage\s*=.*?{(.*?)};", shared_js, re.DOTALL)
+        assert msg_match is not None, "onmessage handler not found in shared.js"
+        handler = msg_match.group(1)
+        assert "try" in handler, "onmessage handler must have a try block"
+        assert "catch" in handler, "onmessage handler must have a catch block"
+        # The onMessage call (which may raise) must be inside the try block
+        try_pos = handler.find("try")
+        on_msg_pos = handler.find("onMessage(")
+        catch_pos = handler.find("catch")
+        assert try_pos < on_msg_pos < catch_pos, (
+            "onMessage() call must be inside the try block so render errors are caught"
         )
