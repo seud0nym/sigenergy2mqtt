@@ -205,8 +205,8 @@ class MonitorService(Device):
                 return f"{sensor.last_state}{sensor.unit}"
             return f"{sensor.last_state} {sensor.unit}"
 
-        def _updates_states(classname: str) -> None:
-            values = {s.name: (s.description, _format_value(s)) for s in snapshot.values() if classname in s.sensor_name}
+        def _updates_states(classname: str, description: str = None) -> None:
+            values = {s.name: (s.description if description is None else description, _format_value(s)) for s in snapshot.values() if classname in s.sensor_name}
             if len(values) == 1:
                 key, state = next(iter(values.values()))
                 states[key] = state
@@ -219,17 +219,18 @@ class MonitorService(Device):
         states[_t("InverterAlarm5.name")] = "-" if len(snapshot) == 0 else "No" if all(s.last_state == self._no_alarm_i18n for s in snapshot.values() if "Alarm" in s.sensor_name) else "** YES **"
         _updates_states("GridStatus")
         _updates_states("GridActivity")
-        _updates_states("TotalLifetimePVEnergy")
         _updates_states("PlantPVPower")
         _updates_states("ThirdPartyPVPower")
+        _updates_states("TotalLifetimePVEnergy")
         _updates_states("TotalLoadConsumption")
-        _updates_states("InverterTemperature")
-        _updates_states("ESSAverageCellTemperature")
-        _updates_states("PlantBatterySoC")
         _updates_states("BatteryStatus")
+        _updates_states("PlantBatterySoC")
+        _updates_states("PlantBatterySoH")
         _updates_states("ESSTotalChargedEnergy")
         _updates_states("ESSTotalDischargedEnergy")
-        _updates_states("InverterFirmwareVersion")
+        _updates_states("ESSAverageCellTemperature")
+        _updates_states("InverterTemperature", "Inverter Temperature")
+        _updates_states("InverterFirmwareVersion", "Firmware")
 
         return states
 
@@ -302,15 +303,14 @@ class MonitorService(Device):
             "status": status,
             "Uptime_secs": time.monotonic() - self._started,
             "Modbus Connections": modbus_connections,
-            "Modbus Connected": modbus_connected,
             "MQTT Connections": mqtt_connections,
-            "MQTT Connected": mqtt_connected,
             "Monitored Topics": len(self._topics),
             "Overdue Topics": overdue_count,
-            "Services Healthy": services_healthy,
+            "Modbus Connected": modbus_connected,
+            "MQTT Connected": mqtt_connected,
         }
         if len(service_contributors) > 0:
-            payload["Services Monitored"] = len(service_contributors)
+            payload["Services Healthy"] = services_healthy
             for key, value in service_contributors.items():
                 payload[f"Service '{key}' Healthy"] = value
         self._last_published_at = time.monotonic()

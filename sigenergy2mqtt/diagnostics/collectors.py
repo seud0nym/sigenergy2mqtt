@@ -119,13 +119,15 @@ class DiagnosticsCollectors:
         """Diagnostics provider callback: exposes the latest InfluxDB metrics."""
         async with Metrics.lock(timeout=1.0):
             return {
-                f"{_t('InfluxDBWriteErrors.name')}": Metrics.sigenergy2mqtt_influxdb_write_errors,
-                f"{_t('InfluxDBWriteMax.name')}_ms": Metrics.sigenergy2mqtt_influxdb_write_max,
-                f"{_t('InfluxDBWriteMean.name')}_ms": Metrics.sigenergy2mqtt_influxdb_write_mean,
-                f"{_t('InfluxDBWriteMin.name')}_ms": Metrics.sigenergy2mqtt_influxdb_write_min if Metrics.sigenergy2mqtt_influxdb_write_min != float("inf") else 0.0,
-                f"{_t('InfluxDBQueryErrors.name')}": Metrics.sigenergy2mqtt_influxdb_query_errors,
-                f"{_t('InfluxDBRetries.name')}": Metrics.sigenergy2mqtt_influxdb_retries,
-                f"{_t('InfluxDBRateLimitWaits.name')}": Metrics.sigenergy2mqtt_influxdb_rate_limit_waits,
+                "Write Count": Metrics.sigenergy2mqtt_influxdb_writes,
+                f"{_t('InfluxDBWriteErrors.name').removeprefix('InfluxDB ')}": Metrics.sigenergy2mqtt_influxdb_write_errors,
+                f"{_t('InfluxDBWriteMax.name').removeprefix('InfluxDB ')}_ms": Metrics.sigenergy2mqtt_influxdb_write_max,
+                f"{_t('InfluxDBWriteMean.name').removeprefix('InfluxDB ')}_ms": Metrics.sigenergy2mqtt_influxdb_write_mean,
+                f"{_t('InfluxDBWriteMin.name').removeprefix('InfluxDB ')}_ms": Metrics.sigenergy2mqtt_influxdb_write_min if Metrics.sigenergy2mqtt_influxdb_write_min != float("inf") else 0.0,
+                "Query Count": Metrics.sigenergy2mqtt_influxdb_queries,
+                f"{_t('InfluxDBQueryErrors.name').removeprefix('InfluxDB ')}": Metrics.sigenergy2mqtt_influxdb_query_errors,
+                f"{_t('InfluxDBRetries.name').removeprefix('InfluxDB ')}": Metrics.sigenergy2mqtt_influxdb_retries,
+                f"{_t('InfluxDBRateLimitWaits.name').removeprefix('InfluxDB ')}": Metrics.sigenergy2mqtt_influxdb_rate_limit_waits,
                 "config": {
                     "write_timeout_secs": active_config.influxdb.write_timeout,
                     "batch_size": active_config.influxdb.batch_size,
@@ -138,17 +140,18 @@ class DiagnosticsCollectors:
         """Diagnostics provider callback: exposes the latest Modbus metric."""
         async with Metrics.lock(timeout=1.0):
             return {
-                f"{_t('ModbusPhysicalReads.name')}_pct": Metrics.sigenergy2mqtt_modbus_physical_read_percentage,
-                f"{_t('ModbusCacheHits.name')}_pct": Metrics.sigenergy2mqtt_modbus_cache_hit_percentage,
-                f"{_t('ModbusReadMax.name')}_ms": Metrics.sigenergy2mqtt_modbus_read_max,
-                f"{_t('ModbusReadMean.name')}_ms": Metrics.sigenergy2mqtt_modbus_read_mean,
-                f"{_t('ModbusReadMin.name')}_ms": Metrics.sigenergy2mqtt_modbus_read_min if Metrics.sigenergy2mqtt_modbus_read_min != float("inf") else 0.0,
-                f"{_t('ModbusReadErrors.name')}": Metrics.sigenergy2mqtt_modbus_read_errors,
-                f"{_t('ModbusWriteMax.name')}_ms": Metrics.sigenergy2mqtt_modbus_write_max,
-                f"{_t('ModbusWriteMean.name')}_ms": Metrics.sigenergy2mqtt_modbus_write_mean,
-                f"{_t('ModbusWriteMin.name')}_ms": Metrics.sigenergy2mqtt_modbus_write_min if Metrics.sigenergy2mqtt_modbus_write_min != float("inf") else 0.0,
-                f"{_t('ModbusWriteErrors.name')}": Metrics.sigenergy2mqtt_modbus_write_errors,
-                f"{_t('ModbusSkippedErrors.name')}": Metrics.sigenergy2mqtt_modbus_skipped_errors,
+                f"{_t('ModbusPhysicalReads.name').removeprefix('Modbus ')}_pct": Metrics.sigenergy2mqtt_modbus_physical_read_percentage,
+                f"{_t('ModbusCacheHits.name').removeprefix('Modbus ')}_pct": Metrics.sigenergy2mqtt_modbus_cache_hit_percentage,
+                "Read Count": Metrics.sigenergy2mqtt_modbus_reads,
+                f"{_t('ModbusReadMax.name').removeprefix('Modbus ')}_ms": Metrics.sigenergy2mqtt_modbus_read_max,
+                f"{_t('ModbusReadMean.name').removeprefix('Modbus ')}_ms": Metrics.sigenergy2mqtt_modbus_read_mean,
+                f"{_t('ModbusReadMin.name').removeprefix('Modbus ')}_ms": Metrics.sigenergy2mqtt_modbus_read_min if Metrics.sigenergy2mqtt_modbus_read_min != float("inf") else 0.0,
+                f"{_t('ModbusReadErrors.name').removeprefix('Modbus ')}": Metrics.sigenergy2mqtt_modbus_read_errors,
+                f"{_t('ModbusWriteMax.name').removeprefix('Modbus ')}_ms": Metrics.sigenergy2mqtt_modbus_write_max,
+                f"{_t('ModbusWriteMean.name').removeprefix('Modbus ')}_ms": Metrics.sigenergy2mqtt_modbus_write_mean,
+                f"{_t('ModbusWriteMin.name').removeprefix('Modbus ')}_ms": Metrics.sigenergy2mqtt_modbus_write_min if Metrics.sigenergy2mqtt_modbus_write_min != float("inf") else 0.0,
+                f"{_t('ModbusWriteErrors.name').removeprefix('Modbus ')}": Metrics.sigenergy2mqtt_modbus_write_errors,
+                f"{_t('ModbusSkippedErrors.name').removeprefix('Modbus ')}": Metrics.sigenergy2mqtt_modbus_skipped_errors,
                 "config": {
                     "disable_chunking": "yes" if active_config.modbus[0].disable_chunking else "no",
                     "timeout_0_secs": active_config.modbus[0].timeout,
@@ -161,8 +164,9 @@ class DiagnosticsCollectors:
         """Diagnostics provider callback: exposes the latest MQTT metrics."""
         async with Metrics.lock(timeout=1.0):
             return {
-                f"{_t('MQTTPhysicalPublishes.name')}_pct": Metrics.sigenergy2mqtt_mqtt_physical_publish_percentage,
-                f"{_t('MQTTPublishFailures.name')}": Metrics.sigenergy2mqtt_mqtt_publish_failures,
+                "Publish Attempts": Metrics.sigenergy2mqtt_mqtt_publish_attempts,
+                f"{_t('MQTTPhysicalPublishes.name').removeprefix('MQTT ')}_pct": Metrics.sigenergy2mqtt_mqtt_physical_publish_percentage,
+                f"{_t('MQTTPublishFailures.name').removeprefix('MQTT ')}": Metrics.sigenergy2mqtt_mqtt_publish_failures,
                 "config": {
                     "simplified_topics": "yes" if active_config.home_assistant.enabled or active_config.home_assistant.use_simplified_topics else "no",
                     "repeated_state_publish_interval_secs": active_config.repeated_state_publish_interval,
@@ -180,11 +184,12 @@ class DiagnosticsCollectors:
 
         async with Metrics.lock(timeout=1.0):
             return {
-                f"{_t('PVOutputUploadErrors.name')}": Metrics.sigenergy2mqtt_pvoutput_upload_errors,
-                f"{_t('PVOutputUploadSkipped.name')}": Metrics.sigenergy2mqtt_pvoutput_upload_skipped,
-                f"{_t('PVOutputUploadMax.name')}_ms": Metrics.sigenergy2mqtt_pvoutput_upload_max,
-                f"{_t('PVOutputUploadMean.name')}_ms": Metrics.sigenergy2mqtt_pvoutput_upload_mean,
-                f"{_t('PVOutputUploadMin.name')}_ms": Metrics.sigenergy2mqtt_pvoutput_upload_min if Metrics.sigenergy2mqtt_pvoutput_upload_min != float("inf") else 0.0,
+                "Upload Count": Metrics.sigenergy2mqtt_pvoutput_uploads,
+                f"{_t('PVOutputUploadErrors.name').removeprefix('PVOutput ')}": Metrics.sigenergy2mqtt_pvoutput_upload_errors,
+                f"{_t('PVOutputUploadSkipped.name').removeprefix('PVOutput ')}": Metrics.sigenergy2mqtt_pvoutput_upload_skipped,
+                f"{_t('PVOutputUploadMax.name').removeprefix('PVOutput ')}_ms": Metrics.sigenergy2mqtt_pvoutput_upload_max,
+                f"{_t('PVOutputUploadMean.name').removeprefix('PVOutput ')}_ms": Metrics.sigenergy2mqtt_pvoutput_upload_mean,
+                f"{_t('PVOutputUploadMin.name').removeprefix('PVOutput ')}_ms": Metrics.sigenergy2mqtt_pvoutput_upload_min if Metrics.sigenergy2mqtt_pvoutput_upload_min != float("inf") else 0.0,
                 "config": {
                     "donator": "yes" if PVOutputSettings.donator else "no",
                     "status_interval_secs": PVOutputSettings.interval * 60,
@@ -201,13 +206,14 @@ class DiagnosticsCollectors:
         """Diagnostics provider callback: exposes the latest StateStore metrics."""
         async with Metrics.lock(timeout=1.0):
             return {
-                f"{_t('StateStoreSaveMax.name')}_ms": Metrics.sigenergy2mqtt_state_store_save_max,
-                f"{_t('StateStoreSaveMean.name')}_ms": Metrics.sigenergy2mqtt_state_store_save_mean,
-                f"{_t('StateStoreSaveMin.name')}_ms": Metrics.sigenergy2mqtt_state_store_save_min if Metrics.sigenergy2mqtt_state_store_save_min != float("inf") else 0.0,
-                f"{_t('StateStoreLoadHitPercentage.name')}": Metrics.sigenergy2mqtt_state_store_load_hit_percentage,
-                f"{_t('StateStoreSaveErrors.name')}": Metrics.sigenergy2mqtt_state_store_save_errors,
-                f"{_t('StateStoreLoadErrors.name')}": Metrics.sigenergy2mqtt_state_store_load_errors,
-                f"{_t('StateStoreDeleteErrors.name')}": Metrics.sigenergy2mqtt_state_store_delete_errors,
+                "Save Count": Metrics.sigenergy2mqtt_state_store_saves,
+                f"{_t('StateStoreSaveMax.name').removeprefix('State Store ')}_ms": Metrics.sigenergy2mqtt_state_store_save_max,
+                f"{_t('StateStoreSaveMean.name').removeprefix('State Store ')}_ms": Metrics.sigenergy2mqtt_state_store_save_mean,
+                f"{_t('StateStoreSaveMin.name').removeprefix('State Store ')}_ms": Metrics.sigenergy2mqtt_state_store_save_min if Metrics.sigenergy2mqtt_state_store_save_min != float("inf") else 0.0,
+                f"{_t('StateStoreLoadHitPercentage.name').removeprefix('State Store ')}": Metrics.sigenergy2mqtt_state_store_load_hit_percentage,
+                f"{_t('StateStoreSaveErrors.name').removeprefix('State Store ')}": Metrics.sigenergy2mqtt_state_store_save_errors,
+                f"{_t('StateStoreLoadErrors.name').removeprefix('State Store ')}": Metrics.sigenergy2mqtt_state_store_load_errors,
+                f"{_t('StateStoreDeleteErrors.name').removeprefix('State Store ')}": Metrics.sigenergy2mqtt_state_store_delete_errors,
                 "config": {
                     "mqtt_redundancy": "yes" if active_config.persistence.mqtt_redundancy else "no",
                     "disk_primary": "yes" if active_config.persistence.disk_primary else "no",
