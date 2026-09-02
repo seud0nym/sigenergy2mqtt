@@ -324,13 +324,19 @@ class InverterSelfConsumedPower(DerivedSensor, HybridInverter, PVInverter):
             state = 0
         try:
             self.set_latest_state(state)
+            for name in self._source_consumed:
+                self._source_consumed[name] = True
         except SanityCheckException as e:
             if self.debug_logging:
                 logger.debug(f"{self.log_identity} set_latest_state({state}) FAILED - {e}")
-
-        # Mark all source values as consumed by this calculation
-        for name in self._source_consumed:
-            self._source_consumed[name] = True
+            # Discard bad snapshot so rejected/insane readings are not retained or reused
+            self.active_power = None
+            self.battery_power = None
+            self.pv_string_power = {string_number: None for string_number in self.pv_string_power}
+            self._source_timestamps = {name: None for name in self._source_timestamps}
+            for name in self._source_consumed:
+                self._source_consumed[name] = True
+            self._incomplete_snapshot_logged = False
 
         return True
 

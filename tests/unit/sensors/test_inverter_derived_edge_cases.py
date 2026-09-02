@@ -328,6 +328,10 @@ class TestInverterSelfConsumedPowerEdgeCases:
                 assert result is True  # Returns True even when SanityCheckException is caught
                 debug_calls = [str(c) for c in mock_log.debug.call_args_list]
                 assert any("FAILED" in c for c in debug_calls)
+                # Verify rejected snapshot is discarded
+                assert sensor.active_power is None
+                assert sensor.battery_power is None
+                assert sensor.pv_string_power[1] is None
 
     def test_repeated_overnight_zero_reads_no_warnings(self, caplog):
         """Repeated zero reads across multiple scan cycles log zero unconsumed or stale warnings."""
