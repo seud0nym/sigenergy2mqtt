@@ -10,7 +10,7 @@ from sigenergy2mqtt.diagnostics.collectors import DiagnosticsCollectors
 async def test_collect_modbus_metrics(monkeypatch):
     monkeypatch.setattr(active_config, "modbus", [MagicMock(disable_chunking=False, timeout=5, retries=3)], raising=False)
     metrics = await DiagnosticsCollectors._diagnostics_collect_modbus_metrics()
-    assert "Modbus Physical Reads_pct" in metrics
+    assert "Physical Reads_pct" in metrics
     assert "config" in metrics
     assert metrics["config"]["disable_chunking"] == "no"
 
@@ -19,7 +19,7 @@ async def test_collect_modbus_metrics(monkeypatch):
 async def test_collect_mqtt_metrics(monkeypatch):
     monkeypatch.setattr(active_config.home_assistant, "enabled", True, raising=False)
     metrics = await DiagnosticsCollectors._diagnostics_collect_mqtt_metrics()
-    assert "MQTT Physical Publishes_pct" in metrics
+    assert "Physical Publishes_pct" in metrics
     assert "config" in metrics
 
 
@@ -27,7 +27,7 @@ async def test_collect_mqtt_metrics(monkeypatch):
 async def test_collect_influxdb_metrics(monkeypatch):
     monkeypatch.setattr(active_config.influxdb, "write_timeout", 10, raising=False)
     metrics = await DiagnosticsCollectors._diagnostics_collect_influxdb_metrics()
-    assert "InfluxDB Write Errors" in metrics
+    assert "Write Errors" in metrics
     assert "config" in metrics
 
 
@@ -35,7 +35,7 @@ async def test_collect_influxdb_metrics(monkeypatch):
 async def test_collect_state_store_metrics(monkeypatch):
     monkeypatch.setattr(active_config.persistence, "mqtt_redundancy", True, raising=False)
     metrics = await DiagnosticsCollectors._diagnostics_collect_state_store_metrics()
-    assert "State Store Save Max_ms" in metrics
+    assert "Save Max_ms" in metrics
     assert "config" in metrics
 
 
@@ -56,7 +56,7 @@ async def test_collect_pvoutput_metrics(monkeypatch):
     monkeypatch.setattr("sigenergy2mqtt.pvoutput.PVOutputSettings", FakePVOutputSettings)
 
     metrics = await DiagnosticsCollectors._diagnostics_collect_pvoutput_metrics()
-    assert "PVOutput Upload Errors" in metrics
+    assert "Upload Errors" in metrics
     assert "config" in metrics
     assert metrics["config"]["end_of_day"] == "@ status interval"
 
