@@ -123,6 +123,7 @@ class TestPVStringPowerValueApply:
         sensor = _make_pv_string_power()
         v = PVStringPower.Value(name="test_value", divisor=1.0, owner=sensor)
         v.value = 100.0  # Already has a value
+        v.consumed = False
         v.timestamp = time.time()
 
         mock_sensor = MagicMock(spec=Sensor)
@@ -327,3 +328,120 @@ class TestInverterSelfConsumedPowerEdgeCases:
                 assert result is True  # Returns True even when SanityCheckException is caught
                 debug_calls = [str(c) for c in mock_log.debug.call_args_list]
                 assert any("FAILED" in c for c in debug_calls)
+
+    def test_repeated_overnight_zero_reads_no_warnings(self, caplog):
+        """Repeated zero reads across multiple scan cycles log zero unconsumed or stale warnings."""
+        caplog.set_level(logging.WARNING)
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            ap = MagicMock(spec=ActivePower)
+            ap.protocol_version = ProtocolVersion.V2_4
+            bp = MagicMock(spec=ChargeDischargePower)
+            bp.protocol_version = ProtocolVersion.V2_4
+            pv1 = MagicMock(spec=PVStringPower)
+            pv1.string_number = 1
+            pv1.protocol_version = ProtocolVersion.V2_4
+
+            sensor = InverterSelfConsumedPower(0, 1, ap, bp, pv1)
+
+            # Cycle 1: zero reads arrive from all sources
+            ap.latest_raw_state = 0
+            bp.latest_raw_state = 0
+            pv1.latest_raw_state = 0
+
+            with patch("sigenergy2mqtt.sensors.inverter_derived.logger") as mock_log:
+                sensor.update_from_source_sensor(ap)
+                sensor.update_from_source_sensor(bp)
+                sensor.update_from_source_sensor(pv1)
+
+                # Cycle 2: repeated zero reads arrive
+                sensor.update_from_source_sensor(ap)
+                sensor.update_from_source_sensor(bp)
+                sensor.update_from_source_sensor(pv1)
+
+                assert mock_log.warning.call_count == 0
+
+    def test_genuine_unconsumed_overwrite_warning(self):
+        """Updating the same source twice before calculation completes logs an unconsumed warning."""
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            ap = MagicMock(spec=ActivePower)
+            ap.protocol_version = ProtocolVersion.V2_4
+            bp = MagicMock(spec=ChargeDischargePower)
+            bp.protocol_version = ProtocolVersion.V2_4
+            pv1 = MagicMock(spec=PVStringPower)
+            pv1.string_number = 1
+            pv1.protocol_version = ProtocolVersion.V2_4
+
+            sensor = InverterSelfConsumedPower(0, 1, ap, bp, pv1)
+
+            ap.latest_raw_state = 100
+            sensor.update_from_source_sensor(ap)
+
+            # Second update to ap before bp/pv1 arrive
+            ap.latest_raw_state = 200
+            with patch("sigenergy2mqtt.sensors.base.derived.logger") as mock_log:
+                sensor.update_from_source_sensor(ap)
+                mock_log.warning.assert_called_once()
+                assert "Overwriting unconsumed source value active_power=100" in mock_log.warning.call_args[0][0]
+
+    def test_stale_incomplete_snapshot_discard_includes_zero(self):
+        """Incomplete source snapshot past expected_interval is discarded even when value is zero."""
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            ap = MagicMock(spec=ActivePower)
+            ap.protocol_version = ProtocolVersion.V2_4
+            ap.scan_interval = 2
+            bp = MagicMock(spec=ChargeDischargePower)
+            bp.protocol_version = ProtocolVersion.V2_4
+            pv1 = MagicMock(spec=PVStringPower)
+            pv1.string_number = 1
+            pv1.protocol_version = ProtocolVersion.V2_4
+
+            sensor = InverterSelfConsumedPower(0, 1, ap, bp, pv1)
+
+            ap.last_successful_read_time = time.time() - 10  # 10s old, expected interval ~4s
+            ap.latest_raw_state = 0
+            sensor.update_from_source_sensor(ap)
+
+            # Trigger discard via another sensor update
+            bp.latest_raw_state = 0
+            bp.last_successful_read_time = time.time()
+
+            with patch("sigenergy2mqtt.sensors.inverter_derived.logger") as mock_log:
+                sensor.update_from_source_sensor(bp)
+                mock_log.warning.assert_called_once()
+                assert "Discarding stale incomplete source snapshot" in mock_log.warning.call_args[0][0]
+
+    def test_completed_snapshot_not_discarded_as_stale(self):
+        """Completed snapshots (consumed=True) are not discarded as stale even if time passes."""
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            ap = MagicMock(spec=ActivePower)
+            ap.protocol_version = ProtocolVersion.V2_4
+            ap.scan_interval = 2
+            bp = MagicMock(spec=ChargeDischargePower)
+            bp.protocol_version = ProtocolVersion.V2_4
+            pv1 = MagicMock(spec=PVStringPower)
+            pv1.string_number = 1
+            pv1.protocol_version = ProtocolVersion.V2_4
+
+            sensor = InverterSelfConsumedPower(0, 1, ap, bp, pv1)
+
+            now = time.time()
+            ap.last_successful_read_time = now
+            ap.latest_raw_state = 0
+            bp.last_successful_read_time = now
+            bp.latest_raw_state = 0
+            pv1.last_successful_read_time = now
+            pv1.latest_raw_state = 0
+
+            # Complete calculation
+            sensor.update_from_source_sensor(ap)
+            sensor.update_from_source_sensor(bp)
+            sensor.update_from_source_sensor(pv1)
+
+            # Advance timestamp on ap past expected_interval
+            ap.last_successful_read_time = now + 10
+            ap.latest_raw_state = 0
+
+            with patch("sigenergy2mqtt.sensors.inverter_derived.logger") as mock_log:
+                sensor.update_from_source_sensor(ap)
+                assert mock_log.warning.call_count == 0
+
