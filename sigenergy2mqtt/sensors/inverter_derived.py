@@ -100,15 +100,17 @@ class PVStringPower(DerivedSensor, HybridInverter, PVInverter):
         divisor: float
         value: float | None = None
         timestamp: float = 0
+        consumed: bool = True
         owner: PVStringPower | None = field(default=None, compare=False, repr=False)
 
         def apply(self, sensor: Sensor) -> None:
-            if self.owner is not None:
+            if self.owner is not None and not self.consumed:
                 self.owner._log_unconsumed_source_value(self.name, self.value, self.timestamp, sensor)
             raw = sensor.latest_raw_state
             if raw is None:
                 return
             self.value = float(raw) / self.divisor
+            self.consumed = False
             source_timestamp = self.owner._source_timestamp(sensor) if self.owner is not None else sensor.latest_time
             self.timestamp = source_timestamp if source_timestamp is not None else 0
 
@@ -174,7 +176,17 @@ class PVStringPower(DerivedSensor, HybridInverter, PVInverter):
         state = self.volts.value * self.amperes.value
         if self.debug_logging:
             logger.debug(f"{self.log_identity} source values populated - setting latest state ({self.amperes.value}A * {self.volts.value}V = {state}W)")
-        self.set_latest_state(state)
+        try:
+            self.set_latest_state(state)
+            self.volts.consumed = True
+            self.amperes.consumed = True
+        except SanityCheckException as e:
+            if self.debug_logging:
+                logger.debug(f"{self.log_identity} set_latest_state({state}) FAILED - {e}")
+            self.volts.value = None
+            self.amperes.value = None
+            self.volts.consumed = True
+            self.amperes.consumed = True
         return True
 
 
@@ -243,6 +255,7 @@ class InverterSelfConsumedPower(DerivedSensor, HybridInverter, PVInverter):
         self.pv_string_power: dict[int, int | None] = {p.string_number: None for p in pv_string_power}
         self._source_timestamps: dict[str, float | None] = {"active_power": None, "battery_power": None, **{f"pv_string_power_{p.string_number}": None for p in pv_string_power}}
         self._source_sensors: dict[str, Sensor] = {"active_power": active_power, "battery_power": battery_power, **{f"pv_string_power_{p.string_number}": p for p in pv_string_power}}
+        self._source_consumed: dict[str, bool] = {"active_power": True, "battery_power": True, **{f"pv_string_power_{p.string_number}": True for p in pv_string_power}}
         self._incomplete_snapshot_logged = False
 
         self.sanity_check.min_raw = 0  # Watts
@@ -270,6 +283,8 @@ class InverterSelfConsumedPower(DerivedSensor, HybridInverter, PVInverter):
             self.battery_power = None
             self.pv_string_power = {p: None for p in self.pv_string_power}
             self._source_timestamps = {name: None for name in self._source_timestamps}
+            for name in self._source_consumed:
+                self._source_consumed[name] = True
             self._incomplete_snapshot_logged = False
         return bool(published)
 
@@ -278,18 +293,24 @@ class InverterSelfConsumedPower(DerivedSensor, HybridInverter, PVInverter):
             return False
         self._discard_stale_snapshot()
         if isinstance(sensor, ActivePower):
-            self._log_unconsumed_source_value("active_power", self.active_power, self._source_timestamps["active_power"], sensor)
+            if not self._source_consumed["active_power"]:
+                self._log_unconsumed_source_value("active_power", self.active_power, self._source_timestamps["active_power"], sensor)
             self.active_power = int(sensor.latest_raw_state)
             self._source_timestamps["active_power"] = self._source_timestamp(sensor)
+            self._source_consumed["active_power"] = False
         elif isinstance(sensor, ChargeDischargePower):
-            self._log_unconsumed_source_value("battery_power", self.battery_power, self._source_timestamps["battery_power"], sensor)
+            if not self._source_consumed["battery_power"]:
+                self._log_unconsumed_source_value("battery_power", self.battery_power, self._source_timestamps["battery_power"], sensor)
             self.battery_power = int(sensor.latest_raw_state)
             self._source_timestamps["battery_power"] = self._source_timestamp(sensor)
+            self._source_consumed["battery_power"] = False
         elif isinstance(sensor, PVStringPower):
             source_name = f"pv_string_power_{sensor.string_number}"
-            self._log_unconsumed_source_value(source_name, self.pv_string_power[sensor.string_number], self._source_timestamps[source_name], sensor)
+            if not self._source_consumed[source_name]:
+                self._log_unconsumed_source_value(source_name, self.pv_string_power[sensor.string_number], self._source_timestamps[source_name], sensor)
             self.pv_string_power[sensor.string_number] = int(sensor.latest_raw_state)
             self._source_timestamps[source_name] = self._source_timestamp(sensor)
+            self._source_consumed[source_name] = False
         else:
             logger.warning(f"{self.log_identity} Attempt to call update_from_source_sensor from {sensor.log_identity}")
             return False
@@ -311,9 +332,20 @@ class InverterSelfConsumedPower(DerivedSensor, HybridInverter, PVInverter):
             state = 0
         try:
             self.set_latest_state(state)
+            for name in self._source_consumed:
+                self._source_consumed[name] = True
         except SanityCheckException as e:
             if self.debug_logging:
                 logger.debug(f"{self.log_identity} set_latest_state({state}) FAILED - {e}")
+            # Discard bad snapshot so rejected/insane readings are not retained or reused
+            self.active_power = None
+            self.battery_power = None
+            self.pv_string_power = {string_number: None for string_number in self.pv_string_power}
+            self._source_timestamps = {name: None for name in self._source_timestamps}
+            for name in self._source_consumed:
+                self._source_consumed[name] = True
+            self._incomplete_snapshot_logged = False
+
         return True
 
     def _discard_stale_snapshot(self) -> None:
@@ -321,7 +353,7 @@ class InverterSelfConsumedPower(DerivedSensor, HybridInverter, PVInverter):
         now = time.time()
         stale_sources = {}
         for source_name, value in self._source_timestamps.items():
-            if value is None:
+            if value is None or self._source_consumed.get(source_name, True):
                 continue
             source_sensor = self._source_sensors.get(source_name)
             expected_interval = self._source_expected_interval(source_sensor) if source_sensor is not None else None
@@ -337,8 +369,6 @@ class InverterSelfConsumedPower(DerivedSensor, HybridInverter, PVInverter):
                         cached_val = self.pv_string_power.get(string_number)
                     except ValueError:
                         pass
-                if cached_val == 0: # A zero value contributes nothing, so ignore stale zero values
-                    continue
                 stale_sources[source_name] = cached_val
 
         if not stale_sources:
@@ -349,4 +379,6 @@ class InverterSelfConsumedPower(DerivedSensor, HybridInverter, PVInverter):
         self.battery_power = None
         self.pv_string_power = {string_number: None for string_number in self.pv_string_power}
         self._source_timestamps = {name: None for name in self._source_timestamps}
+        for name in self._source_consumed:
+            self._source_consumed[name] = True
         self._incomplete_snapshot_logged = False

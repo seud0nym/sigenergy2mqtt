@@ -197,6 +197,7 @@ class TestInverterSelfConsumedPowerCoverage:
             sensor = InverterSelfConsumedPower(0, 1, ap, bp, pv)
             sensor.pv_string_power[1] = 1234
             sensor._source_timestamps["pv_string_power_1"] = 100.0
+            sensor._source_consumed["pv_string_power_1"] = False
 
             with patch("sigenergy2mqtt.sensors.inverter_derived.time.time", return_value=110.0):
                 sensor._discard_stale_snapshot()
@@ -206,7 +207,8 @@ class TestInverterSelfConsumedPowerCoverage:
             assert sensor.pv_string_power[1] is None
             assert all(timestamp is None for timestamp in sensor._source_timestamps.values())
 
-    def test_stale_partial_snapshot_with_zero_is_not_discarded(self):
+    def test_stale_partial_snapshot_with_zero_is_discarded(self):
+        """Stale unconsumed snapshots with zero value are also discarded now that workaround is removed."""
         ap = MagicMock(spec=Sensor)
         bp = MagicMock(spec=Sensor)
         pv = MagicMock(spec=PVStringPower)
@@ -218,12 +220,13 @@ class TestInverterSelfConsumedPowerCoverage:
             sensor = InverterSelfConsumedPower(0, 1, ap, bp, pv)
             sensor.pv_string_power[1] = 0
             sensor._source_timestamps["pv_string_power_1"] = 100.0
+            sensor._source_consumed["pv_string_power_1"] = False
 
             with patch("sigenergy2mqtt.sensors.inverter_derived.time.time", return_value=110.0):
                 sensor._discard_stale_snapshot()
 
-            assert sensor.pv_string_power[1] == 0
-            assert sensor._source_timestamps["pv_string_power_1"] == 100.0
+            assert sensor.pv_string_power[1] is None
+            assert sensor._source_timestamps["pv_string_power_1"] is None
 
     def test_get_attributes(self):
         from sigenergy2mqtt.sensors.inverter_derived import InverterSelfConsumedPower, PVStringPower
