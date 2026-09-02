@@ -240,6 +240,29 @@ class TestPVStringPowerUpdateFromSourceSensor:
                 debug_calls = [str(c) for c in mock_log.debug.call_args_list]
                 assert any("source values populated" in c for c in debug_calls)
 
+    def test_sanity_check_exception_clears_volts_and_amperes(self):
+        """SanityCheckException in PVStringPower resets volts and amperes values to None."""
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            sensor = _make_pv_string_power()
+            v_source = MagicMock(spec=PVVoltageSensor)
+            v_source.latest_raw_state = 4000
+            v_source.latest_time = time.time()
+            sensor.update_from_source_sensor(v_source)
+
+            c_source = MagicMock(spec=PVCurrentSensor)
+            c_source.latest_raw_state = 1000
+            c_source.latest_time = time.time()
+
+            from sigenergy2mqtt.sensors.base import SanityCheckException
+
+            with patch.object(sensor, "set_latest_state", side_effect=SanityCheckException("test sanity check")):
+                result = sensor.update_from_source_sensor(c_source)
+                assert result is True
+                assert sensor.volts.value is None
+                assert sensor.amperes.value is None
+                assert sensor.volts.consumed is True
+                assert sensor.amperes.consumed is True
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # InverterSelfConsumedPower.update_from_source_sensor (lines 264, 281-288)

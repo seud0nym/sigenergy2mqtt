@@ -174,11 +174,19 @@ class PVStringPower(DerivedSensor, HybridInverter, PVInverter):
         if self.volts.value is None or self.amperes.value is None:
             return False  # until all values populated, can't do calculation
         state = self.volts.value * self.amperes.value
-        self.volts.consumed = True
-        self.amperes.consumed = True
         if self.debug_logging:
             logger.debug(f"{self.log_identity} source values populated - setting latest state ({self.amperes.value}A * {self.volts.value}V = {state}W)")
-        self.set_latest_state(state)
+        try:
+            self.set_latest_state(state)
+            self.volts.consumed = True
+            self.amperes.consumed = True
+        except SanityCheckException as e:
+            if self.debug_logging:
+                logger.debug(f"{self.log_identity} set_latest_state({state}) FAILED - {e}")
+            self.volts.value = None
+            self.amperes.value = None
+            self.volts.consumed = True
+            self.amperes.consumed = True
         return True
 
 
