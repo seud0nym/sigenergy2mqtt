@@ -118,14 +118,15 @@ class DerivedSensor(TypedSensorMixin, Sensor):
 
     def set_latest_state(self, state: float | str | list[bool] | list[int] | list[float]) -> bool:
         """Update latest state and track pending updates for publishing."""
-        updated = super().set_latest_state(state)
+        self.mark_successful_read()
+        try:
+            updated = super().set_latest_state(state)
+        except Exception:
+            self._last_successful_read_time = self._previous_successful_read_time
+            self._update_generation -= 1
+            raise
         if updated:
             self._pending_update = True
-        else:
-            # A successful re-computation can produce the same value. The state
-            # publication is suppressed, but downstream derived sensors still
-            # need the fresh source value.
-            self._update_derived_sensors()
         return updated
 
     async def publish(self, mqtt_client, modbus_client, republish: bool = False) -> bool:

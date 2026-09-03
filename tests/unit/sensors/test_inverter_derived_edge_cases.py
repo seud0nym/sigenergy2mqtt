@@ -472,3 +472,76 @@ class TestInverterSelfConsumedPowerEdgeCases:
                 sensor.update_from_source_sensor(ap)
                 assert mock_log.warning.call_count == 0
 
+    def test_repeated_state_publish_interval_derived_source_not_stale(self, mock_config):
+        """When repeated_state_publish_interval > 0, repeated values from a DerivedSensor source
+        (like PVStringPower) update last_successful_read_time and do NOT get discarded as stale.
+        """
+        mock_config.repeated_state_publish_interval = 60
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            # Create real PVStringPower with mock voltage and current
+            v_source = MagicMock(spec=PVVoltageSensor)
+            v_source.scan_interval = 2
+            v_source.protocol_version = ProtocolVersion.V2_4
+            c_source = MagicMock(spec=PVCurrentSensor)
+            c_source.scan_interval = 2
+            c_source.protocol_version = ProtocolVersion.V2_4
+            pv_power = PVStringPower(0, 1, 1, v_source, c_source)
+
+            ap = MagicMock(spec=ActivePower)
+            ap.scan_interval = 2
+            ap.protocol_version = ProtocolVersion.V2_4
+            bp = MagicMock(spec=ChargeDischargePower)
+            bp.scan_interval = 2
+            bp.protocol_version = ProtocolVersion.V2_4
+
+            sensor = InverterSelfConsumedPower(0, 1, ap, bp, pv_power)
+
+            # Cycle 1 at t0 = 1000.0
+            t0 = 1000.0
+            with patch("time.time", return_value=t0):
+                v_source.latest_raw_state = 0
+                v_source.last_successful_read_time = t0
+                c_source.latest_raw_state = 0
+                c_source.last_successful_read_time = t0
+                pv_power.update_from_source_sensor(v_source)
+                pv_power.update_from_source_sensor(c_source)
+
+                ap.latest_raw_state = 0
+                ap.last_successful_read_time = t0
+                bp.latest_raw_state = 0
+                bp.last_successful_read_time = t0
+
+                sensor.update_from_source_sensor(ap)
+                sensor.update_from_source_sensor(bp)
+                sensor.update_from_source_sensor(pv_power)
+
+            # Cycle 2 at t1 = 1010.0 (10s later; >4s expected_interval, but <60s publish interval)
+            t1 = 1010.0
+            with patch("time.time", return_value=t1), patch("sigenergy2mqtt.sensors.inverter_derived.logger") as mock_log:
+                v_source.latest_raw_state = 0
+                v_source.last_successful_read_time = t1
+                c_source.latest_raw_state = 0
+                c_source.last_successful_read_time = t1
+                pv_power.update_from_source_sensor(v_source)
+                pv_power.update_from_source_sensor(c_source)
+
+                # pv_power's latest_time is still t0 (because 0W is repeated and <60s elapsed),
+                # but last_successful_read_time must be t1!
+                assert pv_power.latest_time == t0
+                assert pv_power.last_successful_read_time == t1
+
+                ap.latest_raw_state = 0
+                ap.last_successful_read_time = t1
+                bp.latest_raw_state = 0
+                bp.last_successful_read_time = t1
+
+                sensor.update_from_source_sensor(pv_power)
+                # Next sibling arrives - must NOT discard pv_power as stale!
+                sensor.update_from_source_sensor(ap)
+                sensor.update_from_source_sensor(bp)
+
+                # No stale discard warning should be logged
+                stale_warnings = [call for call in mock_log.warning.call_args_list if "Discarding stale incomplete source snapshot" in str(call)]
+                assert len(stale_warnings) == 0
+
+
