@@ -384,7 +384,13 @@ class DiagnosticsServer:
                 await ws.send_json(cached)
             async for msg in ws:
                 if msg.type == WSMsgType.ERROR:
-                    logger.warning(f"DiagnosticsServer WebSocket error: {ws.exception()}")
+                    exc = ws.exception()
+                    if isinstance(exc, asyncio.TimeoutError):
+                        # Expected: client went away without responding to a
+                        # heartbeat ping (sleep, network drop, tab closed, etc.)
+                        logger.debug(f"DiagnosticsServer WebSocket closed: {exc}")
+                    else:
+                        logger.warning(f"DiagnosticsServer WebSocket error: {exc}")
                 # No client->server messages are expected; this loop just
                 # keeps the connection open and detects close/error.
         finally:
