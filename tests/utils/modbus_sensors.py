@@ -40,6 +40,8 @@ from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerInputBreaker, A
 from sigenergy2mqtt.sensors.ac_charger_read_write import ACChargerStatus
 from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, AlarmSensor, ModbusSensorMixin, NumericSensor, ReservedSensor, Sensor, SwitchSensor, TimestampSensor, WriteOnlySensor
 from sigenergy2mqtt.sensors.inverter_read_only import (
+    DCChargerRatedChargingPower,
+    DCChargerRatedDischargingPower,
     DCChargerVehicleBatteryVoltage,
     InsulationResistance,
     InverterFirmwareVersion,
@@ -69,6 +71,8 @@ logger = logging.getLogger(__name__)
 
 initialize()
 
+DC_RATED_CHARGING_POWER: float = 25.0
+DC_RATED_DISCHARGING_POWER: float = 25.0
 FIRMWARE_VERSION: str = "V100R001C00SPC112B107G"
 INPUT_BREAKER: float = 16.0
 OUTPUT_TYPE: int = 2
@@ -145,6 +149,8 @@ class DummyInverterModbusClient(DummyModbusClient):
 
         input_breaker = ACChargerInputBreaker(0, 1)
         rated_current = ACChargerRatedCurrent(0, 1)
+        dc_charger_rated_charging_power = DCChargerRatedChargingPower(0, 1)
+        dc_charger_rated_discharging_power = DCChargerRatedDischargingPower(0, 1)
 
         super().__init__({  # convert_to_registers will create the correct number of registers based on data_type, so we can ignore the count parameter in the read methods
             time_zone.address: self.convert_to_registers(time_zone.state2raw(TIME_ZONE), time_zone.data_type),
@@ -159,8 +165,9 @@ class DummyInverterModbusClient(DummyModbusClient):
             pack_bcu_count.address: self.convert_to_registers(pack_bcu_count.state2raw(PACK_BCU_COUNT), pack_bcu_count.data_type),
             input_breaker.address: self.convert_to_registers(input_breaker.state2raw(INPUT_BREAKER), input_breaker.data_type),
             rated_current.address: self.convert_to_registers(rated_current.state2raw(RATED_CURRENT), rated_current.data_type),
+            dc_charger_rated_charging_power.address: self.convert_to_registers(dc_charger_rated_charging_power.state2raw(DC_RATED_CHARGING_POWER), dc_charger_rated_charging_power.data_type),
+            dc_charger_rated_discharging_power.address: self.convert_to_registers(dc_charger_rated_discharging_power.state2raw(DC_RATED_DISCHARGING_POWER), dc_charger_rated_discharging_power.data_type),
         })
-
 
 class DummyPIDModbusClient(DummyModbusClient):
     def __init__(self, model_id: str, serial_number: str, firmware_version: str):
@@ -270,7 +277,7 @@ async def get_sensor_instances(
     plant = await PowerPlant.create(plant_index, hi_device_type, FirmwareVersion(firmware_version), protocol_version, tz, output_type, True, hi_modbus_client)
     hybrid_inverter = await Inverter.create(plant_index, hybrid_inverter_device_address, hi_device_type, protocol_version, tz, hi_modbus_client)
     pv_inverter = await Inverter.create(plant_index, pv_inverter_device_address, pv_device_type, protocol_version, tz, pv_modbus_client)
-    dc_charger = await DCCharger.create(plant_index, dc_charger_device_address, protocol_version)
+    dc_charger = await DCCharger.create(plant_index, dc_charger_device_address, protocol_version, hi_modbus_client)
     ac_charger = await ACCharger.create(plant_index, ac_charger_device_address, protocol_version, hi_modbus_client)
 
     if protocol_version >= ProtocolVersion.V2_9:
