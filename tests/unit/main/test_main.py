@@ -525,9 +525,18 @@ class TestFactories:
     @pytest.mark.asyncio
     async def test_make_dc_charger(self):
         """Test make_dc_charger factory."""
+        mock_client = AsyncMock()
+        mock_plant = MagicMock()
+        mock_plant.protocol_version = ProtocolVersion.V2_8
         with patch("sigenergy2mqtt.devices.DCCharger.create", new_callable=AsyncMock) as mock_create:
             mock_create.return_value = MagicMock()
-            charger = await main_mod.make_dc_charger(0, 1, ProtocolVersion.V2_8, "inverter_id")
+            charger = await main_mod.make_dc_charger(
+                plant_index=0,
+                device_address=1,
+                modbus_client=mock_client,
+                plant=mock_plant,
+                inverter_unique_id="inverter_id",
+            )
             assert charger.via_device == "inverter_id"
 
     @pytest.mark.asyncio

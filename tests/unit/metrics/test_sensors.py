@@ -40,29 +40,30 @@ def mock_config():
 
 class TestMetricsSensor:
     def test_init(self):
-        sensor = MetricsSensor(name="Test Sensor", unique_id="sigen_test_id", object_id="sigenergy2mqtt_test_object", unit="test_unit", scan_interval=10)
+        sensor = MetricsSensor(attribute=None, name="Test Sensor", unique_id="sigen_test_id", object_id="sigenergy2mqtt_test_object", unit="test_unit", scan_interval=10)
         assert sensor["name"] == "Test Sensor"
         assert sensor["unique_id"] == "sigen_test_id"
         assert sensor["object_id"] == "sigenergy2mqtt_test_object"
         assert sensor["unit_of_measurement"] == "test_unit"
         assert sensor.scan_interval == 10
         assert sensor["enabled_by_default"] is True
+        assert sensor._attribute is None
 
     @pytest.mark.asyncio
     async def test_update_internal_state_raises_not_implemented(self):
-        sensor = MetricsSensor("name", "sigen_uid", "sigenergy2mqtt_oid")
+        sensor = MetricsSensor(None, "name", "sigen_uid", "sigenergy2mqtt_oid")
         with pytest.raises(NotImplementedError):
             await sensor._update_internal_state()
 
     def test_configure_mqtt_topics(self):
-        sensor = MetricsSensor("name", "sigen_uid", "sigenergy2mqtt_test_object")
+        sensor = MetricsSensor(None, "name", "sigen_uid", "sigenergy2mqtt_test_object")
         base = sensor.configure_mqtt_topics("device_id")
         assert base == "sigenergy2mqtt/metrics/test_object"
         assert sensor["state_topic"] == "sigenergy2mqtt/metrics/test_object"
         assert sensor["availability_topic"] == "sigenergy2mqtt/status"
 
     def test_publish_attributes(self):
-        sensor = MetricsSensor("name", "sigen_uid", "sigenergy2mqtt_oid")
+        sensor = MetricsSensor(None, "name", "sigen_uid", "sigenergy2mqtt_oid")
         # Should do nothing
         sensor.publish_attributes(None)
 
@@ -117,8 +118,8 @@ class TestModbusReadMax:
     async def test_update_internal_state_inf(self):
         sensor = ModbusReadMax()
         Metrics.sigenergy2mqtt_modbus_read_max = float("inf")
-        await sensor._update_internal_state()
-        assert sensor.latest_raw_state == 0.0
+        assert await sensor._update_internal_state() is False
+        assert sensor.latest_raw_state is None
 
 
 class TestModbusReadMean:
@@ -142,8 +143,8 @@ class TestModbusReadMin:
     async def test_update_internal_state_inf(self):
         sensor = ModbusReadMin()
         Metrics.sigenergy2mqtt_modbus_read_min = float("inf")
-        await sensor._update_internal_state()
-        assert sensor.latest_raw_state == 0.0
+        assert await sensor._update_internal_state() is False
+        assert sensor.latest_raw_state is None
 
 
 class TestModbusWriteErrors:
@@ -167,8 +168,8 @@ class TestModbusWriteMax:
     async def test_update_internal_state_inf(self):
         sensor = ModbusWriteMax()
         Metrics.sigenergy2mqtt_modbus_write_max = float("inf")
-        await sensor._update_internal_state()
-        assert sensor.latest_raw_state == 0.0
+        assert await sensor._update_internal_state() is False
+        assert sensor.latest_raw_state is None
 
 
 class TestModbusWriteMean:
@@ -192,8 +193,8 @@ class TestModbusWriteMin:
     async def test_update_internal_state_inf(self):
         sensor = ModbusWriteMin()
         Metrics.sigenergy2mqtt_modbus_write_min = float("inf")
-        await sensor._update_internal_state()
-        assert sensor.latest_raw_state == 0.0
+        assert await sensor._update_internal_state() is False
+        assert sensor.latest_raw_state is None
 
 
 class TestModbusActiveLocks:
@@ -270,8 +271,8 @@ class TestStateStoreSaveMax:
     async def test_update_internal_state_inf(self):
         sensor = StateStoreSaveMax()
         Metrics.sigenergy2mqtt_state_store_save_max = float("inf")
-        await sensor._update_internal_state()
-        assert sensor.latest_raw_state == 0.0
+        assert await sensor._update_internal_state() is False
+        assert sensor.latest_raw_state is None
 
 
 class TestStateStoreSaveMean:
@@ -295,8 +296,8 @@ class TestStateStoreSaveMin:
     async def test_update_internal_state_inf(self):
         sensor = StateStoreSaveMin()
         Metrics.sigenergy2mqtt_state_store_save_min = float("inf")
-        await sensor._update_internal_state()
-        assert sensor.latest_raw_state == 0.0
+        assert await sensor._update_internal_state() is False
+        assert sensor.latest_raw_state is None
 
 
 class TestStateStoreLoads:

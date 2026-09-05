@@ -33,7 +33,7 @@ def mock_config():
 class TestMetricsSensorsExtended:
     @pytest.mark.asyncio
     async def test_metrics_sensor_debug_logging(self, caplog):
-        sensor = MetricsSensor("name", "sigen_uid", "sigenergy2mqtt_test_object")
+        sensor = MetricsSensor(None, "name", "sigen_uid", "sigenergy2mqtt_test_object")
         sensor.debug_logging = True
         with caplog.at_level("DEBUG"):
             sensor.configure_mqtt_topics("device_id")
@@ -52,7 +52,7 @@ class TestMetricsSensorsExtended:
         sensor = Started()
         Metrics.sigenergy2mqtt_started = None
         await sensor._update_internal_state()
-        assert sensor.latest_raw_state == ""
+        assert sensor.latest_raw_state is None
 
     @pytest.mark.asyncio
     async def test_influxdb_writes(self):
