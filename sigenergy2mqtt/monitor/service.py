@@ -205,7 +205,7 @@ class MonitorService(Device):
                 return f"{sensor.last_state}{sensor.unit}"
             return f"{sensor.last_state} {sensor.unit}"
 
-        def _updates_states(classname: str, description: str = None) -> None:
+        def _updates_states(classname: str, description: str | None = None) -> None:
             values = {s.name: (s.description if description is None else description, _format_value(s)) for s in snapshot.values() if classname in s.sensor_name}
             if len(values) == 1:
                 key, state = next(iter(values.values()))
