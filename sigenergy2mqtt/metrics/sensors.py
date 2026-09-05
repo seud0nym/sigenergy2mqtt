@@ -35,6 +35,7 @@ class MetricsSensor(ReadableSensorMixin):
 
     def __init__(
         self,
+        attribute: str | None,
         name: str,
         unique_id: str,
         object_id: str,
@@ -58,6 +59,9 @@ class MetricsSensor(ReadableSensorMixin):
             scan_interval=scan_interval,
             **kwargs,
         )
+        if attribute is not None and not hasattr(Metrics, attribute):
+            raise AttributeError(f"{self.log_identity} Metrics has no attribute '{attribute}'")
+        self._attribute = attribute
         self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
     def _get_base_topic(self, device_id: str) -> str:
@@ -75,7 +79,13 @@ class MetricsSensor(ReadableSensorMixin):
         return f"{base}/{suffix}"
 
     async def _update_internal_state(self, **kwargs) -> bool:
-        raise NotImplementedError
+        if self._attribute is None:
+            raise NotImplementedError(f"{self.log_identity} No attribute has been defined so _update_internal_state must be overridden in the subclass")
+        state = getattr(Metrics, self._attribute)
+        if state == float("-inf") or state == float("inf"):
+            return False
+        self.set_latest_state(state)
+        return True
 
     def configure_mqtt_topics(self, device_id: str) -> str:
         """
@@ -106,6 +116,7 @@ class MQTTPublishFailures(MetricsSensor):
 
     def __init__(self):
         super().__init__(
+            attribute="sigenergy2mqtt_mqtt_publish_failures",
             name="MQTT Publish Failures",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_mqtt_publish_failures",
             object_id="sigenergy2mqtt_mqtt_publish_failures",
@@ -113,16 +124,13 @@ class MQTTPublishFailures(MetricsSensor):
             precision=0,
         )
 
-    async def _update_internal_state(self, **kwargs) -> bool:
-        self.set_latest_state(Metrics.sigenergy2mqtt_mqtt_publish_failures)
-        return True
-
 
 class MQTTPhysicalPublishes(MetricsSensor):
     """Percentage of MQTT publish attempts that were physically published."""
 
     def __init__(self):
         super().__init__(
+            attribute="sigenergy2mqtt_mqtt_physical_publish_percentage",
             name="MQTT Physical Publishes",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_mqtt_physical_publish_percentage",
             object_id="sigenergy2mqtt_mqtt_physical_publish_percentage",
@@ -130,10 +138,6 @@ class MQTTPhysicalPublishes(MetricsSensor):
             icon="mdi:percent",
             precision=2,
         )
-
-    async def _update_internal_state(self, **kwargs) -> bool:
-        self.set_latest_state(Metrics.sigenergy2mqtt_mqtt_physical_publish_percentage)
-        return True
 
 
 # =============================================================================
@@ -146,6 +150,7 @@ class ModbusCacheHits(MetricsSensor):
 
     def __init__(self):
         super().__init__(
+            attribute="sigenergy2mqtt_modbus_cache_hit_percentage",
             name="Modbus Cache Hits",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_modbus_cache_hit_percentage",
             object_id="sigenergy2mqtt_modbus_cache_hit_percentage",
@@ -154,17 +159,13 @@ class ModbusCacheHits(MetricsSensor):
             precision=2,
         )
 
-    async def _update_internal_state(self, **kwargs) -> bool:
-        new_state = Metrics.sigenergy2mqtt_modbus_cache_hit_percentage
-        self.set_latest_state(new_state)
-        return True
-
 
 class ModbusPhysicalReads(MetricsSensor):
     """Percentage of modbus reads that resulted in a physical bus read (i.e. cache misses)."""
 
     def __init__(self):
         super().__init__(
+            attribute="sigenergy2mqtt_modbus_physical_read_percentage",
             name="Modbus Physical Reads",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_modbus_physical_reads",
             object_id="sigenergy2mqtt_modbus_physical_reads",
@@ -173,17 +174,13 @@ class ModbusPhysicalReads(MetricsSensor):
             precision=2,
         )
 
-    async def _update_internal_state(self, **kwargs) -> bool:
-        new_state = Metrics.sigenergy2mqtt_modbus_physical_read_percentage
-        self.set_latest_state(new_state)
-        return True
-
 
 class ModbusReadsPerSecond(MetricsSensor):
     """Modbus register reads per second since service start."""
 
     def __init__(self):
         super().__init__(
+            attribute="sigenergy2mqtt_modbus_reads",
             name="Modbus Reads/second",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_modbus_reads_sec",
             object_id="sigenergy2mqtt_modbus_reads_sec",
@@ -206,6 +203,7 @@ class ModbusReadErrors(MetricsSensor):
 
     def __init__(self):
         super().__init__(
+            attribute="sigenergy2mqtt_modbus_read_errors",
             name="Modbus Read Errors",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_modbus_read_errors",
             object_id="sigenergy2mqtt_modbus_read_errors",
@@ -213,17 +211,13 @@ class ModbusReadErrors(MetricsSensor):
             precision=0,
         )
 
-    async def _update_internal_state(self, **kwargs) -> bool:
-        new_state = Metrics.sigenergy2mqtt_modbus_read_errors
-        self.set_latest_state(new_state)
-        return True
-
 
 class ModbusReadMax(MetricsSensor):
     """Maximum single modbus read duration in milliseconds."""
 
     def __init__(self):
         super().__init__(
+            attribute="sigenergy2mqtt_modbus_read_max",
             name="Modbus Read Max",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_modbus_read_max",
             object_id="sigenergy2mqtt_modbus_read_max",
@@ -232,19 +226,13 @@ class ModbusReadMax(MetricsSensor):
             precision=2,
         )
 
-    async def _update_internal_state(self, **kwargs) -> bool:
-        value = Metrics.sigenergy2mqtt_modbus_read_max
-        if value == float("inf"):
-            value = 0.0
-        self.set_latest_state(value)
-        return True
-
 
 class ModbusReadMean(MetricsSensor):
     """Mean modbus read duration per register read, in milliseconds."""
 
     def __init__(self):
         super().__init__(
+            attribute="sigenergy2mqtt_modbus_read_mean",
             name="Modbus Read Mean",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_modbus_read_mean",
             object_id="sigenergy2mqtt_modbus_read_mean",
@@ -253,17 +241,13 @@ class ModbusReadMean(MetricsSensor):
             precision=2,
         )
 
-    async def _update_internal_state(self, **kwargs) -> bool:
-        value = Metrics.sigenergy2mqtt_modbus_read_mean
-        self.set_latest_state(value)
-        return True
-
 
 class ModbusReadMin(MetricsSensor):
     """Minimum single modbus read duration in milliseconds."""
 
     def __init__(self):
         super().__init__(
+            attribute="sigenergy2mqtt_modbus_read_min",
             name="Modbus Read Min",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_modbus_read_min",
             object_id="sigenergy2mqtt_modbus_read_min",
@@ -272,19 +256,13 @@ class ModbusReadMin(MetricsSensor):
             precision=2,
         )
 
-    async def _update_internal_state(self, **kwargs) -> bool:
-        value = Metrics.sigenergy2mqtt_modbus_read_min
-        if value == float("inf"):
-            value = 0.0
-        self.set_latest_state(value)
-        return True
-
 
 class ModbusSkippedErrors(MetricsSensor):
     """Cumulative count of modbus skipped errors."""
 
     def __init__(self):
         super().__init__(
+            attribute="sigenergy2mqtt_modbus_skipped_errors",
             name="Modbus Skipped Errors",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_modbus_skipped_errors",
             object_id="sigenergy2mqtt_modbus_skipped_reads",
@@ -293,17 +271,13 @@ class ModbusSkippedErrors(MetricsSensor):
         )
         self.publishable = any(device.log_skipped is False for device in active_config.modbus)
 
-    async def _update_internal_state(self, **kwargs) -> bool:
-        new_state = Metrics.sigenergy2mqtt_modbus_skipped_errors
-        self.set_latest_state(new_state)
-        return True
-
 
 class ModbusWriteErrors(MetricsSensor):
     """Cumulative count of modbus write errors."""
 
     def __init__(self):
         super().__init__(
+            attribute="sigenergy2mqtt_modbus_write_errors",
             name="Modbus Write Errors",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_modbus_write_errors",
             object_id="sigenergy2mqtt_modbus_write_errors",
@@ -311,17 +285,13 @@ class ModbusWriteErrors(MetricsSensor):
             precision=0,
         )
 
-    async def _update_internal_state(self, **kwargs) -> bool:
-        new_state = Metrics.sigenergy2mqtt_modbus_write_errors
-        self.set_latest_state(new_state)
-        return True
-
 
 class ModbusWriteMax(MetricsSensor):
     """Maximum single modbus write duration in milliseconds."""
 
     def __init__(self):
         super().__init__(
+            attribute="sigenergy2mqtt_modbus_write_max",
             name="Modbus Write Max",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_modbus_write_max",
             object_id="sigenergy2mqtt_modbus_write_max",
@@ -330,19 +300,13 @@ class ModbusWriteMax(MetricsSensor):
             precision=2,
         )
 
-    async def _update_internal_state(self, **kwargs) -> bool:
-        value = Metrics.sigenergy2mqtt_modbus_write_max
-        if value == float("inf"):
-            value = 0.0
-        self.set_latest_state(value)
-        return True
-
 
 class ModbusWriteMean(MetricsSensor):
     """Mean modbus write duration per write call, in milliseconds."""
 
     def __init__(self):
         super().__init__(
+            attribute="sigenergy2mqtt_modbus_write_mean",
             name="Modbus Write Mean",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_modbus_write_mean",
             object_id="sigenergy2mqtt_modbus_write_mean",
@@ -351,17 +315,13 @@ class ModbusWriteMean(MetricsSensor):
             precision=2,
         )
 
-    async def _update_internal_state(self, **kwargs) -> bool:
-        value = Metrics.sigenergy2mqtt_modbus_write_mean
-        self.set_latest_state(value)
-        return True
-
 
 class ModbusWriteMin(MetricsSensor):
     """Minimum single modbus write duration in milliseconds."""
 
     def __init__(self):
         super().__init__(
+            attribute="sigenergy2mqtt_modbus_write_min",
             name="Modbus Write Min",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_modbus_write_min",
             object_id="sigenergy2mqtt_modbus_write_min",
@@ -370,19 +330,13 @@ class ModbusWriteMin(MetricsSensor):
             precision=2,
         )
 
-    async def _update_internal_state(self, **kwargs) -> bool:
-        value = Metrics.sigenergy2mqtt_modbus_write_min
-        if value == float("inf"):
-            value = 0.0
-        self.set_latest_state(value)
-        return True
-
 
 class ModbusActiveLocks(MetricsSensor):
     """Number of coroutines currently waiting to acquire a modbus lock."""
 
     def __init__(self):
         super().__init__(
+            attribute=None,
             name="Modbus Active Locks",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_modbus_locks",
             object_id="sigenergy2mqtt_modbus_locks",
@@ -408,6 +362,7 @@ class Started(MetricsSensor):
 
     def __init__(self):
         super().__init__(
+            attribute="sigenergy2mqtt_started",
             name="Started",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_started",
             object_id="sigenergy2mqtt_started",
@@ -416,17 +371,13 @@ class Started(MetricsSensor):
         )
         self["entity_category"] = "diagnostic"
 
-    async def _update_internal_state(self, **kwargs) -> bool:
-        value = Metrics.sigenergy2mqtt_started
-        self.set_latest_state(str(value) if value else "")
-        return True
-
 
 class ProtocolVersionSensor(MetricsSensor):
     """The Sigenergy modbus protocol version in use."""
 
     def __init__(self, protocol_version: ProtocolVersion):
         super().__init__(
+            attribute=None,
             name="Protocol Version",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_modbus_protocol",
             object_id="sigenergy2mqtt_modbus_protocol",
@@ -446,6 +397,7 @@ class ProtocolPublished(MetricsSensor):
 
     def __init__(self, protocol_version: ProtocolVersion):
         super().__init__(
+            attribute=None,
             name="Protocol Published",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_modbus_protocol_published",
             object_id="sigenergy2mqtt_modbus_protocol_published",
@@ -470,6 +422,7 @@ class InfluxDBWrites(MetricsSensor):
 
     def __init__(self):
         super().__init__(
+            attribute="sigenergy2mqtt_influxdb_writes",
             name="InfluxDB Writes",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_influxdb_writes",
             object_id="sigenergy2mqtt_influxdb_writes",
@@ -478,17 +431,13 @@ class InfluxDBWrites(MetricsSensor):
         )
         self.publishable = active_config.influxdb.enabled
 
-    async def _update_internal_state(self, **kwargs) -> bool:
-        new_state = Metrics.sigenergy2mqtt_influxdb_writes
-        self.set_latest_state(new_state)
-        return True
-
 
 class InfluxDBWriteErrors(MetricsSensor):
     """Cumulative count of InfluxDB write errors."""
 
     def __init__(self):
         super().__init__(
+            attribute="sigenergy2mqtt_influxdb_write_errors",
             name="InfluxDB Write Errors",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_influxdb_write_errors",
             object_id="sigenergy2mqtt_influxdb_write_errors",
@@ -497,17 +446,13 @@ class InfluxDBWriteErrors(MetricsSensor):
         )
         self.publishable = active_config.influxdb.enabled
 
-    async def _update_internal_state(self, **kwargs) -> bool:
-        new_state = Metrics.sigenergy2mqtt_influxdb_write_errors
-        self.set_latest_state(new_state)
-        return True
-
 
 class InfluxDBWriteMax(MetricsSensor):
     """Maximum single InfluxDB write duration in milliseconds."""
 
     def __init__(self):
         super().__init__(
+            attribute="sigenergy2mqtt_influxdb_write_max",
             name="InfluxDB Write Max",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_influxdb_write_max",
             object_id="sigenergy2mqtt_influxdb_write_max",
@@ -517,17 +462,13 @@ class InfluxDBWriteMax(MetricsSensor):
         )
         self.publishable = active_config.influxdb.enabled
 
-    async def _update_internal_state(self, **kwargs) -> bool:
-        value = Metrics.sigenergy2mqtt_influxdb_write_max
-        self.set_latest_state(value)
-        return True
-
 
 class InfluxDBWriteMin(MetricsSensor):
     """Minimum InfluxDB write duration per write call, in milliseconds."""
 
     def __init__(self):
         super().__init__(
+            attribute="sigenergy2mqtt_influxdb_write_min",
             name="InfluxDB Write Min",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_influxdb_write_min",
             object_id="sigenergy2mqtt_influxdb_write_min",
@@ -537,17 +478,13 @@ class InfluxDBWriteMin(MetricsSensor):
         )
         self.publishable = active_config.influxdb.enabled
 
-    async def _update_internal_state(self, **kwargs) -> bool:
-        value = Metrics.sigenergy2mqtt_influxdb_write_min
-        self.set_latest_state(value)
-        return True
-
 
 class InfluxDBWriteMean(MetricsSensor):
     """Mean InfluxDB write duration per write call, in milliseconds."""
 
     def __init__(self):
         super().__init__(
+            attribute="sigenergy2mqtt_influxdb_write_mean",
             name="InfluxDB Write Mean",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_influxdb_write_mean",
             object_id="sigenergy2mqtt_influxdb_write_mean",
@@ -557,17 +494,13 @@ class InfluxDBWriteMean(MetricsSensor):
         )
         self.publishable = active_config.influxdb.enabled
 
-    async def _update_internal_state(self, **kwargs) -> bool:
-        value = Metrics.sigenergy2mqtt_influxdb_write_mean
-        self.set_latest_state(value)
-        return True
-
 
 class InfluxDBQueries(MetricsSensor):
     """Cumulative count of InfluxDB query operations."""
 
     def __init__(self):
         super().__init__(
+            attribute="sigenergy2mqtt_influxdb_queries",
             name="InfluxDB Queries",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_influxdb_queries",
             object_id="sigenergy2mqtt_influxdb_queries",
@@ -576,17 +509,13 @@ class InfluxDBQueries(MetricsSensor):
         )
         self.publishable = active_config.influxdb.enabled
 
-    async def _update_internal_state(self, **kwargs) -> bool:
-        new_state = Metrics.sigenergy2mqtt_influxdb_queries
-        self.set_latest_state(new_state)
-        return True
-
 
 class InfluxDBQueryErrors(MetricsSensor):
     """Cumulative count of InfluxDB query errors."""
 
     def __init__(self):
         super().__init__(
+            attribute="sigenergy2mqtt_influxdb_query_errors",
             name="InfluxDB Query Errors",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_influxdb_query_errors",
             object_id="sigenergy2mqtt_influxdb_query_errors",
@@ -595,17 +524,13 @@ class InfluxDBQueryErrors(MetricsSensor):
         )
         self.publishable = active_config.influxdb.enabled
 
-    async def _update_internal_state(self, **kwargs) -> bool:
-        new_state = Metrics.sigenergy2mqtt_influxdb_query_errors
-        self.set_latest_state(new_state)
-        return True
-
 
 class InfluxDBRetries(MetricsSensor):
     """Cumulative count of InfluxDB retry attempts."""
 
     def __init__(self):
         super().__init__(
+            attribute="sigenergy2mqtt_influxdb_retries",
             name="InfluxDB Retries",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_influxdb_retries",
             object_id="sigenergy2mqtt_influxdb_retries",
@@ -614,17 +539,13 @@ class InfluxDBRetries(MetricsSensor):
         )
         self.publishable = active_config.influxdb.enabled
 
-    async def _update_internal_state(self, **kwargs) -> bool:
-        new_state = Metrics.sigenergy2mqtt_influxdb_retries
-        self.set_latest_state(new_state)
-        return True
-
 
 class InfluxDBRateLimitWaits(MetricsSensor):
     """Cumulative count of number of times execution was paused due to InfluxDB rate limiting."""
 
     def __init__(self):
         super().__init__(
+            attribute="sigenergy2mqtt_influxdb_rate_limit_waits",
             name="InfluxDB Rate Limit Waits",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_influxdb_rate_limit_waits",
             object_id="sigenergy2mqtt_influxdb_rate_limit_waits",
@@ -633,17 +554,13 @@ class InfluxDBRateLimitWaits(MetricsSensor):
         )
         self.publishable = active_config.influxdb.enabled
 
-    async def _update_internal_state(self, **kwargs) -> bool:
-        new_state = Metrics.sigenergy2mqtt_influxdb_rate_limit_waits
-        self.set_latest_state(new_state)
-        return True
-
 
 class InfluxDBThroughput(MetricsSensor):
     """InfluxDB data points written per second since service start."""
 
     def __init__(self):
         super().__init__(
+            attribute=None,
             name="InfluxDB Throughput",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_influxdb_throughput",
             object_id="sigenergy2mqtt_influxdb_throughput",
@@ -672,6 +589,7 @@ class StateStoreSaves(MetricsSensor):
 
     def __init__(self):
         super().__init__(
+            attribute="sigenergy2mqtt_state_store_saves",
             name="State Store Saves",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_state_store_saves",
             object_id="sigenergy2mqtt_state_store_saves",
@@ -679,16 +597,13 @@ class StateStoreSaves(MetricsSensor):
             precision=0,
         )
 
-    async def _update_internal_state(self, **kwargs) -> bool:
-        self.set_latest_state(Metrics.sigenergy2mqtt_state_store_saves)
-        return True
-
 
 class StateStoreSaveErrors(MetricsSensor):
     """Cumulative count of StateStore save errors."""
 
     def __init__(self):
         super().__init__(
+            attribute="sigenergy2mqtt_state_store_save_errors",
             name="State Store Save Errors",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_state_store_save_errors",
             object_id="sigenergy2mqtt_state_store_save_errors",
@@ -696,16 +611,13 @@ class StateStoreSaveErrors(MetricsSensor):
             precision=0,
         )
 
-    async def _update_internal_state(self, **kwargs) -> bool:
-        self.set_latest_state(Metrics.sigenergy2mqtt_state_store_save_errors)
-        return True
-
 
 class StateStoreSaveMax(MetricsSensor):
     """Maximum single StateStore save duration in milliseconds."""
 
     def __init__(self):
         super().__init__(
+            attribute="sigenergy2mqtt_state_store_save_max",
             name="State Store Save Max",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_state_store_save_max",
             object_id="sigenergy2mqtt_state_store_save_max",
@@ -714,19 +626,13 @@ class StateStoreSaveMax(MetricsSensor):
             precision=2,
         )
 
-    async def _update_internal_state(self, **kwargs) -> bool:
-        value = Metrics.sigenergy2mqtt_state_store_save_max
-        if value == float("inf"):
-            value = 0.0
-        self.set_latest_state(value)
-        return True
-
 
 class StateStoreSaveMean(MetricsSensor):
     """Mean StateStore save duration per save call, in milliseconds."""
 
     def __init__(self):
         super().__init__(
+            attribute="sigenergy2mqtt_state_store_save_mean",
             name="State Store Save Mean",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_state_store_save_mean",
             object_id="sigenergy2mqtt_state_store_save_mean",
@@ -735,16 +641,13 @@ class StateStoreSaveMean(MetricsSensor):
             precision=2,
         )
 
-    async def _update_internal_state(self, **kwargs) -> bool:
-        self.set_latest_state(Metrics.sigenergy2mqtt_state_store_save_mean)
-        return True
-
 
 class StateStoreSaveMin(MetricsSensor):
     """Minimum single StateStore save duration in milliseconds."""
 
     def __init__(self):
         super().__init__(
+            attribute="sigenergy2mqtt_state_store_save_min",
             name="State Store Save Min",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_state_store_save_min",
             object_id="sigenergy2mqtt_state_store_save_min",
@@ -753,19 +656,13 @@ class StateStoreSaveMin(MetricsSensor):
             precision=2,
         )
 
-    async def _update_internal_state(self, **kwargs) -> bool:
-        value = Metrics.sigenergy2mqtt_state_store_save_min
-        if value == float("inf"):
-            value = 0.0
-        self.set_latest_state(value)
-        return True
-
 
 class StateStoreLoads(MetricsSensor):
     """Cumulative count of StateStore load operations."""
 
     def __init__(self):
         super().__init__(
+            attribute="sigenergy2mqtt_state_store_loads",
             name="State Store Loads",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_state_store_loads",
             object_id="sigenergy2mqtt_state_store_loads",
@@ -773,16 +670,13 @@ class StateStoreLoads(MetricsSensor):
             precision=0,
         )
 
-    async def _update_internal_state(self, **kwargs) -> bool:
-        self.set_latest_state(Metrics.sigenergy2mqtt_state_store_loads)
-        return True
-
 
 class StateStoreLoadHitPercentage(MetricsSensor):
     """Percentage of StateStore load calls that returned a value (cache/disk hit rate)."""
 
     def __init__(self):
         super().__init__(
+            attribute="sigenergy2mqtt_state_store_load_hit_percentage",
             name="State Store Load Hits %",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_state_store_load_hit_percentage",
             object_id="sigenergy2mqtt_state_store_load_hit_percentage",
@@ -791,16 +685,13 @@ class StateStoreLoadHitPercentage(MetricsSensor):
             precision=2,
         )
 
-    async def _update_internal_state(self, **kwargs) -> bool:
-        self.set_latest_state(Metrics.sigenergy2mqtt_state_store_load_hit_percentage)
-        return True
-
 
 class StateStoreLoadErrors(MetricsSensor):
     """Cumulative count of StateStore load errors."""
 
     def __init__(self):
         super().__init__(
+            attribute="sigenergy2mqtt_state_store_load_errors",
             name="State Store Load Errors",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_state_store_load_errors",
             object_id="sigenergy2mqtt_state_store_load_errors",
@@ -808,16 +699,13 @@ class StateStoreLoadErrors(MetricsSensor):
             precision=0,
         )
 
-    async def _update_internal_state(self, **kwargs) -> bool:
-        self.set_latest_state(Metrics.sigenergy2mqtt_state_store_load_errors)
-        return True
-
 
 class StateStoreDeletes(MetricsSensor):
     """Cumulative count of StateStore delete operations."""
 
     def __init__(self):
         super().__init__(
+            attribute="sigenergy2mqtt_state_store_deletes",
             name="State Store Deletes",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_state_store_deletes",
             object_id="sigenergy2mqtt_state_store_deletes",
@@ -825,26 +713,19 @@ class StateStoreDeletes(MetricsSensor):
             precision=0,
         )
 
-    async def _update_internal_state(self, **kwargs) -> bool:
-        self.set_latest_state(Metrics.sigenergy2mqtt_state_store_deletes)
-        return True
-
 
 class StateStoreDeleteErrors(MetricsSensor):
     """Cumulative count of StateStore delete errors."""
 
     def __init__(self):
         super().__init__(
+            attribute="sigenergy2mqtt_state_store_delete_errors",
             name="State Store Delete Errors",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_state_store_delete_errors",
             object_id="sigenergy2mqtt_state_store_delete_errors",
             icon="mdi:delete-alert-outline",
             precision=0,
         )
-
-    async def _update_internal_state(self, **kwargs) -> bool:
-        self.set_latest_state(Metrics.sigenergy2mqtt_state_store_delete_errors)
-        return True
 
 
 # =============================================================================
@@ -857,6 +738,7 @@ class PVOutputUploads(MetricsSensor):
 
     def __init__(self):
         super().__init__(
+            attribute="sigenergy2mqtt_pvoutput_uploads",
             name="PVOutput Uploads",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_pvoutput_uploads",
             object_id="sigenergy2mqtt_pvoutput_uploads",
@@ -865,16 +747,13 @@ class PVOutputUploads(MetricsSensor):
         )
         self.publishable = active_config.pvoutput.enabled
 
-    async def _update_internal_state(self, **kwargs) -> bool:
-        self.set_latest_state(Metrics.sigenergy2mqtt_pvoutput_uploads)
-        return True
-
 
 class PVOutputUploadErrors(MetricsSensor):
     """Cumulative count of PVOutput upload errors."""
 
     def __init__(self):
         super().__init__(
+            attribute="sigenergy2mqtt_pvoutput_upload_errors",
             name="PVOutput Upload Errors",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_pvoutput_upload_errors",
             object_id="sigenergy2mqtt_pvoutput_upload_errors",
@@ -883,16 +762,13 @@ class PVOutputUploadErrors(MetricsSensor):
         )
         self.publishable = active_config.pvoutput.enabled
 
-    async def _update_internal_state(self, **kwargs) -> bool:
-        self.set_latest_state(Metrics.sigenergy2mqtt_pvoutput_upload_errors)
-        return True
-
 
 class PVOutputUploadSkipped(MetricsSensor):
     """Cumulative count of skipped PVOutput uploads."""
 
     def __init__(self):
         super().__init__(
+            attribute="sigenergy2mqtt_pvoutput_upload_skipped",
             name="PVOutput Upload Skipped",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_pvoutput_upload_skipped",
             object_id="sigenergy2mqtt_pvoutput_upload_skipped",
@@ -901,16 +777,13 @@ class PVOutputUploadSkipped(MetricsSensor):
         )
         self.publishable = active_config.pvoutput.enabled
 
-    async def _update_internal_state(self, **kwargs) -> bool:
-        self.set_latest_state(Metrics.sigenergy2mqtt_pvoutput_upload_skipped)
-        return True
-
 
 class PVOutputUploadMax(MetricsSensor):
     """Maximum single PVOutput upload duration in milliseconds."""
 
     def __init__(self):
         super().__init__(
+            attribute="sigenergy2mqtt_pvoutput_upload_max",
             name="PVOutput Upload Max",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_pvoutput_upload_max",
             object_id="sigenergy2mqtt_pvoutput_upload_max",
@@ -920,19 +793,13 @@ class PVOutputUploadMax(MetricsSensor):
         )
         self.publishable = active_config.pvoutput.enabled
 
-    async def _update_internal_state(self, **kwargs) -> bool:
-        value = Metrics.sigenergy2mqtt_pvoutput_upload_max
-        if value == float("inf"):
-            value = 0.0
-        self.set_latest_state(value)
-        return True
-
 
 class PVOutputUploadMean(MetricsSensor):
     """Mean PVOutput upload duration per upload call, in milliseconds."""
 
     def __init__(self):
         super().__init__(
+            attribute="sigenergy2mqtt_pvoutput_upload_mean",
             name="PVOutput Upload Mean",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_pvoutput_upload_mean",
             object_id="sigenergy2mqtt_pvoutput_upload_mean",
@@ -942,16 +809,13 @@ class PVOutputUploadMean(MetricsSensor):
         )
         self.publishable = active_config.pvoutput.enabled
 
-    async def _update_internal_state(self, **kwargs) -> bool:
-        self.set_latest_state(Metrics.sigenergy2mqtt_pvoutput_upload_mean)
-        return True
-
 
 class PVOutputUploadMin(MetricsSensor):
     """Minimum single PVOutput upload duration in milliseconds."""
 
     def __init__(self):
         super().__init__(
+            attribute="sigenergy2mqtt_pvoutput_upload_min",
             name="PVOutput Upload Min",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_pvoutput_upload_min",
             object_id="sigenergy2mqtt_pvoutput_upload_min",
@@ -960,13 +824,6 @@ class PVOutputUploadMin(MetricsSensor):
             precision=2,
         )
         self.publishable = active_config.pvoutput.enabled
-
-    async def _update_internal_state(self, **kwargs) -> bool:
-        value = Metrics.sigenergy2mqtt_pvoutput_upload_min
-        if value == float("inf"):
-            value = 0.0
-        self.set_latest_state(value)
-        return True
 
 
 # =============================================================================
