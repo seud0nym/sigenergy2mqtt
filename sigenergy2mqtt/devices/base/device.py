@@ -13,7 +13,7 @@ from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.config.models import RegisterAccess
 from sigenergy2mqtt.i18n import _t
 from sigenergy2mqtt.mqtt import MqttHandler
-from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, CrossDeviceDerivedSensor, DerivedSensor, ObservableMixin, ReadableSensorMixin, Sensor, WriteableSensorMixin, WriteOnlySensor
+from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, CrossDeviceDerivedSensor, DerivedSensor, ObservableMixin, ReadableSensorMixin, Sensor, WriteableSensorMixin, WriteOnlySensorMixin
 
 if TYPE_CHECKING:
     from sigenergy2mqtt.modbus import ModbusClient
@@ -402,7 +402,7 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
             if added:
                 self._add_to_all_sensors(sensor)
             return added
-        if isinstance(sensor, WriteOnlySensor):
+        if isinstance(sensor, WriteOnlySensorMixin):
             self.write_sensors[sensor.unique_id] = sensor
             self._add_to_all_sensors(sensor)
             return True

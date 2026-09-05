@@ -9,7 +9,7 @@ from pymodbus.client.mixin import ModbusClientMixin
 
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.metrics.sensors import ResetMetrics
-from sigenergy2mqtt.sensors.base import NumericSensor, SelectSensor, SwitchSensor, WriteableSensorMixin, WriteOnlySensor
+from sigenergy2mqtt.sensors.base import NumericSensor, SelectSensor, SwitchSensor, WriteableSensorMixin, WriteOnlySensorMixin
 from sigenergy2mqtt.sensors.base.constants import DiscoveryKeys
 from sigenergy2mqtt.sensors.plant_read_write import MaxChargingLimit, MaxDischargingLimit, PVMaxPowerLimit, RemoteEMSLimit
 from tests.utils.modbus_sensors import get_sensor_instances
@@ -167,7 +167,7 @@ def test_all_writable_sensor_types_write_expected_registers_and_set_force_publis
                 assert await sensor.set_value(modbus, mqtt, "__invalid_payload__", topic, handler) is False
                 assert sensor.force_publish is True
 
-            elif isinstance(sensor, WriteOnlySensor):
+            elif isinstance(sensor, WriteOnlySensorMixin):
                 valid = sensor._payloads["on"]
                 assert await sensor.set_value(modbus, mqtt, valid, topic, handler) is True
                 modbus.write_register.assert_awaited_with(sensor.address, sensor._values["on"], device_id=sensor.device_address, no_response_expected=False)
