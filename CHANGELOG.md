@@ -14,6 +14,7 @@
 - Fixed state class validation for energy sensors and update DC Charger capacity sensors to correct state class (#238)
 - Fixed index out of range error during MQTT state store retries drain
 - Fixed bug that allowed derived sensors to bind to stale devices on restart, causing them to fail to update
+- Fixed Home Assistant start-up log message "No device components to cleanup for sigen_diagnostics, node_id 'None'"
 - Reduced log level for expected WebSocket timeout errors in diagnostics server
 
 ### Changed
