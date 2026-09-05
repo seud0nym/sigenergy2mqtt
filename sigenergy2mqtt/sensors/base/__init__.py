@@ -97,4 +97,5 @@ from .writeable import (  # noqa: F401
     SwitchSensorMixin,
     ThreePhaseAdjustmentTargetValue,
     WriteOnlySensor,
+    WriteOnlySensorMixin,
 )

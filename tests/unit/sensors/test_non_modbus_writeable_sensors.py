@@ -13,6 +13,7 @@ from sigenergy2mqtt.sensors.base import (
     Sensor,
     SwitchSensorMixin,
     WriteableSensorMixin,
+    WriteOnlySensorMixin,
 )
 
 
@@ -37,6 +38,10 @@ class NonModbusSelectSensor(SelectSensorMixin, _NonModbusWriteableSensor):
 
 
 class NonModbusSwitchSensor(SwitchSensorMixin, _NonModbusWriteableSensor):
+    pass
+
+
+class NonModbusWriteOnlySensor(WriteOnlySensorMixin, _NonModbusWriteableSensor):
     pass
 
 
@@ -78,10 +83,12 @@ def sensor_kwargs(name: str) -> dict:
         (NonModbusNumericSensor, {"minimum": 0, "maximum": 100}, "12", 12),
         (NonModbusSelectSensor, {"options": ["Automatic", "Manual"]}, "Manual", 1),
         (NonModbusSwitchSensor, {}, "1", 1),
+        (NonModbusWriteOnlySensor, {}, "on", 1),
+        (NonModbusWriteOnlySensor, {}, "off", 0),
     ],
 )
 async def test_writable_entity_mixins_dispatch_commands_without_modbus(sensor_class, extra_kwargs, command, expected):
-    sensor = sensor_class(**sensor_kwargs(sensor_class.__name__.lower()), **extra_kwargs)
+    sensor = sensor_class(**sensor_kwargs(f"{sensor_class.__name__.lower()}_{command}"), **extra_kwargs)
     sensor.configure_mqtt_topics("test-device")
 
     assert await sensor.set_value(None, MagicMock(), command, sensor.command_topic, MagicMock()) is True
@@ -124,3 +131,40 @@ async def test_select_mixin_matches_modbus_state_conversion():
 
     assert await sensor.get_state(republish=True) == "Manual"
     assert await sensor.get_state(raw=True, republish=True) == 1
+
+
+def test_write_only_mixin_discovery_components():
+    sensor = NonModbusWriteOnlySensor(**sensor_kwargs("btn_test"))
+    comps = sensor.get_discovery_components()
+
+    assert f"{sensor.unique_id}_on" in comps
+    assert f"{sensor.unique_id}_off" in comps
+    assert comps[f"{sensor.unique_id}_on"]["payload_press"] == "on"
+    assert comps[f"{sensor.unique_id}_off"]["payload_press"] == "off"
+    assert comps[f"{sensor.unique_id}_on"]["platform"] == "button"
+    assert comps[f"{sensor.unique_id}_off"]["platform"] == "button"
+
+
+@pytest.mark.asyncio
+async def test_write_only_mixin_validation_and_raw2state():
+    sensor = NonModbusWriteOnlySensor(**sensor_kwargs("btn_valid"))
+
+    assert await sensor._update_internal_state() is False
+    assert await sensor.value_is_valid(None, 1) is True
+    assert await sensor.value_is_valid(None, 0) is True
+    assert await sensor.value_is_valid(None, 2) is False
+    assert sensor._raw2state("0") == "Power Off"
+    assert sensor._raw2state(0) == "Power Off"
+    assert sensor._raw2state("off") == "Power Off"
+    assert sensor._raw2state("1") == "Power On"
+    assert sensor._raw2state(1) == "Power On"
+    assert sensor._raw2state("on") == "Power On"
+    assert sensor._raw2state("unknown") == "unknown"
+
+
+def test_write_only_mixin_validates_icons():
+    with pytest.raises(ValueError, match="on icon.*does not start with 'mdi:'"):
+        NonModbusWriteOnlySensor(**sensor_kwargs("bad_on"), icon_on="invalid")
+
+    with pytest.raises(ValueError, match="off icon.*does not start with 'mdi:'"):
+        NonModbusWriteOnlySensor(**sensor_kwargs("bad_off"), icon_off="invalid")

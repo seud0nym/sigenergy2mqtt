@@ -28,7 +28,7 @@ from sigenergy2mqtt.monitor import MonitorService
 from sigenergy2mqtt.mqtt import interrupt_mqtt_reconnection, mqtt_health_registry, reset_mqtt_reconnection_interrupt
 from sigenergy2mqtt.persistence import Category, state_store
 from sigenergy2mqtt.pvoutput import get_pvoutput_services
-from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, ModbusSensorMixin, SanityCheckException, WriteOnlySensor
+from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, ModbusSensorMixin, SanityCheckException, WriteOnlySensorMixin
 from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, InverterModel, InverterSerialNumber, OutputType, PACKBCUCount, RatedActivePower
 from sigenergy2mqtt.sensors.pid_read_only import PIDSerialNumber
 from sigenergy2mqtt.sensors.plant_ess_preheating_read_write import ESSPreHeatingEnable
@@ -1154,7 +1154,7 @@ async def validate_publishable_sensors(modbus_client: ModbusClient, device: Devi
     if active_config.clean:
         return
 
-    sensors_to_test = [s for s in device.get_all_sensors(search_children=True).values() if isinstance(s, ModbusSensorMixin) and not isinstance(s, WriteOnlySensor) and s.publishable and s.state_count == 0]
+    sensors_to_test = [s for s in device.get_all_sensors(search_children=True).values() if isinstance(s, ModbusSensorMixin) and not isinstance(s, WriteOnlySensorMixin) and s.publishable and s.state_count == 0]
     if not sensors_to_test:
         return
 

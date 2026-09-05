@@ -13,7 +13,7 @@ from typing import Any, cast
 
 from sigenergy2mqtt.common import PERCENTAGE, DeviceClass, ProtocolApplies, ProtocolVersion
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.sensors.base import DiscoveryKeys, ReadableSensorMixin, WriteOnlySensor
+from sigenergy2mqtt.sensors.base import DiscoveryKeys, ReadableSensorMixin, WriteOnlySensor, WriteOnlySensorMixin
 
 from .metrics import Metrics
 
@@ -831,7 +831,7 @@ class PVOutputUploadMin(MetricsSensor):
 # =============================================================================
 
 
-class ResetMetrics(WriteOnlySensor):
+class ResetMetrics(WriteOnlySensorMixin):
     """Button that resets all metrics counters to their default values.
 
     Unlike typical :class:`WriteOnlySensor` subclasses this sensor:
@@ -846,10 +846,14 @@ class ResetMetrics(WriteOnlySensor):
     def __init__(self):
         super().__init__(
             name="Reset Metrics",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_metrics_reset",
             object_id="sigenergy2mqtt_metrics_reset",
-            plant_index=0,  # Required for assertions, but not used
-            device_address=1,  # Required for assertions, but not used
-            address=99999,  # Required for assertions, but not used
+            unit=None,
+            device_class=None,
+            state_class=None,
+            icon=None,
+            gain=None,
+            precision=None,
             protocol_version=ProtocolVersion.N_A,
             icon_off="mdi:reload",
             icon_on="mdi:reload",
@@ -859,7 +863,6 @@ class ResetMetrics(WriteOnlySensor):
             payload_on=self._PAYLOAD_PRESS,
             value_off=1,
             value_on=1,
-            unique_id_override=f"{active_config.home_assistant.unique_id_prefix}_metrics_reset",
         )
         self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
