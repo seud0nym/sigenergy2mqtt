@@ -54,18 +54,59 @@ jobs:
           cache: "pip"
 
       - name: Fix README links for PyPI
+        env:
+          REF: ${{ steps.ref.outputs.ref }}
+          REPOSITORY: ${{ github.repository }}
         run: |
-          REF="${{ steps.ref.outputs.ref }}"
-          REPO="https://github.com/${{ github.repository }}/blob/${REF}"
-          REPO_RAW="https://github.com/${{ github.repository }}/raw/${REF}"
+          python - <<'PY'
+          import os
+          import re
 
-          # Rewrite ./ and ../ links
-          sed -i -E 's|\]\(\./|]('"${REPO}"'/|g' README.md
-          sed -i -E 's|\]\(\.\./|]('"${REPO}"'/|g' README.md
+          ref = os.environ["REF"]
+          repository = os.environ["REPOSITORY"]
 
-          # Rewrite resource paths safely (badges/ must come before resources/)
-          sed -i -E 's|\]\((resources/badges/)|]('"${REPO_RAW}"'/\1|g' README.md
-          sed -i -E 's|\]\((resources/)|]('"${REPO}"'/\1|g' README.md
+          repo = f"https://github.com/{repository}/blob/{ref}"
+          repo_raw = f"https://raw.githubusercontent.com/{repository}/{ref}"
+
+          path = "README.md"
+          text = open(path, encoding="utf-8").read()
+
+          # HTML images -> raw GitHub
+          text = re.sub(
+              r'(<img\s+[^>]*src=["\'])\./([^"\']+)(["\'])',
+              rf'\g<1>{repo_raw}/\2\3',
+              text,
+          )
+
+          text = re.sub(
+              r'(<img\s+[^>]*src=["\'])(resources/[^"\']+)(["\'])',
+              rf'\g<1>{repo_raw}/\2\3',
+              text,
+          )
+
+          # Markdown images -> raw GitHub
+          text = re.sub(
+              r'(!\[[^\]]*\]\()(\./|)(resources/[^)\s]+)(\))',
+              rf'\g<1>{repo_raw}/\3\4',
+              text,
+          )
+
+          # Markdown relative links -> GitHub blob
+          text = re.sub(
+              r'(\[[^\]]+\]\()(\./|\.\./)([^)\s]+)(\))',
+              rf'\g<1>{repo}/\3\4',
+              text,
+          )
+
+          # Markdown resources links -> GitHub blob
+          text = re.sub(
+              r'(\[[^\]]+\]\()(resources/[^)\s]+)(\))',
+              rf'\g<1>{repo}/\2\3',
+              text,
+          )
+
+          open(path, "w", encoding="utf-8").write(text)
+          PY
 
       - name: Install build tools
         run: |
