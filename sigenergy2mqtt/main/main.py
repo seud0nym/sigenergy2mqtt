@@ -246,17 +246,17 @@ async def probe_optional_interface(modbus_client: ModbusClient, register: int, i
 # ---------------------------------------------------------------------------
 
 
-async def make_ac_charger(plant_index: int, modbus_client: ModbusClient, device_address: int, plant: PowerPlant, sequence_number: int | None = None, total_count: int | None = None) -> ACCharger:
+async def make_ac_charger(plant_index: int, device_address: int, modbus_client: ModbusClient, plant: PowerPlant, sequence_number: int | None = None, total_count: int | None = None) -> ACCharger:
     """Create an AC charger device and link it to the parent plant.
 
     Side effects: performs async device initialisation reads and sets
     ``via_device`` to the plant unique ID for topology/discovery metadata.
     """
     charger = await ACCharger.create(
-        plant_index,
-        device_address,
-        plant.protocol_version,
-        modbus_client,
+        plant_index=plant_index,
+        device_address=device_address,
+        protocol_version=plant.protocol_version,
+        modbus_client=modbus_client,
         sequence_number=sequence_number,
         total_count=total_count,
     )
@@ -264,16 +264,19 @@ async def make_ac_charger(plant_index: int, modbus_client: ModbusClient, device_
     return charger
 
 
-async def make_dc_charger(plant_index: int, device_address: int, protocol_version: ProtocolVersion, inverter_unique_id: str, sequence_number: int | None = None, total_count: int | None = None) -> DCCharger:
+async def make_dc_charger(
+    plant_index: int, device_address: int, modbus_client: ModbusClient, plant: PowerPlant, inverter_unique_id: str, sequence_number: int | None = None, total_count: int | None = None
+) -> DCCharger:
     """Create a DC charger device and associate it with its inverter.
 
     Side effects: performs async device initialisation and sets ``via_device``
     to the owning inverter unique ID.
     """
     charger = await DCCharger.create(
-        plant_index,
-        device_address,
-        protocol_version,
+        plant_index=plant_index,
+        device_address=device_address,
+        protocol_version=plant.protocol_version,
+        modbus_client=modbus_client,
         sequence_number=sequence_number,
         total_count=total_count,
     )
@@ -282,7 +285,7 @@ async def make_dc_charger(plant_index: int, device_address: int, protocol_versio
 
 
 async def make_pid(
-    plant_index: int, modbus_client: ModbusClient, device_address: int, plant: PowerPlant, seen_serial_numbers: set[str], sequence_number: int | None = None, total_count: int | None = None
+    plant_index: int, device_address: int, modbus_client: ModbusClient, plant: PowerPlant, seen_serial_numbers: set[str], sequence_number: int | None = None, total_count: int | None = None
 ) -> PID | None:
     """Create a PID device and link it to the parent plant.
 
@@ -293,10 +296,10 @@ async def make_pid(
     ``via_device`` to the plant unique ID for topology/discovery metadata.
     """
     pid = await PID.create(
-        plant_index,
-        device_address,
-        plant.protocol_version,
-        modbus_client,
+        plant_index=plant_index,
+        device_address=device_address,
+        protocol_version=plant.protocol_version,
+        modbus_client=modbus_client,
     )
     pid.via_device = plant.unique_id
 
@@ -391,10 +394,10 @@ async def make_pss(
     ``via_device`` to the plant unique ID for topology/discovery metadata.
     """
     pss = await PSS.create(
-        plant_index,
-        device_address,
-        plant.protocol_version,
-        modbus_client,
+        plant_index=plant_index,
+        device_address=device_address,
+        protocol_version=plant.protocol_version,
+        modbus_client=modbus_client,
     )
     pss.via_device = plant.unique_id
 
@@ -488,50 +491,50 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
                     await validate_publishable_sensors(modbus, inverter, inverter_firmware_versions)
 
                 dc_charger_sequence = await _setup_dc_chargers(
-                    plant_index,
-                    device,
-                    plant,
-                    modbus,
-                    inverters,
-                    config,
-                    dc_charger_sequence,
-                    total_dc_chargers,
-                    inverter_firmware_versions,
+                    plant_index=plant_index,
+                    device=device,
+                    plant=plant,
+                    modbus_client=modbus,
+                    inverters=inverters,
+                    config=config,
+                    sequence_start=dc_charger_sequence,
+                    total_count=total_dc_chargers,
+                    inverter_firmware_versions=inverter_firmware_versions,
                 )
                 ac_charger_sequence = await _setup_ac_chargers(
-                    plant_index,
-                    device,
-                    plant,
-                    modbus,
-                    config,
-                    protocol_version,
-                    ac_charger_sequence,
-                    total_ac_chargers,
-                    inverter_firmware_versions,
+                    plant_index=plant_index,
+                    device=device,
+                    plant=plant,
+                    modbus_client=modbus,
+                    config=config,
+                    protocol_version=protocol_version,
+                    sequence_start=ac_charger_sequence,
+                    total_count=total_ac_chargers,
+                    inverter_firmware_versions=inverter_firmware_versions,
                 )
                 pid_sequence = await _setup_pid(
-                    plant_index,
-                    device,
-                    plant,
-                    seen_serial_numbers,
-                    modbus,
-                    config,
-                    protocol_version,
-                    pid_sequence,
-                    len(device.pid) if device.pid else 0,
-                    inverter_firmware_versions,
+                    plant_index=plant_index,
+                    device=device,
+                    plant=plant,
+                    seen_serial_numbers=seen_serial_numbers,
+                    modbus_client=modbus,
+                    config=config,
+                    protocol_version=protocol_version,
+                    sequence_start=pid_sequence,
+                    total_count=len(device.pid) if device.pid else 0,
+                    inverter_firmware_versions=inverter_firmware_versions,
                 )
                 pss_sequence = await _setup_pss(
-                    plant_index,
-                    device,
-                    plant,
-                    seen_serial_numbers,
-                    modbus,
-                    config,
-                    protocol_version,
-                    pss_sequence,
-                    len(device.pss) if device.pss else 0,
-                    inverter_firmware_versions,
+                    plant_index=plant_index,
+                    device=device,
+                    plant=plant,
+                    seen_serial_numbers=seen_serial_numbers,
+                    modbus_client=modbus,
+                    config=config,
+                    protocol_version=protocol_version,
+                    sequence_start=pss_sequence,
+                    total_count=len(device.pss) if device.pss else 0,
+                    inverter_firmware_versions=inverter_firmware_versions,
                 )
 
                 # Finalise cross-device sensor bindings now that all inverters and chargers are registered
@@ -694,10 +697,10 @@ async def _setup_ac_chargers(
         sequence_number += 1
         try:
             charger = await make_ac_charger(
-                plant_index,
-                modbus_client,
-                device_address,
-                plant,
+                plant_index=plant_index,
+                device_address=device_address,
+                modbus_client=modbus_client,
+                plant=plant,
                 sequence_number=sequence_number,
                 total_count=total_count,
             )
@@ -747,10 +750,11 @@ async def _setup_dc_chargers(
             continue
         sequence_number += 1
         charger = await make_dc_charger(
-            plant_index,
-            device_address,
-            plant.protocol_version,
-            inverters[device_address],
+            plant_index=plant_index,
+            device_address=device_address,
+            modbus_client=modbus_client,
+            plant=plant,
+            inverter_unique_id=inverters[device_address],
             sequence_number=sequence_number,
             total_count=total_count,
         )
@@ -785,11 +789,11 @@ async def _setup_pid(
         sequence_number += 1
         try:
             pid = await make_pid(
-                plant_index,
-                modbus_client,
-                device_address,
-                plant,
-                seen_serial_numbers,
+                plant_index=plant_index,
+                modbus_client=modbus_client,
+                device_address=device_address,
+                plant=plant,
+                seen_serial_numbers=seen_serial_numbers,
                 sequence_number=sequence_number,
                 total_count=total_count,
             )
@@ -836,11 +840,11 @@ async def _setup_pss(
         sequence_number += 1
         try:
             pss = await make_pss(
-                plant_index,
-                modbus_client,
-                device_address,
-                plant,
-                seen_serial_numbers,
+                plant_index=plant_index,
+                device_address=device_address,
+                modbus_client=modbus_client,
+                plant=plant,
+                seen_serial_numbers=seen_serial_numbers,
                 sequence_number=sequence_number,
                 total_count=total_count,
             )
