@@ -35,6 +35,7 @@ from sigenergy2mqtt.common import DeviceClass, FirmwareVersion, HybridInverter, 
 from sigenergy2mqtt.config import Config, SettingsService, _swap_active_config, active_config, initialize
 from sigenergy2mqtt.devices import PID, PSS, ACCharger, DCCharger, Device, Inverter, PowerPlant
 from sigenergy2mqtt.metrics import MetricsService
+from sigenergy2mqtt.metrics.sensors import Started
 from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerInputBreaker, ACChargerRatedCurrent, ACChargerRunningState
 from sigenergy2mqtt.sensors.ac_charger_read_write import ACChargerStatus
@@ -326,7 +327,7 @@ async def get_sensor_instances(
         # Check for missing unit of measurement on concrete sensor classes, excluding known exceptions
         if (
             s.unit is None
-            and not isinstance(s, (AlarmSensor, AlarmCombinedSensor, TimestampSensor))
+            and not isinstance(s, (AlarmSensor, AlarmCombinedSensor, TimestampSensor, Started))
             and (s.device_class is not None and s.device_class not in (DeviceClass.ENUM))
             and "Factor" not in s.__class__.__name__
         ):
