@@ -103,7 +103,7 @@ class Reserved41001(ReservedSensor):
 class DCChargerMaxChargingPowerLimit(NumericSensor, HybridInverter):
     ADDRESS = 41002
 
-    def __init__(self, plant_index: int, device_address: int):
+    def __init__(self, plant_index: int, device_address: int, rated_charging_power: float):
         super().__init__(
             availability_control_sensor=None,
             name="Max Charging Power Limit",
@@ -122,6 +122,7 @@ class DCChargerMaxChargingPowerLimit(NumericSensor, HybridInverter):
             precision=2,
             protocol_version=ProtocolVersion.V2_9,
             minimum=0.0,
+            maximum=rated_charging_power,
         )
 
     def get_attributes(self) -> dict[str, float | int | str]:
@@ -133,7 +134,7 @@ class DCChargerMaxChargingPowerLimit(NumericSensor, HybridInverter):
 class DCChargerMaxDischargingPowerLimit(NumericSensor, HybridInverter):
     ADDRESS = 41004
 
-    def __init__(self, plant_index: int, device_address: int):
+    def __init__(self, plant_index: int, device_address: int, rated_discharging_power: float):
         super().__init__(
             availability_control_sensor=None,
             name="Max Discharging Power Limit",
@@ -152,6 +153,7 @@ class DCChargerMaxDischargingPowerLimit(NumericSensor, HybridInverter):
             precision=2,
             protocol_version=ProtocolVersion.V2_9,
             minimum=0.0,
+            maximum=rated_discharging_power,
         )
 
     def get_attributes(self) -> dict[str, float | int | str]:

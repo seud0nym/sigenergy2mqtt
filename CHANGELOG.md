@@ -25,6 +25,7 @@
 - Implemented improved firmware update detection and subsequent restart policy
 - Implemented stale state solutions for Derived Sensors
 - Simplified Metrics sensors by removing the need for _update_internal_state to be overridden in most cases
+- Set maximum value for DC Charger Max Charging/Discharging Power Limit from Rated Charging/Discharging Power
 - Upgraded `pydantic-settings` from 2.14.2 to 2.15.0
 - Upgraded `pymodbus` from 3.14.0 to 3.15.0
 

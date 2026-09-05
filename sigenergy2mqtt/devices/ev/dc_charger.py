@@ -1,8 +1,11 @@
+from typing import cast
+
 import sigenergy2mqtt.sensors.inverter_read_only as ro
 import sigenergy2mqtt.sensors.inverter_read_write as rw
 from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.common.types import NonInverter
 from sigenergy2mqtt.devices import ModbusDevice
+from sigenergy2mqtt.modbus import ModbusClient
 
 
 class DCCharger(ModbusDevice):
@@ -34,14 +37,20 @@ class DCCharger(ModbusDevice):
         plant_index: int,
         device_address: int,
         protocol_version: ProtocolVersion,
+        modbus_client: ModbusClient,
         sequence_number: int | None = None,
         total_count: int | None = None,
     ) -> "DCCharger":
         charger = cls(plant_index, device_address, protocol_version, sequence_number=sequence_number, total_count=total_count)
-        await charger._register_sensors(plant_index, device_address)
+        await charger._register_sensors(plant_index, device_address, modbus_client)
         return charger
 
-    async def _register_sensors(self, plant_index: int, device_address: int) -> None:
+    async def _register_sensors(self, plant_index: int, device_address: int, modbus_client: ModbusClient) -> None:
+        rated_charging_power = ro.DCChargerRatedChargingPower(plant_index, device_address)
+        rated_discharging_power = ro.DCChargerRatedDischargingPower(plant_index, device_address)
+        rcp_value = await rated_charging_power.get_state(modbus_client=modbus_client, raw=True)
+        rdp_value = await rated_discharging_power.get_state(modbus_client=modbus_client, raw=True)
+
         self._add_sensor(ro.DCChargerOutputPower(plant_index, device_address))
         self._add_sensor(ro.DCChargerCurrentChargingCapacity(plant_index, device_address))
         self._add_sensor(ro.DCChargerCurrentChargingDuration(plant_index, device_address))
@@ -55,11 +64,11 @@ class DCCharger(ModbusDevice):
         self._add_sensor(ro.DCChargerCurrentDischargingDuration(plant_index, device_address))
         self._add_sensor(ro.DCChargerTotalChargingCapacity(plant_index, device_address))
         self._add_sensor(ro.DCChargerTotalDischargingCapacity(plant_index, device_address))
-        self._add_sensor(ro.DCChargerRatedChargingPower(plant_index, device_address))
-        self._add_sensor(ro.DCChargerRatedDischargingPower(plant_index, device_address))
+        self._add_sensor(rated_charging_power)
+        self._add_sensor(rated_discharging_power)
 
         self._add_sensor(rw.DCChargerStatus(plant_index, device_address))
-        self._add_sensor(rw.DCChargerMaxChargingPowerLimit(plant_index, device_address))
-        self._add_sensor(rw.DCChargerMaxDischargingPowerLimit(plant_index, device_address))
+        self._add_sensor(rw.DCChargerMaxChargingPowerLimit(plant_index, device_address, rated_charging_power=cast(float, rcp_value)))
+        self._add_sensor(rw.DCChargerMaxDischargingPowerLimit(plant_index, device_address, rated_discharging_power=cast(float, rdp_value)))
 
         self._add_sensor(rw.Reserved41001(plant_index, device_address))
