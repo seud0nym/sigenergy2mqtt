@@ -40,6 +40,7 @@ for arg in "$@"; do
 done
 
 changed_files=y
+changed_py=0
 if ls dist/sigenergy2mqtt-*-py3-none-any.whl >/dev/null 2>&1; then
     file_list=$(find . -newer $(ls -t dist/sigenergy2mqtt-*-py3-none-any.whl | head -n 1) -type f | grep -E '(\.(py|yaml|html)$|Dockerfile)')
     if [[ $(echo "$file_list" | grep -v 'sigenergy2mqtt/config/version.py\|sigenergy2mqtt/translations/en.yaml\|^[[:blank:]]*$' | wc -l) = 0 ]]; then
@@ -47,6 +48,7 @@ if ls dist/sigenergy2mqtt-*-py3-none-any.whl >/dev/null 2>&1; then
     else
         echo -e "${GREEN}>>> Changed files found${NC}"
         echo -e "${GREY}${file_list}${NC}"
+        changed_py=$(echo "$file_list" | grep '\.py$' | grep -v 'sigenergy2mqtt/config/version.py' | wc -l)
     fi
 fi
 if [[ $force_build = n && $changed_files = n ]]; then
@@ -128,11 +130,14 @@ if [[ $skip_extras = n ]]; then
 fi
 
 if [[ $new_version != $old_version && $skip_extras = n ]]; then
-    echo -e "${GREEN}>>> Running test suite...${NC}"
-    pytest -n logical -q --disable-warnings || exit
+    if [[ $changed_py -eq 0 ]]; then
+        echo -e "${ORANGE}>>> Skipped test suite (no Python files changed)${NC}"
+    else
+        echo -e "${GREEN}>>> Running test suite...${NC}"
+        pytest -n logical -q --disable-warnings || exit
 
-    echo -e "${GREEN}>>> Checking sensors...${NC}"
-    python3 - <<EOF2 || exit
+        echo -e "${GREEN}>>> Checking sensors...${NC}"
+        python3 - <<EOF2 || exit
 import asyncio, logging
 from tests.utils import get_sensor_instances
 logging.basicConfig(level=logging.WARNING)
@@ -141,6 +146,7 @@ async def check():
     await get_sensor_instances(home_assistant_enabled=False)
 asyncio.run(check())
 EOF2
+    fi
     echo -e "${GREEN}>>> Updating documentation...${NC}"
     scripts/update_md "$new_version"
 fi
