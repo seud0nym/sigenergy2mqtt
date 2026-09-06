@@ -918,16 +918,11 @@ class ResetMetrics(WriteOnlySensorMixin):
     def publish_attributes(self, mqtt_client: Any, clean: bool = False, **kwargs) -> None:
         """Metrics sensors do not publish extra MQTT attributes."""
 
-    async def set_value(self, modbus_client: Any | None, mqtt_client: Any, value: float | str, source: str, handler: Any) -> bool:
-        """Reset metrics without touching Modbus."""
-        self.force_publish = True
-        if str(value) == self._PAYLOAD_PRESS:
-            logger.info("ResetMetrics: Resetting all metrics counters")
+    async def _write_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
+        """Reset metrics counters."""
+        if str(value) == "1":
+            logger.info(f"{self.log_identity} Resetting all metrics counters")
             await Metrics.reset()
             return True
         logger.warning(f"ResetMetrics: Ignored unexpected payload '{value}'")
         return False
-
-    async def value_is_valid(self, modbus_client: Any | None, raw_value: float | str) -> bool:
-        """Accept the reset payload."""
-        return str(raw_value) == self._PAYLOAD_PRESS
