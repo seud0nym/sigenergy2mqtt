@@ -23,7 +23,7 @@ from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 from sigenergy2mqtt.common import ConsumptionMethod, HybridInverter, ProtocolVersion, PVInverter
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.config.sensors import SettingsSensor
-from sigenergy2mqtt.metrics.sensors import MetricsSensor
+from sigenergy2mqtt.metrics.sensors import MetricsSensor, ResetMetrics
 from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, ModbusSensorMixin, ReadableSensorMixin, ReservedSensor, Sensor, TypedSensorMixin, WriteableSensorMixin, WriteOnlySensor
 from sigenergy2mqtt.sensors.plant_derived import PlantConsumedPower
 from sigenergy2mqtt.sensors.plant_read_write import RemoteEMSLimit
@@ -258,7 +258,7 @@ async def sensor_index() -> None:
                     f.write(f"<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>{sensor.state_topic}</td></tr>\n")
                     if sensor.publish_raw:
                         f.write(f"<tr><td>Raw&nbsp;State&nbsp;Topic</td><td>{sensor['raw_state_topic']}</td></tr>\n")
-                    if not isinstance(sensor, (MetricsSensor, SettingsSensor)):
+                    if not isinstance(sensor, (MetricsSensor, ResetMetrics, SettingsSensor)):
                         f.write("<tr><td>Source</td><td>")
                         if "source" in attributes:
                             if isinstance(sensor, PlantConsumedPower):
