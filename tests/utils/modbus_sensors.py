@@ -265,6 +265,7 @@ async def get_sensor_instances(
 
     active_config.home_assistant.enabled = home_assistant_enabled
     active_config.influxdb.enabled = True
+    active_config.pvoutput.enabled = True
 
     hi_device_type = HybridInverter(has_grid_code_interface=True, has_independent_phase_power_control_interface=True)
     hi_modbus_client = DummyInverterModbusClient("SigenStor EC 12.0 TP", "CMU123A45BP678")
