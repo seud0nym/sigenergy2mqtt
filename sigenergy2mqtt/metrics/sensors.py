@@ -13,7 +13,7 @@ from typing import Any, cast
 
 from sigenergy2mqtt.common import PERCENTAGE, DeviceClass, ProtocolApplies, ProtocolVersion
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.sensors.base import DiscoveryKeys, ReadableSensorMixin, WriteOnlySensor, WriteOnlySensorMixin
+from sigenergy2mqtt.sensors.base import DiscoveryKeys, ReadableSensorMixin, WriteOnlySensorMixin
 
 from .metrics import Metrics
 
@@ -918,7 +918,7 @@ class ResetMetrics(WriteOnlySensorMixin):
     def publish_attributes(self, mqtt_client: Any, clean: bool = False, **kwargs) -> None:
         """Metrics sensors do not publish extra MQTT attributes."""
 
-    async def _write_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
+    async def _write_value(self, modbus_client: Any | None, mqtt_client: Any, value: float | str, source: str, handler: Any) -> bool:
         """Reset metrics counters."""
         if str(value) == "1":
             logger.info(f"{self.log_identity} Resetting all metrics counters")
