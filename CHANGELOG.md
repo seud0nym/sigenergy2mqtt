@@ -16,6 +16,7 @@
 - Fixed bug that allowed derived sensors to bind to stale devices on restart, causing them to fail to update
 - Fixed Home Assistant start-up log message "No device components to cleanup for sigen_diagnostics, node_id 'None'"
 - Reduced log level for expected WebSocket timeout errors in diagnostics server
+- Ensured WriteOnlySensorMixin sensors are correctly seeded in Modbus test server to prevent ILLEGAL_ADDRESS errors
 
 ### Changed
 
