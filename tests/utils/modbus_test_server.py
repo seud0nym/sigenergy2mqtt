@@ -1338,7 +1338,7 @@ if __name__ == "__main__":
     # module will have already attached their own handlers; basicConfig() is a
     # no-op in that case.
     logging.basicConfig(
-        level=logging.DEBUG,
+        level=logging.INFO,
         format="%(asctime)s %(levelname)-8s %(name)s: %(message)s",
         datefmt="%Y-%m-%dT%H:%M:%S",
     )
