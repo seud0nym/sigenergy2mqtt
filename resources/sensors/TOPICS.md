@@ -6275,7 +6275,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Modbus Registers 41002-41003</td></tr>
 <tr><td>Comment</td><td>Maximum DC charger charging power limit</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.9</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0.0 kW and 500.0 kW (0 ≦ raw value ≦ 500000)</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0.0 kW and 25000.0 kW (0 ≦ raw value ≦ 25000000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_41004'>Max Discharging Power Limit</a></h5>
 <table>
@@ -6289,7 +6289,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Source</td><td>Modbus Registers 41004-41005</td></tr>
 <tr><td>Comment</td><td>Maximum DC charger discharging power limit</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.9</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0.0 kW and 500.0 kW (0 ≦ raw value ≦ 500000)</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0.0 kW and 25000.0 kW (0 ≦ raw value ≦ 25000000)</td></tr>
 </table>
 <h5><a id='sigen_0_001_31502'>Output Power</a></h5>
 <table>
@@ -6424,6 +6424,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_dc_charger_1_max_charging_power_limit/set</td></tr>
 <tr><td>Comment</td><td>Maximum DC charger charging power limit</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>25000.0</td></tr>
 <tr><td>Since&nbsp;ProtocolVersion&nbsp;Version</td><td>2.9</td></tr>
 </table>
 <h5><a id='sigen_0_001_41004_set'>Max Discharging Power Limit
@@ -6433,6 +6434,7 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_dc_charger_1_max_discharging_power_limit/set</td></tr>
 <tr><td>Comment</td><td>Maximum DC charger discharging power limit</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>25000.0</td></tr>
 <tr><td>Since&nbsp;ProtocolVersion&nbsp;Version</td><td>2.9</td></tr>
 </table>
 
@@ -6709,6 +6711,69 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
+<h5><a id='sigen_pvoutput_upload_errors'>PVOutput Upload Errors</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVOutputUploadErrors</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_pvoutput_upload_errors</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/pvoutput_upload_errors</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/pvoutput_upload_errors</td></tr>
+</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
+</table>
+<h5><a id='sigen_pvoutput_upload_max'>PVOutput Upload Max</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVOutputUploadMax</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>ms</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_pvoutput_upload_max</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/pvoutput_upload_max</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/pvoutput_upload_max</td></tr>
+</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
+</table>
+<h5><a id='sigen_pvoutput_upload_mean'>PVOutput Upload Mean</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVOutputUploadMean</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>ms</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_pvoutput_upload_mean</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/pvoutput_upload_mean</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/pvoutput_upload_mean</td></tr>
+</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
+</table>
+<h5><a id='sigen_pvoutput_upload_min'>PVOutput Upload Min</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVOutputUploadMin</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>ms</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_pvoutput_upload_min</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/pvoutput_upload_min</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/pvoutput_upload_min</td></tr>
+</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
+</table>
+<h5><a id='sigen_pvoutput_upload_skipped'>PVOutput Upload Skipped</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVOutputUploadSkipped</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_pvoutput_upload_skipped</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/pvoutput_upload_skipped</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/pvoutput_upload_skipped</td></tr>
+</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
+</table>
+<h5><a id='sigen_pvoutput_uploads'>PVOutput Uploads</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVOutputUploads</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_pvoutput_uploads</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/pvoutput_uploads</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/pvoutput_uploads</td></tr>
+</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
+</table>
 <h5><a id='sigen_modbus_protocol_published'>Protocol Published</a></h5>
 <table>
 <tr><td>Sensor&nbsp;Class</td><td>ProtocolPublished</td></tr>
@@ -6728,6 +6793,15 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_protocol</td></tr>
 </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.9</td></tr>
+</table>
+<h5><a id='sigen_metrics_reset'>Reset Metrics</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>ResetMetrics</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_metrics_reset</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/metrics_reset</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/metrics_reset</td></tr>
+</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
 </table>
 <h5><a id='sigen_started'>Started</a></h5>
 <table>
@@ -6936,6 +7010,58 @@ InfluxDB and PVOutput settings are only published when those options are enabled
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
 <tr><td>Sanity&nbsp;Check</td><td>The value must be between 0  and 50  (0 ≦ raw value ≦ 50)</td></tr>
 </table>
+<h5><a id='sigenergy2mqtt_config_pvoutput_log_level'>PVOutput Log Level</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVOutputLogLevel</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>60s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_config_pvoutput_log_level</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/pvoutput/log_level/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/pvoutput/log_level/state</td></tr>
+<tr><td>Raw&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/pvoutput/log_level/raw</td></tr>
+</td></tr>
+<tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='10'>DEBUG</li><li value='20'>INFO</li><li value='30'>WARNING</li><li value='40'>ERROR</li><li value='50'>CRITICAL</li></ol></td></tr>
+<tr><td>Comment</td><td>The PVOutput interface logging level</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0  and 50  (0 ≦ raw value ≦ 50)</td></tr>
+</table>
+<h5><a id='sigenergy2mqtt_config_pvoutput_upload_log_level'>PVOutput Upload Log Level</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVOutputUploadLogLevel</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>60s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_config_pvoutput_upload_log_level</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/pvoutput/upload_log_level/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/pvoutput/upload_log_level/state</td></tr>
+<tr><td>Raw&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/pvoutput/upload_log_level/raw</td></tr>
+</td></tr>
+<tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='10'>DEBUG</li><li value='20'>INFO</li><li value='30'>WARNING</li><li value='40'>ERROR</li><li value='50'>CRITICAL</li></ol></td></tr>
+<tr><td>Comment</td><td>The PVOutput upload payload logging level. If the overall PVOutput Log Level is set to a level higher than the level specified for this option (e.g. this option is set to INFO and PVOutput Log Level is set to WARNING), then the upload log messages will be suppressed.</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0  and 50  (0 ≦ raw value ≦ 50)</td></tr>
+</table>
+<h5><a id='sigenergy2mqtt_config_pvoutput_calc_debug_logging'>PVOutput Value Calculation Debugging</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVOutputCalcDebugLogging</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>60s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_config_pvoutput_calc_debug_logging</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/pvoutput/calc_debug_logging/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/pvoutput/calc_debug_logging/state</td></tr>
+</td></tr>
+<tr><td>Comment</td><td>If enabled the aggregation of values for uploading to PVOutput will be logged at the `DEBUG` level.  Only applicable if the PVOutput Log Level is set to DEBUG.</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0  and 1  (0 ≦ raw value ≦ 1)</td></tr>
+</table>
+<h5><a id='sigenergy2mqtt_config_pvoutput_update_debug_logging'>PVOutput Value Update Debugging</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVOutputUpdateDebugLogging</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>60s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_config_pvoutput_update_debug_logging</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/pvoutput/update_debug_logging/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/pvoutput/update_debug_logging/state</td></tr>
+</td></tr>
+<tr><td>Comment</td><td>If enabled the updating of values for uploading to PVOutput will be logged at the DEBUG level. Only applicable if PVOutput Log Level is set to DEBUG.</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0  and 1  (0 ≦ raw value ≦ 1)</td></tr>
+</table>
 <h5><a id='sigenergy2mqtt_config_persistence_debug'>Persistence Debugging</a></h5>
 <table>
 <tr><td>Sensor&nbsp;Class</td><td>PersistenceDebugging</td></tr>
@@ -7018,6 +7144,40 @@ InfluxDB and PVOutput settings are only published when those options are enabled
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/modbus/log_level/set</td></tr>
 <tr><td>Comment</td><td>The Modbus interface logging level</td></tr>
 <tr><td>Valid&nbsp;Values</td><td><ul><li value='10'>"DEBUG"</li><li value='20'>"INFO"</li><li value='30'>"WARNING"</li><li value='40'>"ERROR"</li><li value='50'>"CRITICAL"</li></ol></td></tr>
+<tr><td>Since&nbsp;ProtocolVersion&nbsp;Version</td><td>N/A</td></tr>
+</table>
+<h5><a id='sigenergy2mqtt_config_pvoutput_log_level_set'>PVOutput Log Level
+</a></h5>
+<table>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/pvoutput/log_level/set</td></tr>
+<tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/pvoutput/log_level/set</td></tr>
+<tr><td>Comment</td><td>The PVOutput interface logging level</td></tr>
+<tr><td>Valid&nbsp;Values</td><td><ul><li value='10'>"DEBUG"</li><li value='20'>"INFO"</li><li value='30'>"WARNING"</li><li value='40'>"ERROR"</li><li value='50'>"CRITICAL"</li></ol></td></tr>
+<tr><td>Since&nbsp;ProtocolVersion&nbsp;Version</td><td>N/A</td></tr>
+</table>
+<h5><a id='sigenergy2mqtt_config_pvoutput_upload_log_level_set'>PVOutput Upload Log Level
+</a></h5>
+<table>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/pvoutput/upload_log_level/set</td></tr>
+<tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/pvoutput/upload_log_level/set</td></tr>
+<tr><td>Comment</td><td>The PVOutput upload payload logging level. If the overall PVOutput Log Level is set to a level higher than the level specified for this option (e.g. this option is set to INFO and PVOutput Log Level is set to WARNING), then the upload log messages will be suppressed.</td></tr>
+<tr><td>Valid&nbsp;Values</td><td><ul><li value='10'>"DEBUG"</li><li value='20'>"INFO"</li><li value='30'>"WARNING"</li><li value='40'>"ERROR"</li><li value='50'>"CRITICAL"</li></ol></td></tr>
+<tr><td>Since&nbsp;ProtocolVersion&nbsp;Version</td><td>N/A</td></tr>
+</table>
+<h5><a id='sigenergy2mqtt_config_pvoutput_calc_debug_logging_set'>PVOutput Value Calculation Debugging
+</a></h5>
+<table>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/pvoutput/calc_debug_logging/set</td></tr>
+<tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/pvoutput/calc_debug_logging/set</td></tr>
+<tr><td>Comment</td><td>If enabled the aggregation of values for uploading to PVOutput will be logged at the `DEBUG` level.  Only applicable if the PVOutput Log Level is set to DEBUG.</td></tr>
+<tr><td>Since&nbsp;ProtocolVersion&nbsp;Version</td><td>N/A</td></tr>
+</table>
+<h5><a id='sigenergy2mqtt_config_pvoutput_update_debug_logging_set'>PVOutput Value Update Debugging
+</a></h5>
+<table>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/pvoutput/update_debug_logging/set</td></tr>
+<tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/pvoutput/update_debug_logging/set</td></tr>
+<tr><td>Comment</td><td>If enabled the updating of values for uploading to PVOutput will be logged at the DEBUG level. Only applicable if PVOutput Log Level is set to DEBUG.</td></tr>
 <tr><td>Since&nbsp;ProtocolVersion&nbsp;Version</td><td>N/A</td></tr>
 </table>
 <h5><a id='sigenergy2mqtt_config_persistence_debug_set'>Persistence Debugging
@@ -7567,8 +7727,15 @@ The attributes payload currently includes:
 <a href='#sigen_modbus_write_max'>Modbus Write Max</a><br>
 <a href='#sigen_modbus_write_mean'>Modbus Write Mean</a><br>
 <a href='#sigen_modbus_write_min'>Modbus Write Min</a><br>
+<a href='#sigen_pvoutput_upload_errors'>PVOutput Upload Errors</a><br>
+<a href='#sigen_pvoutput_upload_max'>PVOutput Upload Max</a><br>
+<a href='#sigen_pvoutput_upload_mean'>PVOutput Upload Mean</a><br>
+<a href='#sigen_pvoutput_upload_min'>PVOutput Upload Min</a><br>
+<a href='#sigen_pvoutput_upload_skipped'>PVOutput Upload Skipped</a><br>
+<a href='#sigen_pvoutput_uploads'>PVOutput Uploads</a><br>
 <a href='#sigen_modbus_protocol_published'>Protocol Published</a><br>
 <a href='#sigen_modbus_protocol'>Protocol Version</a><br>
+<a href='#sigen_metrics_reset'>Reset Metrics</a><br>
 <a href='#sigen_started'>Started</a><br>
 <a href='#sigen_state_store_delete_errors'>State Store Delete Errors</a><br>
 <a href='#sigen_state_store_deletes'>State Store Deletes</a><br>
@@ -7587,6 +7754,10 @@ The attributes payload currently includes:
 <a href='#sigenergy2mqtt_config_influxdb_log_level'>InfluxDB Log Level</a><br>
 <a href='#sigenergy2mqtt_config_mqtt_log_level'>MQTT Log Level</a><br>
 <a href='#sigenergy2mqtt_config_modbus_log_level'>Modbus Log Level</a><br>
+<a href='#sigenergy2mqtt_config_pvoutput_log_level'>PVOutput Log Level</a><br>
+<a href='#sigenergy2mqtt_config_pvoutput_upload_log_level'>PVOutput Upload Log Level</a><br>
+<a href='#sigenergy2mqtt_config_pvoutput_calc_debug_logging'>PVOutput Value Calculation Debugging</a><br>
+<a href='#sigenergy2mqtt_config_pvoutput_update_debug_logging'>PVOutput Value Update Debugging</a><br>
 <a href='#sigenergy2mqtt_config_persistence_debug'>Persistence Debugging</a><br>
 <a href='#sigenergy2mqtt_config_repeated_state_publish_interval'>Repeated State Publish Interval</a><br>
 <a href='#sigenergy2mqtt_config_sanity_check_failures_increment'>Sanity Check Failures Increment</a><br>
@@ -7652,8 +7823,12 @@ The attributes payload currently includes:
 <a href='#sigenergy2mqtt_config_influxdb_log_level_set'>InfluxDB Log Level</a><br>
 <a href='#sigenergy2mqtt_config_mqtt_log_level_set'>MQTT Log Level</a><br>
 <a href='#sigenergy2mqtt_config_modbus_log_level_set'>Modbus Log Level</a><br>
+<a href='#sigenergy2mqtt_config_pvoutput_log_level_set'>PVOutput Log Level</a><br>
+<a href='#sigenergy2mqtt_config_pvoutput_upload_log_level_set'>PVOutput Upload Log Level</a><br>
+<a href='#sigenergy2mqtt_config_pvoutput_calc_debug_logging_set'>PVOutput Value Calculation Debugging</a><br>
+<a href='#sigenergy2mqtt_config_pvoutput_update_debug_logging_set'>PVOutput Value Update Debugging</a><br>
 <a href='#sigenergy2mqtt_config_persistence_debug_set'>Persistence Debugging</a><br>
 <a href='#sigenergy2mqtt_config_repeated_state_publish_interval_set'>Repeated State Publish Interval</a><br>
 <a href='#sigenergy2mqtt_config_sanity_check_failures_increment_set'>Sanity Check Failures Increment</a><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></td></tr>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></td></tr>
 </table>
