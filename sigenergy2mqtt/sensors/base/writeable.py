@@ -24,154 +24,6 @@ from .sensor import AvailabilityMixin, Sensor
 
 logger = logging.getLogger(__name__)
 # =============================================================================
-
-
-class WriteOnlySensor(ModbusWriteableSensorMixin, Sensor):
-    """Sensor that can only write values (e.g., buttons, triggers).
-
-    Write-only sensors appear as buttons in Home Assistant and don't
-    have a readable state.
-    """
-
-    def __init__(
-        self,
-        name: str,
-        object_id: str,
-        plant_index: int,
-        device_address: int,
-        address: int,
-        protocol_version: ProtocolVersion,
-        payload_off: str = "off",
-        payload_on: str = "on",
-        name_off: str = "Power Off",
-        name_on: str = "Power On",
-        icon_off: str = "mdi:power-off",
-        icon_on: str = "mdi:power-on",
-        value_off: int = 0,
-        value_on: int = 1,
-        **kwargs,
-    ):
-        # Validate icons
-        if not icon_on.startswith("mdi:"):
-            raise ValueError(f"{self.__class__.__name__}: on icon '{icon_on}' does not start with 'mdi:'")
-        if not icon_off.startswith("mdi:"):
-            raise ValueError(f"{self.__class__.__name__}: off icon '{icon_off}' does not start with 'mdi:'")
-
-        super().__init__(
-            name=name,
-            object_id=object_id,
-            input_type=InputType.HOLDING,
-            plant_index=plant_index,
-            device_address=device_address,
-            address=address,
-            count=1,
-            data_type=ModbusDataType.UINT16,
-            unit=None,
-            device_class=None,
-            state_class=None,
-            icon=None,
-            gain=None,
-            precision=None,
-            protocol_version=protocol_version,
-            **kwargs,
-        )
-
-        self[DiscoveryKeys.PLATFORM] = "button"
-        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
-
-        self._payloads = {"off": payload_off, "on": payload_on}
-
-        # Use shared translation for defaults, specific for overrides
-        t_off = _t("WriteOnlySensor.name_off", name_off, self.debug_logging) if name_off == "Power Off" else _t(f"{self.__class__.__name__}.name_off", name_off, self.debug_logging)
-        t_on = _t("WriteOnlySensor.name_on", name_on, self.debug_logging) if name_on == "Power On" else _t(f"{self.__class__.__name__}.name_on", name_on, self.debug_logging)
-
-        self._names = {"off": t_off, "on": t_on}
-        self._icons = {"off": icon_off, "on": icon_on}
-        self._values = {"off": value_off, "on": value_on}
-
-    async def _update_internal_state(self, **kwargs) -> bool | Exception | ExceptionResponse:
-        """Write-only sensors don't have internal state."""
-        return False
-
-    def get_discovery_components(self) -> dict[str, dict[str, Any]]:
-        """Get discovery components for both on and off buttons.
-
-        Returns:
-            Dictionary of component configurations
-        """
-        components: dict[str, Any] = {}
-
-        # Remove legacy entities first
-        for action in ["On", "Off"]:
-            components[f"{self.unique_id}_{action}"] = {"p": "button"}
-
-        # Create new button entities
-        for action in ["on", "off"]:
-            config: dict[str, Any] = {}
-
-            if self._names[action] == "" or self._names[action].isspace():
-                continue
-
-            for k, v in self.items():
-                if v is None:
-                    continue
-
-                if k == DiscoveryKeys.NAME:
-                    config[k] = self._names[action]
-                elif k in (DiscoveryKeys.OBJECT_ID, DiscoveryKeys.UNIQUE_ID):
-                    config[k] = f"{v}_{self._payloads[action]}"
-                else:
-                    config[k] = v
-
-            config[DiscoveryKeys.ICON] = self._icons[action]
-            config["payload_press"] = self._payloads[action]
-            components[f"{self.unique_id}_{action}"] = config
-
-        if self.debug_logging:
-            logger.debug(f"{self.log_identity} Discovered components={components}")
-
-        return components
-
-    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
-        """Set value, translating payload to actual value.
-
-        Args:
-            modbus_client: Modbus client for writing
-            mqtt_client: MQTT client
-            value: Payload value ("on" or "off")
-            source: Source topic
-            handler: MQTT handler
-
-        Returns:
-            True if successfully set
-        """
-        # Translate payload to actual value
-        if self._payloads["off"] == value:
-            actual_value = self._values["off"]
-        elif self._payloads["on"] == value:
-            actual_value = self._values["on"]
-        else:
-            actual_value = value
-
-        return await super().set_value(modbus_client, mqtt_client, actual_value, source, handler)
-
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | str) -> bool:
-        """Validate that value is either on or off value.
-
-        Args:
-            modbus_client: Modbus client (unused)
-            raw_value: Value to validate
-
-        Returns:
-            True if valid
-        """
-        if raw_value not in (self._values["off"], self._values["on"]):
-            logger.error(f"{self.log_identity} Invalid value '{raw_value}': Must be either '{self._payloads['on']}' or '{self._payloads['off']}'")
-            return False
-        return True
-
-
-# =============================================================================
 # Read-Write Sensor
 # =============================================================================
 
@@ -458,6 +310,186 @@ class SwitchSensorMixin(WriteableSensorMixin):
 
     async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | str) -> bool:
         return raw_value in (self[DiscoveryKeys.PAYLOAD_OFF], self[DiscoveryKeys.PAYLOAD_ON])
+
+
+class WriteOnlySensorMixin(WriteableSensorMixin):
+    """Add Home Assistant button configuration and payload handling.
+
+    This inherits :class:`WriteableSensorMixin`; provide ``_write_value`` in a
+    subclass when the value is not backed by Modbus.
+    """
+
+    def __init__(
+        self,
+        payload_off: str = "off",
+        payload_on: str = "on",
+        name_off: str = "Power Off",
+        name_on: str = "Power On",
+        icon_off: str = "mdi:power-off",
+        icon_on: str = "mdi:power-on",
+        value_off: int = 0,
+        value_on: int = 1,
+        **kwargs,
+    ):
+        # Validate icons
+        if not icon_on.startswith("mdi:"):
+            raise ValueError(f"{self.__class__.__name__}: on icon '{icon_on}' does not start with 'mdi:'")
+        if not icon_off.startswith("mdi:"):
+            raise ValueError(f"{self.__class__.__name__}: off icon '{icon_off}' does not start with 'mdi:'")
+
+        super().__init__(**kwargs)
+
+        self[DiscoveryKeys.PLATFORM] = "button"
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
+
+        self._payloads = {"off": payload_off, "on": payload_on}
+
+        # Use shared translation for defaults, specific for overrides
+        t_off = _t("WriteOnlySensor.name_off", name_off, self.debug_logging) if name_off == "Power Off" else _t(f"{self.__class__.__name__}.name_off", name_off, self.debug_logging)
+        t_on = _t("WriteOnlySensor.name_on", name_on, self.debug_logging) if name_on == "Power On" else _t(f"{self.__class__.__name__}.name_on", name_on, self.debug_logging)
+
+        self._names = {"off": t_off, "on": t_on}
+        self._icons = {"off": icon_off, "on": icon_on}
+        self._values = {"off": value_off, "on": value_on}
+
+    async def _update_internal_state(self, **kwargs) -> bool | Exception | ExceptionResponse:
+        """Write-only sensors don't have internal state."""
+        return False
+
+    def get_discovery_components(self) -> dict[str, dict[str, Any]]:
+        """Get discovery components for both on and off buttons.
+
+        Returns:
+            Dictionary of component configurations
+        """
+        components: dict[str, Any] = {}
+
+        # Remove legacy entities first
+        for action in ["On", "Off"]:
+            components[f"{self.unique_id}_{action}"] = {"p": "button"}
+
+        # Create new button entities
+        for action in ["on", "off"]:
+            config: dict[str, Any] = {}
+
+            if self._names[action] == "" or self._names[action].isspace():
+                continue
+
+            for k, v in self.items():
+                if v is None:
+                    continue
+
+                if k == DiscoveryKeys.NAME:
+                    config[k] = self._names[action]
+                elif k in (DiscoveryKeys.OBJECT_ID, DiscoveryKeys.UNIQUE_ID):
+                    config[k] = f"{v}_{self._payloads[action]}"
+                else:
+                    config[k] = v
+
+            config[DiscoveryKeys.ICON] = self._icons[action]
+            config["payload_press"] = self._payloads[action]
+            components[f"{self.unique_id}_{action}"] = config
+
+        if self.debug_logging:
+            logger.debug(f"{self.log_identity} Discovered components={components}")
+
+        return components
+
+    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
+        """Set value, translating payload to actual value.
+
+        Args:
+            modbus_client: Modbus client for writing
+            mqtt_client: MQTT client
+            value: Payload value ("on" or "off")
+            source: Source topic
+            handler: MQTT handler
+
+        Returns:
+            True if successfully set
+        """
+        # Translate payload to actual value
+        if self._payloads["off"] == value:
+            actual_value = self._values["off"]
+        elif self._payloads["on"] == value:
+            actual_value = self._values["on"]
+        else:
+            actual_value = value
+
+        return await super().set_value(modbus_client, mqtt_client, actual_value, source, handler)
+
+    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | str) -> bool:
+        """Validate that value is either on or off value.
+
+        Args:
+            modbus_client: Modbus client (unused)
+            raw_value: Value to validate
+
+        Returns:
+            True if valid
+        """
+        if raw_value not in (self._values["off"], self._values["on"]):
+            logger.error(f"{self.log_identity} Invalid value '{raw_value}': Must be either '{self._payloads['on']}' or '{self._payloads['off']}'")
+            return False
+        return True
+
+
+# =============================================================================
+# Write-Only Sensor
+# =============================================================================
+
+
+class WriteOnlySensor(WriteOnlySensorMixin, ModbusWriteableSensorMixin, Sensor):
+    """Sensor that can only write values (e.g., buttons, triggers).
+
+    Write-only sensors appear as buttons in Home Assistant and don't
+    have a readable state.
+    """
+
+    def __init__(
+        self,
+        name: str,
+        object_id: str,
+        plant_index: int,
+        device_address: int,
+        address: int,
+        protocol_version: ProtocolVersion,
+        payload_off: str = "off",
+        payload_on: str = "on",
+        name_off: str = "Power Off",
+        name_on: str = "Power On",
+        icon_off: str = "mdi:power-off",
+        icon_on: str = "mdi:power-on",
+        value_off: int = 0,
+        value_on: int = 1,
+        **kwargs,
+    ):
+        super().__init__(
+            name=name,
+            object_id=object_id,
+            input_type=InputType.HOLDING,
+            plant_index=plant_index,
+            device_address=device_address,
+            address=address,
+            count=1,
+            data_type=ModbusDataType.UINT16,
+            unit=None,
+            device_class=None,
+            state_class=None,
+            icon=None,
+            gain=None,
+            precision=None,
+            protocol_version=protocol_version,
+            payload_off=payload_off,
+            payload_on=payload_on,
+            name_off=name_off,
+            name_on=name_on,
+            icon_off=icon_off,
+            icon_on=icon_on,
+            value_off=value_off,
+            value_on=value_on,
+            **kwargs,
+        )
 
 
 # =============================================================================

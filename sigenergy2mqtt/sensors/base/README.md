@@ -25,7 +25,7 @@ Sensor (abstract; discovery, state, publishing, overrides)
 │       ├── EnergyLifetimeAccumulationSensor
 │       └── EnergyDailyAccumulationSensor
 │           └── SimpleEnergyDailyAccumulationSensor
-├── WriteOnlySensor (Modbus command/button)
+├── WriteOnlySensor (WriteOnlySensorMixin + ModbusWriteableSensorMixin + Sensor)
 └── ReadWriteSensor (Modbus polling + commands)
     ├── NumericSensor (NumericSensorMixin + ReadWriteSensor)
     │   └── ThreePhaseAdjustmentTargetValue
@@ -52,11 +52,12 @@ Sensor
 └── WriteableSensorMixin
     ├── NumericSensorMixin
     ├── SelectSensorMixin
-    └── SwitchSensorMixin
+    ├── SwitchSensorMixin
+    └── WriteOnlySensorMixin
 
 TypedSensorMixin + ModbusSensorMixin + WriteableSensorMixin
 └── ModbusWriteableSensorMixin
-    ├── WriteOnlySensor
+    ├── WriteOnlySensorMixin + ModbusWriteableSensorMixin -> WriteOnlySensor
     └── ReadWriteSensor
         ├── NumericSensorMixin + ReadWriteSensor -> NumericSensor
         ├── SelectSensorMixin + ReadWriteSensor  -> SelectSensor
@@ -99,9 +100,11 @@ without choosing a transport:
   an option name to its index.
 * `SwitchSensorMixin` configures a binary `switch` entity and validates `0` or
   `1` commands.
+* `WriteOnlySensorMixin` configures Home Assistant `button` entities for
+  transmitting action payloads without tracking a readable state.
 
 They mirror the command-facing behaviour of `NumericSensor`, `SelectSensor`,
-and `SwitchSensor`, and each inherits `WriteableSensorMixin`. Subclass the
+`SwitchSensor`, and `WriteOnlySensor`, and each inherits `WriteableSensorMixin`. Subclass the
 appropriate presentation mixin directly when the backing service is not Modbus.
 
 ## Creating a non-Modbus writeable sensor
@@ -127,7 +130,7 @@ Instantiate it with the normal `Sensor` keyword arguments (`name`, `unique_id`,
 `modbus_client` argument remains in the command method signature for a common
 MQTT handler interface and may be `None` for non-Modbus sensors.
 
-For a select or switch, replace `NumericSensorMixin` with `SelectSensorMixin`
-(and provide `options`) or `SwitchSensorMixin`.  A custom transport can also
-subclass `WriteableSensorMixin` directly when it needs no number/select/switch
+For a select, switch, or button, replace `NumericSensorMixin` with `SelectSensorMixin`
+(and provide `options`), `SwitchSensorMixin`, or `WriteOnlySensorMixin`.  A custom transport can also
+subclass `WriteableSensorMixin` directly when it needs no number/select/switch/button
 presentation behaviour.

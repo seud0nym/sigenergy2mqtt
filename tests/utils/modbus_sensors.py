@@ -39,7 +39,7 @@ from sigenergy2mqtt.metrics.sensors import Started
 from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerInputBreaker, ACChargerRatedCurrent, ACChargerRunningState
 from sigenergy2mqtt.sensors.ac_charger_read_write import ACChargerStatus
-from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, AlarmSensor, ModbusSensorMixin, NumericSensor, ReservedSensor, Sensor, SwitchSensor, TimestampSensor, WriteOnlySensor
+from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, AlarmSensor, ModbusSensorMixin, NumericSensor, ReservedSensor, Sensor, SwitchSensor, TimestampSensor, WriteOnlySensorMixin
 from sigenergy2mqtt.sensors.inverter_read_only import (
     DCChargerRatedChargingPower,
     DCChargerRatedDischargingPower,
@@ -334,7 +334,7 @@ async def get_sensor_instances(
             logger.warning(f"{s.__class__.__name__} has no Unit of Measurement")
         # Check for missing device_class and state_class on concrete sensor classes, excluding known exceptions
         if (
-            not isinstance(s, (AlarmCombinedSensor, AlarmSensor, CurrentControlCommandValue, ESSPreHeatingTOUTime, InsulationResistance, ReservedSensor, SystemTimeZone, SwitchSensor, WriteOnlySensor))
+            not isinstance(s, (AlarmCombinedSensor, AlarmSensor, CurrentControlCommandValue, ESSPreHeatingTOUTime, InsulationResistance, ReservedSensor, SystemTimeZone, SwitchSensor, WriteOnlySensorMixin))
             and getattr(s, "data_type", ModbusDataType.STRING) is not ModbusDataType.STRING
         ):
             if s.device_class is None and not any(sub in s.__class__.__name__ for sub in ["Count", "Gradient"]):
