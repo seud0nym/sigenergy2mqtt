@@ -50,6 +50,7 @@ from pymodbus.simulator import DataType, SimData, SimDevice
 from sigenergy2mqtt.common import Constants, DeviceClass, ProtocolVersion
 from sigenergy2mqtt.modbus.client import ModbusClient
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerChargingPower, ACChargerInputBreaker, ACChargerRatedCurrent
+from sigenergy2mqtt.sensors.base import WriteOnlySensorMixin
 from sigenergy2mqtt.sensors.inverter_read_only import DCChargerOutputPower, InverterFirmwareVersion, OutputType, PhaseCurrent, PhaseVoltage, PowerFactor
 from sigenergy2mqtt.sensors.plant_read_only import GridStatus
 from sigenergy2mqtt.sensors.plant_read_write import RemoteEMS
@@ -697,14 +698,21 @@ class CustomDataBlock:
 
         Applies the following priority order:
 
-        1. String sensors — uses ``latest_raw_state`` if available, otherwise a
+        1. Write-only sensors (:class:`WriteOnlySensorMixin`) — always returns the
+           ``value_off`` payload value (default ``0``) so that the register is
+           seeded with a valid, encodeable initial value in :class:`SimData`.
+           Without this the generic path would call ``state2raw`` with an
+           arbitrary float, producing garbage or an exception, and leave the
+           address absent from :attr:`_initial_registers` — causing pymodbus to
+           return ``ILLEGAL_ADDRESS`` for any subsequent Modbus write.
+        2. String sensors — uses ``latest_raw_state`` if available, otherwise a
            placeholder string.
-        2. Sensor-specific overrides — ``OutputType``, ``PowerFactor``,
+        3. Sensor-specific overrides — ``OutputType``, ``PowerFactor``,
            ``ACChargerRatedCurrent``, ``ACChargerInputBreaker``, and alarm sensors
            each have fixed test values (see inline comments for rationale).
-        3. ``sensor.latest_raw_state`` — used when already populated by
+        4. ``sensor.latest_raw_state`` — used when already populated by
            :func:`prepopulate`.
-        4. Sensor metadata — ``options``, ``min``/``max`` bounds, sanity-check
+        5. Sensor metadata — ``options``, ``min``/``max`` bounds, sanity-check
            bounds, or data-type limits, sampled randomly in that order.
 
         Args:
@@ -714,6 +722,11 @@ class CustomDataBlock:
             A ``(value, source)`` tuple where *value* is the initial state and
             *source* is a short label used in debug log messages.
         """
+        if isinstance(sensor, WriteOnlySensorMixin):
+            # Default to the "off" value (0 unless overridden) so the register is
+            # always seeded with a valid uint16 value in SimData.
+            return (sensor._values.get("off", 0), "write_only_sensor")
+
         if sensor.address == InverterFirmwareVersion.ADDRESS:
             return (TestConfig.initial_firmware, "inverter_firmware_version")
 
@@ -804,7 +817,7 @@ class CustomDataBlock:
             source: The source label returned by :meth:`_get_initial_value`.
                 Used to determine whether MQTT subscription is appropriate.
         """
-        _MQTT_EXCLUDED_SOURCES = {"output_type", "pv_string_count", "mppt_count", "alarm_sensor", "power_factor"}
+        _MQTT_EXCLUDED_SOURCES = {"output_type", "pv_string_count", "mppt_count", "alarm_sensor", "power_factor", "write_only_sensor"}
         if not self._mqtt_client or not sensor.address or source in _MQTT_EXCLUDED_SOURCES:
             return
         if "state_topic" in sensor:
@@ -984,7 +997,7 @@ async def run_async_server(
         concrete_sensor_check=False,
     )
     sorted_sensors: list = sorted(
-        [s for s in sensors.values() if hasattr(s, "address") and s["platform"] != "button" and not hasattr(s, "alarms")],
+        [s for s in sensors.values() if hasattr(s, "address") and not hasattr(s, "alarms")],
         key=lambda x: (x.device_address, x.address),
     )
     devices: dict[int, str] = {}
@@ -1320,4 +1333,13 @@ async def async_helper() -> None:
 
 
 if __name__ == "__main__":
+    # Configure a root StreamHandler so that _logger records are not silently
+    # discarded when the server is run directly.  test fixtures that import this
+    # module will have already attached their own handlers; basicConfig() is a
+    # no-op in that case.
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)-8s %(name)s: %(message)s",
+        datefmt="%Y-%m-%dT%H:%M:%S",
+    )
     asyncio.run(async_helper(), debug=True)
