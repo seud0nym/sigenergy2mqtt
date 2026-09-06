@@ -191,7 +191,7 @@ class TestResetMetricsCoverage:
     @pytest.mark.asyncio
     async def test_reset_metrics_set_value_ignored(self):
         sensor = ResetMetrics()
-        sensor.command_topic = "source"
+        sensor[DiscoveryKeys.COMMAND_TOPIC] = "source"
         res = await sensor.set_value(None, None, "wrong", "source", None)
         assert res is False
 
