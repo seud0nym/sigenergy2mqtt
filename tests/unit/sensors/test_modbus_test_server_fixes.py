@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -261,18 +261,19 @@ class TestDebugLogging:
             logger.setLevel(original_level)
             logger.propagate = original_propagate
 
-    def test_registers_to_debug_promotes_level(self):
-        """When registers_to_debug is set, the logger must be promoted to DEBUG."""
+    @pytest.mark.asyncio
+    async def test_registers_to_debug_promotes_level(self, mock_config, monkeypatch):
+        """When registers_to_debug is set, run_async_server must promote the logger to DEBUG."""
         import tests.utils.modbus_test_server as server_module
-        from tests.utils.modbus_test_server import TestConfig
+        from tests.utils.modbus_test_server import TestConfig, run_async_server
+
+        monkeypatch.setattr("tests.utils.modbus_test_server.ModbusTcpServer.serve_forever", AsyncMock())
 
         original_level = server_module._logger.level
         original_registers = TestConfig.registers_to_debug[:]
         try:
             TestConfig.registers_to_debug = [41000]
-            # Replicate the promotion logic from run_async_server() lines 1013-1015
-            if any(TestConfig.registers_to_debug):
-                server_module._logger.setLevel(logging.DEBUG)
+            await run_async_server(mqtt_client=None, modbus_client=None, use_simplified_topics=False, host="127.0.0.1", port=0, log_level=logging.INFO)
             assert server_module._logger.isEnabledFor(logging.DEBUG), (
                 "_logger must be at DEBUG level when registers_to_debug is non-empty."
             )
