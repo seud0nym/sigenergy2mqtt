@@ -83,3 +83,28 @@ async def test_collect_runtime_config():
         assert controls["persistence_debug"]["type"] == "switch"
     finally:
         DeviceRegistry.clear()
+
+
+@pytest.mark.asyncio
+async def test_collect_runtime_config_with_metrics_reset():
+    from sigenergy2mqtt.common import ProtocolVersion
+    from sigenergy2mqtt.config.service import SettingsService
+    from sigenergy2mqtt.devices.base.registry import DeviceRegistry
+    from sigenergy2mqtt.metrics.service import MetricsService
+
+    DeviceRegistry.clear()
+    try:
+        _ = SettingsService()
+        _ = MetricsService(ProtocolVersion.N_A)
+        payload = await DiagnosticsCollectors._diagnostics_collect_runtime_config()
+        assert "controls" in payload
+        controls = payload["controls"]
+        assert "metrics_reset" in controls
+        reset_ctrl = controls["metrics_reset"]
+        assert reset_ctrl["type"] == "button"
+        assert reset_ctrl["label"] == "Reset Metrics"
+        assert reset_ctrl["endpoint"] == "metrics_reset"
+        assert reset_ctrl["value"] == "Reset"
+    finally:
+        DeviceRegistry.clear()
+

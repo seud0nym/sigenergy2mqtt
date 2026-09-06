@@ -4,7 +4,7 @@ from sigenergy2mqtt.config import ConsumptionSource, active_config
 from sigenergy2mqtt.i18n import _t
 from sigenergy2mqtt.metrics.metrics import Metrics
 from sigenergy2mqtt.sensors.base.constants import DiscoveryKeys
-from sigenergy2mqtt.sensors.base.writeable import NumericSensorMixin, SelectSensorMixin, SwitchSensorMixin
+from sigenergy2mqtt.sensors.base.writeable import NumericSensorMixin, SelectSensorMixin, SwitchSensorMixin, WriteOnlySensorMixin
 
 from .registry import diagnostics_registry
 
@@ -34,54 +34,65 @@ class DiagnosticsCollectors:
 
         controls: dict[str, Any] = {}
 
-        # Find the SettingsService device (registered at plant_index=-1)
+        # Find virtual service devices (registered at plant_index=-1)
         for device in DeviceRegistry.get(-1):
             for sensor in device.sensors.values():
-                if not isinstance(sensor, SettingsSensor):
-                    continue
-                settings_sensor = cast("SettingsSensor", sensor)
+                if isinstance(sensor, SettingsSensor):
+                    settings_sensor = cast("SettingsSensor", sensor)
 
-                # Derive a URL-safe endpoint key from the unique_id
-                # e.g. "sigenergy2mqtt_config_log_level" -> "log_level"
-                endpoint = settings_sensor.unique_id.removeprefix("sigenergy2mqtt_config_")
+                    # Derive a URL-safe endpoint key from the unique_id
+                    # e.g. "sigenergy2mqtt_config_log_level" -> "log_level"
+                    endpoint = settings_sensor.unique_id.removeprefix("sigenergy2mqtt_config_")
 
-                # Read the current display value via get_value()
-                value = settings_sensor.get_value()
+                    # Read the current display value via get_value()
+                    value = settings_sensor.get_value()
 
-                # Build the descriptor based on the sensor's mixin type
-                descriptor: dict[str, Any] = {
-                    "label": settings_sensor.name,
-                    "comment": settings_sensor.get_attributes().get("comment", ""),
-                    "endpoint": endpoint,
-                }
+                    # Build the descriptor based on the sensor's mixin type
+                    descriptor: dict[str, Any] = {
+                        "label": settings_sensor.name,
+                        "comment": settings_sensor.get_attributes().get("comment", ""),
+                        "endpoint": endpoint,
+                    }
 
-                if isinstance(settings_sensor, SelectSensorMixin):
-                    options = cast(list[str], settings_sensor[DiscoveryKeys.OPTIONS])
-                    # Filter out empty placeholder slots (log-level list has empty strings)
-                    visible_options = [o for o in options if o]
-                    descriptor.update({
-                        "type": "select",
-                        "value": str(value) if value is not None else "",
-                        "options": visible_options,
-                    })
-                elif isinstance(settings_sensor, NumericSensorMixin):
-                    descriptor.update({
-                        "type": "number",
-                        "value": value,
-                        "min": settings_sensor.get(DiscoveryKeys.MIN),
-                        "max": settings_sensor.get(DiscoveryKeys.MAX),
-                        "unit": settings_sensor.unit or "",
-                    })
-                elif isinstance(settings_sensor, SwitchSensorMixin):
-                    descriptor.update({
-                        "type": "switch",
-                        "value": bool(value),
-                    })
-                else:
-                    # Fallback: surface as a read-only string
-                    descriptor.update({"type": "readonly", "value": str(value)})
+                    if isinstance(settings_sensor, SelectSensorMixin):
+                        options = cast(list[str], settings_sensor[DiscoveryKeys.OPTIONS])
+                        # Filter out empty placeholder slots (log-level list has empty strings)
+                        visible_options = [o for o in options if o]
+                        descriptor.update({
+                            "type": "select",
+                            "value": str(value) if value is not None else "",
+                            "options": visible_options,
+                        })
+                    elif isinstance(settings_sensor, NumericSensorMixin):
+                        descriptor.update({
+                            "type": "number",
+                            "value": value,
+                            "min": settings_sensor.get(DiscoveryKeys.MIN),
+                            "max": settings_sensor.get(DiscoveryKeys.MAX),
+                            "unit": settings_sensor.unit or "",
+                        })
+                    elif isinstance(settings_sensor, SwitchSensorMixin):
+                        descriptor.update({
+                            "type": "switch",
+                            "value": bool(value),
+                        })
+                    else:
+                        # Fallback: surface as a read-only string
+                        descriptor.update({"type": "readonly", "value": str(value)})
 
-                controls[endpoint] = descriptor
+                    controls[endpoint] = descriptor
+
+                elif isinstance(sensor, WriteOnlySensorMixin):
+                    prefix = f"{active_config.home_assistant.unique_id_prefix}_"
+                    endpoint = sensor.unique_id.removeprefix(prefix).removeprefix("sigenergy2mqtt_")
+                    descriptor = {
+                        "label": sensor.name,
+                        "comment": sensor.get_attributes().get("comment", "") if hasattr(sensor, "get_attributes") else "",
+                        "endpoint": endpoint,
+                        "type": "button",
+                        "value": "Reset",
+                    }
+                    controls[endpoint] = descriptor
 
         return {"controls": controls}
 

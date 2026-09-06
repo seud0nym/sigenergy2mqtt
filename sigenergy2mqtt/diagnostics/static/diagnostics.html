@@ -325,6 +325,33 @@
       white-space: nowrap;
     }
 
+    .ctrl-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 4px 12px;
+      cursor: pointer;
+      transition: border-color 0.15s, transform 0.1s;
+      outline: none;
+    }
+
+    .ctrl-btn:hover:not(:disabled) {
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+
+    .ctrl-btn:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    .ctrl-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
     /* Toggle switch */
     .ctrl-switch {
       position: relative;
@@ -827,6 +854,19 @@
             });
 
             widgetWrap.appendChild(labelEl);
+          } else if (ctrl.type === 'button') {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'ctrl-btn';
+            btn.dataset.endpoint = endpoint;
+            btn.textContent = ctrl.value || 'Reset';
+            btn.addEventListener('click', () => {
+              btn.disabled = true;
+              sendConfigUpdate(endpoint, 1, btn).finally(() => {
+                btn.disabled = false;
+              });
+            });
+            widgetWrap.appendChild(btn);
           } else {
             const val = document.createElement('span');
             val.className = 'v';
@@ -841,6 +881,7 @@
 
       function updateControlsCard(card, controls, revision) {
         Object.entries(controls).forEach(([endpoint, ctrl]) => {
+          if (ctrl.type === 'button') return;
           const widget = card.querySelector(`[data-endpoint="${endpoint}"]`);
           if (!widget) return;
 
