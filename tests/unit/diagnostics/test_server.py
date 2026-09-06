@@ -395,3 +395,84 @@ async def test_handle_config_update_validation_rejected(server: DiagnosticsServe
         assert body["ok"] is False
     finally:
         DeviceRegistry.clear()
+
+
+@pytest.mark.asyncio
+async def test_handle_config_update_metrics_reset_success(server: DiagnosticsServer) -> None:
+    from sigenergy2mqtt.common import ProtocolVersion
+    from sigenergy2mqtt.config.service import SettingsService
+    from sigenergy2mqtt.devices.base.registry import DeviceRegistry
+    from sigenergy2mqtt.metrics.metrics import Metrics
+    from sigenergy2mqtt.metrics.service import MetricsService
+
+    DeviceRegistry.clear()
+    try:
+        _ = SettingsService()
+        _ = MetricsService(ProtocolVersion.N_A)
+
+        # Mutate a metric to verify reset
+        Metrics.sigenergy2mqtt_modbus_reads = 42
+
+        request = make_mocked_request("POST", "/diagnostics/config/metrics_reset", match_info={"endpoint": "metrics_reset"})
+        request.json = AsyncMock(return_value={"value": 1})
+
+        response = await server._handle_config_update(request)
+        assert response.status == 200
+        body = json.loads(response.text)
+        assert body["ok"] is True
+        assert "revision" in body
+        await Metrics.drain()
+        assert Metrics.sigenergy2mqtt_modbus_reads == 0
+    finally:
+        DeviceRegistry.clear()
+
+
+@pytest.mark.asyncio
+async def test_handle_config_update_reset_metrics_alias(server: DiagnosticsServer) -> None:
+    from sigenergy2mqtt.common import ProtocolVersion
+    from sigenergy2mqtt.config.service import SettingsService
+    from sigenergy2mqtt.devices.base.registry import DeviceRegistry
+    from sigenergy2mqtt.metrics.metrics import Metrics
+    from sigenergy2mqtt.metrics.service import MetricsService
+
+    DeviceRegistry.clear()
+    try:
+        _ = SettingsService()
+        _ = MetricsService(ProtocolVersion.N_A)
+
+        Metrics.sigenergy2mqtt_mqtt_publish_attempts = 15
+
+        request = make_mocked_request("POST", "/diagnostics/config/reset_metrics", match_info={"endpoint": "reset_metrics"})
+        request.json = AsyncMock(return_value={"value": "reset"})
+
+        response = await server._handle_config_update(request)
+        assert response.status == 200
+        body = json.loads(response.text)
+        assert body["ok"] is True
+        await Metrics.drain()
+        assert Metrics.sigenergy2mqtt_mqtt_publish_attempts == 0
+    finally:
+        DeviceRegistry.clear()
+
+
+@pytest.mark.asyncio
+async def test_handle_config_update_metrics_reset_fallback(server: DiagnosticsServer) -> None:
+    from sigenergy2mqtt.devices.base.registry import DeviceRegistry
+    from sigenergy2mqtt.metrics.metrics import Metrics
+
+    DeviceRegistry.clear()
+    try:
+        Metrics.sigenergy2mqtt_modbus_reads = 99
+
+        request = make_mocked_request("POST", "/diagnostics/config/metrics_reset", match_info={"endpoint": "metrics_reset"})
+        request.json = AsyncMock(return_value={})
+
+        response = await server._handle_config_update(request)
+        assert response.status == 200
+        body = json.loads(response.text)
+        assert body["ok"] is True
+        await Metrics.drain()
+        assert Metrics.sigenergy2mqtt_modbus_reads == 0
+    finally:
+        DeviceRegistry.clear()
+
