@@ -18,6 +18,7 @@ from sigenergy2mqtt.metrics.sensors import (
 )
 
 from sigenergy2mqtt.metrics.metrics import Metrics
+from sigenergy2mqtt.sensors.base import DiscoveryKeys
 
 
 @pytest.fixture(autouse=True)
@@ -170,8 +171,18 @@ class TestResetMetricsCoverage:
         sensor.publish_attributes(None)
 
     @pytest.mark.asyncio
+    async def test_reset_metrics_set_value_failure(self):
+        sensor = ResetMetrics()
+        sensor[DiscoveryKeys.COMMAND_TOPIC] = "source"
+        with patch.object(Metrics, "reset") as mock_reset:
+            res = await sensor.set_value(None, None, "wrong", "source", None)
+            assert res is False
+            mock_reset.assert_not_called()
+
+    @pytest.mark.asyncio
     async def test_reset_metrics_set_value_success(self):
         sensor = ResetMetrics()
+        sensor[DiscoveryKeys.COMMAND_TOPIC] = "source"
         with patch.object(Metrics, "reset") as mock_reset:
             res = await sensor.set_value(None, None, "reset", "source", None)
             assert res is True
@@ -180,11 +191,12 @@ class TestResetMetricsCoverage:
     @pytest.mark.asyncio
     async def test_reset_metrics_set_value_ignored(self):
         sensor = ResetMetrics()
+        sensor[DiscoveryKeys.COMMAND_TOPIC] = "source"
         res = await sensor.set_value(None, None, "wrong", "source", None)
         assert res is False
 
     @pytest.mark.asyncio
     async def test_reset_metrics_value_is_valid(self):
         sensor = ResetMetrics()
-        assert await sensor.value_is_valid(None, "reset") is True
-        assert await sensor.value_is_valid(None, "other") is False
+        assert await sensor.value_is_valid(None, 1) is True
+        assert await sensor.value_is_valid(None, 0) is False
