@@ -339,9 +339,9 @@ class:
       '6': Inactivo
   BatteryTimeRemaining:
     attributes:
-      comment: Estimated battery time remaining in hours based on current battery power, SoC, rated capacity, and configured charge/discharge cut-off SoC percentages. Positive values indicate remaining charging duration until charge cut-off SoC; negative values indicate remaining discharging duration until discharge cut-off SoC; 0 indicates idle or cut-off reached.
-      source: PlantRatedEnergyCapacity, PlantBatterySoC, BatteryPower and ESSDischargeCutOffSOC/ESSChargeCutOffSOC
-    name: Battery Time Remaining
+      comment: Tiempo estimado de autonomía restante de la batería en horas, basado en la potencia actual de la batería, el estado de carga (SoC), la capacidad nominal y los porcentajes de SoC de corte de carga y descarga configurados. Los valores positivos indican la duración restante de la carga hasta alcanzar el SoC de corte de carga; los valores negativos indican la duración restante de la descarga hasta alcanzar el SoC de corte de descarga; el valor 0 indica estado de inactividad o que se ha alcanzado el SoC de corte.
+      source: PlantRatedEnergyCapacity, PlantBatterySoC, BatteryPower y ESSDischargeCutOffSOC/ESSChargeCutOffSOC
+    name: Tiempo restante de la batería
   ChargeCutOffSoC:
     attributes:
       source: Registro Modbus {address}

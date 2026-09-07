@@ -339,9 +339,9 @@ class:
       '6': 闲置的
   BatteryTimeRemaining:
     attributes:
-      comment: Estimated battery time remaining in hours based on current battery power, SoC, rated capacity, and configured charge/discharge cut-off SoC percentages. Positive values indicate remaining charging duration until charge cut-off SoC; negative values indicate remaining discharging duration until discharge cut-off SoC; 0 indicates idle or cut-off reached.
-      source: PlantRatedEnergyCapacity, PlantBatterySoC, BatteryPower and ESSDischargeCutOffSOC/ESSChargeCutOffSOC
-    name: Battery Time Remaining
+      comment: 基于当前电池电量、电量状态（SoC）、额定容量以及配置的充电/放电截止电量状态（SoC）百分比，估算剩余电池使用时间（单位：小时）。正值表示达到充电截止电量状态（SoC）前的剩余充电时长；负值表示达到放电截止电量状态（SoC）前的剩余放电时长；0 表示空闲状态或已达到截止电量状态。
+      source: PlantRatedEnergyCapacity、PlantBatterySoC、BatteryPower 以及 ESSDischargeCutOffSOC/ESSChargeCutOffSOC
+    name: 电池剩余电量
   ChargeCutOffSoC:
     attributes:
       source: Modbus 寄存器 {address}

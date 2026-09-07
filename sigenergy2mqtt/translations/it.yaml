@@ -339,9 +339,9 @@ class:
       '6': Oziare
   BatteryTimeRemaining:
     attributes:
-      comment: Estimated battery time remaining in hours based on current battery power, SoC, rated capacity, and configured charge/discharge cut-off SoC percentages. Positive values indicate remaining charging duration until charge cut-off SoC; negative values indicate remaining discharging duration until discharge cut-off SoC; 0 indicates idle or cut-off reached.
-      source: PlantRatedEnergyCapacity, PlantBatterySoC, BatteryPower and ESSDischargeCutOffSOC/ESSChargeCutOffSOC
-    name: Battery Time Remaining
+      comment: Tempo stimato di autonomia residua della batteria in ore, calcolato in base alla carica attuale della batteria, allo stato di carica (SoC), alla capacità nominale e alle percentuali di SoC di interruzione della carica/scarica configurate. I valori positivi indicano la durata residua della carica fino al raggiungimento dello stato di carica di interruzione; i valori negativi indicano la durata residua della scarica fino al raggiungimento dello stato di scarica di interruzione; 0 indica lo stato di inattività o il raggiungimento dello stato di interruzione.
+      source: PlantRatedEnergyCapacity, PlantBatterySoC, BatteryPower e ESSDischargeCutOffSOC/ESSChargeCutOffSOC
+    name: Tempo residuo della batteria
   ChargeCutOffSoC:
     attributes:
       source: Registro Modbus {address}

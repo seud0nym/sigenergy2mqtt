@@ -339,9 +339,9 @@ class:
       '6': アイドル状態
   BatteryTimeRemaining:
     attributes:
-      comment: Estimated battery time remaining in hours based on current battery power, SoC, rated capacity, and configured charge/discharge cut-off SoC percentages. Positive values indicate remaining charging duration until charge cut-off SoC; negative values indicate remaining discharging duration until discharge cut-off SoC; 0 indicates idle or cut-off reached.
-      source: PlantRatedEnergyCapacity, PlantBatterySoC, BatteryPower and ESSDischargeCutOffSOC/ESSChargeCutOffSOC
-    name: Battery Time Remaining
+      comment: 現在のバッテリー残量、SoC、定格容量、および設定された充電/放電カットオフのSoCパーセンテージに基づいて推定されるバッテリーの残り時間（時間単位）。正の値は、充電カットオフのSoCに達するまでの残りの充電時間を示し、負の値は、放電カットオフのSoCに達するまでの残りの放電時間を示します。0は、アイドル状態またはカットオフに達していることを示します。
+      source: PlantRatedEnergyCapacity、PlantBatterySoC、BatteryPower、およびESSDischargeCutOffSOC/ESSChargeCutOffSOC
+    name: バッテリーの残量
   ChargeCutOffSoC:
     attributes:
       source: Modbusレジスタ {address}

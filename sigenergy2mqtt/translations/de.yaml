@@ -339,9 +339,9 @@ class:
       '6': Leerlauf
   BatteryTimeRemaining:
     attributes:
-      comment: Estimated battery time remaining in hours based on current battery power, SoC, rated capacity, and configured charge/discharge cut-off SoC percentages. Positive values indicate remaining charging duration until charge cut-off SoC; negative values indicate remaining discharging duration until discharge cut-off SoC; 0 indicates idle or cut-off reached.
-      source: PlantRatedEnergyCapacity, PlantBatterySoC, BatteryPower and ESSDischargeCutOffSOC/ESSChargeCutOffSOC
-    name: Battery Time Remaining
+      comment: Geschätzte verbleibende Batterielaufzeit in Stunden, basierend auf der aktuellen Batterieleistung, dem Ladezustand (SoC), der Nennkapazität und den konfigurierten SoC-Prozentwerten für Lade- und Entladeabschaltung. Positive Werte geben die verbleibende Ladedauer bis zum Ladeabschaltungs-SoC an; negative Werte geben die verbleibende Entladezeit bis zum Entladeabschaltungs-SoC an; 0 bedeutet Leerlauf oder dass die Abschaltung erreicht ist.
+      source: PlantRatedEnergyCapacity, PlantBatterySoC, BatteryPower und ESSDischargeCutOffSOC/ESSChargeCutOffSOC
+    name: Verbleibende Batterielaufzeit
   ChargeCutOffSoC:
     attributes:
       source: Modbus-Register {address}
