@@ -337,6 +337,11 @@ class:
       '4': Inconnu
       '5': Couper
       '6': Inactif
+  BatteryTimeRemaining:
+    attributes:
+      comment: Estimation de l'autonomie restante de la batterie en heures, calculée à partir de la puissance actuelle de la batterie, de son niveau de charge (SoC), de sa capacité nominale et des pourcentages de SoC de coupure de charge/décharge configurés. Les valeurs positives indiquent la durée de charge restante jusqu'au niveau de coupure de charge ; les valeurs négatives indiquent la durée de décharge restante jusqu'au niveau de coupure de décharge ; la valeur 0 indique que la batterie est au repos ou que le niveau de coupure est atteint.
+      source: PlantRatedEnergyCapacity, PlantBatterySoC, BatteryPower et ESSDischargeCutOffSOC/ESSChargeCutOffSOC
+    name: Autonomie restante de la batterie
   ChargeCutOffSoC:
     attributes:
       source: Registre Modbus {address}

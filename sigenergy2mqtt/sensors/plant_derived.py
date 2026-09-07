@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 import paho.mqtt.client as mqtt
 
-from sigenergy2mqtt.common import ConsumptionMethod, DeviceClass, HybridInverter, ProtocolVersion, PVInverter, StateClass, UnitOfEnergy, UnitOfPower
+from sigenergy2mqtt.common import ConsumptionMethod, DeviceClass, HybridInverter, ProtocolVersion, PVInverter, StateClass, UnitOfEnergy, UnitOfPower, UnitOfTime
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus import ModbusClient, ModbusDataType
 
@@ -22,6 +22,7 @@ from .plant_read_only import (
     PlantBatterySoC,
     PlantPVPower,
     PlantPVTotalGeneration,
+    PlantRatedEnergyCapacity,
     PlantTotalExportedEnergy,
     PlantTotalImportedEnergy,
     ThirdPartyLifetimePVEnergy,
@@ -200,6 +201,141 @@ class BatteryStatus(DerivedSensor, HybridInverter):
             case _:
                 logger.warning(f"{self.log_identity} Attempt to call update_from_source_sensor from {sensor.log_identity}")
                 return False
+
+
+class BatteryTimeRemaining(DerivedSensor, HybridInverter):
+    def __init__(
+        self,
+        plant_index: int,
+        rated_energy_capacity: PlantRatedEnergyCapacity,
+        current_soc: PlantBatterySoC,
+        battery_power: BatteryPower,
+        discharge_soc: ESSDischargeCutOffSOC,
+        charge_soc: ESSChargeCutOffSOC,
+    ):
+        # Set properties before super().__init__ so that log_identity is correctly generated
+        self.plant_index = plant_index
+        super().__init__(
+            name="Battery Time Remaining",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_battery_time_remaining",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_battery_time_remaining",
+            data_type=ModbusDataType.FLOAT32,
+            unit=UnitOfTime.HOURS,
+            device_class=DeviceClass.DURATION,
+            state_class=StateClass.MEASUREMENT,
+            icon="mdi:battery-clock",
+            gain=None,
+            precision=2,
+            source_sensors=(battery_power, charge_soc, current_soc, discharge_soc, rated_energy_capacity),
+        )
+        self.protocol_version = ProtocolVersion.V2_6
+        self._battery_power: float | None = None
+        self._charge_soc: float | None = None
+        self._current_soc: float | None = None
+        self._discharge_soc: float | None = None
+        self._rated_capacity_kwh: float | None = None
+
+    def get_attributes(self) -> dict[str, float | int | str]:
+        attributes = super().get_attributes()
+        attributes["source"] = "PlantRatedEnergyCapacity, PlantBatterySoC, BatteryPower and ESSDischargeCutOffSOC/ESSChargeCutOffSOC"
+        attributes["comment"] = (
+            "Estimated battery time remaining in hours based on current battery power, "
+            "SoC, rated capacity, and configured charge/discharge cut-off SoC percentages. "
+            "Positive values indicate remaining charging duration until charge cut-off SoC; "
+            "negative values indicate remaining discharging duration until discharge cut-off SoC; "
+            "0 indicates idle or cut-off reached."
+        )
+        return attributes
+
+    @staticmethod
+    def _get_percentage(sensor: Sensor) -> float | None:
+        if sensor.latest_raw_state is None:
+            return None
+        try:
+            raw = float(sensor.latest_raw_state)
+        except (ValueError, TypeError):
+            return None
+        gain = getattr(sensor, "gain", 1.0)
+        if isinstance(gain, (int, float)) and gain > 1:
+            return raw / gain
+        return raw
+
+    @staticmethod
+    def _get_kwh(sensor: Sensor) -> float | None:
+        if sensor.latest_raw_state is None:
+            return None
+        try:
+            raw = float(sensor.latest_raw_state)
+        except (ValueError, TypeError):
+            return None
+        gain = getattr(sensor, "gain", 1.0)
+        if isinstance(gain, (int, float)) and gain > 1:
+            return raw / gain
+        return raw
+
+    def _calculate_time_remaining(self) -> bool:
+        if self._battery_power is None:
+            return False
+
+        # Battery is idle (neither charging nor discharging)
+        if self._battery_power == 0:
+            self.set_latest_state(0.0)
+            return True
+
+        if self._rated_capacity_kwh is None or self._current_soc is None:
+            return False
+
+        if self._battery_power < 0:
+            # Discharging
+            if self._discharge_soc is None:
+                return False
+            soc_diff = max(0.0, self._current_soc - self._discharge_soc)
+            if soc_diff == 0.0 or self._rated_capacity_kwh <= 0.0:
+                self.set_latest_state(0.0)
+                return True
+            remaining_energy_kwh = self._rated_capacity_kwh * (soc_diff / 100.0)
+            energy_wh = remaining_energy_kwh * 1000.0
+            duration_hours = energy_wh / self._battery_power
+            self.set_latest_state(round(duration_hours, self.precision))
+            return True
+        else:
+            # Charging (battery_power > 0)
+            if self._charge_soc is None:
+                return False
+            soc_diff = max(0.0, self._charge_soc - self._current_soc)
+            if soc_diff == 0.0 or self._rated_capacity_kwh <= 0.0:
+                self.set_latest_state(0.0)
+                return True
+            remaining_energy_kwh = self._rated_capacity_kwh * (soc_diff / 100.0)
+            energy_wh = remaining_energy_kwh * 1000.0
+            duration_hours = energy_wh / self._battery_power
+            self.set_latest_state(round(duration_hours, self.precision))
+            return True
+
+    def update_from_source_sensor(self, sensor: Sensor) -> bool:
+        match sensor:
+            case BatteryPower():
+                if sensor.latest_raw_state is None:
+                    self._battery_power = None
+                    return False
+                try:
+                    self._battery_power = float(sensor.latest_raw_state)
+                except (ValueError, TypeError):
+                    self._battery_power = None
+                    return False
+            case PlantBatterySoC():
+                self._current_soc = self._get_percentage(sensor)
+            case ESSDischargeCutOffSOC():
+                self._discharge_soc = self._get_percentage(sensor)
+            case ESSChargeCutOffSOC():
+                self._charge_soc = self._get_percentage(sensor)
+            case PlantRatedEnergyCapacity():
+                self._rated_capacity_kwh = self._get_kwh(sensor)
+            case _:
+                logger.warning(f"{self.log_identity} Attempt to call update_from_source_sensor from {getattr(sensor, 'log_identity', sensor)}")
+                return False
+
+        return self._calculate_time_remaining()
 
 
 class GridSensorExportPower(DerivedSensor, HybridInverter, PVInverter):

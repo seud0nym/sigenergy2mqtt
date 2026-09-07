@@ -337,6 +337,11 @@ class:
       '4': Desconhecido
       '5': Cortar
       '6': Parado
+  BatteryTimeRemaining:
+    attributes:
+      comment: Tempo estimado de autonomia da bateria em horas, com base na carga atual da bateria, no SoC, na capacidade nominal e nas percentagens de SoC de corte de carga/descarga configuradas. Os valores positivos indicam a duração restante de carga até ao SoC de corte de carga; os valores negativos indicam a duração restante de descarga até ao SoC de corte de descarga; 0 indica inatividade ou que o limite de corte foi atingido.
+      source: PlantRatedEnergyCapacity, PlantBatterySoC, BatteryPower e ESSDischargeCutOffSOC/ESSChargeCutOffSOC
+    name: Tempo restante da bateria
   ChargeCutOffSoC:
     attributes:
       source: Registo Modbus {address}

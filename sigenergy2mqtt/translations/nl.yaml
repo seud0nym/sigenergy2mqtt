@@ -337,6 +337,11 @@ class:
       '4': Onbekend
       '5': Afsluiting
       '6': Inactief
+  BatteryTimeRemaining:
+    attributes:
+      comment: Geschatte resterende accuduur in uren, gebaseerd op het huidige accuvermogen, de SoC, de nominale capaciteit en de geconfigureerde SoC-percentages voor het afsluiten van het laden en ontladen. Positieve waarden geven de resterende laadtijd aan tot de SoC-waarde waarbij het laden wordt afgebroken; negatieve waarden geven de resterende ontlaadtijd aan tot de SoC-waarde waarbij het ontladen wordt afgebroken; 0 geeft aan dat het systeem inactief is of dat de afsluitwaarde is bereikt.
+      source: PlantRatedEnergyCapacity, PlantBatterySoC, BatteryPower en ESSDischargeCutOffSOC/ESSChargeCutOffSOC
+    name: Resterende accutijd
   ChargeCutOffSoC:
     attributes:
       source: Modbus-register {address}

@@ -189,6 +189,16 @@ def extract_dashboard_state(state: dict[str, Any]) -> dict[str, Any]:
     # this single check gives the dashboard one clear signal to hide the
     # battery gauges/pills rather than rendering an empty/zero gauge.
     plant["has_battery"] = plant.get("battery_soc", {}).get("value") is not None
+    if plant["has_battery"]:
+        time_left = next((val for key, val in state.items() if key.endswith("battery_time_remaining/state")), None)
+        if time_left is not None and time_left.last_state is not None and time_left.last_state != 0:
+            hours = int(abs(time_left.last_state))
+            minutes = int((abs(time_left.last_state) - hours) * 60)
+            plant["time_remaining_secs"] = {
+                "label": f"Time Remaining Until {'Discharged' if time_left.last_state < 0 else 'Charged'}",
+                "value": f"{hours}h {minutes}m" if hours > 0 and minutes > 0 else f"{hours}h" if hours > 0 else f"{minutes}m",
+                "unit": "",
+            }
 
     inverters = {}
     dc_chargers = {}

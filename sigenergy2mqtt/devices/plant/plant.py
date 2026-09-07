@@ -137,7 +137,8 @@ class PowerPlant(ModbusDevice):
         self._add_sensor(ro.AvailableMaxReactivePower(self.plant_index))
         self._add_sensor(ro.AvailableMinReactivePower(self.plant_index))
         self._add_sensor(ro.PlantRunningState(self.plant_index))
-        self._add_sensor(ro.PlantRatedEnergyCapacity(self.plant_index))
+        rated_energy_capacity = ro.PlantRatedEnergyCapacity(self.plant_index)
+        self._add_sensor(rated_energy_capacity)
         self._add_sensor(rw.GridMaxExportLimit(self.plant_index))
         self._add_sensor(rw.GridMaxImportLimit(self.plant_index))
         self._add_sensor(rw.PCSMaxExportLimit(self.plant_index))
@@ -212,6 +213,7 @@ class PowerPlant(ModbusDevice):
             self._add_sensor(derived.BatteryChargingPower(self.plant_index, battery_power))
             self._add_sensor(derived.BatteryDischargingPower(self.plant_index, battery_power))
             self._add_sensor(derived.BatteryStatus(self.plant_index, battery_power, current_soc, backup_soc, discharge_soc, charge_soc))
+            self._add_sensor(derived.BatteryTimeRemaining(self.plant_index, rated_energy_capacity, current_soc, battery_power, discharge_soc, charge_soc))
             self._add_sensor(derived.PlantDailyChargeEnergy(self.plant_index, total_charge_energy), search_children=False)
             self._add_sensor(derived.PlantDailyDischargeEnergy(self.plant_index, total_discharge_energy), search_children=False)
 
