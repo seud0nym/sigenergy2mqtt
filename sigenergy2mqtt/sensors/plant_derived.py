@@ -312,16 +312,6 @@ class BatteryTimeRemaining(DerivedSensor, HybridInverter):
             self.set_latest_state(round(duration_hours, self.precision))
             return True
 
-    def last_state2time(self, signed: bool = True) -> str:
-        if self.last_state is not None and self.last_state != 0:
-            hours = int(abs(self.last_state))
-            minutes = int((abs(self.last_state) - hours) * 60)
-            result = f"{hours}h {minutes}m" if hours > 0 and minutes > 0 else f"{hours}h" if hours > 0 else f"{minutes}m"
-            if signed and self.last_state < 0:
-                return f"-{result}"
-            return result
-        return ""
-
     def update_from_source_sensor(self, sensor: Sensor) -> bool:
         match sensor:
             case BatteryPower():
