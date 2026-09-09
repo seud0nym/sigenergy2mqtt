@@ -115,6 +115,7 @@ jobs:
 
             # Release events: floating tags
             type=raw,value=latest,enable=${{ github.event_name == 'release' && !github.event.release.prerelease }}
+            type=raw,value=alpha,enable=${{ github.event_name == 'release' }}
             type=raw,value=beta,enable=${{ github.event_name == 'release' && github.event.release.prerelease }}
 
             # Alpha tag pushes: version + alpha floating tag
