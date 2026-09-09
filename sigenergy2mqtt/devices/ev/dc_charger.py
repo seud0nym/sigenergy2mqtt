@@ -46,11 +46,6 @@ class DCCharger(ModbusDevice):
         return charger
 
     async def _register_sensors(self, plant_index: int, device_address: int, modbus_client: ModbusClient) -> None:
-        rated_charging_power = ro.DCChargerRatedChargingPower(plant_index, device_address)
-        rated_discharging_power = ro.DCChargerRatedDischargingPower(plant_index, device_address)
-        rcp_value = await rated_charging_power.get_state(modbus_client=modbus_client, raw=True)
-        rdp_value = await rated_discharging_power.get_state(modbus_client=modbus_client, raw=True)
-
         self._add_sensor(ro.DCChargerOutputPower(plant_index, device_address))
         self._add_sensor(ro.DCChargerCurrentChargingCapacity(plant_index, device_address))
         self._add_sensor(ro.DCChargerCurrentChargingDuration(plant_index, device_address))
@@ -59,16 +54,23 @@ class DCCharger(ModbusDevice):
         self._add_sensor(ro.DCChargerVehicleSoC(plant_index, device_address))
         self._add_sensor(ro.InverterAlarm5(plant_index, device_address))
         self._add_sensor(ro.DCChargerRunningState(plant_index, device_address))
-        self._add_sensor(ro.DCChargerDischargingCurrent(plant_index, device_address))
-        self._add_sensor(ro.DCChargerCurrentDischargingCapacity(plant_index, device_address))
-        self._add_sensor(ro.DCChargerCurrentDischargingDuration(plant_index, device_address))
-        self._add_sensor(ro.DCChargerTotalChargingCapacity(plant_index, device_address))
-        self._add_sensor(ro.DCChargerTotalDischargingCapacity(plant_index, device_address))
-        self._add_sensor(rated_charging_power)
-        self._add_sensor(rated_discharging_power)
 
         self._add_sensor(rw.DCChargerStatus(plant_index, device_address))
-        self._add_sensor(rw.DCChargerMaxChargingPowerLimit(plant_index, device_address, rated_charging_power=cast(float, rcp_value)))
-        self._add_sensor(rw.DCChargerMaxDischargingPowerLimit(plant_index, device_address, rated_discharging_power=cast(float, rdp_value)))
 
-        self._add_sensor(rw.Reserved41001(plant_index, device_address))
+        if self.protocol_version >= ProtocolVersion.V2_9:
+            rated_charging_power = ro.DCChargerRatedChargingPower(plant_index, device_address)
+            rated_discharging_power = ro.DCChargerRatedDischargingPower(plant_index, device_address)
+            rcp_value = await rated_charging_power.get_state(modbus_client=modbus_client, raw=True)
+            rdp_value = await rated_discharging_power.get_state(modbus_client=modbus_client, raw=True)
+
+            self._add_sensor(rw.Reserved41001(plant_index, device_address))
+            self._add_sensor(ro.DCChargerDischargingCurrent(plant_index, device_address))
+            self._add_sensor(ro.DCChargerCurrentDischargingCapacity(plant_index, device_address))
+            self._add_sensor(ro.DCChargerCurrentDischargingDuration(plant_index, device_address))
+            self._add_sensor(ro.DCChargerTotalChargingCapacity(plant_index, device_address))
+            self._add_sensor(ro.DCChargerTotalDischargingCapacity(plant_index, device_address))
+            self._add_sensor(rated_charging_power)
+            self._add_sensor(rated_discharging_power)
+
+            self._add_sensor(rw.DCChargerMaxChargingPowerLimit(plant_index, device_address, rated_charging_power=cast(float, rcp_value)))
+            self._add_sensor(rw.DCChargerMaxDischargingPowerLimit(plant_index, device_address, rated_discharging_power=cast(float, rdp_value)))
