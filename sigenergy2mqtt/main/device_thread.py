@@ -18,7 +18,7 @@ from pymodbus.exceptions import ModbusException
 
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import Device
-from sigenergy2mqtt.modbus import ModbusClient, ModbusClientFactory
+from sigenergy2mqtt.modbus import ModbusClientFactory
 from sigenergy2mqtt.mqtt import mqtt_setup, mqtt_teardown
 
 from .thread_config import ThreadConfig
@@ -60,7 +60,7 @@ async def read_and_publish_device_sensors(
     # when host is absent (e.g. clean/discovery-only runs).
     log_label = config.url if config.host is not None else config.description
 
-    modbus_client: ModbusClient | None = None
+    modbus_client: Any = None
     tasks: list[Awaitable[Any]] = []
 
     if config.host is not None and not active_config.clean:

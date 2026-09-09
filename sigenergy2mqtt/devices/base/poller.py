@@ -2,7 +2,7 @@ import asyncio
 import logging
 import time
 from random import uniform
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import paho.mqtt.client as mqtt
 from pymodbus import ModbusException
@@ -44,7 +44,7 @@ class SensorGroupPoller:
 
     async def _init_next_publish_times(
         self,
-        modbus_client: ModbusClient | None,
+        transport: Any,
         mqtt_client: mqtt.Client,
         *sensors: Sensor,
     ) -> tuple[dict[ReadableSensorMixin, float], list[ReadableSensorMixin], bool]:
@@ -58,7 +58,7 @@ class SensorGroupPoller:
         group.
 
         Args:
-            modbus_client: The Modbus client, passed through to initial publish calls.
+            transport:     The Modbus client, passed through to initial publish calls.
             mqtt_client:   The MQTT client, passed through to initial publish calls.
             *sensors:      All sensors in the scan group.
 
@@ -91,7 +91,7 @@ class SensorGroupPoller:
                 next_publish_times[sensor] = now + group_jitter
                 # Publish initial state if available
                 if sensor.publishable and sensor.latest_raw_state is not None:
-                    await sensor.publish(mqtt_client, modbus_client, republish=True)
+                    await sensor.publish(mqtt_client, transport, republish=True)
         return next_publish_times, daily_sensors, debug_logging
 
     def _get_sensors_to_publish_now(
@@ -254,7 +254,7 @@ class SensorGroupPoller:
 
         return False
 
-    async def run(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, name: str, *sensors: Sensor) -> None:
+    async def run(self, transport: Any, mqtt_client: mqtt.Client, name: str, *sensors: Sensor) -> None:
         """Main sensor polling loop for a single scan group.
 
         Runs continuously while the device is online and the shutdown event is not
@@ -287,14 +287,14 @@ class SensorGroupPoller:
         multiple: bool = len(modbus_sensors) > 1 and modbus_sensors.register_count != -1 and 1 <= modbus_sensors.register_count <= Constants.MAX_MODBUS_REGISTERS_PER_REQUEST
 
         # Initialize per-sensor next publish times, find any daily sensors, and determine if debug logging is needed for this group
-        next_publish_times, daily_sensors, debug_logging = await self._init_next_publish_times(modbus_client, mqtt_client, *sensors)
+        next_publish_times, daily_sensors, debug_logging = await self._init_next_publish_times(transport, mqtt_client, *sensors)
 
         if debug_logging:
             logger.debug(
                 f"{device.log_identity} Sensor Scan Group [{name}] instantiated (multiple={multiple} first_address={modbus_sensors.first_address} last_address={modbus_sensors.last_address} count={modbus_sensors.register_count} sensors={len(sensors)} daily_sensors={len(daily_sensors)})"
             )
 
-        lock = ModbusLockFactory.get(modbus_client)
+        lock = ModbusLockFactory.get(transport)
         last_day = time.localtime(time.time()).tm_yday
 
         # Main publishing loop - respects shutdown event
@@ -317,12 +317,12 @@ class SensorGroupPoller:
 
             if due_sensors:
                 try:
-                    if multiple and modbus_client:
-                        multiple = await self._publish_read_ahead(due_sensors, modbus_client, modbus_sensors, lock, name, debug_logging)
+                    if multiple and transport:
+                        multiple = await self._publish_read_ahead(due_sensors, transport, modbus_sensors, lock, name, debug_logging)
 
                     # Publish each due sensor and update its next publish time
                     for sensor in due_sensors:
-                        await sensor.publish(mqtt_client, modbus_client)
+                        await sensor.publish(mqtt_client, transport)
                         next_publish_times[sensor] = now + sensor.scan_interval
                         sensor.force_publish = False
 
@@ -331,12 +331,12 @@ class SensorGroupPoller:
                         device.publish_discovery(mqtt_client, clean=False)
 
                 except ModbusException as e:
-                    if modbus_client:
+                    if transport:
                         logger.debug(f"{device.log_identity} Sensor Scan Group [{name}] handling {e!s}: Acquiring lock before attempting to reconnect... ({lock.waiters=})")
                         async with lock.lock(timeout=None):
-                            if not modbus_client.connected and device.online:
+                            if not transport.connected and device.online:
                                 # Retain lock while attempting to reconnect to prevent multiple concurrent reconnection attempts from other tasks
-                                reconnected = await self._reconnect_modbus_with_backoff(modbus_client)
+                                reconnected = await self._reconnect_modbus_with_backoff(transport)
                                 if not reconnected and device.online:
                                     logger.error(f"{device.log_identity} failed to reconnect to Modbus, sensor updates paused")
                 except RuntimeError as e:

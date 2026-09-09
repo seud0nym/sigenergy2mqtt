@@ -13,7 +13,7 @@ import paho.mqtt.client as mqtt
 
 from sigenergy2mqtt.common import DeviceClass, StateClass, UnitOfEnergy
 from sigenergy2mqtt.i18n import _t
-from sigenergy2mqtt.modbus import ModbusClient, ModbusDataType
+from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.persistence import Category, state_store
 
 from .constants import DiscoveryKeys, SensorAttributeKeys, _sanitize_path_component
@@ -275,15 +275,15 @@ class ResettableAccumulationSensor(ObservableMixin, AccumulationSensor):
             attributes[SensorAttributeKeys.RESET_UNIT] = self.unit
         return attributes
 
-    async def notify(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
+    async def notify(self, transport: Any, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
         """Handle reset command from MQTT.
 
         Args:
-            modbus_client: Modbus client (unused)
+            transport: Transport client or None (unused)
             mqtt_client: MQTT client
             value: New total value
             source: Source topic
-            handler: MQTT handler
+            handler: MqttHandler
 
         Returns:
             True if reset was handled
@@ -438,15 +438,15 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
 
             self._state_at_midnight = midnight_state
 
-    async def notify(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
+    async def notify(self, transport: Any, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
         """Handle reset command.
 
         Args:
-            modbus_client: Modbus client (unused)
+            transport: Transport client or None (unused)
             mqtt_client: MQTT client
             value: New value
             source: Source topic
-            handler: MQTT handler
+            handler: MqttHandler
 
         Returns:
             True if handled
@@ -474,12 +474,12 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
         self.force_publish = True
         return True
 
-    async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool = False) -> bool:
+    async def publish(self, mqtt_client: mqtt.Client, transport: Any, republish: bool = False) -> bool:
         """Publish state, ensuring midnight state is persisted.
 
         Args:
             mqtt_client: MQTT client
-            modbus_client: Modbus client
+            transport: Modbus client
             republish: If True, republish last state
 
         Returns:
@@ -491,7 +491,7 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
             # if somehow it wasn't on disk but was in memory.
             await self._update_state_at_midnight(float(latest_raw))
 
-        return await super().publish(mqtt_client, modbus_client, republish)
+        return await super().publish(mqtt_client, transport, republish)
 
     def update_from_source_sensor(self, sensor: Sensor) -> bool:
         """Update daily accumulation from source values.

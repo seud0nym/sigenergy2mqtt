@@ -361,11 +361,11 @@ class MonitorService(Device):
             logger.warning(f"MonitorService: MQTT connection failed ({exc}) — cleaned disk only")
             return
 
-    async def on_ha_state_change(self, modbus_client: Any | None, mqtt_client: mqtt.Client, ha_state: str, source: str, mqtt_handler: MqttHandler) -> bool:
+    async def on_ha_state_change(self, transport: Any, mqtt_client: mqtt.Client, ha_state: str, source: str, mqtt_handler: MqttHandler) -> bool:
         """Handle Home Assistant state updates.
 
         Args:
-            modbus_client: Optional Modbus client instance.
+            transport: Optional Modbus client instance.
             mqtt_client: MQTT client instance.
             ha_state: Home Assistant state payload.
             source: MQTT topic source for the update.
@@ -377,11 +377,11 @@ class MonitorService(Device):
 
         return True
 
-    async def on_topic_update(self, modbus_client: Any | None, mqtt_client: mqtt.Client, value: str, source: str, mqtt_handler: MqttHandler) -> bool:
+    async def on_topic_update(self, transport: Any, mqtt_client: mqtt.Client, value: str, source: str, mqtt_handler: MqttHandler) -> bool:
         """Update the ``last_seen`` timestamp for a monitored topic.
 
         Args:
-            modbus_client: Optional Modbus client instance.
+            transport: Optional Modbus client instance.
             mqtt_client: MQTT client instance.
             value: Received MQTT payload.
             source: Topic that emitted the payload.
@@ -409,21 +409,21 @@ class MonitorService(Device):
             logger.warning(f"{self.log_identity} updated from  topic {source}, but topic is not registered !!!")
         return False
 
-    def on_commencement(self, modbus_client: Any | None, mqtt_client: mqtt.Client) -> None:
+    def on_commencement(self, transport: Any, mqtt_client: mqtt.Client) -> None:
         """Log when the monitor service has started.
 
         Args:
-            modbus_client: Optional Modbus client instance.
+            transport: Optional Modbus client instance.
             mqtt_client: MQTT client instance.
         """
         diagnostics_registry.register("plant", self._collect_plant_states)
         diagnostics_registry.register("solar", self._collect_dashboard_states)
 
-    def on_completion(self, modbus_client: Any | None, mqtt_client: mqtt.Client) -> None:
+    def on_completion(self, transport: Any, mqtt_client: mqtt.Client) -> None:
         """Log when the monitor service has stopped and clear stale health messages.
 
         Args:
-            modbus_client: Optional Modbus client instance.
+            transport: Optional Modbus client instance.
             mqtt_client: MQTT client instance.
         """
 
@@ -456,7 +456,7 @@ class MonitorService(Device):
             ``None`` because discovery is not published for this service.
         """
 
-    def schedule(self, modbus_client: Any, mqtt_client: mqtt.Client) -> list[Awaitable[None]]:
+    def schedule(self, transport: Any, mqtt_client: mqtt.Client) -> list[Awaitable[None]]:
         """Return the monitor coroutine(s) to schedule for this service.
 
         Args:

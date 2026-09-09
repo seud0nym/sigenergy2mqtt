@@ -129,8 +129,8 @@ class DerivedSensor(TypedSensorMixin, Sensor):
             self._pending_update = True
         return updated
 
-    async def publish(self, mqtt_client, modbus_client, republish: bool = False) -> bool:
-        published = await super().publish(mqtt_client, modbus_client, republish=republish)
+    async def publish(self, mqtt_client, transport, republish: bool = False) -> bool:
+        published = await super().publish(mqtt_client, transport, republish=republish)
         if published and not republish:
             self._pending_update = False
         return published

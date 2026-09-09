@@ -6,6 +6,7 @@ import pytest
 from sigenergy2mqtt.common import HybridInverter, ProtocolVersion
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.devices import Device, DeviceRegistry, ModbusDevice
+from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.sensors.base import (
     AlarmCombinedSensor,
     ObservableMixin,
@@ -209,7 +210,7 @@ def test_device_subscribe(device):
 async def test_device_on_ha_state_change(device):
     mqtt_client = MagicMock()
     mqtt_handler = AsyncMock()
-    modbus_client = MagicMock()
+    modbus_client = MagicMock(spec=ModbusClient)
 
     s1 = DummyReadable("s1")
     s1.publish = AsyncMock()
@@ -220,7 +221,7 @@ async def test_device_on_ha_state_change(device):
 
         assert res is True
         mqtt_handler.wait_for.assert_awaited()
-        s1.publish.assert_awaited_with(mqtt_client, modbus_client=modbus_client, republish=True)
+        s1.publish.assert_awaited_with(mqtt_client, modbus_client, republish=True)
 
         res_off = await device.on_ha_state_change(modbus_client, mqtt_client, "offline", "src", mqtt_handler)
         assert res_off is False

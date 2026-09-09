@@ -10,7 +10,7 @@ from pymodbus.pdu import ExceptionResponse
 from sigenergy2mqtt.common import Constants, ProtocolVersion
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.i18n import _t
-from sigenergy2mqtt.modbus import ModbusClient, ModbusDataType
+from sigenergy2mqtt.modbus import ModbusDataType
 
 if TYPE_CHECKING:
     from sigenergy2mqtt.mqtt import MqttHandler
@@ -217,7 +217,7 @@ class NumericSensorMixin(WriteableSensorMixin):
             return value * self.gain
         return value
 
-    async def set_value(self, modbus_client, mqtt_client, value, source, handler) -> bool:
+    async def set_value(self, transport, mqtt_client, value, source, handler) -> bool:
         if value is None:
             logger.warning(f"{self.log_identity} Ignored attempt to set value to *None*")
             return False
@@ -228,9 +228,9 @@ class NumericSensorMixin(WriteableSensorMixin):
         except (ValueError, TypeError, RuntimeError) as exc:
             logger.warning(f"{self.log_identity} Attempt to set value to '{value}' FAILED: {exc!r}")
             return False
-        return await super().set_value(modbus_client, mqtt_client, state, source, handler)
+        return await super().set_value(transport, mqtt_client, state, source, handler)
 
-    async def value_is_valid(self, modbus_client, raw_value) -> bool:
+    async def value_is_valid(self, transport, raw_value) -> bool:
         try:
             value = cast(float, self._apply_gain_and_precision(float(raw_value)))
             minimum, maximum = self.get(DiscoveryKeys.MIN), self.get(DiscoveryKeys.MAX)
@@ -274,16 +274,16 @@ class SelectSensorMixin(WriteableSensorMixin):
             return option if option else f"Unknown Mode: {value}"
         return f"Unknown Mode: {value}"
 
-    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
+    async def set_value(self, transport: Any, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
         try:
             value = self._get_option_index(value)
         except ValueError:
             self.force_publish = True
             logger.error(f"{self.log_identity} invalid value '{value}': Not a valid option or index")
             return False
-        return await super().set_value(modbus_client, mqtt_client, value, source, handler)
+        return await super().set_value(transport, mqtt_client, value, source, handler)
 
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | str) -> bool:
+    async def value_is_valid(self, transport: Any, raw_value: float | str) -> bool:
         try:
             self._get_option_index(raw_value)
         except ValueError:
@@ -305,10 +305,10 @@ class SwitchSensorMixin(WriteableSensorMixin):
         self.sanity_check.min_raw = 0
         self.sanity_check.max_raw = 1
 
-    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
-        return await super().set_value(modbus_client, mqtt_client, int(value), source, handler)
+    async def set_value(self, transport: Any, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
+        return await super().set_value(transport, mqtt_client, int(value), source, handler)
 
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | str) -> bool:
+    async def value_is_valid(self, transport: Any, raw_value: float | str) -> bool:
         return raw_value in (self[DiscoveryKeys.PAYLOAD_OFF], self[DiscoveryKeys.PAYLOAD_ON])
 
 
@@ -395,11 +395,11 @@ class WriteOnlySensorMixin(WriteableSensorMixin):
 
         return components
 
-    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
+    async def set_value(self, transport: Any, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
         """Set value, translating payload to actual value.
 
         Args:
-            modbus_client: Modbus client for writing
+            transport: Transport client or None (unused directly; passed through)
             mqtt_client: MQTT client
             value: Payload value ("on" or "off")
             source: Source topic
@@ -416,13 +416,13 @@ class WriteOnlySensorMixin(WriteableSensorMixin):
         else:
             actual_value = value
 
-        return await super().set_value(modbus_client, mqtt_client, actual_value, source, handler)
+        return await super().set_value(transport, mqtt_client, actual_value, source, handler)
 
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | str) -> bool:
+    async def value_is_valid(self, transport: Any, raw_value: float | str) -> bool:
         """Validate that value is either on or off value.
 
         Args:
-            modbus_client: Modbus client (unused)
+            transport: Transport client or None (unused)
             raw_value: Value to validate
 
         Returns:
@@ -662,11 +662,11 @@ class SwitchSensor(SwitchSensorMixin, ReadWriteSensor):
             **kwargs,
         )
 
-    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
+    async def set_value(self, transport: Any, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
         """Set switch value.
 
         Args:
-            modbus_client: Modbus client for writing
+            transport: Transport client or None (passed through)
             mqtt_client: MQTT client
             value: 0 or 1
             source: Source topic
@@ -676,16 +676,16 @@ class SwitchSensor(SwitchSensorMixin, ReadWriteSensor):
             True if successfully set
         """
         try:
-            return await super().set_value(modbus_client, mqtt_client, int(value), source, handler)
+            return await super().set_value(transport, mqtt_client, int(value), source, handler)
         except ValueError as e:
             logger.error(f"{self.log_identity} value_is_valid check of value '{value}' FAILED: {e!r}")
             raise
 
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | str) -> bool:
+    async def value_is_valid(self, transport: Any, raw_value: float | str) -> bool:
         """Validate switch value is 0 or 1.
 
         Args:
-            modbus_client: Modbus client (unused)
+            transport: Transport client or None (unused)
             raw_value: Value to validate
 
         Returns:

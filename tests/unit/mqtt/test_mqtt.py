@@ -8,6 +8,7 @@ import paho.mqtt.client as mqtt
 import pytest
 
 from sigenergy2mqtt.config import Config, _swap_active_config, active_config
+from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.mqtt import mqtt_setup
 from sigenergy2mqtt.mqtt.client import MqttClient, on_connect, on_disconnect, on_message, on_publish, on_subscribe, on_unsubscribe
 from sigenergy2mqtt.mqtt.handler import MqttHandler
@@ -19,12 +20,12 @@ class TestMqttHandler:
     def test_init(self):
         """Test MqttHandler initialization."""
         loop = asyncio.new_event_loop()
-        modbus_client = MagicMock()
+        modbus_client = MagicMock(spec=ModbusClient)
 
         handler = MqttHandler("test_client", modbus_client, loop)
 
         assert handler.client_id == "test_client"
-        assert handler._modbus == modbus_client
+        assert handler._transport == modbus_client
         assert handler._loop == loop
         assert handler.connected is False
         assert handler._topics == {}
@@ -790,11 +791,11 @@ class TestMqttSetup:
             return 0
 
         def fake_loop_start(self):
-            setattr(self, "loop_started", True)
+            self.loop_started = True
 
         def fake_username_pw_set(self, u, p):
-            setattr(self, "_user", u)
-            setattr(self, "_pw", p)
+            self._user = u
+            self._pw = p
 
         monkeypatch.setattr(paho.Client, "connect", fake_connect, raising=True)
         monkeypatch.setattr(paho.Client, "loop_start", fake_loop_start, raising=True)
@@ -807,8 +808,8 @@ class TestMqttSetup:
             loop.close()
 
         assert getattr(client, "loop_started", False) is True
-        assert getattr(client, "_user") == "user"
-        assert getattr(client, "_pw") == "pass"
+        assert client._user == "user"
+        assert client._pw == "pass"
 
     @pytest.mark.asyncio
     async def test_mqtt_setup_fails_after_retries(self, monkeypatch):

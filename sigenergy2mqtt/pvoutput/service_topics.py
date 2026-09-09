@@ -420,11 +420,11 @@ class ServiceTopics(dict[str, Topic]):
             else:
                 logger.debug(f"{self._service.log_identity} Not subscribing to topic {topic} because {self._name} uploading is disabled")
 
-    async def handle_update(self, modbus_client: Any, mqtt_client: mqtt.Client | None, value: float | str, topic: str, handler: MqttHandler | None) -> bool:
+    async def handle_update(self, transport: Any, mqtt_client: mqtt.Client | None, value: float | str, topic: str, handler: MqttHandler | None) -> bool:
         """Handle a new MQTT value and update aggregate state.
 
         Args:
-            modbus_client: Modbus client reference (unused).
+            transport: Transport layer reference (unused).
             mqtt_client: MQTT client reference (unused).
             value: Raw value received from MQTT.
             topic: MQTT topic that produced the value.
@@ -460,9 +460,9 @@ class ServiceTopics(dict[str, Topic]):
                     logger.debug(f"{self._service.log_identity} Updating {self._name} children: {state=} {other_periods_total=} {this_period_state=} current_period={cp_log} {topic=}")
                 for child in self._time_periods:
                     if child._value_key in current_period:
-                        await child.handle_update(modbus_client, mqtt_client, this_period_state, topic, handler)
+                        await child.handle_update(transport, mqtt_client, this_period_state, topic, handler)
                     else:
-                        await child.handle_update(modbus_client, mqtt_client, max(cast(float, child[topic].state) if child[topic].state is not None else 0.0, 0.0), topic, handler)
+                        await child.handle_update(transport, mqtt_client, max(cast(float, child[topic].state) if child[topic].state is not None else 0.0, 0.0), topic, handler)
             return True
         else:
             return False

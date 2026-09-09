@@ -454,8 +454,9 @@ class TestReadWriteSensor:
             # availability, name, object_id, input_type, plant_index, device_address, address, count, data_type, scan_interval, unit, device_class, state_class, icon, gain, precision, protocol_version
             sensor = ReadWriteSensor(None, "RW", "sigen_rw", InputType.HOLDING, 0, 1, 30001, 1, ModbusDataType.UINT16, 10, "W", DeviceClass.POWER, StateClass.MEASUREMENT, "mdi:p", 1.0, 2, ProtocolVersion.V2_4)
             sensor.configure_mqtt_topics("sigen")
-            client = AsyncMock()
-            client.write_register.return_value = MagicMock(isError=lambda: False)
+            from sigenergy2mqtt.modbus import ModbusClient
+            client = AsyncMock(spec=ModbusClient)
+            client.write_register = AsyncMock(return_value=MagicMock(isError=lambda: False))
             # set_value(self, modbus_client, mqtt_client, value, source, handler)
             await sensor.set_value(client, MagicMock(), 123, sensor["command_topic"], MagicMock())
             client.write_register.assert_called_once()

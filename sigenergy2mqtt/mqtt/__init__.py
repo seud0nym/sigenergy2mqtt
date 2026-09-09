@@ -3,14 +3,11 @@ from __future__ import annotations
 import asyncio
 import logging
 from asyncio import sleep
-from typing import TYPE_CHECKING
+from typing import Any
 
 from paho.mqtt import MQTTException
 
 from sigenergy2mqtt.config import active_config
-
-if TYPE_CHECKING:
-    from sigenergy2mqtt.modbus import ModbusClient
 
 from .client import MqttClient
 from .handler import MqttHandler
@@ -95,7 +92,7 @@ async def _connect_with_retry(mqtt_client: MqttClient, client_id: str) -> None:
                 raise
 
 
-async def mqtt_setup(mqtt_client_id: str, modbus_client: ModbusClient | None, loop: asyncio.AbstractEventLoop) -> tuple[MqttClient, MqttHandler]:
+async def mqtt_setup(mqtt_client_id: str, transport: Any, loop: asyncio.AbstractEventLoop) -> tuple[MqttClient, MqttHandler]:
     """Create, configure, and connect an MQTT client/handler pair.
 
     Instantiates an :class:`MqttHandler` and :class:`MqttClient`, applies
@@ -106,8 +103,8 @@ async def mqtt_setup(mqtt_client_id: str, modbus_client: ModbusClient | None, lo
     Args:
         mqtt_client_id: A non-empty string used as the MQTT client identifier.
             Must be unique per broker session.
-        modbus_client:  An optional :class:`ModbusClient` passed through to
-            the :class:`MqttHandler` for Modbus read/write operations.
+        transport:      An optional transport object passed through to
+            the :class:`MqttHandler` for transport read/write operations.
         loop:           The asyncio event loop the handler will schedule
             callbacks on.  Must not be ``None``.
 
@@ -129,7 +126,7 @@ async def mqtt_setup(mqtt_client_id: str, modbus_client: ModbusClient | None, lo
 
     logger.debug(f"Creating MQTT Client ID {mqtt_client_id} for {broker_url} over {active_config.mqtt.transport}")
 
-    mqtt_handler = MqttHandler(mqtt_client_id, modbus_client, loop, mqtt_health_registry)
+    mqtt_handler = MqttHandler(mqtt_client_id, transport, loop, mqtt_health_registry)
     mqtt_client = MqttClient(
         client_id=mqtt_client_id,
         userdata=mqtt_handler,

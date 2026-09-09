@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import logging
 from abc import ABC
-from typing import cast
+from typing import Any, cast
 
 import paho.mqtt.client as mqtt
 
 from sigenergy2mqtt.common import PERCENTAGE, Constants, DeviceClass, HybridInverter, InputType, ProtocolVersion, PVInverter, UnitOfFrequency, UnitOfPower, UnitOfReactivePower
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.modbus import ModbusClient, ModbusDataType
+from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.base import (
     AvailabilityMixin,
     DiscoveryKeys,
@@ -95,11 +95,11 @@ class ActivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVInv
         attributes["comment"] = "Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect."
         return attributes
 
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | str) -> bool:
+    async def value_is_valid(self, transport: Any, raw_value: float | str) -> bool:
         if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state == 0:
             logger.error(f"{self.log_identity} Failed to write value '{raw_value}': {self._remote_ems_mode.log_identity} is not in PCS Remote Control Mode")
             return False
-        return await super().value_is_valid(modbus_client, raw_value)
+        return await super().value_is_valid(transport, raw_value)
 
 
 class ReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
@@ -144,11 +144,11 @@ class ReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVI
         attributes["comment"] = "Range: [-60.00 * base value ,60.00 * base value]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect."
         return attributes
 
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | str) -> bool:
+    async def value_is_valid(self, transport: Any, raw_value: float | str) -> bool:
         if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state == 0:
             logger.error(f"{self.log_identity} Failed to write value '{raw_value}': {self._remote_ems_mode.log_identity} is not in PCS Remote Control Mode")
             return False
-        return await super().value_is_valid(modbus_client, raw_value)
+        return await super().value_is_valid(transport, raw_value)
 
 
 class ActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
@@ -192,11 +192,11 @@ class ActivePowerPercentageAdjustmentTargetValue(NumericSensor, HybridInverter, 
         attributes["comment"] = "Range: [-100.00,100.00]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect."
         return attributes
 
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | str) -> bool:
+    async def value_is_valid(self, transport: Any, raw_value: float | str) -> bool:
         if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state == 0:
             logger.error(f"{self.log_identity} Failed to write value '{raw_value}': {self._remote_ems_mode.log_identity} is not in PCS Remote Control Mode")
             return False
-        return await super().value_is_valid(modbus_client, raw_value)
+        return await super().value_is_valid(transport, raw_value)
 
 
 class QSAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
@@ -240,11 +240,11 @@ class QSAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
         attributes["comment"] = "Range: [-60.0,60.00]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect."
         return attributes
 
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | str) -> bool:
+    async def value_is_valid(self, transport: Any, raw_value: float | str) -> bool:
         if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state == 0:
             logger.error(f"{self.log_identity} Failed to write value '{raw_value}': {self._remote_ems_mode.log_identity} is not in PCS Remote Control Mode")
             return False
-        return await super().value_is_valid(modbus_client, raw_value)
+        return await super().value_is_valid(transport, raw_value)
 
 
 class PowerFactorAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter):
@@ -289,11 +289,11 @@ class PowerFactorAdjustmentTargetValue(NumericSensor, HybridInverter, PVInverter
         attributes["comment"] = "Range: [(-1.0, -0.8) U (0.8, 1.0)]. Grid Sensor needed. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect."
         return attributes
 
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | str) -> bool:
+    async def value_is_valid(self, transport: Any, raw_value: float | str) -> bool:
         if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state == 0:
             logger.error(f"{self.log_identity} Failed to write value '{raw_value}': {self._remote_ems_mode.log_identity} is not in PCS Remote Control Mode")
             return False
-        return await super().value_is_valid(modbus_client, raw_value)
+        return await super().value_is_valid(transport, raw_value)
 
 
 class PhaseActivePowerFixedAdjustmentTargetValue(ThreePhaseAdjustmentTargetValue, HybridInverter):
@@ -345,11 +345,11 @@ class PhaseActivePowerFixedAdjustmentTargetValue(ThreePhaseAdjustmentTargetValue
         attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect."
         return attributes
 
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | str) -> bool:
+    async def value_is_valid(self, transport: Any, raw_value: float | str) -> bool:
         if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state == 0:
             logger.error(f"{self.log_identity} Failed to write value '{raw_value}': {self._remote_ems_mode.log_identity} is not in PCS Remote Control Mode")
             return False
-        return await super().value_is_valid(modbus_client, raw_value)
+        return await super().value_is_valid(transport, raw_value)
 
 
 class PhaseReactivePowerFixedAdjustmentTargetValue(ThreePhaseAdjustmentTargetValue, HybridInverter):
@@ -401,11 +401,11 @@ class PhaseReactivePowerFixedAdjustmentTargetValue(ThreePhaseAdjustmentTargetVal
         attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect."
         return attributes
 
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | str) -> bool:
+    async def value_is_valid(self, transport: Any, raw_value: float | str) -> bool:
         if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state == 0:
             logger.error(f"{self.log_identity} Failed to write value '{raw_value}': {self._remote_ems_mode.log_identity} is not in PCS Remote Control Mode")
             return False
-        return await super().value_is_valid(modbus_client, raw_value)
+        return await super().value_is_valid(transport, raw_value)
 
 
 class PhaseActivePowerPercentageAdjustmentTargetValue(ThreePhaseAdjustmentTargetValue, HybridInverter):
@@ -458,11 +458,11 @@ class PhaseActivePowerPercentageAdjustmentTargetValue(ThreePhaseAdjustmentTarget
         attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N. Range: [-100.00,100.00]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect."
         return attributes
 
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | str) -> bool:
+    async def value_is_valid(self, transport: Any, raw_value: float | str) -> bool:
         if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state == 0:
             logger.error(f"{self.log_identity} Failed to write value '{raw_value}': {self._remote_ems_mode.log_identity} is not in PCS Remote Control Mode")
             return False
-        return await super().value_is_valid(modbus_client, raw_value)
+        return await super().value_is_valid(transport, raw_value)
 
 
 class PhaseQSAdjustmentTargetValue(ThreePhaseAdjustmentTargetValue, HybridInverter):
@@ -515,11 +515,11 @@ class PhaseQSAdjustmentTargetValue(ThreePhaseAdjustmentTargetValue, HybridInvert
         attributes["comment"] = "Valid only when Output Type is L1/L2/L3/N. Range: [-60.00,60.00]. Remote EMS must be enabled and the EMS must be in PCS Remote Control Mode for this register to take effect."
         return attributes
 
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | str) -> bool:
+    async def value_is_valid(self, transport: Any, raw_value: float | str) -> bool:
         if self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state == 0:
             logger.error(f"{self.log_identity} Failed to write value '{raw_value}': {self._remote_ems_mode.log_identity} is not in PCS Remote Control Mode")
             return False
-        return await super().value_is_valid(modbus_client, raw_value)
+        return await super().value_is_valid(transport, raw_value)
 
 
 ## //---------------------- End of Plant setting parameter power dispatch register definition ----------------------// ##
@@ -605,8 +605,8 @@ class RemoteEMSControlMode(SelectSensor, HybridInverter, PVInverter):
             self.is_charging_discharging_topic = f"{base}/is_command_mode"
         return base
 
-    async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool = False) -> bool:
-        result = await super().publish(mqtt_client, modbus_client, republish=republish)
+    async def publish(self, mqtt_client: mqtt.Client, transport: Any, republish: bool = False) -> bool:
+        result = await super().publish(mqtt_client, transport, republish=republish)
         if result and active_config.home_assistant.enabled:
             pcs_remote_control_mode = "0"
             charging_mode = "0"
@@ -632,13 +632,13 @@ class RemoteEMSControlMode(SelectSensor, HybridInverter, PVInverter):
             return True
         return result
 
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | str) -> bool:
+    async def value_is_valid(self, transport: Any, raw_value: float | str) -> bool:
         if self._availability_control_sensor is not None and self._availability_control_sensor.latest_raw_state in (0, "0"):
             logger.error(
                 f"{self.log_identity} Failed to write '{cast(list[str], self['options'])[raw_value] if isinstance(raw_value, int) else raw_value}' ({raw_value}): {self._availability_control_sensor.log_identity} is not enabled"
             )
             return False
-        return await super().value_is_valid(modbus_client, raw_value)
+        return await super().value_is_valid(transport, raw_value)
 
 
 class IndependentPhasePowerControl(SwitchSensor, AvailabilityMixin, HybridInverter):
@@ -723,11 +723,11 @@ class RemoteEMSLimit(NumericSensor, HybridInverter, ABC):
                 cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append({"topic": self._remote_ems_mode.is_discharging_mode_topic, "payload_available": 1, "payload_not_available": 0})
         return base
 
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | str) -> bool:
+    async def value_is_valid(self, transport: Any, raw_value: float | str) -> bool:
         if self._availability_control_sensor is not None and self._availability_control_sensor.latest_raw_state == 0:
             logger.error(f"{self.log_identity} Failed to write value '{raw_value}': {self._availability_control_sensor.log_identity} is not enabled")
             return False
-        return await super().value_is_valid(modbus_client, raw_value)
+        return await super().value_is_valid(transport, raw_value)
 
 
 class MaxChargingLimit(RemoteEMSLimit):
@@ -756,11 +756,11 @@ class MaxChargingLimit(RemoteEMSLimit):
         )
         return attributes
 
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | str) -> bool:
+    async def value_is_valid(self, transport: Any, raw_value: float | str) -> bool:
         if self._availability_control_sensor is not None and self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state not in (3, 4) and active_config.ems_mode_check:
             logger.error(f"{self.log_identity} Failed to write value '{raw_value}': Remote EMS control mode is not set to Command Charging")
             return False
-        return await super().value_is_valid(modbus_client, raw_value)
+        return await super().value_is_valid(transport, raw_value)
 
 
 class MaxDischargingLimit(RemoteEMSLimit):
@@ -789,11 +789,11 @@ class MaxDischargingLimit(RemoteEMSLimit):
         )
         return attributes
 
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | str) -> bool:
+    async def value_is_valid(self, transport: Any, raw_value: float | str) -> bool:
         if self._availability_control_sensor is not None and self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state not in (5, 6) and active_config.ems_mode_check:
             logger.error(f"{self.log_identity} Failed to write value '{raw_value}': Remote EMS control mode is not set to Command Discharging")
             return False
-        return await super().value_is_valid(modbus_client, raw_value)
+        return await super().value_is_valid(transport, raw_value)
 
 
 class PVMaxPowerLimit(RemoteEMSLimit):
@@ -821,11 +821,11 @@ class PVMaxPowerLimit(RemoteEMSLimit):
         )
         return attributes
 
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | str) -> bool:
+    async def value_is_valid(self, transport: Any, raw_value: float | str) -> bool:
         if self._availability_control_sensor is not None and self._remote_ems_mode is not None and self._remote_ems_mode.latest_raw_state not in (3, 4, 5, 6) and active_config.ems_mode_check:
             logger.error(f"{self.log_identity} Failed to write value '{raw_value}': Remote EMS control mode is not set to Command Charging/Discharging")
             return False
-        return await super().value_is_valid(modbus_client, raw_value)
+        return await super().value_is_valid(transport, raw_value)
 
 
 class GridMaxExportLimit(NumericSensor, HybridInverter, PVInverter):

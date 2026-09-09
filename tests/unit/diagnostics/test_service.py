@@ -1,8 +1,8 @@
 import asyncio
 from unittest.mock import AsyncMock, patch
 
-import pytest
 import paho.mqtt.client as mqtt
+import pytest
 
 from sigenergy2mqtt.diagnostics.service import DiagnosticsService
 
@@ -21,11 +21,10 @@ async def test_schedule(diagnostics_service: DiagnosticsService) -> None:
     coros[0].close()
 
 
-
 @pytest.mark.asyncio
 async def test_run_without_crashing_the_thread_success(diagnostics_service: DiagnosticsService) -> None:
     with patch("sigenergy2mqtt.diagnostics.service.diagnostics_server.run", new_callable=AsyncMock) as mock_run:
-        await diagnostics_service._run_without_crashing_the_thread()
+        await diagnostics_service._run_without_crashing_the_thread(None)
         mock_run.assert_called_once()
 
 
@@ -34,7 +33,7 @@ async def test_run_without_crashing_the_thread_handles_oserror(diagnostics_servi
     with patch("sigenergy2mqtt.diagnostics.service.diagnostics_server.run", new_callable=AsyncMock) as mock_run:
         mock_run.side_effect = OSError("Address already in use")
         # Should not raise exception
-        await diagnostics_service._run_without_crashing_the_thread()
+        await diagnostics_service._run_without_crashing_the_thread(None)
         mock_run.assert_called_once()
 
 
@@ -43,7 +42,7 @@ async def test_run_without_crashing_the_thread_handles_runtimeerror(diagnostics_
     with patch("sigenergy2mqtt.diagnostics.service.diagnostics_server.run", new_callable=AsyncMock) as mock_run:
         mock_run.side_effect = RuntimeError("Something bad")
         # Should not raise exception
-        await diagnostics_service._run_without_crashing_the_thread()
+        await diagnostics_service._run_without_crashing_the_thread(None)
         mock_run.assert_called_once()
 
 
@@ -52,5 +51,5 @@ async def test_run_without_crashing_the_thread_propagates_cancel(diagnostics_ser
     with patch("sigenergy2mqtt.diagnostics.service.diagnostics_server.run", new_callable=AsyncMock) as mock_run:
         mock_run.side_effect = asyncio.CancelledError()
         with pytest.raises(asyncio.CancelledError):
-            await diagnostics_service._run_without_crashing_the_thread()
+            await diagnostics_service._run_without_crashing_the_thread(None)
         mock_run.assert_called_once()

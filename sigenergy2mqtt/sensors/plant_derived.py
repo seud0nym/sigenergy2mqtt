@@ -1,12 +1,13 @@
 import logging
 import time
 from dataclasses import dataclass
+from typing import Any
 
 import paho.mqtt.client as mqtt
 
 from sigenergy2mqtt.common import ConsumptionMethod, DeviceClass, HybridInverter, ProtocolVersion, PVInverter, StateClass, UnitOfEnergy, UnitOfPower, UnitOfTime
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.modbus import ModbusClient, ModbusDataType
+from sigenergy2mqtt.modbus import ModbusDataType
 
 from .ac_charger_read_only import ACChargerChargingPower
 from .base import CrossDeviceDerivedSensor, DerivedSensor, DiscoveryKeys, EnergyDailyAccumulationSensor, PVPowerSensor, Sensor, SimpleEnergyDailyAccumulationSensor, UnpublishResetSensorMixin
@@ -503,7 +504,7 @@ class TotalPVPower(DerivedSensor, HybridInverter, PVInverter):
         attributes["source"] = "PV Power + Third-Party PV Power"
         return attributes
 
-    async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool = False) -> bool:
+    async def publish(self, mqtt_client: mqtt.Client, transport: Any, republish: bool = False) -> bool:
         if not republish:
             if any(value.state is None for value in self._sources.values()):
                 if self.debug_logging:
@@ -512,7 +513,7 @@ class TotalPVPower(DerivedSensor, HybridInverter, PVInverter):
             if self.debug_logging:
                 logger.debug(f"{self.log_identity} Publishing READY   - {self._sources=}")
         pending_update = self._pending_update
-        published = await super().publish(mqtt_client, modbus_client, republish=republish)
+        published = await super().publish(mqtt_client, transport, republish=republish)
         if published is False and pending_update:
             return False
         if not republish:
@@ -651,7 +652,7 @@ class PlantConsumedPower(CrossDeviceDerivedSensor, HybridInverter, PVInverter):
                 attributes["source"] = "TotalLoadPower"
         return attributes
 
-    async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool = False) -> bool:
+    async def publish(self, mqtt_client: mqtt.Client, transport: Any, republish: bool = False) -> bool:
         if not republish:
             if not self._set_latest_consumption():
                 if self.debug_logging:
@@ -659,7 +660,7 @@ class PlantConsumedPower(CrossDeviceDerivedSensor, HybridInverter, PVInverter):
                 return False  # until all values populated, can't do calculation
             republish = True  # if we got here, we have a valid value to publish
         pending_update = self._pending_update
-        published = await super().publish(mqtt_client, modbus_client, republish=republish)
+        published = await super().publish(mqtt_client, transport, republish=republish)
         if published is False and pending_update:
             return False
         # reset internal values to missing for next calculation
@@ -763,7 +764,7 @@ class TotalLifetimePVEnergy(UnpublishResetSensorMixin, DerivedSensor, HybridInve
         attributes["source"] = "∑ of PlantPVTotalGeneration and ThirdPartyLifetimePVEnergy"
         return attributes
 
-    async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool = False) -> bool:
+    async def publish(self, mqtt_client: mqtt.Client, transport: Any, republish: bool = False) -> bool:
         if self.plant_lifetime_pv_energy is None or self.plant_3rd_party_lifetime_pv_energy is None:
             if self.debug_logging:
                 logger.debug(f"{self.log_identity} Publishing SKIPPED - plant_lifetime_pv_energy={self.plant_lifetime_pv_energy} plant_3rd_party_lifetime_pv_energy={self.plant_3rd_party_lifetime_pv_energy}")
@@ -771,7 +772,7 @@ class TotalLifetimePVEnergy(UnpublishResetSensorMixin, DerivedSensor, HybridInve
         if self.debug_logging:
             logger.debug(f"{self.log_identity} Publishing READY   - plant_lifetime_pv_energy={self.plant_lifetime_pv_energy} plant_3rd_party_lifetime_pv_energy={self.plant_3rd_party_lifetime_pv_energy}")
         pending_update = self._pending_update
-        published = await super().publish(mqtt_client, modbus_client, republish=republish)
+        published = await super().publish(mqtt_client, transport, republish=republish)
         if published is False and pending_update:
             return False
         # reset internal values to missing for next calculation
@@ -923,7 +924,7 @@ class PlantSelfConsumedPower(CrossDeviceDerivedSensor, HybridInverter):
         attributes["source"] = "∑ of InverterSelfConsumedPower across all Inverters associated with the Plant"
         return attributes
 
-    async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool = False) -> bool:
+    async def publish(self, mqtt_client: mqtt.Client, transport: Any, republish: bool = False) -> bool:
         if any(v is None for v in self._values.values()):
             if self.debug_logging:
                 logger.debug(f"{self.log_identity} Publishing SKIPPED - values={self._values}")
@@ -931,7 +932,7 @@ class PlantSelfConsumedPower(CrossDeviceDerivedSensor, HybridInverter):
         if self.debug_logging:
             logger.debug(f"{self.log_identity} Publishing READY   - values={self._values}")
         pending_update = self._pending_update
-        published = await super().publish(mqtt_client, modbus_client, republish=republish)
+        published = await super().publish(mqtt_client, transport, republish=republish)
         if published is False and pending_update:
             return False
         # reset internal values to missing for next calculation
