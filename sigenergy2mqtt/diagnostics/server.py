@@ -23,6 +23,7 @@ import time
 from pathlib import Path
 from typing import Any
 
+import paho.mqtt.client as mqtt
 from aiohttp import WSMsgType, web
 
 from sigenergy2mqtt.config import active_config, is_docker
@@ -327,7 +328,7 @@ class DiagnosticsServer:
             matched_sensor[DiscoveryKeys.COMMAND_TOPIC] = cmd_topic
 
         try:
-            ok = await matched_sensor.set_value(None, None, coerced, cmd_topic, None)  # type: ignore[arg-type]
+            ok = await matched_sensor.set_value(None, self._mqtt_client, coerced, cmd_topic, self._mqtt_client._userdata)
         except (KeyError, RuntimeError, TypeError, ValueError) as exc:
             logger.warning(f"DiagnosticsServer config update for {endpoint!r} raised: {exc}")
             return web.json_response({"ok": False, "error": str(exc)}, status=500)
@@ -367,6 +368,7 @@ class DiagnosticsServer:
 
         # Find the sensor across all real-device plant indices
         from sigenergy2mqtt.sensors.base.sensor import Sensor
+
         matched_sensor: Sensor | None = None
         for plant_index, device_list in DeviceRegistry._devices.items():
             if plant_index < 0:
@@ -398,7 +400,6 @@ class DiagnosticsServer:
             logger.info(f"DiagnosticsServer debug_logging toggled via HTTP: {sensor_id!r} = {raw_value!r}")
             return web.json_response({"ok": True, "revision": revision})
         return web.json_response({"ok": False, "error": "Update had no effect (value unchanged)"})
-
 
     async def _handle_websocket(self, request: web.Request) -> web.WebSocketResponse:
         ws = web.WebSocketResponse(heartbeat=30)
@@ -488,7 +489,7 @@ class DiagnosticsServer:
         self._app = None
         logger.info("DiagnosticsServer Stopped")
 
-    async def run(self) -> None:
+    async def run(self, mqtt_client: mqtt.Client) -> None:
         """Start the server and block until cancelled.
 
         Matches the shape expected by ``Device.schedule()`` — a single
@@ -497,6 +498,7 @@ class DiagnosticsServer:
             def schedule(self, modbus_client, mqtt_client) -> list[Awaitable[None]]:
                 return [self._monitor(mqtt_client), diagnostics_server.run()]
         """
+        self._mqtt_client = mqtt_client
         await self.start()
         try:
             await asyncio.Event().wait()  # sleeps forever until the task is cancelled

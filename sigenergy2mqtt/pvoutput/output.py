@@ -259,15 +259,15 @@ class PVOutputOutputService(Service):
         if changed and active_config.pvoutput.output_hour == -1:
             self._previous_payload = payload
 
-    def schedule(self, modbus_client: Any, mqtt_client: mqtt.Client) -> list[Awaitable[None]]:
+    def schedule(self, transport: Any, mqtt_client: mqtt.Client) -> list[Awaitable[None]]:
         """Return asyncio tasks that periodically generate and upload output.
 
         Args:
-            modbus_client: Modbus client reference (unused).
+            transport: Transport reference (unused).
             mqtt_client: MQTT client reference (unused).
         """
 
-        async def publish_updates(modbus_client: Any, mqtt_client: Any, *sensors: Any) -> None:
+        async def publish_updates(transport: Any, mqtt_client: Any, *sensors: Any) -> None:
             minute: int = randint(56, 59)
             next: float = await self._next_output_upload(minute)
             last: float | None = None
@@ -317,7 +317,7 @@ class PVOutputOutputService(Service):
                     await asyncio.sleep(60)
             logger.info(f"{self.log_identity} Completed: Flagged as offline ({self.online=})")
 
-        tasks: list[Awaitable[None]] = [publish_updates(modbus_client, mqtt_client)]
+        tasks: list[Awaitable[None]] = [publish_updates(transport, mqtt_client)]
         return tasks
 
     def subscribe(self, mqtt_client: mqtt.Client, mqtt_handler: MqttHandler) -> None:

@@ -918,7 +918,7 @@ class ResetMetrics(WriteOnlySensorMixin):
     def publish_attributes(self, mqtt_client: Any, clean: bool = False, **kwargs) -> None:
         """Metrics sensors do not publish extra MQTT attributes."""
 
-    async def _write_value(self, modbus_client: Any | None, mqtt_client: Any, value: float | str, source: str, handler: Any) -> bool:
+    async def _write_value(self, transport: Any | None, mqtt_client: Any, value: float | str, source: str, handler: Any) -> bool:
         """Reset metrics counters."""
         if str(value) == "1":
             logger.info(f"{self.log_identity} Resetting all metrics counters")

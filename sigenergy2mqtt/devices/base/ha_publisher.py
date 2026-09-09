@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING, Any
 import paho.mqtt.client as mqtt
 
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.mqtt import MqttHandler
 from sigenergy2mqtt.sensors.base import Sensor
 
@@ -76,7 +75,7 @@ class HaPublisherMixin(abc.ABC):
 
     async def on_ha_state_change(
         self,
-        modbus_client: ModbusClient | None,
+        transport: Any,
         mqtt_client: mqtt.Client,
         ha_state: str,
         source: str,
@@ -92,7 +91,7 @@ class HaPublisherMixin(abc.ABC):
         See: https://www.home-assistant.io/integrations/mqtt/#birth-and-last-will-messages
 
         Args:
-            modbus_client: The Modbus client, if available, passed through to sensor
+            transport:     The Modbus client, if available, passed through to sensor
                            publish calls.
             mqtt_client:   The MQTT client used for publishing.
             ha_state:      The HA availability state string, typically "online" or
@@ -112,7 +111,7 @@ class HaPublisherMixin(abc.ABC):
                 await asyncio.sleep(seconds)  # https://www.home-assistant.io/integrations/mqtt/#birth-and-last-will-messages
                 await mqtt_handler.wait_for(2, self.name, self.publish_discovery, mqtt_client, clean=False)
                 for sensor in self.get_all_sensors(search_children=True).values():
-                    await sensor.publish(mqtt_client, modbus_client=modbus_client, republish=True)
+                    await sensor.publish(mqtt_client, transport, republish=True)
                 return True
             except asyncio.CancelledError:
                 logger.debug(f"{self.log_identity} on_ha_state_change sleep interrupted")

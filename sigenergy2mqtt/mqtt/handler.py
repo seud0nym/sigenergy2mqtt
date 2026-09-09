@@ -35,15 +35,12 @@ import threading
 import time
 from collections import namedtuple
 from collections.abc import Callable, Coroutine
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import paho.mqtt.client as mqtt
 from paho.mqtt.enums import MQTTErrorCode
 
 from sigenergy2mqtt.config import active_config
-
-if TYPE_CHECKING:
-    from sigenergy2mqtt.modbus import ModbusClient
 
 from .registry import MqttHealthRegistry
 
@@ -79,8 +76,8 @@ class MqttHandler:
     ----------
     client_id:
         The paho client identifier string, used only for log messages.
-    modbus_client:
-        Optional Modbus client passed through to every topic handler so
+    transport:
+        Optional transport client passed through to every topic handler so
         handlers can issue Modbus reads/writes in response to MQTT
         messages.
     loop:
@@ -93,10 +90,10 @@ class MqttHandler:
         be omitted for testing.
     """
 
-    def __init__(self, client_id: str, modbus_client: ModbusClient | None, loop: asyncio.AbstractEventLoop, health_registry: MqttHealthRegistry | None = None):
+    def __init__(self, client_id: str, transport: Any, loop: asyncio.AbstractEventLoop, health_registry: MqttHealthRegistry | None = None):
         """Initialise internal state; no network I/O is performed here."""
         self._loop = loop
-        self._modbus = modbus_client
+        self._transport = transport
         self.client_id = client_id
         self.connected = False
 
@@ -116,7 +113,7 @@ class MqttHandler:
 
         self._topics: dict[
             str,
-            list[Callable[[ModbusClient | None, mqtt.Client, str, str, MqttHandler], Coroutine[Any, Any, bool]]],
+            list[Callable[[Any, mqtt.Client, str, str, MqttHandler], Coroutine[Any, Any, bool]]],
         ] = {}
 
         self._pending_tasks: set[concurrent.futures.Future] = set()
@@ -256,7 +253,7 @@ class MqttHandler:
         for method in handlers:
             method_name = _get_method_name(method)
             logger.debug(f"Handling topic {topic} with {method_name} ({payload=} client_id={self.client_id})")
-            method_result = method(self._modbus, client, value, topic, self)
+            method_result = method(self._transport, client, value, topic, self)
             if inspect.isawaitable(method_result):
                 self._schedule_coroutine(method_result, method_name)
 
@@ -315,7 +312,7 @@ class MqttHandler:
     # Public API
     # ------------------------------------------------------------------
 
-    def register(self, client: mqtt.Client, topic: str, handler: Callable[[ModbusClient | None, mqtt.Client, str, str, MqttHandler], Coroutine[Any, Any, bool]]) -> tuple[MQTTErrorCode, int | None]:
+    def register(self, client: mqtt.Client, topic: str, handler: Callable[[Any, mqtt.Client, str, str, MqttHandler], Coroutine[Any, Any, bool]]) -> tuple[MQTTErrorCode, int | None]:
         """Register a handler for *topic* and subscribe to it on the broker.
 
         Multiple handlers may be registered for the same topic; they are

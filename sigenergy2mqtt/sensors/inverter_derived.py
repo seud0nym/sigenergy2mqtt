@@ -3,12 +3,13 @@ from __future__ import annotations
 import logging
 import time
 from dataclasses import dataclass, field
+from typing import Any
 
 import paho.mqtt.client as mqtt
 
 from sigenergy2mqtt.common import DeviceClass, HybridInverter, ProtocolVersion, PVInverter, StateClass, UnitOfPower
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.modbus import ModbusClient, ModbusDataType
+from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.base import SanityCheckException
 from sigenergy2mqtt.sensors.inverter_read_only import ActivePower
 
@@ -141,7 +142,7 @@ class PVStringPower(DerivedSensor, HybridInverter, PVInverter):
         attributes["source"] = "PVVoltageSensor × PVCurrentSensor"
         return attributes
 
-    async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool = False) -> bool:
+    async def publish(self, mqtt_client: mqtt.Client, transport: Any, republish: bool = False) -> bool:
         if self.volts.value is None or self.amperes.value is None:
             if self.debug_logging:
                 logger.debug(f"{self.log_identity} Publishing SKIPPED - current={self.amperes.value} voltage={self.volts.value}")
@@ -152,7 +153,7 @@ class PVStringPower(DerivedSensor, HybridInverter, PVInverter):
             logger.debug(f"{self.log_identity} Publishing READY   - current={self.amperes.value} voltage={self.volts.value} gap={gap:.2f}s")
             if gap > _MAX_PV_STRING_POWER_GAP_WARNING_SECONDS:
                 logger.debug(f"{self.log_identity} Publishing WARNING - gap between acquiring current and voltage was {gap:.2f}s")
-        published = await super().publish(mqtt_client, modbus_client, republish=republish)  # Publish even if gap exceeds warning threshold
+        published = await super().publish(mqtt_client, transport, republish=republish)  # Publish even if gap exceeds warning threshold
         if published is False and pending_update:
             return False
         if not republish:
@@ -266,7 +267,7 @@ class InverterSelfConsumedPower(DerivedSensor, HybridInverter, PVInverter):
         attributes["source"] = "Estimate of inverter self-consumption (ActivePower − ChargeDischargePower − ∑[PVStringPower])"
         return attributes
 
-    async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool = False) -> bool:
+    async def publish(self, mqtt_client: mqtt.Client, transport: Any, republish: bool = False) -> bool:
         if self.active_power is None or self.battery_power is None or any(p is None for p in self.pv_string_power.values()):
             if self.debug_logging:
                 logger.debug(f"{self.log_identity} Publishing SKIPPED - active_power={self.active_power} battery_power={self.battery_power} pv_string_power={[p for p in self.pv_string_power.values()]}")
@@ -274,7 +275,7 @@ class InverterSelfConsumedPower(DerivedSensor, HybridInverter, PVInverter):
         pending_update = self._pending_update
         if self.debug_logging:
             logger.debug(f"{self.log_identity} Publishing READY   - active_power={self.active_power} battery_power={self.battery_power} pv_string_power={[p for p in self.pv_string_power.values()]}")
-        published = await super().publish(mqtt_client, modbus_client, republish=republish)  # Publish even if gap exceeds warning threshold
+        published = await super().publish(mqtt_client, transport, republish=republish)  # Publish even if gap exceeds warning threshold
         if published is False and pending_update:
             return False
         if not republish:

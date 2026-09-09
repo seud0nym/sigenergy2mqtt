@@ -1,6 +1,14 @@
 <!-- git log [since tag]..HEAD --oneline -->
 # Changelog 
 
+## [Unreleased]
+
+### Changed
+
+- Refactored WriteableSensorMixin and derived classes to use transport-agnostic pattern
+
+---
+
 ## [2026.9.9] - 2026-09-09
 
 ### Added

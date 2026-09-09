@@ -6,13 +6,13 @@ sensor entities and handles the service lifecycle.
 """
 
 import logging
+from typing import Any
 
 import paho.mqtt.client as mqtt
 
 from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import Device
-from sigenergy2mqtt.modbus import ModbusClient
 
 from .sensors import (
     ApplicationLogLevel,
@@ -57,10 +57,10 @@ class SettingsService(Device):
             self._add_sensor(PVOutputCalcDebugLogging())
             self._add_sensor(PVOutputUpdateDebugLogging())
 
-    def on_commencement(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client) -> None:
+    def on_commencement(self, transport: Any, mqtt_client: mqtt.Client) -> None:
         """Mark the service online."""
         logger.info(f"{self.log_identity} Commenced")
 
-    def on_completion(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client) -> None:
+    def on_completion(self, transport: Any, mqtt_client: mqtt.Client) -> None:
         """Mark the service offline on shutdown."""
         logger.info(f"{self.log_identity} Service Completed: Flagged as offline ({self.online=})")

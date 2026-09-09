@@ -260,11 +260,11 @@ class ObservableMixin(abc.ABC):
     """Mixin for sensors that can be observed/controlled via MQTT."""
 
     @abc.abstractmethod
-    async def notify(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
+    async def notify(self, transport: Any, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
         """Handle notification of value change.
 
         Args:
-            modbus_client: Modbus client for writing values
+            transport: Transport client (e.g. ModbusClient) or None for transport-independent sensors
             mqtt_client: MQTT client
             value: New value
             source: Source topic of the value
@@ -369,11 +369,11 @@ class WriteableSensorMixin(Sensor):
             logger.debug(f"{self.log_identity} >>> {DiscoveryKeys.COMMAND_TOPIC}={self[DiscoveryKeys.COMMAND_TOPIC]})")
         return base
 
-    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
+    async def set_value(self, transport: Any, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
         """Validate and dispatch an MQTT command through ``_write_value``."""
         self.force_publish = True
         try:
-            if not await self.value_is_valid(modbus_client, value):
+            if not await self.value_is_valid(transport, value):
                 return False
         except ModbusException as exc:
             logger.error(f"{self.log_identity} value_is_valid check of value '{value}' FAILED: {exc!r}")
@@ -381,13 +381,13 @@ class WriteableSensorMixin(Sensor):
         if source != self.command_topic:
             logger.error(f"{self.log_identity} Attempt to set value '{value}' from unknown topic {source}")
             return False
-        return await self._write_value(modbus_client, mqtt_client, value, source, handler)
+        return await self._write_value(transport, mqtt_client, value, source, handler)
 
     @abc.abstractmethod
-    async def _write_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
+    async def _write_value(self, transport: Any, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
         """Deliver a validated command value using the sensor's transport."""
 
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | str) -> bool:
+    async def value_is_valid(self, transport: Any, raw_value: float | str) -> bool:
         """Return whether a command value is accepted by this sensor."""
         return True
 
@@ -489,17 +489,20 @@ class ModbusWriteableSensorMixin(TypedSensorMixin, ModbusSensorMixin, WriteableS
 
         return self._check_register_response(rr, method)
 
-    async def _write_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
+    async def _write_value(self, transport: Any, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
         """Write a validated command value to this sensor's Modbus register."""
-        if modbus_client is None:
-            raise ValueError(f"{self.log_identity}: ModbusClient cannot be None")
-        return await self._write_registers(modbus_client, value, mqtt_client)
+        if not isinstance(transport, ModbusClient):
+            raise TypeError(
+                f"{self.log_identity}: _write_value requires a ModbusClient transport, "
+                f"got {type(transport)!r}"
+            )
+        return await self._write_registers(transport, value, mqtt_client)
 
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | str) -> bool:
+    async def value_is_valid(self, transport: Any, raw_value: float | str) -> bool:
         """Validate that a value is acceptable for this sensor.
 
         Args:
-            modbus_client: Modbus client (may be used for validation)
+            transport: Transport client (not used for validation)
             raw_value: Value to validate
 
         Returns:
@@ -523,11 +526,11 @@ class PVPowerSensor(ObservableMixin):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    async def notify(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
+    async def notify(self, transport: Any, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
         """Handle notification (currently no-op).
 
         Args:
-            modbus_client: Modbus client
+            transport: Transport client or None (unused)
             mqtt_client: MQTT client
             value: Notification value
             source: Source topic

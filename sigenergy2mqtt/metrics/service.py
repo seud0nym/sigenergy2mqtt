@@ -8,6 +8,7 @@ timestamps at actual commencement time.
 """
 
 import logging
+from typing import Any
 
 import paho.mqtt.client as mqtt
 
@@ -15,7 +16,6 @@ from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.metrics import sensors
-from sigenergy2mqtt.modbus import ModbusClient
 
 logger = logging.getLogger(__name__)
 
@@ -87,12 +87,12 @@ class MetricsService(Device):
 
         self._add_sensor(sensors.ResetMetrics())
 
-    def on_commencement(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client) -> None:
+    def on_commencement(self, transport: Any, mqtt_client: mqtt.Client) -> None:
         """Mark the service online."""
         logger.info(f"{self.log_identity} Commenced")
         mqtt_client.publish("sigenergy2mqtt/status", "online", qos=0, retain=True)
 
-    def on_completion(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client) -> None:
+    def on_completion(self, transport: Any, mqtt_client: mqtt.Client) -> None:
         """Mark the service offline on shutdown."""
         logger.info(f"{self.log_identity} Service Completed: Flagged as offline ({self.online=})")
         mqtt_client.publish("sigenergy2mqtt/status", "offline", qos=0, retain=True)

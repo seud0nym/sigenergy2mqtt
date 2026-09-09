@@ -43,11 +43,11 @@ class DiagnosticsService(Device):
         """DiagnosticsService does not publish any discovery messages."""
         return None
 
-    def schedule(self, modbus_client: Any, mqtt_client: mqtt.Client) -> list[Awaitable[None]]:
+    def schedule(self, transport: Any, mqtt_client: mqtt.Client) -> list[Awaitable[None]]:
         """Return the single long-running coroutine that owns the web server's lifecycle."""
-        return [self._run_without_crashing_the_thread()]
+        return [self._run_without_crashing_the_thread(mqtt_client)]
 
-    async def _run_without_crashing_the_thread(self) -> None:
+    async def _run_without_crashing_the_thread(self, mqtt_client: mqtt.Client) -> None:
         """Run the diagnostics server, but never let a startup/bind failure escape.
 
         This coroutine is gathered alongside MetricsService/PVOutput/InfluxDB
@@ -66,7 +66,7 @@ class DiagnosticsService(Device):
         being silently swallowed.
         """
         try:
-            await diagnostics_server.run()
+            await diagnostics_server.run(mqtt_client)
         except asyncio.CancelledError:
             raise  # cooperative shutdown must still propagate
         except (OSError, RuntimeError):

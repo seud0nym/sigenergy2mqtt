@@ -4,7 +4,7 @@ import abc
 import asyncio
 import logging
 from collections.abc import Awaitable
-from typing import TYPE_CHECKING, Literal, cast
+from typing import Any, Literal, cast
 
 import paho.mqtt.client as mqtt
 
@@ -14,9 +14,6 @@ from sigenergy2mqtt.config.models import RegisterAccess
 from sigenergy2mqtt.i18n import _t
 from sigenergy2mqtt.mqtt import MqttHandler
 from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, CrossDeviceDerivedSensor, DerivedSensor, ObservableMixin, ReadableSensorMixin, Sensor, WriteableSensorMixin, WriteOnlySensorMixin
-
-if TYPE_CHECKING:
-    from sigenergy2mqtt.modbus import ModbusClient
 
 from .ha_publisher import HaPublisherMixin
 from .poller import SensorGroupPoller
@@ -491,13 +488,13 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
 
         return None
 
-    def on_commencement(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client) -> None:
+    def on_commencement(self, transport: Any, mqtt_client: mqtt.Client) -> None:
         """Called when the device is brought online."""
 
-    def on_completion(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client) -> None:
+    def on_completion(self, transport: Any, mqtt_client: mqtt.Client) -> None:
         """Called when the device is taken offline."""
 
-    def schedule(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client) -> list[Awaitable[None]]:
+    def schedule(self, transport: Any, mqtt_client: mqtt.Client) -> list[Awaitable[None]]:
         """Build the list of coroutines that drive this device's runtime behaviour.
 
         Creates one SensorGroupPoller.run() coroutine per sensor scan group that
@@ -509,7 +506,7 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
         as asyncio Tasks.
 
         Args:
-            modbus_client: The Modbus client, or None for non-Modbus devices.
+            transport:     The transport (e.g. Modbus client).
             mqtt_client:   The MQTT client used by all coroutines for publishing.
 
         Returns:
@@ -520,7 +517,7 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
         tasks: list[Awaitable[None]] = []
         for name, sensors in groups.items():
             if any(s.publishable for s in sensors):
-                tasks.append(poller.run(modbus_client, mqtt_client, name, *sensors))
+                tasks.append(poller.run(transport, mqtt_client, name, *sensors))
             else:
                 logger.debug(f"{self.log_identity} Sensor Scan Group [{name}] skipped because no sensors are publishable (unique_ids={[s.unique_id for s in sensors]})")
         if active_config.home_assistant.enabled and active_config.home_assistant.republish_discovery_interval > 0:

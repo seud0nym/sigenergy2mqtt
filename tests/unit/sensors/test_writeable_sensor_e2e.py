@@ -31,7 +31,8 @@ async def _get_writable_sensors() -> list[WriteableSensorMixin]:
 
 
 def _build_modbus() -> MagicMock:
-    modbus = MagicMock()
+    from sigenergy2mqtt.modbus import ModbusClient
+    modbus = MagicMock(spec=ModbusClient)
     modbus.DATATYPE = ModbusClientMixin.DATATYPE
     modbus.convert_to_registers = MagicMock(side_effect=lambda value, data_type: ModbusClientMixin.convert_to_registers(int(value), data_type))
     ok = MagicMock()

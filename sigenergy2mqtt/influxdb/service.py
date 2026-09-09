@@ -3,14 +3,13 @@ import logging
 import re
 import time
 from collections.abc import Awaitable
-from typing import cast
+from typing import Any, cast
 
 import paho.mqtt.client as mqtt
 import requests
 
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import DeviceRegistry
-from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.mqtt import MqttHandler
 
 from .base import InfluxBase
@@ -68,7 +67,7 @@ class InfluxService(InfluxBase):
 
     async def _keep_running(
         self,
-        modbus_client: ModbusClient | None,
+        transport: Any,
         mqtt_client: mqtt.Client,
     ) -> None:
         """Main service coroutine: initialise, optionally sync history, then idle.
@@ -78,7 +77,7 @@ class InfluxService(InfluxBase):
         in-flight history sync task.
 
         Args:
-            modbus_client: Modbus client for the plant (unused directly, passed
+            transport: Modbus client for the plant (unused directly, passed
                 for interface compatibility).
             mqtt_client: Active MQTT client used for unsubscription on shutdown.
         """
@@ -131,7 +130,7 @@ class InfluxService(InfluxBase):
 
     async def handle_mqtt(
         self,
-        modbus_client: ModbusClient | None,
+        transport: Any,
         mqtt_client: mqtt.Client,
         payload: str,
         topic: str,
@@ -145,7 +144,7 @@ class InfluxService(InfluxBase):
         (string).
 
         Args:
-            modbus_client: Modbus client for the plant (unused, for interface compatibility).
+            transport: Modbus client for the plant (unused, for interface compatibility).
             mqtt_client: Active MQTT client (unused, for interface compatibility).
             payload: Raw string payload from the MQTT broker.
             topic: Full MQTT topic string.
@@ -200,21 +199,17 @@ class InfluxService(InfluxBase):
     # Scheduling and subscription
     # ------------------------------------------------------------------
 
-    def schedule(
-        self,
-        modbus_client: ModbusClient | None,
-        mqtt_client: mqtt.Client,
-    ) -> list[Awaitable[None]]:
+    def schedule(self, transport: Any, mqtt_client: mqtt.Client) -> list[Awaitable[None]]:
         """Return the list of awaitables that drive this service.
 
         Args:
-            modbus_client: Modbus client for the plant.
+            transport: Modbus client for the plant.
             mqtt_client: Active MQTT client.
 
         Returns:
             A single-element list containing the :meth:`_keep_running` coroutine.
         """
-        return [self._keep_running(modbus_client, mqtt_client)]
+        return [self._keep_running(transport, mqtt_client)]
 
     def subscribe(self, mqtt_client: mqtt.Client, mqtt_handler: MqttHandler) -> None:
         """Discover all publishable sensors for this plant and subscribe to their topics.

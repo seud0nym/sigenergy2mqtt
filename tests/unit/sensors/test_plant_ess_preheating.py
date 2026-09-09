@@ -45,7 +45,7 @@ async def test_ess_preheating_advance_enable_invalid(monkeypatch, caplog):
     fake_mode.configure_mqtt_topics("device_id")
     sensor = ESSPreHeatingAdvanceEnable(plant_index=0, preheating_mode=fake_mode)
     caplog.set_level(logging.ERROR)
-    valid = await sensor.value_is_valid(modbus_client=None, raw_value=2)
+    valid = await sensor.value_is_valid(transport=None, raw_value=2)
     assert not valid
     assert any("Failed to write value" in rec.message for rec in caplog.records)
 
@@ -59,7 +59,7 @@ async def test_ess_preheating_advance_enable_valid(monkeypatch):
         return True
     
     monkeypatch.setattr("sigenergy2mqtt.sensors.base.writeable.SwitchSensor.value_is_valid", mock_super_valid)
-    valid = await sensor.value_is_valid(modbus_client=None, raw_value=1)
+    valid = await sensor.value_is_valid(transport=None, raw_value=1)
     assert valid
 
 def test_ess_preheating_tou_time_raw2state_and_attributes():

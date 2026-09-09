@@ -20,7 +20,7 @@ from sigenergy2mqtt.common import DeviceClass, ProtocolVersion, StateClass
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.config.models import RegisterAccess
 from sigenergy2mqtt.i18n import _t
-from sigenergy2mqtt.modbus import ModbusClient, ModbusDataType
+from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.mqtt import MqttHandler
 from sigenergy2mqtt.persistence import Category, state_store
 
@@ -886,14 +886,14 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], SensorProtocol, m
         The default implementation does nothing.
         """
 
-    async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool = False) -> bool:
+    async def publish(self, mqtt_client: mqtt.Client, transport: Any, republish: bool = False) -> bool:
         from sigenergy2mqtt.metrics import Metrics
 
         """Publish the sensor state to MQTT.
 
         Args:
             mqtt_client: MQTT client for publishing
-            modbus_client: Modbus client for reading values
+            transport: Transport object for reading values
             republish: If True, republish last known state without re-reading
             
         Returns:
@@ -903,13 +903,13 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], SensorProtocol, m
             return False
 
         try:
-            published = await self._attempt_publish(mqtt_client, modbus_client, republish)
-            await self._publish_derived_sensors(mqtt_client, modbus_client, republish)
+            published = await self._attempt_publish(mqtt_client, transport, republish)
+            await self._publish_derived_sensors(mqtt_client, transport, republish)
             return published
         except (ModbusException, SanityCheckException) as e:
             await Metrics.mqtt_publish_attempt(physical_publish=False)
             await Metrics.mqtt_publish_failure()
-            return self._handle_publish_error(mqtt_client, modbus_client, e)
+            return self._handle_publish_error(mqtt_client, transport, e)
         finally:
             self.force_publish = False
 
@@ -927,7 +927,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], SensorProtocol, m
 
         return should_publish
 
-    async def _attempt_publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool) -> bool:
+    async def _attempt_publish(self, mqtt_client: mqtt.Client, transport: Any, republish: bool) -> bool:
         from sigenergy2mqtt.metrics import Metrics
 
         """Attempt to publish sensor state.
@@ -943,7 +943,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], SensorProtocol, m
         if not self.publishable:
             return False
 
-        state = await self.get_state(modbus_client=modbus_client, raw=False, republish=republish)
+        state = await self.get_state(modbus_client=transport, raw=False, republish=republish)
 
         if state is None and not self.force_publish:
             if self.debug_logging:
@@ -1013,7 +1013,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], SensorProtocol, m
             logger.warning(f"{self.log_identity} Failed to publish state={payload} to topic {topic} result={message.rc}")
         return message.is_published()
 
-    async def _publish_derived_sensors(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, republish: bool) -> None:
+    async def _publish_derived_sensors(self, mqtt_client: mqtt.Client, transport: Any, republish: bool) -> None:
         """Publish all derived sensors.
 
         Args:
@@ -1022,9 +1022,9 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], SensorProtocol, m
             republish: If True, republish last known state
         """
         for sensor in self.derived_sensors.values():
-            await sensor.publish(mqtt_client, modbus_client, republish=republish)
+            await sensor.publish(mqtt_client, transport, republish=republish)
 
-    def _handle_publish_error(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None, error: Exception) -> bool:
+    def _handle_publish_error(self, mqtt_client: mqtt.Client, transport: Any, error: Exception) -> bool:
         """Handle errors during publish.
 
         Args:
@@ -1037,7 +1037,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], SensorProtocol, m
         """
         logger.warning(f"{self.log_identity} Publishing SKIPPED: Failed to get state ({error!r})")
 
-        if modbus_client and modbus_client.connected:
+        if transport and transport.connected:
             self._update_failure_count(error)
         else:
             raise error
@@ -1198,7 +1198,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], SensorProtocol, m
             return active_config.sensor_overrides[identifier]
         return None
 
-    async def set_debug_logging(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
+    async def set_debug_logging(self, transport: Any, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
         """Set debug logging value via MQTT.
 
         Args:

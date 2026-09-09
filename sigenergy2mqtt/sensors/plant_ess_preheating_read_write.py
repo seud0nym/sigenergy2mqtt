@@ -3,13 +3,13 @@ from __future__ import annotations
 import logging
 from abc import ABC
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import paho.mqtt.client as mqtt
 
 from sigenergy2mqtt.common import Constants, ProtocolVersion
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.modbus import ModbusClient, ModbusDataType
+from sigenergy2mqtt.modbus import ModbusDataType
 
 if TYPE_CHECKING:
     from sigenergy2mqtt.mqtt import MqttHandler
@@ -88,13 +88,13 @@ class ESSPreHeatingAdvanceEnable(SwitchSensor, HybridInverter):
         attributes["comment"] = "0: Disable, 1: Enable. Takes effect when Preheating Mode is Manual."
         return attributes
 
-    async def value_is_valid(self, modbus_client: ModbusClient | None, raw_value: float | str) -> bool:
+    async def value_is_valid(self, transport: Any, raw_value: float | str) -> bool:
         if self._availability_control_sensor is not None and self._availability_control_sensor.latest_raw_state == 0:
             logger.error(
                 f"{self.log_identity} Failed to write value '{raw_value}': {self._availability_control_sensor.log_identity} is set to Automatic mode, so cannot enable Advance. Set Preheating Mode to Manual first."
             )
             return False
-        return await super().value_is_valid(modbus_client, raw_value)
+        return await super().value_is_valid(transport, raw_value)
 
 
 class ESSPreHeatingTOUTime(NumericSensor, HybridInverter, ABC):
@@ -164,9 +164,9 @@ class ESSPreHeatingTOUTime(NumericSensor, HybridInverter, ABC):
 
         return state
 
-    async def set_value(self, modbus_client: ModbusClient | None, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
+    async def set_value(self, transport: Any, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
         epoch = cast(int, self.state2raw(value))
-        return await super().set_value(modbus_client, mqtt_client, epoch, source, handler)
+        return await super().set_value(transport, mqtt_client, epoch, source, handler)
 
     def state2raw(self, state: float | str) -> float | int | str | None:
         """Convert time string back to Unix epoch value.

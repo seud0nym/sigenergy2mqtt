@@ -74,7 +74,7 @@ class SettingsSensor(ReadableSensorMixin, WriteableSensorMixin):
             state = state()
         return self.set_latest_state(cast(float | str, state) if not isinstance(self, SwitchSensorMixin) else (1 if state else 0))
 
-    async def _write_value(self, modbus_client, mqtt_client, value, source, handler) -> bool:
+    async def _write_value(self, transport, mqtt_client, value, source, handler) -> bool:
         logger.info(f"{self.log_identity} Updated '{self._setting}' to '{self._raw2state(value)}'")
         setattr(self._parent, self._attribute, value if not isinstance(self, SwitchSensorMixin) else bool(value))
         return True
@@ -126,8 +126,8 @@ class LogLevelSensor(SettingsSensor, SelectSensorMixin):
     def apply_log_level(self, log_level: int) -> None:
         logging.getLogger(self._logger).setLevel(log_level)
 
-    async def _write_value(self, modbus_client, mqtt_client, value, source, handler) -> bool:
-        result = await super()._write_value(modbus_client, mqtt_client, value, source, handler)
+    async def _write_value(self, transport, mqtt_client, value, source, handler) -> bool:
+        result = await super()._write_value(transport, mqtt_client, value, source, handler)
         if result:
             self.apply_log_level(value)
         return result

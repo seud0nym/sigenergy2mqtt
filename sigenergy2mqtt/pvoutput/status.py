@@ -159,11 +159,11 @@ class PVOutputStatusService(Service):
         logger.debug(f"{self.log_identity} Next update at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(next_time))} ({seconds:.2f}s)")
         return seconds, next_time
 
-    def schedule(self, modbus_client: Any, mqtt_client: Any) -> list[Awaitable[None]]:
+    def schedule(self, transport: Any, mqtt_client: Any) -> list[Awaitable[None]]:
         """Return asyncio tasks that periodically upload status payloads.
 
         Args:
-            modbus_client: Modbus client reference (unused).
+            transport: Transport layer reference.
             mqtt_client: MQTT client reference (unused).
         """
 
@@ -226,7 +226,7 @@ class PVOutputStatusService(Service):
                         wait = 60
             logger.info(f"{self.log_identity} Completed: Flagged as offline ({self.online=})")
 
-        tasks: list[Awaitable[None]] = [publish_updates(modbus_client, mqtt_client)]
+        tasks: list[Awaitable[None]] = [publish_updates(transport, mqtt_client)]
         return tasks
 
     def subscribe(self, mqtt_client, mqtt_handler) -> None:
