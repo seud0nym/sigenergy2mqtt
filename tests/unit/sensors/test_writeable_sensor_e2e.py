@@ -8,9 +8,9 @@ from unittest.mock import AsyncMock, MagicMock
 from pymodbus.client.mixin import ModbusClientMixin
 
 from sigenergy2mqtt.config import Config, _swap_active_config
-from sigenergy2mqtt.metrics.sensors import ResetMetrics
 from sigenergy2mqtt.sensors.base import NumericSensor, SelectSensor, SwitchSensor, WriteableSensorMixin, WriteOnlySensorMixin
 from sigenergy2mqtt.sensors.base.constants import DiscoveryKeys
+from sigenergy2mqtt.sensors.metrics import ResetMetrics
 from sigenergy2mqtt.sensors.plant_read_write import MaxChargingLimit, MaxDischargingLimit, PVMaxPowerLimit, RemoteEMSLimit
 from tests.utils.modbus_sensors import get_sensor_instances
 
@@ -32,6 +32,7 @@ async def _get_writable_sensors() -> list[WriteableSensorMixin]:
 
 def _build_modbus() -> MagicMock:
     from sigenergy2mqtt.modbus import ModbusClient
+
     modbus = MagicMock(spec=ModbusClient)
     modbus.DATATYPE = ModbusClientMixin.DATATYPE
     modbus.convert_to_registers = MagicMock(side_effect=lambda value, data_type: ModbusClientMixin.convert_to_registers(int(value), data_type))

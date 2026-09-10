@@ -6,7 +6,6 @@ import pytest
 
 from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.config import Config, _swap_active_config
-from sigenergy2mqtt.config.sensors import ApplicationLogLevel
 from sigenergy2mqtt.sensors.base import (
     NumericSensorMixin,
     SelectSensorMixin,
@@ -15,6 +14,7 @@ from sigenergy2mqtt.sensors.base import (
     WriteableSensorMixin,
     WriteOnlySensorMixin,
 )
+from sigenergy2mqtt.sensors.settings import ApplicationLogLevel
 
 
 class _NonModbusWriteableSensor(WriteableSensorMixin, Sensor):

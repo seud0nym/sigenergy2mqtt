@@ -19,9 +19,9 @@ from sigenergy2mqtt.i18n import _t
 from sigenergy2mqtt.modbus import ModbusClientFactory
 from sigenergy2mqtt.mqtt import MqttHandler, mqtt_health_registry, mqtt_setup, mqtt_teardown
 from sigenergy2mqtt.sensors.base import DerivedSensor, ReadableSensorMixin
+from sigenergy2mqtt.sensors.monitor import MonitoredSensor
 
 from .dashboard import extract_dashboard_state
-from .sensor import MonitoredSensor
 
 logger = logging.getLogger(__name__)
 

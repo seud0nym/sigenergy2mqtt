@@ -238,7 +238,7 @@ def _default_translations_dir() -> Path:
     Returns:
         The default Path to the translations directory.
     """
-    return Path(__file__).parent.resolve().parent / "sigenergy2mqtt" / "translations"
+    return Path(__file__).parent.resolve().parent / "src" / "sigenergy2mqtt" / "translations"
 
 
 # ---------------------------------------------------------------------------

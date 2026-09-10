@@ -10,7 +10,7 @@ if [[ -z "$VIRTUAL_ENV" ]]; then
    source .venv/bin/activate
 fi
 
-git restore sigenergy2mqtt/config/version.py
+git restore src/sigenergy2mqtt/config/version.py
 git pull
 
 echo -e "${GREEN}>>> Checking dependencies...${NC}"
@@ -22,8 +22,8 @@ echo -en "${GREEN}>>> Confirm version bump? (y/n): ${NC}"
 read confirm
 if [[ "$confirm" != "y" ]]; then
     echo -e "${RED}>>> Version bump cancelled.${NC}"
-    git restore sigenergy2mqtt/config/version.py
-    touch -d "$(git log -1 --pretty=format:%cI -- sigenergy2mqtt/config/version.py)" sigenergy2mqtt/config/version.py
+    git restore src/sigenergy2mqtt/config/version.py
+    touch -d "$(git log -1 --pretty=format:%cI -- src/sigenergy2mqtt/config/version.py)" src/sigenergy2mqtt/config/version.py
     exit 1
 fi
 
@@ -34,8 +34,8 @@ for file in \
     resources/configuration/CLI.md \
     resources/sensors/SENSORS.md \
     resources/sensors/TOPICS.md \
-    sigenergy2mqtt/config/version.py \
-    sigenergy2mqtt/sensors/base/_sigenergy_local_modbus_registers.py
+    src/sigenergy2mqtt/config/version.py \
+    src/sigenergy2mqtt/sensors/base/_sigenergy_local_modbus_registers.py
 do
     if ! git diff --quiet "$file"; then
         git add "$file"

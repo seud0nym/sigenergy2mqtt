@@ -12,11 +12,14 @@
         ".vscode",
         "pyproject.toml",
         "scripts/update_en_translation.py",
-        "sigenergy2mqtt/translations",
+        "src/sigenergy2mqtt/translations",
         "tests",
         ".github/workflows/*.yaml"
     ],
     "cSpell.language": "en-GB",
+    "cSpell.maxDuplicateProblems": 1,
+    "cSpell.spellCheckOnlyWorkspaceFiles": true,
+    "cSpell.unknownWords": "report-all",
     "cSpell.words": [
         "_mids",
         "ACCHARGER",
@@ -146,6 +149,7 @@
     "python.analysis.diagnosticMode": "workspace",
     "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
     "python.languageServer": "Default",
+    "python.pythonPath": ".venv/bin/python",
     "python.terminal.activateEnvironment": true,
     "python.testing.pytestArgs": [
         "tests",
@@ -154,15 +158,11 @@
     ],
     "python.testing.pytestEnabled": true,
     "python.testing.unittestEnabled": false,
+    "ruff.format.preview": true,
     "ruff.lineLength": 210,
     "terminal.integrated.defaultProfile.linux": "bash",
     "terminal.integrated.env.linux": {
         "PATH": "${workspaceFolder}/.venv/bin:${env:PATH}"
     },
-    "terminal.integrated.shellIntegration.enabled": true,
-    "python.pythonPath": ".venv/bin/python",
-    "cSpell.maxDuplicateProblems": 1,
-    "cSpell.unknownWords": "report-all",
-    "cSpell.spellCheckOnlyWorkspaceFiles": true,
-    "ruff.format.preview": true,
+    "terminal.integrated.shellIntegration.enabled": true
 }

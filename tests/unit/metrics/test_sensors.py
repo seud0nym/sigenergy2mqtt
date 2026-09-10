@@ -5,7 +5,7 @@ import pytest
 
 from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.metrics.metrics import Metrics
-from sigenergy2mqtt.metrics.sensors import (
+from sigenergy2mqtt.sensors.metrics import (
     MetricsSensor,
     ModbusActiveLocks,
     ModbusCacheHits,
@@ -226,7 +226,7 @@ class TestProtocolVersionSensor:
 class TestProtocolPublished:
     @pytest.mark.asyncio
     async def test_update_internal_state(self):
-        with patch("sigenergy2mqtt.metrics.sensors.ProtocolApplies", return_value="2024-08-05"):
+        with patch("sigenergy2mqtt.sensors.metrics.ProtocolApplies", return_value="2024-08-05"):
             sensor = ProtocolPublished(ProtocolVersion.V1_8)
             await sensor._update_internal_state()
             assert sensor.latest_raw_state == "2024-08-05"

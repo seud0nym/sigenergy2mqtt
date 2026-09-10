@@ -7,7 +7,7 @@ from pathlib import Path
 from ruamel.yaml import YAML
 
 # Add project root to path to import constants
-project_root = Path(__file__).parent.parent.resolve()
+project_root = Path(__file__).parent.parent.resolve() / "src"
 sys.path.append(str(project_root))
 
 try:
@@ -118,7 +118,6 @@ def yaml_to_env(yaml_data):
         set_env(const.SIGENERGY2MQTT_SCAN_INTERVAL_MEDIUM, m.get("scan-interval-medium"))
         set_env(const.SIGENERGY2MQTT_SCAN_INTERVAL_HIGH, m.get("scan-interval-high"))
         set_env(const.SIGENERGY2MQTT_SCAN_INTERVAL_REALTIME, m.get("scan-interval-realtime"))
-
 
     # PVOutput
     pvo = yaml_data.get("pvoutput", {})

@@ -13,8 +13,7 @@ import paho.mqtt.client as mqtt
 from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import Device
-
-from .sensors import (
+from sigenergy2mqtt.sensors.settings import (
     ApplicationLogLevel,
     DiagnosticsLogLevel,
     InfluxDBLogLevel,

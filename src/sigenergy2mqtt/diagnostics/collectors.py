@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, cast
+from typing import Any, cast
 
 from sigenergy2mqtt.config import ConsumptionSource, active_config
 from sigenergy2mqtt.i18n import _t
@@ -7,9 +7,6 @@ from sigenergy2mqtt.sensors.base.constants import DiscoveryKeys
 from sigenergy2mqtt.sensors.base.writeable import NumericSensorMixin, SelectSensorMixin, SwitchSensorMixin, WriteOnlySensorMixin
 
 from .registry import diagnostics_registry
-
-if TYPE_CHECKING:
-    from sigenergy2mqtt.config.sensors import SettingsSensor
 
 
 class DiagnosticsCollectors:
@@ -29,8 +26,8 @@ class DiagnosticsCollectors:
     @classmethod
     async def _diagnostics_collect_runtime_config(cls) -> dict[str, Any]:
         """Diagnostics provider callback: exposes live SettingsService sensor values as editable controls."""
-        from sigenergy2mqtt.config.sensors import SettingsSensor
         from sigenergy2mqtt.devices.base.registry import DeviceRegistry
+        from sigenergy2mqtt.sensors.settings import SettingsSensor
 
         controls: dict[str, Any] = {}
 
@@ -99,8 +96,8 @@ class DiagnosticsCollectors:
     @classmethod
     async def _diagnostics_collect_sensor_debug(cls) -> dict[str, Any]:
         """Diagnostics provider callback: exposes all sensor debug_logging flags, grouped by device."""
-        from sigenergy2mqtt.config.sensors import SettingsSensor
         from sigenergy2mqtt.devices.base.registry import DeviceRegistry
+        from sigenergy2mqtt.sensors.settings import SettingsSensor
 
         devices_data: dict[str, Any] = {}
 
