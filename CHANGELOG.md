@@ -1,14 +1,6 @@
 <!-- git log [since tag]..HEAD --oneline -->
 # Changelog 
 
-## [Unreleased]
-
-### Changed
-
-- Remove redundant protocol version checks against N_A
-
----
-
 ## [2026.9.10] - 2026-09-10
 
 ### Fixed
