@@ -362,7 +362,7 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
             # Only apply a protocol check on the sensor itself here; source
             # validation and bidirectional wiring happen in bind_cross_device_sensors().
             sensor_protocol = getattr(sensor, "protocol_version", ProtocolVersion.N_A)
-            if self.protocol_version > ProtocolVersion.N_A and sensor_protocol > self.protocol_version:
+            if sensor_protocol > self.protocol_version:
                 if sensor.debug_logging:
                     logger.debug(f"{self.log_identity} skipped adding {sensor.__class__.__name__} - ProtocolVersion version {sensor_protocol} > {self.protocol_version}")
                 return False
@@ -370,7 +370,7 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
             return True
         if isinstance(sensor, DerivedSensor):
             sensor_protocol = getattr(sensor, "protocol_version", ProtocolVersion.N_A)
-            if self.protocol_version > ProtocolVersion.N_A and sensor_protocol > self.protocol_version:
+            if sensor_protocol > self.protocol_version:
                 if sensor.debug_logging:
                     logger.debug(f"{self.log_identity} skipped adding {sensor.__class__.__name__} - ProtocolVersion version {sensor_protocol} > {self.protocol_version}")
                 return False
@@ -378,12 +378,12 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
             if not source_sensors:
                 logger.error(f"{self.log_identity} cannot add {sensor.__class__.__name__} - no declared source sensors")
                 return False
-            if self.protocol_version > ProtocolVersion.N_A and any(getattr(s, "protocol_version", ProtocolVersion.N_A) > self.protocol_version for s in source_sensors):
+            if any(getattr(s, "protocol_version", ProtocolVersion.N_A) > self.protocol_version for s in source_sensors):
                 logger.debug(f"{self.log_identity} skipped adding {sensor.__class__.__name__} - one or more source sensors have ProtocolVersion version > {self.protocol_version}")
                 return False
             added = False
             for source in source_sensors:
-                if self.protocol_version > ProtocolVersion.N_A and source.protocol_version > self.protocol_version:
+                if source.protocol_version > self.protocol_version:
                     logger.debug(
                         f"{self.log_identity} skipped binding source {source.__class__.__name__} to {sensor.__class__.__name__} - "
                         f"source protocol {source.protocol_version} > device protocol {self.protocol_version}"
