@@ -242,7 +242,7 @@ class DiagnosticsServer:
     async def _handle_config_update(self, request: web.Request) -> web.Response:
         """Apply a runtime configuration change posted from the diagnostics UI.
 
-        Finds the matching :class:`~sigenergy2mqtt.config.sensors.SettingsSensor`
+        Finds the matching :class:`~sigenergy2mqtt.sensors.settings.SettingsSensor`
         or :class:`~sigenergy2mqtt.sensors.base.writeable.WriteOnlySensorMixin`
         in virtual services via ``DeviceRegistry.get(-1)``, then calls its
         ``set_value`` method so that the normal ``WriteableSensorMixin`` validation
@@ -255,10 +255,10 @@ class DiagnosticsServer:
         ``SettingsSensor._write_value`` and ``ResetMetrics._write_value`` do
         not use these transports, so these are safe to omit.
         """
-        from sigenergy2mqtt.config.sensors import SettingsSensor
         from sigenergy2mqtt.devices.base.registry import DeviceRegistry
         from sigenergy2mqtt.sensors.base.constants import DiscoveryKeys
         from sigenergy2mqtt.sensors.base.writeable import NumericSensorMixin, SelectSensorMixin, SwitchSensorMixin, WriteOnlySensorMixin
+        from sigenergy2mqtt.sensors.settings import SettingsSensor
 
         endpoint = request.match_info["endpoint"]
 
@@ -351,7 +351,8 @@ class DiagnosticsServer:
         ``modbus_client``, ``mqtt_client``, and ``handler`` are all ``None``;
         ``set_debug_logging`` only reads ``value`` and does not use the others.
         """
-        from sigenergy2mqtt.config.sensors import SettingsSensor
+        from sensors.settings import SettingsSensor
+
         from sigenergy2mqtt.devices.base.registry import DeviceRegistry
 
         sensor_id = request.match_info["sensor_id"]

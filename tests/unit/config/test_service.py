@@ -4,13 +4,13 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from sigenergy2mqtt.config import Config, _swap_active_config
-from sigenergy2mqtt.config.sensors import (
+from sigenergy2mqtt.config.service import SettingsService
+from sigenergy2mqtt.sensors.settings import (
     ApplicationLogLevel,
     DiagnosticsLogLevel,
     InfluxDBLogLevel,
     PVOutputLogLevel,
 )
-from sigenergy2mqtt.config.service import SettingsService
 
 
 @pytest.fixture
@@ -57,7 +57,7 @@ async def test_application_log_level_write_updates_config_and_logger(config):
 
 
 def test_settings_sensor_get_value(config):
-    from sigenergy2mqtt.config.sensors import ModbusLogLevel, PersistenceDebugging, RepeatedStatePublishInterval
+    from sigenergy2mqtt.sensors.settings import ModbusLogLevel, PersistenceDebugging, RepeatedStatePublishInterval
 
     config.log_level = logging.DEBUG
     app_log = ApplicationLogLevel()

@@ -22,11 +22,11 @@ from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 
 from sigenergy2mqtt.common import ConsumptionMethod, HybridInverter, ProtocolVersion, PVInverter
 from sigenergy2mqtt.config import Config, _swap_active_config
-from sigenergy2mqtt.config.sensors import SettingsSensor
 from sigenergy2mqtt.metrics.sensors import MetricsSensor, ResetMetrics
 from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, ModbusSensorMixin, ReadableSensorMixin, ReservedSensor, Sensor, TypedSensorMixin, WriteableSensorMixin, WriteOnlySensor
 from sigenergy2mqtt.sensors.plant_derived import PlantConsumedPower
 from sigenergy2mqtt.sensors.plant_read_write import RemoteEMSLimit
+from sigenergy2mqtt.sensors.settings import SettingsSensor
 from tests.utils import get_sensor_instances
 
 HTTP_TIMEOUT = 15  # Default timeout (seconds) for all outbound GitHub API requests.
