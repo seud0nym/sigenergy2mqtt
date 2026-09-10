@@ -351,9 +351,8 @@ class DiagnosticsServer:
         ``modbus_client``, ``mqtt_client``, and ``handler`` are all ``None``;
         ``set_debug_logging`` only reads ``value`` and does not use the others.
         """
-        from sensors.settings import SettingsSensor
-
         from sigenergy2mqtt.devices.base.registry import DeviceRegistry
+        from sigenergy2mqtt.sensors.settings import SettingsSensor
 
         sensor_id = request.match_info["sensor_id"]
 

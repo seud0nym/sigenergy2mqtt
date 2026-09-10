@@ -13,10 +13,10 @@ fi
 if [[ -n "$1" ]]; then
     new_version="$1"
 else 
-    new_version=$(grep -oP 'added:\s*\K[\d.]+' sigenergy2mqtt/config/const.py | sort -t. -k1,1n -k2,2n -k3,3n | tail -1)
+    new_version=$(grep -oP 'added:\s*\K[\d.]+' src/sigenergy2mqtt/config/const.py | sort -t. -k1,1n -k2,2n -k3,3n | tail -1)
 fi
 
-for var in $(grep -Eo '^SIGENERGY2MQTT_[^:]+' sigenergy2mqtt/config/const.py); do
+for var in $(grep -Eo '^SIGENERGY2MQTT_[^:]+' src/sigenergy2mqtt/config/const.py); do
     grep -Eq "| \`${var}\`" resources/configuration/ENV.md || { echo -e "${RED}>>> Environment variable ${ORANGE}$var${RED} not found in ENV.md!"; exit; }
 done
 date "+%Y-%m-%d %H:%M:%S,000 INFO     sigenergy2mqtt:build..........0071 All environment variables found in resources/configuration/ENV.md"
