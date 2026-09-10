@@ -25,7 +25,7 @@ OUTPUT_FILE="resources/configuration/CLI.md"
 NEW_HELP_TMP=$(mktemp)
 OLD_HELP_TMP=$(mktemp)
 # 1. Capture the fresh help output to a temp file
-python3 -m sigenergy2mqtt --help | sed -e 's/__main__.py/sigenergy2mqtt/g' > "$NEW_HELP_TMP" 2>/dev/null
+PYTHONPATH=src python3 -m sigenergy2mqtt --help | sed -e 's/__main__.py/sigenergy2mqtt/g' > "$NEW_HELP_TMP" 2>/dev/null
 # 2. Extract the existing help output from the current file (if it exists)
 if [ -f "$OUTPUT_FILE" ]; then
     # This sed command finds the text between the ```text and ``` markers

@@ -1456,7 +1456,7 @@ def main() -> None:
     5. Write ``translations/en.yaml`` (preserving existing comments).
     6. Synchronise all other language files.
     """
-    package_dir = Path(__file__).parent.parent / "sigenergy2mqtt"
+    package_dir = Path(__file__).parent.parent / "src" / "sigenergy2mqtt"
 
     # Seed translations that cannot be extracted via AST.
     sensor_translations: dict = {

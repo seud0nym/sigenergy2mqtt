@@ -11,8 +11,9 @@ from typing import Any, cast
 if not os.getcwd().endswith("resources"):
     os.chdir(str((Path(__file__).parent / "../resources").resolve()))
 
-sys.path.insert(0, str((Path(__file__).parent / "../src").resolve()))
+sys.path.insert(0, str((Path(__file__).parent / "..").resolve()))
 sys.path.insert(0, str((Path(__file__).parent / "../resources").resolve()))
+sys.path.insert(0, str((Path(__file__).parent / "../src").resolve()))
 
 # Need to set SIGENERGY2MQTT_MODBUS_HOST before importing the config module otherwise it will not be found and config will attempt to run auto-discovery
 os.environ["SIGENERGY2MQTT_MODBUS_HOST"] = "127.0.0.1"
@@ -33,7 +34,7 @@ HTTP_TIMEOUT = 15  # Default timeout (seconds) for all outbound GitHub API reque
 RANGE_PATTERN = r"Range:\s*\[(.*?)\]"
 SENSORS: Path = Path("sensors/SENSORS.md")
 TOPICS: Path = Path("sensors/TOPICS.md")
-SIGENERGY_LOCAL_MODBUS_REGISTERS: Path = Path("../sigenergy2mqtt/sensors/base/_sigenergy_local_modbus_registers.py")
+SIGENERGY_LOCAL_MODBUS_REGISTERS: Path = Path("../src/sigenergy2mqtt/sensors/base/_sigenergy_local_modbus_registers.py")
 
 logger = logging.getLogger(__name__)
 
