@@ -99,6 +99,8 @@ def configure_logging() -> None:
     _configure_logger("sigenergy2mqtt.influxdb", active_config.influxdb.log_level)
     _configure_logger("sigenergy2mqtt.pvoutput", active_config.pvoutput.log_level)
     _configure_logger("sigenergy2mqtt.mqtt.client", active_config.mqtt.log_level)
+    _configure_logger("sigenergy2mqtt.sensors.cloud", active_config.cloud.log_level)
+
     _configure_logger("paho.mqtt", active_config.mqtt.log_level)
 
     # We have to configure root logging before pymodbus so basicConfig wins the handler race

@@ -6,3 +6,4 @@ class ScanIntervalDefault(IntEnum):
     HIGH = 10
     MEDIUM = 60
     LOW = 600
+    CLOUD = 30

@@ -10,6 +10,7 @@ properties:
       - type: string
         enum: [DEBUG, INFO, WARNING, ERROR, CRITICAL]
       - type: integer
+        enum: [10, 20, 30, 40, 50]
     default: INFO
   log-fmt:
     description: "Set the log format."
@@ -55,6 +56,28 @@ properties:
   metrics-enabled:
     description: "Internal pydantic field for metrics enabled"
     type: boolean
+
+  cloud:
+    type: object
+    additionalProperties: false
+    properties:
+      username: 
+        type: string
+      password: 
+        type: string
+      region: 
+        type: string
+      log-level:
+        oneOf:
+          - type: string
+            enum: [DEBUG, INFO, WARNING, ERROR, CRITICAL]
+          - type: integer
+            enum: [10, 20, 30, 40, 50]
+        default: INFO
+      scan-interval:
+        type: integer
+        minimum: 10
+        default: 30
 
   modbus:
     type: array
@@ -108,6 +131,7 @@ properties:
             - type: string
               enum: [DEBUG, INFO, WARNING, ERROR, CRITICAL]
             - type: integer
+              enum: [10, 20, 30, 40, 50]
           default: WARNING
         log-skipped:
           type: boolean
@@ -193,6 +217,7 @@ properties:
           - type: string
             enum: [DEBUG, INFO, WARNING, ERROR, CRITICAL]
           - type: integer
+            enum: [10, 20, 30, 40, 50]
         default: WARNING
       retry_delay:
         type: integer
@@ -376,12 +401,14 @@ properties:
           - type: string
             enum: [DEBUG, INFO, WARNING, ERROR, CRITICAL]
           - type: integer
+            enum: [10, 20, 30, 40, 50]
         default: CRITICAL
       upload-log-level:
         oneOf:
           - type: string
             enum: [DEBUG, INFO, WARNING, ERROR, CRITICAL]
           - type: integer
+            enum: [10, 20, 30, 40, 50]
         default: INFO
       calc-debug-logging:
         type: boolean
@@ -484,6 +511,7 @@ properties:
           - type: string
             enum: [DEBUG, INFO, WARNING, ERROR, CRITICAL]
           - type: integer
+            enum: [10, 20, 30, 40, 50]
         default: WARNING
       write-timeout:
         type: number
@@ -571,6 +599,7 @@ properties:
           - type: string
             enum: [DEBUG, INFO, WARNING, ERROR, CRITICAL]
           - type: integer
+            enum: [10, 20, 30, 40, 50]
         default: WARNING
 
   # Pydantic internal

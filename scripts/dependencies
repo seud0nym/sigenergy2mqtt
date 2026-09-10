@@ -119,6 +119,7 @@ for spec in \
     "pymodbus(>=3.9.2,<4.0.0)" \
     "requests(>=2.32.4,<3.0.0)" \
     "ruamel.yaml(>=0.19.1,<1.0.0)" \
+    "sigenergy-cloud(>=0.1.6)" \
 ; do
   check_pkg "$spec" $after
   pkgs="$pkgs $spec"

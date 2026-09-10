@@ -29,6 +29,7 @@ from sigenergy2mqtt.config.merge import (
     propagate_to_all_devices,
 )
 from sigenergy2mqtt.config.models import (
+    CloudConfig,
     DiagnosticsConfig,
     HealthCheckConfig,
     HomeAssistantConfig,
@@ -160,14 +161,15 @@ class Settings(BaseSettings):
     sensor_debug_logging: bool = Field(False, alias="sensor-debug-logging")
 
     # ── Sub-configs ──────────────────────────────────────────────────────────
+    cloud: CloudConfig = Field(default_factory=CloudConfig, alias="cloud")  # type: ignore[reportCallIssue]
+    diagnostics: DiagnosticsConfig = Field(default_factory=DiagnosticsConfig, alias="diagnostics")  # type: ignore[reportCallIssue]
     health_check: HealthCheckConfig = Field(default_factory=HealthCheckConfig, alias="health-check")  # type: ignore[reportCallIssue]
     home_assistant: HomeAssistantConfig = Field(default_factory=HomeAssistantConfig, alias="home-assistant")  # type: ignore[reportCallIssue]
+    influxdb: InfluxDbConfig = Field(default_factory=InfluxDbConfig)  # type: ignore[reportCallIssue]
+    modbus: list[ModbusConfig] = Field(default_factory=list)
     mqtt: MqttConfig = Field(default_factory=MqttConfig)  # type: ignore[reportCallIssue]
     persistence: PersistenceConfig = Field(default_factory=PersistenceConfig, alias="persistence")  # type: ignore[reportCallIssue]
     pvoutput: PvOutputConfig = Field(default_factory=PvOutputConfig)  # type: ignore[reportCallIssue]
-    influxdb: InfluxDbConfig = Field(default_factory=InfluxDbConfig)  # type: ignore[reportCallIssue]
-    diagnostics: DiagnosticsConfig = Field(default_factory=DiagnosticsConfig, alias="diagnostics")  # type: ignore[reportCallIssue]
-    modbus: list[ModbusConfig] = Field(default_factory=list)
 
     sensor_overrides: dict[str, Any] = Field(default_factory=dict, alias="sensor-overrides")
 

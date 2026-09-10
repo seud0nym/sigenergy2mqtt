@@ -148,6 +148,16 @@ class ApplicationLogLevel(LogLevelSensor):
         return attributes
 
 
+class CloudLogLevel(LogLevelSensor):
+    def __init__(self):
+        super().__init__(setting="active_config.cloud.log_level", name="Cloud Log Level", logger="sigenergy2mqtt.cloud")
+
+    def get_attributes(self) -> dict[str, float | int | str]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "The sigenergy2mqtt cloud module logging level"
+        return attributes
+
+
 class DiagnosticsLogLevel(LogLevelSensor):
     def __init__(self):
         super().__init__(setting="active_config.diagnostics.log_level", name="Diagnostics Log Level", logger="sigenergy2mqtt.diagnostics")

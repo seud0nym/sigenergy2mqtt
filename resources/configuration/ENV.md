@@ -10,7 +10,7 @@ Environment variables override the configuration file, but *not* command line op
 | `SIGENERGY2MQTT_CONFIG` | The path to the YAML configuration file (defaults: `/etc/sigenergy2mqtt.yaml` for Linux, `/data/sigenergy2mqtt.yaml` for Docker and `/config/sigenergy2mqtt.yaml` for Home Assistant) [<sup>(More…)</sup>](README.md#opt_config_path) | 2025.5.12 |
 | `SIGENERGY2MQTT_STATE_DIR` | The directory in which to store persistent state files (defaults: `/var/lib/` for Linux, `/data/` for Docker and `/config/` for Home Assistant). A sub-directory will be created in the specified directory called `sigenergy2mqtt` to store the files. [<sup>(More…)</sup>](README.md#opt_state_dir) | 2026.2.23 |
 | `SIGENERGY2MQTT_LANGUAGE` | The language to use for translations. Valid values are determined from the translation files available in the 'translations' directory. The default is determined from system (e.g. LANG environment variable) or English if no translation is found. [<sup>(More…)</sup>](README.md#opt_language) | 2026.1.22 |
-| `SIGENERGY2MQTT_LOG_LEVEL` | Set the log level. Valid values are: `DEBUG`, `INFO`, `WARNING`, `ERROR` or `CRITICAL`. Default is `INFO` (warnings, errors and critical failures) [<sup>(More…)</sup>](README.md#opt_log_level) | 2025.5.12 |
+| `SIGENERGY2MQTT_LOG_LEVEL` | Set the log level. Valid values are: `DEBUG`, `INFO`, `WARNING`, `ERROR` or `CRITICAL`. Default is `INFO` [<sup>(More…)</sup>](README.md#opt_log_level) | 2025.5.12 |
 | `SIGENERGY2MQTT_LOG_FMT` | Set the log format. The default depends on the runtime environment. [<sup>(More…)</sup>](README.md#opt_log_fmt) | 2026.5.31 |
 | `SIGENERGY2MQTT_DEBUG_SENSOR` | Specify a sensor to be debugged using either the full entity id, a partial entity id, the full sensor class name, or a partial sensor class name. For example, specifying 'daily' would match all sensors with daily in their entity id. From 2026.1.5, the sensor may also be specified as a regular expression (e.g. ^PowerFactor$ will match *only* the PowerFactor class name, but not InverterPowerFactorAdjustmentFeedback). If specified, `SIGENERGY2MQTT_LOG_LEVEL` is also forced to `DEBUG`. [<sup>(More…)</sup>](README.md#opt_debug_sensor) | 2025.5.12 |
 | `SIGENERGY2MQTT_SANITY_CHECK_FAILURES_INCREMENT` | Set to `true` to increment the number of sensor read failures when a sanity check fails. Default is `false`. [<sup>(More…)</sup>](README.md#opt_sanity_check_failures_increment) | 2026.1.21 |
@@ -35,6 +35,18 @@ Environment variables override the configuration file, but *not* command line op
 | `SIGENERGY2MQTT_HASS_SIGENERGY_LOCAL_MODBUS_NAMING` | Set to `true` to apply Sigenergy-Local-Modbus entity_id, gain and unit mappings (where available) to ease migration. If enabled, `SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX` must be 'sigen' (default) and `SIGENERGY2MQTT_HASS_USE_SIMPLIFIED_TOPICS` is forced to `false`. [<sup>(More…)</sup>](README.md#opt_home_assistant_use_sigenergy_local_modbus_naming) | 2026.3.13 |
 | `SIGENERGY2MQTT_HASS_SENSORS_ENABLED_BY_DEFAULT` | Set to `true` to enable all sensors by default when they are first discovered by Home Assistant. [<sup>(More…)</sup>](README.md#opt_home_assistant_sensors_enabled_by_default) | 2026.4.4 |
 | `SIGENERGY2MQTT_HASS_EDIT_PCT_BOX` | Set to `true` to use a numeric entry box to change the value of percentage sensors or `false` to use a slider to change the value (default: `false`) [<sup>(More…)</sup>](README.md#opt_home_assistant_edit_pct_box) | 2025.5.12 |
+
+## Cloud Access Configuration Variables
+
+If the username, password and region are all supplied, `sigenergy2mqtt` can access the Sigenergy Cloud service to read and control Sigenergy stations, batteries, and DC chargers.
+
+| Name | Description | Since |
+|------|-------------|-------|
+| `SIGENERGY2MQTT_CLOUD_USERNAME` | The user's Sigenergy Cloud username. If specified, password and region must also be specified. [<sup>(More…)</sup>](README.md#opt_cloud_username) | 2026.9.10 |
+| `SIGENERGY2MQTT_CLOUD_PASSWORD` | The user's Sigenergy Cloud password. If specified, username and region must also be specified. [<sup>(More…)</sup>](README.md#opt_cloud_username) | 2026.9.10 |
+| `SIGENERGY2MQTT_CLOUD_REGION` | The user's Sigenergy Cloud region. If specified, username and password must also be specified. Must be one of the following: 'aus', 'eu', 'cn', 'apac', 'us' [<sup>(More…)</sup>](README.md#opt_cloud_region) | 2026.9.10 |
+| `SIGENERGY2MQTT_CLOUD_LOG_LEVEL` | Set the cloud module log level. Valid values are: `DEBUG`, `INFO`, `WARNING`, `ERROR` or `CRITICAL`. Default is `INFO` [<sup>(More…)</sup>](README.md#opt_cloud_log_level) | 2026.9.10 |
+| `SIGENERGY2MQTT_SCAN_INTERVAL_CLOUD` | The scan interval in seconds for retrieving cloud data. Default is `30` (seconds), and the minimum value is `10`. [<sup>(More…)</sup>](README.md#opt_modbus_scan_interval_cloud) | 2025.6.11 |
 
 ## Modbus Configuration Variables
 

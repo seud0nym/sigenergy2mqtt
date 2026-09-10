@@ -82,6 +82,35 @@ no-ems-mode-check: false
 #   description:  If true, sigenergy2mqtt will not publish any metrics to
 #                 MQTT.
 no-metrics: false
+# cloud
+#   added: 2026.9.10
+#   description:  The configuration for the Sigenergy Cloud integration. If enabled,
+#                 sigenergy2mqtt will be able to access the Sigenergy Cloud Service
+#                 for the specified user.
+cloud:
+    # username
+    #   default: ""
+    #   description:  The username for the cloud service.
+    username: ""
+    # password
+    #   default: ""
+    #   description:  The password for the cloud service.
+    password: ""
+    # region
+    #   default: ""
+    #   description:  The user's region for the cloud service. Must be one of the following: 
+    #                 'aus', 'eu', 'cn', 'apac', 'us'.
+    region: ""
+    # log-level
+    #   default: "WARNING"
+    #   description:  The log level for the cloud service. Must be one of:
+    #                 DEBUG, INFO, WARNING, ERROR, or CRITICAL
+    log-level: "INFO"
+    # scan-interval
+    #   default: 30
+    #   description:  The scan interval in seconds for retrieving cloud data. Default is 30
+    #                 (seconds), and the minimum value is 10.
+    scan-interval: 30
 # modbus
 #   default: [ ]
 #   description:  The array of Modbus device configurations. Each device

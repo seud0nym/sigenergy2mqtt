@@ -206,6 +206,80 @@ The directory in which to store persistent state files. The defaults are:
 - `/config/` for Home Assistant
 A sub-directory will be created in the specified directory called `sigenergy2mqtt` to store the files.
 
+## Cloud
+
+If the username, password and region are all supplied, `sigenergy2mqtt` can access the Sigenergy Cloud service to read and control Sigenergy stations, batteries, and DC chargers.
+
+<a id="opt_cloud_username"></a>
+### Username
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--cloud-username</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_CLOUD_USERNAME</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>cloud.username</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
+The user's Sigenergy Cloud username. If specified, password and region must also be specified.
+
+<a id="opt_cloud_password"></a>
+### Host
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--cloud-password</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_CLOUD_PASSWORD</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>cloud.password</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
+The user's Sigenergy Cloud password. If specified, username and region must also be specified.
+
+<a id="opt_cloud_region"></a>
+### Port
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--cloud-region</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_CLOUD_REGION</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>cloud.region</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
+The user's Sigenergy Cloud region. If specified, username and password must also be specified. 
+
+Must be one of: 
+
+- `aus` (Australia & New Zealand)
+- `eu` (Europe)
+- `cn` (China)
+- `apac` (Asia Pacific)
+- `us` (United States)
+
+<a id="opt_cloud_log_level"></a>
+### Log Level
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--cloud-log-level</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_CLOUD_LOG_LEVEL</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>cloud.log-level</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>sigenergy2mqtt/config/cloud/log_level/set</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>select.sigenergy2mqtt_config_cloud_log_level</code></small></td></tr>
+</table>
+The sigenergy2mqtt cloud module logging level. Must be one of:
+
+- `DEBUG`
+- `INFO`
+- `WARNING`
+- `ERROR`
+- `CRITICAL`
+
+The default is `INFO`.
+
+<a id="opt_modbus_scan_interval_cloud"></a>
+#### Scan Interval - cloud
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--scan-interval-cloud</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_SCAN_INTERVAL_CLOUD</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>cloud.scan-interval</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
+The scan interval in seconds for retrieving cloud data. Default is `30` (seconds), and the minimum value is `10`.
 
 
 ## Diagnostics

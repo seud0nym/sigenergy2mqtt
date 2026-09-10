@@ -899,6 +899,51 @@ def get_parser() -> argparse.ArgumentParser:
     )
     # endregion
 
+    # region Cloud Configuration
+    parser.add_argument(
+        "--cloud-username",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_CLOUD_USERNAME,
+        default=os.getenv(const.SIGENERGY2MQTT_CLOUD_USERNAME, None),
+        help="The username for the cloud service.",
+    )
+    parser.add_argument(
+        "--cloud-password",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_CLOUD_PASSWORD,
+        default=os.getenv(const.SIGENERGY2MQTT_CLOUD_PASSWORD, None),
+        help="The password for the cloud service.",
+    )
+    parser.add_argument(
+        "--cloud-region",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_CLOUD_REGION,
+        default=os.getenv(const.SIGENERGY2MQTT_CLOUD_REGION, None),
+        help="The user's region for the cloud service. Must be one of the following: 'aus', 'eu', 'cn', 'apac', 'us'.",
+    )
+    parser.add_argument(
+        "--cloud-log-level",
+        nargs="?",
+        action="store",
+        dest=const.SIGENERGY2MQTT_CLOUD_LOG_LEVEL,
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        default=os.getenv(const.SIGENERGY2MQTT_CLOUD_LOG_LEVEL, None),
+        help="Cloud subsystem log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)",
+    )
+    parser.add_argument(
+        "--scan-interval-cloud",
+        nargs="?",
+        action="store",
+        default=os.getenv(const.SIGENERGY2MQTT_SCAN_INTERVAL_CLOUD, None),
+        dest=const.SIGENERGY2MQTT_SCAN_INTERVAL_CLOUD,
+        type=int,
+        help="The scan interval in seconds for retrieving cloud data. Default is 30 (seconds), and the minimum value is 10",
+    )
+    # endregion
+
     parser.add_argument(
         "--clean",
         action="store_true",
