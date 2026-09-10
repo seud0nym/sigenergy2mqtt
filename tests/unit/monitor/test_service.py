@@ -1,11 +1,10 @@
 import asyncio
 import logging
 import time
-from unittest.mock import MagicMock,patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 import requests
-from sigenergy2mqtt.monitor.sensor import MonitoredSensor
 
 from sigenergy2mqtt.common import service_health_registry
 from sigenergy2mqtt.config import active_config
@@ -14,6 +13,7 @@ from sigenergy2mqtt.modbus import ModbusClientFactory
 from sigenergy2mqtt.monitor.service import MonitorService
 from sigenergy2mqtt.pvoutput.service import Service as PvOutputService
 from sigenergy2mqtt.sensors.base import ReadableSensorMixin
+from sigenergy2mqtt.sensors.monitor import MonitoredSensor
 
 
 class DummyReadable(ReadableSensorMixin):

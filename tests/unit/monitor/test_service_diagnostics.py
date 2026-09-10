@@ -5,8 +5,8 @@ import pytest
 
 from sigenergy2mqtt.common import service_health_registry
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.monitor.sensor import MonitoredSensor
 from sigenergy2mqtt.monitor.service import MonitorService
+from sigenergy2mqtt.sensors.monitor import MonitoredSensor
 
 
 class FakeMqttClient:
