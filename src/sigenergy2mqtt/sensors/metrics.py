@@ -13,9 +13,8 @@ from typing import Any, cast
 
 from sigenergy2mqtt.common import PERCENTAGE, DeviceClass, ProtocolApplies, ProtocolVersion
 from sigenergy2mqtt.config import active_config
+from sigenergy2mqtt.metrics import Metrics
 from sigenergy2mqtt.sensors.base import DiscoveryKeys, ReadableSensorMixin, WriteOnlySensorMixin
-
-from .metrics import Metrics
 
 logger = logging.getLogger(__name__)
 

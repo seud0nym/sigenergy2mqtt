@@ -22,8 +22,8 @@ from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 
 from sigenergy2mqtt.common import ConsumptionMethod, HybridInverter, ProtocolVersion, PVInverter
 from sigenergy2mqtt.config import Config, _swap_active_config
-from sigenergy2mqtt.metrics.sensors import MetricsSensor, ResetMetrics
 from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, ModbusSensorMixin, ReadableSensorMixin, ReservedSensor, Sensor, TypedSensorMixin, WriteableSensorMixin, WriteOnlySensor
+from sigenergy2mqtt.sensors.metrics import MetricsSensor, ResetMetrics
 from sigenergy2mqtt.sensors.plant_derived import PlantConsumedPower
 from sigenergy2mqtt.sensors.plant_read_write import RemoteEMSLimit
 from sigenergy2mqtt.sensors.settings import SettingsSensor
