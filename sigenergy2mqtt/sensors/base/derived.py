@@ -264,7 +264,7 @@ class CrossDeviceDerivedSensor(DerivedSensor):
         added = False
         for pending in pending_sources:
             # Skip sources that violate the owner device's protocol version
-            if owner_device.protocol_version > ProtocolVersion.N_A and pending.protocol_version > owner_device.protocol_version:
+            if pending.protocol_version > owner_device.protocol_version:
                 logger.debug(f"{self.log_identity} skipped cross-device binding of {pending.__class__.__name__} - source protocol {pending.protocol_version} > device protocol {owner_device.protocol_version}")
                 continue
 
