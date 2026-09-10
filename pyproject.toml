@@ -22,7 +22,14 @@ readme = "README.md"
 requires-python = ">=3.12"
 
 [project.optional-dependencies]
-test = ["deepl", "jsonschema", "pytest", "pytest-asyncio", "pytest-cov", "pytest-xdist"]
+test = [
+    "deepl",
+    "jsonschema",
+    "pytest",
+    "pytest-asyncio",
+    "pytest-cov",
+    "pytest-xdist",
+]
 
 [project.scripts]
 sigenergy2mqtt = "sigenergy2mqtt.__main__:main"
@@ -32,21 +39,28 @@ issues = "https://github.com/seud0nym/sigenergy2mqtt/issues"
 repository = "https://github.com/seud0nym/sigenergy2mqtt"
 
 [tool.hatch.build.targets.sdist]
-include = ["sigenergy2mqtt/**"]
+include = ["/src/sigenergy2mqtt"]
 
 [tool.hatch.build.targets.wheel]
-include = ["sigenergy2mqtt/**"]
+packages = ["src/sigenergy2mqtt"]
 
 [tool.hatch.envs.default]
 features = ["test"]
-scripts.cov = "pytest -n auto --cov=sigenergy2mqtt --cov-report=xml --maxfail=0"
+scripts.cov = "pytest -n auto --cov=src/sigenergy2mqtt --cov-report=xml --maxfail=0"
 
 [tool.hatch.version]
-path = "sigenergy2mqtt/config/version.py"
+path = "src/sigenergy2mqtt/config/version.py"
 
 [tool.pyright]
-exclude = [".git", ".venv", "tests", "**/node_modules", "**/__pycache__", "**/.*"]
-extraPaths = ["./sigenergy2mqtt"]
+exclude = [
+    "**/.*",
+    "**/__pycache__",
+    "**/node_modules",
+    ".git",
+    ".venv",
+    "tests",
+]
+extraPaths = ["./src"]
 ignore = [".git", ".venv", "tests"]
 typeCheckingMode = "standard"
 
@@ -58,4 +72,5 @@ markers = [
     "no_language_mock: disable global mock of i18n.get_default_language",
     "no_persistent_state_mock: disable global mock of Config.persistent_state_path",
 ]
+pythonpath = ["src"]
 testpaths = ["tests"]

@@ -10,11 +10,11 @@
             "request": "launch",
             "program": "tests/utils/modbus_test_server.py",
             "console": "integratedTerminal",
-            "envFile": "${workspaceFolder}/.debug_modbus_server.env",
+            "envFile": "${workspaceFolder}/tests/utils/.debug_modbus_server.env",
             "subProcess": true,
             "env": {
                 "PYTEST_ADDOPTS": "--no-cov",
-                "PYTHONPATH": "${workspaceFolder}",
+                "PYTHONPATH": "${workspaceFolder}/src",
                 "PYDEVD_DISABLE_FILE_VALIDATION": "1"
             }
         },
@@ -24,12 +24,12 @@
             "request": "launch",
             "program": "tests/utils/launch.py",
             "console": "integratedTerminal",
-            "envFile": "${workspaceFolder}/.debug.env",
-            "args": "--config=.debug.env.yaml",
+            "envFile": "${workspaceFolder}/tests/utils/.debug.env",
+            "args": "--config=tests/utils/.debug.env.yaml",
             "subProcess": true,
             "env": {
                 "PYTEST_ADDOPTS": "--no-cov",
-                "PYTHONPATH": "${workspaceFolder}",
+                "PYTHONPATH": "${workspaceFolder}/src",
                 "PYDEVD_DISABLE_FILE_VALIDATION": "1"
             }
         },
@@ -39,11 +39,11 @@
             "request": "launch",
             "program": "tests/utils/launch.py",
             "console": "integratedTerminal",
-            "args": "--config=.debug.yaml",
+            "args": "--config=tests/utils/.debug.yaml",
             "subProcess": true,
             "env": {
                 "PYTEST_ADDOPTS": "--no-cov",
-                "PYTHONPATH": "${workspaceFolder}",
+                "PYTHONPATH": "${workspaceFolder}/src",
                 "PYDEVD_DISABLE_FILE_VALIDATION": "1"
             }
         },
@@ -57,7 +57,7 @@
             "subProcess": true,
             "env": {
                 "PYTEST_ADDOPTS": "--no-cov",
-                "PYTHONPATH": "${workspaceFolder}",
+                "PYTHONPATH": "${workspaceFolder}/src",
                 "PYDEVD_DISABLE_FILE_VALIDATION": "1"
             }
         },
@@ -67,11 +67,11 @@
             "request": "launch",
             "program": "tests/utils/launch.py",
             "console": "integratedTerminal",
-            "args": "--config=.debug.yaml --log-level=DEBUG --hass-enabled --clean",
+            "args": "--config=tests/utils/.debug.yaml --log-level=DEBUG --hass-enabled --clean",
             "subProcess": true,
             "env": {
                 "PYTEST_ADDOPTS": "--no-cov",
-                "PYTHONPATH": "${workspaceFolder}",
+                "PYTHONPATH": "${workspaceFolder}/src",
                 "PYDEVD_DISABLE_FILE_VALIDATION": "1"
             }
         },
@@ -81,12 +81,12 @@
             "request": "launch",
             "program": "tests/utils/launch.py",
             "console": "integratedTerminal",
-            "envFile": "${workspaceFolder}/.debug.env",
-            "args": "--config=.debug.env.yaml --log-level=DEBUG --hass-enabled --clean",
+            "envFile": "${workspaceFolder}/tests/utils/.debug.env",
+            "args": "--config=tests/utils/.debug.env.yaml --log-level=DEBUG --hass-enabled --clean",
             "subProcess": true,
             "env": {
                 "PYTEST_ADDOPTS": "--no-cov",
-                "PYTHONPATH": "${workspaceFolder}",
+                "PYTHONPATH": "${workspaceFolder}/src",
                 "PYDEVD_DISABLE_FILE_VALIDATION": "1"
             }
         },
@@ -96,11 +96,11 @@
             "request": "launch",
             "program": "tests/utils/launch.py",
             "console": "integratedTerminal",
-            "args": "--config=.debug.yaml --log-level=DEBUG --hass-enabled --hass-discovery-only",
+            "args": "--config=tests/utils/.debug.yaml --log-level=DEBUG --hass-enabled --hass-discovery-only",
             "subProcess": true,
             "env": {
                 "PYTEST_ADDOPTS": "--no-cov",
-                "PYTHONPATH": "${workspaceFolder}",
+                "PYTHONPATH": "${workspaceFolder}/src",
                 "PYDEVD_DISABLE_FILE_VALIDATION": "1"
             }
         },
@@ -114,7 +114,7 @@
             "subProcess": true,
             "env": {
                 "PYTEST_ADDOPTS": "--no-cov",
-                "PYTHONPATH": "${workspaceFolder}",
+                "PYTHONPATH": "${workspaceFolder}/src",
                 "PYDEVD_DISABLE_FILE_VALIDATION": "1"
             }
         },
@@ -128,7 +128,7 @@
             "subProcess": true,
             "env": {
                 "PYTEST_ADDOPTS": "--no-cov",
-                "PYTHONPATH": "${workspaceFolder}",
+                "PYTHONPATH": "${workspaceFolder}/src",
                 "PYDEVD_DISABLE_FILE_VALIDATION": "1"
             }
         }

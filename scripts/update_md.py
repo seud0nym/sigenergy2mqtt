@@ -11,7 +11,7 @@ from typing import Any, cast
 if not os.getcwd().endswith("resources"):
     os.chdir(str((Path(__file__).parent / "../resources").resolve()))
 
-sys.path.insert(0, str((Path(__file__).parent / "..").resolve()))
+sys.path.insert(0, str((Path(__file__).parent / "../src").resolve()))
 sys.path.insert(0, str((Path(__file__).parent / "../resources").resolve()))
 
 # Need to set SIGENERGY2MQTT_MODBUS_HOST before importing the config module otherwise it will not be found and config will attempt to run auto-discovery

@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-STATIC_DIR = Path(__file__).parent.parent.parent.parent / "sigenergy2mqtt" / "diagnostics" / "static"
+STATIC_DIR = Path(__file__).parent.parent.parent.parent / "src" / "sigenergy2mqtt" / "diagnostics" / "static"
 
 
 @pytest.fixture
