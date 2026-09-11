@@ -270,8 +270,8 @@ The sigenergy2mqtt cloud module logging level. Must be one of:
 
 The default is `INFO`.
 
-<a id="opt_modbus_scan_interval_cloud"></a>
-#### Scan Interval - cloud
+<a id="opt_cloud_scan_interval"></a>
+#### Scan Interval
 <table>
 <tr><td><small>CLI</small></td><td><small><code>--scan-interval-cloud</code></small></td></tr>
 <tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_SCAN_INTERVAL_CLOUD</code></small></td></tr>

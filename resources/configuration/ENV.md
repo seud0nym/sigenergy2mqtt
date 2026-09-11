@@ -46,7 +46,7 @@ If the username, password and region are all supplied, `sigenergy2mqtt` can acce
 | `SIGENERGY2MQTT_CLOUD_PASSWORD` | The user's Sigenergy Cloud password. If specified, username and region must also be specified. [<sup>(More…)</sup>](README.md#opt_cloud_username) | 2026.9.10 |
 | `SIGENERGY2MQTT_CLOUD_REGION` | The user's Sigenergy Cloud region. If specified, username and password must also be specified. Must be one of the following: 'aus', 'eu', 'cn', 'apac', 'us' [<sup>(More…)</sup>](README.md#opt_cloud_region) | 2026.9.10 |
 | `SIGENERGY2MQTT_CLOUD_LOG_LEVEL` | Set the cloud module log level. Valid values are: `DEBUG`, `INFO`, `WARNING`, `ERROR` or `CRITICAL`. Default is `INFO` [<sup>(More…)</sup>](README.md#opt_cloud_log_level) | 2026.9.10 |
-| `SIGENERGY2MQTT_SCAN_INTERVAL_CLOUD` | The scan interval in seconds for retrieving cloud data. Default is `30` (seconds), and the minimum value is `10`. [<sup>(More…)</sup>](README.md#opt_modbus_scan_interval_cloud) | 2025.6.11 |
+| `SIGENERGY2MQTT_SCAN_INTERVAL_CLOUD` | The scan interval in seconds for retrieving cloud data. Default is `30` (seconds), and the minimum value is `10`. [<sup>(More…)</sup>](README.md#opt_cloud_scan_interval) | 2025.6.11 |
 
 ## Modbus Configuration Variables
 
