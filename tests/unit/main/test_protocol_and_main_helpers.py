@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 import sigenergy2mqtt.__main__ as main_module
-from sigenergy2mqtt.common.protocol import ProtocolVersion, ProtocolApplies
+from sigenergy2mqtt.common.protocol import ProtocolApplies, ProtocolVersion
 from sigenergy2mqtt.influxdb import get_influxdb_services
 
 
@@ -81,10 +81,10 @@ def test_validate_connections_invokes_mqtt_and_services(monkeypatch):
     def _pvoutput(show_credentials: bool):
         calls.append(f"pvoutput:{show_credentials}")
 
-    monkeypatch.setattr("sigenergy2mqtt.main.main._validate_modbus_connections", _modbus)
-    monkeypatch.setattr("sigenergy2mqtt.main.main._validate_mqtt_connection", _mqtt)
-    monkeypatch.setattr("sigenergy2mqtt.main.main._validate_influxdb_connection", _influx)
-    monkeypatch.setattr("sigenergy2mqtt.main.main._validate_pvoutput_connection", _pvoutput)
+    monkeypatch.setattr("sigenergy2mqtt.main.validation._validate_modbus_connections", _modbus)
+    monkeypatch.setattr("sigenergy2mqtt.main.validation._validate_mqtt_connection", _mqtt)
+    monkeypatch.setattr("sigenergy2mqtt.main.validation._validate_influxdb_connection", _influx)
+    monkeypatch.setattr("sigenergy2mqtt.main.validation._validate_pvoutput_connection", _pvoutput)
 
     import asyncio
 
@@ -112,12 +112,12 @@ def test_main_validate_reinstalls_default_sigint(monkeypatch):
 
 
 def test_validate_pvoutput_connection_skips_when_testing(monkeypatch):
-    from sigenergy2mqtt.main import main as main_mod
+    from sigenergy2mqtt.main import validation as main_mod
 
     monkeypatch.setattr(main_mod.active_config.pvoutput, "enabled", True, raising=False)
     monkeypatch.setattr(main_mod.active_config.pvoutput, "testing", True, raising=False)
 
-    with patch("sigenergy2mqtt.main.main.requests.get") as mock_get:
+    with patch("sigenergy2mqtt.main.validation.requests.get") as mock_get:
         main_mod._validate_pvoutput_connection(show_credentials=False)
 
     mock_get.assert_not_called()
