@@ -147,7 +147,7 @@ async def test_is_grid_outage_type_error(caplog):
 
 @pytest.mark.asyncio
 async def test_watch_grid_restore_cancelled():
-    with patch("sigenergy2mqtt.main.validation.ModbusClient", autospec=True) as mock_mc:
+    with patch("sigenergy2mqtt.main.device_setup.ModbusClient", autospec=True) as mock_mc:
         mock_client = AsyncMock()
         mock_client.connected = True
         mock_mc.return_value = mock_client
