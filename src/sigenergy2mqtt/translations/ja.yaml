@@ -352,6 +352,10 @@ class:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: バッテリー電力
+  CloudLogLevel:
+    attributes:
+      comment: sigenergy2mqtt クラウドモジュールのロギングレベル
+    name: クラウドのログレベル
   CurrentControlCommandValue:
     attributes:
       comment: 日本でのリモート出力制御の使用
@@ -2837,6 +2841,14 @@ class:
     name_off: 電源オフ
     name_on: 電源オン
 cli:
+  SIGENERGY2MQTT_CLOUD_LOG_LEVEL:
+    help: 'クラウドサブシステムのログレベル。有効な値は、DEBUG、INFO、WARNING、ERROR、またはCRITICALです。デフォルトはWARNING（警告、エラー、および重大な障害）です。'
+  SIGENERGY2MQTT_CLOUD_PASSWORD:
+    help: クラウドサービスのパスワード。
+  SIGENERGY2MQTT_CLOUD_REGION:
+    help: "クラウドサービスにおけるユーザーの地域。以下のいずれかである必要があります：'aus'、'eu'、'cn'、'apac'、'us'。"
+  SIGENERGY2MQTT_CLOUD_USERNAME:
+    help: クラウドサービスのユーザー名。
   SIGENERGY2MQTT_CONFIG:
     help: 'YAML設定ファイルのパス（デフォルト: SIGENERGY2MQTT_CONFIG環境変数、それ以外の場合は/etc/sigenergy2mqtt.yaml）'
   SIGENERGY2MQTT_CONSUMPTION:
@@ -3043,6 +3055,8 @@ cli:
     help: "繰り返し状態が公開される間隔（秒単位）。0 未満の場合、繰り返し状態は公開されません。0 の場合、繰り返し状態は常に公開されます。0 より大きい場合、繰り返し状態は指定された間隔で公開されます。デフォルトは 0（常に公開）です。"
   SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW:
     help: '電力センサーの実際の値とエネルギーセンサーのデルタ値の最大値と最小値を検証するためにサニティチェックに使用されるデフォルト値（kW）。デフォルト値は1秒あたり500kWで、範囲外の読み取り値は無視されます。'
+  SIGENERGY2MQTT_SCAN_INTERVAL_CLOUD:
+    help: クラウドデータを取得するためのスキャン間隔（秒単位）。デフォルトは30（秒）で、最小値は10です。
   SIGENERGY2MQTT_SCAN_INTERVAL_HIGH:
     help: '高頻度レジスタのスキャン間隔。デフォルト: 10。'
   SIGENERGY2MQTT_SCAN_INTERVAL_LOW:

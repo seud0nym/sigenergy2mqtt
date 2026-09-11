@@ -352,6 +352,10 @@ class:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
     name: Potencia de Batería
+  CloudLogLevel:
+    attributes:
+      comment: El nivel de registro del módulo en la nube «sigenergy2mqtt»
+    name: Nivel de registro en la nube
   CurrentControlCommandValue:
     attributes:
       comment: Uso del Control de Salida Remota en Japón
@@ -2837,6 +2841,14 @@ class:
     name_off: Apagar
     name_on: Encender
 cli:
+  SIGENERGY2MQTT_CLOUD_LOG_LEVEL:
+    help: 'Nivel de registro del subsistema en la nube. Los valores válidos son: DEBUG, INFO, WARNING, ERROR o CRITICAL. El valor por defecto es WARNING (advertencias, errores y fallos críticos).'
+  SIGENERGY2MQTT_CLOUD_PASSWORD:
+    help: La contraseña del servicio en la nube.
+  SIGENERGY2MQTT_CLOUD_REGION:
+    help: "Región del usuario para el servicio en la nube. Debe ser una de las siguientes: «aus», «eu», «cn», «apac», «us»."
+  SIGENERGY2MQTT_CLOUD_USERNAME:
+    help: El nombre de usuario para el servicio en la nube.
   SIGENERGY2MQTT_CONFIG:
     help: 'La ruta al archivo de configuración YAML (predeterminado: variable de entorno SIGENERGY2MQTT_CONFIG, de lo contrario /etc/sigenergy2mqtt.yaml)'
   SIGENERGY2MQTT_CONSUMPTION:
@@ -3043,6 +3055,8 @@ cli:
     help: "El intervalo en segundos en el que se publican los estados repetidos. Si < 0, los estados repetidos nunca se publican. Si 0, los estados repetidos siempre se publican. Si > 0, los estados repetidos se publican en el intervalo especificado. El valor predeterminado es 0 (publicar siempre)."
   SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW:
     help: El valor predeterminado en kW usado para comprobaciones de cordura para validar los valores máximo y mínimo de sensores de potencia y el valor delta de sensores de energía. El valor predeterminado es 500 kW por segundo, y las lecturas fuera del rango se ignoran.
+  SIGENERGY2MQTT_SCAN_INTERVAL_CLOUD:
+    help: El intervalo de exploración, en segundos, para la obtención de datos de la nube. El valor por defecto es 30 (segundos) y el valor mínimo es 10.
   SIGENERGY2MQTT_SCAN_INTERVAL_HIGH:
     help: El intervalo de escaneo en segundos para registros Modbus que se escanean a alta frecuencia. El predeterminado es 10 (segundos), y el valor mínimo es 1.
   SIGENERGY2MQTT_SCAN_INTERVAL_LOW:

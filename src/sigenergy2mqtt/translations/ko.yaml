@@ -352,6 +352,10 @@ class:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: 배터리 전력
+  CloudLogLevel:
+    attributes:
+      comment: sigenergy2mqtt 클라우드 모듈의 로깅 수준
+    name: 클라우드 로그 수준
   CurrentControlCommandValue:
     attributes:
       comment: 일본에서 원격 출력 제어 사용
@@ -2837,6 +2841,14 @@ class:
     name_off: 전원 끄기
     name_on: 전원 켜기
 cli:
+  SIGENERGY2MQTT_CLOUD_LOG_LEVEL:
+    help: '클라우드 하위 시스템 로그 수준. 유효한 값은 DEBUG, INFO, WARNING, ERROR 또는 CRITICAL입니다. 기본값은 WARNING(경고, 오류 및 치명적 오류)입니다.'
+  SIGENERGY2MQTT_CLOUD_PASSWORD:
+    help: 클라우드 서비스의 비밀번호.
+  SIGENERGY2MQTT_CLOUD_REGION:
+    help: "클라우드 서비스에 대한 사용자의 지역. 다음 중 하나여야 합니다: 'aus', 'eu', 'cn', 'apac', 'us'."
+  SIGENERGY2MQTT_CLOUD_USERNAME:
+    help: 클라우드 서비스의 사용자 이름.
   SIGENERGY2MQTT_CONFIG:
     help: 'YAML 설정 파일의 경로 (기본값: SIGENERGY2MQTT_CONFIG 환경 변수, 그렇지 않으면 /etc/sigenergy2mqtt.yaml)'
   SIGENERGY2MQTT_CONSUMPTION:
@@ -3043,6 +3055,8 @@ cli:
     help: "반복 상태가 게시되는 간격(초 단위)입니다. 0보다 작으면 반복 상태가 게시되지 않습니다. 0이면 반복 상태가 항상 게시됩니다. 0보다 크면 반복 상태가 지정된 간격으로 게시됩니다. 기본값은 0(항상 게시)입니다."
   SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW:
     help: '전력 센서의 실제 값과 에너지 센서의 델타 값에 대한 최대값 및 최소값을 검증하기 위해 무결성 검사에 사용되는 기본값(kW). 기본값은 초당 500kW이며, 범위를 벗어난 측정값은 무시됩니다.'
+  SIGENERGY2MQTT_SCAN_INTERVAL_CLOUD:
+    help: 클라우드 데이터를 가져오기 위한 스캔 간격(초). 기본값은 30(초)이며, 최소값은 10입니다.
   SIGENERGY2MQTT_SCAN_INTERVAL_HIGH:
     help: '고빈도 레지스터 스캔 간격. 기본값: 10.'
   SIGENERGY2MQTT_SCAN_INTERVAL_LOW:

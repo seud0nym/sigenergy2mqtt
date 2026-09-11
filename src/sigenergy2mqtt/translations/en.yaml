@@ -352,6 +352,10 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Battery Power
+  CloudLogLevel:
+    attributes:
+      comment: The sigenergy2mqtt cloud module logging level
+    name: Cloud Log Level
   CurrentControlCommandValue:
     attributes:
       comment: Use of Remote Output Control in Japan
@@ -2837,6 +2841,14 @@ class:
     name_off: Power Off
     name_on: Power On
 cli:
+  SIGENERGY2MQTT_CLOUD_LOG_LEVEL:
+    help: 'Cloud subsystem log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)'
+  SIGENERGY2MQTT_CLOUD_PASSWORD:
+    help: The password for the cloud service.
+  SIGENERGY2MQTT_CLOUD_REGION:
+    help: "The user's region for the cloud service. Must be one of the following: 'aus', 'eu', 'cn', 'apac', 'us'."
+  SIGENERGY2MQTT_CLOUD_USERNAME:
+    help: The username for the cloud service.
   SIGENERGY2MQTT_CONFIG:
     help: 'The path to the YAML configuration file (default: SIGENERGY2MQTT_CONFIG env var, otherwise /etc/sigenergy2mqtt.yaml)'
   SIGENERGY2MQTT_CONSUMPTION:
@@ -3043,6 +3055,8 @@ cli:
     help: "The interval in seconds at which repeated states are published. If < 0, repeated states are never published. If 0, repeated states are always published. If > 0, repeated states are published at the specified interval. The default is 0 (always publish)."
   SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW:
     help: The default value in kW used for sanity checks to validate the maximum and minimum values for actual value of power sensors and the delta value of energy sensors. The default value is 500 kW per second, and readings outside the range are ignored.
+  SIGENERGY2MQTT_SCAN_INTERVAL_CLOUD:
+    help: The scan interval in seconds for retrieving cloud data. Default is 30 (seconds), and the minimum value is 10
   SIGENERGY2MQTT_SCAN_INTERVAL_HIGH:
     help: The scan interval in seconds for Modbus registers that are to be scanned at a high frequency. Default is 10 (seconds), and the minimum value is 1.
   SIGENERGY2MQTT_SCAN_INTERVAL_LOW:

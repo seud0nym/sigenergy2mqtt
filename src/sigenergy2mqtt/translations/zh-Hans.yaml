@@ -352,6 +352,10 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 电池功率
+  CloudLogLevel:
+    attributes:
+      comment: sigenergy2mqtt 云模块的日志级别
+    name: 云日志级别
   CurrentControlCommandValue:
     attributes:
       comment: 日本远程输出控制使用
@@ -2837,6 +2841,14 @@ class:
     name_off: 关机
     name_on: 开机
 cli:
+  SIGENERGY2MQTT_CLOUD_LOG_LEVEL:
+    help: '云子系统的日志级别。有效值为：DEBUG、INFO、WARNING、ERROR 或 CRITICAL。默认值为 WARNING（警告、错误和严重故障）'
+  SIGENERGY2MQTT_CLOUD_PASSWORD:
+    help: 云服务的密码。
+  SIGENERGY2MQTT_CLOUD_REGION:
+    help: "云服务的用户所在区域。必须为以下选项之一：'aus'、'eu'、'cn'、'apac'、'us'。"
+  SIGENERGY2MQTT_CLOUD_USERNAME:
+    help: 云服务的用户名。
   SIGENERGY2MQTT_CONFIG:
     help: 'YAML配置文件的路径（默认：SIGENERGY2MQTT_CONFIG环境变量，否则为/etc/sigenergy2mqtt.yaml）'
   SIGENERGY2MQTT_CONSUMPTION:
@@ -3043,6 +3055,8 @@ cli:
     help: "重复状态发布的时间间隔（以秒为单位）。如果 < 0，则永远不发布重复状态。如果为 0，则始终发布重复状态。如果 > 0，则以指定的间隔发布重复状态。默认值为 0（始终发布）。"
   SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW:
     help: '用于合理性检查的默认值（kW），用于验证功率传感器的当前值和能量传感器的增量值的最大和最小。默认值为每秒 500 kW，超出范围的读数将被忽略。'
+  SIGENERGY2MQTT_SCAN_INTERVAL_CLOUD:
+    help: 用于获取云端数据的扫描间隔（单位：秒）。默认值为 30（秒），最小值为 10
   SIGENERGY2MQTT_SCAN_INTERVAL_HIGH:
     help: 高频寄存器扫描间隔。默认：10。
   SIGENERGY2MQTT_SCAN_INTERVAL_LOW:

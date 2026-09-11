@@ -352,6 +352,10 @@ class:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Batterijvermogen
+  CloudLogLevel:
+    attributes:
+      comment: Het logniveau van de sigenergy2mqtt-cloudmodule
+    name: Logboekniveau in de cloud
   CurrentControlCommandValue:
     attributes:
       comment: Gebruik van Externe Uitgangsregeling in Japan
@@ -2837,6 +2841,14 @@ class:
     name_off: Uitschakelen
     name_on: Inschakelen
 cli:
+  SIGENERGY2MQTT_CLOUD_LOG_LEVEL:
+    help: 'Logboekniveau van het cloud-subsysteem. Geldige waarden zijn: DEBUG, INFO, WARNING, ERROR of CRITICAL. De standaardinstelling is WARNING (waarschuwingen, fouten en kritieke storingen)'
+  SIGENERGY2MQTT_CLOUD_PASSWORD:
+    help: Het wachtwoord voor de clouddienst.
+  SIGENERGY2MQTT_CLOUD_REGION:
+    help: "De regio van de gebruiker voor de clouddienst. Moet een van de volgende zijn: 'aus', 'eu', 'cn', 'apac', 'us'."
+  SIGENERGY2MQTT_CLOUD_USERNAME:
+    help: De gebruikersnaam voor de clouddienst.
   SIGENERGY2MQTT_CONFIG:
     help: 'De pad naar het YAML-configuratiebestand (standaard: SIGENERGY2MQTT_CONFIG-omgevingsvariabele, anders /etc/sigenergy2mqtt.yaml)'
   SIGENERGY2MQTT_CONSUMPTION:
@@ -3043,6 +3055,8 @@ cli:
     help: "Het interval in seconden waarmee herhaalde staten worden gepubliceerd. Als < 0, worden herhaalde staten nooit gepubliceerd. Als 0, worden herhaalde staten altijd gepubliceerd. Als > 0, worden herhaalde staten gepubliceerd op het opgegeven interval. De standaardwaarde is 0 (altijd publiceren)."
   SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW:
     help: 'De standaardwaarde in kW die gebruikt wordt voor plausibiliteitscontroles om de maximale en minimale waarden voor de werkelijke waarde van vermogenssensoren en de deltawaarde van energiesensoren te valideren. De standaardwaarde is 500 kW per seconde, en metingen buiten het bereik worden genegeerd.'
+  SIGENERGY2MQTT_SCAN_INTERVAL_CLOUD:
+    help: Het scaninterval in seconden voor het ophalen van cloudgegevens. De standaardwaarde is 30 (seconden) en de minimumwaarde is 10
   SIGENERGY2MQTT_SCAN_INTERVAL_HIGH:
     help: 'Scaninterval in seconden voor registers met hoge frequentie. Standaard: 10.'
   SIGENERGY2MQTT_SCAN_INTERVAL_LOW:
