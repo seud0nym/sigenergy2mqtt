@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-import sigenergy2mqtt.main.main as main_mod
+import sigenergy2mqtt.main.device_setup as main_mod
 
 
 @pytest.mark.asyncio

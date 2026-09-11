@@ -1,6 +1,14 @@
 <!-- git log [since tag]..HEAD --oneline -->
 # Changelog 
 
+## [Unreleased]
+
+### Changed
+
+- Refactored former monolithic main module into separate concerns modules
+
+---
+
 ## [2026.9.15] - 2026-09-15
 
 ### Fixed
