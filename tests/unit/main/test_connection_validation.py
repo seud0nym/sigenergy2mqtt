@@ -5,7 +5,7 @@ import pytest
 from paho.mqtt import MQTTException
 
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.main.main import (
+from sigenergy2mqtt.main.validation import (
     _validate_influxdb_connection,
     _validate_modbus_connections,
     _validate_mqtt_connection,
@@ -47,7 +47,7 @@ async def test_validate_modbus_connections_success(mock_config_main):
     mock_modbus.retries = 1
     mock_config_main._config._settings.modbus = [mock_modbus]
 
-    with patch("sigenergy2mqtt.main.main.ModbusClient") as mock_client_class:
+    with patch("sigenergy2mqtt.main.validation.ModbusClient") as mock_client_class:
         mock_client = mock_client_class.return_value
         mock_client.connect = AsyncMock()
         mock_client.connected = True
@@ -63,7 +63,7 @@ async def test_validate_modbus_connections_failure(mock_config_main):
     mock_modbus.port = 502
     mock_config_main._config._settings.modbus = [mock_modbus]
 
-    with patch("sigenergy2mqtt.main.main.ModbusClient") as mock_client_class:
+    with patch("sigenergy2mqtt.main.validation.ModbusClient") as mock_client_class:
         mock_client = mock_client_class.return_value
         mock_client.connect = AsyncMock()
         mock_client.connected = False
@@ -148,9 +148,9 @@ def test_validate_pvoutput_connection_testing(mock_config_main):
 
 @pytest.mark.asyncio
 async def test_validate_connections_all(mock_config_main):
-    with patch("sigenergy2mqtt.main.main._validate_modbus_connections") as m1, patch("sigenergy2mqtt.main.main._validate_mqtt_connection") as m3:
-        with patch("sigenergy2mqtt.main.main._validate_influxdb_connection") as m4:
-            with patch("sigenergy2mqtt.main.main._validate_pvoutput_connection") as m5:
+    with patch("sigenergy2mqtt.main.validation._validate_modbus_connections") as m1, patch("sigenergy2mqtt.main.validation._validate_mqtt_connection") as m3:
+        with patch("sigenergy2mqtt.main.validation._validate_influxdb_connection") as m4:
+            with patch("sigenergy2mqtt.main.validation._validate_pvoutput_connection") as m5:
                 await validate_connections(True)
                 m1.assert_called()
                 m3.assert_called()

@@ -12,8 +12,16 @@ from pymodbus import ModbusException
 from sigenergy2mqtt.common import ConsumptionMethod, DeviceClass, FirmwareVersion, InputType, ProtocolVersion, StateClass, UnitOfPower
 from sigenergy2mqtt.config import _swap_active_config, active_config
 from sigenergy2mqtt.main import main as main_mod
+from sigenergy2mqtt.main.device_factories import get_state, make_ac_charger, make_dc_charger, make_plant_and_inverter
+from sigenergy2mqtt.main.device_setup import _is_grid_outage, _setup_ac_chargers, _setup_dc_chargers, setup_devices
+from sigenergy2mqtt.main.logging_setup import _configure_logger, configure_logging
+from sigenergy2mqtt.main.main import async_main, thread_config_registry
+from sigenergy2mqtt.main.modbus_helpers import get_modbus_url, read_registers
+from sigenergy2mqtt.main.protocol_probe import probe_optional_interface, probe_protocol
 from sigenergy2mqtt.main.restart import restart_controller
+from sigenergy2mqtt.main.service_setup import setup_services, setup_signals
 from sigenergy2mqtt.main.thread_config import ThreadConfig
+from sigenergy2mqtt.main.validation import _PUBLISHABLE_SENSOR_VALIDATION_CACHE_VERSION, _inverter_firmware_payload, _validation_hash, validate_publishable_sensors
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerRunningState
 from sigenergy2mqtt.sensors.base import Sensor
 from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion
@@ -71,22 +79,17 @@ def make_validation_device(sensor, unique_id: str = "sigen_validation_device"):
 
 
 def validation_payload(firmware_versions, modbus_hash, sensor_ids):
-    firmware_payload = main_mod._inverter_firmware_payload(firmware_versions)
+    firmware_payload = _inverter_firmware_payload(firmware_versions)
     return json.dumps(
         {
-            "cache_version": main_mod._PUBLISHABLE_SENSOR_VALIDATION_CACHE_VERSION,
+            "cache_version": _PUBLISHABLE_SENSOR_VALIDATION_CACHE_VERSION,
             "inverter_firmware_versions": firmware_payload,
-            "inverter_firmware_hash": main_mod._validation_hash(firmware_payload),
+            "inverter_firmware_hash": _validation_hash(firmware_payload),
             "modbus_config_hash": modbus_hash,
             "illegal_sensor_unique_ids": sensor_ids,
         },
         sort_keys=True,
     )
-
-
-# Use locally aliased function for backward compatibility
-configure_logging = main_mod.configure_logging
-get_state = main_mod.get_state
 
 
 @pytest.fixture
@@ -114,7 +117,7 @@ def clean_config(monkeypatch):
     with _swap_active_config(cfg):
         # Mock validation and logging config to avoid side effects
         monkeypatch.setattr("sigenergy2mqtt.main.main.configure_logging", lambda: None)
-        monkeypatch.setattr("sigenergy2mqtt.main.main.pymodbus_apply_logging_config", lambda *a: None)
+        monkeypatch.setattr("sigenergy2mqtt.main.logging_setup.pymodbus_apply_logging_config", lambda *a: None)
         yield cfg
 
 
@@ -171,7 +174,7 @@ class TestConfigureLogging:
             logging.getLogger("paho.mqtt").setLevel(logging.NOTSET)
             logging.getLogger("sigenergy2mqtt.pvoutput").setLevel(logging.NOTSET)
 
-            main_mod.configure_logging()
+            configure_logging()
 
             assert logging.getLogger().level == logging.DEBUG
             assert logging.getLogger("pymodbus.logging").level == logging.INFO
@@ -182,10 +185,10 @@ class TestConfigureLogging:
         """Test the TTY logging format branch."""
         monkeypatch.setattr(os, "isatty", lambda fd: True)
         monkeypatch.setattr(sys.stdout, "fileno", lambda: 1)
-        monkeypatch.setattr(main_mod.active_config, "log_fmt", "")
+        monkeypatch.setattr(active_config, "log_fmt", "")
 
         with patch("logging.basicConfig") as mock_basic:
-            main_mod.configure_logging()
+            configure_logging()
             fmt_calls = [call for call in mock_basic.call_args_list if "format" in call.kwargs]
             assert fmt_calls, "logging.basicConfig was not called with a 'format' kwarg"
             assert "sigenergy2mqtt:" in fmt_calls[0].kwargs["format"]
@@ -194,12 +197,12 @@ class TestConfigureLogging:
         """Test the Docker logging format branch."""
         monkeypatch.setattr(os, "isatty", lambda fd: False)
         monkeypatch.setattr(sys.stdout, "fileno", lambda: 1)
-        monkeypatch.setattr(main_mod.active_config, "log_fmt", "")
+        monkeypatch.setattr(active_config, "log_fmt", "")
         with patch("sigenergy2mqtt.config.config.Path") as mock_path:
             # Mocking /.dockerenv existance
             mock_path.return_value.is_file.return_value = True
             with patch("logging.basicConfig") as mock_basic:
-                main_mod.configure_logging()
+                configure_logging()
                 fmt_calls = [call for call in mock_basic.call_args_list if "format" in call.kwargs]
                 assert fmt_calls, "logging.basicConfig was not called with a 'format' kwarg"
                 assert "{asctime}" in fmt_calls[0].kwargs["format"]
@@ -210,7 +213,7 @@ class TestConfigureLogging:
         logger = logging.getLogger("test_logger")
         logger.setLevel(logging.INFO)
         with patch.object(logger, "log") as mock_log:
-            main_mod._configure_logger("test_logger", logging.DEBUG)
+            _configure_logger("test_logger", logging.DEBUG)
             assert mock_log.called
 
     def test_configure_logging_adds_noskippedfilter(self):
@@ -229,7 +232,7 @@ class TestConfigureLogging:
             logger = logging.getLogger("pymodbus.logging")
             logger.filters = []
 
-            main_mod.configure_logging()
+            configure_logging()
             filter_obj = next((f for f in logger.filters if f.__class__.__name__ == "_FramerSkipFilter"), None)
             assert filter_obj is not None
 
@@ -261,7 +264,7 @@ class TestGetState:
         mock_modbus.comm_params.host = "192.168.1.1"
         mock_modbus.comm_params.port = 502
 
-        state = await main_mod.get_state(mock_sensor, mock_modbus, "test_device")
+        state = await get_state(mock_sensor, mock_modbus, "test_device")
 
         assert state == 42.5
 
@@ -276,7 +279,7 @@ class TestGetState:
         mock_modbus.comm_params.host = "192.168.1.1"
         mock_modbus.comm_params.port = 502
 
-        state = await main_mod.get_state(mock_sensor, mock_modbus, "test_device", default_value=999)
+        state = await get_state(mock_sensor, mock_modbus, "test_device", default_value=999)
         assert state == 999
 
     @pytest.mark.asyncio
@@ -423,28 +426,28 @@ class TestModbusHelpers:
 
     def test_get_modbus_url_unknown(self):
         """Test get_modbus_url with unknown client."""
-        assert main_mod.get_modbus_url(None) == "modbus://unknown"
-        assert main_mod.get_modbus_url(object()) == "modbus://unknown"
+        assert get_modbus_url(None) == "modbus://unknown"
+        assert get_modbus_url(object()) == "modbus://unknown"
 
     @pytest.mark.asyncio
     async def test_read_registers_input(self):
         """Test read_registers with INPUT type."""
         mock_client = AsyncMock()
-        await main_mod.read_registers(mock_client, 100, 2, 1, InputType.INPUT)
+        await read_registers(mock_client, 100, 2, 1, InputType.INPUT)
         mock_client.read_input_registers.assert_called_with(100, count=2, device_id=1)
 
     @pytest.mark.asyncio
     async def test_read_registers_none_client(self):
         """Test read_registers with None client."""
         with pytest.raises(ValueError, match="modbus_client cannot be None"):
-            await main_mod.read_registers(None, 0, 1, 1, InputType.HOLDING)
+            await read_registers(None, 0, 1, 1, InputType.HOLDING)
 
     @pytest.mark.asyncio
     async def test_read_registers_invalid_type(self):
         """Test read_registers with invalid type."""
         mock_client = AsyncMock()
         with pytest.raises(ValueError, match="Unknown input type"):
-            await main_mod.read_registers(mock_client, 0, 1, 1, "INVALID")
+            await read_registers(mock_client, 0, 1, 1, "INVALID")
 
 
 class TestDiscovery:
@@ -460,9 +463,9 @@ class TestDiscovery:
                 return False
 
         mock_read = AsyncMock(return_value=RR())
-        monkeypatch.setattr(main_mod, "read_registers", mock_read)
+        monkeypatch.setattr("sigenergy2mqtt.main.protocol_probe.read_registers", mock_read)
 
-        version = await main_mod.probe_protocol(mock_client)
+        version = await probe_protocol(mock_client)
         # Verify it tried only the first candidate (succeeded immediately)
         assert mock_read.await_count == 1
         # Verify it returns a valid ProtocolVersion (not the fallback)
@@ -480,9 +483,9 @@ class TestDiscovery:
 
             exception_code = 0x02
 
-        monkeypatch.setattr(main_mod, "read_registers", AsyncMock(return_value=RR()))
+        monkeypatch.setattr("sigenergy2mqtt.main.protocol_probe.read_registers", AsyncMock(return_value=RR()))
 
-        version = await main_mod.probe_protocol(mock_client)
+        version = await probe_protocol(mock_client)
         assert version == ProtocolVersion.V1_8
 
     @pytest.mark.asyncio
@@ -496,17 +499,17 @@ class TestDiscovery:
 
             exception_code = 0x02
 
-        monkeypatch.setattr(main_mod, "read_registers", AsyncMock(return_value=RR()))
+        monkeypatch.setattr("sigenergy2mqtt.main.protocol_probe.read_registers", AsyncMock(return_value=RR()))
 
-        assert await main_mod.probe_optional_interface(mock_client, 1, "Test") is False
+        assert await probe_optional_interface(mock_client, 1, "Test") is False
 
     @pytest.mark.asyncio
     async def test_probe_optional_interface_exception(self, monkeypatch):
         """Test probe_optional_interface with Exception."""
         mock_client = AsyncMock()
-        monkeypatch.setattr(main_mod, "read_registers", AsyncMock(side_effect=ModbusException("BOOM")))
+        monkeypatch.setattr("sigenergy2mqtt.main.protocol_probe.read_registers", AsyncMock(side_effect=ModbusException("BOOM")))
 
-        assert await main_mod.probe_optional_interface(mock_client, 1, "Test") is False
+        assert await probe_optional_interface(mock_client, 1, "Test") is False
 
 
 class TestFactories:
@@ -519,7 +522,7 @@ class TestFactories:
         mock_plant = MagicMock(unique_id="plant_id", protocol_version=ProtocolVersion.V2_8)
         with patch("sigenergy2mqtt.devices.ACCharger.create", new_callable=AsyncMock) as mock_create:
             mock_create.return_value = MagicMock()
-            charger = await main_mod.make_ac_charger(0, mock_client, 1, mock_plant)
+            charger = await make_ac_charger(0, mock_client, 1, mock_plant)
             assert charger.via_device == "plant_id"
 
     @pytest.mark.asyncio
@@ -530,7 +533,7 @@ class TestFactories:
         mock_plant.protocol_version = ProtocolVersion.V2_8
         with patch("sigenergy2mqtt.devices.DCCharger.create", new_callable=AsyncMock) as mock_create:
             mock_create.return_value = MagicMock()
-            charger = await main_mod.make_dc_charger(
+            charger = await make_dc_charger(
                 plant_index=0,
                 device_address=1,
                 modbus_client=mock_client,
@@ -544,8 +547,8 @@ class TestFactories:
         """Test make_plant_and_inverter with duplicate SN."""
         mock_client = AsyncMock()
         seen = {"SN123"}
-        with patch("sigenergy2mqtt.main.main.get_state", AsyncMock(return_value="SN123")):
-            inv, plant = await main_mod.make_plant_and_inverter(0, mock_client, 1, None, seen)
+        with patch("sigenergy2mqtt.main.device_factories.get_state", AsyncMock(return_value="SN123")):
+            inv, plant = await make_plant_and_inverter(0, mock_client, 1, None, seen)
             assert inv is None
             assert plant is None
 
@@ -554,8 +557,8 @@ class TestFactories:
         """Test make_plant_and_inverter missing model ID error."""
         mock_client = AsyncMock()
         seen = set()
-        with patch("sigenergy2mqtt.main.main.get_state", side_effect=["SN123", None]), pytest.raises(ValueError, match="Model ID cannot be None"):
-            await main_mod.make_plant_and_inverter(0, mock_client, 1, None, seen)
+        with patch("sigenergy2mqtt.main.device_factories.get_state", side_effect=["SN123", None]), pytest.raises(ValueError, match="Model ID cannot be None"):
+            await make_plant_and_inverter(0, mock_client, 1, None, seen)
 
     @pytest.mark.asyncio
     async def test_make_plant_and_inverter_pv_inverter(self):
@@ -564,13 +567,13 @@ class TestFactories:
         seen = set()
         # SN, Model, PACKBCUCount (0 for PVInverter), SystemTimeZone, InverterFirmwareVersion, OutputType, ESSPreHeatingEnable
         with (
-            patch("sigenergy2mqtt.main.main.get_state", side_effect=["SN1", "MDL1", 0, 600, "V122R001C00SPC112B701P", 1, None]),
-            patch("sigenergy2mqtt.main.main.probe_protocol", AsyncMock(return_value=ProtocolVersion.V2_8)),
-            patch("sigenergy2mqtt.main.main.probe_optional_interface", AsyncMock(return_value=False)),
+            patch("sigenergy2mqtt.main.device_factories.get_state", side_effect=["SN1", "MDL1", 0, 600, "V122R001C00SPC112B701P", 1, None]),
+            patch("sigenergy2mqtt.main.device_factories.probe_protocol", AsyncMock(return_value=ProtocolVersion.V2_8)),
+            patch("sigenergy2mqtt.main.device_factories.probe_optional_interface", AsyncMock(return_value=False)),
             patch("sigenergy2mqtt.devices.PowerPlant.create", AsyncMock(return_value=MagicMock(protocol_version=ProtocolVersion.V2_8, unique_id="p1"))),
             patch("sigenergy2mqtt.devices.Inverter.create", AsyncMock(return_value=MagicMock())),
         ):
-            inv, plant = await main_mod.make_plant_and_inverter(0, mock_client, 1, None, seen)
+            inv, plant = await make_plant_and_inverter(0, mock_client, 1, None, seen)
             assert inv is not None
             assert plant is not None
 
@@ -583,9 +586,9 @@ class TestFactories:
         seen = set()
         clean_config.ems_mode_check = True
         with (
-            patch("sigenergy2mqtt.main.main.get_state", side_effect=["SN1", "MDL1", 1, 600, "V122R001C00SPC113B717A", 1, None]),
-            patch("sigenergy2mqtt.main.main.probe_protocol", AsyncMock(return_value=ProtocolVersion.V2_8)),
-            patch("sigenergy2mqtt.main.main.probe_optional_interface", AsyncMock(return_value=False)),
+            patch("sigenergy2mqtt.main.device_factories.get_state", side_effect=["SN1", "MDL1", 1, 600, "V122R001C00SPC113B717A", 1, None]),
+            patch("sigenergy2mqtt.main.device_factories.probe_protocol", AsyncMock(return_value=ProtocolVersion.V2_8)),
+            patch("sigenergy2mqtt.main.device_factories.probe_optional_interface", AsyncMock(return_value=False)),
             patch("sigenergy2mqtt.devices.PowerPlant.create", AsyncMock(return_value=MagicMock(protocol_version=ProtocolVersion.V2_8, unique_id="p1"))),
             patch("sigenergy2mqtt.sensors.inverter_read_only.InverterFirmwareVersion.get_state", AsyncMock(return_value="V122R001C00SPC113B717A")),
             patch("sigenergy2mqtt.sensors.inverter_read_only.InverterModel.get_state", AsyncMock(return_value="MDL1")),
@@ -595,7 +598,7 @@ class TestFactories:
             patch("sigenergy2mqtt.sensors.inverter_read_only.OutputType.get_state", AsyncMock(return_value=1)),
             patch("sigenergy2mqtt.devices.inverter.inverter.logger.debug") as mock_debug,
         ):
-            await main_mod.make_plant_and_inverter(0, mock_client, 1, None, seen)
+            await make_plant_and_inverter(0, mock_client, 1, None, seen)
             assert clean_config.ems_mode_check is False
             assert any("Remote EMS Mode check disabled" in str(call) for call in mock_debug.call_args_list)
 
@@ -608,9 +611,9 @@ class TestFactories:
         seen = set()
         clean_config.ems_mode_check = True
         with (
-            patch("sigenergy2mqtt.main.main.get_state", side_effect=["SN1", "MDL1", 1, 600, "V122R001C00SPC112B701P", 1, None]),
-            patch("sigenergy2mqtt.main.main.probe_protocol", AsyncMock(return_value=ProtocolVersion.V2_8)),
-            patch("sigenergy2mqtt.main.main.probe_optional_interface", AsyncMock(return_value=False)),
+            patch("sigenergy2mqtt.main.device_factories.get_state", side_effect=["SN1", "MDL1", 1, 600, "V122R001C00SPC112B701P", 1, None]),
+            patch("sigenergy2mqtt.main.device_factories.probe_protocol", AsyncMock(return_value=ProtocolVersion.V2_8)),
+            patch("sigenergy2mqtt.main.device_factories.probe_optional_interface", AsyncMock(return_value=False)),
             patch("sigenergy2mqtt.devices.PowerPlant.create", AsyncMock(return_value=MagicMock(protocol_version=ProtocolVersion.V2_8, unique_id="p1"))),
             patch("sigenergy2mqtt.sensors.inverter_read_only.InverterFirmwareVersion.get_state", AsyncMock(return_value="V122R001C00SPC112B701P")),
             patch("sigenergy2mqtt.sensors.inverter_read_only.InverterModel.get_state", AsyncMock(return_value="MDL1")),
@@ -619,7 +622,7 @@ class TestFactories:
             patch("sigenergy2mqtt.sensors.inverter_read_only.InverterSerialNumber.get_state", AsyncMock(return_value="SN1")),
             patch("sigenergy2mqtt.sensors.inverter_read_only.OutputType.get_state", AsyncMock(return_value=1)),
         ):
-            await main_mod.make_plant_and_inverter(0, mock_client, 1, None, seen)
+            await make_plant_and_inverter(0, mock_client, 1, None, seen)
             assert clean_config.ems_mode_check is True
 
     async def test_make_plant_and_inverter_old_protocol_consumption_reset(self, clean_config):
@@ -632,13 +635,13 @@ class TestFactories:
         clean_config.consumption = ConsumptionMethod.CALCULATED
         # SN, Model, PACKBCUCount, SystemTimeZone, InverterFirmwareVersion, OutputType, ESSPreHeatingEnable
         with (
-            patch("sigenergy2mqtt.main.main.get_state", side_effect=["SN1", "MDL1", 1, 600, "V122R001C00SPC112B701P", 1, None]),
-            patch("sigenergy2mqtt.main.main.probe_protocol", AsyncMock(return_value=ProtocolVersion.V1_8)),
-            patch("sigenergy2mqtt.main.main.probe_optional_interface", AsyncMock(return_value=False)),
+            patch("sigenergy2mqtt.main.device_factories.get_state", side_effect=["SN1", "MDL1", 1, 600, "V122R001C00SPC112B701P", 1, None]),
+            patch("sigenergy2mqtt.main.device_factories.probe_protocol", AsyncMock(return_value=ProtocolVersion.V1_8)),
+            patch("sigenergy2mqtt.main.device_factories.probe_optional_interface", AsyncMock(return_value=False)),
             patch("sigenergy2mqtt.devices.PowerPlant.create", AsyncMock(return_value=MagicMock(protocol_version=ProtocolVersion.V1_8, unique_id="p1"))),
             patch("sigenergy2mqtt.devices.Inverter.create", AsyncMock(return_value=MagicMock())),
         ):
-            await main_mod.make_plant_and_inverter(0, mock_client, 1, None, seen)
+            await make_plant_and_inverter(0, mock_client, 1, None, seen)
             assert clean_config.consumption == ConsumptionMethod.CALCULATED
 
     def test_make_plant_and_inverter_passes_firmware_to_powerplant_create(self):
@@ -648,13 +651,13 @@ class TestFactories:
         mock_plant = MagicMock(protocol_version=ProtocolVersion.V2_8, unique_id="p1")
 
         with (
-            patch("sigenergy2mqtt.main.main.get_state", side_effect=["SN1", "MDL1", 1, 600, "V122R001C00SPC113B717A", 1, None]),
-            patch("sigenergy2mqtt.main.main.probe_protocol", AsyncMock(return_value=ProtocolVersion.V2_8)),
-            patch("sigenergy2mqtt.main.main.probe_optional_interface", AsyncMock(return_value=False)),
+            patch("sigenergy2mqtt.main.device_factories.get_state", side_effect=["SN1", "MDL1", 1, 600, "V122R001C00SPC113B717A", 1, None]),
+            patch("sigenergy2mqtt.main.device_factories.probe_protocol", AsyncMock(return_value=ProtocolVersion.V2_8)),
+            patch("sigenergy2mqtt.main.device_factories.probe_optional_interface", AsyncMock(return_value=False)),
             patch("sigenergy2mqtt.devices.PowerPlant.create", AsyncMock(return_value=mock_plant)) as mock_plant_create,
             patch("sigenergy2mqtt.devices.Inverter.create", AsyncMock(return_value=MagicMock())),
         ):
-            asyncio.run(main_mod.make_plant_and_inverter(0, mock_client, 1, None, seen))
+            asyncio.run(make_plant_and_inverter(0, mock_client, 1, None, seen))
 
             assert mock_plant_create.await_count == 1
             assert str(mock_plant_create.await_args.args[2]) == "V122R001C00SPC113B717A"
@@ -666,12 +669,12 @@ class TestFactories:
         existing_plant = MagicMock(protocol_version=ProtocolVersion.V2_8, unique_id="p-existing")
 
         with (
-            patch("sigenergy2mqtt.main.main.get_state", side_effect=["SN1", "MDL1", 1, 600]) as mock_get_state,
-            patch("sigenergy2mqtt.main.main.probe_optional_interface", AsyncMock(return_value=False)),
+            patch("sigenergy2mqtt.main.device_factories.get_state", side_effect=["SN1", "MDL1", 1, 600]) as mock_get_state,
+            patch("sigenergy2mqtt.main.device_factories.probe_optional_interface", AsyncMock(return_value=False)),
             patch("sigenergy2mqtt.devices.Inverter.create", AsyncMock(return_value=MagicMock())),
             patch("sigenergy2mqtt.devices.PowerPlant.create", AsyncMock()) as mock_plant_create,
         ):
-            asyncio.run(main_mod.make_plant_and_inverter(0, mock_client, 1, existing_plant, seen))
+            asyncio.run(make_plant_and_inverter(0, mock_client, 1, existing_plant, seen))
 
             assert mock_get_state.await_count == 4
             mock_plant_create.assert_not_called()
@@ -686,12 +689,12 @@ class TestFactories:
         seen = set()
         # SN, Model, PACKBCUCount, SystemTimeZone, InverterFirmwareVersion, OutputType (returns None)
         with (
-            patch("sigenergy2mqtt.main.main.get_state", side_effect=["SN1", "MDL1", 1, 600, "V122R001C00SPC112B701P", None]),
-            patch("sigenergy2mqtt.main.main.probe_protocol", AsyncMock(return_value=ProtocolVersion.V2_8)),
-            patch("sigenergy2mqtt.main.main.probe_optional_interface", AsyncMock(return_value=False)),
+            patch("sigenergy2mqtt.main.device_factories.get_state", side_effect=["SN1", "MDL1", 1, 600, "V122R001C00SPC112B701P", None]),
+            patch("sigenergy2mqtt.main.device_factories.probe_protocol", AsyncMock(return_value=ProtocolVersion.V2_8)),
+            patch("sigenergy2mqtt.main.device_factories.probe_optional_interface", AsyncMock(return_value=False)),
             pytest.raises(ValueError, match="OutputType cannot be None"),
         ):
-            await main_mod.make_plant_and_inverter(0, mock_client, 1, None, seen)
+            await make_plant_and_inverter(0, mock_client, 1, None, seen)
 
 
 @pytest.mark.asyncio
@@ -719,10 +722,10 @@ async def test_probe_protocol_candidates_and_error(monkeypatch):
     # Mocking read_registers to fail first 3 and succeed on the 4th candidate
     responses = [RR(True), RR(True), RuntimeError("BOOM"), RR(False)]
     mock_read = AsyncMock(side_effect=responses)
-    monkeypatch.setattr(main_mod, "read_registers", mock_read)
+    monkeypatch.setattr("sigenergy2mqtt.main.protocol_probe.read_registers", mock_read)
 
     # Should skip first 3 candidates (fail, fail, exception) and succeed on 4th
-    version = await main_mod.probe_protocol(mock_client)
+    version = await probe_protocol(mock_client)
     # Verify it tried exactly 4 candidates before succeeding
     assert mock_read.await_count == 4
     # Verify it returns a valid ProtocolVersion (not the fallback)
@@ -730,8 +733,8 @@ async def test_probe_protocol_candidates_and_error(monkeypatch):
     assert version != ProtocolVersion.V1_8
 
     # Test complete failure fallback to V1_8
-    monkeypatch.setattr(main_mod, "read_registers", AsyncMock(return_value=RR(True)))
-    version = await main_mod.probe_protocol(mock_client)
+    monkeypatch.setattr("sigenergy2mqtt.main.protocol_probe.read_registers", AsyncMock(return_value=RR(True)))
+    version = await probe_protocol(mock_client)
     assert version == ProtocolVersion.V1_8
 
 
@@ -752,8 +755,8 @@ async def test_probe_optional_interface_success(monkeypatch):
         def __format__(self, format_spec):
             return "RR"
 
-    monkeypatch.setattr(main_mod, "read_registers", AsyncMock(return_value=RR()))
-    assert await main_mod.probe_optional_interface(mock_client, 1, "Test") is True
+    monkeypatch.setattr("sigenergy2mqtt.main.protocol_probe.read_registers", AsyncMock(return_value=RR()))
+    assert await probe_optional_interface(mock_client, 1, "Test") is True
 
 
 @pytest.mark.asyncio
@@ -763,8 +766,8 @@ async def test_setup_devices_ignored_host(clean_config):
     clean_config.modbus[0].registers.read_write = False
     clean_config.modbus[0].registers.write_only = False
     seen = set()
-    main_mod.thread_config_registry.clear()
-    configs, proto = await main_mod.setup_devices(seen)
+    thread_config_registry.clear()
+    configs, proto = await setup_devices(seen)
     assert len(configs) == 0
 
 
@@ -778,7 +781,7 @@ async def test_setup_devices_connection_failure(clean_config, monkeypatch):
     mock_client.comm_params.port = 502
     mock_client.__str__ = lambda x: "h:502"
     mock_client.__aenter__.return_value = mock_client
-    monkeypatch.setattr(main_mod, "ModbusClient", lambda *a, **k: mock_client)
+    monkeypatch.setattr("sigenergy2mqtt.main.device_setup.ModbusClient", lambda *a, **k: mock_client)
 
     # Also need to mock active_config.modbus[plant_index] attributes
     clean_config.modbus[0] = FmtMock(wraps=clean_config.modbus[0])
@@ -786,7 +789,7 @@ async def test_setup_devices_connection_failure(clean_config, monkeypatch):
     clean_config.modbus[0].port = 502
 
     with pytest.raises(SystemExit):
-        await main_mod.setup_devices(set())
+        await setup_devices(set())
 
 
 @pytest.mark.asyncio
@@ -799,26 +802,26 @@ async def test_coverage_gap_closers(clean_config, monkeypatch):
     seen = set()
     clean_config.consumption = ConsumptionMethod.TOTAL
     with (
-        patch("sigenergy2mqtt.main.main.get_state", side_effect=["SN1", "MDL1", 1, 600, "V122R001C00SPC112B701P", 1, None]),
-        patch("sigenergy2mqtt.main.main.probe_protocol", AsyncMock(return_value=ProtocolVersion.V1_8)),
-        patch("sigenergy2mqtt.main.main.probe_optional_interface", AsyncMock(return_value=False)),
+        patch("sigenergy2mqtt.main.device_factories.get_state", side_effect=["SN1", "MDL1", 1, 600, "V122R001C00SPC112B701P", 1, None]),
+        patch("sigenergy2mqtt.main.device_factories.probe_protocol", AsyncMock(return_value=ProtocolVersion.V1_8)),
+        patch("sigenergy2mqtt.main.device_factories.probe_optional_interface", AsyncMock(return_value=False)),
         patch("sigenergy2mqtt.devices.PowerPlant.create", AsyncMock(return_value=MagicMock(protocol_version=ProtocolVersion.V1_8, unique_id="p1"))),
         patch("sigenergy2mqtt.devices.Inverter.create", AsyncMock(return_value=MagicMock())),
-        patch("sigenergy2mqtt.main.main.logger.warning") as mock_warn,
+        patch("sigenergy2mqtt.main.device_factories.logger.warning") as mock_warn,
     ):
-        await main_mod.make_plant_and_inverter(0, mock_client, 1, None, seen)
+        await make_plant_and_inverter(0, mock_client, 1, None, seen)
         assert clean_config.consumption == ConsumptionMethod.CALCULATED
         assert mock_warn.called
 
     # Line 254: plant already exists branch
     mock_plant = MagicMock(protocol_version=ProtocolVersion.V2_8, unique_id="p1")
     with (
-        patch("sigenergy2mqtt.main.main.get_state", side_effect=["SN2", "MDL1", 1, 600]),
-        patch("sigenergy2mqtt.main.main.probe_protocol", AsyncMock(return_value=ProtocolVersion.V2_8)),
-        patch("sigenergy2mqtt.main.main.probe_optional_interface", AsyncMock(return_value=False)),
+        patch("sigenergy2mqtt.main.device_factories.get_state", side_effect=["SN2", "MDL1", 1, 600]),
+        patch("sigenergy2mqtt.main.device_factories.probe_protocol", AsyncMock(return_value=ProtocolVersion.V2_8)),
+        patch("sigenergy2mqtt.main.device_factories.probe_optional_interface", AsyncMock(return_value=False)),
         patch("sigenergy2mqtt.devices.Inverter.create", AsyncMock(return_value=MagicMock())),
     ):
-        inv, plant = await main_mod.make_plant_and_inverter(0, mock_client, 1, mock_plant, seen)
+        inv, plant = await make_plant_and_inverter(0, mock_client, 1, mock_plant, seen)
         assert plant is mock_plant
 
     from sigenergy2mqtt.modbus import ModbusDataType
@@ -851,13 +854,15 @@ async def test_coverage_gap_closers(clean_config, monkeypatch):
 
         exception_code = 0x02
 
-    monkeypatch.setattr(main_mod, "read_registers", AsyncMock(return_value=RR()))
-    await main_mod.validate_publishable_sensors(mock_client, device)
+    monkeypatch.setattr("sigenergy2mqtt.main.validation.read_registers", AsyncMock(return_value=RR()))
+    await validate_publishable_sensors(mock_client, device)
     assert sensor.publishable is False
 
 
 @pytest.mark.asyncio
 async def test_validate_publishable_sensors_saves_illegal_address_cache(clean_config, monkeypatch):
+    import sigenergy2mqtt.main.validation as main_mod
+
     sensor = make_validation_sensor("cache_save", 30011)
     device = make_validation_device(sensor, "sigen_validation_cache_save_device")
     firmware_versions = {1: "V100R001C00SPC112B107G", 2: "V100R001C00SPC113"}
@@ -874,8 +879,8 @@ async def test_validate_publishable_sensors_saves_illegal_address_cache(clean_co
 
     assert sensor.publishable is False
     main_mod.read_registers.assert_awaited_once()
-    save.assert_awaited_once()
-    saved_payload = json.loads(save.await_args.args[2])
+    main_mod.state_store.save.assert_awaited_once()
+    saved_payload = json.loads(main_mod.state_store.save.await_args.args[2])
     assert saved_payload["inverter_firmware_versions"] == {"1": firmware_versions[1], "2": firmware_versions[2]}
     assert saved_payload["modbus_config_hash"] == "modbus-a"
     assert saved_payload["illegal_sensor_unique_ids"] == [sensor.unique_id]
@@ -888,19 +893,18 @@ async def test_validate_publishable_sensors_uses_cache_without_scan(clean_config
     firmware_versions = {1: "V100R001C00SPC112B107G"}
     mock_client = AsyncMock()
 
-    monkeypatch.setattr(main_mod, "_current_modbus_config_hash", lambda: "modbus-a")
+    monkeypatch.setattr("sigenergy2mqtt.main.validation._current_modbus_config_hash", lambda: "modbus-a")
     monkeypatch.setattr(
-        main_mod.state_store,
-        "load",
+        "sigenergy2mqtt.main.validation.state_store.load",
         AsyncMock(return_value=validation_payload(firmware_versions, "modbus-a", [sensor.unique_id])),
     )
     save = AsyncMock()
-    monkeypatch.setattr(main_mod.state_store, "save", save)
+    monkeypatch.setattr("sigenergy2mqtt.main.validation.state_store.save", save)
     read_registers = AsyncMock(return_value=IllegalAddressResponse())
-    monkeypatch.setattr(main_mod, "read_registers", read_registers)
+    monkeypatch.setattr("sigenergy2mqtt.main.validation.read_registers", read_registers)
 
     with caplog.at_level(logging.DEBUG):
-        await main_mod.validate_publishable_sensors(mock_client, device, firmware_versions)
+        await validate_publishable_sensors(mock_client, device, firmware_versions)
 
     assert sensor.publishable is False
     read_registers.assert_not_awaited()
@@ -916,18 +920,17 @@ async def test_validate_publishable_sensors_rescans_when_any_inverter_firmware_c
     current_firmware_versions = {1: "V100R001C00SPC112B107G", 2: "V100R001C00SPC114"}
     mock_client = AsyncMock()
 
-    monkeypatch.setattr(main_mod, "_current_modbus_config_hash", lambda: "modbus-a")
+    monkeypatch.setattr("sigenergy2mqtt.main.validation._current_modbus_config_hash", lambda: "modbus-a")
     monkeypatch.setattr(
-        main_mod.state_store,
-        "load",
+        "sigenergy2mqtt.main.validation.state_store.load",
         AsyncMock(return_value=validation_payload(persisted_firmware_versions, "modbus-a", [sensor.unique_id])),
     )
     save = AsyncMock()
-    monkeypatch.setattr(main_mod.state_store, "save", save)
+    monkeypatch.setattr("sigenergy2mqtt.main.validation.state_store.save", save)
     read_registers = AsyncMock(return_value=IllegalAddressResponse())
-    monkeypatch.setattr(main_mod, "read_registers", read_registers)
+    monkeypatch.setattr("sigenergy2mqtt.main.validation.read_registers", read_registers)
 
-    await main_mod.validate_publishable_sensors(mock_client, device, current_firmware_versions)
+    await validate_publishable_sensors(mock_client, device, current_firmware_versions)
 
     read_registers.assert_awaited_once()
     save.assert_awaited_once()
@@ -940,18 +943,17 @@ async def test_validate_publishable_sensors_rescans_when_modbus_config_changes(c
     firmware_versions = {1: "V100R001C00SPC112B107G"}
     mock_client = AsyncMock()
 
-    monkeypatch.setattr(main_mod, "_current_modbus_config_hash", lambda: "modbus-b")
+    monkeypatch.setattr("sigenergy2mqtt.main.validation._current_modbus_config_hash", lambda: "modbus-b")
     monkeypatch.setattr(
-        main_mod.state_store,
-        "load",
+        "sigenergy2mqtt.main.validation.state_store.load",
         AsyncMock(return_value=validation_payload(firmware_versions, "modbus-a", [sensor.unique_id])),
     )
     save = AsyncMock()
-    monkeypatch.setattr(main_mod.state_store, "save", save)
+    monkeypatch.setattr("sigenergy2mqtt.main.validation.state_store.save", save)
     read_registers = AsyncMock(return_value=IllegalAddressResponse())
-    monkeypatch.setattr(main_mod, "read_registers", read_registers)
+    monkeypatch.setattr("sigenergy2mqtt.main.validation.read_registers", read_registers)
 
-    await main_mod.validate_publishable_sensors(mock_client, device, firmware_versions)
+    await validate_publishable_sensors(mock_client, device, firmware_versions)
 
     read_registers.assert_awaited_once()
     save.assert_awaited_once()
@@ -966,16 +968,15 @@ async def test_validate_publishable_sensors_ignores_non_inverter_device_attribut
     firmware_versions = {1: "V100R001C00SPC112B107G"}
     mock_client = AsyncMock()
 
-    monkeypatch.setattr(main_mod, "_current_modbus_config_hash", lambda: "modbus-a")
+    monkeypatch.setattr("sigenergy2mqtt.main.validation._current_modbus_config_hash", lambda: "modbus-a")
     monkeypatch.setattr(
-        main_mod.state_store,
-        "load",
+        "sigenergy2mqtt.main.validation.state_store.load",
         AsyncMock(return_value=validation_payload(firmware_versions, "modbus-a", [sensor.unique_id])),
     )
     read_registers = AsyncMock(return_value=IllegalAddressResponse())
-    monkeypatch.setattr(main_mod, "read_registers", read_registers)
+    monkeypatch.setattr("sigenergy2mqtt.main.validation.read_registers", read_registers)
 
-    await main_mod.validate_publishable_sensors(mock_client, device, firmware_versions)
+    await validate_publishable_sensors(mock_client, device, firmware_versions)
 
     assert sensor.publishable is False
     read_registers.assert_not_awaited()
@@ -993,10 +994,10 @@ async def test_setup_services_comprehensive(clean_config):
     configs = [ThreadConfig.create(name="Test", host="host", port=502)]
 
     with (
-        patch("sigenergy2mqtt.main.main.get_pvoutput_services", return_value=[MagicMock()]),
-        patch("sigenergy2mqtt.main.main.get_influxdb_services", return_value=[MagicMock()]),
+        patch("sigenergy2mqtt.main.service_setup.get_pvoutput_services", return_value=[MagicMock()]),
+        patch("sigenergy2mqtt.main.service_setup.get_influxdb_services", return_value=[MagicMock()]),
     ):
-        result = main_mod.setup_services(configs, ProtocolVersion.V2_8)
+        result = setup_services(configs, ProtocolVersion.V2_8)
         # Should have Monitor thread at 0 and Services thread at end
         assert result[0].name == "Monitor"
         assert result[-1].name == "Services"
@@ -1007,10 +1008,10 @@ def test_exit_on_signal(clean_config):
     """Test exit_on_signal logic."""
     mock_config = MagicMock()
     configs = [mock_config]
-    main_mod.setup_signals(configs)
+    setup_signals(configs)
 
     with patch("signal.signal") as mock_sig:
-        main_mod.setup_signals(configs)
+        setup_signals(configs)
         # Find SIGINT handler
         handler = [call.args[1] for call in mock_sig.call_args_list if call.args[0] == signal.SIGINT][0]
         handler(signal.SIGINT, None)
@@ -1023,8 +1024,8 @@ async def test_setup_dc_chargers_missing_inverter(clean_config):
     mock_modbus_cfg = MagicMock(dc_chargers=[2], host="h", port=502)
     mock_plant = MagicMock()
     mock_config = MagicMock()
-    with patch("sigenergy2mqtt.main.main.logger.warning") as mock_warn:
-        await main_mod._setup_dc_chargers(0, mock_modbus_cfg, mock_plant, AsyncMock(), {1: "inv1"}, mock_config, 0, 1)
+    with patch("sigenergy2mqtt.main.device_setup.logger.warning") as mock_warn:
+        await _setup_dc_chargers(0, mock_modbus_cfg, mock_plant, AsyncMock(), {1: "inv1"}, mock_config, 0, 1)
         assert mock_warn.called
 
 
@@ -1034,8 +1035,8 @@ async def test_setup_ac_chargers_older_protocol(clean_config):
     mock_modbus_cfg = MagicMock(ac_chargers=[1], host="h", port=502)
     mock_plant = MagicMock()
     mock_config = MagicMock()
-    with patch("sigenergy2mqtt.main.main.logger.warning") as mock_warn:
-        await main_mod._setup_ac_chargers(0, mock_modbus_cfg, mock_plant, AsyncMock(), mock_config, ProtocolVersion.V1_8, 0, 1)
+    with patch("sigenergy2mqtt.main.device_setup.logger.warning") as mock_warn:
+        await _setup_ac_chargers(0, mock_modbus_cfg, mock_plant, AsyncMock(), mock_config, ProtocolVersion.V1_8, 0, 1)
         assert mock_warn.called
 
 
@@ -1043,9 +1044,9 @@ async def test_setup_ac_chargers_older_protocol(clean_config):
 async def test_is_grid_outage_true(clean_config, monkeypatch):
     mock_grid_sensor = MagicMock()
     mock_grid_sensor.get_state = AsyncMock(return_value=1)
-    monkeypatch.setattr(main_mod, "GridStatus", MagicMock(return_value=mock_grid_sensor))
+    monkeypatch.setattr("sigenergy2mqtt.main.device_setup.GridStatus", MagicMock(return_value=mock_grid_sensor))
 
-    assert await main_mod._is_grid_outage(0, AsyncMock()) is True
+    assert await _is_grid_outage(0, AsyncMock()) is True
 
 
 @pytest.mark.asyncio
@@ -1054,13 +1055,13 @@ async def test_setup_ac_chargers_outage_failure_skips_and_continues(clean_config
     mock_plant = MagicMock()
     mock_config = MagicMock()
 
-    monkeypatch.setattr(main_mod, "make_ac_charger", AsyncMock(side_effect=[RuntimeError("unreachable"), MagicMock()]))
-    monkeypatch.setattr(main_mod, "_is_grid_outage", AsyncMock(return_value=True))
+    monkeypatch.setattr("sigenergy2mqtt.main.device_setup.make_ac_charger", AsyncMock(side_effect=[RuntimeError("unreachable"), MagicMock()]))
+    monkeypatch.setattr("sigenergy2mqtt.main.device_setup._is_grid_outage", AsyncMock(return_value=True))
     mock_schedule = MagicMock()
-    monkeypatch.setattr(main_mod, "_schedule_restart_on_grid_restore", mock_schedule)
+    monkeypatch.setattr("sigenergy2mqtt.main.device_setup._schedule_restart_on_grid_restore", mock_schedule)
 
-    with patch("sigenergy2mqtt.main.main.logger.warning") as mock_warn:
-        next_seq = await main_mod._setup_ac_chargers(0, mock_modbus_cfg, mock_plant, AsyncMock(), mock_config, ProtocolVersion.V2_8, 0, 2)
+    with patch("sigenergy2mqtt.main.device_setup.logger.warning") as mock_warn:
+        next_seq = await _setup_ac_chargers(0, mock_modbus_cfg, mock_plant, AsyncMock(), mock_config, ProtocolVersion.V2_8, 0, 2)
 
     assert next_seq == 2
     assert mock_config.add_device.call_count == 1
@@ -1074,11 +1075,11 @@ async def test_setup_ac_chargers_non_outage_failure_logs_error(clean_config, mon
     mock_plant = MagicMock()
     mock_config = MagicMock()
 
-    monkeypatch.setattr(main_mod, "make_ac_charger", AsyncMock(side_effect=RuntimeError("boom")))
-    monkeypatch.setattr(main_mod, "_is_grid_outage", AsyncMock(return_value=False))
+    monkeypatch.setattr("sigenergy2mqtt.main.device_setup.make_ac_charger", AsyncMock(side_effect=RuntimeError("boom")))
+    monkeypatch.setattr("sigenergy2mqtt.main.device_setup._is_grid_outage", AsyncMock(return_value=False))
 
-    with patch("sigenergy2mqtt.main.main.logger.error") as mock_err:
-        next_seq = await main_mod._setup_ac_chargers(0, mock_modbus_cfg, mock_plant, AsyncMock(), mock_config, ProtocolVersion.V2_8, 0, 1)
+    with patch("sigenergy2mqtt.main.device_setup.logger.error") as mock_err:
+        next_seq = await _setup_ac_chargers(0, mock_modbus_cfg, mock_plant, AsyncMock(), mock_config, ProtocolVersion.V2_8, 0, 1)
 
     assert next_seq == 1
     mock_config.add_device.assert_not_called()
@@ -1093,7 +1094,7 @@ class TestSignals:
         clean_config.home_assistant.enabled = True
         with patch("signal.signal") as mock_sig:
             mock_config = MagicMock()
-            main_mod.setup_signals([mock_config])
+            setup_signals([mock_config])
             handler = [call.args[1] for call in mock_sig.call_args_list if call.args[0] == signal.SIGUSR1][0]
             handler(signal.SIGUSR1, None)
             assert active_config.home_assistant.enabled is False
@@ -1102,7 +1103,7 @@ class TestSignals:
     def test_reload_on_signal(self, clean_config):
         """Test reload_on_signal signal handler."""
         with patch("signal.signal") as mock_sig, patch.object(active_config, "reload") as mock_reload, patch.object(restart_controller, "request") as mock_request:
-            main_mod.setup_signals([MagicMock()])
+            setup_signals([MagicMock()])
             handler = [call.args[1] for call in mock_sig.call_args_list if call.args[0] == signal.SIGHUP][0]
             with patch("asyncio.get_running_loop") as mock_get_loop:
                 mock_loop = MagicMock()
@@ -1136,8 +1137,8 @@ async def test_async_main_with_full_device_flow(clean_config, monkeypatch):
     active_config.modbus.extend([mock_device])
 
     mock_thread_config = MagicMock()
-    monkeypatch.setattr(main_mod.ThreadConfig, "create", lambda *a, **kw: mock_thread_config)
-    monkeypatch.setattr(main_mod, "ModbusClient", lambda *a, **k: AsyncMock(__aenter__=AsyncMock(return_value=AsyncMock(connected=True))))
+    monkeypatch.setattr("sigenergy2mqtt.main.device_setup.ThreadConfig.create", lambda *a, **kw: mock_thread_config)
+    monkeypatch.setattr("sigenergy2mqtt.main.device_setup.ModbusClient", lambda *a, **k: AsyncMock(__aenter__=AsyncMock(return_value=AsyncMock(connected=True))))
 
     mock_plant = MagicMock(protocol_version=ProtocolVersion.V2_8, has_battery=True, unique_id="p_uid", device_address=247)
     mock_plant.name = "Plant"
@@ -1145,14 +1146,14 @@ async def test_async_main_with_full_device_flow(clean_config, monkeypatch):
 
     mock_inverter = MagicMock(unique_id="i_uid", device_address=1)
     mock_inverter.name = "Inverter"
-    monkeypatch.setattr(main_mod, "make_plant_and_inverter", AsyncMock(return_value=(mock_inverter, mock_plant)))
-    monkeypatch.setattr(main_mod, "validate_publishable_sensors", AsyncMock())
-    monkeypatch.setattr(main_mod, "make_dc_charger", AsyncMock(return_value=MagicMock()))
-    monkeypatch.setattr(main_mod, "make_ac_charger", AsyncMock(return_value=MagicMock()))
+    monkeypatch.setattr("sigenergy2mqtt.main.device_setup.make_plant_and_inverter", AsyncMock(return_value=(mock_inverter, mock_plant)))
+    monkeypatch.setattr("sigenergy2mqtt.main.device_setup.validate_publishable_sensors", AsyncMock())
+    monkeypatch.setattr("sigenergy2mqtt.main.device_setup.make_dc_charger", AsyncMock(return_value=MagicMock()))
+    monkeypatch.setattr("sigenergy2mqtt.main.device_setup.make_ac_charger", AsyncMock(return_value=MagicMock()))
     monkeypatch.setattr(main_mod, "start", AsyncMock())
     monkeypatch.setattr(signal, "signal", lambda *a: None)
 
-    await main_mod.async_main()
+    await async_main()
     assert mock_thread_config.add_device.called
 
 
@@ -1179,17 +1180,17 @@ async def test_async_main_with_no_battery(clean_config, monkeypatch):
     mock_plant.get_sensor.return_value = mock_si_sensor
 
     mock_thread_config = MagicMock()
-    monkeypatch.setattr(main_mod.ThreadConfig, "create", lambda *a, **kw: mock_thread_config)
+    monkeypatch.setattr("sigenergy2mqtt.main.device_setup.ThreadConfig.create", lambda *a, **kw: mock_thread_config)
 
-    monkeypatch.setattr(main_mod, "ModbusClient", lambda *a, **k: AsyncMock(__aenter__=AsyncMock(return_value=AsyncMock(connected=True))))
+    monkeypatch.setattr("sigenergy2mqtt.main.device_setup.ModbusClient", lambda *a, **k: AsyncMock(__aenter__=AsyncMock(return_value=AsyncMock(connected=True))))
     mock_inverter = MagicMock(unique_id="i_uid", device_address=1)
     mock_inverter.name = "Inverter"
-    monkeypatch.setattr(main_mod, "make_plant_and_inverter", AsyncMock(return_value=(mock_inverter, mock_plant)))
-    monkeypatch.setattr(main_mod, "validate_publishable_sensors", AsyncMock())
+    monkeypatch.setattr("sigenergy2mqtt.main.device_setup.make_plant_and_inverter", AsyncMock(return_value=(mock_inverter, mock_plant)))
+    monkeypatch.setattr("sigenergy2mqtt.main.device_setup.validate_publishable_sensors", AsyncMock())
     monkeypatch.setattr(main_mod, "start", AsyncMock())
     monkeypatch.setattr(signal, "signal", lambda *a: None)
 
-    await main_mod.async_main()
+    await async_main()
     assert mock_si_sensor.publishable is False
 
 
@@ -1218,16 +1219,16 @@ async def test_async_main_restarts_when_requested(clean_config, monkeypatch):
     monkeypatch.setattr(main_mod, "start", start_mock)
 
     clear_mock = MagicMock()
-    monkeypatch.setattr(main_mod.thread_config_registry, "clear", clear_mock)
+    monkeypatch.setattr("sigenergy2mqtt.main.device_setup.thread_config_registry.clear", clear_mock)
 
-    monkeypatch.setattr(main_mod, "ModbusClient", lambda *a, **h: AsyncMock(__aenter__=AsyncMock(return_value=AsyncMock(connected=True))))
+    monkeypatch.setattr("sigenergy2mqtt.main.device_setup.ModbusClient", lambda *a, **h: AsyncMock(__aenter__=AsyncMock(return_value=AsyncMock(connected=True))))
     mock_plant = MagicMock(protocol_version=ProtocolVersion.V1_8, device_address=247, name="Plant")
     mock_plant.sensors = {f"{active_config.home_assistant.unique_id_prefix}_0_247_40029": MagicMock()}
     mock_inverter = MagicMock(unique_id="i_uid", device_address=1, name="Inverter")
-    monkeypatch.setattr(main_mod, "make_plant_and_inverter", AsyncMock(return_value=(mock_inverter, mock_plant)))
+    monkeypatch.setattr("sigenergy2mqtt.main.device_setup.make_plant_and_inverter", AsyncMock(return_value=(mock_inverter, mock_plant)))
 
     active_config.home_assistant.enabled = True
-    await main_mod.async_main()
+    await async_main()
 
     assert start_mock.await_count == 2
     assert clear_mock.call_count == 2
@@ -1279,16 +1280,16 @@ async def test_async_main_sighup_reload_suppresses_ha_during_restart(clean_confi
             assert active_config.home_assistant.enabled is False
 
     monkeypatch.setattr(main_mod, "start", AsyncMock(side_effect=_start))
-    monkeypatch.setattr(main_mod, "ModbusClient", lambda *a, **h: AsyncMock(__aenter__=AsyncMock(return_value=AsyncMock(connected=True))))
+    monkeypatch.setattr("sigenergy2mqtt.main.device_setup.ModbusClient", lambda *a, **h: AsyncMock(__aenter__=AsyncMock(return_value=AsyncMock(connected=True))))
 
     mock_plant = MagicMock(protocol_version=ProtocolVersion.V1_8, device_address=247, name="Plant")
     mock_plant.sensors = {f"{active_config.home_assistant.unique_id_prefix}_0_247_40029": MagicMock()}
     mock_inverter = MagicMock(unique_id="i_uid", device_address=1, name="Inverter")
-    monkeypatch.setattr(main_mod, "make_plant_and_inverter", AsyncMock(return_value=(mock_inverter, mock_plant)))
+    monkeypatch.setattr("sigenergy2mqtt.main.device_setup.make_plant_and_inverter", AsyncMock(return_value=(mock_inverter, mock_plant)))
     monkeypatch.setattr(main_mod, "initialize_async", AsyncMock())
 
     active_config.home_assistant.enabled = True
-    await main_mod.async_main()
+    await async_main()
 
     assert calls["count"] == 2
     assert active_config.home_assistant.enabled is False
@@ -1312,15 +1313,15 @@ async def test_async_main_registers_signal_handlers(clean_config, monkeypatch):
     handlers = {}
     monkeypatch.setattr(signal, "signal", lambda sig, h: handlers.update({sig: h}))
     monkeypatch.setattr(main_mod, "start", AsyncMock())
-    monkeypatch.setattr(main_mod, "ModbusClient", lambda *a, **h: AsyncMock(__aenter__=AsyncMock(return_value=AsyncMock(connected=True))))
+    monkeypatch.setattr("sigenergy2mqtt.main.device_setup.ModbusClient", lambda *a, **h: AsyncMock(__aenter__=AsyncMock(return_value=AsyncMock(connected=True))))
 
     mock_plant = MagicMock(protocol_version=ProtocolVersion.V1_8, device_address=247, name="Plant")
     mock_plant.sensors = {f"{active_config.home_assistant.unique_id_prefix}_0_247_40029": MagicMock()}
     mock_inverter = MagicMock(unique_id="i_uid", device_address=1)
     mock_inverter.name = "Inverter"
-    monkeypatch.setattr(main_mod, "make_plant_and_inverter", AsyncMock(return_value=(mock_inverter, mock_plant)))
+    monkeypatch.setattr("sigenergy2mqtt.main.device_setup.make_plant_and_inverter", AsyncMock(return_value=(mock_inverter, mock_plant)))
 
-    await main_mod.async_main()
+    await async_main()
     assert signal.SIGINT in handlers
     assert signal.SIGTERM in handlers
     assert signal.SIGHUP in handlers
