@@ -5,6 +5,7 @@ import pytest
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.config.settings import InfluxDbConfig
 from sigenergy2mqtt.influxdb.service import InfluxService
+from sigenergy2mqtt.influxdb.writers import V2HttpWriter
 
 
 def test_influxdb_config_tuning_defaults():
@@ -93,17 +94,17 @@ async def test_service_uses_config_values(monkeypatch):
     assert captured_args["retries"] == 5
 
     # Verify write timeout logic
-    # Mock asyncio.to_thread to check timeout arg
+    # The writer reads the timeout dynamically when each write executes.
     captured_post = {}
 
-    async def fake_to_thread(func, *args, **kwargs):
+    def fake_post(*args, **kwargs):
         captured_post["timeout"] = kwargs.get("timeout")
         return MagicMock(status_code=204)
 
-    monkeypatch.setattr("asyncio.to_thread", fake_to_thread)
+    monkeypatch.setattr(svc._session, "post", fake_post)
 
     svc._writer_type = "v2_http"
-    svc._write_url = "http://localhost:8086/api/v2/write"
+    svc._writers["v2_http"] = V2HttpWriter("http://localhost:8086", "db", None, None, svc.log_identity)
     active_config.influxdb.write_timeout = 45.0
 
     await svc.execute_write(b"data")

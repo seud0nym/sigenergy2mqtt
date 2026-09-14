@@ -7,6 +7,7 @@ import requests
 
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.influxdb.service import InfluxService
+from sigenergy2mqtt.influxdb.writers import V1HttpWriter, V2HttpWriter
 
 
 class MockResponse:
@@ -170,7 +171,7 @@ async def testwrite_line_http_fail(influx_config):
 
     # Manually configure writer
     svc._writer_type = "v2_http"
-    svc._write_url = "http://localhost:8086/api/v2/write"
+    svc._writers["v2_http"] = V2HttpWriter("http://localhost:8086", "test_db", None, "tok", svc.log_identity)
 
     # Mock clean session post failure
     with patch.object(svc._session, "post", side_effect=requests.RequestException("write error")), patch("sigenergy2mqtt.influxdb.base.logger.error") as mock_logger_error:
@@ -311,7 +312,7 @@ async def testwrite_line_v2_http_and_v1_http(logger, influx_config):
 
     # v2_http
     svc._writer_type = "v2_http"
-    svc._write_url = "http://v2"
+    svc._writers["v2_http"] = V2HttpWriter("http://localhost:8086", "test_db", None, "tok", svc.log_identity)
     with patch.object(svc._session, "post") as mock_post:
         mock_post.return_value = MockResponse(204)
         await svc.write_line("line2")
@@ -320,7 +321,7 @@ async def testwrite_line_v2_http_and_v1_http(logger, influx_config):
 
     # v1_http
     svc._writer_type = "v1_http"
-    svc._write_url = "http://v1"
+    svc._writers["v1_http"] = V1HttpWriter("https://example.test", "test_db", None, svc.log_identity)
     with patch.object(svc._session, "post") as mock_post:
         mock_post.return_value = MockResponse(204)
         await svc.write_line("line1")

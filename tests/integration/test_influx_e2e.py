@@ -8,6 +8,7 @@ import pytest
 
 from sigenergy2mqtt.config import Config, active_config
 from sigenergy2mqtt.influxdb.hass_history_sync import HassHistorySync
+from sigenergy2mqtt.influxdb.writers import V1HttpWriter, V2HttpWriter
 
 
 @pytest.fixture
@@ -393,8 +394,7 @@ async def test_copy_records_from_homeassistant_uses_v2_first(service, monkeypatc
     active_config.influxdb.password = None
 
     service._writer_type = "v2_http"
-    service._write_url = "http://localhost:8086/api/v2/write"
-    service._write_headers = {"Authorization": "Token mytoken"}
+    service._writers["v2_http"] = V2HttpWriter("http://localhost:8086", "test_db", None, "tok", service.log_identity)
 
     csv_response = """#group,false
 #datatype,string,long
@@ -436,8 +436,7 @@ async def test_copy_records_from_homeassistant_falls_back_to_v1(service, monkeyp
     active_config.influxdb.password = None
 
     service._writer_type = "v1_http"
-    service._write_url = "http://localhost:8086/write"
-    service._write_auth = None
+    service._writers["v1_http"] = V1HttpWriter("https://example.test", "test_db", None, service.log_identity)
 
     v1_result = {
         "results": [
