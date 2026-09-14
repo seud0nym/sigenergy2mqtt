@@ -337,39 +337,17 @@ class InfluxBase(Device):
         config = self.get_config_values()
         test_line = b"state value=1"
 
-        # Try v2 HTTP write endpoint (preferred if token provided)
-        if config["token"] and self._try_v2_write(config["base"], config["bucket"], config["org"], config["token"], test_line):
-            return
-
-        # Bail early if a shutdown signal arrived during the v2 probe.
-        if self._shutdown_event.is_set():
-            return
-
-        # If username is provided, prefer v1 HTTP (InfluxDB 1.x)
-        if config["user"] and self._try_v1_write(config["base"], config["db"], config["auth"], test_line):
-            return
-
-        # Bail early if a shutdown signal arrived during the v1 probe.
-        if self._shutdown_event.is_set():
-            return
-
-        # Try v2 without token (some setups)
-        if not self._writer_type and self._try_v2_write(config["base"], config["bucket"], config["org"], None, test_line):
-            return
-
-        # Bail early if a shutdown signal arrived during the tokenless v2 probe.
-        if self._shutdown_event.is_set():
-            return
-
-        # Final fallback: try v1 HTTP without username (no auth)
-        if not self._writer_type and self._try_v1_write(config["base"], config["db"], config["auth"], test_line):
-            return
-
-        # If we were shut down during the probing sequence, don't raise — just
-        # return silently.  The caller (async_init) will detect the offline
-        # state before deciding whether to surface an error.
-        if self._shutdown_event.is_set():
-            return
+        probes = [
+            (bool(config["token"]), lambda: self._try_v2_write(config["base"], config["bucket"], config["org"], config["token"], test_line)),
+            (bool(config["user"]), lambda: self._try_v1_write(config["base"], config["db"], config["auth"], test_line)),
+            (True, lambda: self._try_v2_write(config["base"], config["bucket"], config["org"], None, test_line)),
+            (True, lambda: self._try_v1_write(config["base"], config["db"], None, test_line)),
+        ]
+        for should_try, probe in probes:
+            if should_try and probe():
+                return
+            if self._shutdown_event.is_set():
+                return
 
         raise RuntimeError(f"{self.log_identity} Initialization failed: could not determine writable endpoint or create database/bucket")
 
