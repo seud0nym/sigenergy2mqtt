@@ -1,6 +1,18 @@
 <!-- git log [since tag]..HEAD --oneline -->
 # Changelog 
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed crash risk in InfluxDB _matches_filter service.py
+
+### Changed
+
+- Enhance escaping in InfluxDB line protocol for tags and fields
+
+---
+
 ## [2026.9.10] - 2026-09-10
 
 ### Fixed

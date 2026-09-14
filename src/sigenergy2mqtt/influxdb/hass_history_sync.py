@@ -201,7 +201,7 @@ class HassHistorySync(InfluxBase):
         """
         try:
             config = self.get_config_values()
-            logger.debug(f"{self.log_identity} detect_homeassistant_db: base={config['base']} db={config['db']} token={'set' if config['token'] else 'unset'} org={config['org']} bucket={config['bucket']}")
+            logger.debug(f"{self.log_identity} get_earliest_timestamp: base={config['base']} db={config['db']} token={'set' if config['token'] else 'unset'} org={config['org']} bucket={config['bucket']}")
 
             # Try v2 API (Flux query)
             if config["token"]:
@@ -459,7 +459,9 @@ class HassHistorySync(InfluxBase):
         """
         try:
             config = self.get_config_values()
-            logger.debug(f"{self.log_identity} detect_homeassistant_db: base={config['base']} db={config['db']} token={'set' if config['token'] else 'unset'} org={config['org']} bucket={config['bucket']}")
+            logger.debug(
+                f"{self.log_identity} copy_records_from_homeassistant: base={config['base']} db={config['db']} token={'set' if config['token'] else 'unset'} org={config['org']} bucket={config['bucket']}"
+            )
 
             # Try v2 API first
             if config["token"]:

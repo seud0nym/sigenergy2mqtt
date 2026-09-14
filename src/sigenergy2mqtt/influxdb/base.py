@@ -480,8 +480,8 @@ class InfluxBase(Device):
         """
 
         def esc(s: str) -> str:
-            """Escape spaces and commas in measurement names, tag keys, and tag values."""
-            return str(s).replace(" ", "\\ ").replace(",", "\\,")
+            """Escape spaces, commas, and equals signs in measurement names, tag keys, and tag values."""
+            return str(s).replace(" ", "\\ ").replace(",", "\\,").replace("=", "\\=")
 
         def fmt_val(v: Any) -> str:
             """Format a field value according to line-protocol type rules."""
@@ -489,7 +489,10 @@ class InfluxBase(Device):
                 return f"{v}i"
             if isinstance(v, float):
                 return f"{v}"
-            return f'"{str(v).replace(chr(34), chr(92) + chr(34))}"'
+            # Backslash must be escaped before quotes, or a trailing backslash
+            # in the source value would swallow the escaped quote that follows it.
+            escaped = str(v).replace(chr(92), chr(92) + chr(92)).replace(chr(34), chr(92) + chr(34))
+            return f'"{escaped}"'
 
         tags_part = ",".join(f"{esc(k)}={esc(v)}" for k, v in tags.items()) if tags else ""
         fields_part = ",".join(f"{esc(k)}={fmt_val(v)}" for k, v in fields.items())

@@ -196,6 +196,25 @@ class TestToLineProtocolExtended:
         line = service.to_line_protocol("m", {}, {"message": 'say "hello"'}, 1000)
         assert 'message="say \\"hello\\""' in line
 
+    def test_tags_with_equals_sign(self, service):
+        """Build line protocol with an equals sign in tag key/value (escaped)."""
+        line = service.to_line_protocol("m", {"a=b": "c=d"}, {"value": 1}, 1000)
+        assert "a\\=b=c\\=d" in line
+
+    def test_string_field_with_backslash(self, service):
+        """Build line protocol with a backslash in string field value (escaped)."""
+        line = service.to_line_protocol("m", {}, {"path": "C:\\temp"}, 1000)
+        assert 'path="C:\\\\temp"' in line
+
+    def test_string_field_with_backslash_and_quote(self, service):
+        """Build line protocol with a trailing backslash immediately before a quote.
+
+        Backslashes must be escaped before quotes, or a trailing backslash in
+        the source value would swallow the escaped quote that follows it.
+        """
+        line = service.to_line_protocol("m", {}, {"message": "end\\"}, 1000)
+        assert 'message="end\\\\"' in line
+
     def test_multiple_mixed_fields(self, service):
         """Build line protocol with multiple fields of different types."""
         line = service.to_line_protocol("m", {}, {"count": 10, "temp": 25.5, "status": "ok"}, 1000)
