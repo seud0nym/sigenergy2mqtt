@@ -584,6 +584,18 @@ class TestInfluxServiceMissingCoverage:
         assert service._matches_filter(sensor, "obj1", "uid1", ["uid1"]) is True
         assert service._matches_filter(sensor, "obj1", "uid1", ["nomatch"]) is False
 
+    def test_matches_filter_none_unique_id(self, service):
+        """unique_id can legitimately be None (getattr(s, "unique_id", None)); this
+        must not raise TypeError inside re.search() — see service.py fix."""
+
+        class DummySensor:
+            pass
+
+        sensor = DummySensor()
+        assert service._matches_filter(sensor, "obj1", None, ["DummySensor"]) is True
+        assert service._matches_filter(sensor, "obj1", None, ["obj1"]) is True
+        assert service._matches_filter(sensor, "obj1", None, ["nomatch"]) is False
+
     @pytest.mark.asyncio
     async def test_keep_running_init_fails(self, service, monkeypatch, caplog):
         async def fake_init():
