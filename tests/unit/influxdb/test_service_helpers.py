@@ -361,9 +361,7 @@ class TestMiscEdgeCases:
     def test_default_writer_attributes_on_init(self, service):
         """Writer attributes default to None when InfluxDB not configured."""
         assert service._writer_type is None
-        assert service._write_url is None
-        assert service._write_headers is None
-        assert service._write_auth is None
+        assert service._writers == {}
 
 
 class TestHassHistorySyncCoverage:

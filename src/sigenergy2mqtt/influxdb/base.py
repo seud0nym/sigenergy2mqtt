@@ -1,5 +1,4 @@
 import asyncio
-import json
 import logging
 import time
 from datetime import datetime
@@ -14,6 +13,7 @@ from sigenergy2mqtt.common import ProtocolVersion, service_health_registry
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.metrics import Metrics
+from sigenergy2mqtt.influxdb.writers import V1HttpWriter, V2HttpWriter, Writer
 
 logger = logging.getLogger(__name__)
 
@@ -134,14 +134,10 @@ class InfluxBase(Device):
         self._last_query_time: float = 0.0
         self._query_lock = asyncio.Lock()
 
-        # Writer state — populated by _init_connection; kept as None so that
-        # unit tests can instantiate without a live InfluxDB server.
+        # Writer selection is populated by _init_connection. Each writer owns
+        # its endpoint-specific connection state.
         self._writer_type: str | None = None
-        self._write_url: str | None = None
-        self._write_headers: dict[str, str] | None = None
-        self._write_auth: tuple[str, str] | None = None
-        self._writer_obj_bucket: str | None = None
-        self._writer_obj_org: str | None = None
+        self._writers: dict[str, Writer] = {}
 
     # ------------------------------------------------------------------
     # Shutdown hook
@@ -183,153 +179,13 @@ class InfluxBase(Device):
     # Connection initialisation helpers
     # ------------------------------------------------------------------
 
-    def _create_v2_bucket(self, base: str, bucket: str, token: str) -> bool:
-        """Create an InfluxDB v2 bucket, using the first available organisation.
-
-        Args:
-            base: Base URL of the InfluxDB server (e.g. ``http://host:8086``).
-            bucket: Name of the bucket to create.
-            token: API token with write access.
-
-        Returns:
-            ``True`` if the bucket was created successfully, ``False`` otherwise.
-        """
-        try:
-            headers_create = {"Authorization": f"Token {token}", "Content-Type": "application/json"}
-            orgs = self._session.get(f"{base}/api/v2/orgs", headers=headers_create, timeout=5)
-            if orgs.status_code == 200:
-                items = orgs.json()
-                org_id = None
-                if isinstance(items, dict) and items.get("orgs"):
-                    lst = items.get("orgs")
-                    if isinstance(lst, list) and lst:
-                        org_id = lst[0].get("id")
-                if org_id:
-                    create_bucket = {"name": bucket, "orgID": org_id}
-                    r2 = self._session.post(
-                        f"{base}/api/v2/buckets",
-                        headers=headers_create,
-                        data=json.dumps(create_bucket),
-                        timeout=5,
-                    )
-                    return r2.status_code in (201, 200)
-        except (ValueError, requests.RequestException, TimeoutError) as e:
-            logger.debug(f"{self.log_identity} v2 bucket creation failed: {e}")
-        return False
-
-    def _try_v2_write(self, base: str, bucket: str, org: str | None, token: str | None, test_line: bytes) -> bool:
-        """Probe the v2 HTTP write endpoint and configure the writer if reachable.
-
-        If the target bucket does not exist and a token is available, an attempt
-        is made to create it before retrying the write.
-
-        Args:
-            base: Base URL of the InfluxDB server.
-            bucket: Target bucket name.
-            org: Organisation name or ID (optional for single-org setups).
-            token: API token; omit for token-less setups.
-            test_line: A minimal valid line-protocol payload used for probing.
-
-        Returns:
-            ``True`` if the endpoint is writable and writer state has been set.
-        """
-        try:
-            # precision=s matches the seconds-precision timestamps emitted by
-            # to_line_protocol; the two must always stay in sync.
-            url_v2 = f"{base}/api/v2/write?bucket={bucket}&precision=s"
-            if org:
-                url_v2 += f"&org={org}"
-            headers = {"Authorization": f"Token {token}"} if token else {}
-
-            r = self._session.post(url_v2, headers=headers or None, data=test_line, timeout=5)
-            if r.status_code in (204, 200):
-                self._writer_type = "v2_http"
-                self._write_url = url_v2
-                self._write_headers = headers or {}
-                logger.info(f"{self.log_identity} Using v2 HTTP write endpoint to {url_v2}")
-                return True
-
-            # If bucket not found and token provided, attempt to create it
-            if r.status_code in (400, 404) and token and self._create_v2_bucket(base, bucket, token):
-                r3 = self._session.post(url_v2, headers=headers or None, data=test_line, timeout=5)
-                if r3.status_code in (204, 200):
-                    self._writer_type = "v2_http"
-                    self._write_url = url_v2
-                    self._write_headers = headers or {}
-                    logger.info(f"{self.log_identity} Created v2 bucket and will use v2 HTTP write to {url_v2}")
-                    return True
-        except (requests.RequestException, TimeoutError) as e:
-            logger.debug(f"{self.log_identity} v2 HTTP detection failed: {e}")
-
-        return False
-
-    def _create_v1_database(self, base: str, db: str, auth: tuple | None) -> bool:
-        """Create an InfluxDB v1 database via the query endpoint.
-
-        Args:
-            base: Base URL of the InfluxDB server.
-            db: Name of the database to create.
-            auth: Optional ``(username, password)`` tuple.
-
-        Returns:
-            ``True`` if the database was created successfully, ``False`` otherwise.
-        """
-        try:
-            create_url = f"{base}/query"
-            q = {"q": f"CREATE DATABASE {db}"}
-            r2 = self._session.post(create_url, params=q, auth=auth, timeout=5)
-            return r2.status_code == 200
-        except (requests.RequestException, TimeoutError) as e:
-            logger.debug(f"{self.log_identity} v1 database creation failed: {e}")
-        return False
-
-    def _try_v1_write(self, base: str, db: str, auth: tuple | None, test_line: bytes) -> bool:
-        """Probe the v1 HTTP write endpoint and configure the writer if reachable.
-
-        If the target database does not exist, an attempt is made to create it
-        before retrying the write.
-
-        Args:
-            base: Base URL of the InfluxDB server.
-            db: Target database name.
-            auth: Optional ``(username, password)`` tuple.
-            test_line: A minimal valid line-protocol payload used for probing.
-
-        Returns:
-            ``True`` if the endpoint is writable and writer state has been set.
-        """
-        try:
-            url_v1 = f"{base}/write"
-            # precision=s keeps v1 consistent with to_line_protocol's seconds output.
-            r = self._session.post(url_v1, params={"db": db, "precision": "s"}, data=test_line, auth=auth, timeout=5)
-            if r.status_code in (204, 200):
-                self._writer_type = "v1_http"
-                self._write_url = url_v1
-                self._write_auth = auth
-                logger.info(f"{self.log_identity} Using v1 HTTP write endpoint to {url_v1}")
-                return True
-
-            # Attempt to create database and retry
-            if (r.status_code in (404, 400) or (r.status_code >= 400 and r.content and b"database" in r.content.lower())) and self._create_v1_database(base, db, auth):
-                r3 = self._session.post(url_v1, params={"db": db, "precision": "s"}, data=test_line, auth=auth, timeout=5)
-                if r3.status_code in (204, 200):
-                    self._writer_type = "v1_http"
-                    self._write_url = url_v1
-                    self._write_auth = auth
-                    logger.info(f"{self.log_identity} Created v1 database and will use v1 HTTP write to {url_v1}")
-                    return True
-        except (requests.RequestException, TimeoutError) as e:
-            logger.debug(f"{self.log_identity} v1 HTTP detection failed: {e}")
-
-        return False
-
     def _init_connection(self) -> None:
         """Determine the InfluxDB API version and writable endpoint.
 
         Probes the server in preference order: v2 with token → v1 with
         credentials → v2 without token → v1 without auth.  The first
-        successful probe sets :attr:`_writer_type`, :attr:`_write_url`, and
-        related writer attributes.
+        successful probe registers the configured writer and sets
+        :attr:`_writer_type`.
 
         Raises:
             RuntimeError: If no writable endpoint could be found or created.
@@ -337,14 +193,16 @@ class InfluxBase(Device):
         config = self.get_config_values()
         test_line = b"state value=1"
 
-        probes = [
-            (bool(config["token"]), lambda: self._try_v2_write(config["base"], config["bucket"], config["org"], config["token"], test_line)),
-            (bool(config["user"]), lambda: self._try_v1_write(config["base"], config["db"], config["auth"], test_line)),
-            (True, lambda: self._try_v2_write(config["base"], config["bucket"], config["org"], None, test_line)),
-            (True, lambda: self._try_v1_write(config["base"], config["db"], None, test_line)),
+        candidates: list[tuple[bool, Writer]] = [
+            (bool(config["token"]), V2HttpWriter(config["base"], config["bucket"], config["org"], config["token"], self.log_identity)),
+            (bool(config["user"]), V1HttpWriter(config["base"], config["db"], config["auth"], self.log_identity)),
+            (True, V2HttpWriter(config["base"], config["bucket"], config["org"], None, self.log_identity)),
+            (True, V1HttpWriter(config["base"], config["db"], None, self.log_identity)),
         ]
-        for should_try, probe in probes:
-            if should_try and probe():
+        for should_try, writer in candidates:
+            if should_try and writer.probe(self._session, test_line):
+                self._writers[writer.writer_type] = writer
+                self._writer_type = writer.writer_type
                 return
             if self._shutdown_event.is_set():
                 return
@@ -384,11 +242,7 @@ class InfluxBase(Device):
         """
         self._session = source._session
         self._writer_type = source._writer_type
-        self._write_url = source._write_url
-        self._write_headers = source._write_headers
-        self._write_auth = source._write_auth
-        self._writer_obj_bucket = source._writer_obj_bucket
-        self._writer_obj_org = source._writer_obj_org
+        self._writers = source._writers.copy()
 
     # ------------------------------------------------------------------
     # Configuration
@@ -509,7 +363,7 @@ class InfluxBase(Device):
             else:
                 await Metrics.influxdb_write_error()
         except (ValueError, TypeError, RuntimeError) as e:
-            logger.error(f"InfluxDB batch write failed: {e} (type={self._writer_type} url={self._write_url} batch_size={batch_size})")
+            logger.error(f"InfluxDB batch write failed: {e} (type={self._writer_type} batch_size={batch_size})")
             await Metrics.influxdb_write_error()
 
     async def write_line(self, line: str) -> None:
@@ -550,42 +404,16 @@ class InfluxBase(Device):
         if not self.online:
             return False
 
+        writer = self._writers.get(self._writer_type or "")
+        if writer is None:
+            return False
         try:
-            if self._writer_type == "v2_http" and self._write_url:
-                r = await asyncio.to_thread(
-                    self._session.post,
-                    self._write_url,
-                    headers=self._write_headers or {},
-                    data=data,
-                    timeout=active_config.influxdb.write_timeout,
-                )
-                if r.status_code in (204, 200):
-                    service_health_registry.set_health(self.service_health_key, True)
-                    return True
-                logger.error(f"InfluxDB v2 HTTP write failed: {r.status_code=} {r.text=} (url={self._write_url})")
-                service_health_registry.set_health(self.service_health_key, False)
-                return False
-
-            elif self._writer_type == "v1_http" and self._write_url:
-                r = await asyncio.to_thread(
-                    self._session.post,
-                    self._write_url,
-                    params={"db": active_config.influxdb.database, "precision": "s"},
-                    data=data,
-                    auth=self._write_auth,
-                    timeout=active_config.influxdb.write_timeout,
-                )
-                if r.status_code in (204, 200):
-                    service_health_registry.set_health(self.service_health_key, True)
-                    return True
-                logger.error(f"InfluxDB v1 HTTP write failed: {r.status_code=} {r.text=} (url={self._write_url})")
-                service_health_registry.set_health(self.service_health_key, False)
-                return False
-
+            success = await asyncio.to_thread(writer.write, self._session, data)
         except (OSError, requests.RequestException, TimeoutError) as e:
-            logger.error(f"InfluxDB write failed: {e} (type={self._writer_type} url={self._write_url})")
-            service_health_registry.set_health(self.service_health_key, False)
-        return False
+            logger.error(f"InfluxDB write failed: {e} (type={self._writer_type})")
+            success = False
+        service_health_registry.set_health(self.service_health_key, success)
+        return success
 
     # ------------------------------------------------------------------
     # Queries

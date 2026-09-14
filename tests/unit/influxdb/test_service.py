@@ -7,6 +7,7 @@ from urllib3.exceptions import MaxRetryError
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.influxdb.base import _ShutdownAwareRetry
 from sigenergy2mqtt.influxdb.service import InfluxService
+from sigenergy2mqtt.influxdb.writers import V1HttpWriter, V2HttpWriter
 
 
 def _bring_online(svc: InfluxService) -> asyncio.Future:
@@ -87,7 +88,7 @@ async def test_influx_org_propagation():
         args, kwargs = mock_post.call_args
         assert "org=myorg" in args[0]
         assert svc._writer_type == "v2_http"
-        assert "mybucket" in svc._write_url
+        assert "mybucket" in svc._writers["v2_http"].url
 
 
 @pytest.mark.asyncio
@@ -131,18 +132,17 @@ def test_init_connection_falls_back_to_tokenless_v1():
     }
     test_line = b"state value=1"
 
-    with (
-        patch.object(svc, "get_config_values", return_value=config),
-        patch.object(svc, "_try_v2_write", return_value=False) as mock_v2,
-        patch.object(svc, "_try_v1_write", return_value=True) as mock_v1,
-    ):
+    with patch.object(svc, "get_config_values", return_value=config), patch.object(V2HttpWriter, "probe", return_value=False) as mock_v2, patch.object(
+        V1HttpWriter, "probe", return_value=True
+    ) as mock_v1:
         svc._init_connection()  # should not raise
 
     # Neither the token'd v2 attempt nor the user'd v1 attempt should fire (both
     # config values are falsy); only the tokenless v2 probe and the final
     # tokenless v1 fallback should be attempted.
-    mock_v2.assert_called_once_with(config["base"], config["bucket"], config["org"], None, test_line)
-    mock_v1.assert_called_once_with(config["base"], config["db"], config["auth"], test_line)
+    mock_v2.assert_called_once_with(svc._session, test_line)
+    mock_v1.assert_called_once_with(svc._session, test_line)
+    assert isinstance(svc._writers["v1_http"], V1HttpWriter)
 
 
 @pytest.mark.asyncio

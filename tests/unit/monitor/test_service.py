@@ -8,7 +8,7 @@ import requests
 
 from sigenergy2mqtt.common import service_health_registry
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.influxdb.base import InfluxBase
+from sigenergy2mqtt.influxdb.base import InfluxBase, V1HttpWriter
 from sigenergy2mqtt.modbus import ModbusClientFactory
 from sigenergy2mqtt.monitor.service import MonitorService
 from sigenergy2mqtt.pvoutput.service import Service as PvOutputService
@@ -268,8 +268,7 @@ async def test_influxdb_write_failure_marks_health_unhealthy(monkeypatch):
     loop = asyncio.get_running_loop()
     service.online = loop.create_future()
     service._writer_type = "v1_http"
-    service._write_url = "https://example.test/write"
-    service._write_auth = None
+    service._writers["v1_http"] = V1HttpWriter("https://example.test", "test_db", None, service.log_identity)
 
     class FakeResponse:
         status_code = 500
@@ -298,9 +297,9 @@ async def test_multi_plant_influxdb_health_isolation(monkeypatch):
     plant1_service.online = loop.create_future()
 
     plant0_service._writer_type = "v1_http"
-    plant0_service._write_url = "https://example.test/write"
+    plant0_service._writers["v1_http"] = V1HttpWriter("https://example.test", "test_db", None, plant0_service.log_identity)
     plant1_service._writer_type = "v1_http"
-    plant1_service._write_url = "https://example.test/write"
+    plant1_service._writers["v1_http"] = V1HttpWriter("https://example.test", "test_db", None, plant1_service.log_identity)
 
     # Plant 0 fails write
     monkeypatch.setattr(plant0_service._session, "post", lambda *args, **kwargs: MagicMock(status_code=500, text="error"))
