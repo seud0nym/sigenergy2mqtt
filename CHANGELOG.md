@@ -10,6 +10,7 @@
 ### Changed
 
 - Enhance escaping in InfluxDB line protocol for tags and fields
+- Refactored InfluxDB writer logic to prepare for v3 implementation
 
 ---
 
