@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import time
+from collections.abc import Awaitable, Callable
 from typing import Any, cast
 
 import requests
@@ -247,6 +248,38 @@ class HassHistorySync(InfluxBase):
     # Record copying
     # ------------------------------------------------------------------
 
+    async def _copy_records_paginated(
+        self,
+        measurement: str,
+        tags: dict[str, str],
+        before_timestamp: int | None,
+        fetch_page: Callable[[int | None, int], Awaitable[tuple[list[str], int | None]]],
+    ) -> int:
+        """Copy paginated records using a version-specific page fetcher."""
+        records_copied = 0
+        chunk_size = active_config.influxdb.sync_chunk_size
+        current_before = before_timestamp
+
+        while self.online:
+            lines, earliest_timestamp = await fetch_page(current_before, chunk_size)
+            chunk_records = len(lines)
+
+            if chunk_records == 0:
+                break
+
+            for line in lines:
+                await self.write_line(line)
+
+            records_copied += chunk_records
+            logger.debug(f"{self.log_identity} Copied {chunk_records} records in chunk (total: {records_copied}) for {tags.get('entity_id', 'unknown')} [{measurement}]")
+
+            if earliest_timestamp is None or chunk_records < chunk_size:
+                break
+
+            current_before = earliest_timestamp
+
+        return records_copied
+
     async def copy_records_v2(
         self,
         config: InfluxConfigValues,
@@ -270,11 +303,8 @@ class HassHistorySync(InfluxBase):
         Returns:
             Total number of line-protocol records written.
         """
-        records_copied = 0
-        chunk_size = active_config.influxdb.sync_chunk_size
-        current_before = before_timestamp
 
-        while self.online:
+        async def fetch_page(current_before: int | None, chunk_size: int) -> tuple[list[str], int | None]:
             # Build time range: always anchor the end; always anchor the start
             # at Unix epoch so Flux doesn't scan unbounded history on each page.
             if current_before:
@@ -289,12 +319,12 @@ class HassHistorySync(InfluxBase):
 
             success, response_text = await self.query_v2(config["base"], config["org"], cast(str, config["token"]), flux_query)
             if not success or not response_text:
-                break
+                return [], None
 
             # Parse CSV response and convert to line protocol.
             lines = response_text.strip().split("\n")
             header_indices: dict[str, int] = {}
-            chunk_records = 0
+            page_lines: list[str] = []
             earliest_timestamp: int | None = None
 
             for line in lines:
@@ -335,18 +365,11 @@ class HassHistorySync(InfluxBase):
                     fields["value_str"] = str(field_value)
 
                 line_protocol = self.to_line_protocol(measurement, tags, fields, timestamp)
-                await self.write_line(line_protocol)
-                chunk_records += 1
+                page_lines.append(line_protocol)
 
-            records_copied += chunk_records
-            logger.debug(f"{self.log_identity} Copied {chunk_records} records in chunk (total: {records_copied}) for {tags.get('entity_id', 'unknown')} [{measurement}]")
+            return page_lines, earliest_timestamp
 
-            if earliest_timestamp is None or chunk_records < chunk_size:
-                break
-
-            current_before = earliest_timestamp
-
-        return records_copied
+        return await self._copy_records_paginated(measurement, tags, before_timestamp, fetch_page)
 
     async def copy_records_v1(
         self,
@@ -370,12 +393,9 @@ class HassHistorySync(InfluxBase):
         Returns:
             Total number of line-protocol records written.
         """
-        records_copied = 0
         v1_filter = self.build_v1_tag_filter(tags)
-        chunk_size = active_config.influxdb.sync_chunk_size
-        current_before = before_timestamp
 
-        while self.online:
+        async def fetch_page(current_before: int | None, chunk_size: int) -> tuple[list[str], int | None]:
             where_parts: list[str] = []
             if v1_filter:
                 where_parts.append(v1_filter)
@@ -387,9 +407,9 @@ class HassHistorySync(InfluxBase):
 
             success, result = await self.query_v1(config["base"], "homeassistant", config["auth"], query, epoch="s")
             if not success or not result:
-                break
+                return [], None
 
-            chunk_records = 0
+            page_lines: list[str] = []
             last_timestamp: int | None = None
 
             if result.get("results"):
@@ -421,21 +441,11 @@ class HassHistorySync(InfluxBase):
                             continue
 
                         line_protocol = self.to_line_protocol(measurement, tags, fields, timestamp)
-                        await self.write_line(line_protocol)
-                        chunk_records += 1
+                        page_lines.append(line_protocol)
 
-            if chunk_records == 0:
-                break
+            return page_lines, last_timestamp
 
-            records_copied += chunk_records
-            logger.debug(f"{self.log_identity} Copied {chunk_records} records in chunk (total: {records_copied}) for {tags.get('entity_id', 'unknown')} [{measurement}]")
-
-            if last_timestamp is None or chunk_records < chunk_size:
-                break
-
-            current_before = last_timestamp
-
-        return records_copied
+        return await self._copy_records_paginated(measurement, tags, before_timestamp, fetch_page)
 
     async def copy_records_from_homeassistant(
         self,
