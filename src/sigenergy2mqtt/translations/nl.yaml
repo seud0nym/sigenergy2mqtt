@@ -1318,6 +1318,7 @@ class:
       "1": L1/L2/L3
       "2": L1/L2/L3/N
       "3": L1/L2/N
+      '4': L1/L2
   PACKBCUCount:
     attributes:
       source: Modbus-register {address}
