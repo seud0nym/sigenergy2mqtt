@@ -146,6 +146,42 @@ class TestOutputType:
             assert result == "L1/L2/N"
 
     @pytest.mark.asyncio
+    async def test_output_type_valid_index_4(self, mock_config):
+        """Test get_state with valid index 4 (L1/L2)."""
+        sensor = OutputType(plant_index=0, device_address=1)
+
+        with patch.object(sensor.__class__.__bases__[0], "get_state", new_callable=AsyncMock) as mock_parent_get_state:
+            mock_parent_get_state.return_value = 4
+
+            result = await sensor.get_state(raw=False)
+            assert result == "L1/L2"
+
+    def test_output_type_sanity_check_index_4(self, mock_config):
+        """Test that raw value 4 passes sanity check validation."""
+        sensor = OutputType(plant_index=0, device_address=1)
+        assert sensor.sanity_check.max_raw == 4
+        assert sensor.sanity_check.is_sane(4, []) is True
+
+    @pytest.mark.parametrize(
+        "value,expected_phases",
+        [
+            (0, 1),
+            ("L/N", 1),
+            (1, 3),
+            (2, 3),
+            ("L1/L2/L3", 3),
+            ("L1/L2/L3/N", 3),
+            (3, 2),
+            ("L1/L2/N", 2),
+            (4, 2),
+            ("L1/L2", 2),
+        ],
+    )
+    def test_output_type_to_phases(self, value, expected_phases):
+        """Test OutputType.to_phases maps raw and processed values correctly."""
+        assert OutputType.to_phases(value) == expected_phases
+
+    @pytest.mark.asyncio
     async def test_output_type_invalid_index_negative(self, mock_config):
         """Test get_state with invalid negative index."""
         sensor = OutputType(plant_index=0, device_address=1)
