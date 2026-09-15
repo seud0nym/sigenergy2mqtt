@@ -1,12 +1,32 @@
 """Shared test doubles and fixtures for the InfluxDB test suites."""
 
+import asyncio
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from sigenergy2mqtt.config import active_config
+from sigenergy2mqtt.influxdb.base import InfluxBase
 from sigenergy2mqtt.influxdb.hass_history_sync import HassHistorySync
 from sigenergy2mqtt.influxdb.service import InfluxService
+
+
+def _bring_online(svc: InfluxBase) -> asyncio.Future:
+    """Bring a service online via the real ``online`` setter (not the ``_online`` backdoor).
+
+    Exercises the same code path production code uses, so that the setter's
+    bookkeeping (clearing the shutdown event, etc.) and the corresponding
+    offline-transition logic (session close, task cancellation) are actually
+    tested rather than bypassed.
+    """
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+    future = loop.create_future()
+    svc.online = future
+    return future
 
 
 class FakeResponse:

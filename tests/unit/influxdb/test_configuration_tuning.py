@@ -6,6 +6,7 @@ from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.config.settings import InfluxDbConfig
 from sigenergy2mqtt.influxdb.service import InfluxService
 from sigenergy2mqtt.influxdb.writers import V2HttpWriter
+from tests.unit.influxdb.conftest import _bring_online
 
 
 def test_influxdb_config_tuning_defaults():
@@ -66,7 +67,7 @@ async def test_service_uses_config_values(monkeypatch):
 
     logger = MagicMock()
     svc = InfluxService(plant_index=0)
-    svc._online = True
+    _bring_online(svc)
 
     # Check attributes set in init
     assert svc._batch_size == 50

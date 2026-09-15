@@ -8,7 +8,7 @@ import requests
 
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.influxdb.writers import V1HttpWriter, V2HttpWriter
-from tests.unit.influxdb.conftest import FakeResponse
+from tests.unit.influxdb.conftest import FakeResponse, _bring_online
 
 
 @pytest.fixture
@@ -22,7 +22,7 @@ def service(disabled_influx_service):
     svc = disabled_influx_service
     svc._writer_type = "v2_http"
     svc._writers["v2_http"] = V2HttpWriter("http://localhost:8086", "test_db", None, "tok", svc.log_identity)
-    svc._online = True
+    _bring_online(svc)
     return svc
 
 
@@ -32,7 +32,7 @@ def hass_sync(disabled_hass_history_sync):
     svc = disabled_hass_history_sync
     svc._writer_type = "v2_http"
     svc._writers["v2_http"] = V2HttpWriter("http://localhost:8086", "test_db", None, "tok", svc.log_identity)
-    svc._online = True
+    _bring_online(svc)
     return svc
 
 
@@ -242,7 +242,7 @@ class TestInfluxChunking:
             original_write = hass_sync.write_line
 
             async def mock_write(*args):
-                hass_sync._online = False
+                hass_sync.online = False
                 await original_write(*args)
 
             hass_sync.write_line = mock_write

@@ -8,7 +8,7 @@ import requests
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.influxdb.service import InfluxService
 from sigenergy2mqtt.influxdb.writers import V1HttpWriter, V2HttpWriter
-from tests.unit.influxdb.conftest import FakeResponse
+from tests.unit.influxdb.conftest import FakeResponse, _bring_online
 
 
 @pytest.fixture
@@ -158,7 +158,7 @@ async def testwrite_line_http_fail(influx_config):
     # Disable init so we can manually configure the writer for the test
     influx_config.enabled = False
     svc = InfluxService(plant_index=0)
-    svc._online = True  # Enable for write test
+    _bring_online(svc)  # Enable for write test
 
     # Manually configure writer
     svc._writer_type = "v2_http"
@@ -299,7 +299,7 @@ def test_subscribe_edge_cases(logger):
 async def testwrite_line_v2_http_and_v1_http(logger, influx_config):
     influx_config.enabled = False  # Disable init
     svc = InfluxService(plant_index=0)
-    svc._online = True
+    _bring_online(svc)
 
     # v2_http
     svc._writer_type = "v2_http"

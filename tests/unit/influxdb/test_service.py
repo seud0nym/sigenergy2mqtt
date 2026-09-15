@@ -8,19 +8,7 @@ from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.influxdb.base import _ShutdownAwareRetry
 from sigenergy2mqtt.influxdb.service import InfluxService
 from sigenergy2mqtt.influxdb.writers import V1HttpWriter, V2HttpWriter
-
-
-def _bring_online(svc: InfluxService) -> asyncio.Future:
-    """Bring a service online via the real ``online`` setter (not the ``_online`` backdoor).
-
-    Exercises the same code path production code uses, so that the setter's
-    bookkeeping (clearing the shutdown event, etc.) and the corresponding
-    offline-transition logic (session close, task cancellation) are actually
-    tested rather than bypassed.
-    """
-    future = asyncio.get_running_loop().create_future()
-    svc.online = future
-    return future
+from tests.unit.influxdb.conftest import _bring_online
 
 
 class DummyMqtt:

@@ -10,10 +10,9 @@ from sigenergy2mqtt.common import service_health_registry
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.influxdb.base import InfluxBase
 from sigenergy2mqtt.influxdb.writers import V1HttpWriter, V2HttpWriter
+from tests.unit.influxdb.conftest import _bring_online
 
-
-def _online(service: InfluxBase) -> None:
-    service.online = asyncio.get_running_loop().create_future()
+_online = _bring_online
 
 
 @pytest.mark.parametrize("status", [200, 204])
