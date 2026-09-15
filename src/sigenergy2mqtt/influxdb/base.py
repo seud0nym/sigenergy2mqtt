@@ -12,8 +12,8 @@ from urllib3.util.retry import Retry
 from sigenergy2mqtt.common import ProtocolVersion, service_health_registry
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import Device
-from sigenergy2mqtt.metrics import Metrics
 from sigenergy2mqtt.influxdb.writers import V1HttpWriter, V2HttpWriter, Writer
+from sigenergy2mqtt.metrics import Metrics
 
 logger = logging.getLogger(__name__)
 
@@ -311,8 +311,12 @@ class InfluxBase(Device):
             A single line-protocol string ready to be written to InfluxDB.
         """
 
-        def esc(s: str) -> str:
-            """Escape spaces, commas, and equals signs in measurement names, tag keys, and tag values."""
+        def esc_measurement(s: str) -> str:
+            """Escape spaces and commas in measurement names."""
+            return str(s).replace(" ", "\\ ").replace(",", "\\,")
+
+        def esc_key(s: str) -> str:
+            """Escape spaces, commas, and equals signs in tag keys, tag values, and field keys."""
             return str(s).replace(" ", "\\ ").replace(",", "\\,").replace("=", "\\=")
 
         def fmt_val(v: Any) -> str:
@@ -326,12 +330,12 @@ class InfluxBase(Device):
             escaped = str(v).replace(chr(92), chr(92) + chr(92)).replace(chr(34), chr(92) + chr(34))
             return f'"{escaped}"'
 
-        tags_part = ",".join(f"{esc(k)}={esc(v)}" for k, v in tags.items()) if tags else ""
-        fields_part = ",".join(f"{esc(k)}={fmt_val(v)}" for k, v in fields.items())
+        tags_part = ",".join(f"{esc_key(k)}={esc_key(v)}" for k, v in tags.items()) if tags else ""
+        fields_part = ",".join(f"{esc_key(k)}={fmt_val(v)}" for k, v in fields.items())
 
         # Emit seconds — must stay consistent with precision=s on both write URLs.
         ts_s = int(timestamp)
-        return f"{esc(measurement)}{',' + tags_part if tags_part else ''} {fields_part} {ts_s}"
+        return f"{esc_measurement(measurement)}{',' + tags_part if tags_part else ''} {fields_part} {ts_s}"
 
     # ------------------------------------------------------------------
     # Buffered writes
