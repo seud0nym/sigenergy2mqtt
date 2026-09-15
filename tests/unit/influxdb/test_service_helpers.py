@@ -17,24 +17,6 @@ def logger():
     return logging.getLogger("test_influx_extended")
 
 
-@pytest.fixture
-def service(logger):
-    """Create InfluxService with disabled init for isolated testing."""
-    mock_config = MagicMock()
-    # Set defaults required by __init__
-    mock_config.enabled = False
-    mock_config.max_retries = 3
-    mock_config.pool_connections = 100
-    mock_config.pool_maxsize = 100
-    mock_config.batch_size = 100
-    mock_config.flush_interval = 1.0
-    mock_config.query_interval = 0.1
-    mock_config.sync_chunk_size = 100
-    mock_config.max_sync_workers = 5
-
-    with patch.object(active_config, "influxdb", mock_config):
-        svc = InfluxService(plant_index=0)
-        yield svc
 
 
 # =============================================================================
@@ -169,6 +151,17 @@ class TestToLineProtocolExtended:
         line = service.to_line_protocol("meas,urement", {"tag": "val"}, {"value": 1}, 1000)
         assert "meas\\,urement" in line
 
+    def test_measurement_with_equals(self, service):
+        """Build line protocol with equals in measurement name (not escaped)."""
+        line = service.to_line_protocol("power=ac", {"tag": "val"}, {"value": 1}, 1000)
+        assert line.startswith("power=ac,tag=val ")
+        assert "power\\=ac" not in line
+
+    def test_tags_and_fields_with_equals(self, service):
+        """Build line protocol with equals signs in tag/field keys and tag values (escaped)."""
+        line = service.to_line_protocol("power=ac", {"tag=key": "tag=val"}, {"field=key": 1}, 1000)
+        assert line == "power=ac,tag\\=key=tag\\=val field\\=key=1i 1000"
+
     def test_tags_with_spaces_and_commas(self, service):
         """Build line protocol with special chars in tag keys/values."""
         line = service.to_line_protocol("m", {"tag key": "tag,value"}, {"value": 1}, 1000)
@@ -195,6 +188,25 @@ class TestToLineProtocolExtended:
         """Build line protocol with quotes in string field value."""
         line = service.to_line_protocol("m", {}, {"message": 'say "hello"'}, 1000)
         assert 'message="say \\"hello\\""' in line
+
+    def test_tags_with_equals_sign(self, service):
+        """Build line protocol with an equals sign in tag key/value (escaped)."""
+        line = service.to_line_protocol("m", {"a=b": "c=d"}, {"value": 1}, 1000)
+        assert "a\\=b=c\\=d" in line
+
+    def test_string_field_with_backslash(self, service):
+        """Build line protocol with a backslash in string field value (escaped)."""
+        line = service.to_line_protocol("m", {}, {"path": "C:\\temp"}, 1000)
+        assert 'path="C:\\\\temp"' in line
+
+    def test_string_field_with_backslash_and_quote(self, service):
+        """Build line protocol with a trailing backslash immediately before a quote.
+
+        Backslashes must be escaped before quotes, or a trailing backslash in
+        the source value would swallow the escaped quote that follows it.
+        """
+        line = service.to_line_protocol("m", {}, {"message": "end\\"}, 1000)
+        assert 'message="end\\\\"' in line
 
     def test_multiple_mixed_fields(self, service):
         """Build line protocol with multiple fields of different types."""
@@ -342,33 +354,13 @@ class TestMiscEdgeCases:
     def test_default_writer_attributes_on_init(self, service):
         """Writer attributes default to None when InfluxDB not configured."""
         assert service._writer_type is None
-        assert service._write_url is None
-        assert service._write_headers is None
-        assert service._write_auth is None
+        assert service._writers == {}
 
 
 class TestHassHistorySyncCoverage:
-    def _make_hass_sync(self, logger):
-        mock_config = MagicMock()
-        mock_config.enabled = False
-        mock_config.max_retries = 3
-        mock_config.pool_connections = 10
-        mock_config.pool_maxsize = 10
-        mock_config.batch_size = 100
-        mock_config.flush_interval = 1.0
-        mock_config.query_interval = 0.1
-        mock_config.default_measurement = "state"
-        mock_config.max_sync_workers = 5
-        mock_config.sync_chunk_size = 100
-
-        # We set it directly on the active_config proxy.
-        # It will be reset by the next reload() or next test that mocks it.
-        active_config.influxdb = mock_config
-        return HassHistorySync(plant_index=0)
-
     @pytest.mark.asyncio
-    async def test_detect_homeassistant_db_v2_bucket_found(self, logger):
-        hass_sync = self._make_hass_sync(logger)
+    async def test_detect_homeassistant_db_v2_bucket_found(self, disabled_hass_history_sync):
+        hass_sync = disabled_hass_history_sync
         hass_sync.get_config_values = MagicMock(return_value={"base": "http://localhost:8086", "db": "sig", "auth": None, "token": "tok", "org": "org", "bucket": "sig"})
 
         with patch.object(hass_sync._session, "get") as mock_get, patch.object(hass_sync, "query_v1") as mock_q1:
@@ -381,8 +373,8 @@ class TestHassHistorySyncCoverage:
             mock_q1.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_detect_homeassistant_db_v1_detects_homeassistant_without_db_param(self, logger):
-        hass_sync = self._make_hass_sync(logger)
+    async def test_detect_homeassistant_db_v1_detects_homeassistant_without_db_param(self, disabled_hass_history_sync):
+        hass_sync = disabled_hass_history_sync
         hass_sync.get_config_values = MagicMock(return_value={"base": "http://localhost:8086", "db": "sig", "auth": ("u", "p"), "token": None, "org": None, "bucket": "sig"})
 
         with patch.object(hass_sync._session, "get") as mock_get:
@@ -397,8 +389,8 @@ class TestHassHistorySyncCoverage:
             assert kwargs["params"] == {"q": "SHOW DATABASES"}
 
     @pytest.mark.asyncio
-    async def test_detect_homeassistant_db_v1_falls_back_to_direct_probe_when_show_databases_unavailable(self, logger):
-        hass_sync = self._make_hass_sync(logger)
+    async def test_detect_homeassistant_db_v1_falls_back_to_direct_probe_when_show_databases_unavailable(self, disabled_hass_history_sync):
+        hass_sync = disabled_hass_history_sync
         hass_sync.get_config_values = MagicMock(return_value={"base": "http://localhost:8086", "db": "sig", "auth": ("u", "p"), "token": None, "org": None, "bucket": "sig"})
 
         with patch.object(hass_sync._session, "get") as mock_get, patch.object(hass_sync, "query_v1") as mock_q1:
@@ -421,8 +413,8 @@ class TestHassHistorySyncCoverage:
             assert found is True
 
     @pytest.mark.asyncio
-    async def test_detect_homeassistant_db_v1_direct_probe_ignores_non_measurements_series(self, logger):
-        hass_sync = self._make_hass_sync(logger)
+    async def test_detect_homeassistant_db_v1_direct_probe_ignores_non_measurements_series(self, disabled_hass_history_sync):
+        hass_sync = disabled_hass_history_sync
         hass_sync.get_config_values = MagicMock(return_value={"base": "http://localhost:8086", "db": "sig", "auth": ("u", "p"), "token": None, "org": None, "bucket": "sig"})
 
         with patch.object(hass_sync._session, "get") as mock_get, patch.object(hass_sync, "query_v1") as mock_q1:
@@ -445,8 +437,8 @@ class TestHassHistorySyncCoverage:
             assert found is False
 
     @pytest.mark.asyncio
-    async def test_get_earliest_timestamp_v1_path_without_token(self, logger):
-        hass_sync = self._make_hass_sync(logger)
+    async def test_get_earliest_timestamp_v1_path_without_token(self, disabled_hass_history_sync):
+        hass_sync = disabled_hass_history_sync
         hass_sync.get_config_values = MagicMock(return_value={"base": "http://localhost:8086", "db": "sig", "auth": ("u", "p"), "token": None, "org": None, "bucket": "sig"})
         result = {"results": [{"series": [{"columns": ["time", "value"], "values": [["2024-01-01T00:00:11Z", 1.0]]}]}]}
 
@@ -460,8 +452,8 @@ class TestHassHistorySyncCoverage:
         assert timestamp == 1704067211
 
     @pytest.mark.asyncio
-    async def test_copy_records_from_homeassistant_falls_back_to_v1_when_v2_has_no_rows(self, logger):
-        hass_sync = self._make_hass_sync(logger)
+    async def test_copy_records_from_homeassistant_falls_back_to_v1_when_v2_has_no_rows(self, disabled_hass_history_sync):
+        hass_sync = disabled_hass_history_sync
         hass_sync.get_config_values = MagicMock(return_value={"base": "http://localhost:8086", "db": "sig", "auth": ("u", "p"), "token": "tok", "org": "org", "bucket": "sig"})
 
         async def fake_v2(*args, **kwargs):
@@ -478,17 +470,17 @@ class TestHassHistorySyncCoverage:
         assert copied == 4
 
     @pytest.mark.asyncio
-    async def test_sync_from_homeassistant_no_bucket(self, logger):
+    async def test_sync_from_homeassistant_no_bucket(self, disabled_hass_history_sync):
         # Hit 284-360 early return
-        hass_sync = self._make_hass_sync(logger)
+        hass_sync = disabled_hass_history_sync
         with patch.object(hass_sync, "detect_homeassistant_db", return_value=False):
             res = await hass_sync.sync_from_homeassistant({})
             assert res == {}
 
     @pytest.mark.asyncio
-    async def test_get_history_page_success_v1(self, logger):
+    async def test_get_history_page_success_v1(self, disabled_hass_history_sync):
         # Hit 384-449 (copy_records_v1 body)
-        hass_sync = self._make_hass_sync(logger)
+        hass_sync = disabled_hass_history_sync
         hass_sync.get_config_values = MagicMock(return_value={"base": "b", "db": "d", "auth": None})
         active_config.influxdb.sync_chunk_size = 100
 
@@ -504,9 +496,9 @@ class TestHassHistorySyncCoverage:
             assert res == 1
 
     @pytest.mark.asyncio
-    async def test_query_v1_post_success(self, logger):
+    async def test_query_v1_post_success(self, disabled_hass_history_sync):
         # query_v1_internal actually uses GET (see base.py:732)
-        hass_sync = self._make_hass_sync(logger)
+        hass_sync = disabled_hass_history_sync
         fut = asyncio.Future()
         fut.set_result(True)
         hass_sync.online = fut
@@ -518,9 +510,9 @@ class TestHassHistorySyncCoverage:
             assert res == {"results": []}
 
     @pytest.mark.asyncio
-    async def test_query_v1_post_error(self, logger):
+    async def test_query_v1_post_error(self, disabled_hass_history_sync):
         # Hit 560
-        hass_sync = self._make_hass_sync(logger)
+        hass_sync = disabled_hass_history_sync
         fut = asyncio.Future()
         fut.set_result(True)
         hass_sync.online = fut
@@ -530,18 +522,18 @@ class TestHassHistorySyncCoverage:
             assert res is None
 
     @pytest.mark.asyncio
-    async def test_detect_homeassistant_db_v2_exception(self, logger):
+    async def test_detect_homeassistant_db_v2_exception(self, disabled_hass_history_sync):
         # Hit 79-80
-        hass_sync = self._make_hass_sync(logger)
+        hass_sync = disabled_hass_history_sync
         hass_sync.get_config_values = MagicMock(return_value={"base": "b", "token": "t", "org": "o", "db": "d", "bucket": "b", "auth": None})
         with patch.object(hass_sync._session, "get", side_effect=requests.RequestException("boom")), patch.object(hass_sync, "query_v1", return_value=(False, None)):
             found = await hass_sync.detect_homeassistant_db()
             assert found is False
 
     @pytest.mark.asyncio
-    async def test_copy_records_v2_success(self, logger):
+    async def test_copy_records_v2_success(self, disabled_hass_history_sync):
         # Hit 284-360
-        hass_sync = self._make_hass_sync(logger)
+        hass_sync = disabled_hass_history_sync
         hass_sync.get_config_values = MagicMock(return_value={"base": "b", "org": "o", "token": "t"})
         active_config.influxdb.sync_chunk_size = 100
 
@@ -558,9 +550,9 @@ class TestHassHistorySyncCoverage:
                 mock_write.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_sync_from_homeassistant_success(self, logger):
+    async def test_sync_from_homeassistant_success(self, disabled_hass_history_sync):
         # Hit 527-570
-        hass_sync = self._make_hass_sync(logger)
+        hass_sync = disabled_hass_history_sync
         with patch.object(hass_sync, "detect_homeassistant_db", return_value=True), patch.object(hass_sync, "get_earliest_timestamp", return_value=1704067200):
             with patch.object(hass_sync, "copy_records_from_homeassistant", return_value=5):
                 topic_cache = {"t1": {"object_id": "obj1", "uom": "W"}}

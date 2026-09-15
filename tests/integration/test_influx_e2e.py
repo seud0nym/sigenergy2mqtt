@@ -6,8 +6,9 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from sigenergy2mqtt.config import Config, active_config
-from sigenergy2mqtt.influxdb.hass_history_sync import HassHistorySync
+from sigenergy2mqtt.config import active_config
+from sigenergy2mqtt.influxdb.writers import V1HttpWriter, V2HttpWriter
+from tests.unit.influxdb.conftest import FakeResponse, _bring_online, disabled_hass_history_sync, disabled_influx_config
 
 
 @pytest.fixture
@@ -16,23 +17,10 @@ def logger():
 
 
 @pytest.fixture
-def service(logger):
-    """Create HassHistorySync with disabled init for isolated testing."""
-    cfg = Config()
-    cfg.influxdb.enabled = False
-    cfg.influxdb.max_retries = 3
-    cfg.influxdb.pool_connections = 100
-    cfg.influxdb.pool_maxsize = 100
-    cfg.influxdb.batch_size = 100
-    cfg.influxdb.flush_interval = 1.0
-    cfg.influxdb.query_interval = 0.1
-
-    from sigenergy2mqtt.config import _swap_active_config
-
-    with _swap_active_config(cfg):
-        svc = HassHistorySync(plant_index=0)
-        svc._online = True  # Mark as online for tests
-        yield svc
+def service(disabled_hass_history_sync):
+    """Mark the shared disabled history-sync fixture online for E2E tests."""
+    _bring_online(disabled_hass_history_sync)
+    return disabled_hass_history_sync
 
 
 # =============================================================================
@@ -236,17 +224,6 @@ async def test_sync_from_homeassistant_returns_result_key_format(service, logger
 # =============================================================================
 
 
-class FakeResponse:
-    """Helper class for mocking HTTP responses."""
-
-    def __init__(self, code, json_data=None, text=""):
-        self.status_code = code
-        self._json_data = json_data
-        self.text = text
-
-    def json(self):
-        return self._json_data
-
 
 @pytest.mark.integration
 @pytest.mark.asyncio
@@ -393,8 +370,7 @@ async def test_copy_records_from_homeassistant_uses_v2_first(service, monkeypatc
     active_config.influxdb.password = None
 
     service._writer_type = "v2_http"
-    service._write_url = "http://localhost:8086/api/v2/write"
-    service._write_headers = {"Authorization": "Token mytoken"}
+    service._writers["v2_http"] = V2HttpWriter("http://localhost:8086", "test_db", None, "tok", service.log_identity)
 
     csv_response = """#group,false
 #datatype,string,long
@@ -436,8 +412,7 @@ async def test_copy_records_from_homeassistant_falls_back_to_v1(service, monkeyp
     active_config.influxdb.password = None
 
     service._writer_type = "v1_http"
-    service._write_url = "http://localhost:8086/write"
-    service._write_auth = None
+    service._writers["v1_http"] = V1HttpWriter("https://example.test", "test_db", None, service.log_identity)
 
     v1_result = {
         "results": [

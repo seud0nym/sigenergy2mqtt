@@ -5,6 +5,12 @@
 
 ### Fixed
 
+- Fixed crash risk in InfluxDB _matches_filter service.py
+
+### Changed
+
+- Enhance escaping in InfluxDB line protocol for tags and fields
+- Refactored InfluxDB writer logic to prepare for v3 implementation
 - Restored the documented precedence so explicit command-line options override existing environment variables (exposed in logs for #269)
 - Added undocumented 2-phase OutputType "Double Live Wire" (L1/L2?) to prevent start-up crash (#269)
 
