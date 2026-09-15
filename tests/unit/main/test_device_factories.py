@@ -4,9 +4,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from pymodbus import ModbusException
 
-from sigenergy2mqtt.common import InputType, ProtocolVersion
+from sigenergy2mqtt.common import ConsumptionMethod, InputType, ProtocolVersion
 from sigenergy2mqtt.config import Config
-from sigenergy2mqtt.main import main as main_mod
+from sigenergy2mqtt.main import device_factories as main_mod
+from sigenergy2mqtt.main import modbus_helpers
 
 
 @pytest.fixture(autouse=True)
@@ -15,7 +16,7 @@ def clean_config():
     from sigenergy2mqtt.config import _swap_active_config
 
     cfg = Config()
-    cfg.consumption = main_mod.ConsumptionMethod.CALCULATED
+    cfg.consumption = ConsumptionMethod.CALCULATED
     _swap_active_config(cfg)
     yield
     _swap_active_config(Config())
@@ -31,7 +32,7 @@ async def test_read_registers_holding():
     mock_client = AsyncMock()
     mock_client.read_holding_registers.return_value = "holding_result"
 
-    res = await main_mod.read_registers(mock_client, 100, 2, 1, InputType.HOLDING)
+    res = await modbus_helpers.read_registers(mock_client, 100, 2, 1, InputType.HOLDING)
     assert res == "holding_result"
     mock_client.read_holding_registers.assert_called_once_with(100, count=2, device_id=1)
 
@@ -50,7 +51,7 @@ async def test_make_pid_duplicate_sn():
 
     mock_pid = MagicMock()
 
-    with patch("sigenergy2mqtt.devices.PID.create", new_callable=AsyncMock) as mock_pid_create, patch("sigenergy2mqtt.main.main.get_state", new_callable=AsyncMock) as mock_get_state:
+    with patch("sigenergy2mqtt.devices.PID.create", new_callable=AsyncMock) as mock_pid_create, patch("sigenergy2mqtt.main.device_factories.get_state", new_callable=AsyncMock) as mock_get_state:
         mock_pid_create.return_value = mock_pid
         mock_get_state.return_value = "DUPLICATE_SN"
 
@@ -71,7 +72,7 @@ async def test_make_pid_new_sn():
 
     mock_pid = MagicMock()
 
-    with patch("sigenergy2mqtt.devices.PID.create", new_callable=AsyncMock) as mock_pid_create, patch("sigenergy2mqtt.main.main.get_state", new_callable=AsyncMock) as mock_get_state:
+    with patch("sigenergy2mqtt.devices.PID.create", new_callable=AsyncMock) as mock_pid_create, patch("sigenergy2mqtt.main.device_factories.get_state", new_callable=AsyncMock) as mock_get_state:
         mock_pid_create.return_value = mock_pid
         mock_get_state.return_value = "NEW_SN"
 
@@ -97,7 +98,7 @@ async def test_make_pss_duplicate_sn():
 
     mock_pss = MagicMock()
 
-    with patch("sigenergy2mqtt.devices.PSS.create", new_callable=AsyncMock) as mock_pss_create, patch("sigenergy2mqtt.main.main.get_state", new_callable=AsyncMock) as mock_get_state:
+    with patch("sigenergy2mqtt.devices.PSS.create", new_callable=AsyncMock) as mock_pss_create, patch("sigenergy2mqtt.main.device_factories.get_state", new_callable=AsyncMock) as mock_get_state:
         mock_pss_create.return_value = mock_pss
         mock_get_state.return_value = "DUPLICATE_SN"
 
@@ -118,7 +119,7 @@ async def test_make_pss_new_sn():
 
     mock_pss = MagicMock()
 
-    with patch("sigenergy2mqtt.devices.PSS.create", new_callable=AsyncMock) as mock_pss_create, patch("sigenergy2mqtt.main.main.get_state", new_callable=AsyncMock) as mock_get_state:
+    with patch("sigenergy2mqtt.devices.PSS.create", new_callable=AsyncMock) as mock_pss_create, patch("sigenergy2mqtt.main.device_factories.get_state", new_callable=AsyncMock) as mock_get_state:
         mock_pss_create.return_value = mock_pss
         mock_get_state.return_value = "NEW_SN"
 
@@ -158,9 +159,9 @@ async def test_make_plant_and_inverter_missing_tz_offset():
         return None
 
     with (
-        patch("sigenergy2mqtt.main.main.get_state", new_callable=AsyncMock, side_effect=mock_get_state_side_effect),
-        patch("sigenergy2mqtt.main.main.probe_optional_interface", new_callable=AsyncMock, return_value=False),
-        patch("sigenergy2mqtt.main.main.probe_protocol", new_callable=AsyncMock, return_value=ProtocolVersion.V2_8),
+        patch("sigenergy2mqtt.main.device_factories.get_state", new_callable=AsyncMock, side_effect=mock_get_state_side_effect),
+        patch("sigenergy2mqtt.main.device_factories.probe_optional_interface", new_callable=AsyncMock, return_value=False),
+        patch("sigenergy2mqtt.main.device_factories.probe_protocol", new_callable=AsyncMock, return_value=ProtocolVersion.V2_8),
         patch("sigenergy2mqtt.devices.PowerPlant.create", new_callable=AsyncMock) as mock_plant_create,
         patch("sigenergy2mqtt.devices.Inverter.create", new_callable=AsyncMock),
     ):
@@ -197,9 +198,9 @@ async def test_make_plant_and_inverter_tz_exception():
         return None
 
     with (
-        patch("sigenergy2mqtt.main.main.get_state", new_callable=AsyncMock, side_effect=mock_get_state_side_effect),
-        patch("sigenergy2mqtt.main.main.probe_optional_interface", new_callable=AsyncMock, return_value=False),
-        patch("sigenergy2mqtt.main.main.probe_protocol", new_callable=AsyncMock, return_value=ProtocolVersion.V2_8),
+        patch("sigenergy2mqtt.main.device_factories.get_state", new_callable=AsyncMock, side_effect=mock_get_state_side_effect),
+        patch("sigenergy2mqtt.main.device_factories.probe_optional_interface", new_callable=AsyncMock, return_value=False),
+        patch("sigenergy2mqtt.main.device_factories.probe_protocol", new_callable=AsyncMock, return_value=ProtocolVersion.V2_8),
         patch("sigenergy2mqtt.devices.PowerPlant.create", new_callable=AsyncMock) as mock_plant_create,
         patch("sigenergy2mqtt.devices.Inverter.create", new_callable=AsyncMock),
     ):
@@ -236,9 +237,9 @@ async def test_make_plant_and_inverter_protocol_override():
         return None
 
     with (
-        patch("sigenergy2mqtt.main.main.get_state", new_callable=AsyncMock, side_effect=mock_get_state_side_effect),
-        patch("sigenergy2mqtt.main.main.probe_optional_interface", new_callable=AsyncMock, return_value=False),
-        patch("sigenergy2mqtt.main.main.probe_protocol", new_callable=AsyncMock, return_value=ProtocolVersion.V2_8),
+        patch("sigenergy2mqtt.main.device_factories.get_state", new_callable=AsyncMock, side_effect=mock_get_state_side_effect),
+        patch("sigenergy2mqtt.main.device_factories.probe_optional_interface", new_callable=AsyncMock, return_value=False),
+        patch("sigenergy2mqtt.main.device_factories.probe_protocol", new_callable=AsyncMock, return_value=ProtocolVersion.V2_8),
         patch("sigenergy2mqtt.devices.PowerPlant.create", new_callable=AsyncMock) as mock_plant_create,
         patch("sigenergy2mqtt.devices.Inverter.create", new_callable=AsyncMock),
     ):

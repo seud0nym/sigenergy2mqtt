@@ -20,14 +20,14 @@ async def test_main_clean_disables_pvoutput(monkeypatch):
     monkeypatch.setattr(active_config, "modbus_log_level", lambda: logging.INFO, raising=False)
 
     mock_get_pvoutput = MagicMock(return_value=[MagicMock()])
-    monkeypatch.setattr(main_mod, "get_pvoutput_services", mock_get_pvoutput)
+    monkeypatch.setattr("sigenergy2mqtt.main.service_setup.get_pvoutput_services", mock_get_pvoutput)
 
     monkeypatch.setattr(main_mod, "start", AsyncMock())
     monkeypatch.setattr(main_mod, "setup_devices", AsyncMock(return_value=([], None)))
     monkeypatch.setattr(main_mod, "setup_services", lambda c, p: c)
     monkeypatch.setattr(main_mod, "initialize_async", AsyncMock())
     monkeypatch.setattr(main_mod, "configure_logging", lambda: None)
-    monkeypatch.setattr(main_mod, "pymodbus_apply_logging_config", lambda *a: None)
+    monkeypatch.setattr("sigenergy2mqtt.main.logging_setup.pymodbus_apply_logging_config", lambda *a: None)
     monkeypatch.setattr(main_mod.state_store, "initialise", AsyncMock())
     monkeypatch.setattr(main_mod.state_store, "clean", AsyncMock())
     monkeypatch.setattr(main_mod.MonitorService, "clean", AsyncMock())
