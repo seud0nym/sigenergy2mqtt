@@ -1,27 +1,14 @@
 import asyncio
 import logging
 import time
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 import requests
 
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.config.config import active_config
-from sigenergy2mqtt.influxdb.hass_history_sync import HassHistorySync
-from sigenergy2mqtt.influxdb.service import InfluxService
 from sigenergy2mqtt.influxdb.writers import V1HttpWriter, V2HttpWriter
-
-
-class MockResponse:
-    def __init__(self, status_code, json_data=None, content=b""):
-        self.status_code = status_code
-        self._json_data = json_data
-        self.content = content
-        self.text = "mock text"
-
-    def json(self):
-        return self._json_data
+from tests.unit.influxdb.conftest import FakeResponse
 
 
 @pytest.fixture
@@ -30,42 +17,19 @@ def logger():
 
 
 @pytest.fixture
-def service(logger):
-    """Create InfluxService with disabled init for isolated testing."""
-    mock_config = MagicMock()
-    # Set defaults required by __init__
-    mock_config.enabled = False
-    mock_config.max_retries = 3
-    mock_config.pool_connections = 100
-    mock_config.pool_maxsize = 100
-    mock_config.batch_size = 100
-    mock_config.flush_interval = 1.0
-    mock_config.query_interval = 0.1
-
-    with patch.object(active_config, "influxdb", mock_config):
-        svc = InfluxService(plant_index=0)
-    # Manually configure basic writer for these tests
+def service(disabled_influx_service):
+    """Configure the shared disabled service with a usable v2 writer."""
+    svc = disabled_influx_service
     svc._writer_type = "v2_http"
     svc._writers["v2_http"] = V2HttpWriter("http://localhost:8086", "test_db", None, "tok", svc.log_identity)
-    svc._online = True  # Mark as online so writes/queries proceed
+    svc._online = True
     return svc
 
 
 @pytest.fixture
-def hass_sync(logger):
-    """Create HassHistorySync for testing chunking and sync methods."""
-    mock_config = MagicMock()
-    mock_config.enabled = False
-    mock_config.max_retries = 3
-    mock_config.pool_connections = 100
-    mock_config.pool_maxsize = 100
-    mock_config.batch_size = 100
-    mock_config.flush_interval = 1.0
-    mock_config.query_interval = 0.1
-    mock_config.default_measurement = "state"
-
-    with patch.object(active_config, "influxdb", mock_config):
-        svc = HassHistorySync(plant_index=0)
+def hass_sync(disabled_hass_history_sync):
+    """Configure the shared disabled history sync with a usable v2 writer."""
+    svc = disabled_hass_history_sync
     svc._writer_type = "v2_http"
     svc._writers["v2_http"] = V2HttpWriter("http://localhost:8086", "test_db", None, "tok", svc.log_identity)
     svc._online = True
@@ -78,7 +42,7 @@ class TestInfluxRetry:
         """Test that query succeeds after retries."""
         with patch.object(service._session, "post") as mock_post, patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
             # Fail twice then succeed
-            mock_post.side_effect = [requests.RequestException("Fail 1"), requests.RequestException("Fail 2"), MockResponse(200, content=b"success")]
+            mock_post.side_effect = [requests.RequestException("Fail 1"), requests.RequestException("Fail 2"), FakeResponse(200, content=b"success")]
 
             success, _ = await service.query_v2("http://base", "org", "tok", "flux")
 
@@ -107,7 +71,7 @@ class TestInfluxRateLimiting:
         # Use a real lock/semaphore but mock sleep to verify it's called
         service._query_interval = 1.0
 
-        with patch.object(service._session, "post", return_value=MockResponse(200)) as mock_post, patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
+        with patch.object(service._session, "post", return_value=FakeResponse(200)) as mock_post, patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
             # First query sets the time
             await service.query_v2("http://base", "org", "tok", "q1")
 

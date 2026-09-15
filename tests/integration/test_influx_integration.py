@@ -7,6 +7,7 @@ from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.influxdb.hass_history_sync import HassHistorySync
 from sigenergy2mqtt.influxdb.service import InfluxService
 from sigenergy2mqtt.influxdb.writers import V1HttpWriter, V2HttpWriter
+from tests.unit.influxdb.conftest import FakeResponse
 
 
 @pytest.mark.integration
@@ -16,10 +17,6 @@ async def test_init_prefers_v2_http_with_token(monkeypatch):
 
     # Mock requests.Session.post to capture calls
     calls = []
-
-    class FakeResponse:
-        def __init__(self, code):
-            self.status_code = code
 
     def fake_post(self, url, headers=None, data=None, timeout=None, params=None, auth=None):
         calls.append(url)
@@ -63,10 +60,6 @@ async def test_init_prefers_v2_http_with_token(monkeypatch):
 async def test_init_falls_back_to_v2_http_implicit(monkeypatch):
     # If no token but password is used (legacy), or no token at all but v2 endpoint works
 
-    class FakeResponse:
-        def __init__(self, code):
-            self.status_code = code
-
     def fake_post(self, url, headers=None, data=None, timeout=None, params=None, auth=None):
         if "/api/v2/write" in url:
             return FakeResponse(204)
@@ -97,10 +90,6 @@ async def test_init_falls_back_to_v2_http_implicit(monkeypatch):
 async def testwrite_line_uses_configured_writer(monkeypatch):
     calls = {}
 
-    class FakeResponse:
-        def __init__(self, code):
-            self.status_code = code
-
     def fake_post(self, url, headers=None, data=None, timeout=None, params=None, auth=None):
         calls["url"] = url
         calls["data"] = data
@@ -123,18 +112,6 @@ async def testwrite_line_uses_configured_writer(monkeypatch):
 # _try_v1_write() integration tests
 # =============================================================================
 
-
-class FakeResponse:
-    """Helper class for mocking HTTP responses."""
-
-    def __init__(self, code, json_data=None, text="", content=b""):
-        self.status_code = code
-        self._json_data = json_data
-        self.text = text
-        self.content = content
-
-    def json(self):
-        return self._json_data
 
 
 @pytest.mark.integration
