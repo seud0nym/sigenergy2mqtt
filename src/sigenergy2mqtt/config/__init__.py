@@ -71,12 +71,11 @@ def _is_arg_explicitly_set(value) -> bool:
 
 def _promote_cli_to_env(args) -> None:
     """
-    Copy explicitly-set CLI arguments into environment variables, unless an
-    environment variable for that key is already present.
+    Copy explicitly-set CLI arguments into environment variables.
 
     This makes CLI and ENV identical from the perspective of the config
-    loader: both arrive as env vars, ENV wins over CLI by virtue of already
-    being set, and config file values are the fallback.
+    loader: both arrive as env vars, CLI wins over ENV, and config file values
+    are the fallback.
 
     The Modbus read-only flag is a special case: enabling it must atomically
     disable the two mutually-exclusive flags to keep the environment
@@ -99,9 +98,6 @@ def _promote_cli_to_env(args) -> None:
             if value is True:
                 continue
         elif not _is_arg_explicitly_set(value):  # not explicitly set, skipping
-            continue
-
-        if os.getenv(arg):  # superseded by environment variable, skipping
             continue
 
         if arg == const.SIGENERGY2MQTT_MODBUS_READ_ONLY and value in (True, 1, "true", "True"):  # special case for read-only flag

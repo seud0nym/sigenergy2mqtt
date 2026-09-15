@@ -11,6 +11,7 @@
 
 - Enhance escaping in InfluxDB line protocol for tags and fields
 - Refactored InfluxDB writer logic to prepare for v3 implementation
+- Restored the documented precedence so explicit command-line options override existing environment variables (exposed in logs for #269)
 
 ---
 
