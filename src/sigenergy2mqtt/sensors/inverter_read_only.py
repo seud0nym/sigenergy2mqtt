@@ -1376,6 +1376,7 @@ class OutputType(ReadOnlySensor, HybridInverter, PVInverter):
             "L1/L2/L3",  # 1
             "L1/L2/L3/N",  # 2
             "L1/L2/N",  # 3
+            "L1/L2",  # 4 ('Double Live Wire' observed in the wild, not documented in protocol. See https://github.com/seud0nym/sigenergy2mqtt/issues/269)
         ]
         self.sanity_check.min_raw = 0
         self.sanity_check.max_raw = len(cast(list[str], self[DiscoveryKeys.OPTIONS])) - 1
@@ -1387,7 +1388,7 @@ class OutputType(ReadOnlySensor, HybridInverter, PVInverter):
                 return 1
             case 1 | 2 | "L1/L2/L3" | "L1/L2/L3/N":
                 return 3
-            case 3 | "L1/L2/N":
+            case 3 | 4 | "L1/L2/N" | "L1/L2":
                 return 2
             case _:
                 raise ValueError(f"Unknown Output Type: {output_type}")
