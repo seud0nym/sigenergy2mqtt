@@ -6,9 +6,9 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from sigenergy2mqtt.config import Config, active_config
-from sigenergy2mqtt.influxdb.hass_history_sync import HassHistorySync
+from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.influxdb.writers import V1HttpWriter, V2HttpWriter
+from tests.unit.influxdb.conftest import FakeResponse, disabled_hass_history_sync, disabled_influx_config
 
 
 @pytest.fixture
@@ -17,23 +17,10 @@ def logger():
 
 
 @pytest.fixture
-def service(logger):
-    """Create HassHistorySync with disabled init for isolated testing."""
-    cfg = Config()
-    cfg.influxdb.enabled = False
-    cfg.influxdb.max_retries = 3
-    cfg.influxdb.pool_connections = 100
-    cfg.influxdb.pool_maxsize = 100
-    cfg.influxdb.batch_size = 100
-    cfg.influxdb.flush_interval = 1.0
-    cfg.influxdb.query_interval = 0.1
-
-    from sigenergy2mqtt.config import _swap_active_config
-
-    with _swap_active_config(cfg):
-        svc = HassHistorySync(plant_index=0)
-        svc._online = True  # Mark as online for tests
-        yield svc
+def service(disabled_hass_history_sync):
+    """Mark the shared disabled history-sync fixture online for E2E tests."""
+    disabled_hass_history_sync._online = True
+    return disabled_hass_history_sync
 
 
 # =============================================================================
@@ -236,17 +223,6 @@ async def test_sync_from_homeassistant_returns_result_key_format(service, logger
 # detect_homeassistant_db() integration tests
 # =============================================================================
 
-
-class FakeResponse:
-    """Helper class for mocking HTTP responses."""
-
-    def __init__(self, code, json_data=None, text=""):
-        self.status_code = code
-        self._json_data = json_data
-        self.text = text
-
-    def json(self):
-        return self._json_data
 
 
 @pytest.mark.integration
