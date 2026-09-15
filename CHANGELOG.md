@@ -1,6 +1,14 @@
 <!-- git log [since tag]..HEAD --oneline -->
 # Changelog 
 
+## [Unreleased]
+
+### Fixed
+
+- Restored the documented precedence so explicit command-line options override existing environment variables (exposed in logs for #269)
+
+---
+
 ## [2026.9.10] - 2026-09-10
 
 ### Fixed
