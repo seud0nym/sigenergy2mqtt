@@ -2934,10 +2934,10 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_001_inverter/sigen_0_inverter_1_output_type/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_inverter_1_output_type/state</td></tr>
 <tr><td>Source</td><td>Modbus Register 31004</td></tr>
-<tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='0'>L/N</li><li value='1'>L1/L2/L3</li><li value='2'>L1/L2/L3/N</li><li value='3'>L1/L2/N</li></ol></td></tr>
+<tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='0'>L/N</li><li value='1'>L1/L2/L3</li><li value='2'>L1/L2/L3/N</li><li value='3'>L1/L2/N</li><li value='4'>L1/L2</li></ol></td></tr>
 <tr><td>Applicable To</td><td> Hybrid Inverter and PV Inverter </td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0  and 3  (0 ≦ raw value ≦ 3)</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0  and 4  (0 ≦ raw value ≦ 4)</td></tr>
 </table>
 <h5><a id='sigen_0_001_31024'>PACK/BCU Count</a></h5>
 <table>

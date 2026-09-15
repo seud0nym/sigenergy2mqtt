@@ -1,11 +1,12 @@
 <!-- git log [since tag]..HEAD --oneline -->
 # Changelog 
 
-## [Unreleased]
+## [2026.9.15] - 2026-09-15
 
 ### Fixed
 
 - Fixed crash risk in InfluxDB _matches_filter service.py
+- Fixed startup sequence race condition that caused command-line logging level options to be ignored (exposed in logs for #269)
 
 ### Changed
 
