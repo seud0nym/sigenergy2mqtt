@@ -62,6 +62,11 @@ from .thread_config import ThreadConfig, thread_config_registry
 
 _GRID_RESTORE_WATCH_TASKS: set[tuple[str, int, int]] = set()
 
+# Module-level singleton so configure_logging() is idempotent: the same filter
+# object is reused on every call, and _add_filter_once() ensures it is never
+# attached to the same logger/handler more than once.
+_framer_skip_filter: "_FramerSkipFilter | None" = None
+
 # ---------------------------------------------------------------------------
 # Logging
 # ---------------------------------------------------------------------------
@@ -88,8 +93,16 @@ class _FramerSkipFilter(logging.Filter):
         return True
 
 
+def _add_filter_once(target: logging.Logger | logging.Handler, f: logging.Filter) -> None:
+    """Add *f* to *target* only if it is not already present."""
+    if f not in target.filters:
+        target.addFilter(f)
+
+
 def configure_logging() -> None:
     """Configure the runtime logging environment."""
+    global _framer_skip_filter
+
     # Configure root logger format/level via shared helper so logic is unified
     # with configure_root_logger() performed at import time.
     configure_root_logger(active_config.log_level, active_config.log_fmt)
@@ -106,18 +119,19 @@ def configure_logging() -> None:
     pymodbus_apply_logging_config(modbus_log_level)
 
     logger.debug("Applying skipped error logging filter to pymodbus.logging logger (modbus.log_skipped evaluated at message time)")
-    _framer_skip_filter = _FramerSkipFilter()
+    if _framer_skip_filter is None:
+        _framer_skip_filter = _FramerSkipFilter()
     # Attach to the exact logger pymodbus.Log uses, AND to each of its handlers.
     # The logger-level filter is the primary gate: it prevents callHandlers() from
     # ever being reached, so no handler — present or future — can emit the record.
     _pymodbus_logging_logger = logging.getLogger("pymodbus.logging")
-    _pymodbus_logging_logger.addFilter(_framer_skip_filter)
+    _add_filter_once(_pymodbus_logging_logger, _framer_skip_filter)
     for handler in _pymodbus_logging_logger.handlers:
-        handler.addFilter(_framer_skip_filter)
+        _add_filter_once(handler, _framer_skip_filter)
     # Belt-and-suspenders: also cover root handlers in case propagation fires
     # before the logger-level filter takes effect on the first call.
     for handler in logging.getLogger().handlers:
-        handler.addFilter(_framer_skip_filter)
+        _add_filter_once(handler, _framer_skip_filter)
 
 
 def _configure_logger(name: str, level: int, *, propagate: bool = True) -> None:
@@ -1252,6 +1266,12 @@ async def async_main() -> None:
         # guards against StateStore not yet being initialised, so ordering here
         # is safe.
         await initialize_async()
+
+        # Reconfigure logging with the authoritative resolved settings (CLI/YAML/env).
+        # The configure_logging() call at the top of the loop uses the import-time
+        # Settings() which pre-dates CLI→env promotion, so levels may be incorrect
+        # (e.g. --log-level=DEBUG not yet applied). This second call corrects that.
+        configure_logging()
 
         # Initialise StateStore with dedicated MQTT connection + sentinel-based warming
         await state_store.initialise(
