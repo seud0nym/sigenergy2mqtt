@@ -479,13 +479,9 @@ class InfluxBase(Device):
             A single line-protocol string ready to be written to InfluxDB.
         """
 
-        def esc_measurement(s: str) -> str:
-            """Escape spaces and commas in measurement names."""
+        def esc(s: str) -> str:
+            """Escape spaces and commas in measurement names, tag keys, and tag values."""
             return str(s).replace(" ", "\\ ").replace(",", "\\,")
-
-        def esc_key(s: str) -> str:
-            """Escape spaces, commas, and equals signs in tag keys, tag values, and field keys."""
-            return str(s).replace(" ", "\\ ").replace(",", "\\,").replace("=", "\\=")
 
         def fmt_val(v: Any) -> str:
             """Format a field value according to line-protocol type rules."""
@@ -495,12 +491,12 @@ class InfluxBase(Device):
                 return f"{v}"
             return f'"{str(v).replace(chr(34), chr(92) + chr(34))}"'
 
-        tags_part = ",".join(f"{esc_key(k)}={esc_key(v)}" for k, v in tags.items()) if tags else ""
-        fields_part = ",".join(f"{esc_key(k)}={fmt_val(v)}" for k, v in fields.items())
+        tags_part = ",".join(f"{esc(k)}={esc(v)}" for k, v in tags.items()) if tags else ""
+        fields_part = ",".join(f"{esc(k)}={fmt_val(v)}" for k, v in fields.items())
 
         # Emit seconds — must stay consistent with precision=s on both write URLs.
         ts_s = int(timestamp)
-        return f"{esc_measurement(measurement)}{',' + tags_part if tags_part else ''} {fields_part} {ts_s}"
+        return f"{esc(measurement)}{',' + tags_part if tags_part else ''} {fields_part} {ts_s}"
 
     # ------------------------------------------------------------------
     # Buffered writes

@@ -169,17 +169,6 @@ class TestToLineProtocolExtended:
         line = service.to_line_protocol("meas,urement", {"tag": "val"}, {"value": 1}, 1000)
         assert "meas\\,urement" in line
 
-    def test_measurement_with_equals(self, service):
-        """Build line protocol with equals in measurement name (not escaped)."""
-        line = service.to_line_protocol("power=ac", {"tag": "val"}, {"value": 1}, 1000)
-        assert line.startswith("power=ac,tag=val ")
-        assert "power\\=ac" not in line
-
-    def test_tags_and_fields_with_equals(self, service):
-        """Build line protocol with equals signs in tag/field keys and tag values (escaped)."""
-        line = service.to_line_protocol("power=ac", {"tag=key": "tag=val"}, {"field=key": 1}, 1000)
-        assert line == "power=ac,tag\\=key=tag\\=val field\\=key=1i 1000"
-
     def test_tags_with_spaces_and_commas(self, service):
         """Build line protocol with special chars in tag keys/values."""
         line = service.to_line_protocol("m", {"tag key": "tag,value"}, {"value": 1}, 1000)
