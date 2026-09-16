@@ -132,8 +132,6 @@ class DiagnosticsCollectors:
                 f"{_t('InfluxDBWriteMax.name').removeprefix('InfluxDB ')}_ms": Metrics.sigenergy2mqtt_influxdb_write_max,
                 f"{_t('InfluxDBWriteMean.name').removeprefix('InfluxDB ')}_ms": Metrics.sigenergy2mqtt_influxdb_write_mean,
                 f"{_t('InfluxDBWriteMin.name').removeprefix('InfluxDB ')}_ms": Metrics.sigenergy2mqtt_influxdb_write_min if Metrics.sigenergy2mqtt_influxdb_write_min != float("inf") else 0.0,
-                f"{_t('InfluxDBRetries.name').removeprefix('InfluxDB ')}": Metrics.sigenergy2mqtt_influxdb_retries,
-                f"{_t('InfluxDBRateLimitWaits.name').removeprefix('InfluxDB ')}": Metrics.sigenergy2mqtt_influxdb_rate_limit_waits,
                 "config": {
                     "write_timeout_secs": active_config.influxdb.write_timeout,
                     "batch_size": active_config.influxdb.batch_size,
@@ -143,7 +141,9 @@ class DiagnosticsCollectors:
             if active_config.influxdb.load_hass_history:
                 influxdb_metrics.update({
                     "Query Count": Metrics.sigenergy2mqtt_influxdb_queries,
+                    f"{_t('InfluxDBRetries.name').removeprefix('InfluxDB ')}": Metrics.sigenergy2mqtt_influxdb_retries,
                     f"{_t('InfluxDBQueryErrors.name').removeprefix('InfluxDB ')}": Metrics.sigenergy2mqtt_influxdb_query_errors,
+                    f"{_t('InfluxDBRateLimitWaits.name').removeprefix('InfluxDB ')}": Metrics.sigenergy2mqtt_influxdb_rate_limit_waits,
                 })
             return influxdb_metrics
 
