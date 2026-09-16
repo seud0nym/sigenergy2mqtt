@@ -506,7 +506,7 @@ class InfluxDBQueries(MetricsSensor):
             icon="mdi:database-search",
             precision=0,
         )
-        self.publishable = active_config.influxdb.enabled
+        self.publishable = active_config.influxdb.enabled and active_config.influxdb.load_hass_history
 
 
 class InfluxDBQueryErrors(MetricsSensor):
@@ -521,7 +521,7 @@ class InfluxDBQueryErrors(MetricsSensor):
             icon="mdi:database-alert-outline",
             precision=0,
         )
-        self.publishable = active_config.influxdb.enabled
+        self.publishable = active_config.influxdb.enabled and active_config.influxdb.load_hass_history
 
 
 class InfluxDBRetries(MetricsSensor):
@@ -536,7 +536,7 @@ class InfluxDBRetries(MetricsSensor):
             icon="mdi:reload",
             precision=0,
         )
-        self.publishable = active_config.influxdb.enabled
+        self.publishable = active_config.influxdb.enabled and active_config.influxdb.load_hass_history
 
 
 class InfluxDBRateLimitWaits(MetricsSensor):
@@ -551,7 +551,7 @@ class InfluxDBRateLimitWaits(MetricsSensor):
             icon="mdi:reload",
             precision=0,
         )
-        self.publishable = active_config.influxdb.enabled
+        self.publishable = active_config.influxdb.enabled and active_config.influxdb.load_hass_history
 
 
 class InfluxDBThroughput(MetricsSensor):

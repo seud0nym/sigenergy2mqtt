@@ -126,22 +126,26 @@ class DiagnosticsCollectors:
     async def _diagnostics_collect_influxdb_metrics(cls) -> dict[str, Any]:
         """Diagnostics provider callback: exposes the latest InfluxDB metrics."""
         async with Metrics.lock(timeout=1.0):
-            return {
+            influxdb_metrics = {
                 "Write Count": Metrics.sigenergy2mqtt_influxdb_writes,
                 f"{_t('InfluxDBWriteErrors.name').removeprefix('InfluxDB ')}": Metrics.sigenergy2mqtt_influxdb_write_errors,
                 f"{_t('InfluxDBWriteMax.name').removeprefix('InfluxDB ')}_ms": Metrics.sigenergy2mqtt_influxdb_write_max,
                 f"{_t('InfluxDBWriteMean.name').removeprefix('InfluxDB ')}_ms": Metrics.sigenergy2mqtt_influxdb_write_mean,
                 f"{_t('InfluxDBWriteMin.name').removeprefix('InfluxDB ')}_ms": Metrics.sigenergy2mqtt_influxdb_write_min if Metrics.sigenergy2mqtt_influxdb_write_min != float("inf") else 0.0,
-                "Query Count": Metrics.sigenergy2mqtt_influxdb_queries,
-                f"{_t('InfluxDBQueryErrors.name').removeprefix('InfluxDB ')}": Metrics.sigenergy2mqtt_influxdb_query_errors,
-                f"{_t('InfluxDBRetries.name').removeprefix('InfluxDB ')}": Metrics.sigenergy2mqtt_influxdb_retries,
-                f"{_t('InfluxDBRateLimitWaits.name').removeprefix('InfluxDB ')}": Metrics.sigenergy2mqtt_influxdb_rate_limit_waits,
                 "config": {
                     "write_timeout_secs": active_config.influxdb.write_timeout,
                     "batch_size": active_config.influxdb.batch_size,
                     "flush_interval_secs": active_config.influxdb.flush_interval,
                 },
             }
+            if active_config.influxdb.load_hass_history:
+                influxdb_metrics.update({
+                    "Query Count": Metrics.sigenergy2mqtt_influxdb_queries,
+                    f"{_t('InfluxDBRetries.name').removeprefix('InfluxDB ')}": Metrics.sigenergy2mqtt_influxdb_retries,
+                    f"{_t('InfluxDBQueryErrors.name').removeprefix('InfluxDB ')}": Metrics.sigenergy2mqtt_influxdb_query_errors,
+                    f"{_t('InfluxDBRateLimitWaits.name').removeprefix('InfluxDB ')}": Metrics.sigenergy2mqtt_influxdb_rate_limit_waits,
+                })
+            return influxdb_metrics
 
     @classmethod
     async def _diagnostics_collect_modbus_metrics(cls) -> dict[str, Any]:
