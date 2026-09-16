@@ -4,6 +4,7 @@ import pytest
 
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.config.settings import InfluxDbConfig
+from sigenergy2mqtt.influxdb.hass_history_sync import HassHistorySync
 from sigenergy2mqtt.influxdb.service import InfluxService
 from sigenergy2mqtt.influxdb.writers import V2HttpWriter
 from tests.unit.influxdb.conftest import _bring_online
@@ -65,21 +66,24 @@ async def test_service_uses_config_values(monkeypatch):
     active_config.influxdb.query_interval = 0.5
     active_config.influxdb.max_retries = 2
 
-    logger = MagicMock()
     svc = InfluxService(plant_index=0)
     _bring_online(svc)
 
     # Check attributes set in init
     assert svc._batch_size == 50
     assert svc._flush_interval == 2.0
-    assert svc._query_interval == 0.5
+    assert not hasattr(svc, "_query_interval")
+    assert not hasattr(svc, "query_v2")
 
     # Verify retry strategy logic uses config
     # We can inspect the adapter mounted to session
     adapter = svc._session.get_adapter("http://")
     assert adapter.max_retries.total == 2
 
-    # Verify defaults used in methods (mocking _rate_limited_query to capture args)
+    # Query tuning and query APIs are isolated to the history-sync helper.
+    history_sync = HassHistorySync(plant_index=0)
+    _bring_online(history_sync)
+    assert history_sync._query_interval == 0.5
 
     captured_args = {}
 
@@ -87,11 +91,11 @@ async def test_service_uses_config_values(monkeypatch):
         captured_args["retries"] = retries
         return True, "ok"
 
-    svc._rate_limited_query = mock_rate_limit
+    history_sync._rate_limited_query = mock_rate_limit
     active_config.influxdb.read_timeout = 99.0
     active_config.influxdb.max_retries = 5
 
-    await svc.query_v2("base", "org", "tok", "q")
+    await history_sync.query_v2("base", "org", "tok", "q")
     assert captured_args["retries"] == 5
 
     # Verify write timeout logic
