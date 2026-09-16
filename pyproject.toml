@@ -7,12 +7,12 @@ authors = [{ name = "seud0nym", email = "seud0nym@yahoo.com.au" }]
 dependencies = [
     "aiohttp==3.14.3",
     "paho-mqtt==2.1.0",
+    "pycryptodome==3.23.0",
     "psutil==7.2.2",
     "pydantic-settings==2.15.0",
     "pymodbus==3.15.0",
     "requests==2.34.2",
     "ruamel.yaml==0.19.1",
-    "sigenergy-cloud==0.1.7",
 ]
 description = "Publish Modbus data from Sigenergy to MQTT, with optional Home Assistant Auto-Discovery and PVOutput updating"
 dynamic = ["version"]
@@ -24,6 +24,7 @@ requires-python = ">=3.12"
 
 [project.optional-dependencies]
 test = [
+    "aioresponses",
     "deepl",
     "jsonschema",
     "pytest",

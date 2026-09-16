@@ -70,6 +70,8 @@ async def read_and_publish_device_sensors(
             config.timeout,
             config.retries,
         )
+    elif config.transport_factory is not None and not active_config.clean:
+        modbus_client = await config.transport_factory()
 
     mqtt_client_id = f"{active_config.mqtt.client_id_prefix}_{config.description}"
     mqtt_client, mqtt_handler = await mqtt_setup(mqtt_client_id, modbus_client, loop)
@@ -131,8 +133,12 @@ async def read_and_publish_device_sensors(
                     device.publish_availability(mqtt_client, "offline")
 
     finally:
-        if modbus_client is not None:
+        if modbus_client is not None and config.host is not None:
             ModbusClientFactory.remove(modbus_client)
+        elif modbus_client is not None:
+            close = getattr(modbus_client, "close", None)
+            if close is not None:
+                await close()
 
         await mqtt_teardown(mqtt_client, mqtt_handler)
 

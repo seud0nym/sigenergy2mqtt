@@ -1,6 +1,7 @@
 import asyncio
 import ipaddress
 import logging
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
@@ -28,6 +29,8 @@ class ThreadConfig:
             Defaults to ``1.0``.
         retries: Number of retry attempts on failure passed to the Modbus
             client. Defaults to ``3``.
+        transport_factory: Optional async factory for a non-Modbus transport.
+            It is used only when ``host`` is ``None``.
 
     Raises:
         ValueError: If both ``name`` and ``host`` are absent or blank.
@@ -39,6 +42,7 @@ class ThreadConfig:
     port: int | None
     timeout: float = 1.0
     retries: int = 3
+    transport_factory: Callable[[], Awaitable[Any]] | None = None
 
     _devices: list[Device] = field(default_factory=list)
     _token: Any = None

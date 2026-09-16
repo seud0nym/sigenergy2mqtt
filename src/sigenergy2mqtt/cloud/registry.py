@@ -1,0 +1,56 @@
+"""Selection and lifecycle ownership for cloud battery control."""
+
+import logging
+from typing import Literal
+
+from sigenergy2mqtt.config.models.cloud import CloudConfig
+
+from .community_adapter import CommunityCloudAdapter
+from .port import BatteryControlPort
+
+logger = logging.getLogger("sigenergy2mqtt.cloud")
+Provider = Literal["community", "official"]
+
+
+class BatteryControlRegistry:
+    def __init__(self) -> None:
+        self._adapter: BatteryControlPort | None = None
+        self._provider: Provider | None = None
+
+    def configure(self, config: CloudConfig) -> None:
+        if not config.enabled:
+            self._adapter = None
+            self._provider = None
+            return
+        if not config.accept_unofficial_api_risk:
+            raise ValueError(
+                "cloud.accept-unofficial-api-risk must be true to use the unofficial mySigen cloud API"
+            )
+        logger.warning(
+            "Using the unofficial mySigen cloud API. Use a delegated 'View and Edit' "
+            "account created with mySigen System Share rather than the primary account."
+        )
+        self._adapter = CommunityCloudAdapter(
+            config.username, config.password, config.region
+        )
+        self._provider = "community"
+
+    @property
+    def active(self) -> BatteryControlPort | None:
+        return self._adapter
+
+    @property
+    def provider(self) -> Provider | None:
+        return self._provider
+
+    async def transport_factory(self) -> BatteryControlPort | None:
+        if self._adapter is not None:
+            await self._adapter.connect()
+        return self._adapter
+
+    async def close(self) -> None:
+        if self._adapter is not None:
+            await self._adapter.close()
+
+
+battery_control_registry = BatteryControlRegistry()
