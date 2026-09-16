@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from abc import ABC
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, cast
 
@@ -97,7 +96,7 @@ class ESSPreHeatingAdvanceEnable(SwitchSensor, HybridInverter):
         return await super().value_is_valid(transport, raw_value)
 
 
-class ESSPreHeatingTOUTime(NumericSensor, HybridInverter, ABC):
+class ESSPreHeatingTOUTime(NumericSensor, HybridInverter):
     """Base class for ESS Pre-Heating TOU start/end time sensors.
 
     Represents time in epoch seconds with timezone offset applied.

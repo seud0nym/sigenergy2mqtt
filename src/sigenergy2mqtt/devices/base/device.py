@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import abc
 import asyncio
 import logging
 from collections.abc import Awaitable
@@ -23,8 +22,8 @@ from .scan_groups import create_sensor_scan_groups
 logger = logging.getLogger(__name__)
 
 
-class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta):
-    """Abstract base class for all Sigenergy devices.
+class Device(HaPublisherMixin, dict[str, str | list[str]]):
+    """Base class for all Sigenergy devices.
 
     Inherits from dict to allow direct serialisation as the Home Assistant MQTT
     discovery device payload. Keys follow the HA device registry short-form
@@ -38,9 +37,8 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
     provided by HaPublisherMixin. Scan group construction is delegated to
     create_sensor_scan_groups(). Per-group polling is driven by SensorGroupPoller.
 
-    Subclasses must be concrete (non-abstract) and are expected to register their
-    sensors during __init__ via the _add_sensor, _add_sensor, and
-    _add_sensor helpers.
+    Subclasses are expected to register their sensors during ``__init__`` via
+    the sensor registration helpers.
     """
 
     def __init__(self, name: str, plant_index: int, unique_id: str, manufacturer: str, model: str, protocol_version: ProtocolVersion, **kwargs):
@@ -570,8 +568,8 @@ class Device(HaPublisherMixin, dict[str, str | list[str]], metaclass=abc.ABCMeta
             device.subscribe(mqtt_client, mqtt_handler)
 
 
-class ModbusDevice(Device, metaclass=abc.ABCMeta):
-    """Abstract base class for devices that communicate over Modbus.
+class ModbusDevice(Device):
+    """Base class for devices that communicate over Modbus.
 
     Extends Device with Modbus-specific sensor filtering: sensors whose protocol
     version exceeds the device's protocol_version are silently skipped, as are
