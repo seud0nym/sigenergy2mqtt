@@ -8,8 +8,9 @@
 - Refactored former monolithic main module into separate concerns modules
 - Removed the SensorProtocol Protocol from the sensor implementation and exports, and stop inheriting the Protocol from Sensor
 - Converted Device and ModbusDevice to concrete base classes by removing the ABCMeta metaclass
-- Removed needless ABC inheritance from several sensor base classes such as RemoteEMSLimit and ESSPreHeatingTOUTime.
-
+- Removed needless ABC inheritance from several sensor base classes such as RemoteEMSLimit and ESSPreHeatingTOUTime
+- Refactored the InfluxDB query methods into the Home Assistant backfill workflow to keep core functionality focussed on writes
+- Removed InfluxDB query metrics when HA sync disabled
 
 ---
 
