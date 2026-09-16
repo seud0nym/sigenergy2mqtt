@@ -7,7 +7,7 @@ import pytest
 import requests
 
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.influxdb.writers import V1HttpWriter, V2HttpWriter
+from sigenergy2mqtt.influxdb.writers import V2HttpWriter
 from tests.unit.influxdb.conftest import FakeResponse, _bring_online
 
 
@@ -38,26 +38,26 @@ def hass_sync(disabled_hass_history_sync):
 
 class TestInfluxRetry:
     @pytest.mark.asyncio
-    async def testquery_v2_retry_success(self, service):
+    async def testquery_v2_retry_success(self, hass_sync):
         """Test that query succeeds after retries."""
-        with patch.object(service._session, "post") as mock_post, patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
+        with patch.object(hass_sync._session, "post") as mock_post, patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
             # Fail twice then succeed
             mock_post.side_effect = [requests.RequestException("Fail 1"), requests.RequestException("Fail 2"), FakeResponse(200, content=b"success")]
 
-            success, _ = await service.query_v2("http://base", "org", "tok", "flux")
+            success, _ = await hass_sync.query_v2("http://base", "org", "tok", "flux")
 
             assert success is True
             assert mock_post.call_count == 3
             assert mock_sleep.call_count == 2  # Slept twice
 
     @pytest.mark.asyncio
-    async def testquery_v2_retry_exhausted(self, service):
+    async def testquery_v2_retry_exhausted(self, hass_sync):
         """Test that query fails after max retries."""
-        with patch.object(service._session, "post") as mock_post, patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
+        with patch.object(hass_sync._session, "post") as mock_post, patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
             # Fail all times
             mock_post.side_effect = requests.RequestException("Fail")
 
-            success, _ = await service.query_v2("http://base", "org", "tok", "flux", max_retries=2)
+            success, _ = await hass_sync.query_v2("http://base", "org", "tok", "flux", max_retries=2)
 
             assert success is False
             assert mock_post.call_count == 3  # Initial + 2 retries
@@ -66,17 +66,17 @@ class TestInfluxRetry:
 
 class TestInfluxRateLimiting:
     @pytest.mark.asyncio
-    async def test_rate_limiting_enforces_delay(self, service):
+    async def test_rate_limiting_enforces_delay(self, hass_sync):
         """Test that rapid queries trigger rate limiting sleep."""
         # Use a real lock/semaphore but mock sleep to verify it's called
-        service._query_interval = 1.0
+        hass_sync._query_interval = 1.0
 
-        with patch.object(service._session, "post", return_value=FakeResponse(200)) as mock_post, patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
+        with patch.object(hass_sync._session, "post", return_value=FakeResponse(200)), patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
             # First query sets the time
-            await service.query_v2("http://base", "org", "tok", "q1")
+            await hass_sync.query_v2("http://base", "org", "tok", "q1")
 
             # Second query immediate, should sleep
-            await service.query_v2("http://base", "org", "tok", "q2")
+            await hass_sync.query_v2("http://base", "org", "tok", "q2")
 
             # Verify sleep was called
             assert mock_sleep.called

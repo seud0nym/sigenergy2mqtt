@@ -8,7 +8,6 @@ import pytest
 import requests
 
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.influxdb.hass_history_sync import HassHistorySync
 from sigenergy2mqtt.influxdb.service import InfluxService
 
 
@@ -27,56 +26,56 @@ def logger():
 class TestParseTimestamp:
     """Test cases for parse_timestamp edge cases."""
 
-    def test_parse_iso_with_z_suffix(self, service):
+    def test_parse_iso_with_z_suffix(self, disabled_hass_history_sync):
         """Parse ISO timestamp with Z (Zulu/UTC) suffix."""
-        result = service.parse_timestamp("2024-01-15T10:30:00Z")
+        result = disabled_hass_history_sync.parse_timestamp("2024-01-15T10:30:00Z")
         # 2024-01-15 10:30:00 UTC = 1705314600
         assert result == 1705314600
 
-    def test_parse_iso_with_utc_offset(self, service):
+    def test_parse_iso_with_utc_offset(self, disabled_hass_history_sync):
         """Parse ISO timestamp with +00:00 timezone."""
-        result = service.parse_timestamp("2024-01-15T10:30:00+00:00")
+        result = disabled_hass_history_sync.parse_timestamp("2024-01-15T10:30:00+00:00")
         assert result == 1705314600
 
-    def test_parse_iso_with_positive_offset(self, service):
+    def test_parse_iso_with_positive_offset(self, disabled_hass_history_sync):
         """Parse ISO timestamp with positive timezone offset."""
         # +05:30 is 5.5 hours ahead of UTC
-        result = service.parse_timestamp("2024-01-15T16:00:00+05:30")
+        result = disabled_hass_history_sync.parse_timestamp("2024-01-15T16:00:00+05:30")
         # 16:00 +05:30 = 10:30 UTC = 1705314600
         assert result == 1705314600
 
-    def test_parse_iso_with_negative_offset(self, service):
+    def test_parse_iso_with_negative_offset(self, disabled_hass_history_sync):
         """Parse ISO timestamp with negative timezone offset."""
         # -08:00 is 8 hours behind UTC
-        result = service.parse_timestamp("2024-01-15T02:30:00-08:00")
+        result = disabled_hass_history_sync.parse_timestamp("2024-01-15T02:30:00-08:00")
         # 02:30 -08:00 = 10:30 UTC = 1705314600
         assert result == 1705314600
 
-    def test_parse_year_boundary(self, service):
+    def test_parse_year_boundary(self, disabled_hass_history_sync):
         """Parse timestamp at year boundary."""
-        result = service.parse_timestamp("2023-12-31T23:59:59Z")
+        result = disabled_hass_history_sync.parse_timestamp("2023-12-31T23:59:59Z")
         assert result == 1704067199
 
-    def test_parse_new_year(self, service):
+    def test_parse_new_year(self, disabled_hass_history_sync):
         """Parse timestamp at start of new year."""
-        result = service.parse_timestamp("2024-01-01T00:00:00Z")
+        result = disabled_hass_history_sync.parse_timestamp("2024-01-01T00:00:00Z")
         assert result == 1704067200
 
-    def test_parse_leap_year_date(self, service):
+    def test_parse_leap_year_date(self, disabled_hass_history_sync):
         """Parse timestamp on leap year date (Feb 29)."""
-        result = service.parse_timestamp("2024-02-29T12:00:00Z")
+        result = disabled_hass_history_sync.parse_timestamp("2024-02-29T12:00:00Z")
         # Feb 29, 2024 12:00 UTC
         assert result == 1709208000
 
-    def test_parse_with_milliseconds(self, service):
+    def test_parse_with_milliseconds(self, disabled_hass_history_sync):
         """Parse ISO timestamp with milliseconds (should be truncated to seconds)."""
-        result = service.parse_timestamp("2024-01-15T10:30:00.123Z")
+        result = disabled_hass_history_sync.parse_timestamp("2024-01-15T10:30:00.123Z")
         # Milliseconds are part of datetime, result is still in seconds
         assert result == 1705314600
 
-    def test_parse_with_microseconds(self, service):
+    def test_parse_with_microseconds(self, disabled_hass_history_sync):
         """Parse ISO timestamp with microseconds."""
-        result = service.parse_timestamp("2024-01-15T10:30:00.123456Z")
+        result = disabled_hass_history_sync.parse_timestamp("2024-01-15T10:30:00.123456Z")
         assert result == 1705314600
 
 
@@ -88,32 +87,32 @@ class TestParseTimestamp:
 class TestBuildTagFilters:
     """Test cases for build_v1_tag_filter with various tag combinations."""
 
-    def test_empty_tags(self, service):
+    def test_empty_tags(self, disabled_hass_history_sync):
         """Build filters with empty tags dict."""
-        result = service.build_v1_tag_filter({})
+        result = disabled_hass_history_sync.build_v1_tag_filter({})
         assert result == ""
 
-    def test_single_tag(self, service):
+    def test_single_tag(self, disabled_hass_history_sync):
         """Build filters with single tag."""
-        result = service.build_v1_tag_filter({"entity_id": "sensor.power"})
+        result = disabled_hass_history_sync.build_v1_tag_filter({"entity_id": "sensor.power"})
         assert result == "\"entity_id\"='sensor.power'"
 
-    def test_multiple_tags(self, service):
+    def test_multiple_tags(self, disabled_hass_history_sync):
         """Build filters with multiple tags."""
-        result = service.build_v1_tag_filter({"entity_id": "sensor.power", "device": "inverter1"})
+        result = disabled_hass_history_sync.build_v1_tag_filter({"entity_id": "sensor.power", "device": "inverter1"})
         # Order may vary, check both parts exist
         assert "\"entity_id\"='sensor.power'" in result
         assert "\"device\"='inverter1'" in result
         assert " AND " in result
 
-    def test_tag_with_special_characters(self, service):
+    def test_tag_with_special_characters(self, disabled_hass_history_sync):
         """Build filters with special characters in values."""
-        result = service.build_v1_tag_filter({"entity_id": "sensor.my_test"})
+        result = disabled_hass_history_sync.build_v1_tag_filter({"entity_id": "sensor.my_test"})
         assert result == "\"entity_id\"='sensor.my_test'"
 
-    def test_tag_with_spaces(self, service):
+    def test_tag_with_spaces(self, disabled_hass_history_sync):
         """Build filters with spaces in tag values."""
-        result = service.build_v1_tag_filter({"device": "My Device"})
+        result = disabled_hass_history_sync.build_v1_tag_filter({"device": "My Device"})
         assert result == "\"device\"='My Device'"
 
 
@@ -497,7 +496,7 @@ class TestHassHistorySyncCoverage:
 
     @pytest.mark.asyncio
     async def test_query_v1_post_success(self, disabled_hass_history_sync):
-        # query_v1_internal actually uses GET (see base.py:732)
+        # query_v1_internal uses the InfluxDB v1 GET endpoint
         hass_sync = disabled_hass_history_sync
         fut = asyncio.Future()
         fut.set_result(True)
