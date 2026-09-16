@@ -329,10 +329,6 @@ class Settings(BaseSettings):
 
     # ── Post-init orchestration ───────────────────────────────────────────────
 
-    def model_post_init(self, __context: Any, /) -> None:
-        # Sync root logger to the resolved log level
-        logging.getLogger().setLevel(self.log_level)
-
     def finalize_modbus(self, discovery: list[dict[str, Any]]) -> None:
         env_override = self.modbus_env_override
 

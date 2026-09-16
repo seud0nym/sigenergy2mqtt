@@ -6,6 +6,8 @@ import requests
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.influxdb.hass_history_sync import HassHistorySync
 from sigenergy2mqtt.influxdb.service import InfluxService
+from sigenergy2mqtt.influxdb.writers import V1HttpWriter, V2HttpWriter
+from tests.unit.influxdb.conftest import FakeResponse
 
 
 @pytest.mark.integration
@@ -15,10 +17,6 @@ async def test_init_prefers_v2_http_with_token(monkeypatch):
 
     # Mock requests.Session.post to capture calls
     calls = []
-
-    class FakeResponse:
-        def __init__(self, code):
-            self.status_code = code
 
     def fake_post(self, url, headers=None, data=None, timeout=None, params=None, auth=None):
         calls.append(url)
@@ -44,7 +42,7 @@ async def test_init_prefers_v2_http_with_token(monkeypatch):
         # It should have chosen v2_http
         assert svc._writer_type == "v2_http"
         # And the URL should look like v2
-        assert "/api/v2/write" in svc._write_url
+        assert "/api/v2/write" in svc._writers[svc._writer_type].url
 
         # Verify call history - first call should have been to v2
         assert len(calls) > 0
@@ -61,10 +59,6 @@ async def test_init_prefers_v2_http_with_token(monkeypatch):
 @pytest.mark.asyncio
 async def test_init_falls_back_to_v2_http_implicit(monkeypatch):
     # If no token but password is used (legacy), or no token at all but v2 endpoint works
-
-    class FakeResponse:
-        def __init__(self, code):
-            self.status_code = code
 
     def fake_post(self, url, headers=None, data=None, timeout=None, params=None, auth=None):
         if "/api/v2/write" in url:
@@ -84,7 +78,7 @@ async def test_init_falls_back_to_v2_http_implicit(monkeypatch):
         svc = InfluxService(plant_index=0)
         await svc.async_init()
         assert svc._writer_type == "v2_http"
-        assert svc._write_url is not None
+        assert svc._writers["v2_http"].url is not None
     finally:
         active_config.influxdb.enabled = prev_enabled
         active_config.influxdb.database = prev_db
@@ -96,10 +90,6 @@ async def test_init_falls_back_to_v2_http_implicit(monkeypatch):
 async def testwrite_line_uses_configured_writer(monkeypatch):
     calls = {}
 
-    class FakeResponse:
-        def __init__(self, code):
-            self.status_code = code
-
     def fake_post(self, url, headers=None, data=None, timeout=None, params=None, auth=None):
         calls["url"] = url
         calls["data"] = data
@@ -110,8 +100,7 @@ async def testwrite_line_uses_configured_writer(monkeypatch):
     svc = InfluxService(plant_index=0)
     # Manually configure writer
     svc._writer_type = "v2_http"
-    svc._write_url = "http://localhost:8086/api/v2/write?bucket=test_db&precision=s"
-    svc._write_headers = {"Authorization": "Token tok"}
+    svc._writers["v2_http"] = V2HttpWriter("http://localhost:8086", "test_db", None, "tok", svc.log_identity)
     svc._online = True
 
     await svc.write_line("measurement,tag=1 value=42 1000000000")
@@ -123,18 +112,6 @@ async def testwrite_line_uses_configured_writer(monkeypatch):
 # _try_v1_write() integration tests
 # =============================================================================
 
-
-class FakeResponse:
-    """Helper class for mocking HTTP responses."""
-
-    def __init__(self, code, json_data=None, text="", content=b""):
-        self.status_code = code
-        self._json_data = json_data
-        self.text = text
-        self.content = content
-
-    def json(self):
-        return self._json_data
 
 
 @pytest.mark.integration
@@ -151,10 +128,10 @@ def test_try_v1_write_success_first_attempt(monkeypatch):
 
     monkeypatch.setattr(svc._session, "post", lambda *args, **kwargs: fake_post(None, *args, **kwargs))
 
-    result = svc._try_v1_write("http://localhost:8086", "testdb", ("user", "pass"), b"test value=1")
+    writer = V1HttpWriter("http://localhost:8086", "testdb", ("user", "pass"), svc.log_identity)
+    result = writer.probe(svc._session, b"test value=1")
     assert result is True
-    assert svc._writer_type == "v1_http"
-    assert svc._write_url == "http://localhost:8086/write"
+    assert writer.url == "http://localhost:8086/write"
     assert call_count[0] == 1
 
 
@@ -179,9 +156,9 @@ def test_try_v1_write_creates_database_on_404(monkeypatch):
 
     monkeypatch.setattr(svc._session, "post", lambda *args, **kwargs: fake_post(None, *args, **kwargs))
 
-    result = svc._try_v1_write("http://localhost:8086", "testdb", None, b"test value=1")
+    writer = V1HttpWriter("http://localhost:8086", "testdb", None, svc.log_identity)
+    result = writer.probe(svc._session, b"test value=1")
     assert result is True
-    assert svc._writer_type == "v1_http"
     assert call_count[0] == 3
 
 
@@ -217,9 +194,9 @@ def test_try_v1_write_complete_failure(monkeypatch):
     monkeypatch.setattr(svc._session, "post", fake_post)
     monkeypatch.setattr(svc._session, "get", fake_get)
 
-    result = svc._try_v1_write("http://localhost:8086", "testdb", None, b"test value=1")
+    writer = V1HttpWriter("http://localhost:8086", "testdb", None, svc.log_identity)
+    result = writer.probe(svc._session, b"test value=1")
     assert result is False
-    assert svc._writer_type is None
 
 
 # =============================================================================
@@ -243,11 +220,11 @@ def test_try_v2_write_success_first_attempt(monkeypatch):
 
     monkeypatch.setattr(svc._session, "post", lambda *args, **kwargs: fake_post(None, *args, **kwargs))
 
-    result = svc._try_v2_write("http://localhost:8086", "mybucket", "myorg", "mytoken", b"test value=1")
+    writer = V2HttpWriter("http://localhost:8086", "mybucket", "myorg", "mytoken", svc.log_identity)
+    result = writer.probe(svc._session, b"test value=1")
     assert result is True
-    assert svc._writer_type == "v2_http"
-    assert "mybucket" in svc._write_url
-    assert "myorg" in svc._write_url
+    assert "mybucket" in writer.url
+    assert "myorg" in writer.url
     assert call_count[0] == 1
 
 
@@ -276,9 +253,9 @@ def test_try_v2_write_creates_bucket_on_404(monkeypatch):
     monkeypatch.setattr(svc._session, "post", lambda *args, **kwargs: fake_post(None, *args, **kwargs))
     monkeypatch.setattr(svc._session, "get", fake_get)
 
-    result = svc._try_v2_write("http://localhost:8086", "mybucket", "myorg", "mytoken", b"test value=1")
+    writer = V2HttpWriter("http://localhost:8086", "mybucket", "myorg", "mytoken", svc.log_identity)
+    result = writer.probe(svc._session, b"test value=1")
     assert result is True
-    assert svc._writer_type == "v2_http"
 
 
 @pytest.mark.integration
@@ -292,9 +269,9 @@ def test_try_v2_write_complete_failure(monkeypatch):
 
     monkeypatch.setattr(svc._session, "post", fake_post)
 
-    result = svc._try_v2_write("http://localhost:8086", "mybucket", None, None, b"test value=1")
+    writer = V2HttpWriter("http://localhost:8086", "mybucket", None, None, svc.log_identity)
+    result = writer.probe(svc._session, b"test value=1")
     assert result is False
-    assert svc._writer_type is None
 
 
 # =============================================================================
@@ -460,7 +437,7 @@ async def testcopy_records_v1_success(monkeypatch):
 
     # Configure writer
     svc._writer_type = "v1_http"
-    svc._write_url = "http://localhost:8086/write"
+    svc._writers["v1_http"] = V1HttpWriter("https://example.test", "test_db", None, svc.log_identity)
     active_config.influxdb.database = "target_db"
 
     query_result = {
@@ -556,7 +533,7 @@ async def testcopy_records_v1_multiple_series(monkeypatch):
     svc._online = True
 
     svc._writer_type = "v1_http"
-    svc._write_url = "http://localhost:8086/write"
+    svc._writers["v1_http"] = V1HttpWriter("https://example.test", "test_db", None, svc.log_identity)
     active_config.influxdb.database = "target_db"
 
     query_result = {
@@ -602,7 +579,7 @@ async def testcopy_records_v1_field_standardization():
     svc = HassHistorySync(plant_index=0)
     svc._online = True
     svc._writer_type = "v1_http"
-    svc._write_url = "http://localhost:8086/write"
+    svc._writers["v1_http"] = V1HttpWriter("https://example.test", "test_db", None, svc.log_identity)
     svc._session = MagicMock()
 
     # Mock query result with mixed types and non-standard field names
@@ -660,7 +637,7 @@ async def testcopy_records_v2_field_standardization():
     svc = HassHistorySync(plant_index=0)
     svc._online = True
     svc._writer_type = "v2_http"
-    svc._write_url = "http://localhost:8086/api/v2/write"
+    svc._writers["v2_http"] = V2HttpWriter("http://localhost:8086", "test_db", None, "tok", svc.log_identity)
     svc._session = MagicMock()
 
     # Mock CSV response for v2

@@ -59,6 +59,7 @@ class InfluxService(InfluxBase):
         Returns:
             ``True`` if any pattern matches any of the three identifiers.
         """
+        uid = uid or ""  # unique_id may legitimately be None; re.search() requires a str
         return any(re.search(pat, sensor.__class__.__name__) or re.search(pat, obj) or re.search(pat, uid) for pat in patterns)
 
     # ------------------------------------------------------------------

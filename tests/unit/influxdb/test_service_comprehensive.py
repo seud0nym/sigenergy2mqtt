@@ -7,16 +7,8 @@ import requests
 
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.influxdb.service import InfluxService
-
-
-class MockResponse:
-    def __init__(self, status_code, json_data=None, content=b""):
-        self.status_code = status_code
-        self._json_data = json_data
-        self.content = content
-
-    def json(self):
-        return self._json_data
+from sigenergy2mqtt.influxdb.writers import V1HttpWriter, V2HttpWriter
+from tests.unit.influxdb.conftest import FakeResponse, _bring_online
 
 
 @pytest.fixture
@@ -91,7 +83,7 @@ async def test_init_token_prefers_v2_http(logger, influx_config):
     influx_config.token = "mytoken"
     with patch("requests.Session.post") as mock_post:
         mock_post.side_effect = [
-            MockResponse(204),  # v2 HTTP success
+            FakeResponse(204),  # v2 HTTP success
         ]
         svc = InfluxService(plant_index=0)
         await svc.async_init()
@@ -104,7 +96,7 @@ async def test_init_v2_http_success_no_token(logger, influx_config):
     with patch("requests.Session.post") as mock_post:
         # First call might typically be v2 check in fallback
         mock_post.side_effect = [
-            MockResponse(204),  # v2 HTTP success
+            FakeResponse(204),  # v2 HTTP success
         ]
         svc = InfluxService(plant_index=0)
         await svc.async_init()
@@ -116,11 +108,11 @@ async def test_init_v2_http_bucket_creation(logger, influx_config):
     influx_config.token = "mytoken"
     with patch("requests.Session.post") as mock_post, patch("requests.Session.get") as mock_get:
         mock_post.side_effect = [
-            MockResponse(404),  # v2 write fail
-            MockResponse(201),  # v2 bucket create success
-            MockResponse(204),  # v2 write retry success
+            FakeResponse(404),  # v2 write fail
+            FakeResponse(201),  # v2 bucket create success
+            FakeResponse(204),  # v2 write retry success
         ]
-        mock_get.return_value = MockResponse(200, {"orgs": [{"id": "org123"}]})
+        mock_get.return_value = FakeResponse(200, {"orgs": [{"id": "org123"}]})
 
         svc = InfluxService(plant_index=0)
         await svc.async_init()
@@ -132,9 +124,9 @@ async def test_init_v1_http_database_creation(logger, influx_config):
     influx_config.username = "user"
     with patch("requests.Session.post") as mock_post:
         mock_post.side_effect = [
-            MockResponse(404, content=b"database not found"),  # v1 write fail
-            MockResponse(200),  # database create success
-            MockResponse(204),  # v1 write retry success
+            FakeResponse(404, content=b"database not found"),  # v1 write fail
+            FakeResponse(200),  # database create success
+            FakeResponse(204),  # v1 write retry success
         ]
 
         svc = InfluxService(plant_index=0)
@@ -166,11 +158,11 @@ async def testwrite_line_http_fail(influx_config):
     # Disable init so we can manually configure the writer for the test
     influx_config.enabled = False
     svc = InfluxService(plant_index=0)
-    svc._online = True  # Enable for write test
+    _bring_online(svc)  # Enable for write test
 
     # Manually configure writer
     svc._writer_type = "v2_http"
-    svc._write_url = "http://localhost:8086/api/v2/write"
+    svc._writers["v2_http"] = V2HttpWriter("http://localhost:8086", "test_db", None, "tok", svc.log_identity)
 
     # Mock clean session post failure
     with patch.object(svc._session, "post", side_effect=requests.RequestException("write error")), patch("sigenergy2mqtt.influxdb.base.logger.error") as mock_logger_error:
@@ -307,22 +299,22 @@ def test_subscribe_edge_cases(logger):
 async def testwrite_line_v2_http_and_v1_http(logger, influx_config):
     influx_config.enabled = False  # Disable init
     svc = InfluxService(plant_index=0)
-    svc._online = True
+    _bring_online(svc)
 
     # v2_http
     svc._writer_type = "v2_http"
-    svc._write_url = "http://v2"
+    svc._writers["v2_http"] = V2HttpWriter("http://localhost:8086", "test_db", None, "tok", svc.log_identity)
     with patch.object(svc._session, "post") as mock_post:
-        mock_post.return_value = MockResponse(204)
+        mock_post.return_value = FakeResponse(204)
         await svc.write_line("line2")
         await svc.flush_buffer()  # Force flush to trigger write
         mock_post.assert_called()
 
     # v1_http
     svc._writer_type = "v1_http"
-    svc._write_url = "http://v1"
+    svc._writers["v1_http"] = V1HttpWriter("https://example.test", "test_db", None, svc.log_identity)
     with patch.object(svc._session, "post") as mock_post:
-        mock_post.return_value = MockResponse(204)
+        mock_post.return_value = FakeResponse(204)
         await svc.write_line("line1")
         await svc.flush_buffer()  # Force flush to trigger write
         mock_post.assert_called()
@@ -341,7 +333,7 @@ async def test_init_v1_fallback_success(logger, influx_config):
         # Side effects for calls:
         # Call 1: v2 check -> fail
         # Call 2: v1 check -> success
-        mock_post.side_effect = [requests.RequestException("v2 conn fail"), MockResponse(204)]
+        mock_post.side_effect = [requests.RequestException("v2 conn fail"), FakeResponse(204)]
 
         svc = InfluxService(plant_index=0)
         await svc.async_init()

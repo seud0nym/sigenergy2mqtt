@@ -1,6 +1,30 @@
 <!-- git log [since tag]..HEAD --oneline -->
 # Changelog 
 
+## [Unreleased]
+
+### Changed
+
+- Refactored former monolithic main module into separate concerns modules
+
+---
+
+## [2026.9.15] - 2026-09-15
+
+### Fixed
+
+- Fixed crash risk in InfluxDB _matches_filter service.py
+- Fixed startup sequence race condition that caused command-line logging level options to be ignored (exposed in logs for #269)
+
+### Changed
+
+- Enhance escaping in InfluxDB line protocol for tags and fields
+- Refactored InfluxDB writer logic to prepare for v3 implementation
+- Restored the documented precedence so explicit command-line options override existing environment variables (exposed in logs for #269)
+- Added undocumented 2-phase OutputType "Double Live Wire" (L1/L2?) to prevent start-up crash (#269)
+
+---
+
 ## [2026.9.10] - 2026-09-10
 
 ### Fixed

@@ -52,6 +52,12 @@ async def async_main() -> None:
         # is safe.
         await initialize_async()
 
+        # Reconfigure logging with the authoritative resolved settings (CLI/YAML/env).
+        # The configure_logging() call at the top of the loop uses the import-time
+        # Settings() which pre-dates CLI→env promotion, so levels may be incorrect
+        # (e.g. --log-level=DEBUG not yet applied). This second call corrects that.
+        configure_logging()
+
         # Initialise StateStore with dedicated MQTT connection + sentinel-based warming
         await state_store.initialise(
             active_config.persistent_state_path,

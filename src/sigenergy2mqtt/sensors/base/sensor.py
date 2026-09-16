@@ -10,7 +10,7 @@ import logging
 import re
 import time
 from collections import deque
-from typing import TYPE_CHECKING, Any, ClassVar, Protocol, cast
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 import paho.mqtt.client as mqtt
 from pymodbus.exceptions import ModbusException
@@ -32,16 +32,6 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 # =============================================================================
-
-
-class SensorProtocol(Protocol):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-    def __getitem__(self, key: str) -> Any: ...
-    def __setitem__(self, key: str, value: Any) -> None: ...
-    def _log_configured_topics(self) -> None: ...
-    def set_latest_state(self, state: float | str | list[bool] | list[int] | list[float]) -> bool: ...
 
 
 class SensorDebuggingMixin:
@@ -75,7 +65,7 @@ class TypedSensorMixin:
 # =============================================================================
 
 
-class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], SensorProtocol, metaclass=abc.ABCMeta):
+class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
     """Base class for all sensors in the Sigenergy2MQTT system.
 
     This class provides core functionality for:

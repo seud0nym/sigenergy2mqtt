@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from abc import ABC
 from typing import Any, cast
 
 import paho.mqtt.client as mqtt
@@ -668,8 +667,8 @@ class IndependentPhasePowerControl(SwitchSensor, AvailabilityMixin, HybridInvert
 ## //--------------------- 5-2-1 Plant setting parameter power limitation register definition ---------------------// ##
 
 
-class RemoteEMSLimit(NumericSensor, HybridInverter, ABC):
-    """Base class for Remote EMS limits. This is not meant to be instantiated directly."""
+class RemoteEMSLimit(NumericSensor, HybridInverter):
+    """Configurable base implementation for Remote EMS limit sensors."""
 
     def __init__(
         self,

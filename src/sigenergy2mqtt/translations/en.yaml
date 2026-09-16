@@ -1322,6 +1322,7 @@ class:
       '1': L1/L2/L3 # verify:ignore
       '2': L1/L2/L3/N # verify:ignore
       '3': L1/L2/N # verify:ignore
+      '4': L1/L2 #verify:ignore
   PACKBCUCount:
     attributes:
       source: Modbus Register {address}

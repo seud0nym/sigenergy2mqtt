@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from ruamel.yaml import YAML
 
-from sigenergy2mqtt.config import ConfigurationError, _promote_cli_to_env, active_config, const, initialize
+from sigenergy2mqtt.config import ConfigurationError, Settings, _promote_cli_to_env, active_config, cli, const, initialize
 from sigenergy2mqtt.config.config import _create_persistent_state_path, _system_initialize
 
 VersionInfo = collections.namedtuple("VersionInfo", ["major", "minor", "micro", "releaselevel", "serial"])
@@ -154,6 +154,36 @@ def test_promote_cli_to_env_modbus_log_skipped_branch():
     with patch.dict(os.environ, {}, clear=True):
         _promote_cli_to_env(args)
         assert const.SIGENERGY2MQTT_MODBUS_LOG_SKIPPED not in os.environ
+
+
+def test_explicit_cli_options_override_environment():
+    """Exercise the parser and promotion together so CLI precedence is covered."""
+    with patch.dict(
+        os.environ,
+        {
+            const.SIGENERGY2MQTT_LOG_LEVEL: "INFO",
+            const.SIGENERGY2MQTT_DEBUG_SENSOR: "ExistingSensor",
+        },
+        clear=True,
+    ):
+        args = cli.parse_args(["--log-level=DEBUG", "--debug-sensor=OutputType"])
+
+        _promote_cli_to_env(args)
+
+        assert os.environ[const.SIGENERGY2MQTT_LOG_LEVEL] == "DEBUG"
+        assert os.environ[const.SIGENERGY2MQTT_DEBUG_SENSOR] == "OutputType"
+
+
+def test_debug_sensor_cli_option_enables_debug_configuration():
+    """Verify the reported CLI combination reaches the resolved settings."""
+    with patch.dict(os.environ, {const.SIGENERGY2MQTT_LOG_LEVEL: "INFO"}, clear=True):
+        args = cli.parse_args(["--debug-sensor=OutputType"])
+
+        _promote_cli_to_env(args)
+        settings = Settings()
+
+        assert settings.log_level == logging.DEBUG
+        assert settings.sensor_overrides["OutputType"]["debug-logging"] is True
 
 
 def test_initialize_show_version_returns_false():
