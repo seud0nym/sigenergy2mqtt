@@ -24,11 +24,32 @@ async def test_collect_mqtt_metrics(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_collect_influxdb_metrics(monkeypatch):
+async def test_collect_influxdb_metrics_without_history(monkeypatch):
     monkeypatch.setattr(active_config.influxdb, "write_timeout", 10, raising=False)
+    monkeypatch.setattr(active_config.influxdb, "load_hass_history", False, raising=False)
+    metrics = await DiagnosticsCollectors._diagnostics_collect_influxdb_metrics()
+    assert "Write Count" in metrics
+    assert "Write Errors" in metrics
+    assert "Retries" in metrics
+    assert "Rate Limit Waits" in metrics
+    assert "config" in metrics
+    assert "Query Count" not in metrics
+    assert "Query Errors" not in metrics
+
+
+@pytest.mark.asyncio
+async def test_collect_influxdb_metrics_with_history(monkeypatch):
+    from sigenergy2mqtt.metrics import Metrics
+
+    monkeypatch.setattr(active_config.influxdb, "write_timeout", 10, raising=False)
+    monkeypatch.setattr(active_config.influxdb, "load_hass_history", True, raising=False)
+    Metrics.sigenergy2mqtt_influxdb_queries = 42
+    Metrics.sigenergy2mqtt_influxdb_query_errors = 3
     metrics = await DiagnosticsCollectors._diagnostics_collect_influxdb_metrics()
     assert "Write Errors" in metrics
     assert "config" in metrics
+    assert metrics.get("Query Count") == 42
+    assert metrics.get("Query Errors") == 3
 
 
 @pytest.mark.asyncio
