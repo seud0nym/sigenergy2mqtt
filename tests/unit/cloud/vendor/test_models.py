@@ -58,6 +58,34 @@ def test_disabled_instant_manual_control_from_api() -> None:
     assert control == InstantManualControl(enabled=False, mode=None, end_time=None)
 
 
+@pytest.mark.parametrize(
+    ("payload", "expected_mode", "expected_end_time"),
+    [
+        ({"enable": True, "mode": "new-mode", "endTime": "1"}, None, 1),
+        (
+            {"enable": True, "mode": "0", "endTime": "not-a-timestamp"},
+            InstantManualMode.CHARGING,
+            None,
+        ),
+        (
+            {"enable": True, "mode": "0", "endTime": object()},
+            InstantManualMode.CHARGING,
+            None,
+        ),
+    ],
+)
+def test_instant_manual_control_tolerates_unknown_response_values(
+    payload: dict,
+    expected_mode: InstantManualMode | None,
+    expected_end_time: int | None,
+) -> None:
+    control = InstantManualControl.from_api(payload)
+
+    assert control.enabled is True
+    assert control.mode is expected_mode
+    assert control.end_time == expected_end_time
+
+
 def test_peak_shaving_schedule_is_immutable_and_replaceable() -> None:
     schedule = PeakShavingSchedule.from_api(
         {

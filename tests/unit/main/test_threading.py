@@ -142,6 +142,24 @@ async def test_read_and_publish_device_sensors_uses_and_closes_custom_transport(
 
 
 @pytest.mark.asyncio
+async def test_custom_transport_is_closed_when_mqtt_setup_fails(monkeypatch):
+    cfg_obj = Config()
+    cfg_obj.clean = False
+    transport = MagicMock()
+    transport.close = AsyncMock()
+
+    with _swap_active_config(cfg_obj):
+        cfg = ThreadConfig.create(name="Cloud MQTT failure", host=None, port=None)
+        cfg.transport_factory = AsyncMock(return_value=transport)
+        monkeypatch.setattr(threading_mod, "mqtt_setup", AsyncMock(side_effect=RuntimeError("MQTT failed")))
+
+        with pytest.raises(RuntimeError, match="MQTT failed"):
+            await threading_mod.read_and_publish_device_sensors(cfg, loop=asyncio.get_running_loop())
+
+    transport.close.assert_awaited_once()
+
+
+@pytest.mark.asyncio
 async def test_read_and_publish_device_sensors_with_modbus_and_tasks(monkeypatch):
     # Config: not clean, HA disabled
     cfg_obj = Config()

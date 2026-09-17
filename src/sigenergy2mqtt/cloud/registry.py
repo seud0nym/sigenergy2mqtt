@@ -45,7 +45,19 @@ class BatteryControlRegistry:
 
     async def transport_factory(self) -> BatteryControlPort | None:
         if self._adapter is not None:
-            await self._adapter.connect()
+            try:
+                await self._adapter.connect()
+            except BaseException:
+                # connect() may have opened an owned HTTP session before auth
+                # or station discovery failed. The adapter never reached the
+                # device thread in that case, so the registry must close it.
+                try:
+                    await self._adapter.close()
+                except Exception:
+                    logger.exception(
+                        "Failed to close cloud adapter after connect failure"
+                    )
+                raise
         return self._adapter
 
     async def close(self) -> None:

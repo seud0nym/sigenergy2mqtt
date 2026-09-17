@@ -164,3 +164,24 @@ async def test_registry_owns_selected_adapter_lifecycle() -> None:
     registry.active.connect.assert_awaited_once()
     await registry.close()
     registry.active.close.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_registry_closes_partially_connected_adapter() -> None:
+    registry = BatteryControlRegistry()
+    registry.configure(
+        CloudConfig(
+            username="user",
+            password="password",
+            region="eu",
+            **{"accept-unofficial-api-risk": True},
+        )
+    )
+    assert registry.active is not None
+    registry.active.connect = AsyncMock(side_effect=RuntimeError("discovery failed"))  # type: ignore[method-assign]
+    registry.active.close = AsyncMock()  # type: ignore[method-assign]
+
+    with pytest.raises(RuntimeError, match="discovery failed"):
+        await registry.transport_factory()
+
+    registry.active.close.assert_awaited_once()

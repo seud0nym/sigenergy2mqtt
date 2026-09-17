@@ -31,9 +31,17 @@ class InstantManualControl:
     @classmethod
     def from_api(cls, data: dict[str, Any]) -> "InstantManualControl":
         raw_mode = data.get("mode")
-        mode = InstantManualMode(str(raw_mode)) if raw_mode not in (None, "") else None
+        try:
+            mode = (
+                InstantManualMode(str(raw_mode)) if raw_mode not in (None, "") else None
+            )
+        except ValueError:
+            mode = None
         raw_end_time = data.get("endTime")
-        end_time = int(raw_end_time) if raw_end_time not in (None, "") else None
+        try:
+            end_time = int(raw_end_time) if raw_end_time not in (None, "") else None
+        except (TypeError, ValueError):
+            end_time = None
         return cls(
             enabled=bool(data.get("enable")),
             mode=mode,
