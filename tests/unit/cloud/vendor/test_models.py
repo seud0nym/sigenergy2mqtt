@@ -62,6 +62,7 @@ def test_disabled_instant_manual_control_from_api() -> None:
 
 
 def test_region_lookup_rejects_unknown_region() -> None:
+    assert base_url_for_region("aus") == "https://api-aus.sigencloud.com/"
     assert base_url_for_region("eu") == "https://api-eu.sigencloud.com/"
     with pytest.raises(ValueError, match="Unsupported Sigenergy region.*moon"):
         base_url_for_region("moon")

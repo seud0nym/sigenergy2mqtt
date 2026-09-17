@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 REGION_BASE_URLS: dict[str, str] = {
+    "aus": "https://api-aus.sigencloud.com/",
     "eu": "https://api-eu.sigencloud.com/",
     "cn": "https://api-cn.sigencloud.com/",
     "apac": "https://api-apac.sigencloud.com/",

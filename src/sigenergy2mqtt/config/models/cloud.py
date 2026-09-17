@@ -5,16 +5,11 @@ from __future__ import annotations
 import logging
 
 from pydantic import BaseModel, Field, computed_field, field_validator, model_validator
-from sigenergy2mqtt.cloud.vendor.solidfox.sigenergy_cloud import regions
 
+from sigenergy2mqtt.cloud.vendor.solidfox.sigenergy_cloud import regions
 from sigenergy2mqtt.common import ScanIntervalDefault
 from sigenergy2mqtt.config.models._base import _SUB
 from sigenergy2mqtt.config.validators import validate_log_level
-
-if "aus" not in regions.REGION_BASE_URLS:
-    # The 0.1.6 library only ships eu/cn/apac/us, so register Australia ourselves.
-    # Trailing slash is required — the client appends paths directly.
-    regions.REGION_BASE_URLS["aus"] = "https://api-aus.sigencloud.com/"
 
 
 class CloudConfig(BaseModel):
