@@ -206,6 +206,7 @@ async def test_read_and_publish_device_sensors_on_commencement_exception(caplog)
     config.description = "TestCommencementCrash"
     config.host = None
     config.url = "None"
+    config.transport_factory = None
 
     async def fake_task():
         pass
@@ -238,6 +239,7 @@ async def test_read_and_publish_device_sensors_on_completion_exception(caplog):
     config.description = "TestCompletionCrash"
     config.host = None
     config.url = "None"
+    config.transport_factory = None
 
     async def fake_task():
         pass
@@ -270,6 +272,7 @@ async def test_read_and_publish_device_sensors_task_exception(caplog):
     config.description = "TestTaskCrash"
     config.host = None
     config.url = "None"
+    config.transport_factory = None
 
     async def raise_error():
         raise ValueError("task failed")
