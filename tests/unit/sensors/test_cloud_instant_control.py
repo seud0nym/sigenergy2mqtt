@@ -7,9 +7,10 @@ import pytest
 
 from sigenergy2mqtt.cloud.models import (
     Capabilities,
-    InstantControlMode as DomainMode,
     InstantControlStatus,
 )
+from sigenergy2mqtt.cloud.models import InstantControlMode as DomainMode
+from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.devices.plant.cloud_control import SigenergyCloudControl
 from sigenergy2mqtt.sensors.base import DiscoveryKeys
 from sigenergy2mqtt.sensors.plant_cloud_control import (
@@ -74,16 +75,19 @@ def test_cloud_control_device_registers_three_normal_mqtt_entities() -> None:
 
 
 def test_mode_and_duration_are_available_only_while_switch_is_off() -> None:
-    device = SigenergyCloudControl(0)
-    switch, mode, duration = list(device.sensors.values())
+    config = Config()
+    config.home_assistant.enabled = True
+    with _swap_active_config(config):
+        device = SigenergyCloudControl(0)
+        switch, mode, duration = list(device.sensors.values())
 
-    for selector in (mode, duration):
-        availability = selector[DiscoveryKeys.AVAILABILITY]
-        gate = next(
-            item for item in availability if item["topic"] == switch.state_topic
-        )
-        assert gate["payload_available"] == 0
-        assert gate["payload_not_available"] == 1
+        for selector in (mode, duration):
+            availability = selector[DiscoveryKeys.AVAILABILITY]
+            gate = next(
+                item for item in availability if item["topic"] == switch.state_topic
+            )
+            assert gate["payload_available"] == 0
+            assert gate["payload_not_available"] == 1
 
 
 @pytest.mark.asyncio

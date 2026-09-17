@@ -14,7 +14,7 @@ from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.mqtt import MqttHandler
 
 from .constants import DiscoveryKeys
-from .mixins import ReadableSensorMixin
+from .mixins import ReadableSensorMixin, WriteableSensorMixin
 from .sensor import AvailabilityMixin
 
 logger = logging.getLogger(__name__)
@@ -46,7 +46,7 @@ class CloudSensor(ReadableSensorMixin, AvailabilityMixin):
     ) -> float | int | str | None: ...
 
 
-class CloudReadWriteSensor(CloudSensor):
+class CloudReadWriteSensor(WriteableSensorMixin, CloudSensor):
     """Cloud read/write behavior mixed with a writable entity mixin."""
 
     def __init__(
