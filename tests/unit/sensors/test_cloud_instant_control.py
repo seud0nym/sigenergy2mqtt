@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
+from sigenergy2mqtt.cloud.exceptions import BatteryControlUnavailableError
 from sigenergy2mqtt.cloud.models import (
     Capabilities,
     InstantControlStatus,
@@ -12,7 +13,7 @@ from sigenergy2mqtt.cloud.models import (
 from sigenergy2mqtt.cloud.models import InstantControlMode as DomainMode
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.devices.plant.cloud_control import SigenergyCloudControl
-from sigenergy2mqtt.sensors.base import DiscoveryKeys
+from sigenergy2mqtt.sensors.base import CloudReadWriteSensor, DiscoveryKeys
 from sigenergy2mqtt.sensors.plant_cloud_control import (
     INSTANT_CONTROL_OPTIONS,
     InstantControlDuration,
@@ -131,3 +132,79 @@ async def test_selection_sensors_retain_next_values_without_cloud_reads() -> Non
 
     assert await mode._read_cloud_state(port) == 2
     assert await duration._read_cloud_state(port) == 1440
+
+
+@pytest.mark.asyncio
+async def test_cloud_sensor_requires_transport_keyword_and_ignores_missing_port() -> (
+    None
+):
+    mode, _, _ = _controls()
+
+    with pytest.raises(ValueError, match="modbus_client"):
+        await mode._update_internal_state()
+    assert await mode._update_internal_state(modbus_client=None) is False
+
+
+@pytest.mark.asyncio
+async def test_cloud_sensor_handles_failed_and_unknown_reads(caplog) -> None:
+    _, _, switch = _controls()
+    port = FakeBatteryControlPort()
+    switch._read_cloud_state = AsyncMock(  # type: ignore[method-assign]
+        side_effect=BatteryControlUnavailableError("offline")
+    )
+
+    assert await switch._update_internal_state(modbus_client=port) is False
+    assert "cloud read failed" in caplog.text
+
+    switch._read_cloud_state = AsyncMock(return_value=None)  # type: ignore[method-assign]
+    assert await switch._update_internal_state(modbus_client=port) is False
+
+
+def test_cloud_sensor_validates_availability_gate() -> None:
+    mode, _, switch = _controls()
+
+    with pytest.raises(ValueError, match="AvailabilityMixin"):
+        mode.set_availability_control_sensor(object())  # type: ignore[arg-type]
+
+    config = Config()
+    config.home_assistant.enabled = True
+    with _swap_active_config(config):
+        mode.set_availability_control_sensor(switch)
+        with pytest.raises(RuntimeError, match="topic is not configured"):
+            mode.configure_mqtt_topics("cloud-device")
+
+
+def test_cloud_sensor_constructor_rejects_invalid_availability_gate() -> None:
+    uninitialized_mode = InstantControlMode.__new__(InstantControlMode)
+    with pytest.raises(ValueError, match="AvailabilityMixin"):
+        CloudReadWriteSensor.__init__(
+            uninitialized_mode,
+            availability_control_sensor=object(),  # type: ignore[arg-type]
+        )
+
+
+@pytest.mark.asyncio
+async def test_cloud_write_handles_missing_transport_and_domain_error(caplog) -> None:
+    mode, _, _ = _controls()
+
+    assert await mode._write_value(None, AsyncMock(), 1, "source", AsyncMock()) is False
+    mode._write_cloud_value = AsyncMock(  # type: ignore[method-assign]
+        side_effect=BatteryControlUnavailableError("offline")
+    )
+    assert (
+        await mode._write_value(
+            FakeBatteryControlPort(), AsyncMock(), 1, "source", AsyncMock()
+        )
+        is False
+    )
+    assert "cloud write failed" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_cloud_write_delegates_successfully() -> None:
+    mode, _, _ = _controls()
+    mode._write_cloud_value = AsyncMock(return_value=True)  # type: ignore[method-assign]
+    port = FakeBatteryControlPort()
+
+    assert await mode._write_value(port, AsyncMock(), 2, "source", AsyncMock()) is True
+    mode._write_cloud_value.assert_awaited_once_with(port, 2)

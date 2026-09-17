@@ -11,6 +11,9 @@ from sigenergy2mqtt.cloud.vendor.solidfox.sigenergy_cloud import (
     PeakShavingSchedule,
     PeakShavingSlot,
 )
+from sigenergy2mqtt.cloud.vendor.solidfox.sigenergy_cloud.regions import (
+    base_url_for_region,
+)
 
 
 def test_battery_level_settings_round_trip() -> None:
@@ -56,6 +59,12 @@ def test_disabled_instant_manual_control_from_api() -> None:
     )
 
     assert control == InstantManualControl(enabled=False, mode=None, end_time=None)
+
+
+def test_region_lookup_rejects_unknown_region() -> None:
+    assert base_url_for_region("eu") == "https://api-eu.sigencloud.com/"
+    with pytest.raises(ValueError, match="Unsupported Sigenergy region.*moon"):
+        base_url_for_region("moon")
 
 
 @pytest.mark.parametrize(

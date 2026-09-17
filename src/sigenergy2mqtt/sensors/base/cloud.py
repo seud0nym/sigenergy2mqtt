@@ -75,14 +75,15 @@ class CloudReadWriteSensor(WriteableSensorMixin, CloudSensor):
         base = super().configure_mqtt_topics(device_id)
         gate = self._availability_control_sensor
         if gate is not None and active_config.home_assistant.enabled:
-            if not gate.state_topic:
+            gate_topic = gate.get(DiscoveryKeys.STATE_TOPIC)
+            if not gate_topic:
                 raise RuntimeError(
                     f"{self.log_identity} availability sensor topic is not configured"
                 )
             availability = cast(list[dict[str, Any]], self[DiscoveryKeys.AVAILABILITY])
             availability.append(
                 {
-                    "topic": gate.state_topic,
+                    "topic": gate_topic,
                     "payload_available": self._payload_available,
                     "payload_not_available": self._payload_not_available,
                 }
