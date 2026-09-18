@@ -29,12 +29,10 @@ class InstantManualControl:
     end_time: int | None
 
     @classmethod
-    def from_api(cls, data: dict[str, Any]) -> "InstantManualControl":
+    def from_api(cls, data: dict[str, Any]) -> InstantManualControl:
         raw_mode = data.get("mode")
         try:
-            mode = (
-                InstantManualMode(str(raw_mode)) if raw_mode not in (None, "") else None
-            )
+            mode = InstantManualMode(str(raw_mode)) if raw_mode not in (None, "") else None
         except ValueError:
             mode = None
         raw_end_time = data.get("endTime")
@@ -59,7 +57,7 @@ class BatteryLevelSettings:
     backup_soc: int
 
     @classmethod
-    def from_api(cls, data: dict[str, Any]) -> "BatteryLevelSettings":
+    def from_api(cls, data: dict[str, Any]) -> BatteryLevelSettings:
         return cls(
             charge_soc=_int_percent(data["chargeSOC"]),
             discharge_soc=_int_percent(data["dischargeSOC"]),
@@ -88,7 +86,7 @@ class PeakShavingSlot:
     peak_power_kw: float
 
     @classmethod
-    def from_api(cls, index: int, data: dict[str, Any]) -> "PeakShavingSlot":
+    def from_api(cls, index: int, data: dict[str, Any]) -> PeakShavingSlot:
         days = tuple(int(day) for day in str(data["whichDay"]).split(",") if day)
         return cls(
             index=index,
@@ -98,7 +96,7 @@ class PeakShavingSlot:
             peak_power_kw=float(data["peakPower"]),
         )
 
-    def with_peak_power(self, value: float) -> "PeakShavingSlot":
+    def with_peak_power(self, value: float) -> PeakShavingSlot:
         """Return a copy with a different power cap."""
         return replace(self, peak_power_kw=value)
 
@@ -120,23 +118,18 @@ class PeakShavingSchedule:
     slots: tuple[PeakShavingSlot, ...] = ()
 
     @classmethod
-    def from_api(cls, data: dict[str, Any]) -> "PeakShavingSchedule":
-        slots = tuple(
-            PeakShavingSlot.from_api(index, slot)
-            for index, slot in enumerate(data.get("settingList", ()))
-        )
+    def from_api(cls, data: dict[str, Any]) -> PeakShavingSchedule:
+        slots = tuple(PeakShavingSlot.from_api(index, slot) for index, slot in enumerate(data.get("settingList", ())))
         return cls(
             enabled=data.get("controlMode", 0) == 1,
             shaving_soc=int(data.get("shavingSOC", 0)),
             slots=slots,
         )
 
-    def with_slot(self, slot: PeakShavingSlot) -> "PeakShavingSchedule":
+    def with_slot(self, slot: PeakShavingSlot) -> PeakShavingSchedule:
         """Return a copy with one slot replaced by index."""
         if slot.index < 0 or slot.index >= len(self.slots):
-            raise ValueError(
-                f"Slot index {slot.index} out of range for {len(self.slots)} slots"
-            )
+            raise ValueError(f"Slot index {slot.index} out of range for {len(self.slots)} slots")
         slots = list(self.slots)
         slots[slot.index] = slot
         return replace(self, slots=tuple(slots))
