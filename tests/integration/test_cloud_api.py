@@ -2,6 +2,7 @@
 
 import asyncio
 import socket
+from dataclasses import replace
 from datetime import timedelta
 
 import pytest
@@ -52,6 +53,18 @@ async def test_community_cloud_adapter_against_test_server(
             assert status.enabled is False
             assert status.mode is InstantControlMode.DISCHARGE
             assert status.ends_at is None
+
+            # Expire the locally cached token so the next request exercises the
+            # refresh-token grant rather than authenticating with credentials.
+            tokens = adapter._client._auth._tokens
+            assert tokens is not None
+            initial_access_token = tokens.access_token
+            adapter._client._auth._tokens = replace(tokens, expires_at=0)
+            status = await adapter.instant_control_status()
+            refreshed_tokens = adapter._client._auth._tokens
+            assert refreshed_tokens is not None
+            assert refreshed_tokens.access_token != initial_access_token
+            assert status.enabled is False
 
             modes = await adapter.available_operational_modes()
             assert len(modes["defaultWorkingModes"]) == 6

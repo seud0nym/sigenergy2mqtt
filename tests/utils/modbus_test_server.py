@@ -87,7 +87,8 @@ class CloudApiTestServer:
             from sigenergy2mqtt.cloud.vendor.solidfox.sigenergy_cloud.auth import encrypt_password
 
             self.encrypted_password = encrypt_password(password)
-        self.access_token = secrets.token_urlsafe(24)
+        self.access_token: str | None = None
+        self.refresh_token: str | None = None
         self.operational_mode = 0
         self.profile_id = -1
         self.instant_control: dict[str, Any] = {
@@ -102,19 +103,36 @@ class CloudApiTestServer:
 
     async def authenticate(self, request: web.Request) -> web.Response:
         form = await request.post()
-        if (
-            self.username is None
-            or self.encrypted_password is None
-            or form.get("username") != self.username
-            or form.get("password") != self.encrypted_password
-        ):
-            return web.json_response(
-                {"code": 401, "msg": "Invalid username or password"}, status=401
+        grant_type = form.get("grant_type")
+        if grant_type == "password":
+            authenticated = (
+                self.username is not None
+                and self.encrypted_password is not None
+                and form.get("username") == self.username
+                and form.get("password") == self.encrypted_password
             )
+        elif grant_type == "refresh_token":
+            authenticated = (
+                self.refresh_token is not None
+                and form.get("refresh_token") == self.refresh_token
+            )
+        else:
+            authenticated = False
+
+        if not authenticated:
+            return web.json_response(
+                {"code": 401, "msg": "Invalid credentials or refresh token"},
+                status=401,
+            )
+
+        # Rotate both tokens, matching the response shape consumed by OAuthSession
+        # for password and refresh-token grants.
+        self.access_token = secrets.token_urlsafe(24)
+        self.refresh_token = secrets.token_urlsafe(24)
         return self._success(
             {
                 "access_token": self.access_token,
-                "refresh_token": "testing-refresh-token",
+                "refresh_token": self.refresh_token,
                 "expires_in": 3600,
             }
         )
