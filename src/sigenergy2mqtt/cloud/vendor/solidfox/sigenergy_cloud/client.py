@@ -173,9 +173,7 @@ class SigenergyCloudClient:
 
     async def available_operational_modes(self) -> dict[str, Any]:
         """Return available energy-profile modes."""
-        data = await self._station_data(
-            "GET", "device/energy-profile/mode/all/{station_id}"
-        )
+        data = await self._station_data("GET", "device/energy-profile/mode/all/{station_id}")
         self._operational_modes = data
         return data
 
@@ -183,9 +181,7 @@ class SigenergyCloudClient:
         """Return the current energy-profile mode label."""
         if self._operational_modes is None:
             await self.available_operational_modes()
-        data = await self._station_data(
-            "GET", "device/energy-profile/mode/current/{station_id}"
-        )
+        data = await self._station_data("GET", "device/energy-profile/mode/current/{station_id}")
         mode = data["currentMode"]
         profile_id = data["currentProfileId"]
         modes = self._operational_modes or {}
@@ -199,9 +195,7 @@ class SigenergyCloudClient:
                     return str(item["name"])
         return "Unknown mode"
 
-    async def set_operational_mode(
-        self, mode: int, profile_id: int = -1
-    ) -> dict[str, Any]:
+    async def set_operational_mode(self, mode: int, profile_id: int = -1) -> dict[str, Any]:
         """Set the station energy-profile mode."""
         return await self._envelope(
             "PUT",
@@ -215,14 +209,10 @@ class SigenergyCloudClient:
 
     async def battery_levels(self) -> BatteryLevelSettings:
         """Return battery SOC threshold settings."""
-        data = await self._station_data(
-            "GET", "device/energy-profile/battery/level/{station_id}"
-        )
+        data = await self._station_data("GET", "device/energy-profile/battery/level/{station_id}")
         return BatteryLevelSettings.from_api(data)
 
-    async def set_battery_levels(
-        self, settings: BatteryLevelSettings
-    ) -> dict[str, Any]:
+    async def set_battery_levels(self, settings: BatteryLevelSettings) -> dict[str, Any]:
         """Replace battery SOC threshold settings."""
         return await self._envelope(
             "PUT",
@@ -237,25 +227,17 @@ class SigenergyCloudClient:
         (owner value, kW), ``maxLimitationInstaller`` (installer ceiling, kW;
         owners can only lower below it) and ``isUltra``.
         """
-        return await self._station_data(
-            "GET", "device/energy-profile/grid/limitation/export/{station_id}"
-        )
+        return await self._station_data("GET", "device/energy-profile/grid/limitation/export/{station_id}")
 
-    async def set_grid_export_limit(
-        self, limit_kw: float, *, enabled: bool = True
-    ) -> dict[str, Any]:
+    async def set_grid_export_limit(self, limit_kw: float, *, enabled: bool = True) -> dict[str, Any]:
         """Set owner grid-export limit settings."""
         return await self._set_grid_limit("export", limit_kw, enabled)
 
     async def grid_import_limit(self) -> dict[str, Any]:
         """Return grid-import limit settings (same keys as ``grid_export_limit``)."""
-        return await self._station_data(
-            "GET", "device/energy-profile/grid/limitation/import/{station_id}"
-        )
+        return await self._station_data("GET", "device/energy-profile/grid/limitation/import/{station_id}")
 
-    async def set_grid_import_limit(
-        self, limit_kw: float, *, enabled: bool = True
-    ) -> dict[str, Any]:
+    async def set_grid_import_limit(self, limit_kw: float, *, enabled: bool = True) -> dict[str, Any]:
         """Set owner grid-import limit settings."""
         return await self._set_grid_limit("import", limit_kw, enabled)
 
@@ -271,13 +253,9 @@ class SigenergyCloudClient:
         with nearby grid import/export power limits that may share similar
         numeric values.
         """
-        return await self._station_data(
-            "GET", "device/energy-profile/parallel/off/grid/{station_id}"
-        )
+        return await self._station_data("GET", "device/energy-profile/parallel/off/grid/{station_id}")
 
-    async def set_grid_connection_limit(
-        self, limit_a: float, *, enabled: bool = True
-    ) -> dict[str, Any]:
+    async def set_grid_connection_limit(self, limit_a: float, *, enabled: bool = True) -> dict[str, Any]:
         """Set the owner max grid connection current limit in amperes.
 
         Setting the owner value equal to the installer ceiling makes the cloud
@@ -301,9 +279,7 @@ class SigenergyCloudClient:
         Keys: ``batteryMaxChargingPower`` and ``batteryMaxDischargingPower`` in
         kW; ``UNLIMITED_POWER_KW`` means no limit (see ``is_unlimited_power``).
         """
-        return await self._station_data(
-            "GET", "device/energy-profile/battery/limit/{station_id}"
-        )
+        return await self._station_data("GET", "device/energy-profile/battery/limit/{station_id}")
 
     async def set_battery_power_limit(
         self,
@@ -328,9 +304,7 @@ class SigenergyCloudClient:
 
     async def solar_power_limit(self) -> dict[str, Any]:
         """Return the PV power limit (``powerLimit`` in kW, unlimited sentinel)."""
-        return await self._station_data(
-            "GET", "device/energy-profile/solar/limit/{station_id}"
-        )
+        return await self._station_data("GET", "device/energy-profile/solar/limit/{station_id}")
 
     async def set_solar_power_limit(self, limit_kw: float | None) -> dict[str, Any]:
         """Set the PV power limit in kW (``None`` = unlimited).
@@ -352,9 +326,7 @@ class SigenergyCloudClient:
 
         Keys: ``backupReserve`` (percent), ``operationMode`` and ``ja12Soc``.
         """
-        return await self._station_data(
-            "GET", "device/setting/backup/reserve/{station_id}"
-        )
+        return await self._station_data("GET", "device/setting/backup/reserve/{station_id}")
 
     async def set_backup_reserve(self, percent: int) -> dict[str, Any]:
         """Set the backup reserve percentage.
@@ -389,9 +361,7 @@ class SigenergyCloudClient:
 
     async def battery_export_limitation(self) -> dict[str, Any]:
         """Return whether the battery may export to the grid."""
-        return await self._station_data(
-            "GET", "device/energy-profile/battery/export/limitation/{station_id}"
-        )
+        return await self._station_data("GET", "device/energy-profile/battery/export/limitation/{station_id}")
 
     async def set_battery_export_limitation(self, enabled: bool) -> dict[str, Any]:
         """Enable or disable battery export to the grid."""
@@ -407,14 +377,10 @@ class SigenergyCloudClient:
 
     async def peak_shaving_schedule(self) -> PeakShavingSchedule:
         """Return the full peak-shaving schedule."""
-        data = await self._station_data(
-            "GET", "device/dischargesetting/peak/shaving/{station_id}"
-        )
+        data = await self._station_data("GET", "device/dischargesetting/peak/shaving/{station_id}")
         return PeakShavingSchedule.from_api(data)
 
-    async def set_peak_shaving_schedule(
-        self, schedule: PeakShavingSchedule
-    ) -> dict[str, Any]:
+    async def set_peak_shaving_schedule(self, schedule: PeakShavingSchedule) -> dict[str, Any]:
         """Replace the full peak-shaving schedule."""
         return await self._envelope(
             "POST",
@@ -429,16 +395,12 @@ class SigenergyCloudClient:
 
     async def instant_manual_control(self) -> InstantManualControl:
         """Return current Instant Manual Control state."""
-        data = await self._station_data(
-            "GET", "device/energy-profile/instant/manunal/{station_id}"
-        )
+        data = await self._station_data("GET", "device/energy-profile/instant/manunal/{station_id}")
         return InstantManualControl.from_api(data)
 
     async def instant_manual_display(self) -> dict[str, Any]:
         """Return Instant Manual Control display values such as battery power and SOC."""
-        return await self._station_data(
-            "GET", "device/energy-profile/instant/manunal/display/{station_id}"
-        )
+        return await self._station_data("GET", "device/energy-profile/instant/manunal/display/{station_id}")
 
     async def set_instant_manual_control(
         self,
@@ -458,11 +420,7 @@ class SigenergyCloudClient:
         if duration_minutes < 1 or duration_minutes > 1440:
             raise ValueError("Instant Manual Control duration must be 1-1440 minutes")
         if power_limitation_kw is None:
-            power_limitation = (
-                f"{_INSTANT_MANUAL_UNLIMITED_POWER_KW:.3f}"
-                if mode in _INSTANT_MANUAL_POWER_MODES
-                else ""
-            )
+            power_limitation = f"{_INSTANT_MANUAL_UNLIMITED_POWER_KW:.3f}" if mode in _INSTANT_MANUAL_POWER_MODES else ""
         else:
             power_limitation = f"{power_limitation_kw:.3f}"
 
@@ -494,9 +452,7 @@ class SigenergyCloudClient:
 
     async def dc_charge_mode_soc_range(self) -> dict[str, Any]:
         """Return allowed SOC ranges for DC charger mode settings."""
-        return await self._station_data(
-            "GET", "device/charge/mode/soc/range", station_query=True
-        )
+        return await self._station_data("GET", "device/charge/mode/soc/range", station_query=True)
 
     async def dc_charge_mode(self, dc_sn: str | None = None) -> dict[str, Any]:
         """Return the current DC charger mode and mode settings."""
@@ -524,9 +480,7 @@ class SigenergyCloudClient:
             "allowsDischargePower": allows_discharge_power,
             "vehicleDischargeCutoffSoc": vehicle_discharge_cutoff_soc,
         }
-        payload.update(
-            {key: value for key, value in optional_fields.items() if value is not None}
-        )
+        payload.update({key: value for key, value in optional_fields.items() if value is not None})
         return await self._envelope("POST", "device/charge/mode/dc", json=payload)
 
     async def dc_charge_setting(self, dc_sn: str | None = None) -> dict[str, Any]:
@@ -552,9 +506,7 @@ class SigenergyCloudClient:
             },
         )
 
-    async def set_dc_charge_enabled(
-        self, enabled: bool, *, dc_sn: str | None = None
-    ) -> dict[str, Any]:
+    async def set_dc_charge_enabled(self, enabled: bool, *, dc_sn: str | None = None) -> dict[str, Any]:
         """Start or stop DC charging.
 
         Sigenergy's app API uses enable=0 to start and enable=1 to stop.
@@ -571,9 +523,7 @@ class SigenergyCloudClient:
 
     async def station_is_charging(self) -> bool:
         """Return true when the station reports active DC charging."""
-        data = await self._station_data(
-            "POST", "device/charge/check/charge", station_query=True
-        )
+        data = await self._station_data("POST", "device/charge/check/charge", station_query=True)
         return bool(data)
 
     async def dc_status(self, dc_sn: str | None = None) -> dict[str, Any]:
@@ -697,9 +647,7 @@ class SigenergyCloudClient:
             json={"snCode": self._dc_sn(dc_sn), "stationId": self._station_id_int()},
         )
 
-    async def active_alarms(
-        self, *, page: int = 1, page_size: int = 10
-    ) -> dict[str, Any]:
+    async def active_alarms(self, *, page: int = 1, page_size: int = 10) -> dict[str, Any]:
         """Return paginated active station alarms."""
         return await self._station_data(
             "GET",
@@ -750,9 +698,7 @@ class SigenergyCloudClient:
         return data if isinstance(data, dict) else {"raw": data}
 
     @classmethod
-    def iter_topology_nodes(
-        cls, topology: dict[str, Any] | None
-    ) -> list[dict[str, Any]]:
+    def iter_topology_nodes(cls, topology: dict[str, Any] | None) -> list[dict[str, Any]]:
         """Flatten topology nodeList tree into a list of device dicts."""
         if not isinstance(topology, dict):
             return []
@@ -776,19 +722,11 @@ class SigenergyCloudClient:
         if not isinstance(node, dict):
             return None
         try:
-            communicate = (
-                int(node["communicateStatus"])
-                if node.get("communicateStatus") is not None
-                else None
-            )
+            communicate = int(node["communicateStatus"]) if node.get("communicateStatus") is not None else None
         except (TypeError, ValueError):
             communicate = None
         try:
-            device_status = (
-                int(node["deviceStatus"])
-                if node.get("deviceStatus") is not None
-                else None
-            )
+            device_status = int(node["deviceStatus"]) if node.get("deviceStatus") is not None else None
         except (TypeError, ValueError):
             device_status = None
         if communicate == cls.TOPO_COMMUNICATE_STATUS_OFFLINE:
@@ -802,7 +740,7 @@ class SigenergyCloudClient:
         if device_status is None and communicate is None:
             return None
         # Unknown non-online combination: treat as not definitively online.
-        return True if device_status not in (None, 1) else False
+        return device_status not in (None, 1)
 
     def topology_find_node(
         self,
@@ -817,9 +755,7 @@ class SigenergyCloudClient:
             if device_type is not None and node.get("deviceType") != device_type:
                 continue
             if sn_norm is not None:
-                node_sn = str(
-                    node.get("snCode") or node.get("showSnCode") or ""
-                ).strip()
+                node_sn = str(node.get("snCode") or node.get("showSnCode") or "").strip()
                 if node_sn != sn_norm:
                     continue
             return node
@@ -835,9 +771,7 @@ class SigenergyCloudClient:
             sn_code=sn,
         )
         if node is None:
-            node = self.topology_find_node(
-                topology, device_type=self.TOPO_DEVICE_TYPE_DC_CHARGER
-            )
+            node = self.topology_find_node(topology, device_type=self.TOPO_DEVICE_TYPE_DC_CHARGER)
         offline = self.topology_node_is_offline(node)
         return {
             "station_status": topology.get("stationStatus"),
@@ -946,9 +880,7 @@ class SigenergyCloudClient:
             if (not power_on) and status in {3, 5, 6}:
                 return True
         status = (await self.get_station_home_status()).get("status")
-        return (power_on and status in {0, 1, 2}) or (
-            (not power_on) and status in {3, 5, 6}
-        )
+        return (power_on and status in {0, 1, 2}) or ((not power_on) and status in {3, 5, 6})
 
     async def _force_aio_power_on(
         self,
@@ -967,9 +899,7 @@ class SigenergyCloudClient:
                 "powerOn": True,
             },
         )
-        return await self.set_aio_power(
-            True, sn_code=sn_code, timeout_s=timeout_s, poll_s=poll_s
-        )
+        return await self.set_aio_power(True, sn_code=sn_code, timeout_s=timeout_s, poll_s=poll_s)
 
     async def restart_aio(
         self,
@@ -1040,9 +970,7 @@ class SigenergyCloudClient:
             try:
                 status_home = await self.get_station_home_status()
                 power_flag = await self.get_aio_power_on(sn_code=sn)
-                clearly_on = (
-                    status_home.get("status") in {0, 1, 2} and power_flag is True
-                )
+                clearly_on = status_home.get("status") in {0, 1, 2} and power_flag is True
             except Exception:  # noqa: BLE001
                 clearly_on = False
             if clearly_on:
@@ -1056,9 +984,7 @@ class SigenergyCloudClient:
             if t_on_cmd is None:
                 t_on_cmd = time.monotonic()
             try:
-                powered_on = await self._force_aio_power_on(
-                    sn_code=sn, timeout_s=timeout_s, poll_s=poll_s
-                )
+                powered_on = await self._force_aio_power_on(sn_code=sn, timeout_s=timeout_s, poll_s=poll_s)
             except Exception:  # noqa: BLE001
                 powered_on = False
             if powered_on and t_online is None:
@@ -1090,9 +1016,7 @@ class SigenergyCloudClient:
                     break
 
             if powered_off and wait_evdc_offline:
-                evdc_deadline = asyncio.get_running_loop().time() + max(
-                    float(evdc_offline_wait_s), 0.0
-                )
+                evdc_deadline = asyncio.get_running_loop().time() + max(float(evdc_offline_wait_s), 0.0)
                 while asyncio.get_running_loop().time() < evdc_deadline:
                     await asyncio.sleep(poll_s)
                     try:
@@ -1193,22 +1117,10 @@ class SigenergyCloudClient:
             "poll_s": poll_s,
             "wait_evdc_offline": wait_evdc_offline,
             "evdc_offline_wait_s": evdc_offline_wait_s,
-            "t_offline_s": None
-            if t_offline is None
-            else round(t_offline - t_off_cmd, 2),
-            "t_evdc_offline_after_plant_off_s": (
-                None
-                if t_evdc_offline is None or t_offline is None
-                else round(t_evdc_offline - t_offline, 2)
-            ),
-            "t_online_after_on_s": (
-                None
-                if t_online is None or t_on_cmd is None
-                else round(t_online - t_on_cmd, 2)
-            ),
-            "full_cycle_s": (
-                None if t_online is None else round(t_online - t_off_cmd, 2)
-            ),
+            "t_offline_s": None if t_offline is None else round(t_offline - t_off_cmd, 2),
+            "t_evdc_offline_after_plant_off_s": (None if t_evdc_offline is None or t_offline is None else round(t_evdc_offline - t_offline, 2)),
+            "t_online_after_on_s": (None if t_online is None or t_on_cmd is None else round(t_online - t_on_cmd, 2)),
+            "full_cycle_s": (None if t_online is None else round(t_online - t_off_cmd, 2)),
             "elapsed_s": round(time.monotonic() - t0, 2),
         }
 
@@ -1218,9 +1130,7 @@ class SigenergyCloudClient:
             raise RuntimeError("No AIO serial numbers found for this station")
         return serials[0]
 
-    async def _set_grid_limit(
-        self, direction: str, limit_kw: float, enabled: bool
-    ) -> dict[str, Any]:
+    async def _set_grid_limit(self, direction: str, limit_kw: float, enabled: bool) -> dict[str, Any]:
         return await self._envelope(
             "PUT",
             f"device/energy-profile/grid/limitation/{direction}",
@@ -1261,14 +1171,10 @@ class SigenergyCloudClient:
         return await self._data(method, path, params=query or None)
 
     async def _data(self, method: str, path: str, **kwargs: Any) -> Any:
-        return await self._transport.data(
-            await self._http_session(), method, path, **kwargs
-        )
+        return await self._transport.data(await self._http_session(), method, path, **kwargs)
 
     async def _envelope(self, method: str, path: str, **kwargs: Any) -> dict[str, Any]:
-        return await self._transport.envelope(
-            await self._http_session(), method, path, **kwargs
-        )
+        return await self._transport.envelope(await self._http_session(), method, path, **kwargs)
 
     async def _http_session(self) -> aiohttp.ClientSession:
         if self._session is not None:
@@ -1279,9 +1185,7 @@ class SigenergyCloudClient:
 
     def _station_id(self) -> str:
         if self.station_id is None:
-            raise RuntimeError(
-                "SigenergyCloudClient.connect() has not loaded a station"
-            )
+            raise RuntimeError("SigenergyCloudClient.connect() has not loaded a station")
         return self.station_id
 
     def _station_id_int(self) -> int:
