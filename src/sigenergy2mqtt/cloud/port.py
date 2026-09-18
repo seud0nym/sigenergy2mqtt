@@ -1,0 +1,23 @@
+"""The application-facing battery-control port."""
+
+from typing import Protocol, runtime_checkable
+
+from .models import Capabilities, InstantControlStatus, InstantOverrideCommand
+
+
+@runtime_checkable
+class BatteryControlPort(Protocol):
+    @property
+    def capabilities(self) -> Capabilities: ...
+
+    async def connect(self) -> None: ...
+
+    async def close(self) -> None: ...
+
+    async def set_instant_override(self, command: InstantOverrideCommand) -> None: ...
+
+    async def clear_instant_override(self) -> None: ...
+
+    async def instant_control_status(self) -> InstantControlStatus: ...
+
+    async def current_strategy_label(self) -> str | None: ...

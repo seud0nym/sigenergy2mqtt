@@ -265,6 +265,7 @@ class EnvSettingsSource(PydanticBaseSettingsSource):
         _set(cloud, "region", g(const.SIGENERGY2MQTT_CLOUD_REGION))
         _set(cloud, "log_level", g(const.SIGENERGY2MQTT_CLOUD_LOG_LEVEL))
         _set(cloud, "scan_interval", _int(g(const.SIGENERGY2MQTT_SCAN_INTERVAL_CLOUD)))
+        _set(cloud, "accept_unofficial_api_risk", _bool(g(const.SIGENERGY2MQTT_CLOUD_ACCEPT_UNOFFICIAL_API_RISK)))
         if cloud:
             result["cloud"] = cloud
 

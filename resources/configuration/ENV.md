@@ -45,6 +45,7 @@ If the username, password and region are all supplied, `sigenergy2mqtt` can acce
 | `SIGENERGY2MQTT_CLOUD_USERNAME` | The user's Sigenergy Cloud username. If specified, password and region must also be specified. [<sup>(More…)</sup>](README.md#opt_cloud_username) | 2026.9.10 |
 | `SIGENERGY2MQTT_CLOUD_PASSWORD` | The user's Sigenergy Cloud password. If specified, username and region must also be specified. [<sup>(More…)</sup>](README.md#opt_cloud_username) | 2026.9.10 |
 | `SIGENERGY2MQTT_CLOUD_REGION` | The user's Sigenergy Cloud region. If specified, username and password must also be specified. Must be one of the following: 'aus', 'eu', 'cn', 'apac', 'us' [<sup>(More…)</sup>](README.md#opt_cloud_region) | 2026.9.10 |
+| `SIGENERGY2MQTT_CLOUD_ACCEPT_UNOFFICIAL_API_RISK` | Explicitly opt in to the unofficial mySigen cloud API. This must be `true` when cloud credentials are configured. Use a delegated account with **View and Edit** access rather than the primary account. [<sup>(More…)</sup>](README.md#opt_cloud_accept_unofficial_api_risk) | 2026.9.16 |
 | `SIGENERGY2MQTT_CLOUD_LOG_LEVEL` | Set the cloud module log level. Valid values are: `DEBUG`, `INFO`, `WARNING`, `ERROR` or `CRITICAL`. Default is `INFO` [<sup>(More…)</sup>](README.md#opt_cloud_log_level) | 2026.9.10 |
 | `SIGENERGY2MQTT_SCAN_INTERVAL_CLOUD` | The scan interval in seconds for retrieving cloud data. Default is `30` (seconds), and the minimum value is `10`. [<sup>(More…)</sup>](README.md#opt_cloud_scan_interval) | 2025.6.11 |
 
@@ -193,5 +194,4 @@ If the username, password and region are all supplied, `sigenergy2mqtt` can acce
 | `SIGENERGY2MQTT_DIAGNOSTICS_REFRESH_INTERVAL` | The diagnostics and health check web page refresh interval in seconds. Must be greater than `0`. (default: `5.0`) [<sup>(More…)</sup>](README.md#opt_diagnostics_refresh_interval) | 2026.7.29 |
 | `SIGENERGY2MQTT_DIAGNOSTICS_ALLOWED_IPS` | List of allowed IP addresses for the diagnostics web server. If not specified, all IP addresses are allowed. [<sup>(More…)</sup>](README.md#opt_diagnostics_allowed_ips) | 2026.7.30 |
 | `SIGENERGY2MQTT_DIAGNOSTICS_LOG_LEVEL` | Logging level for the diagnostics. Defaults to `WARNING` if not specified. [<sup>(More…)</sup>](README.md#opt_diagnostics_log_level) | 2026.1.30 |
-
 

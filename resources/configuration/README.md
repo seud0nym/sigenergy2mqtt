@@ -210,6 +210,9 @@ A sub-directory will be created in the specified directory called `sigenergy2mqt
 
 If the username, password and region are all supplied, `sigenergy2mqtt` can access the Sigenergy Cloud service to read and control Sigenergy stations, batteries, and DC chargers.
 
+> [!IMPORTANT]
+> Cloud control currently uses the unofficial mySigen app API. Create a delegated account in **mySigen → Settings → System Settings → System Share** with **View and Edit** access instead of using the primary account. You must also explicitly enable [Accept Unofficial API Risk](#opt_cloud_accept_unofficial_api_risk).
+
 <a id="opt_cloud_username"></a>
 ### Username
 <table>
@@ -250,6 +253,19 @@ Must be one of:
 - `cn` (China)
 - `apac` (Asia Pacific)
 - `us` (United States)
+
+<a id="opt_cloud_accept_unofficial_api_risk"></a>
+### Accept Unofficial API Risk
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--cloud-accept-unofficial-api-risk</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_CLOUD_ACCEPT_UNOFFICIAL_API_RISK</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>cloud.accept-unofficial-api-risk</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
+Explicitly permits the unpublished mySigen app API to be used for cloud battery control. This option must be enabled when cloud credentials are configured; the default is `false`.
+
+Use a delegated mySigen account with **View and Edit** access rather than the primary account. The opt-in is still required when delegated credentials are used.
 
 <a id="opt_cloud_log_level"></a>
 ### Log Level

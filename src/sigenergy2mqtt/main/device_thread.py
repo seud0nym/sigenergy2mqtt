@@ -61,20 +61,24 @@ async def read_and_publish_device_sensors(
     log_label = config.url if config.host is not None else config.description
 
     modbus_client: Any = None
+    mqtt_client: Any = None
+    mqtt_handler: Any = None
     tasks: list[Awaitable[Any]] = []
 
-    if config.host is not None and not active_config.clean:
-        modbus_client = await ModbusClientFactory.get_client(
-            config.host,
-            config.port if config.port else 502,
-            config.timeout,
-            config.retries,
-        )
-
-    mqtt_client_id = f"{active_config.mqtt.client_id_prefix}_{config.description}"
-    mqtt_client, mqtt_handler = await mqtt_setup(mqtt_client_id, modbus_client, loop)
-
     try:
+        if config.host is not None and not active_config.clean:
+            modbus_client = await ModbusClientFactory.get_client(
+                config.host,
+                config.port if config.port else 502,
+                config.timeout,
+                config.retries,
+            )
+        elif config.transport_factory is not None and not active_config.clean:
+            modbus_client = await config.transport_factory()
+
+        mqtt_client_id = f"{active_config.mqtt.client_id_prefix}_{config.description}"
+        mqtt_client, mqtt_handler = await mqtt_setup(mqtt_client_id, modbus_client, loop)
+
         device: Device
         for device in config.devices:
             method = device.publish_discovery if active_config.home_assistant.enabled else device.publish_attributes
@@ -131,10 +135,16 @@ async def read_and_publish_device_sensors(
                     device.publish_availability(mqtt_client, "offline")
 
     finally:
-        if modbus_client is not None:
-            ModbusClientFactory.remove(modbus_client)
-
-        await mqtt_teardown(mqtt_client, mqtt_handler)
+        try:
+            if mqtt_client is not None and mqtt_handler is not None:
+                await mqtt_teardown(mqtt_client, mqtt_handler)
+        finally:
+            if modbus_client is not None and config.host is not None:
+                ModbusClientFactory.remove(modbus_client)
+            elif modbus_client is not None:
+                close = getattr(modbus_client, "close", None)
+                if close is not None:
+                    await close()
 
 
 def run_modbus_event_loop(

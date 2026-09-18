@@ -934,6 +934,13 @@ def get_parser() -> argparse.ArgumentParser:
         help="Cloud subsystem log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)",
     )
     parser.add_argument(
+        "--cloud-accept-unofficial-api-risk",
+        action="store_true",
+        dest=const.SIGENERGY2MQTT_CLOUD_ACCEPT_UNOFFICIAL_API_RISK,
+        default=None,
+        help="Explicitly allow the unpublished mySigen API (a delegated account is recommended).",
+    )
+    parser.add_argument(
         "--scan-interval-cloud",
         nargs="?",
         action="store",

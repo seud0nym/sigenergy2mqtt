@@ -107,6 +107,59 @@ async def test_read_and_publish_device_sensors_no_modbus(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_read_and_publish_device_sensors_uses_and_closes_custom_transport(
+    monkeypatch,
+):
+    cfg_obj = Config()
+    cfg_obj.clean = False
+    cfg_obj.home_assistant.enabled = False
+    transport = MagicMock()
+    transport.close = AsyncMock()
+    factory = AsyncMock(return_value=transport)
+
+    with _swap_active_config(cfg_obj):
+        cfg = ThreadConfig.create(name="Cloud", host=None, port=None)
+        cfg.transport_factory = factory
+        cfg.add_device(DummyDevice("cloud-device"))
+        mqtt_client = DummyMQTTClient()
+        mqtt_handler = DummyMQTTHandler()
+        monkeypatch.setattr(
+            threading_mod,
+            "mqtt_setup",
+            AsyncMock(return_value=(mqtt_client, mqtt_handler)),
+        )
+
+        loop = asyncio.new_event_loop()
+        original_name = threading.current_thread().name
+        try:
+            await threading_mod.read_and_publish_device_sensors(cfg, loop=loop)
+        finally:
+            loop.close()
+            threading.current_thread().name = original_name
+
+    factory.assert_awaited_once()
+    transport.close.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_custom_transport_is_closed_when_mqtt_setup_fails(monkeypatch):
+    cfg_obj = Config()
+    cfg_obj.clean = False
+    transport = MagicMock()
+    transport.close = AsyncMock()
+
+    with _swap_active_config(cfg_obj):
+        cfg = ThreadConfig.create(name="Cloud MQTT failure", host=None, port=None)
+        cfg.transport_factory = AsyncMock(return_value=transport)
+        monkeypatch.setattr(threading_mod, "mqtt_setup", AsyncMock(side_effect=RuntimeError("MQTT failed")))
+
+        with pytest.raises(RuntimeError, match="MQTT failed"):
+            await threading_mod.read_and_publish_device_sensors(cfg, loop=asyncio.get_running_loop())
+
+    transport.close.assert_awaited_once()
+
+
+@pytest.mark.asyncio
 async def test_read_and_publish_device_sensors_with_modbus_and_tasks(monkeypatch):
     # Config: not clean, HA disabled
     cfg_obj = Config()

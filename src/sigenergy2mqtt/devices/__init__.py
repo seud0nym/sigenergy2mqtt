@@ -6,6 +6,7 @@ from .inverter.ess import ESS
 from .inverter.inverter import Inverter
 from .inverter.pv_string import PVString
 from .pid import PID
+from .plant.cloud_control import SigenergyCloudControl
 from .plant.ess_preheating import ESSPreHeating
 from .plant.grid_code import GridCode
 from .plant.grid_sensor import GridSensor
@@ -29,5 +30,6 @@ __all__ = [
     "PVString",
     "PlantStatistics",
     "PowerPlant",
+    "SigenergyCloudControl",
     "bind_cross_device_sensors",
 ]

@@ -111,6 +111,12 @@ cloud:
     #   description:  The scan interval in seconds for retrieving cloud data. Default is 30
     #                 (seconds), and the minimum value is 10.
     scan-interval: 30
+    # accept-unofficial-api-risk
+    #   default: false
+    #   description:  Explicit opt-in required to use the unofficial mySigen cloud API.
+    #                 Use a delegated account with "View and Edit" access instead of
+    #                 the primary mySigen account.
+    accept-unofficial-api-risk: false
 # modbus
 #   default: [ ]
 #   description:  The array of Modbus device configurations. Each device
