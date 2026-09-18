@@ -254,6 +254,10 @@ Must be one of:
 - `apac` (Asia Pacific)
 - `us` (United States)
 
+The internal `testing` region is available for integration tests when the
+environment-only `SIGENERGY2MQTT_CLOUD_TESTING_URL` variable points to an
+`http` or `https` base URL ending in `/`. It has no command-line or YAML option.
+
 <a id="opt_cloud_accept_unofficial_api_risk"></a>
 ### Accept Unofficial API Risk
 <table>

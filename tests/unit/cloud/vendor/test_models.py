@@ -4,6 +4,8 @@ from dataclasses import FrozenInstanceError
 
 import pytest
 
+from sigenergy2mqtt.config import Config, _swap_active_config
+from sigenergy2mqtt.config.models.cloud import CloudConfig
 from sigenergy2mqtt.cloud.vendor.solidfox.sigenergy_cloud import (
     BatteryLevelSettings,
     InstantManualControl,
@@ -66,6 +68,28 @@ def test_region_lookup_rejects_unknown_region() -> None:
     assert base_url_for_region("eu") == "https://api-eu.sigencloud.com/"
     with pytest.raises(ValueError, match="Unsupported Sigenergy region.*moon"):
         base_url_for_region("moon")
+
+
+def test_testing_region_uses_configured_url(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv(
+        "SIGENERGY2MQTT_CLOUD_TESTING_URL", "http://127.0.0.1:18080/"
+    )
+    with _swap_active_config(Config()):
+        assert base_url_for_region("testing") == "http://127.0.0.1:18080/"
+
+
+def test_testing_region_without_url_falls_through() -> None:
+    with pytest.raises(ValueError, match="Unsupported Sigenergy region.*testing"):
+        base_url_for_region("testing")
+
+
+@pytest.mark.parametrize(
+    "url",
+    ["ftp://example.test/", "http://example.test", "http://example.test:99999/"],
+)
+def test_cloud_testing_url_validation(url: str) -> None:
+    with pytest.raises(ValueError):
+        CloudConfig(testing_url=url)
 
 
 @pytest.mark.parametrize(

@@ -26,6 +26,7 @@ import string
 import sys
 import threading
 import time
+from contextlib import asynccontextmanager
 from typing import Any, ClassVar
 
 # Need to set a Modbus host otherwise configuration initialisation will launch auto-discovery
@@ -39,6 +40,7 @@ from datetime import datetime
 from random import randint, uniform
 
 import paho.mqtt.client as mqtt
+from aiohttp import web
 from paho.mqtt.enums import CallbackAPIVersion, MQTTErrorCode
 from pymodbus import FramerType, ModbusDeviceIdentification
 from pymodbus import __version__ as pymodbus_version
@@ -70,6 +72,163 @@ DELAY_MIN: int = 5
 DELAY_MAX: int = 50
 
 UNSIGNED_DATA_TYPES = (ModbusClientMixin.DATATYPE.UINT16, ModbusClientMixin.DATATYPE.UINT32, ModbusClientMixin.DATATYPE.UINT64)
+
+CLOUD_TEST_SERVER_DEFAULT_PORT = 8080
+CLOUD_TEST_STATION_ID = 10000000000001
+
+
+class CloudApiTestServer:
+    """Stateful facsimile of the cloud endpoints used by CommunityCloudAdapter."""
+
+    def __init__(self, username: str | None, password: str | None) -> None:
+        self.username = username
+        self.encrypted_password = None
+        if password is not None:
+            from sigenergy2mqtt.cloud.vendor.solidfox.sigenergy_cloud.auth import encrypt_password
+
+            self.encrypted_password = encrypt_password(password)
+        self.access_token = secrets.token_urlsafe(24)
+        self.operational_mode = 0
+        self.profile_id = -1
+        self.instant_control: dict[str, Any] = {
+            "enable": False,
+            "mode": "1",
+            "endTime": None,
+        }
+
+    @staticmethod
+    def _success(data: Any = None) -> web.Response:
+        return web.json_response({"code": 0, "msg": "Success", "data": data})
+
+    async def authenticate(self, request: web.Request) -> web.Response:
+        form = await request.post()
+        if (
+            self.username is None
+            or self.encrypted_password is None
+            or form.get("username") != self.username
+            or form.get("password") != self.encrypted_password
+        ):
+            return web.json_response(
+                {"code": 401, "msg": "Invalid username or password"}, status=401
+            )
+        return self._success(
+            {
+                "access_token": self.access_token,
+                "refresh_token": "testing-refresh-token",
+                "expires_in": 3600,
+            }
+        )
+
+    async def authorized(self, request: web.Request) -> web.Response | None:
+        if request.headers.get("Authorization") != f"Bearer {self.access_token}":
+            return web.json_response({"code": 401, "msg": "Unauthorized"}, status=401)
+        return None
+
+    async def station_home(self, request: web.Request) -> web.Response:
+        if (response := await self.authorized(request)) is not None:
+            return response
+        return self._success(
+            {"stationId": CLOUD_TEST_STATION_ID, "acSnList": [], "dcSnList": []}
+        )
+
+    async def available_modes(self, request: web.Request) -> web.Response:
+        if (response := await self.authorized(request)) is not None:
+            return response
+        return self._success(
+            {
+                "defaultWorkingModes": [
+                    {"label": label, "sortOrder": 0, "remarks": "", "value": value}
+                    for label, value in (
+                        ("Maximum Self-Powered", "0"),
+                        ("Sigen AI Mode", "1"),
+                        ("TOU", "2"),
+                        ("Fully Fed to Grid", "5"),
+                        ("Remote EMS Mode", "7"),
+                        ("Custom Operation Mode", "9"),
+                    )
+                ],
+                "energyProfileItems": [],
+            }
+        )
+
+    async def get_operational_mode(self, request: web.Request) -> web.Response:
+        if (response := await self.authorized(request)) is not None:
+            return response
+        return self._success(
+            {"currentMode": self.operational_mode, "currentProfileId": self.profile_id}
+        )
+
+    async def set_operational_mode(self, request: web.Request) -> web.Response:
+        if (response := await self.authorized(request)) is not None:
+            return response
+        payload = await request.json()
+        self.operational_mode = int(payload["operationMode"])
+        self.profile_id = int(payload.get("profileId", -1))
+        return self._success()
+
+    async def get_instant_control(self, request: web.Request) -> web.Response:
+        if (response := await self.authorized(request)) is not None:
+            return response
+        return self._success(self.instant_control)
+
+    async def set_instant_control(self, request: web.Request) -> web.Response:
+        if (response := await self.authorized(request)) is not None:
+            return response
+        payload = await request.json()
+        enabled = bool(payload.get("enable"))
+        duration = payload.get("duration")
+        self.instant_control = {
+            "enable": enabled,
+            "mode": payload.get("mode") or "1",
+            "endTime": int(time.time()) + int(duration) * 60
+            if enabled and duration
+            else None,
+        }
+        return self._success()
+
+    def app(self) -> web.Application:
+        app = web.Application()
+        app.add_routes(
+            [
+                web.post("/auth/oauth/token", self.authenticate),
+                web.get("/device/owner/station/home", self.station_home),
+                web.get(
+                    "/device/energy-profile/mode/all/{station_id}",
+                    self.available_modes,
+                ),
+                web.get(
+                    "/device/energy-profile/mode/current/{station_id}",
+                    self.get_operational_mode,
+                ),
+                web.put("/device/energy-profile/mode", self.set_operational_mode),
+                web.get(
+                    "/device/energy-profile/instant/manunal/{station_id}",
+                    self.get_instant_control,
+                ),
+                web.put(
+                    "/device/energy-profile/instant/manunal",
+                    self.set_instant_control,
+                ),
+            ]
+        )
+        return app
+
+
+@asynccontextmanager
+async def run_cloud_api_test_server(host: str, port: int):
+    """Run the test cloud API for the lifetime of the context manager."""
+    server = CloudApiTestServer(
+        os.getenv("MODBUS_TEST_SERVER_CLOUD_USERNAME"),
+        os.getenv("MODBUS_TEST_SERVER_CLOUD_PASSWORD"),
+    )
+    runner = web.AppRunner(server.app())
+    await runner.setup()
+    await web.TCPSite(runner, host, port).start()
+    _logger.info("Cloud API Testing Server listening on http://%s:%s/", host, port)
+    try:
+        yield server
+    finally:
+        await runner.cleanup()
 
 
 class TestConfig:
@@ -945,6 +1104,7 @@ async def run_async_server(
     port: int = 502,
     protocol_version: ProtocolVersion = list(ProtocolVersion)[-1],
     log_level: int = logging.INFO,
+    cloud_port: int | None = None,
 ) -> None:
     """Build and run the async Modbus TCP test server.
 
@@ -978,7 +1138,15 @@ async def run_async_server(
         port: TCP port for the server to listen on.
         protocol_version: Sigenergy protocol version to emulate.
         log_level: Logging verbosity for this module's logger.
+        cloud_port: Port for the companion cloud API server. When omitted in
+            imported tests, an ephemeral port is selected unless configured by
+            ``MODBUS_TEST_SERVER_CLOUD_PORT``.
     """
+    if cloud_port is None:
+        # Imported tests commonly run in parallel, so use an ephemeral port unless
+        # explicitly configured. The command-line entry point supplies port 8080.
+        cloud_port = int(os.getenv("MODBUS_TEST_SERVER_CLOUD_PORT", "0"))
+
     context: dict[int, CustomDataBlock] = {}
     groups: dict[int, list] = {}
     group_index: int = -1
@@ -1127,7 +1295,8 @@ async def run_async_server(
         if TestConfig.simulate_firmware_upgrade:
             for idx in inverter_device_address:
                 tasks.append(simulate_firmware_version_upgrade(context[idx], wait_for_seconds=randint(30, 60)))
-        await asyncio.gather(*tasks)
+        async with run_cloud_api_test_server(host, cloud_port):
+            await asyncio.gather(*tasks)
     except asyncio.CancelledError as e:
         _logger.debug(f"Modbus TCP Testing Server cancelled: {e}")
         # Ensure we don't leave the port bound
@@ -1315,6 +1484,9 @@ async def async_helper() -> None:
 
     server_host = _env("MODBUS_TEST_SERVER_HOST") or "0.0.0.0"
     server_port = _env_int("MODBUS_TEST_SERVER_PORT", 502)
+    cloud_port = _env_int(
+        "MODBUS_TEST_SERVER_CLOUD_PORT", CLOUD_TEST_SERVER_DEFAULT_PORT
+    )
 
     try:
         await run_async_server(
@@ -1325,6 +1497,7 @@ async def async_helper() -> None:
             log_level=TestConfig.log_level,
             host=server_host,
             port=server_port,
+            cloud_port=cloud_port,
         )
     finally:
         if mqtt_client is not None:

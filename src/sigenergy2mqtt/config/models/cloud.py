@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from urllib.parse import urlsplit
 
 from pydantic import BaseModel, Field, computed_field, field_validator, model_validator
 
@@ -25,8 +26,8 @@ class CloudConfig(BaseModel):
         v = v.strip()
         if not v:
             return ""
-        if v not in regions.REGION_BASE_URLS:
-            valid = ", ".join(regions.REGION_BASE_URLS.keys())
+        if v not in (*regions.REGION_BASE_URLS, "testing"):
+            valid = ", ".join((*regions.REGION_BASE_URLS.keys(), "testing"))
             raise ValueError(f"invalid region {v!r}, must be one of: {valid}")
         return v
 
@@ -51,6 +52,31 @@ class CloudConfig(BaseModel):
 
     region: str = Field("", alias="region")
     """The region to which the Sigenergy Cloud service belongs."""
+
+    testing_url: str = Field("", alias="testing-url", exclude=True)
+    """Base URL for the integration-test cloud service."""
+
+    @field_validator("testing_url")
+    @classmethod
+    def validate_testing_url(cls, value: str) -> str:
+        """Validate the optional HTTP(S) testing endpoint base URL."""
+        value = value.strip()
+        if not value:
+            return ""
+        try:
+            parsed = urlsplit(value)
+            port = parsed.port
+        except ValueError as exc:
+            raise ValueError("testing URL must be a valid http/https URL") from exc
+        if parsed.scheme not in ("http", "https") or not parsed.hostname:
+            raise ValueError("testing URL must use the http or https scheme")
+        if parsed.username or parsed.password or parsed.query or parsed.fragment:
+            raise ValueError("testing URL must not contain credentials, a query, or a fragment")
+        if port is not None and not 1 <= port <= 65535:
+            raise ValueError("testing URL port must be between 1 and 65535")
+        if not value.endswith("/"):
+            raise ValueError("testing URL must end with '/'")
+        return value
 
     log_level: int = Field(logging.WARNING, alias="log-level")
     """Cloud subsystem log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)"""
