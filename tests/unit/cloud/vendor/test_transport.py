@@ -3,6 +3,7 @@
 import aiohttp
 import pytest
 from aioresponses import aioresponses
+from yarl import URL
 
 from sigenergy2mqtt.cloud.vendor.solidfox.sigenergy_cloud.auth import OAuthSession
 from sigenergy2mqtt.cloud.vendor.solidfox.sigenergy_cloud.errors import (
@@ -33,6 +34,13 @@ async def _authed_transport() -> tuple[aiohttp.ClientSession, CloudTransport]:
             "user",
             "encrypted",
         )
+        (request,) = mocked.requests[
+            ("POST", URL("https://api-eu.sigencloud.com/auth/oauth/token"))
+        ]
+        assert request.kwargs["headers"] == {
+            "Authorization": aiohttp.encode_basic_auth("sigen", "sigen")
+        }
+        assert "auth" not in request.kwargs
     return session, CloudTransport("https://api-eu.sigencloud.com/", auth)
 
 

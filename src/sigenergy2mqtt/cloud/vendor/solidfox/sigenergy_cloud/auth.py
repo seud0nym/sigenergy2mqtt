@@ -117,7 +117,11 @@ class OAuthSession:
         async with session.post(
             url,
             data=form,
-            auth=aiohttp.BasicAuth(_OAUTH_CLIENT_ID, _OAUTH_CLIENT_SECRET),
+            headers={
+                "Authorization": aiohttp.encode_basic_auth(
+                    _OAUTH_CLIENT_ID, _OAUTH_CLIENT_SECRET
+                )
+            },
         ) as response:
             body = await response.text()
             if response.status != 200:
