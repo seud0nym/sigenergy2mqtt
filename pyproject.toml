@@ -24,7 +24,7 @@ requires-python = ">=3.12"
 
 [project.optional-dependencies]
 test = [
-    "aioresponses",
+    "aioresponses @ git+https://github.com/agners/aioresponses.git@8f40e0db2eed16621607ecfc857168240c795755",
     "deepl",
     "jsonschema",
     "pytest",
