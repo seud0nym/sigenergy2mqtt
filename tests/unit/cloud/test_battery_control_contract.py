@@ -46,7 +46,11 @@ def community_adapter() -> CommunityCloudAdapter:
                 end_time=1_800_000_000,
             )
         ),
-        current_operational_mode=AsyncMock(return_value="TOU"),
+        available_operational_modes=AsyncMock(
+            return_value={"defaultWorkingModes": [], "energyProfileItems": []}
+        ),
+        get_operational_mode=AsyncMock(return_value=(2, -1)),
+        set_operational_mode=AsyncMock(return_value={"ok": True}),
     )
     return adapter
 
@@ -92,7 +96,13 @@ async def test_port_translates_command_and_authoritative_status(
     assert status.enabled is True
     assert status.mode is InstantControlMode.DISCHARGE
     assert status.ends_at == 1_800_000_000.0
-    assert await community_adapter.current_strategy_label() == "TOU"
+    assert await community_adapter.available_operational_modes() == {
+        "defaultWorkingModes": [],
+        "energyProfileItems": [],
+    }
+    assert await community_adapter.get_operational_mode() == (2, -1)
+    assert await community_adapter.set_operational_mode(9, 7) == {"ok": True}
+    community_adapter._client.set_operational_mode.assert_awaited_once_with(9, 7)  # type: ignore[reportPrivateUsage]
 
 
 @pytest.mark.asyncio
@@ -272,17 +282,17 @@ async def test_connect_translates_vendor_errors(
             BatteryControlUnavailableError,
         ),
         (
-            "current_operational_mode",
+            "get_operational_mode",
             SigenergyCloudRateLimitError("limited"),
             BatteryControlRateLimitedError,
         ),
         (
-            "current_operational_mode",
+            "get_operational_mode",
             SigenergyCloudAuthError("expired"),
             BatteryControlAuthError,
         ),
         (
-            "current_operational_mode",
+            "get_operational_mode",
             SigenergyCloudError("offline"),
             BatteryControlUnavailableError,
         ),
@@ -307,7 +317,7 @@ async def test_operations_translate_vendor_errors(
         elif method_name == "instant_manual_control":
             await community_adapter.instant_control_status()
         else:
-            await community_adapter.current_strategy_label()
+            await community_adapter.get_operational_mode()
 
     if isinstance(vendor_error, SigenergyCloudAuthError):
         assert community_adapter._connected is False  # type: ignore[reportPrivateUsage]

@@ -1,6 +1,6 @@
 """The application-facing battery-control port."""
 
-from typing import Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 from .models import Capabilities, InstantControlStatus, InstantOverrideCommand
 
@@ -20,4 +20,10 @@ class BatteryControlPort(Protocol):
 
     async def instant_control_status(self) -> InstantControlStatus: ...
 
-    async def current_strategy_label(self) -> str | None: ...
+    async def available_operational_modes(self) -> dict[str, Any]: ...
+
+    async def get_operational_mode(self) -> tuple[int, int]: ...
+
+    async def set_operational_mode(
+        self, mode: int, profile_id: int = -1
+    ) -> dict[str, Any]: ...

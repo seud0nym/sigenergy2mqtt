@@ -1,6 +1,7 @@
 """Adapter for the vendored, unofficial mySigen app API."""
 
 from datetime import timedelta
+from typing import Any, Awaitable, Callable, TypeVar
 
 from .exceptions import (
     BatteryControlAuthError,
@@ -36,6 +37,7 @@ _CAPABILITIES = Capabilities(
     min_duration=timedelta(minutes=1),
     max_duration=timedelta(minutes=1440),
 )
+_T = TypeVar("_T")
 
 
 class CommunityCloudAdapter:
@@ -136,10 +138,12 @@ class CommunityCloudAdapter:
             ends_at=float(status.end_time) if status.end_time is not None else None,
         )
 
-    async def current_strategy_label(self) -> str | None:
+    async def _operational_mode_operation(
+        self, operation: Callable[[], Awaitable[_T]]
+    ) -> _T:
         await self.connect()
         try:
-            return await self._client.current_operational_mode()
+            return await operation()
         except SigenergyCloudRateLimitError as exc:
             raise BatteryControlRateLimitedError(str(exc)) from exc
         except SigenergyCloudAuthError as exc:
@@ -147,3 +151,18 @@ class CommunityCloudAdapter:
             raise BatteryControlAuthError(str(exc)) from exc
         except (SigenergyCloudError, OSError, TimeoutError) as exc:
             raise BatteryControlUnavailableError(str(exc)) from exc
+
+    async def available_operational_modes(self) -> dict[str, Any]:
+        return await self._operational_mode_operation(
+            self._client.available_operational_modes
+        )
+
+    async def get_operational_mode(self) -> tuple[int, int]:
+        return await self._operational_mode_operation(self._client.get_operational_mode)
+
+    async def set_operational_mode(
+        self, mode: int, profile_id: int = -1
+    ) -> dict[str, Any]:
+        return await self._operational_mode_operation(
+            lambda: self._client.set_operational_mode(mode, profile_id)
+        )

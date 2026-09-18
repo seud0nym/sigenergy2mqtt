@@ -181,9 +181,7 @@ class SigenergyCloudClient:
         """Return the current energy-profile mode label."""
         if self._operational_modes is None:
             await self.available_operational_modes()
-        data = await self._station_data("GET", "device/energy-profile/mode/current/{station_id}")
-        mode = data["currentMode"]
-        profile_id = data["currentProfileId"]
+        mode, profile_id = await self.get_operational_mode()
         modes = self._operational_modes or {}
         if mode != 9:
             for item in modes.get("defaultWorkingModes", ()):
@@ -194,6 +192,13 @@ class SigenergyCloudClient:
                 if item.get("profileId") == profile_id:
                     return str(item["name"])
         return "Unknown mode"
+
+    async def get_operational_mode(self) -> tuple[int, int]:
+        """Return the current mode and energy-profile identifiers."""
+        data = await self._station_data(
+            "GET", "device/energy-profile/mode/current/{station_id}"
+        )
+        return data["currentMode"], data["currentProfileId"]
 
     async def set_operational_mode(self, mode: int, profile_id: int = -1) -> dict[str, Any]:
         """Set the station energy-profile mode."""
