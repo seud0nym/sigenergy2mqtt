@@ -48,10 +48,6 @@ class FakeBatteryControlPort:
     async def instant_control_status(self) -> InstantControlStatus:
         return InstantControlStatus(self.enabled, None, None)
 
-    async def current_strategy_label(self) -> str | None:
-        return "TOU"
-
-
 def _controls() -> tuple[
     InstantControlMode, InstantControlDuration, InstantControlSwitch
 ]:

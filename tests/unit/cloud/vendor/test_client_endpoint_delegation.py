@@ -82,6 +82,21 @@ async def test_operational_mode_labels_default_profile_and_unknown(
 
 
 @pytest.mark.asyncio
+async def test_get_operational_mode_returns_mode_and_profile_ids(
+    client: SigenergyCloudClient,
+) -> None:
+    client._station_data.return_value = {  # type: ignore[reportPrivateUsage]
+        "currentMode": 9,
+        "currentProfileId": 7,
+    }
+
+    assert await client.get_operational_mode() == (9, 7)
+    client._station_data.assert_awaited_once_with(  # type: ignore[reportPrivateUsage]
+        "GET", "device/energy-profile/mode/current/{station_id}"
+    )
+
+
+@pytest.mark.asyncio
 async def test_read_endpoints_delegate_to_expected_helpers(
     client: SigenergyCloudClient,
 ) -> None:
