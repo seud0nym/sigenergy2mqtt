@@ -4,6 +4,10 @@ from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices.base.device import Device
 from sigenergy2mqtt.sensors.plant_cloud_control import (
+    BatteryExportLimitation,
+    GridConnectionLimit,
+    GridExportLimit,
+    GridImportLimit,
     InstantControlDuration,
     InstantControlMode,
     InstantControlSwitch,
@@ -20,7 +24,7 @@ class SigenergyCloudControl(Device):
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_cloud_control",
             manufacturer="Sigenergy",
             model="mySigen Cloud (unofficial)",
-            protocol_version=ProtocolVersion.V2_4,
+            protocol_version=ProtocolVersion.N_A,
         )
         mode = InstantControlMode(plant_index)
         duration = InstantControlDuration(plant_index)
@@ -33,3 +37,7 @@ class SigenergyCloudControl(Device):
         self._add_sensor(switch)
         self._add_sensor(mode)
         self._add_sensor(duration)
+        self._add_sensor(GridExportLimit(plant_index))
+        self._add_sensor(GridImportLimit(plant_index))
+        self._add_sensor(GridConnectionLimit(plant_index))
+        self._add_sensor(BatteryExportLimitation(plant_index))

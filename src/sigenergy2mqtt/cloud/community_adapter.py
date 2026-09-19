@@ -166,3 +166,66 @@ class CommunityCloudAdapter:
         return await self._operational_mode_operation(
             lambda: self._client.set_operational_mode(mode, profile_id)
         )
+
+    async def grid_export_limit(self) -> dict[str, Any]:
+        return await self._operational_mode_operation(self._client.grid_export_limit)
+
+    async def set_grid_export_limit(
+        self, limit_kw: float, *, enabled: bool = True
+    ) -> dict[str, Any]:
+        return await self._operational_mode_operation(
+            lambda: self._client.set_grid_export_limit(limit_kw, enabled=enabled)
+        )
+
+    async def grid_import_limit(self) -> dict[str, Any]:
+        return await self._operational_mode_operation(self._client.grid_import_limit)
+
+    async def set_grid_import_limit(
+        self, limit_kw: float, *, enabled: bool = True
+    ) -> dict[str, Any]:
+        return await self._operational_mode_operation(
+            lambda: self._client.set_grid_import_limit(limit_kw, enabled=enabled)
+        )
+
+    async def grid_connection_limit(self) -> dict[str, Any]:
+        return await self._operational_mode_operation(
+            self._client.grid_connection_limit
+        )
+
+    async def set_grid_connection_limit(
+        self, limit_a: float, *, enabled: bool = True
+    ) -> dict[str, Any]:
+        return await self._operational_mode_operation(
+            lambda: self._client.set_grid_connection_limit(limit_a, enabled=enabled)
+        )
+
+    async def battery_power_limit(self) -> dict[str, Any]:
+        return await self._operational_mode_operation(self._client.battery_power_limit)
+
+    async def set_battery_power_limit(
+        self, *, max_charge_kw: float | None, max_discharge_kw: float | None
+    ) -> dict[str, Any]:
+        return await self._operational_mode_operation(
+            lambda: self._client.set_battery_power_limit(
+                max_charge_kw=max_charge_kw,
+                max_discharge_kw=max_discharge_kw,
+            )
+        )
+
+    async def solar_power_limit(self) -> dict[str, Any]:
+        return await self._operational_mode_operation(self._client.solar_power_limit)
+
+    async def set_solar_power_limit(self, limit_kw: float | None) -> dict[str, Any]:
+        return await self._operational_mode_operation(
+            lambda: self._client.set_solar_power_limit(limit_kw)
+        )
+
+    async def battery_export_limitation(self) -> dict[str, Any]:
+        return await self._operational_mode_operation(
+            self._client.battery_export_limitation
+        )
+
+    async def set_battery_export_limitation(self, enabled: bool) -> dict[str, Any]:
+        return await self._operational_mode_operation(
+            lambda: self._client.set_battery_export_limitation(enabled)
+        )

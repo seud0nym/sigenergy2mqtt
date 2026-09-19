@@ -1,7 +1,7 @@
 """Reserved integration point for Sigenergy's official OAuth API.
 
 The public API does not yet document instant-control cancellation and status
-semantics sufficiently to implement the :class:`BatteryControlPort` contract.
+semantics sufficiently to implement the :class:`CloudControlPort` contract.
 """
 
 

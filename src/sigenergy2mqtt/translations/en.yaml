@@ -1,6 +1,22 @@
 class:
   ACCharger:
     name: Sigenergy AC Charger {sequence_suffix}
+  BatteryExportLimitation:
+    name: Battery Export Limitation
+  GridConnectionLimit:
+    name: Grid Connection Current Limit
+  GridExportLimit:
+    name: Grid Export Limit
+  GridImportLimit:
+    name: Grid Import Limit
+  InstantControlDuration:
+    name: Instant Manual Control Duration
+  InstantControlMode:
+    name: Instant Manual Control Mode
+  InstantControlSwitch:
+    name: Instant Manual Control
+  SigenergyCloudControl:
+    name: Sigenergy Cloud Control
   ACChargerAlarm1:
     alarm:
       '0': Grid over-voltage
@@ -2842,6 +2858,8 @@ class:
     name_off: Power Off
     name_on: Power On
 cli:
+  SIGENERGY2MQTT_CLOUD_ACCEPT_UNOFFICIAL_API_RISK:
+    help: Explicitly allow the unpublished mySigen API (a delegated account is recommended).
   SIGENERGY2MQTT_CLOUD_LOG_LEVEL:
     help: 'Cloud subsystem log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)'
   SIGENERGY2MQTT_CLOUD_PASSWORD:

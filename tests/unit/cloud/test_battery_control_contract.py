@@ -1,4 +1,4 @@
-"""Contract tests for BatteryControlPort implementations."""
+"""Contract tests for CloudControlPort implementations."""
 
 from datetime import timedelta
 from types import SimpleNamespace
@@ -19,7 +19,7 @@ from sigenergy2mqtt.cloud.models import (
     InstantControlMode,
     InstantOverrideCommand,
 )
-from sigenergy2mqtt.cloud.port import BatteryControlPort
+from sigenergy2mqtt.cloud.port import CloudControlPort
 from sigenergy2mqtt.cloud.registry import BatteryControlRegistry
 from sigenergy2mqtt.cloud.vendor.solidfox.sigenergy_cloud import InstantManualMode
 from sigenergy2mqtt.cloud.vendor.solidfox.sigenergy_cloud.errors import (
@@ -51,6 +51,25 @@ def community_adapter() -> CommunityCloudAdapter:
         ),
         get_operational_mode=AsyncMock(return_value=(2, -1)),
         set_operational_mode=AsyncMock(return_value={"ok": True}),
+        grid_export_limit=AsyncMock(return_value={"enable": True}),
+        set_grid_export_limit=AsyncMock(return_value={"ok": True}),
+        grid_import_limit=AsyncMock(return_value={"enable": True}),
+        set_grid_import_limit=AsyncMock(return_value={"ok": True}),
+        grid_connection_limit=AsyncMock(return_value={"enable": True}),
+        set_grid_connection_limit=AsyncMock(return_value={"ok": True}),
+        battery_power_limit=AsyncMock(return_value={"batteryMaxChargingPower": "5"}),
+        set_battery_power_limit=AsyncMock(return_value={"ok": True}),
+        solar_power_limit=AsyncMock(return_value={"powerLimit": "6"}),
+        set_solar_power_limit=AsyncMock(return_value={"ok": True}),
+        battery_export_limitation=AsyncMock(
+            return_value={
+                "currentEnable": False,
+                "ownerSetEnable": None,
+                "installerSetEnable": None,
+                "nearModify": None,
+            }
+        ),
+        set_battery_export_limitation=AsyncMock(return_value={"ok": True}),
     )
     return adapter
 
@@ -58,7 +77,7 @@ def community_adapter() -> CommunityCloudAdapter:
 def test_community_adapter_satisfies_port_and_reports_capabilities(
     community_adapter: CommunityCloudAdapter,
 ) -> None:
-    assert isinstance(community_adapter, BatteryControlPort)
+    assert isinstance(community_adapter, CloudControlPort)
     assert community_adapter.capabilities.features == frozenset()
     assert community_adapter.capabilities.min_duration == timedelta(minutes=1)
     assert community_adapter.capabilities.max_duration == timedelta(minutes=1440)
@@ -109,6 +128,51 @@ async def test_port_translates_command_and_authoritative_status(
 async def test_port_clears_override(community_adapter: CommunityCloudAdapter) -> None:
     await community_adapter.clear_instant_override()
     community_adapter._client.disable_instant_manual_control.assert_awaited_once()  # type: ignore[reportPrivateUsage]
+
+
+@pytest.mark.asyncio
+async def test_port_delegates_all_limit_operations(
+    community_adapter: CommunityCloudAdapter,
+) -> None:
+    assert await community_adapter.grid_export_limit() == {"enable": True}
+    assert await community_adapter.set_grid_export_limit(4.5, enabled=False) == {
+        "ok": True
+    }
+    assert await community_adapter.grid_import_limit() == {"enable": True}
+    assert await community_adapter.set_grid_import_limit(6.5) == {"ok": True}
+    assert await community_adapter.grid_connection_limit() == {"enable": True}
+    assert await community_adapter.set_grid_connection_limit(32.0) == {"ok": True}
+    assert await community_adapter.battery_power_limit() == {
+        "batteryMaxChargingPower": "5"
+    }
+    assert await community_adapter.set_battery_power_limit(
+        max_charge_kw=3.0, max_discharge_kw=None
+    ) == {"ok": True}
+    assert await community_adapter.solar_power_limit() == {"powerLimit": "6"}
+    assert await community_adapter.set_solar_power_limit(None) == {"ok": True}
+    assert await community_adapter.battery_export_limitation() == {
+        "currentEnable": False,
+        "ownerSetEnable": None,
+        "installerSetEnable": None,
+        "nearModify": None,
+    }
+    assert await community_adapter.set_battery_export_limitation(False) == {"ok": True}
+
+    community_adapter._client.set_grid_export_limit.assert_awaited_once_with(  # type: ignore[reportPrivateUsage]
+        4.5, enabled=False
+    )
+    community_adapter._client.set_grid_import_limit.assert_awaited_once_with(  # type: ignore[reportPrivateUsage]
+        6.5, enabled=True
+    )
+    community_adapter._client.set_grid_connection_limit.assert_awaited_once_with(  # type: ignore[reportPrivateUsage]
+        32.0, enabled=True
+    )
+    community_adapter._client.set_battery_power_limit.assert_awaited_once_with(  # type: ignore[reportPrivateUsage]
+        max_charge_kw=3.0, max_discharge_kw=None
+    )
+    community_adapter._client.set_battery_export_limitation.assert_awaited_once_with(  # type: ignore[reportPrivateUsage]
+        False
+    )
 
 
 @pytest.mark.asyncio

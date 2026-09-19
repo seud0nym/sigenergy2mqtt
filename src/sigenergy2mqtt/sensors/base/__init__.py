@@ -46,7 +46,7 @@ from .constants import (  # noqa: F401
     _sanitize_path_component,
 )
 
-from .cloud import CloudReadWriteSensor, CloudSensor  # noqa: F401
+from .cloud import CloudGridLimitSensor, CloudReadWriteSensor, CloudSensor  # noqa: F401
 
 # Derived sensors
 from .derived import CrossDeviceDerivedSensor, DerivedSensor  # noqa: F401
