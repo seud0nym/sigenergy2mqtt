@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import abc
 import logging
+import math
 from typing import Any, cast
 
 import paho.mqtt.client as mqtt
@@ -134,17 +135,72 @@ class CloudGridLimitSensor(NumericSensorMixin, CloudReadWriteSensor):
         self._updates_allowed = False
         super().__init__(minimum=0.0, maximum=None, **kwargs)
 
-    async def _read_cloud_state(self, port: CloudControlPort) -> bytes | float:
+    def _update_installer_maximum(self, maximum: float | None) -> None:
+        previous = self.get(DiscoveryKeys.MAX)
+        if maximum is None:
+            self.pop(DiscoveryKeys.MAX, None)
+            self.sanity_check.max_raw = None
+        else:
+            self.apply_min_max(0.0, maximum)
+        if previous != self.get(DiscoveryKeys.MAX) and self.parent_device is not None:
+            self.parent_device.rediscover = True
+
+    def _parse_number(
+        self, payload: dict[str, Any], key: str
+    ) -> tuple[float | None, bool]:
+        value = payload.get(key)
+        if value in (None, ""):
+            return None, True
+        try:
+            parsed = float(value)
+        except (TypeError, ValueError):
+            logger.warning(
+                f"{self.log_identity} cloud response contains invalid {key}={value!r}"
+            )
+            return None, False
+        if not math.isfinite(parsed):
+            logger.warning(
+                f"{self.log_identity} cloud response contains invalid {key}={value!r}"
+            )
+            return None, False
+        return parsed, True
+
+    async def _read_cloud_state(self, port: CloudControlPort) -> float | str:
         payload = await getattr(port, self._read_method)()
-        enabled = bool(payload.get("enable"))
-        current = payload.get(self._current_key)
-        installer_maximum = payload.get(self._installer_key)
-        self._updates_allowed = enabled and installer_maximum not in (None, "")
-        if self._updates_allowed:
-            self.apply_min_max(0.0, float(cast(float | str, installer_maximum)))
-        if not enabled or current in (None, ""):
-            return b""
-        return float(current)
+        if not isinstance(payload, dict):
+            logger.warning(
+                f"{self.log_identity} cloud response is not an object: {payload!r}"
+            )
+            self._updates_allowed = False
+            self._update_installer_maximum(None)
+            return "None"
+        enabled_value = payload.get("enable")
+        enabled_valid = isinstance(enabled_value, bool)
+        if not enabled_valid:
+            logger.warning(
+                f"{self.log_identity} cloud response contains invalid enable={enabled_value!r}"
+            )
+        enabled = enabled_value is True
+        current, current_valid = self._parse_number(payload, self._current_key)
+        installer_maximum, installer_valid = self._parse_number(
+            payload, self._installer_key
+        )
+        self._updates_allowed = (
+            enabled
+            and current_valid
+            and installer_valid
+            and installer_maximum is not None
+        )
+        self._update_installer_maximum(installer_maximum)
+        if (
+            not enabled_valid
+            or not current_valid
+            or not installer_valid
+            or not enabled
+            or current is None
+        ):
+            return "None"
+        return current
 
     async def _write_cloud_value(
         self, port: CloudControlPort, value: float | str

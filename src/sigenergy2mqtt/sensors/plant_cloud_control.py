@@ -268,9 +268,16 @@ class BatteryExportLimitation(SwitchSensorMixin, CloudReadWriteSensor):
             protocol_version=ProtocolVersion.N_A,
         )
 
-    async def _read_cloud_state(self, port: CloudControlPort) -> int:
+    async def _read_cloud_state(self, port: CloudControlPort) -> int | str:
         payload = await port.battery_export_limitation()
-        return int(bool(payload["currentEnable"]))
+        if not isinstance(payload, dict) or not isinstance(
+            payload.get("currentEnable"), bool
+        ):
+            logger.warning(
+                f"{self.log_identity} cloud response contains invalid currentEnable: {payload!r}"
+            )
+            return "None"
+        return int(payload["currentEnable"])
 
     async def _write_cloud_value(
         self, port: CloudControlPort, value: float | str

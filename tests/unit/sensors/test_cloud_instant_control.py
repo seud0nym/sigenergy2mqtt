@@ -308,7 +308,7 @@ async def test_grid_limit_empty_states_and_disallowed_updates(payload) -> None:
     if payload["enable"] and payload["maxLimitation"]:
         assert state == 5.0
     else:
-        assert state == b""
+        assert state == "None"
     assert await sensor._write_cloud_value(port, 4.0) is (
         payload["enable"] and bool(payload["maxLimitationInstaller"])
     )
@@ -330,3 +330,64 @@ async def test_battery_export_limitation_reads_current_state_and_writes_owner_st
     assert await sensor._read_cloud_state(port) == 0
     assert await sensor._write_cloud_value(port, 1) is True
     port.set_battery_export_limitation.assert_awaited_once_with(True)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"enable": True, "maxLimitation": "invalid", "maxLimitationInstaller": "10"},
+        {"enable": True, "maxLimitation": "5", "maxLimitationInstaller": object()},
+        {"enable": True, "maxLimitation": "nan", "maxLimitationInstaller": "10"},
+        [],
+    ],
+)
+async def test_grid_limit_malformed_payload_publishes_unavailable_without_raising(
+    payload,
+) -> None:
+    sensor = GridExportLimit(0)
+    port = AsyncMock()
+    port.grid_export_limit.return_value = payload
+
+    assert await sensor._update_internal_state(modbus_client=port) is True
+    assert sensor.latest_raw_state == "None"
+    assert await sensor._write_cloud_value(port, 1) is False
+
+
+@pytest.mark.asyncio
+async def test_grid_limit_maximum_changes_request_discovery_republish() -> None:
+    device = SigenergyCloudControl(0)
+    sensor = next(
+        item for item in device.sensors.values() if isinstance(item, GridExportLimit)
+    )
+    port = AsyncMock()
+    port.grid_export_limit.return_value = {
+        "enable": True,
+        "maxLimitation": "5",
+        "maxLimitationInstaller": "10",
+    }
+
+    assert await sensor._read_cloud_state(port) == 5.0
+    assert sensor[DiscoveryKeys.MAX] == 10.0
+    assert device.rediscover is True
+
+    device.rediscover = False
+    port.grid_export_limit.return_value["maxLimitationInstaller"] = ""
+    assert await sensor._read_cloud_state(port) == 5.0
+    assert DiscoveryKeys.MAX not in sensor
+    assert sensor.sanity_check.max_raw is None
+    assert device.rediscover is True
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "payload",
+    [{}, {"currentEnable": None}, {"currentEnable": "false"}, []],
+)
+async def test_battery_export_malformed_payload_publishes_unavailable(payload) -> None:
+    sensor = BatteryExportLimitation(0)
+    port = AsyncMock()
+    port.battery_export_limitation.return_value = payload
+
+    assert await sensor._update_internal_state(modbus_client=port) is True
+    assert sensor.latest_raw_state == "None"
