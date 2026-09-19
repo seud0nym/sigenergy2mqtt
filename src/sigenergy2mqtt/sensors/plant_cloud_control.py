@@ -7,11 +7,18 @@ from datetime import timedelta
 
 from sigenergy2mqtt.cloud.models import InstantControlMode as Mode
 from sigenergy2mqtt.cloud.models import InstantOverrideCommand
-from sigenergy2mqtt.cloud.port import BatteryControlPort
-from sigenergy2mqtt.common import ProtocolVersion, UnitOfTime
+from sigenergy2mqtt.cloud.port import CloudControlPort
+from sigenergy2mqtt.common import (
+    DeviceClass,
+    ProtocolVersion,
+    UnitOfElectricCurrent,
+    UnitOfPower,
+    UnitOfTime,
+)
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.sensors.base import (
     CloudReadWriteSensor,
+    CloudGridLimitSensor,
     NumericSensorMixin,
     SelectSensorMixin,
     SwitchSensorMixin,
@@ -61,17 +68,17 @@ class InstantControlMode(SelectSensorMixin, CloudReadWriteSensor):
             icon="mdi:battery-charging-medium",
             gain=None,
             precision=None,
-            protocol_version=ProtocolVersion.V2_4,
+            protocol_version=ProtocolVersion.N_A,
         )
         self._payload_available, self._payload_not_available = 0, 1
         self.set_latest_state(0)
 
-    async def _read_cloud_state(self, port: BatteryControlPort) -> int | None:
+    async def _read_cloud_state(self, port: CloudControlPort) -> int | None:
         state = self.latest_raw_state
         return int(state) if state is not None else None
 
     async def _write_cloud_value(
-        self, port: BatteryControlPort, value: float | str
+        self, port: CloudControlPort, value: float | str
     ) -> bool:
         return self.set_latest_state(value)
 
@@ -96,17 +103,17 @@ class InstantControlDuration(NumericSensorMixin, CloudReadWriteSensor):
             precision=0,
             minimum=1.0,
             maximum=1440.0,
-            protocol_version=ProtocolVersion.V2_4,
+            protocol_version=ProtocolVersion.N_A,
         )
         self._payload_available, self._payload_not_available = 0, 1
         self.set_latest_state(30)
 
-    async def _read_cloud_state(self, port: BatteryControlPort) -> float | None:
+    async def _read_cloud_state(self, port: CloudControlPort) -> float | None:
         state = self.latest_raw_state
         return float(state) if state is not None else None
 
     async def _write_cloud_value(
-        self, port: BatteryControlPort, value: float | str
+        self, port: CloudControlPort, value: float | str
     ) -> bool:
         return self.set_latest_state(value)
 
@@ -136,14 +143,14 @@ class InstantControlSwitch(SwitchSensorMixin, CloudReadWriteSensor):
             icon="mdi:battery-sync",
             gain=None,
             precision=0,
-            protocol_version=ProtocolVersion.V2_4,
+            protocol_version=ProtocolVersion.N_A,
         )
 
-    async def _read_cloud_state(self, port: BatteryControlPort) -> int:
+    async def _read_cloud_state(self, port: CloudControlPort) -> int:
         return int((await port.instant_control_status()).enabled)
 
     async def _write_cloud_value(
-        self, port: BatteryControlPort, value: float | str
+        self, port: CloudControlPort, value: float | str
     ) -> bool:
         if int(value) == 0:
             await port.clear_instant_override()
@@ -163,4 +170,110 @@ class InstantControlSwitch(SwitchSensorMixin, CloudReadWriteSensor):
                 duration=timedelta(minutes=float(duration)),
             )
         )
+        return True
+
+
+class GridExportLimit(CloudGridLimitSensor):
+    """Maximum power that the owner permits the plant to export."""
+
+    def __init__(self, plant_index: int) -> None:
+        object_id, unique_id = _identity(plant_index, "grid_export_limit")
+        super().__init__(
+            availability_control_sensor=None,
+            read_method="grid_export_limit",
+            write_method="set_grid_export_limit",
+            current_key="maxLimitation",
+            installer_key="maxLimitationInstaller",
+            name="Grid Export Limit",
+            object_id=object_id,
+            unique_id=unique_id,
+            scan_interval=active_config.cloud.scan_interval,
+            unit=UnitOfPower.KILO_WATT,
+            device_class=DeviceClass.POWER,
+            state_class=None,
+            icon="mdi:transmission-tower-export",
+            gain=None,
+            precision=3,
+            protocol_version=ProtocolVersion.N_A,
+        )
+
+
+class GridImportLimit(CloudGridLimitSensor):
+    """Maximum power that the owner permits the plant to import."""
+
+    def __init__(self, plant_index: int) -> None:
+        object_id, unique_id = _identity(plant_index, "grid_import_limit")
+        super().__init__(
+            availability_control_sensor=None,
+            read_method="grid_import_limit",
+            write_method="set_grid_import_limit",
+            current_key="maxLimitation",
+            installer_key="maxLimitationInstaller",
+            name="Grid Import Limit",
+            object_id=object_id,
+            unique_id=unique_id,
+            scan_interval=active_config.cloud.scan_interval,
+            unit=UnitOfPower.KILO_WATT,
+            device_class=DeviceClass.POWER,
+            state_class=None,
+            icon="mdi:transmission-tower-import",
+            gain=None,
+            precision=3,
+            protocol_version=ProtocolVersion.N_A,
+        )
+
+
+class GridConnectionLimit(CloudGridLimitSensor):
+    """Maximum phase current allowed at the grid connection point."""
+
+    def __init__(self, plant_index: int) -> None:
+        object_id, unique_id = _identity(plant_index, "grid_connection_limit")
+        super().__init__(
+            availability_control_sensor=None,
+            read_method="grid_connection_limit",
+            write_method="set_grid_connection_limit",
+            current_key="currentLimitation",
+            installer_key="installerSetLimitation",
+            name="Grid Connection Current Limit",
+            object_id=object_id,
+            unique_id=unique_id,
+            scan_interval=active_config.cloud.scan_interval,
+            unit=UnitOfElectricCurrent.AMPERE,
+            device_class=DeviceClass.CURRENT,
+            state_class=None,
+            icon="mdi:current-ac",
+            gain=None,
+            precision=1,
+            protocol_version=ProtocolVersion.N_A,
+        )
+
+
+class BatteryExportLimitation(SwitchSensorMixin, CloudReadWriteSensor):
+    """Control whether the battery is permitted to export to the grid."""
+
+    def __init__(self, plant_index: int) -> None:
+        object_id, unique_id = _identity(plant_index, "battery_export_limitation")
+        super().__init__(
+            availability_control_sensor=None,
+            name="Battery Export Limitation",
+            object_id=object_id,
+            unique_id=unique_id,
+            scan_interval=active_config.cloud.scan_interval,
+            unit=None,
+            device_class=None,
+            state_class=None,
+            icon="mdi:battery-arrow-up-outline",
+            gain=None,
+            precision=0,
+            protocol_version=ProtocolVersion.N_A,
+        )
+
+    async def _read_cloud_state(self, port: CloudControlPort) -> int:
+        payload = await port.battery_export_limitation()
+        return int(bool(payload["currentEnable"]))
+
+    async def _write_cloud_value(
+        self, port: CloudControlPort, value: float | str
+    ) -> bool:
+        await port.set_battery_export_limitation(bool(int(value)))
         return True

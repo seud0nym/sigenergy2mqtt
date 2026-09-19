@@ -6,7 +6,7 @@ from typing import Literal
 from sigenergy2mqtt.config.models.cloud import CloudConfig
 
 from .community_adapter import CommunityCloudAdapter
-from .port import BatteryControlPort
+from .port import CloudControlPort
 
 logger = logging.getLogger("sigenergy2mqtt.cloud")
 Provider = Literal["community", "official"]
@@ -14,7 +14,7 @@ Provider = Literal["community", "official"]
 
 class BatteryControlRegistry:
     def __init__(self) -> None:
-        self._adapter: BatteryControlPort | None = None
+        self._adapter: CloudControlPort | None = None
         self._provider: Provider | None = None
 
     def configure(self, config: CloudConfig) -> None:
@@ -36,14 +36,14 @@ class BatteryControlRegistry:
         self._provider = "community"
 
     @property
-    def active(self) -> BatteryControlPort | None:
+    def active(self) -> CloudControlPort | None:
         return self._adapter
 
     @property
     def provider(self) -> Provider | None:
         return self._provider
 
-    async def transport_factory(self) -> BatteryControlPort | None:
+    async def transport_factory(self) -> CloudControlPort | None:
         if self._adapter is not None:
             try:
                 await self._adapter.connect()

@@ -97,6 +97,38 @@ class CloudApiTestServer:
             "endTime": None,
         }
 
+        self.grid_export_limit = {
+            "enable": True,
+            "maxLimitation": "10.000",
+            "maxLimitationOwner": "10.000",
+            "maxLimitationInstaller": "20.000",
+            "isUltra": False,
+        }
+        self.grid_import_limit = {
+            "enable": True,
+            "maxLimitation": "12.000",
+            "maxLimitationOwner": "12.000",
+            "maxLimitationInstaller": "25.000",
+            "isUltra": False,
+        }
+        self.grid_connection_limit = {
+            "enable": True,
+            "currentLimitation": "32.0",
+            "ownerSetLimitation": "32.0",
+            "installerSetLimitation": "63.0",
+        }
+        self.battery_power_limit = {
+            "batteryMaxChargingPower": "5.000",
+            "batteryMaxDischargingPower": "5.000",
+        }
+        self.solar_power_limit = {"powerLimit": "6.000"}
+        self.battery_export_limitation = {
+            "currentEnable": False,
+            "ownerSetEnable": None,
+            "installerSetEnable": None,
+            "nearModify": None,
+        }
+
     @staticmethod
     def _success(data: Any = None) -> web.Response:
         return web.json_response({"code": 0, "msg": "Success", "data": data})
@@ -204,6 +236,77 @@ class CloudApiTestServer:
         }
         return self._success()
 
+    async def get_limit(self, request: web.Request) -> web.Response:
+        if (response := await self.authorized(request)) is not None:
+            return response
+        path = request.path
+        setting = (
+            "grid_export_limit"
+            if "/grid/limitation/export/" in path
+            else "grid_import_limit"
+            if "/grid/limitation/import/" in path
+            else "grid_connection_limit"
+            if "/parallel/off/grid/" in path
+            else "battery_power_limit"
+            if "/battery/limit/" in path
+            else "solar_power_limit"
+            if "/solar/limit/" in path
+            else "battery_export_limitation"
+        )
+        return self._success(getattr(self, setting))
+
+    async def set_grid_limit(self, request: web.Request) -> web.Response:
+        if (response := await self.authorized(request)) is not None:
+            return response
+        payload = await request.json()
+        setting = f"grid_{request.match_info['direction']}_limit"
+        state = getattr(self, setting)
+        state.update(
+            enable=bool(payload["enable"]),
+            maxLimitation=payload["maxLimitationOwner"],
+            maxLimitationOwner=payload["maxLimitationOwner"],
+        )
+        return self._success()
+
+    async def set_grid_connection_limit(self, request: web.Request) -> web.Response:
+        if (response := await self.authorized(request)) is not None:
+            return response
+        payload = await request.json()
+        self.grid_connection_limit.update(
+            enable=bool(payload["enable"]),
+            currentLimitation=payload["ownerSetLimitation"],
+            ownerSetLimitation=payload["ownerSetLimitation"],
+        )
+        return self._success()
+
+    async def set_battery_power_limit(self, request: web.Request) -> web.Response:
+        if (response := await self.authorized(request)) is not None:
+            return response
+        payload = await request.json()
+        self.battery_power_limit.update(
+            batteryMaxChargingPower=payload["batteryMaxChargingPower"],
+            batteryMaxDischargingPower=payload["batteryMaxDischargingPower"],
+        )
+        return self._success()
+
+    async def set_solar_power_limit(self, request: web.Request) -> web.Response:
+        if (response := await self.authorized(request)) is not None:
+            return response
+        payload = await request.json()
+        self.solar_power_limit["powerLimit"] = payload["powerLimit"]
+        return self._success()
+
+    async def set_battery_export_limitation(self, request: web.Request) -> web.Response:
+        if (response := await self.authorized(request)) is not None:
+            return response
+        payload = await request.json()
+        self.battery_export_limitation.update(
+            currentEnable=payload["ownerSetEnable"],
+            installerSetEnable=payload["installerSetEnable"],
+            ownerSetEnable=payload["ownerSetEnable"],
+        )
+        return self._success()
+
     def app(self) -> web.Application:
         app = web.Application()
         app.add_routes(
@@ -226,6 +329,50 @@ class CloudApiTestServer:
                 web.put(
                     "/device/energy-profile/instant/manunal",
                     self.set_instant_control,
+                ),
+                web.get(
+                    "/device/energy-profile/grid/limitation/export/{station_id}",
+                    self.get_limit,
+                ),
+                web.get(
+                    "/device/energy-profile/grid/limitation/import/{station_id}",
+                    self.get_limit,
+                ),
+                web.put(
+                    "/device/energy-profile/grid/limitation/{direction}",
+                    self.set_grid_limit,
+                ),
+                web.get(
+                    "/device/energy-profile/parallel/off/grid/{station_id}",
+                    self.get_limit,
+                ),
+                web.put(
+                    "/device/energy-profile/parallel/off/grid",
+                    self.set_grid_connection_limit,
+                ),
+                web.get(
+                    "/device/energy-profile/battery/limit/{station_id}",
+                    self.get_limit,
+                ),
+                web.put(
+                    "/device/energy-profile/battery/limit",
+                    self.set_battery_power_limit,
+                ),
+                web.get(
+                    "/device/energy-profile/solar/limit/{station_id}",
+                    self.get_limit,
+                ),
+                web.put(
+                    "/device/energy-profile/solar/limit",
+                    self.set_solar_power_limit,
+                ),
+                web.get(
+                    "/device/energy-profile/battery/export/limitation/{station_id}",
+                    self.get_limit,
+                ),
+                web.put(
+                    "/device/energy-profile/battery/export/limitation",
+                    self.set_battery_export_limitation,
                 ),
             ]
         )

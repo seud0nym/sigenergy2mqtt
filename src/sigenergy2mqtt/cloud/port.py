@@ -1,4 +1,4 @@
-"""The application-facing battery-control port."""
+"""The application-facing cloud-control port."""
 
 from typing import Any, Protocol, runtime_checkable
 
@@ -6,7 +6,7 @@ from .models import Capabilities, InstantControlStatus, InstantOverrideCommand
 
 
 @runtime_checkable
-class BatteryControlPort(Protocol):
+class CloudControlPort(Protocol):
     @property
     def capabilities(self) -> Capabilities: ...
 
@@ -27,3 +27,35 @@ class BatteryControlPort(Protocol):
     async def set_operational_mode(
         self, mode: int, profile_id: int = -1
     ) -> dict[str, Any]: ...
+
+    async def grid_export_limit(self) -> dict[str, Any]: ...
+
+    async def set_grid_export_limit(
+        self, limit_kw: float, *, enabled: bool = True
+    ) -> dict[str, Any]: ...
+
+    async def grid_import_limit(self) -> dict[str, Any]: ...
+
+    async def set_grid_import_limit(
+        self, limit_kw: float, *, enabled: bool = True
+    ) -> dict[str, Any]: ...
+
+    async def grid_connection_limit(self) -> dict[str, Any]: ...
+
+    async def set_grid_connection_limit(
+        self, limit_a: float, *, enabled: bool = True
+    ) -> dict[str, Any]: ...
+
+    async def battery_power_limit(self) -> dict[str, Any]: ...
+
+    async def set_battery_power_limit(
+        self, *, max_charge_kw: float | None, max_discharge_kw: float | None
+    ) -> dict[str, Any]: ...
+
+    async def solar_power_limit(self) -> dict[str, Any]: ...
+
+    async def set_solar_power_limit(self, limit_kw: float | None) -> dict[str, Any]: ...
+
+    async def battery_export_limitation(self) -> dict[str, Any]: ...
+
+    async def set_battery_export_limitation(self, enabled: bool) -> dict[str, Any]: ...

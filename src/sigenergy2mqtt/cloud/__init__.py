@@ -7,10 +7,10 @@ from .models import (
     InstantControlStatus,
     InstantOverrideCommand,
 )
-from .port import BatteryControlPort
+from .port import CloudControlPort
 
 __all__ = [
-    "BatteryControlPort",
+    "CloudControlPort",
     "Capabilities",
     "ControlFeature",
     "InstantControlMode",

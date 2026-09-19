@@ -365,7 +365,11 @@ class SigenergyCloudClient:
         return data if isinstance(data, list) else []
 
     async def battery_export_limitation(self) -> dict[str, Any]:
-        """Return whether the battery may export to the grid."""
+        """Return whether the battery may export to the grid.
+
+        Keys: ``currentEnable`` (effective state), ``ownerSetEnable``,
+        ``installerSetEnable`` and ``nearModify``.
+        """
         return await self._station_data("GET", "device/energy-profile/battery/export/limitation/{station_id}")
 
     async def set_battery_export_limitation(self, enabled: bool) -> dict[str, Any]:
