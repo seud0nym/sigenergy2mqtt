@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from datetime import timedelta
 
 from sigenergy2mqtt.cloud.models import InstantControlMode as Mode
@@ -38,6 +39,7 @@ _OPTION_TO_MODE = {
     2: Mode.HOLD,
     3: Mode.SELF_CONSUMPTION,
 }
+_MODE_TO_OPTION = {mode: option for option, mode in _OPTION_TO_MODE.items()}
 
 
 def _identity(plant_index: int, suffix: str) -> tuple[str, str]:
@@ -71,16 +73,20 @@ class InstantControlMode(SelectSensorMixin, CloudReadWriteSensor):
             protocol_version=ProtocolVersion.N_A,
         )
         self._payload_available, self._payload_not_available = 0, 1
-        self.set_latest_state(0)
+        self._pending_value: int | None = None
 
     async def _read_cloud_state(self, port: CloudControlPort) -> int | None:
-        state = self.latest_raw_state
-        return int(state) if state is not None else None
+        status = await port.instant_control_status()
+        if not status.enabled or status.mode is None:
+            return None
+        return _MODE_TO_OPTION.get(status.mode)
 
     async def _write_cloud_value(
         self, port: CloudControlPort, value: float | str
     ) -> bool:
-        return self.set_latest_state(value)
+        changed = self.set_latest_state(value)
+        self._pending_value = int(value)
+        return changed
 
 
 class InstantControlDuration(NumericSensorMixin, CloudReadWriteSensor):
@@ -106,16 +112,20 @@ class InstantControlDuration(NumericSensorMixin, CloudReadWriteSensor):
             protocol_version=ProtocolVersion.N_A,
         )
         self._payload_available, self._payload_not_available = 0, 1
-        self.set_latest_state(30)
+        self._pending_value: float | None = None
 
     async def _read_cloud_state(self, port: CloudControlPort) -> float | None:
-        state = self.latest_raw_state
-        return float(state) if state is not None else None
+        status = await port.instant_control_status()
+        if not status.enabled or status.ends_at is None:
+            return None
+        return max(0.0, (status.ends_at - time.time()) / 60)
 
     async def _write_cloud_value(
         self, port: CloudControlPort, value: float | str
     ) -> bool:
-        return self.set_latest_state(value)
+        changed = self.set_latest_state(value)
+        self._pending_value = float(value)
+        return changed
 
 
 class InstantControlSwitch(SwitchSensorMixin, CloudReadWriteSensor):
@@ -156,11 +166,11 @@ class InstantControlSwitch(SwitchSensorMixin, CloudReadWriteSensor):
             await port.clear_instant_override()
             return True
 
-        option = self._mode.latest_raw_state
+        option = self._mode._pending_value
         if option is None or int(option) not in _OPTION_TO_MODE:
             logger.error(f"{self.log_identity} no valid mode selected")
             return False
-        duration = self._duration.latest_raw_state
+        duration = self._duration._pending_value
         if duration is None:
             logger.error(f"{self.log_identity} no valid duration selected")
             return False

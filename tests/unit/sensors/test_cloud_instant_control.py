@@ -116,8 +116,10 @@ async def test_switch_reads_authoritative_cloud_state() -> None:
 async def test_switch_submits_current_mode_and_duration() -> None:
     mode, duration, switch = _controls()
     port = FakeCloudControlPort()
-    mode.set_latest_state(INSTANT_CONTROL_OPTIONS.index("Self-Consumption"))
-    duration.set_latest_state(90)
+    await mode._write_cloud_value(
+        port, INSTANT_CONTROL_OPTIONS.index("Self-Consumption")
+    )
+    await duration._write_cloud_value(port, 90)
 
     assert await switch._write_cloud_value(port, 1) is True
     assert port.command.mode is DomainMode.SELF_CONSUMPTION
@@ -134,14 +136,50 @@ async def test_switch_off_clears_override() -> None:
 
 
 @pytest.mark.asyncio
-async def test_selection_sensors_retain_next_values_without_cloud_reads() -> None:
+async def test_selection_sensors_read_authoritative_cloud_values(monkeypatch) -> None:
     mode, duration, _ = _controls()
     port = FakeCloudControlPort()
-    mode.set_latest_state(2)
-    duration.set_latest_state(1440)
+    port.enabled = True
+    port.instant_control_status = AsyncMock(
+        return_value=InstantControlStatus(True, DomainMode.HOLD, 1_800_000_600)
+    )
+    monkeypatch.setattr(
+        "sigenergy2mqtt.sensors.plant_cloud_control.time.time",
+        lambda: 1_800_000_000,
+    )
 
     assert await mode._read_cloud_state(port) == 2
-    assert await duration._read_cloud_state(port) == 1440
+    assert await duration._read_cloud_state(port) == 10
+
+
+@pytest.mark.asyncio
+async def test_selection_sensors_keep_pending_values_separate_from_cloud_state() -> None:
+    mode, duration, switch = _controls()
+    port = FakeCloudControlPort(enabled=True)
+
+    await mode._write_cloud_value(port, 1)
+    await duration._write_cloud_value(port, 45)
+    port.instant_control_status = AsyncMock(
+        return_value=InstantControlStatus(True, DomainMode.HOLD, None)
+    )
+
+    assert await mode._read_cloud_state(port) == 2
+    assert await duration._read_cloud_state(port) is None
+    assert await switch._write_cloud_value(port, 1) is True
+    assert port.command.mode is DomainMode.DISCHARGE
+    assert port.command.duration == timedelta(minutes=45)
+
+
+@pytest.mark.asyncio
+async def test_selection_sensors_have_no_arbitrary_initial_values() -> None:
+    mode, duration, switch = _controls()
+    port = FakeCloudControlPort()
+
+    assert mode.latest_raw_state is None
+    assert duration.latest_raw_state is None
+    assert await mode._read_cloud_state(port) is None
+    assert await duration._read_cloud_state(port) is None
+    assert await switch._write_cloud_value(port, 1) is False
 
 
 @pytest.mark.asyncio
