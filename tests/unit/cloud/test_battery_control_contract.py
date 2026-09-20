@@ -23,7 +23,10 @@ from sigenergy2mqtt.cloud.models import (
 )
 from sigenergy2mqtt.cloud.port import CloudControlPort
 from sigenergy2mqtt.cloud.registry import BatteryControlRegistry
-from sigenergy2mqtt.cloud.vendor.solidfox.sigenergy_cloud import InstantManualMode
+from sigenergy2mqtt.cloud.vendor.solidfox.sigenergy_cloud import (
+    InstantManualMode,
+    SigenergyCloudClient,
+)
 from sigenergy2mqtt.cloud.vendor.solidfox.sigenergy_cloud.errors import (
     SigenergyCloudAPIError,
     SigenergyCloudAuthError,
@@ -48,6 +51,44 @@ def community_adapter() -> CommunityCloudAdapter:
                 end_time=1_800_000_000,
             )
         ),
+        device_topology=AsyncMock(
+            return_value={
+                "stationId": 123,
+                "nodeList": [
+                    {
+                        "stationId": 123,
+                        "snCode": "AIO",
+                        "deviceType": 2,
+                        "deviceStatus": 1,
+                        "communicateStatus": 2,
+                        "nodeList": [
+                            {
+                                "stationId": 123,
+                                "snCode": "INV",
+                                "deviceType": 3,
+                                "deviceStatus": 1,
+                                "communicateStatus": 2,
+                                "deviceCode": "PN1",
+                                "modelVersionStr": "FW1",
+                                "ratedActivePower": 8.0,
+                                "nodeList": [],
+                            },
+                            {
+                                "stationId": 123,
+                                "snCode": "BAT",
+                                "deviceType": 4,
+                                "deviceStatus": 4,
+                                "communicateStatus": 1,
+                                "modelVersionStr": "FW2",
+                                "nodeList": [],
+                            },
+                        ],
+                    }
+                ],
+            }
+        ),
+        iter_topology_nodes=SigenergyCloudClient.iter_topology_nodes,
+        topology_node_is_offline=SigenergyCloudClient.topology_node_is_offline,
         available_operational_modes=AsyncMock(
             return_value={"defaultWorkingModes": [], "energyProfileItems": []}
         ),
@@ -74,6 +115,31 @@ def community_adapter() -> CommunityCloudAdapter:
         set_battery_export_limitation=AsyncMock(return_value={"ok": True}),
     )
     return adapter
+
+
+async def test_device_list_uses_official_api_shape(
+    community_adapter: CommunityCloudAdapter,
+) -> None:
+    assert await community_adapter.device_list() == [
+        {
+            "systemId": "123",
+            "serialNumber": "INV",
+            "deviceType": "Inverter",
+            "status": "Normal",
+            "pn": "PN1",
+            "firmwareVersion": "FW1",
+            "attrMap": {"ratedActivePower": 8.0},
+        },
+        {
+            "systemId": "123",
+            "serialNumber": "BAT",
+            "deviceType": "Battery",
+            "status": "Offline",
+            "pn": "",
+            "firmwareVersion": "FW2",
+            "attrMap": {},
+        },
+    ]
 
 
 def test_community_adapter_satisfies_port_and_reports_capabilities(

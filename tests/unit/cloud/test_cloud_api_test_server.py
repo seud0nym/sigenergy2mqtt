@@ -16,6 +16,15 @@ async def test_cloud_api_test_server_exposes_all_limit_endpoints() -> None:
         )
         assert (await response.json())["data"]["maxLimitation"] == "10.000"
 
+        response = await client.get(
+            "/device/devicetreepanel/topology",
+            headers=headers,
+            params={"stationId": 1},
+        )
+        topology = (await response.json())["data"]
+        assert topology["stationId"] == api.device_topology["stationId"]
+        assert topology["nodeList"][0]["nodeList"][0]["snCode"] == "INV-TEST"
+
         response = await client.put(
             "/device/energy-profile/grid/limitation/export",
             headers=headers,

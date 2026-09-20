@@ -96,6 +96,32 @@ class CloudApiTestServer:
             "mode": "1",
             "endTime": None,
         }
+        self.device_topology = {
+            "stationId": CLOUD_TEST_STATION_ID,
+            "stationStatus": 1,
+            "nodeList": [
+                {
+                    "stationId": CLOUD_TEST_STATION_ID,
+                    "snCode": "AIO-TEST",
+                    "deviceType": 2,
+                    "deviceStatus": 1,
+                    "communicateStatus": 2,
+                    "nodeList": [
+                        {
+                            "stationId": CLOUD_TEST_STATION_ID,
+                            "snCode": "INV-TEST",
+                            "deviceType": 3,
+                            "deviceStatus": 1,
+                            "communicateStatus": 2,
+                            "deviceCode": "PN-INV",
+                            "modelVersionStr": "V100R001C00",
+                            "ratedActivePower": 6.0,
+                            "nodeList": [],
+                        }
+                    ],
+                }
+            ],
+        }
 
         self.grid_export_limit = {
             "enable": True,
@@ -180,6 +206,11 @@ class CloudApiTestServer:
         return self._success(
             {"stationId": CLOUD_TEST_STATION_ID, "acSnList": [], "dcSnList": []}
         )
+
+    async def get_device_topology(self, request: web.Request) -> web.Response:
+        if (response := await self.authorized(request)) is not None:
+            return response
+        return self._success(self.device_topology)
 
     async def available_modes(self, request: web.Request) -> web.Response:
         if (response := await self.authorized(request)) is not None:
@@ -313,6 +344,9 @@ class CloudApiTestServer:
             [
                 web.post("/auth/oauth/token", self.authenticate),
                 web.get("/device/owner/station/home", self.station_home),
+                web.get(
+                    "/device/devicetreepanel/topology", self.get_device_topology
+                ),
                 web.get(
                     "/device/energy-profile/mode/all/{station_id}",
                     self.available_modes,
