@@ -81,6 +81,12 @@ class CommunityCloudAdapter:
             self._connected = False
             await self._connect_locked()
 
+    async def _invalidate_connection(self, failed_generation: int) -> None:
+        """Invalidate a failed login without overwriting a newer connection."""
+        async with self._connect_lock:
+            if self._connection_generation == failed_generation:
+                self._connected = False
+
     async def close(self) -> None:
         await self._client.close()
         self._connected = False
@@ -153,7 +159,7 @@ class CommunityCloudAdapter:
                     await self._reconnect(generation)
                     generation = self._connection_generation
                     continue
-                self._connected = False
+                await self._invalidate_connection(generation)
                 raise BatteryControlAuthError(str(exc)) from exc
             except ValueError as exc:
                 if reject_api_errors:

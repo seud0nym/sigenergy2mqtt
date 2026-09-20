@@ -1,5 +1,7 @@
 """Contract tests for CloudControlPort implementations."""
 
+import asyncio
+
 from datetime import timedelta
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
@@ -438,6 +440,45 @@ async def test_operations_reauthenticate_and_retry_after_session_termination(
         assert result.ends_at == 1_800_000_001.0
     else:
         assert result == recovered_value
+
+
+@pytest.mark.asyncio
+async def test_stale_authentication_failure_does_not_invalidate_new_connection(
+    community_adapter: CommunityCloudAdapter,
+) -> None:
+    community_adapter._connected = True  # type: ignore[reportPrivateUsage]
+    community_adapter._connection_generation = 1  # type: ignore[reportPrivateUsage]
+    stale_retry_started = asyncio.Event()
+    allow_stale_retry_to_fail = asyncio.Event()
+    call_count = 0
+
+    async def get_operational_mode() -> tuple[int, int]:
+        nonlocal call_count
+        call_count += 1
+        if call_count == 1:
+            raise SigenergyCloudAuthError("old session terminated")
+        if call_count == 2:
+            stale_retry_started.set()
+            await allow_stale_retry_to_fail.wait()
+            raise SigenergyCloudAuthError("stale retry rejected")
+        if call_count == 3:
+            raise SigenergyCloudAuthError("replacement session terminated")
+        return (2, -1)
+
+    community_adapter._client.get_operational_mode.side_effect = (  # type: ignore[reportPrivateUsage]
+        get_operational_mode
+    )
+    stale_operation = asyncio.create_task(community_adapter.get_operational_mode())
+    await stale_retry_started.wait()
+
+    assert await community_adapter.get_operational_mode() == (2, -1)
+    allow_stale_retry_to_fail.set()
+    with pytest.raises(BatteryControlAuthError, match="stale retry rejected"):
+        await stale_operation
+
+    assert community_adapter._connected is True  # type: ignore[reportPrivateUsage]
+    assert community_adapter._connection_generation == 3  # type: ignore[reportPrivateUsage]
+    assert community_adapter._client.connect.await_count == 2  # type: ignore[reportPrivateUsage]
 
 
 def test_official_adapter_is_explicitly_unavailable() -> None:
