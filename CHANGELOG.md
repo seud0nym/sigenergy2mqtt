@@ -3,6 +3,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Improved pymodbus 'Skipping' logging filter to catch subsequent 'Repeating'  messages
+
 ### Changed
 
 - Refactored former monolithic main module into separate concerns modules
