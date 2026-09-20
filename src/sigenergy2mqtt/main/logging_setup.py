@@ -14,22 +14,42 @@ _framer_skip_filter: "_FramerSkipFilter | None" = None
 
 
 class _FramerSkipFilter(logging.Filter):
-    """Suppress dev-id / transaction-id mismatch noise from pymodbus framer.
+    """..."""  # (docstring unchanged)
 
-    The check against ``active_config.modbus`` is intentionally deferred to
-    filter-call time (not setup time) so that the correct ``log_skipped``
-    values are used even when this filter is installed before
-    ``initialize_async()`` has finished loading the YAML configuration.
-    """
+    def __init__(self) -> None:
+        super().__init__()
+        # True only while the immediately preceding record on this logger
+        # was a Skipping match we suppressed (or a Repeating.... we suppressed
+        # as a continuation of that same chain). Reset by any other record.
+        self._chain_active = False
 
     def filter(self, record: logging.LogRecord) -> bool:
         msg = record.getMessage()
-        # Suppress unless every configured device has explicitly opted in
-        # to seeing these messages (log_skipped=True).  When no devices are
-        # configured yet (early startup), apply the default suppression.
-        if "request ask for " in msg and "Skipping." in msg and (not active_config.modbus or any(not device.log_skipped for device in active_config.modbus)):
+        is_skip = "request ask for " in msg and "Skipping." in msg
+        is_repeat = "Repeating...." in msg
+        log_skipped = active_config.modbus and all(device.log_skipped for device in active_config.modbus)
+
+        if is_skip:
+            if log_skipped:
+                self._chain_active = False
+                return True
             Metrics.modbus_skipped_error()
+            self._chain_active = True
             return False
+
+        if is_repeat and self._chain_active:
+            # pymodbus's Log de-dup (see pymodbus/logging.py: Log.build_msg)
+            # substituted this literal text for a repeat of the immediately
+            # preceding Skipping message we just suppressed above.
+            if log_skipped:
+                self._chain_active = False
+                return True
+            Metrics.modbus_skipped_error()
+            return False  # chain stays open, in case of a further repeat
+
+        # Anything else - including a "Repeating...." NOT chained to a
+        # Skipping message we suppressed - ends the chain and passes through.
+        self._chain_active = False
         return True
 
 
