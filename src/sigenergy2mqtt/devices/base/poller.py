@@ -128,6 +128,19 @@ class SensorGroupPoller:
                 due_sensors.append(sensor)
         return due_sensors
 
+    @staticmethod
+    def _begin_coordinated_refresh(
+        due_sensors: list[ReadableSensorMixin],
+    ) -> None:
+        """Invalidate shared read snapshots once for the current polling batch."""
+        coordinators: set[int] = set()
+        for sensor in due_sensors:
+            coordinator = getattr(sensor, "_polling_coordinator", None)
+            if coordinator is None or id(coordinator) in coordinators:
+                continue
+            coordinator.begin_refresh()
+            coordinators.add(id(coordinator))
+
     async def _publish_read_ahead(
         self,
         due_sensors: list[ReadableSensorMixin],
@@ -317,6 +330,7 @@ class SensorGroupPoller:
 
             if due_sensors:
                 try:
+                    self._begin_coordinated_refresh(due_sensors)
                     if multiple and transport:
                         multiple = await self._publish_read_ahead(due_sensors, transport, modbus_sensors, lock, name, debug_logging)
 
