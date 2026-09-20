@@ -56,18 +56,24 @@ class _InstantControlStatusSnapshot:
 
     def __init__(self) -> None:
         self._status: InstantControlStatus | None = None
-        self._readers: set[int] = set()
+        self._error: Exception | None = None
 
-    async def read(
-        self, port: CloudControlPort, reader: object
-    ) -> InstantControlStatus:
-        # The controls are phase-aligned and polled sequentially. Seeing the same
-        # reader again therefore marks the start of their next refresh.
-        reader_id = id(reader)
-        if self._status is None or reader_id in self._readers:
-            self._status = await port.instant_control_status()
-            self._readers.clear()
-        self._readers.add(reader_id)
+    def begin_refresh(self) -> None:
+        """Invalidate the previous polling batch's snapshot."""
+        self._status = None
+        self._error = None
+
+    async def read(self, port: CloudControlPort) -> InstantControlStatus:
+        if self._error is not None:
+            raise self._error
+        if self._status is None:
+            try:
+                self._status = await port.instant_control_status()
+            except Exception as exc:
+                # All sensors in this batch must observe the same outcome rather
+                # than issuing retries that could mix refresh snapshots.
+                self._error = exc
+                raise
         return self._status
 
 
@@ -95,9 +101,10 @@ class InstantControlMode(SelectSensorMixin, CloudReadWriteSensor):
         self._payload_available, self._payload_not_available = 0, 1
         self._pending_value: int | None = None
         self._status_snapshot = _InstantControlStatusSnapshot()
+        self._polling_coordinator = self._status_snapshot
 
     async def _read_cloud_state(self, port: CloudControlPort) -> int | None:
-        status = await self._status_snapshot.read(port, self)
+        status = await self._status_snapshot.read(port)
         if not status.enabled or status.mode is None:
             return None
         return _MODE_TO_OPTION.get(status.mode)
@@ -135,9 +142,10 @@ class InstantControlDuration(NumericSensorMixin, CloudReadWriteSensor):
         self._payload_available, self._payload_not_available = 0, 1
         self._pending_value: float | None = None
         self._status_snapshot = _InstantControlStatusSnapshot()
+        self._polling_coordinator = self._status_snapshot
 
     async def _read_cloud_state(self, port: CloudControlPort) -> float | None:
-        status = await self._status_snapshot.read(port, self)
+        status = await self._status_snapshot.read(port)
         if not status.enabled or status.ends_at is None:
             return None
         remaining = max(0.0, (status.ends_at - time.time()) / 60)
@@ -166,6 +174,9 @@ class InstantControlSwitch(SwitchSensorMixin, CloudReadWriteSensor):
         self._duration = duration
         self._status_snapshot = mode._status_snapshot
         duration._status_snapshot = self._status_snapshot
+        self._polling_coordinator = self._status_snapshot
+        mode._polling_coordinator = self._status_snapshot
+        duration._polling_coordinator = self._status_snapshot
         super().__init__(
             availability_control_sensor=None,
             name="Instant Manual Control",
@@ -182,7 +193,7 @@ class InstantControlSwitch(SwitchSensorMixin, CloudReadWriteSensor):
         )
 
     async def _read_cloud_state(self, port: CloudControlPort) -> int:
-        status = await self._status_snapshot.read(port, self)
+        status = await self._status_snapshot.read(port)
         return int(status.enabled)
 
     async def _write_cloud_value(

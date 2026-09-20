@@ -13,6 +13,7 @@ from sigenergy2mqtt.cloud.models import (
 from sigenergy2mqtt.cloud.models import InstantControlMode as DomainMode
 from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.config import Config, _swap_active_config
+from sigenergy2mqtt.devices.base.poller import SensorGroupPoller
 from sigenergy2mqtt.devices.plant.cloud_control import SigenergyCloudControl
 from sigenergy2mqtt.sensors.base import CloudReadWriteSensor, DiscoveryKeys
 from sigenergy2mqtt.sensors.plant_cloud_control import (
@@ -148,12 +149,36 @@ async def test_selection_sensors_read_authoritative_cloud_values(monkeypatch) ->
         lambda: 1_800_000_000,
     )
 
+    SensorGroupPoller._begin_coordinated_refresh([switch, mode, duration])
     assert await switch._read_cloud_state(port) == 1
     assert await mode._read_cloud_state(port) == 2
     assert await duration._read_cloud_state(port) == 10
     port.instant_control_status.assert_awaited_once()
 
+    SensorGroupPoller._begin_coordinated_refresh([switch, mode, duration])
     assert await switch._read_cloud_state(port) == 1
+    assert port.instant_control_status.await_count == 2
+
+
+@pytest.mark.asyncio
+async def test_forced_selector_refresh_cannot_leak_into_next_group_poll() -> None:
+    mode, duration, switch = _controls()
+    port = FakeCloudControlPort(enabled=True)
+    port.instant_control_status = AsyncMock(
+        side_effect=[
+            InstantControlStatus(True, DomainMode.CHARGE, 1_800_000_600),
+            InstantControlStatus(True, DomainMode.DISCHARGE, 1_800_000_600),
+        ]
+    )
+
+    # A forced selector-only polling batch gets its own snapshot.
+    SensorGroupPoller._begin_coordinated_refresh([mode])
+    assert await mode._read_cloud_state(port) == 0
+
+    # The next regular batch is explicitly invalidated before any sensor reads.
+    SensorGroupPoller._begin_coordinated_refresh([switch, mode, duration])
+    assert await switch._read_cloud_state(port) == 1
+    assert await mode._read_cloud_state(port) == 1
     assert port.instant_control_status.await_count == 2
 
 
