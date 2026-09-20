@@ -1,8 +1,9 @@
 """Adapter for the vendored, unofficial mySigen app API."""
 
 import asyncio
+from collections.abc import Awaitable, Callable
 from datetime import timedelta
-from typing import Any, Awaitable, Callable, TypeVar
+from typing import Any, TypeVar
 
 from .exceptions import (
     BatteryControlAuthError,
@@ -109,7 +110,10 @@ class CommunityCloudAdapter:
         topology = await self._cloud_operation(self._client.device_topology)
         devices: list[dict[str, Any]] = []
         for node in self._client.iter_topology_nodes(topology):
-            device_type = _TOPOLOGY_DEVICE_TYPES.get(node.get("deviceType"))
+            raw_device_type = node.get("deviceType")
+            if not isinstance(raw_device_type, int):
+                continue
+            device_type = _TOPOLOGY_DEVICE_TYPES.get(raw_device_type)
             if device_type is None:
                 # AIO nodes are topology containers, not an official API device type.
                 continue
@@ -120,47 +124,32 @@ class CommunityCloudAdapter:
             if device_type == "Inverter" and node.get("ratedActivePower") is not None:
                 attributes["ratedActivePower"] = node["ratedActivePower"]
 
-            devices.append(
-                {
-                    "systemId": str(node.get("stationId") or topology.get("stationId") or ""),
-                    "serialNumber": str(node.get("snCode") or node.get("showSnCode") or ""),
-                    "deviceType": device_type,
-                    "status": status,
-                    "pn": str(node.get("deviceCode") or node.get("gatewayDeviceCode") or ""),
-                    "firmwareVersion": str(node.get("modelVersionStr") or ""),
-                    "attrMap": attributes,
-                }
-            )
+            devices.append({
+                "systemId": str(node.get("stationId") or topology.get("stationId") or ""),
+                "serialNumber": str(node.get("snCode") or node.get("showSnCode") or ""),
+                "deviceType": device_type,
+                "status": status,
+                "pn": str(node.get("deviceCode") or node.get("gatewayDeviceCode") or ""),
+                "firmwareVersion": str(node.get("modelVersionStr") or ""),
+                "attrMap": attributes,
+            })
         return devices
 
     async def set_instant_override(self, command: InstantOverrideCommand) -> None:
         unsupported = []
         if command.power_kw is not None:
             unsupported.append("power limit")
-        if (
-            command.charge_priority is not None
-            or command.discharge_priority is not None
-        ):
+        if command.charge_priority is not None or command.discharge_priority is not None:
             unsupported.append("source priority")
         if command.starts_at is not None:
             unsupported.append("scheduled start")
         if unsupported:
-            raise BatteryControlUnsupportedError(
-                f"Community backend does not support {', '.join(unsupported)}"
-            )
-        if (
-            not self.capabilities.min_duration
-            <= command.duration
-            <= self.capabilities.max_duration
-        ):
-            raise BatteryControlRejectedError(
-                "Duration must be between 1 and 1440 minutes"
-            )
+            raise BatteryControlUnsupportedError(f"Community backend does not support {', '.join(unsupported)}")
+        if not self.capabilities.min_duration <= command.duration <= self.capabilities.max_duration:
+            raise BatteryControlRejectedError("Duration must be between 1 and 1440 minutes")
         duration_minutes = round(command.duration.total_seconds() / 60)
         await self._cloud_operation(
-            lambda: self._client.set_instant_manual_control(
-                _MODE_TO_APP_CODE[command.mode], duration_minutes=duration_minutes
-            ),
+            lambda: self._client.set_instant_manual_control(_MODE_TO_APP_CODE[command.mode], duration_minutes=duration_minutes),
             reject_api_errors=True,
         )
 
@@ -171,9 +160,7 @@ class CommunityCloudAdapter:
         status = await self._cloud_operation(self._client.instant_manual_control)
         return InstantControlStatus(
             enabled=status.enabled,
-            mode=_APP_CODE_TO_MODE.get(status.mode)
-            if status.mode is not None
-            else None,
+            mode=_APP_CODE_TO_MODE.get(status.mode) if status.mode is not None else None,
             ends_at=float(status.end_time) if status.end_time is not None else None,
         )
 
@@ -216,58 +203,36 @@ class CommunityCloudAdapter:
         raise AssertionError("cloud operation retry loop exhausted")
 
     async def available_operational_modes(self) -> dict[str, Any]:
-        return await self._cloud_operation(
-            self._client.available_operational_modes
-        )
+        return await self._cloud_operation(self._client.available_operational_modes)
 
     async def get_operational_mode(self) -> tuple[int, int]:
         return await self._cloud_operation(self._client.get_operational_mode)
 
-    async def set_operational_mode(
-        self, mode: int, profile_id: int = -1
-    ) -> dict[str, Any]:
-        return await self._cloud_operation(
-            lambda: self._client.set_operational_mode(mode, profile_id)
-        )
+    async def set_operational_mode(self, mode: int, profile_id: int = -1) -> dict[str, Any]:
+        return await self._cloud_operation(lambda: self._client.set_operational_mode(mode, profile_id))
 
     async def grid_export_limit(self) -> dict[str, Any]:
         return await self._cloud_operation(self._client.grid_export_limit)
 
-    async def set_grid_export_limit(
-        self, limit_kw: float, *, enabled: bool = True
-    ) -> dict[str, Any]:
-        return await self._cloud_operation(
-            lambda: self._client.set_grid_export_limit(limit_kw, enabled=enabled)
-        )
+    async def set_grid_export_limit(self, limit_kw: float, *, enabled: bool = True) -> dict[str, Any]:
+        return await self._cloud_operation(lambda: self._client.set_grid_export_limit(limit_kw, enabled=enabled))
 
     async def grid_import_limit(self) -> dict[str, Any]:
         return await self._cloud_operation(self._client.grid_import_limit)
 
-    async def set_grid_import_limit(
-        self, limit_kw: float, *, enabled: bool = True
-    ) -> dict[str, Any]:
-        return await self._cloud_operation(
-            lambda: self._client.set_grid_import_limit(limit_kw, enabled=enabled)
-        )
+    async def set_grid_import_limit(self, limit_kw: float, *, enabled: bool = True) -> dict[str, Any]:
+        return await self._cloud_operation(lambda: self._client.set_grid_import_limit(limit_kw, enabled=enabled))
 
     async def grid_connection_limit(self) -> dict[str, Any]:
-        return await self._cloud_operation(
-            self._client.grid_connection_limit
-        )
+        return await self._cloud_operation(self._client.grid_connection_limit)
 
-    async def set_grid_connection_limit(
-        self, limit_a: float, *, enabled: bool = True
-    ) -> dict[str, Any]:
-        return await self._cloud_operation(
-            lambda: self._client.set_grid_connection_limit(limit_a, enabled=enabled)
-        )
+    async def set_grid_connection_limit(self, limit_a: float, *, enabled: bool = True) -> dict[str, Any]:
+        return await self._cloud_operation(lambda: self._client.set_grid_connection_limit(limit_a, enabled=enabled))
 
     async def battery_power_limit(self) -> dict[str, Any]:
         return await self._cloud_operation(self._client.battery_power_limit)
 
-    async def set_battery_power_limit(
-        self, *, max_charge_kw: float | None, max_discharge_kw: float | None
-    ) -> dict[str, Any]:
+    async def set_battery_power_limit(self, *, max_charge_kw: float | None, max_discharge_kw: float | None) -> dict[str, Any]:
         return await self._cloud_operation(
             lambda: self._client.set_battery_power_limit(
                 max_charge_kw=max_charge_kw,
@@ -279,16 +244,10 @@ class CommunityCloudAdapter:
         return await self._cloud_operation(self._client.solar_power_limit)
 
     async def set_solar_power_limit(self, limit_kw: float | None) -> dict[str, Any]:
-        return await self._cloud_operation(
-            lambda: self._client.set_solar_power_limit(limit_kw)
-        )
+        return await self._cloud_operation(lambda: self._client.set_solar_power_limit(limit_kw))
 
     async def battery_export_limitation(self) -> dict[str, Any]:
-        return await self._cloud_operation(
-            self._client.battery_export_limitation
-        )
+        return await self._cloud_operation(self._client.battery_export_limitation)
 
     async def set_battery_export_limitation(self, enabled: bool) -> dict[str, Any]:
-        return await self._cloud_operation(
-            lambda: self._client.set_battery_export_limitation(enabled)
-        )
+        return await self._cloud_operation(lambda: self._client.set_battery_export_limitation(enabled))
