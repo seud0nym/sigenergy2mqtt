@@ -51,6 +51,10 @@ class CommunityCloudAdapter:
         self._connect_lock = asyncio.Lock()
 
     @property
+    def model(self) -> str:
+        return "mySigen Cloud (unofficial)"
+
+    @property
     def capabilities(self) -> Capabilities:
         return _CAPABILITIES
 

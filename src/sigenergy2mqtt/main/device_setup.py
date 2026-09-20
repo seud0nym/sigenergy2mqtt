@@ -185,10 +185,10 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
             logger.debug(f"Disconnecting from modbus://{device.host}:{device.port} - register probing complete")
 
     battery_control_registry.configure(active_config.cloud)
-    if battery_control_registry.active is not None:
+    if (cloud_port := battery_control_registry.active) is not None:
         cloud_config = ThreadConfig.create(host=None, port=None, name="Sigenergy Cloud")
         cloud_config.transport_factory = battery_control_registry.transport_factory
-        cloud_config.add_device(SigenergyCloudControl(0))
+        cloud_config.add_device(SigenergyCloudControl(0, cloud_port))
 
     return thread_config_registry.get_all(), protocol_version
 
