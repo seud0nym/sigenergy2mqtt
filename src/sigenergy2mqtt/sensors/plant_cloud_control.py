@@ -7,7 +7,7 @@ import time
 from datetime import timedelta
 
 from sigenergy2mqtt.cloud.models import InstantControlMode as Mode
-from sigenergy2mqtt.cloud.models import InstantOverrideCommand
+from sigenergy2mqtt.cloud.models import InstantControlStatus, InstantOverrideCommand
 from sigenergy2mqtt.cloud.port import CloudControlPort
 from sigenergy2mqtt.common import (
     DeviceClass,
@@ -51,6 +51,26 @@ def _identity(plant_index: int, suffix: str) -> tuple[str, str]:
     )
 
 
+class _InstantControlStatusSnapshot:
+    """Share one cloud status response across a complete control refresh."""
+
+    def __init__(self) -> None:
+        self._status: InstantControlStatus | None = None
+        self._readers: set[int] = set()
+
+    async def read(
+        self, port: CloudControlPort, reader: object
+    ) -> InstantControlStatus:
+        # The controls are phase-aligned and polled sequentially. Seeing the same
+        # reader again therefore marks the start of their next refresh.
+        reader_id = id(reader)
+        if self._status is None or reader_id in self._readers:
+            self._status = await port.instant_control_status()
+            self._readers.clear()
+        self._readers.add(reader_id)
+        return self._status
+
+
 class InstantControlMode(SelectSensorMixin, CloudReadWriteSensor):
     """Mode to use the next time Instant Manual Control is enabled."""
 
@@ -74,9 +94,10 @@ class InstantControlMode(SelectSensorMixin, CloudReadWriteSensor):
         )
         self._payload_available, self._payload_not_available = 0, 1
         self._pending_value: int | None = None
+        self._status_snapshot = _InstantControlStatusSnapshot()
 
     async def _read_cloud_state(self, port: CloudControlPort) -> int | None:
-        status = await port.instant_control_status()
+        status = await self._status_snapshot.read(port, self)
         if not status.enabled or status.mode is None:
             return None
         return _MODE_TO_OPTION.get(status.mode)
@@ -113,12 +134,14 @@ class InstantControlDuration(NumericSensorMixin, CloudReadWriteSensor):
         )
         self._payload_available, self._payload_not_available = 0, 1
         self._pending_value: float | None = None
+        self._status_snapshot = _InstantControlStatusSnapshot()
 
     async def _read_cloud_state(self, port: CloudControlPort) -> float | None:
-        status = await port.instant_control_status()
+        status = await self._status_snapshot.read(port, self)
         if not status.enabled or status.ends_at is None:
             return None
-        return max(0.0, (status.ends_at - time.time()) / 60)
+        remaining = max(0.0, (status.ends_at - time.time()) / 60)
+        return round(remaining, self.precision or 0)
 
     async def _write_cloud_value(
         self, port: CloudControlPort, value: float | str
@@ -141,6 +164,8 @@ class InstantControlSwitch(SwitchSensorMixin, CloudReadWriteSensor):
         self.plant_index = plant_index
         self._mode = mode
         self._duration = duration
+        self._status_snapshot = mode._status_snapshot
+        duration._status_snapshot = self._status_snapshot
         super().__init__(
             availability_control_sensor=None,
             name="Instant Manual Control",
@@ -157,7 +182,8 @@ class InstantControlSwitch(SwitchSensorMixin, CloudReadWriteSensor):
         )
 
     async def _read_cloud_state(self, port: CloudControlPort) -> int:
-        return int((await port.instant_control_status()).enabled)
+        status = await self._status_snapshot.read(port, self)
+        return int(status.enabled)
 
     async def _write_cloud_value(
         self, port: CloudControlPort, value: float | str

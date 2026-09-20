@@ -137,19 +137,24 @@ async def test_switch_off_clears_override() -> None:
 
 @pytest.mark.asyncio
 async def test_selection_sensors_read_authoritative_cloud_values(monkeypatch) -> None:
-    mode, duration, _ = _controls()
+    mode, duration, switch = _controls()
     port = FakeCloudControlPort()
     port.enabled = True
     port.instant_control_status = AsyncMock(
-        return_value=InstantControlStatus(True, DomainMode.HOLD, 1_800_000_600)
+        return_value=InstantControlStatus(True, DomainMode.HOLD, 1_800_000_599)
     )
     monkeypatch.setattr(
         "sigenergy2mqtt.sensors.plant_cloud_control.time.time",
         lambda: 1_800_000_000,
     )
 
+    assert await switch._read_cloud_state(port) == 1
     assert await mode._read_cloud_state(port) == 2
     assert await duration._read_cloud_state(port) == 10
+    port.instant_control_status.assert_awaited_once()
+
+    assert await switch._read_cloud_state(port) == 1
+    assert port.instant_control_status.await_count == 2
 
 
 @pytest.mark.asyncio
