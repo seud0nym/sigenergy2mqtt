@@ -28,6 +28,7 @@ from sigenergy2mqtt.sensors.plant_cloud_control import (
 
 
 class FakeCloudControlPort:
+    model = "Test Cloud"
     capabilities = Capabilities(
         features=frozenset(),
         min_duration=timedelta(minutes=1),
@@ -64,7 +65,7 @@ def _controls() -> tuple[
 
 
 def test_cloud_control_device_registers_normal_mqtt_entities() -> None:
-    device = SigenergyCloudControl(0)
+    device = SigenergyCloudControl(0, FakeCloudControlPort())
     sensors = list(device.sensors.values())
 
     assert [type(sensor) for sensor in sensors] == [
@@ -82,6 +83,8 @@ def test_cloud_control_device_registers_normal_mqtt_entities() -> None:
     assert all(sensor[DiscoveryKeys.PLATFORM] == "number" for sensor in sensors[3:6])
     assert sensors[6][DiscoveryKeys.PLATFORM] == "switch"
     assert device.protocol_version is ProtocolVersion.N_A
+    assert device.name == "Sigenergy Cloud"
+    assert device["model"] == "Test Cloud"
     assert all(sensor.protocol_version is ProtocolVersion.N_A for sensor in sensors)
 
 
@@ -89,7 +92,7 @@ def test_mode_and_duration_are_available_only_while_switch_is_off() -> None:
     config = Config()
     config.home_assistant.enabled = True
     with _swap_active_config(config):
-        device = SigenergyCloudControl(0)
+        device = SigenergyCloudControl(0, FakeCloudControlPort())
         switch, mode, duration = list(device.sensors.values())[:3]
 
         for selector in (mode, duration):
@@ -356,7 +359,7 @@ async def test_grid_limit_malformed_payload_publishes_unavailable_without_raisin
 
 @pytest.mark.asyncio
 async def test_grid_limit_maximum_changes_request_discovery_republish() -> None:
-    device = SigenergyCloudControl(0)
+    device = SigenergyCloudControl(0, FakeCloudControlPort())
     sensor = next(
         item for item in device.sensors.values() if isinstance(item, GridExportLimit)
     )

@@ -1,5 +1,6 @@
 """Cloud-backed Instant Manual Control device."""
 
+from sigenergy2mqtt.cloud.port import CloudControlPort
 from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices.base.device import Device
@@ -17,13 +18,13 @@ from sigenergy2mqtt.sensors.plant_cloud_control import (
 class SigenergyCloudControl(Device):
     """Expose cloud Instant Manual Control through normal MQTT sensors."""
 
-    def __init__(self, plant_index: int) -> None:
+    def __init__(self, plant_index: int, port: CloudControlPort) -> None:
         super().__init__(
-            name="Sigenergy Cloud Control",
+            name="Sigenergy Cloud",
             plant_index=plant_index,
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_cloud_control",
             manufacturer="Sigenergy",
-            model="mySigen Cloud (unofficial)",
+            model=port.model,
             protocol_version=ProtocolVersion.N_A,
         )
         mode = InstantControlMode(plant_index)

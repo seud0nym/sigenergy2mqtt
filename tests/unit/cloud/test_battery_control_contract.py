@@ -80,6 +80,7 @@ def test_community_adapter_satisfies_port_and_reports_capabilities(
     community_adapter: CommunityCloudAdapter,
 ) -> None:
     assert isinstance(community_adapter, CloudControlPort)
+    assert community_adapter.model == "mySigen Cloud (unofficial)"
     assert community_adapter.capabilities.features == frozenset()
     assert community_adapter.capabilities.min_duration == timedelta(minutes=1)
     assert community_adapter.capabilities.max_duration == timedelta(minutes=1440)

@@ -16,7 +16,7 @@ class:
   InstantControlSwitch:
     name: Instant Manual Control
   SigenergyCloudControl:
-    name: Sigenergy Cloud Control
+    name: Sigenergy Cloud
   ACChargerAlarm1:
     alarm:
       '0': Grid over-voltage
