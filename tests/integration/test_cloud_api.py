@@ -68,6 +68,17 @@ async def test_community_cloud_adapter_against_test_server(
 
             modes = await adapter.available_operational_modes()
             assert len(modes["defaultWorkingModes"]) == 6
+            assert await adapter.device_list() == [
+                {
+                    "systemId": "10000000000001",
+                    "serialNumber": "INV-TEST",
+                    "deviceType": "Inverter",
+                    "status": "Normal",
+                    "pn": "PN-INV",
+                    "firmwareVersion": "V100R001C00",
+                    "attrMap": {"ratedActivePower": 6.0},
+                }
+            ]
             assert await adapter.get_operational_mode() == (0, -1)
             await adapter.set_operational_mode(7)
             assert await adapter.get_operational_mode() == (7, -1)

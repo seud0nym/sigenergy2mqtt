@@ -40,6 +40,15 @@ _CAPABILITIES = Capabilities(
 )
 _T = TypeVar("_T")
 
+_TOPOLOGY_DEVICE_TYPES = {
+    3: "Inverter",
+    4: "Battery",
+    5: "DcCharger",
+    6: "AcCharger",
+    8: "Gateway",
+    9: "Meter",
+}
+
 
 class CommunityCloudAdapter:
     """Translate domain commands to the unofficial, vendored cloud client."""
@@ -94,6 +103,35 @@ class CommunityCloudAdapter:
     async def close(self) -> None:
         await self._client.close()
         self._connected = False
+
+    async def device_list(self) -> list[dict[str, Any]]:
+        """Return app topology devices in the official cloud API shape."""
+        topology = await self._cloud_operation(self._client.device_topology)
+        devices: list[dict[str, Any]] = []
+        for node in self._client.iter_topology_nodes(topology):
+            device_type = _TOPOLOGY_DEVICE_TYPES.get(node.get("deviceType"))
+            if device_type is None:
+                # AIO nodes are topology containers, not an official API device type.
+                continue
+
+            offline = self._client.topology_node_is_offline(node)
+            status = "Offline" if offline else "Normal" if offline is False else "Fault"
+            attributes: dict[str, Any] = {}
+            if device_type == "Inverter" and node.get("ratedActivePower") is not None:
+                attributes["ratedActivePower"] = node["ratedActivePower"]
+
+            devices.append(
+                {
+                    "systemId": str(node.get("stationId") or topology.get("stationId") or ""),
+                    "serialNumber": str(node.get("snCode") or node.get("showSnCode") or ""),
+                    "deviceType": device_type,
+                    "status": status,
+                    "pn": str(node.get("deviceCode") or node.get("gatewayDeviceCode") or ""),
+                    "firmwareVersion": str(node.get("modelVersionStr") or ""),
+                    "attrMap": attributes,
+                }
+            )
+        return devices
 
     async def set_instant_override(self, command: InstantOverrideCommand) -> None:
         unsupported = []
