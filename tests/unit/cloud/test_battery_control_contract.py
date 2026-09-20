@@ -387,6 +387,59 @@ async def test_operations_translate_vendor_errors(
         assert community_adapter._connected is False  # type: ignore[reportPrivateUsage]
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("method_name", "invoke", "recovered_value"),
+    [
+        (
+            "set_instant_manual_control",
+            lambda adapter: adapter.set_instant_override(
+                InstantOverrideCommand(
+                    InstantControlMode.CHARGE, timedelta(minutes=30)
+                )
+            ),
+            None,
+        ),
+        (
+            "instant_manual_control",
+            lambda adapter: adapter.instant_control_status(),
+            SimpleNamespace(
+                enabled=True,
+                mode=InstantManualMode.CHARGING,
+                end_time=1_800_000_001,
+            ),
+        ),
+        (
+            "get_operational_mode",
+            lambda adapter: adapter.get_operational_mode(),
+            (2, -1),
+        ),
+    ],
+)
+async def test_operations_reauthenticate_and_retry_after_session_termination(
+    community_adapter: CommunityCloudAdapter,
+    method_name: str,
+    invoke,
+    recovered_value,
+) -> None:
+    community_adapter._connected = True  # type: ignore[reportPrivateUsage]
+    community_adapter._connection_generation = 1  # type: ignore[reportPrivateUsage]
+    operation = getattr(community_adapter._client, method_name)  # type: ignore[reportPrivateUsage]
+    operation.side_effect = [SigenergyCloudAuthError("session terminated"), recovered_value]
+
+    result = await invoke(community_adapter)
+
+    assert community_adapter._connected is True  # type: ignore[reportPrivateUsage]
+    assert community_adapter._connection_generation == 2  # type: ignore[reportPrivateUsage]
+    community_adapter._client.connect.assert_awaited_once()  # type: ignore[reportPrivateUsage]
+    assert operation.await_count == 2
+    if method_name == "instant_manual_control":
+        assert result.mode is InstantControlMode.CHARGE
+        assert result.ends_at == 1_800_000_001.0
+    else:
+        assert result == recovered_value
+
+
 def test_official_adapter_is_explicitly_unavailable() -> None:
     from sigenergy2mqtt.cloud.official_adapter import OfficialCloudAdapter
 
