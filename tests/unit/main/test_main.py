@@ -77,14 +77,15 @@ def test_cloud_control_plant_index_defaults_to_zero(caplog):
 
 
 @pytest.mark.asyncio
-async def test_cloud_control_discovery_failure_does_not_abort_startup(caplog):
+async def test_cloud_control_discovery_failure_disables_cloud_control(caplog):
     cloud_port = MagicMock()
     cloud_port.device_list = AsyncMock(side_effect=CloudControlAuthError("bad credentials"))
 
     with caplog.at_level(logging.WARNING):
-        assert await _discover_cloud_control_plant_index(cloud_port) == 0
+        assert await _discover_cloud_control_plant_index(cloud_port) is None
 
     assert "Cloud inverter discovery failed" in caplog.text
+    assert "cloud control will be disabled" in caplog.text
     assert "bad credentials" in caplog.text
 
 
@@ -812,6 +813,22 @@ async def test_setup_devices_ignored_host(clean_config):
     thread_config_registry.clear()
     configs, proto = await setup_devices(seen)
     assert len(configs) == 0
+
+
+@pytest.mark.asyncio
+async def test_setup_devices_omits_cloud_control_when_discovery_fails(clean_config):
+    clean_config.modbus[0].registers.read_only = False
+    clean_config.modbus[0].registers.read_write = False
+    clean_config.modbus[0].registers.write_only = False
+    cloud_port = MagicMock()
+    cloud_port.device_list = AsyncMock(side_effect=CloudControlAuthError("bad credentials"))
+    thread_config_registry.clear()
+
+    with patch("sigenergy2mqtt.main.device_setup.cloud_control_registry") as registry:
+        registry.active = cloud_port
+        configs, _ = await setup_devices(set())
+
+    assert configs == []
 
 
 @pytest.mark.asyncio

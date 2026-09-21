@@ -60,16 +60,16 @@ def _cloud_control_plant_index(device_list: list[dict[str, Any]]) -> int:
     return 0
 
 
-async def _discover_cloud_control_plant_index(cloud_port: CloudControlPort) -> int:
+async def _discover_cloud_control_plant_index(cloud_port: CloudControlPort) -> int | None:
     """Discover the cloud plant without making cloud availability block startup."""
     try:
         device_list = await cloud_port.device_list()
     except CloudControlError as exc:
         logger.warning(
-            "Cloud inverter discovery failed; defaulting cloud control to plant index 0: %s",
+            "Cloud inverter discovery failed; cloud control will be disabled for this run: %s",
             exc,
         )
-        return 0
+        return None
     return _cloud_control_plant_index(device_list)
 
 
@@ -222,9 +222,10 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
     cloud_control_registry.configure(active_config.cloud)
     if (cloud_port := cloud_control_registry.active) is not None:
         plant_index = await _discover_cloud_control_plant_index(cloud_port)
-        cloud_config = ThreadConfig.create(host=None, port=None, name="Sigenergy Cloud")
-        cloud_config.transport_factory = cloud_control_registry.transport_factory
-        cloud_config.add_device(SigenergyCloudControl(plant_index, cloud_port))
+        if plant_index is not None:
+            cloud_config = ThreadConfig.create(host=None, port=None, name="Sigenergy Cloud")
+            cloud_config.transport_factory = cloud_control_registry.transport_factory
+            cloud_config.add_device(SigenergyCloudControl(plant_index, cloud_port))
 
     return thread_config_registry.get_all(), protocol_version
 
