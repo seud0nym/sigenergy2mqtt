@@ -10,11 +10,11 @@ import pytest
 
 from sigenergy2mqtt.cloud.community_adapter import CommunityCloudAdapter
 from sigenergy2mqtt.cloud.exceptions import (
-    BatteryControlAuthError,
-    BatteryControlRateLimitedError,
-    BatteryControlRejectedError,
-    BatteryControlUnavailableError,
-    BatteryControlUnsupportedError,
+    CloudControlAuthError,
+    CloudControlRateLimitedError,
+    CloudControlRejectedError,
+    CloudControlUnavailableError,
+    CloudControlUnsupportedError,
 )
 from sigenergy2mqtt.cloud.models import (
     ControlFeature,
@@ -22,7 +22,7 @@ from sigenergy2mqtt.cloud.models import (
     InstantOverrideCommand,
 )
 from sigenergy2mqtt.cloud.port import CloudControlPort
-from sigenergy2mqtt.cloud.registry import BatteryControlRegistry
+from sigenergy2mqtt.cloud.registry import CloudControlRegistry
 from sigenergy2mqtt.cloud.vendor.solidfox.sigenergy_cloud import (
     InstantManualMode,
     SigenergyCloudClient,
@@ -269,7 +269,7 @@ async def test_port_rejects_unsupported_features(
     community_adapter: CommunityCloudAdapter,
     command: InstantOverrideCommand,
 ) -> None:
-    with pytest.raises(BatteryControlUnsupportedError):
+    with pytest.raises(CloudControlUnsupportedError):
         await community_adapter.set_instant_override(command)
 
 
@@ -279,7 +279,7 @@ async def test_port_rejects_duration_outside_capabilities(
     community_adapter: CommunityCloudAdapter,
     minutes: int,
 ) -> None:
-    with pytest.raises(BatteryControlRejectedError):
+    with pytest.raises(CloudControlRejectedError):
         await community_adapter.set_instant_override(
             InstantOverrideCommand(
                 InstantControlMode.HOLD,
@@ -289,7 +289,7 @@ async def test_port_rejects_duration_outside_capabilities(
 
 
 def test_registry_requires_explicit_unofficial_api_opt_in() -> None:
-    registry = BatteryControlRegistry()
+    registry = CloudControlRegistry()
     config = CloudConfig(username="user", password="password", region="eu")
 
     with pytest.raises(ValueError, match="accept-unofficial-api-risk"):
@@ -298,7 +298,7 @@ def test_registry_requires_explicit_unofficial_api_opt_in() -> None:
 
 @pytest.mark.asyncio
 async def test_registry_owns_selected_adapter_lifecycle() -> None:
-    registry = BatteryControlRegistry()
+    registry = CloudControlRegistry()
     registry.configure(
         CloudConfig(
             username="user",
@@ -320,7 +320,7 @@ async def test_registry_owns_selected_adapter_lifecycle() -> None:
 
 @pytest.mark.asyncio
 async def test_registry_closes_partially_connected_adapter() -> None:
-    registry = BatteryControlRegistry()
+    registry = CloudControlRegistry()
     registry.configure(
         CloudConfig(
             username="user",
@@ -343,10 +343,10 @@ async def test_registry_closes_partially_connected_adapter() -> None:
 @pytest.mark.parametrize(
     ("vendor_error", "domain_error"),
     [
-        (SigenergyCloudAuthError("bad credentials"), BatteryControlAuthError),
-        (SigenergyCloudRateLimitError("slow down"), BatteryControlRateLimitedError),
-        (SigenergyCloudError("offline"), BatteryControlUnavailableError),
-        (OSError("network"), BatteryControlUnavailableError),
+        (SigenergyCloudAuthError("bad credentials"), CloudControlAuthError),
+        (SigenergyCloudRateLimitError("slow down"), CloudControlRateLimitedError),
+        (SigenergyCloudError("offline"), CloudControlUnavailableError),
+        (OSError("network"), CloudControlUnavailableError),
     ],
 )
 async def test_connect_translates_vendor_errors(
@@ -367,67 +367,67 @@ async def test_connect_translates_vendor_errors(
         (
             "set_instant_manual_control",
             SigenergyCloudRateLimitError("limited"),
-            BatteryControlRateLimitedError,
+            CloudControlRateLimitedError,
         ),
         (
             "set_instant_manual_control",
             SigenergyCloudAuthError("expired"),
-            BatteryControlAuthError,
+            CloudControlAuthError,
         ),
         (
             "set_instant_manual_control",
             SigenergyCloudAPIError("rejected"),
-            BatteryControlRejectedError,
+            CloudControlRejectedError,
         ),
         (
             "set_instant_manual_control",
             SigenergyCloudError("offline"),
-            BatteryControlUnavailableError,
+            CloudControlUnavailableError,
         ),
         (
             "disable_instant_manual_control",
             SigenergyCloudRateLimitError("limited"),
-            BatteryControlRateLimitedError,
+            CloudControlRateLimitedError,
         ),
         (
             "disable_instant_manual_control",
             SigenergyCloudAuthError("expired"),
-            BatteryControlAuthError,
+            CloudControlAuthError,
         ),
         (
             "disable_instant_manual_control",
             SigenergyCloudError("offline"),
-            BatteryControlUnavailableError,
+            CloudControlUnavailableError,
         ),
         (
             "instant_manual_control",
             SigenergyCloudRateLimitError("limited"),
-            BatteryControlRateLimitedError,
+            CloudControlRateLimitedError,
         ),
         (
             "instant_manual_control",
             SigenergyCloudAuthError("expired"),
-            BatteryControlAuthError,
+            CloudControlAuthError,
         ),
         (
             "instant_manual_control",
             SigenergyCloudError("offline"),
-            BatteryControlUnavailableError,
+            CloudControlUnavailableError,
         ),
         (
             "get_operational_mode",
             SigenergyCloudRateLimitError("limited"),
-            BatteryControlRateLimitedError,
+            CloudControlRateLimitedError,
         ),
         (
             "get_operational_mode",
             SigenergyCloudAuthError("expired"),
-            BatteryControlAuthError,
+            CloudControlAuthError,
         ),
         (
             "get_operational_mode",
             SigenergyCloudError("offline"),
-            BatteryControlUnavailableError,
+            CloudControlUnavailableError,
         ),
     ],
 )
@@ -540,7 +540,7 @@ async def test_stale_authentication_failure_does_not_invalidate_new_connection(
 
     assert await community_adapter.get_operational_mode() == (2, -1)
     allow_stale_retry_to_fail.set()
-    with pytest.raises(BatteryControlAuthError, match="stale retry rejected"):
+    with pytest.raises(CloudControlAuthError, match="stale retry rejected"):
         await stale_operation
 
     assert community_adapter._connected is True  # type: ignore[reportPrivateUsage]

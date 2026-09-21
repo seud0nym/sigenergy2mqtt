@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from sigenergy2mqtt.cloud.exceptions import BatteryControlUnavailableError
+from sigenergy2mqtt.cloud.exceptions import CloudControlUnavailableError
 from sigenergy2mqtt.cloud.models import (
     Capabilities,
     InstantControlStatus,
@@ -231,7 +231,7 @@ async def test_cloud_sensor_handles_failed_and_unknown_reads(caplog) -> None:
     _, _, switch = _controls()
     port = FakeCloudControlPort()
     switch._read_cloud_state = AsyncMock(  # type: ignore[method-assign]
-        side_effect=BatteryControlUnavailableError("offline")
+        side_effect=CloudControlUnavailableError("offline")
     )
 
     assert await switch._update_internal_state(modbus_client=port) is False
@@ -270,7 +270,7 @@ async def test_cloud_write_handles_missing_transport_and_domain_error(caplog) ->
 
     assert await mode._write_value(None, AsyncMock(), 1, "source", AsyncMock()) is False
     mode._write_cloud_value = AsyncMock(  # type: ignore[method-assign]
-        side_effect=BatteryControlUnavailableError("offline")
+        side_effect=CloudControlUnavailableError("offline")
     )
     assert (
         await mode._write_value(

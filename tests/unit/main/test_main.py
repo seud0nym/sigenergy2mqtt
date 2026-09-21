@@ -11,9 +11,10 @@ from pymodbus import ModbusException
 
 from sigenergy2mqtt.common import ConsumptionMethod, DeviceClass, FirmwareVersion, InputType, ProtocolVersion, StateClass, UnitOfPower
 from sigenergy2mqtt.config import _swap_active_config, active_config
+from sigenergy2mqtt.devices import DeviceRegistry, Inverter
 from sigenergy2mqtt.main import main as main_mod
 from sigenergy2mqtt.main.device_factories import get_state, make_ac_charger, make_dc_charger, make_plant_and_inverter
-from sigenergy2mqtt.main.device_setup import _is_grid_outage, _setup_ac_chargers, _setup_dc_chargers, setup_devices
+from sigenergy2mqtt.main.device_setup import _cloud_control_plant_index, _is_grid_outage, _setup_ac_chargers, _setup_dc_chargers, setup_devices
 from sigenergy2mqtt.main.logging_setup import _configure_logger, configure_logging
 from sigenergy2mqtt.main.main import async_main, thread_config_registry
 from sigenergy2mqtt.main.modbus_helpers import get_modbus_url, read_registers
@@ -43,6 +44,35 @@ class IllegalAddressResponse:
 
     def isError(self):
         return True
+
+
+def _registered_inverter(plant_index: int, **attributes: str) -> Inverter:
+    inverter = dict.__new__(Inverter)
+    dict.__init__(inverter, attributes)
+    inverter.plant_index = plant_index
+    DeviceRegistry.add(plant_index, inverter)
+    return inverter
+
+
+@pytest.mark.parametrize("serial_key", ["sn", "serial_number"])
+def test_cloud_control_plant_index_matches_local_inverter(serial_key):
+    _registered_inverter(3, **{serial_key: "LOCAL-SN"})
+
+    assert _cloud_control_plant_index([
+        {"deviceType": "Battery", "serialNumber": "LOCAL-SN"},
+        {"deviceType": "Inverter", "serialNumber": "LOCAL-SN"},
+    ]) == 3
+
+
+def test_cloud_control_plant_index_defaults_to_zero(caplog):
+    _registered_inverter(2, sn="OTHER-SN")
+
+    with caplog.at_level(logging.WARNING):
+        assert _cloud_control_plant_index([
+            {"deviceType": "Inverter", "serialNumber": "CLOUD-SN"}
+        ]) == 0
+
+    assert "defaulting cloud control to plant index 0" in caplog.text
 
 
 def make_validation_sensor(suffix: str, address: int = 30001):

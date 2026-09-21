@@ -1,29 +1,29 @@
-"""Stable exception taxonomy for every battery-control backend."""
+"""Stable exception taxonomy for every cloud-control backend."""
 
 
-class BatteryControlError(Exception):
+class CloudControlError(Exception):
     pass
 
 
-class BatteryControlAuthError(BatteryControlError):
+class CloudControlAuthError(CloudControlError):
     pass
 
 
-class BatteryControlRateLimitedError(BatteryControlError):
+class CloudControlRateLimitedError(CloudControlError):
     def __init__(self, message: str, retry_after: float | None = None) -> None:
         super().__init__(message)
         self.retry_after = retry_after
 
 
-class BatteryControlRejectedError(BatteryControlError):
+class CloudControlRejectedError(CloudControlError):
     def __init__(self, message: str, vendor_code: str | None = None) -> None:
         super().__init__(message)
         self.vendor_code = vendor_code
 
 
-class BatteryControlUnsupportedError(BatteryControlError):
+class CloudControlUnsupportedError(CloudControlError):
     pass
 
 
-class BatteryControlUnavailableError(BatteryControlError):
+class CloudControlUnavailableError(CloudControlError):
     pass
