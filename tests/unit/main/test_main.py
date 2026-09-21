@@ -9,11 +9,13 @@ from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
 import pytest
 from pymodbus import ModbusException
 
+from sigenergy2mqtt.cloud.exceptions import CloudControlAuthError
 from sigenergy2mqtt.common import ConsumptionMethod, DeviceClass, FirmwareVersion, InputType, ProtocolVersion, StateClass, UnitOfPower
 from sigenergy2mqtt.config import _swap_active_config, active_config
+from sigenergy2mqtt.devices import DeviceRegistry, Inverter
 from sigenergy2mqtt.main import main as main_mod
 from sigenergy2mqtt.main.device_factories import get_state, make_ac_charger, make_dc_charger, make_plant_and_inverter
-from sigenergy2mqtt.main.device_setup import _is_grid_outage, _setup_ac_chargers, _setup_dc_chargers, setup_devices
+from sigenergy2mqtt.main.device_setup import _cloud_control_plant_index, _discover_cloud_control_plant_index, _is_grid_outage, _setup_ac_chargers, _setup_dc_chargers, setup_devices
 from sigenergy2mqtt.main.logging_setup import _configure_logger, configure_logging
 from sigenergy2mqtt.main.main import async_main, thread_config_registry
 from sigenergy2mqtt.main.modbus_helpers import get_modbus_url, read_registers
@@ -43,6 +45,62 @@ class IllegalAddressResponse:
 
     def isError(self):
         return True
+
+
+def _registered_inverter(plant_index: int, **attributes: str) -> Inverter:
+    inverter = dict.__new__(Inverter)
+    dict.__init__(inverter, attributes)
+    inverter.plant_index = plant_index
+    DeviceRegistry.add(plant_index, inverter)
+    return inverter
+
+
+@pytest.mark.parametrize("serial_key", ["sn", "serial_number"])
+def test_cloud_control_plant_index_matches_local_inverter(serial_key):
+    _registered_inverter(3, **{serial_key: "LOCAL-SN"})
+
+    assert _cloud_control_plant_index([
+        {"deviceType": "Battery", "serialNumber": "LOCAL-SN"},
+        {"deviceType": "Inverter", "serialNumber": "LOCAL-SN"},
+    ]) == 3
+
+
+def test_cloud_control_plant_index_defaults_to_zero(caplog):
+    _registered_inverter(2, sn="OTHER-SN")
+
+    with caplog.at_level(logging.WARNING):
+        assert _cloud_control_plant_index([
+            {"deviceType": "Inverter", "serialNumber": "CLOUD-SN"}
+        ]) == 0
+
+    assert "defaulting cloud control to plant index 0" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_cloud_control_discovery_failure_disables_cloud_control(caplog):
+    cloud_port = MagicMock()
+    cloud_port.device_list = AsyncMock(side_effect=CloudControlAuthError("bad credentials"))
+    cloud_port.close = AsyncMock()
+
+    with caplog.at_level(logging.WARNING):
+        assert await _discover_cloud_control_plant_index(cloud_port) is None
+
+    assert "Cloud inverter discovery failed" in caplog.text
+    assert "cloud control will be disabled" in caplog.text
+    assert "bad credentials" in caplog.text
+    cloud_port.close.assert_awaited_once_with()
+
+
+@pytest.mark.asyncio
+async def test_cloud_control_close_failure_does_not_abort_startup(caplog):
+    cloud_port = MagicMock()
+    cloud_port.device_list = AsyncMock(side_effect=CloudControlAuthError("bad credentials"))
+    cloud_port.close = AsyncMock(side_effect=OSError("close failed"))
+
+    with caplog.at_level(logging.ERROR):
+        assert await _discover_cloud_control_plant_index(cloud_port) is None
+
+    assert "Failed to close cloud adapter after discovery failure" in caplog.text
 
 
 def make_validation_sensor(suffix: str, address: int = 30001):
@@ -769,6 +827,24 @@ async def test_setup_devices_ignored_host(clean_config):
     thread_config_registry.clear()
     configs, proto = await setup_devices(seen)
     assert len(configs) == 0
+
+
+@pytest.mark.asyncio
+async def test_setup_devices_omits_cloud_control_when_discovery_fails(clean_config):
+    clean_config.modbus[0].registers.read_only = False
+    clean_config.modbus[0].registers.read_write = False
+    clean_config.modbus[0].registers.write_only = False
+    cloud_port = MagicMock()
+    cloud_port.device_list = AsyncMock(side_effect=CloudControlAuthError("bad credentials"))
+    cloud_port.close = AsyncMock()
+    thread_config_registry.clear()
+
+    with patch("sigenergy2mqtt.main.device_setup.cloud_control_registry") as registry:
+        registry.active = cloud_port
+        configs, _ = await setup_devices(set())
+
+    assert configs == []
+    cloud_port.close.assert_awaited_once_with()
 
 
 @pytest.mark.asyncio

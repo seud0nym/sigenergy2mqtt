@@ -6,11 +6,11 @@ from datetime import timedelta
 from typing import Any, TypeVar
 
 from .exceptions import (
-    BatteryControlAuthError,
-    BatteryControlRateLimitedError,
-    BatteryControlRejectedError,
-    BatteryControlUnavailableError,
-    BatteryControlUnsupportedError,
+    CloudControlAuthError,
+    CloudControlRateLimitedError,
+    CloudControlRejectedError,
+    CloudControlUnavailableError,
+    CloudControlUnsupportedError,
 )
 from .models import (
     Capabilities,
@@ -79,11 +79,11 @@ class CommunityCloudAdapter:
         try:
             await self._client.connect()
         except SigenergyCloudAuthError as exc:
-            raise BatteryControlAuthError(str(exc)) from exc
+            raise CloudControlAuthError(str(exc)) from exc
         except SigenergyCloudRateLimitError as exc:
-            raise BatteryControlRateLimitedError(str(exc)) from exc
+            raise CloudControlRateLimitedError(str(exc)) from exc
         except (SigenergyCloudError, OSError, TimeoutError) as exc:
-            raise BatteryControlUnavailableError(str(exc)) from exc
+            raise CloudControlUnavailableError(str(exc)) from exc
         self._connected = True
         self._connection_generation += 1
 
@@ -144,9 +144,9 @@ class CommunityCloudAdapter:
         if command.starts_at is not None:
             unsupported.append("scheduled start")
         if unsupported:
-            raise BatteryControlUnsupportedError(f"Community backend does not support {', '.join(unsupported)}")
+            raise CloudControlUnsupportedError(f"Community backend does not support {', '.join(unsupported)}")
         if not self.capabilities.min_duration <= command.duration <= self.capabilities.max_duration:
-            raise BatteryControlRejectedError("Duration must be between 1 and 1440 minutes")
+            raise CloudControlRejectedError("Duration must be between 1 and 1440 minutes")
         duration_minutes = round(command.duration.total_seconds() / 60)
         await self._cloud_operation(
             lambda: self._client.set_instant_manual_control(_MODE_TO_APP_CODE[command.mode], duration_minutes=duration_minutes),
@@ -182,24 +182,24 @@ class CommunityCloudAdapter:
             try:
                 return await operation()
             except SigenergyCloudRateLimitError as exc:
-                raise BatteryControlRateLimitedError(str(exc)) from exc
+                raise CloudControlRateLimitedError(str(exc)) from exc
             except SigenergyCloudAuthError as exc:
                 if attempt == 0:
                     await self._reconnect(generation)
                     generation = self._connection_generation
                     continue
                 await self._invalidate_connection(generation)
-                raise BatteryControlAuthError(str(exc)) from exc
+                raise CloudControlAuthError(str(exc)) from exc
             except ValueError as exc:
                 if reject_api_errors:
-                    raise BatteryControlRejectedError(str(exc)) from exc
+                    raise CloudControlRejectedError(str(exc)) from exc
                 raise
             except SigenergyCloudAPIError as exc:
                 if reject_api_errors:
-                    raise BatteryControlRejectedError(str(exc)) from exc
-                raise BatteryControlUnavailableError(str(exc)) from exc
+                    raise CloudControlRejectedError(str(exc)) from exc
+                raise CloudControlUnavailableError(str(exc)) from exc
             except (SigenergyCloudError, OSError, TimeoutError) as exc:
-                raise BatteryControlUnavailableError(str(exc)) from exc
+                raise CloudControlUnavailableError(str(exc)) from exc
         raise AssertionError("cloud operation retry loop exhausted")
 
     async def available_operational_modes(self) -> dict[str, Any]:

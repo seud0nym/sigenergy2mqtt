@@ -9,7 +9,7 @@ from typing import Any, cast
 
 import paho.mqtt.client as mqtt
 
-from sigenergy2mqtt.cloud.exceptions import BatteryControlError
+from sigenergy2mqtt.cloud.exceptions import CloudControlError
 from sigenergy2mqtt.cloud.port import CloudControlPort
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.mqtt import MqttHandler
@@ -35,7 +35,7 @@ class CloudSensor(ReadableSensorMixin, AvailabilityMixin):
             return False
         try:
             value = await self._read_cloud_state(port)
-        except BatteryControlError as exc:
+        except CloudControlError as exc:
             logger.warning(f"{self.log_identity} cloud read failed: {exc!r}")
             return False
         if value is None:
@@ -106,7 +106,7 @@ class CloudReadWriteSensor(WriteableSensorMixin, CloudSensor):
             return False
         try:
             return await self._write_cloud_value(port, value)
-        except BatteryControlError as exc:
+        except CloudControlError as exc:
             logger.error(f"{self.log_identity} cloud write failed: {exc!r}")
             return False
 

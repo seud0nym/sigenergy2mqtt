@@ -2,14 +2,16 @@ import asyncio
 import logging
 import sys
 from collections.abc import Mapping
-from typing import cast
+from typing import Any, cast
 
 from pymodbus.exceptions import ModbusException
 
-from sigenergy2mqtt.cloud.registry import battery_control_registry
+from sigenergy2mqtt.cloud.exceptions import CloudControlError
+from sigenergy2mqtt.cloud.port import CloudControlPort
+from sigenergy2mqtt.cloud.registry import cloud_control_registry
 from sigenergy2mqtt.common import Constants, ProtocolVersion
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.devices import Inverter, PowerPlant, SigenergyCloudControl, bind_cross_device_sensors
+from sigenergy2mqtt.devices import DeviceRegistry, Inverter, PowerPlant, SigenergyCloudControl, bind_cross_device_sensors
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.sensors.inverter_read_only import RatedActivePower
 from sigenergy2mqtt.sensors.plant_read_only import (
@@ -36,6 +38,43 @@ from .validation import validate_publishable_sensors
 logger = logging.getLogger(__name__)
 
 _GRID_RESTORE_WATCH_TASKS: set[tuple[str, int, int]] = set()
+
+
+def _cloud_control_plant_index(device_list: list[dict[str, Any]]) -> int:
+    """Find the local plant containing an inverter reported by the cloud."""
+    cloud_serial_numbers = {
+        str(device.get("serialNumber") or device.get("serial_number") or device.get("sn"))
+        for device in device_list
+        if device.get("deviceType") == "Inverter"
+        and (device.get("serialNumber") or device.get("serial_number") or device.get("sn"))
+    }
+    for devices in DeviceRegistry._devices.values():
+        for device in devices:
+            if not isinstance(device, Inverter):
+                continue
+            serial_number = device.get("sn") or device.get("serial_number")
+            if serial_number is not None and str(serial_number) in cloud_serial_numbers:
+                return device.plant_index
+
+    logger.warning("No cloud inverter matched a local inverter; defaulting cloud control to plant index 0")
+    return 0
+
+
+async def _discover_cloud_control_plant_index(cloud_port: CloudControlPort) -> int | None:
+    """Discover the cloud plant without making cloud availability block startup."""
+    try:
+        device_list = await cloud_port.device_list()
+    except CloudControlError as exc:
+        logger.warning(
+            "Cloud inverter discovery failed; cloud control will be disabled for this run: %s",
+            exc,
+        )
+        try:
+            await cloud_port.close()
+        except Exception:
+            logger.exception("Failed to close cloud adapter after discovery failure")
+        return None
+    return _cloud_control_plant_index(device_list)
 
 
 async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfig], ProtocolVersion | None]:
@@ -184,11 +223,13 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
 
             logger.debug(f"Disconnecting from modbus://{device.host}:{device.port} - register probing complete")
 
-    battery_control_registry.configure(active_config.cloud)
-    if (cloud_port := battery_control_registry.active) is not None:
-        cloud_config = ThreadConfig.create(host=None, port=None, name="Sigenergy Cloud")
-        cloud_config.transport_factory = battery_control_registry.transport_factory
-        cloud_config.add_device(SigenergyCloudControl(0, cloud_port))
+    cloud_control_registry.configure(active_config.cloud)
+    if (cloud_port := cloud_control_registry.active) is not None:
+        plant_index = await _discover_cloud_control_plant_index(cloud_port)
+        if plant_index is not None:
+            cloud_config = ThreadConfig.create(host=None, port=None, name="Sigenergy Cloud")
+            cloud_config.transport_factory = cloud_control_registry.transport_factory
+            cloud_config.add_device(SigenergyCloudControl(plant_index, cloud_port))
 
     return thread_config_registry.get_all(), protocol_version
 

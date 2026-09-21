@@ -1,4 +1,4 @@
-"""Selection and lifecycle ownership for cloud battery control."""
+"""Selection and lifecycle ownership for cloud control."""
 
 import logging
 from typing import Literal
@@ -12,7 +12,7 @@ logger = logging.getLogger("sigenergy2mqtt.cloud")
 Provider = Literal["community", "official"]
 
 
-class BatteryControlRegistry:
+class CloudControlRegistry:
     def __init__(self) -> None:
         self._adapter: CloudControlPort | None = None
         self._provider: Provider | None = None
@@ -65,4 +65,4 @@ class BatteryControlRegistry:
             await self._adapter.close()
 
 
-battery_control_registry = BatteryControlRegistry()
+cloud_control_registry = CloudControlRegistry()
