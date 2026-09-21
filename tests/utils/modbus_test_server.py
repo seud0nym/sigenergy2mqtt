@@ -53,11 +53,11 @@ from sigenergy2mqtt.common import Constants, DeviceClass, ProtocolVersion
 from sigenergy2mqtt.modbus.client import ModbusClient
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerChargingPower, ACChargerInputBreaker, ACChargerRatedCurrent
 from sigenergy2mqtt.sensors.base import WriteOnlySensorMixin
-from sigenergy2mqtt.sensors.inverter_read_only import DCChargerOutputPower, InverterFirmwareVersion, OutputType, PhaseCurrent, PhaseVoltage, PowerFactor
+from sigenergy2mqtt.sensors.inverter_read_only import DCChargerOutputPower, InverterFirmwareVersion, InverterModel, InverterSerialNumber, OutputType, PhaseCurrent, PhaseVoltage, PowerFactor, RatedActivePower
 from sigenergy2mqtt.sensors.plant_read_only import GridStatus
 from sigenergy2mqtt.sensors.plant_read_write import RemoteEMS
 from tests.utils import get_sensor_instances
-from tests.utils.modbus_sensors import AC_CHARGER_SERIAL, DC_CHARGER_SERIAL, FIRMWARE_VERSION, HYBRID_INVERTER_MODEL, HYBRID_INVERTER_SERIAL, PV_INVERTER_MODEL, PV_INVERTER_SERIAL
+from tests.utils.modbus_sensors import AC_CHARGER_SERIAL, DC_CHARGER_SERIAL, FIRMWARE_VERSION, HYBRID_INVERTER_MODEL, HYBRID_INVERTER_RATED_ACTIVE_POWER, HYBRID_INVERTER_SERIAL, PV_INVERTER_MODEL, PV_INVERTER_RATED_ACTIVE_POWER, PV_INVERTER_SERIAL
 
 logging.getLogger("asyncio").setLevel(logging.CRITICAL)
 logging.getLogger("pymodbus.logging").setLevel(logging.CRITICAL)
@@ -76,6 +76,18 @@ UNSIGNED_DATA_TYPES = (ModbusClientMixin.DATATYPE.UINT16, ModbusClientMixin.DATA
 
 CLOUD_TEST_SERVER_DEFAULT_PORT = 8080
 CLOUD_TEST_STATION_ID = 10000000000001
+SYNTHESIZED_INVERTER_VALUES = {
+    1: {
+        InverterModel.ADDRESS: HYBRID_INVERTER_MODEL,
+        InverterSerialNumber.ADDRESS: HYBRID_INVERTER_SERIAL,
+        RatedActivePower.ADDRESS: HYBRID_INVERTER_RATED_ACTIVE_POWER,
+    },
+    3: {
+        InverterModel.ADDRESS: PV_INVERTER_MODEL,
+        InverterSerialNumber.ADDRESS: PV_INVERTER_SERIAL,
+        RatedActivePower.ADDRESS: PV_INVERTER_RATED_ACTIVE_POWER,
+    },
+}
 
 
 class CloudApiTestServer:
@@ -116,7 +128,7 @@ class CloudApiTestServer:
                             "communicateStatus": 2,
                             "deviceCode": HYBRID_INVERTER_MODEL,
                             "modelVersionStr": FIRMWARE_VERSION,
-                            "ratedActivePower": 12.0,
+                            "ratedActivePower": HYBRID_INVERTER_RATED_ACTIVE_POWER,
                             "nodeList": [],
                         },
                         {
@@ -139,7 +151,7 @@ class CloudApiTestServer:
                     "communicateStatus": 2,
                     "deviceCode": PV_INVERTER_MODEL,
                     "modelVersionStr": FIRMWARE_VERSION,
-                    "ratedActivePower": 5.0,
+                    "ratedActivePower": PV_INVERTER_RATED_ACTIVE_POWER,
                     "nodeList": [],
                 },
                 {
@@ -1119,6 +1131,12 @@ class CustomDataBlock:
 
         if sensor.address == InverterFirmwareVersion.ADDRESS:
             return (TestConfig.initial_firmware, "inverter_firmware_version")
+
+        if sensor.address in SYNTHESIZED_INVERTER_VALUES.get(sensor.device_address, {}):
+            return (
+                SYNTHESIZED_INVERTER_VALUES[sensor.device_address][sensor.address],
+                "inverter_identity",
+            )
 
         if sensor.data_type == ModbusClientMixin.DATATYPE.STRING:
             return ("string value" if not sensor.latest_raw_state else sensor.latest_raw_state, "string")

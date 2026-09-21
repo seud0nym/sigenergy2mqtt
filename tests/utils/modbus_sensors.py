@@ -79,8 +79,10 @@ AC_CHARGER_SERIAL: str = "AC-CHARGER-2"
 DC_CHARGER_SERIAL: str = "DC-CHARGER-1"
 HYBRID_INVERTER_MODEL: str = "SigenStor EC 12.0 TP"
 HYBRID_INVERTER_SERIAL: str = "CMU123A45BP678"
+HYBRID_INVERTER_RATED_ACTIVE_POWER: float = 12.0
 PV_INVERTER_MODEL: str = "Sigen PV Max 5.0 TP"
 PV_INVERTER_SERIAL: str = "CMU876A54BP321"
+PV_INVERTER_RATED_ACTIVE_POWER: float = 5.0
 INPUT_BREAKER: float = 16.0
 OUTPUT_TYPE: int = 2
 PACK_BCU_COUNT: int = 3
@@ -279,7 +281,7 @@ async def get_sensor_instances(
     pv_device_type = PVInverter(has_grid_code_interface=True, has_independent_phase_power_control_interface=True)
     pv_modbus_client = DummyInverterModbusClient(PV_INVERTER_MODEL, PV_INVERTER_SERIAL)
 
-    total_rated_active_power = 12 + 5  # Sum of RatedActivePower of both inverters
+    total_rated_active_power = HYBRID_INVERTER_RATED_ACTIVE_POWER + PV_INVERTER_RATED_ACTIVE_POWER
 
     tz = timezone(timedelta(minutes=600))
 
