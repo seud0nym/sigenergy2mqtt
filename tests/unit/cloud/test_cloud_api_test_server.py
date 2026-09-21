@@ -3,6 +3,15 @@
 from aiohttp.test_utils import TestClient, TestServer
 
 from tests.utils.modbus_test_server import CloudApiTestServer
+from tests.utils.modbus_sensors import (
+    AC_CHARGER_SERIAL,
+    DC_CHARGER_SERIAL,
+    FIRMWARE_VERSION,
+    HYBRID_INVERTER_MODEL,
+    HYBRID_INVERTER_SERIAL,
+    PV_INVERTER_MODEL,
+    PV_INVERTER_SERIAL,
+)
 
 
 async def test_cloud_api_test_server_exposes_all_limit_endpoints() -> None:
@@ -11,6 +20,13 @@ async def test_cloud_api_test_server_exposes_all_limit_endpoints() -> None:
     headers = {"Authorization": "Bearer test-token"}
 
     async with TestClient(TestServer(api.app())) as client:
+        response = await client.get("/device/owner/station/home", headers=headers)
+        assert (await response.json())["data"] == {
+            "stationId": api.device_topology["stationId"],
+            "acSnList": [AC_CHARGER_SERIAL],
+            "dcSnList": [DC_CHARGER_SERIAL],
+        }
+
         response = await client.get(
             "/device/energy-profile/grid/limitation/export/1", headers=headers
         )
@@ -23,7 +39,36 @@ async def test_cloud_api_test_server_exposes_all_limit_endpoints() -> None:
         )
         topology = (await response.json())["data"]
         assert topology["stationId"] == api.device_topology["stationId"]
-        assert topology["nodeList"][0]["nodeList"][0]["snCode"] == "INV-TEST"
+        inverter_nodes = [
+            node
+            for root in topology["nodeList"]
+            for node in [root, *root["nodeList"]]
+            if node["deviceType"] == 3
+        ]
+        assert inverter_nodes == [
+            {
+                "stationId": api.device_topology["stationId"],
+                "snCode": HYBRID_INVERTER_SERIAL,
+                "deviceType": 3,
+                "deviceStatus": 1,
+                "communicateStatus": 2,
+                "deviceCode": HYBRID_INVERTER_MODEL,
+                "modelVersionStr": FIRMWARE_VERSION,
+                "ratedActivePower": 12.0,
+                "nodeList": [],
+            },
+            {
+                "stationId": api.device_topology["stationId"],
+                "snCode": PV_INVERTER_SERIAL,
+                "deviceType": 3,
+                "deviceStatus": 1,
+                "communicateStatus": 2,
+                "deviceCode": PV_INVERTER_MODEL,
+                "modelVersionStr": FIRMWARE_VERSION,
+                "ratedActivePower": 5.0,
+                "nodeList": [],
+            },
+        ]
 
         response = await client.put(
             "/device/energy-profile/grid/limitation/export",

@@ -75,6 +75,12 @@ initialize()
 DC_RATED_CHARGING_POWER: float = 25.0
 DC_RATED_DISCHARGING_POWER: float = 25.0
 FIRMWARE_VERSION: str = "V100R001C00SPC112B107G"
+AC_CHARGER_SERIAL: str = "AC-CHARGER-2"
+DC_CHARGER_SERIAL: str = "DC-CHARGER-1"
+HYBRID_INVERTER_MODEL: str = "SigenStor EC 12.0 TP"
+HYBRID_INVERTER_SERIAL: str = "CMU123A45BP678"
+PV_INVERTER_MODEL: str = "Sigen PV Max 5.0 TP"
+PV_INVERTER_SERIAL: str = "CMU876A54BP321"
 INPUT_BREAKER: float = 16.0
 OUTPUT_TYPE: int = 2
 PACK_BCU_COUNT: int = 3
@@ -269,9 +275,9 @@ async def get_sensor_instances(
     active_config.pvoutput.enabled = True
 
     hi_device_type = HybridInverter(has_grid_code_interface=True, has_independent_phase_power_control_interface=True)
-    hi_modbus_client = DummyInverterModbusClient("SigenStor EC 12.0 TP", "CMU123A45BP678")
+    hi_modbus_client = DummyInverterModbusClient(HYBRID_INVERTER_MODEL, HYBRID_INVERTER_SERIAL)
     pv_device_type = PVInverter(has_grid_code_interface=True, has_independent_phase_power_control_interface=True)
-    pv_modbus_client = DummyInverterModbusClient("Sigen PV Max 5.0 TP", "CMU876A54BP321")
+    pv_modbus_client = DummyInverterModbusClient(PV_INVERTER_MODEL, PV_INVERTER_SERIAL)
 
     total_rated_active_power = 12 + 5  # Sum of RatedActivePower of both inverters
 

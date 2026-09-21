@@ -46,9 +46,7 @@ async def test_community_cloud_adapter_against_test_server(
     adapter: CommunityCloudAdapter | None = None
     try:
         with _swap_active_config(Config()):
-            adapter = CommunityCloudAdapter(
-                "cloud-user", "cloud-password", "testing"
-            )
+            adapter = CommunityCloudAdapter("cloud-user", "cloud-password", "testing")
             status = await adapter.instant_control_status()
             assert status.enabled is False
             assert status.mode is InstantControlMode.DISCHARGE
@@ -71,13 +69,40 @@ async def test_community_cloud_adapter_against_test_server(
             assert await adapter.device_list() == [
                 {
                     "systemId": "10000000000001",
-                    "serialNumber": "INV-TEST",
+                    "serialNumber": "CMU123A45BP678",
                     "deviceType": "Inverter",
                     "status": "Normal",
-                    "pn": "PN-INV",
-                    "firmwareVersion": "V100R001C00",
-                    "attrMap": {"ratedActivePower": 6.0},
-                }
+                    "pn": "SigenStor EC 12.0 TP",
+                    "firmwareVersion": "V100R001C00SPC112B107G",
+                    "attrMap": {"ratedActivePower": 12.0},
+                },
+                {
+                    "systemId": "10000000000001",
+                    "serialNumber": "DC-CHARGER-1",
+                    "deviceType": "DcCharger",
+                    "status": "Normal",
+                    "pn": "Sigen EV DC Charging Module",
+                    "firmwareVersion": "V100R001C00SPC112B107G",
+                    "attrMap": {},
+                },
+                {
+                    "systemId": "10000000000001",
+                    "serialNumber": "CMU876A54BP321",
+                    "deviceType": "Inverter",
+                    "status": "Normal",
+                    "pn": "Sigen PV Max 5.0 TP",
+                    "firmwareVersion": "V100R001C00SPC112B107G",
+                    "attrMap": {"ratedActivePower": 5.0},
+                },
+                {
+                    "systemId": "10000000000001",
+                    "serialNumber": "AC-CHARGER-2",
+                    "deviceType": "AcCharger",
+                    "status": "Normal",
+                    "pn": "Sigen EV AC Charger",
+                    "firmwareVersion": "V100R001C00SPC112B107G",
+                    "attrMap": {},
+                },
             ]
             assert await adapter.get_operational_mode() == (0, -1)
             await adapter.set_operational_mode(7)

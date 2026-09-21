@@ -57,6 +57,7 @@ from sigenergy2mqtt.sensors.inverter_read_only import DCChargerOutputPower, Inve
 from sigenergy2mqtt.sensors.plant_read_only import GridStatus
 from sigenergy2mqtt.sensors.plant_read_write import RemoteEMS
 from tests.utils import get_sensor_instances
+from tests.utils.modbus_sensors import AC_CHARGER_SERIAL, DC_CHARGER_SERIAL, FIRMWARE_VERSION, HYBRID_INVERTER_MODEL, HYBRID_INVERTER_SERIAL, PV_INVERTER_MODEL, PV_INVERTER_SERIAL
 
 logging.getLogger("asyncio").setLevel(logging.CRITICAL)
 logging.getLogger("pymodbus.logging").setLevel(logging.CRITICAL)
@@ -102,24 +103,55 @@ class CloudApiTestServer:
             "nodeList": [
                 {
                     "stationId": CLOUD_TEST_STATION_ID,
-                    "snCode": "AIO-TEST",
+                    "snCode": HYBRID_INVERTER_SERIAL,
                     "deviceType": 2,
                     "deviceStatus": 1,
                     "communicateStatus": 2,
                     "nodeList": [
                         {
                             "stationId": CLOUD_TEST_STATION_ID,
-                            "snCode": "INV-TEST",
+                            "snCode": HYBRID_INVERTER_SERIAL,
                             "deviceType": 3,
                             "deviceStatus": 1,
                             "communicateStatus": 2,
-                            "deviceCode": "PN-INV",
-                            "modelVersionStr": "V100R001C00",
-                            "ratedActivePower": 6.0,
+                            "deviceCode": HYBRID_INVERTER_MODEL,
+                            "modelVersionStr": FIRMWARE_VERSION,
+                            "ratedActivePower": 12.0,
                             "nodeList": [],
-                        }
+                        },
+                        {
+                            "stationId": CLOUD_TEST_STATION_ID,
+                            "snCode": DC_CHARGER_SERIAL,
+                            "deviceType": 5,
+                            "deviceStatus": 1,
+                            "communicateStatus": 2,
+                            "deviceCode": "Sigen EV DC Charging Module",
+                            "modelVersionStr": FIRMWARE_VERSION,
+                            "nodeList": [],
+                        },
                     ],
-                }
+                },
+                {
+                    "stationId": CLOUD_TEST_STATION_ID,
+                    "snCode": PV_INVERTER_SERIAL,
+                    "deviceType": 3,
+                    "deviceStatus": 1,
+                    "communicateStatus": 2,
+                    "deviceCode": PV_INVERTER_MODEL,
+                    "modelVersionStr": FIRMWARE_VERSION,
+                    "ratedActivePower": 5.0,
+                    "nodeList": [],
+                },
+                {
+                    "stationId": CLOUD_TEST_STATION_ID,
+                    "snCode": AC_CHARGER_SERIAL,
+                    "deviceType": 6,
+                    "deviceStatus": 1,
+                    "communicateStatus": 2,
+                    "deviceCode": "Sigen EV AC Charger",
+                    "modelVersionStr": FIRMWARE_VERSION,
+                    "nodeList": [],
+                },
             ],
         }
 
@@ -204,7 +236,7 @@ class CloudApiTestServer:
         if (response := await self.authorized(request)) is not None:
             return response
         return self._success(
-            {"stationId": CLOUD_TEST_STATION_ID, "acSnList": [], "dcSnList": []}
+            {"stationId": CLOUD_TEST_STATION_ID, "acSnList": [AC_CHARGER_SERIAL], "dcSnList": [DC_CHARGER_SERIAL]}
         )
 
     async def get_device_topology(self, request: web.Request) -> web.Response:
