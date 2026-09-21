@@ -1,8 +1,29 @@
 """Tests for the stateful cloud API facsimile used by integration tests."""
 
 from aiohttp.test_utils import TestClient, TestServer
+from pymodbus.client.mixin import ModbusClientMixin
 
-from tests.utils.modbus_test_server import CloudApiTestServer
+from sigenergy2mqtt.sensors.inverter_read_only import (
+    InverterModel,
+    InverterSerialNumber,
+    RatedActivePower,
+)
+from tests.utils.modbus_test_server import (
+    CloudApiTestServer,
+    CustomDataBlock,
+    LatencyBudget,
+)
+from tests.utils.modbus_sensors import (
+    AC_CHARGER_SERIAL,
+    DC_CHARGER_SERIAL,
+    FIRMWARE_VERSION,
+    HYBRID_INVERTER_MODEL,
+    HYBRID_INVERTER_RATED_ACTIVE_POWER,
+    HYBRID_INVERTER_SERIAL,
+    PV_INVERTER_MODEL,
+    PV_INVERTER_RATED_ACTIVE_POWER,
+    PV_INVERTER_SERIAL,
+)
 
 
 async def test_cloud_api_test_server_exposes_all_limit_endpoints() -> None:
@@ -11,6 +32,13 @@ async def test_cloud_api_test_server_exposes_all_limit_endpoints() -> None:
     headers = {"Authorization": "Bearer test-token"}
 
     async with TestClient(TestServer(api.app())) as client:
+        response = await client.get("/device/owner/station/home", headers=headers)
+        assert (await response.json())["data"] == {
+            "stationId": api.device_topology["stationId"],
+            "acSnList": [AC_CHARGER_SERIAL],
+            "dcSnList": [DC_CHARGER_SERIAL],
+        }
+
         response = await client.get(
             "/device/energy-profile/grid/limitation/export/1", headers=headers
         )
@@ -23,7 +51,36 @@ async def test_cloud_api_test_server_exposes_all_limit_endpoints() -> None:
         )
         topology = (await response.json())["data"]
         assert topology["stationId"] == api.device_topology["stationId"]
-        assert topology["nodeList"][0]["nodeList"][0]["snCode"] == "INV-TEST"
+        inverter_nodes = [
+            node
+            for root in topology["nodeList"]
+            for node in [root, *root["nodeList"]]
+            if node["deviceType"] == 3
+        ]
+        assert inverter_nodes == [
+            {
+                "stationId": api.device_topology["stationId"],
+                "snCode": HYBRID_INVERTER_SERIAL,
+                "deviceType": 3,
+                "deviceStatus": 1,
+                "communicateStatus": 2,
+                "deviceCode": HYBRID_INVERTER_MODEL,
+                "modelVersionStr": FIRMWARE_VERSION,
+                "ratedActivePower": 12.0,
+                "nodeList": [],
+            },
+            {
+                "stationId": api.device_topology["stationId"],
+                "snCode": PV_INVERTER_SERIAL,
+                "deviceType": 3,
+                "deviceStatus": 1,
+                "communicateStatus": 2,
+                "deviceCode": PV_INVERTER_MODEL,
+                "modelVersionStr": FIRMWARE_VERSION,
+                "ratedActivePower": 5.0,
+                "nodeList": [],
+            },
+        ]
 
         response = await client.put(
             "/device/energy-profile/grid/limitation/export",
@@ -87,3 +144,53 @@ async def test_cloud_api_test_server_exposes_all_limit_endpoints() -> None:
             "installerSetEnable": None,
             "nearModify": None,
         }
+
+
+def test_cloud_topology_matches_synthesized_modbus_identity_registers() -> None:
+    api = CloudApiTestServer(None, None)
+    topology_inverters = {
+        node["snCode"]: node
+        for root in api.device_topology["nodeList"]
+        for node in [root, *root["nodeList"]]
+        if node["deviceType"] == 3
+    }
+
+    for address, model, serial, rated_power in (
+        (
+            1,
+            HYBRID_INVERTER_MODEL,
+            HYBRID_INVERTER_SERIAL,
+            HYBRID_INVERTER_RATED_ACTIVE_POWER,
+        ),
+        (
+            3,
+            PV_INVERTER_MODEL,
+            PV_INVERTER_SERIAL,
+            PV_INVERTER_RATED_ACTIVE_POWER,
+        ),
+    ):
+        block = CustomDataBlock(address, None, LatencyBudget())
+        modbus_values = {}
+        for key, sensor in {
+            "deviceCode": InverterModel(0, address),
+            "snCode": InverterSerialNumber(0, address),
+            "ratedActivePower": RatedActivePower(0, address),
+        }.items():
+            block.add_sensor(sensor)
+            registers = [
+                block._initial_registers[sensor.address + offset]
+                for offset in range(sensor.count)
+            ]
+            raw_value = ModbusClientMixin.convert_from_registers(
+                registers, sensor.data_type
+            )
+            modbus_values[key] = (
+                raw_value / sensor.gain
+                if isinstance(raw_value, (int, float)) and sensor.gain is not None
+                else raw_value
+            )
+        cloud_node = topology_inverters[serial]
+        assert {
+            key: cloud_node[key]
+            for key in ("deviceCode", "snCode", "ratedActivePower")
+        } == modbus_values

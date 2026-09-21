@@ -53,10 +53,11 @@ from sigenergy2mqtt.common import Constants, DeviceClass, ProtocolVersion
 from sigenergy2mqtt.modbus.client import ModbusClient
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerChargingPower, ACChargerInputBreaker, ACChargerRatedCurrent
 from sigenergy2mqtt.sensors.base import WriteOnlySensorMixin
-from sigenergy2mqtt.sensors.inverter_read_only import DCChargerOutputPower, InverterFirmwareVersion, OutputType, PhaseCurrent, PhaseVoltage, PowerFactor
+from sigenergy2mqtt.sensors.inverter_read_only import DCChargerOutputPower, InverterFirmwareVersion, InverterModel, InverterSerialNumber, OutputType, PhaseCurrent, PhaseVoltage, PowerFactor, RatedActivePower
 from sigenergy2mqtt.sensors.plant_read_only import GridStatus
 from sigenergy2mqtt.sensors.plant_read_write import RemoteEMS
 from tests.utils import get_sensor_instances
+from tests.utils.modbus_sensors import AC_CHARGER_SERIAL, DC_CHARGER_SERIAL, FIRMWARE_VERSION, HYBRID_INVERTER_MODEL, HYBRID_INVERTER_RATED_ACTIVE_POWER, HYBRID_INVERTER_SERIAL, PV_INVERTER_MODEL, PV_INVERTER_RATED_ACTIVE_POWER, PV_INVERTER_SERIAL
 
 logging.getLogger("asyncio").setLevel(logging.CRITICAL)
 logging.getLogger("pymodbus.logging").setLevel(logging.CRITICAL)
@@ -75,6 +76,18 @@ UNSIGNED_DATA_TYPES = (ModbusClientMixin.DATATYPE.UINT16, ModbusClientMixin.DATA
 
 CLOUD_TEST_SERVER_DEFAULT_PORT = 8080
 CLOUD_TEST_STATION_ID = 10000000000001
+SYNTHESIZED_INVERTER_VALUES = {
+    1: {
+        InverterModel.ADDRESS: HYBRID_INVERTER_MODEL,
+        InverterSerialNumber.ADDRESS: HYBRID_INVERTER_SERIAL,
+        RatedActivePower.ADDRESS: HYBRID_INVERTER_RATED_ACTIVE_POWER,
+    },
+    3: {
+        InverterModel.ADDRESS: PV_INVERTER_MODEL,
+        InverterSerialNumber.ADDRESS: PV_INVERTER_SERIAL,
+        RatedActivePower.ADDRESS: PV_INVERTER_RATED_ACTIVE_POWER,
+    },
+}
 
 
 class CloudApiTestServer:
@@ -102,24 +115,55 @@ class CloudApiTestServer:
             "nodeList": [
                 {
                     "stationId": CLOUD_TEST_STATION_ID,
-                    "snCode": "AIO-TEST",
+                    "snCode": HYBRID_INVERTER_SERIAL,
                     "deviceType": 2,
                     "deviceStatus": 1,
                     "communicateStatus": 2,
                     "nodeList": [
                         {
                             "stationId": CLOUD_TEST_STATION_ID,
-                            "snCode": "INV-TEST",
+                            "snCode": HYBRID_INVERTER_SERIAL,
                             "deviceType": 3,
                             "deviceStatus": 1,
                             "communicateStatus": 2,
-                            "deviceCode": "PN-INV",
-                            "modelVersionStr": "V100R001C00",
-                            "ratedActivePower": 6.0,
+                            "deviceCode": HYBRID_INVERTER_MODEL,
+                            "modelVersionStr": FIRMWARE_VERSION,
+                            "ratedActivePower": HYBRID_INVERTER_RATED_ACTIVE_POWER,
                             "nodeList": [],
-                        }
+                        },
+                        {
+                            "stationId": CLOUD_TEST_STATION_ID,
+                            "snCode": DC_CHARGER_SERIAL,
+                            "deviceType": 5,
+                            "deviceStatus": 1,
+                            "communicateStatus": 2,
+                            "deviceCode": "Sigen EV DC Charging Module",
+                            "modelVersionStr": FIRMWARE_VERSION,
+                            "nodeList": [],
+                        },
                     ],
-                }
+                },
+                {
+                    "stationId": CLOUD_TEST_STATION_ID,
+                    "snCode": PV_INVERTER_SERIAL,
+                    "deviceType": 3,
+                    "deviceStatus": 1,
+                    "communicateStatus": 2,
+                    "deviceCode": PV_INVERTER_MODEL,
+                    "modelVersionStr": FIRMWARE_VERSION,
+                    "ratedActivePower": PV_INVERTER_RATED_ACTIVE_POWER,
+                    "nodeList": [],
+                },
+                {
+                    "stationId": CLOUD_TEST_STATION_ID,
+                    "snCode": AC_CHARGER_SERIAL,
+                    "deviceType": 6,
+                    "deviceStatus": 1,
+                    "communicateStatus": 2,
+                    "deviceCode": "Sigen EV AC Charger",
+                    "modelVersionStr": FIRMWARE_VERSION,
+                    "nodeList": [],
+                },
             ],
         }
 
@@ -204,7 +248,7 @@ class CloudApiTestServer:
         if (response := await self.authorized(request)) is not None:
             return response
         return self._success(
-            {"stationId": CLOUD_TEST_STATION_ID, "acSnList": [], "dcSnList": []}
+            {"stationId": CLOUD_TEST_STATION_ID, "acSnList": [AC_CHARGER_SERIAL], "dcSnList": [DC_CHARGER_SERIAL]}
         )
 
     async def get_device_topology(self, request: web.Request) -> web.Response:
@@ -1087,6 +1131,12 @@ class CustomDataBlock:
 
         if sensor.address == InverterFirmwareVersion.ADDRESS:
             return (TestConfig.initial_firmware, "inverter_firmware_version")
+
+        if sensor.address in SYNTHESIZED_INVERTER_VALUES.get(sensor.device_address, {}):
+            return (
+                SYNTHESIZED_INVERTER_VALUES[sensor.device_address][sensor.address],
+                "inverter_identity",
+            )
 
         if sensor.data_type == ModbusClientMixin.DATATYPE.STRING:
             return ("string value" if not sensor.latest_raw_state else sensor.latest_raw_state, "string")
