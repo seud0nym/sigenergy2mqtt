@@ -6,6 +6,8 @@ from typing import Any, cast
 
 from pymodbus.exceptions import ModbusException
 
+from sigenergy2mqtt.cloud.exceptions import CloudControlError
+from sigenergy2mqtt.cloud.port import CloudControlPort
 from sigenergy2mqtt.cloud.registry import cloud_control_registry
 from sigenergy2mqtt.common import Constants, ProtocolVersion
 from sigenergy2mqtt.config import active_config
@@ -56,6 +58,19 @@ def _cloud_control_plant_index(device_list: list[dict[str, Any]]) -> int:
 
     logger.warning("No cloud inverter matched a local inverter; defaulting cloud control to plant index 0")
     return 0
+
+
+async def _discover_cloud_control_plant_index(cloud_port: CloudControlPort) -> int:
+    """Discover the cloud plant without making cloud availability block startup."""
+    try:
+        device_list = await cloud_port.device_list()
+    except CloudControlError as exc:
+        logger.warning(
+            "Cloud inverter discovery failed; defaulting cloud control to plant index 0: %s",
+            exc,
+        )
+        return 0
+    return _cloud_control_plant_index(device_list)
 
 
 async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfig], ProtocolVersion | None]:
@@ -206,7 +221,7 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
 
     cloud_control_registry.configure(active_config.cloud)
     if (cloud_port := cloud_control_registry.active) is not None:
-        plant_index = _cloud_control_plant_index(await cloud_port.device_list())
+        plant_index = await _discover_cloud_control_plant_index(cloud_port)
         cloud_config = ThreadConfig.create(host=None, port=None, name="Sigenergy Cloud")
         cloud_config.transport_factory = cloud_control_registry.transport_factory
         cloud_config.add_device(SigenergyCloudControl(plant_index, cloud_port))

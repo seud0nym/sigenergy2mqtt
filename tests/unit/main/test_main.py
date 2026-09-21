@@ -9,12 +9,13 @@ from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
 import pytest
 from pymodbus import ModbusException
 
+from sigenergy2mqtt.cloud.exceptions import CloudControlAuthError
 from sigenergy2mqtt.common import ConsumptionMethod, DeviceClass, FirmwareVersion, InputType, ProtocolVersion, StateClass, UnitOfPower
 from sigenergy2mqtt.config import _swap_active_config, active_config
 from sigenergy2mqtt.devices import DeviceRegistry, Inverter
 from sigenergy2mqtt.main import main as main_mod
 from sigenergy2mqtt.main.device_factories import get_state, make_ac_charger, make_dc_charger, make_plant_and_inverter
-from sigenergy2mqtt.main.device_setup import _cloud_control_plant_index, _is_grid_outage, _setup_ac_chargers, _setup_dc_chargers, setup_devices
+from sigenergy2mqtt.main.device_setup import _cloud_control_plant_index, _discover_cloud_control_plant_index, _is_grid_outage, _setup_ac_chargers, _setup_dc_chargers, setup_devices
 from sigenergy2mqtt.main.logging_setup import _configure_logger, configure_logging
 from sigenergy2mqtt.main.main import async_main, thread_config_registry
 from sigenergy2mqtt.main.modbus_helpers import get_modbus_url, read_registers
@@ -73,6 +74,18 @@ def test_cloud_control_plant_index_defaults_to_zero(caplog):
         ]) == 0
 
     assert "defaulting cloud control to plant index 0" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_cloud_control_discovery_failure_does_not_abort_startup(caplog):
+    cloud_port = MagicMock()
+    cloud_port.device_list = AsyncMock(side_effect=CloudControlAuthError("bad credentials"))
+
+    with caplog.at_level(logging.WARNING):
+        assert await _discover_cloud_control_plant_index(cloud_port) == 0
+
+    assert "Cloud inverter discovery failed" in caplog.text
+    assert "bad credentials" in caplog.text
 
 
 def make_validation_sensor(suffix: str, address: int = 30001):
