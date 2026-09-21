@@ -69,6 +69,10 @@ async def _discover_cloud_control_plant_index(cloud_port: CloudControlPort) -> i
             "Cloud inverter discovery failed; cloud control will be disabled for this run: %s",
             exc,
         )
+        try:
+            await cloud_port.close()
+        except Exception:
+            logger.exception("Failed to close cloud adapter after discovery failure")
         return None
     return _cloud_control_plant_index(device_list)
 
