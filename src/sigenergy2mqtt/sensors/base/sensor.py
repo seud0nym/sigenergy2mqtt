@@ -1332,7 +1332,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
 
         raise ValueError(f"'{value}' is not a valid option")
 
-    def state2raw(self, state: float | str) -> float | int | str | None:
+    def state2raw(self, state: float | str | None) -> float | int | str | None:
         """Convert processed state back to raw value.
 
         Args:

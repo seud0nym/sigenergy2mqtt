@@ -109,7 +109,9 @@ class SystemTimeZone(ReadOnlySensor, HybridInverter, PVInverter):
         else:
             return None
 
-    def state2raw(self, state) -> float | int | str:
+    def state2raw(self, state: float | str | None) -> float | int | str | None:
+        if state is None:
+            return None
         if isinstance(state, str):
             offset = state.replace("UTC", "")
             if not offset:

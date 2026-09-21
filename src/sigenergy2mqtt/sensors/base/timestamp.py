@@ -91,7 +91,7 @@ class TimestampSensor(ReadOnlySensor):
 
         return iso8601
 
-    def state2raw(self, state: float | str) -> float | int | str | None:
+    def state2raw(self, state: float | str | None) -> float | int | str | None:
         """Convert ISO 8601 timestamp back to Unix timestamp.
 
         Args:
@@ -100,6 +100,9 @@ class TimestampSensor(ReadOnlySensor):
         Returns:
             Unix timestamp as integer
         """
+        if state is None:
+            return None
+
         if isinstance(state, (float, int)):
             return int(state)
 

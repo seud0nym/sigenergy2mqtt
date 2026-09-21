@@ -167,7 +167,7 @@ class ESSPreHeatingTOUTime(NumericSensor, HybridInverter):
         epoch = cast(int, self.state2raw(value))
         return await super().set_value(transport, mqtt_client, epoch, source, handler)
 
-    def state2raw(self, state: float | str) -> float | int | str | None:
+    def state2raw(self, state: float | str | None) -> float | int | str | None:
         """Convert time string back to Unix epoch value.
 
         Args:

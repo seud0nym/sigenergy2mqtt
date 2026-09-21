@@ -195,7 +195,7 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
 
         return compressed[: (max_len - 3)] + "..."
 
-    def state2raw(self, state: float | str) -> float | int | str | None:
+    def state2raw(self, state: float | str | None) -> float | int | str | None:
         """Convert alarm description back to code.
 
         Args:
@@ -479,7 +479,7 @@ class AlarmCombinedSensor(ReadOnlySensor, HybridInverter, PVInverter):
 
         return compressed
 
-    def state2raw(self, state: float | str) -> float | int | str | None:
+    def state2raw(self, state: float | str | None) -> float | int | str | None:
         """Convert alarm state back to code.
 
         Args:
