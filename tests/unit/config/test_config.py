@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, PropertyMock, patch
 
 import pytest
 from ruamel.yaml import YAML
+from ruamel.yaml.error import YAMLError
 
 from sigenergy2mqtt.config import Config, _promote_cli_to_env, active_config, const
 from sigenergy2mqtt.config.config import _swap_active_config
@@ -192,7 +193,10 @@ class TestConfigReload:
 
     def test_reload_with_env_overrides(self):
         """Test reload with environment variable overrides."""
-        from sigenergy2mqtt.config.const import SIGENERGY2MQTT_LOG_LEVEL, SIGENERGY2MQTT_MODBUS_HOST
+        from sigenergy2mqtt.config.const import (
+            SIGENERGY2MQTT_LOG_LEVEL,
+            SIGENERGY2MQTT_MODBUS_HOST,
+        )
 
         with _swap_active_config(Config()) as cfg, patch.dict("os.environ", {SIGENERGY2MQTT_LOG_LEVEL: "DEBUG", SIGENERGY2MQTT_MODBUS_HOST: "localhost"}, clear=True):
             asyncio.run(cfg.reload())
@@ -200,7 +204,10 @@ class TestConfigReload:
 
     def test_reload_with_no_ems_mode_check_env(self):
         """Test reload with SIGENERGY2MQTT_NO_EMS_MODE_CHECK environment variable."""
-        from sigenergy2mqtt.config.const import SIGENERGY2MQTT_MODBUS_HOST, SIGENERGY2MQTT_NO_EMS_MODE_CHECK
+        from sigenergy2mqtt.config.const import (
+            SIGENERGY2MQTT_MODBUS_HOST,
+            SIGENERGY2MQTT_NO_EMS_MODE_CHECK,
+        )
 
         with (
             _swap_active_config(Config()) as cfg,
@@ -220,15 +227,21 @@ class TestConfigReload:
 
     def test_reload_with_language_env_invalid_fallback(self, caplog):
         """Test reload with invalid language environment variable."""
-        from sigenergy2mqtt.config.const import SIGENERGY2MQTT_LANGUAGE, SIGENERGY2MQTT_MODBUS_HOST
+        from sigenergy2mqtt.config.const import (
+            SIGENERGY2MQTT_LANGUAGE,
+            SIGENERGY2MQTT_MODBUS_HOST,
+        )
 
-        with _swap_active_config(Config()) as cfg, patch.dict("os.environ", {SIGENERGY2MQTT_LANGUAGE: "de", SIGENERGY2MQTT_MODBUS_HOST: "localhost"}, clear=True):
-            with patch("sigenergy2mqtt.i18n.get_available_translations", return_value=["en", "fr"]):
-                with patch("sigenergy2mqtt.i18n.get_default_language", return_value="en"):
-                    with caplog.at_level(logging.WARNING):
-                        asyncio.run(cfg.reload())
-                        assert cfg.language == "en"
-                        assert "Invalid language 'de'" in caplog.text
+        with (
+            _swap_active_config(Config()) as cfg,
+            patch.dict("os.environ", {SIGENERGY2MQTT_LANGUAGE: "de", SIGENERGY2MQTT_MODBUS_HOST: "localhost"}, clear=True),
+            patch("sigenergy2mqtt.i18n.get_available_translations", return_value=["en", "fr"]),
+            patch("sigenergy2mqtt.i18n.get_default_language", return_value="en"),
+            caplog.at_level(logging.WARNING),
+        ):
+            asyncio.run(cfg.reload())
+            assert cfg.language == "en"
+            assert "Invalid language 'de'" in caplog.text
 
     @patch("sigenergy2mqtt.config.config.Config._perform_auto_discovery")
     def test_reload_with_auto_discovery_force(self, mock_perform_auto_discovery, tmp_path):
@@ -337,16 +350,7 @@ class TestConfigReload:
         """Preflight-only YAML keys must not trigger extra_forbidden on final Settings parse."""
         config_file = tmp_path / "config.yaml"
         config_file.write_text(
-            "\n".join([
-                "modbus-port: 1502",
-                "modbus-auto-discovery: once",
-                "modbus-auto-discovery-timeout: 1.25",
-                "modbus-auto-discovery-ping-timeout: 2.5",
-                "modbus-auto-discovery-retries: 7",
-                "modbus:",
-                "  - host: 10.0.0.9",
-                "    port: 502",
-            ])
+            "modbus-port: 1502\nmodbus-auto-discovery: once\nmodbus-auto-discovery-timeout: 1.25\nmodbus-auto-discovery-ping-timeout: 2.5\nmodbus-auto-discovery-retries: 7\nmodbus:\n  - host: 10.0.0.9\n    port: 502"
             + "\n"
         )
 
@@ -904,7 +908,7 @@ def test_reload_invalid_yaml(tmp_path):
     original_source = active_config._source
     try:
         active_config._source = str(bad)
-        with pytest.raises(Exception):
+        with pytest.raises(YAMLError):
             asyncio.run(active_config.reload())
     finally:
         active_config._source = original_source

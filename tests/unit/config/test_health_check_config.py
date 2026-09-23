@@ -1,13 +1,13 @@
 """Tests for HealthCheckConfig and is_docker() helper."""
 
 import asyncio
-from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
+from pydantic import ValidationError
 
-from sigenergy2mqtt.config.models.health_check import HealthCheckConfig
 from sigenergy2mqtt.config.config import is_docker
+from sigenergy2mqtt.config.models.health_check import HealthCheckConfig
 
 
 class TestHealthCheckConfigDefaults:
@@ -44,12 +44,12 @@ class TestHealthCheckConfigDefaults:
 
     def test_interval_minimum(self):
         """interval must be >= 1."""
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             HealthCheckConfig(interval=0)
 
     def test_timeout_minimum(self):
         """timeout must be >= 1."""
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             HealthCheckConfig(timeout=0)
 
     def test_start_period_zero_allowed(self):
@@ -59,7 +59,7 @@ class TestHealthCheckConfigDefaults:
 
     def test_retries_minimum(self):
         """retries must be >= 1."""
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             HealthCheckConfig(retries=0)
 
 
@@ -119,55 +119,70 @@ class TestHealthCheckConfigEnvVars:
 
     def test_env_enabled_false(self, monkeypatch, tmp_path):
         from unittest.mock import patch as mpatch
+
         from sigenergy2mqtt.config import Config, _swap_active_config
 
         monkeypatch.setenv("SIGENERGY2MQTT_HEALTH_CHECK_ENABLED", "false")
-        with mpatch("sigenergy2mqtt.config.config.Config._perform_auto_discovery", return_value=None):
-            with _swap_active_config(Config()) as cfg:
-                cfg.persistent_state_path = tmp_path
-                asyncio.run(cfg.reload())
-                assert cfg.health_check.enabled is False
+        with (
+            mpatch("sigenergy2mqtt.config.config.Config._perform_auto_discovery", return_value=None),
+            _swap_active_config(Config()) as cfg,
+        ):
+            cfg.persistent_state_path = tmp_path
+            asyncio.run(cfg.reload())
+            assert cfg.health_check.enabled is False
 
     def test_env_interval_override(self, monkeypatch, tmp_path):
         from unittest.mock import patch as mpatch
+
         from sigenergy2mqtt.config import Config, _swap_active_config
 
         monkeypatch.setenv("SIGENERGY2MQTT_HEALTH_CHECK_INTERVAL", "60")
-        with mpatch("sigenergy2mqtt.config.config.Config._perform_auto_discovery", return_value=None):
-            with _swap_active_config(Config()) as cfg:
-                cfg.persistent_state_path = tmp_path
-                asyncio.run(cfg.reload())
-                assert cfg.health_check.interval == 60
+        with (
+            mpatch("sigenergy2mqtt.config.config.Config._perform_auto_discovery", return_value=None),
+            _swap_active_config(Config()) as cfg,
+        ):
+            cfg.persistent_state_path = tmp_path
+            asyncio.run(cfg.reload())
+            assert cfg.health_check.interval == 60
 
     def test_env_timeout_override(self, monkeypatch, tmp_path):
         from unittest.mock import patch as mpatch
+
         from sigenergy2mqtt.config import Config, _swap_active_config
 
         monkeypatch.setenv("SIGENERGY2MQTT_HEALTH_CHECK_TIMEOUT", "10")
-        with mpatch("sigenergy2mqtt.config.config.Config._perform_auto_discovery", return_value=None):
-            with _swap_active_config(Config()) as cfg:
-                cfg.persistent_state_path = tmp_path
-                asyncio.run(cfg.reload())
-                assert cfg.health_check.timeout == 10
+        with (
+            mpatch("sigenergy2mqtt.config.config.Config._perform_auto_discovery", return_value=None),
+            _swap_active_config(Config()) as cfg,
+        ):
+            cfg.persistent_state_path = tmp_path
+            asyncio.run(cfg.reload())
+            assert cfg.health_check.timeout == 10
 
     def test_env_start_period_override(self, monkeypatch, tmp_path):
         from unittest.mock import patch as mpatch
+
         from sigenergy2mqtt.config import Config, _swap_active_config
 
         monkeypatch.setenv("SIGENERGY2MQTT_HEALTH_CHECK_START_PERIOD", "90")
-        with mpatch("sigenergy2mqtt.config.config.Config._perform_auto_discovery", return_value=None):
-            with _swap_active_config(Config()) as cfg:
-                cfg.persistent_state_path = tmp_path
-                asyncio.run(cfg.reload())
-                assert cfg.health_check.start_period == 90
+        with (
+            mpatch("sigenergy2mqtt.config.config.Config._perform_auto_discovery", return_value=None),
+            _swap_active_config(Config()) as cfg,
+        ):
+            cfg.persistent_state_path = tmp_path
+            asyncio.run(cfg.reload())
+            assert cfg.health_check.start_period == 90
 
     def test_env_retries_override(self, monkeypatch, tmp_path):
         from unittest.mock import patch as mpatch
+
         from sigenergy2mqtt.config import Config, _swap_active_config
 
         monkeypatch.setenv("SIGENERGY2MQTT_HEALTH_CHECK_RETRIES", "5")
-        with mpatch("sigenergy2mqtt.config.config.Config._perform_auto_discovery", return_value=None):
-            with _swap_active_config(Config()) as cfg:
-                cfg.persistent_state_path = tmp_path
-                asyncio.run(cfg.reload())
-                assert cfg.health_check.retries == 5
+        with (
+            mpatch("sigenergy2mqtt.config.config.Config._perform_auto_discovery", return_value=None),
+            _swap_active_config(Config()) as cfg,
+        ):
+            cfg.persistent_state_path = tmp_path
+            asyncio.run(cfg.reload())
+            assert cfg.health_check.retries == 5

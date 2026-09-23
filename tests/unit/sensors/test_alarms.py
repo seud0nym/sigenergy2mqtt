@@ -1,10 +1,16 @@
-import pytest
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from sigenergy2mqtt.common import ProtocolVersion
-from sigenergy2mqtt.config import Config, _swap_active_config, active_config
-from sigenergy2mqtt.sensors.base.alarms import AlarmSensor, AlarmCombinedSensor, RunningStateSensor
+from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.sensors.base import Sensor
+from sigenergy2mqtt.sensors.base.alarms import (
+    AlarmCombinedSensor,
+    AlarmSensor,
+    RunningStateSensor,
+)
+
 
 @pytest.fixture(autouse=True)
 def setup_configs():

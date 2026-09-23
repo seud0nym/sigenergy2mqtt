@@ -13,7 +13,7 @@ from sigenergy2mqtt.pvoutput.service_topics import Calculation, ServiceTopics, T
 
 
 def make_output_service():
-    logger = logging.getLogger("test-pvoutput-output")
+    logging.getLogger("test-pvoutput-output")
     return PVOutputOutputService({})
 
 
@@ -188,8 +188,10 @@ class TestPVOutputOutput:
         svc = make_output_service()
 
         class ErrorResp:
-            headers = {"X-Rate-Limit-Limit": "60", "X-Rate-Limit-Remaining": "59", "X-Rate-Limit-Reset": str(int(time.time() + 3600))}
             status_code, reason, text = 404, "Not Found", ""
+
+            def __init__(self):
+                self.headers = {"X-Rate-Limit-Limit": "60", "X-Rate-Limit-Remaining": "59", "X-Rate-Limit-Reset": str(int(time.time() + 3600))}
 
             def __enter__(self):
                 return self

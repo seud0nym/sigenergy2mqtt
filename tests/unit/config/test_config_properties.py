@@ -1,5 +1,4 @@
 import logging
-from unittest.mock import MagicMock
 
 import pytest
 
@@ -38,7 +37,7 @@ def test_property_setters_raise_attribute_error_when_uninitialized(clean_config)
 
 def test_property_setters_update_settings(clean_config):
     """Test that property setters update settings when initialized."""
-    from sigenergy2mqtt.config.settings import Settings, PersistenceConfig
+    from sigenergy2mqtt.config.settings import Settings
     
     clean_config._settings = Settings()
 

@@ -1,4 +1,5 @@
 import logging
+from typing import cast
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -71,7 +72,7 @@ class TestBatteryDerivedPowerCoverage:
             cdp.state_class = "measurement"
             cdp.protocol_version = ProtocolVersion.V2_4
             sensor = InverterBatteryChargingPower(0, 1, cdp)
-            assert "ChargeDischargePower > 0" in sensor.get_attributes()["source"]
+            assert "ChargeDischargePower > 0" in cast(str, sensor.get_attributes()["source"])
 
     def test_set_source_values_error_charging(self, caplog):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
@@ -92,7 +93,7 @@ class TestBatteryDerivedPowerCoverage:
             cdp.state_class = "measurement"
             cdp.protocol_version = ProtocolVersion.V2_4
             sensor = InverterBatteryDischargingPower(0, 1, cdp)
-            assert "ChargeDischargePower < 0" in sensor.get_attributes()["source"]
+            assert "ChargeDischargePower < 0" in cast(str, sensor.get_attributes()["source"])
 
     def test_set_source_values_error_discharging(self, caplog):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
@@ -117,7 +118,7 @@ class TestPVStringPowerCoverage:
             c.gain = 100
             c.protocol_version = ProtocolVersion.V2_4
             sensor = PVStringPower(0, 1, 1, v, c)
-            assert "PVVoltageSensor × PVCurrentSensor" in sensor.get_attributes()["source"]
+            assert "PVVoltageSensor × PVCurrentSensor" in cast(str, sensor.get_attributes()["source"])
 
     @pytest.mark.asyncio
     async def test_publish_skipped_and_ready(self, caplog):
@@ -139,7 +140,7 @@ class TestPVStringPowerCoverage:
             # Ready
             sensor.volts.value = 400.0
             sensor.amperes.value = 10.0
-            with patch("sigenergy2mqtt.sensors.base.DerivedSensor.publish", new_callable=AsyncMock) as mock_pub:
+            with patch("sigenergy2mqtt.sensors.base.DerivedSensor.publish", new_callable=AsyncMock):
                 assert await sensor.publish(MagicMock(), None) is True
                 assert "Publishing READY" in caplog.text
                 assert sensor.volts.value is None
@@ -177,11 +178,11 @@ class TestPVStringEnergyCoverage:
 
             # Lifetime
             lifetime = PVStringLifetimeEnergy(0, 1, 1, power)
-            assert "Riemann ∑ of PVStringPower" in lifetime.get_attributes()["source"]
+            assert "Riemann ∑ of PVStringPower" in cast(str, lifetime.get_attributes()["source"])
 
             # Daily
             daily = PVStringDailyEnergy(0, 1, 1, lifetime)
-            assert "PVStringLifetimeEnergy −" in daily.get_attributes()["source"]
+            assert "PVStringLifetimeEnergy −" in cast(str, daily.get_attributes()["source"])
 
 
 class TestInverterSelfConsumedPowerCoverage:
@@ -229,8 +230,14 @@ class TestInverterSelfConsumedPowerCoverage:
             assert sensor._source_timestamps["pv_string_power_1"] is None
 
     def test_get_attributes(self):
-        from sigenergy2mqtt.sensors.inverter_derived import InverterSelfConsumedPower, PVStringPower
-        from sigenergy2mqtt.sensors.inverter_read_only import ActivePower, ChargeDischargePower
+        from sigenergy2mqtt.sensors.inverter_derived import (
+            InverterSelfConsumedPower,
+            PVStringPower,
+        )
+        from sigenergy2mqtt.sensors.inverter_read_only import (
+            ActivePower,
+            ChargeDischargePower,
+        )
 
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             ap = MagicMock(spec=ActivePower)
@@ -242,14 +249,20 @@ class TestInverterSelfConsumedPowerCoverage:
             pv1.protocol_version = ProtocolVersion.V2_4
 
             sensor = InverterSelfConsumedPower(0, 1, ap, bp, pv1)
-            assert "ActivePower − ChargeDischargePower" in sensor.get_attributes()["source"]
+            assert "ActivePower − ChargeDischargePower" in cast(str, sensor.get_attributes()["source"])
 
     @pytest.mark.asyncio
     async def test_publish_skipped_and_ready(self, caplog):
         import logging
 
-        from sigenergy2mqtt.sensors.inverter_derived import InverterSelfConsumedPower, PVStringPower
-        from sigenergy2mqtt.sensors.inverter_read_only import ActivePower, ChargeDischargePower
+        from sigenergy2mqtt.sensors.inverter_derived import (
+            InverterSelfConsumedPower,
+            PVStringPower,
+        )
+        from sigenergy2mqtt.sensors.inverter_read_only import (
+            ActivePower,
+            ChargeDischargePower,
+        )
 
         caplog.set_level(logging.DEBUG)
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
@@ -272,7 +285,7 @@ class TestInverterSelfConsumedPowerCoverage:
             sensor.active_power = 100
             sensor.battery_power = -50
             sensor.pv_string_power[1] = 500
-            with patch("sigenergy2mqtt.sensors.base.DerivedSensor.publish", new_callable=AsyncMock) as mock_pub:
+            with patch("sigenergy2mqtt.sensors.base.DerivedSensor.publish", new_callable=AsyncMock):
                 assert await sensor.publish(MagicMock(), None) is True
                 assert "Publishing READY" in caplog.text
                 assert sensor.active_power is None
@@ -280,8 +293,14 @@ class TestInverterSelfConsumedPowerCoverage:
                 assert sensor.pv_string_power[1] is None
 
     def test_set_source_values_error_and_calculation(self, caplog):
-        from sigenergy2mqtt.sensors.inverter_derived import InverterSelfConsumedPower, PVStringPower
-        from sigenergy2mqtt.sensors.inverter_read_only import ActivePower, ChargeDischargePower
+        from sigenergy2mqtt.sensors.inverter_derived import (
+            InverterSelfConsumedPower,
+            PVStringPower,
+        )
+        from sigenergy2mqtt.sensors.inverter_read_only import (
+            ActivePower,
+            ChargeDischargePower,
+        )
 
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             ap = MagicMock(spec=ActivePower)

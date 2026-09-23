@@ -6,11 +6,12 @@ Covers missing lines in plant_read_write.py:
 """
 
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from typing import cast
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.common import Constants, ProtocolVersion
+from sigenergy2mqtt.common import Constants
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.sensors.base import AvailabilityMixin, Sensor
 from sigenergy2mqtt.sensors.plant_read_write import (
@@ -40,9 +41,8 @@ def mock_config():
     mock_modbus.scan_interval.realtime = 5
     cfg.modbus = [mock_modbus]
 
-    with _swap_active_config(cfg):
-        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            yield cfg
+    with _swap_active_config(cfg), patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+        yield cfg
 
     Sensor._used_unique_ids.clear()
     Sensor._used_object_ids.clear()
@@ -76,7 +76,10 @@ class TestPowerFactorAdjustmentTargetValue:
 
     def test_get_attributes_has_comment(self):
         """Lines 288-290: get_attributes returns comment about PCS Remote Control Mode."""
-        from sigenergy2mqtt.sensors.plant_read_write import PowerFactorAdjustmentTargetValue
+        from sigenergy2mqtt.sensors.plant_read_write import (
+            PowerFactorAdjustmentTargetValue,
+        )
+
         remote_ems = MagicMock(spec=AvailabilityMixin)
         remote_ems.state_topic = "sigen/plant/remote_ems/state"
         remote_ems.raw_state_topic = "sigen/plant/remote_ems/raw_state"
@@ -87,12 +90,15 @@ class TestPowerFactorAdjustmentTargetValue:
         sensor.configure_mqtt_topics("test_device")
         attrs = sensor.get_attributes()
         assert "comment" in attrs
-        assert "PCS Remote Control Mode" in attrs["comment"]
+        assert "PCS Remote Control Mode" in cast(str, attrs["comment"])
 
     @pytest.mark.asyncio
     async def test_value_is_valid_fails_when_not_in_pcs_mode(self):
         """Lines 293-295: value_is_valid returns False when EMS mode is 0 (not PCS Remote Control Mode)."""
-        from sigenergy2mqtt.sensors.plant_read_write import PowerFactorAdjustmentTargetValue
+        from sigenergy2mqtt.sensors.plant_read_write import (
+            PowerFactorAdjustmentTargetValue,
+        )
+
         remote_ems = MagicMock(spec=AvailabilityMixin)
         remote_ems.state_topic = "sigen/plant/remote_ems/state"
         remote_ems.raw_state_topic = "sigen/plant/remote_ems/raw_state"
@@ -107,7 +113,10 @@ class TestPowerFactorAdjustmentTargetValue:
     @pytest.mark.asyncio
     async def test_value_is_valid_passes_when_in_pcs_mode(self):
         """Lines 292-296: value_is_valid calls super when EMS mode != 0."""
-        from sigenergy2mqtt.sensors.plant_read_write import PowerFactorAdjustmentTargetValue
+        from sigenergy2mqtt.sensors.plant_read_write import (
+            PowerFactorAdjustmentTargetValue,
+        )
+
         remote_ems = MagicMock(spec=AvailabilityMixin)
         remote_ems.state_topic = "sigen/plant/remote_ems/state"
         remote_ems.raw_state_topic = "sigen/plant/remote_ems/raw_state"
@@ -125,43 +134,47 @@ class TestPhaseActivePowerFixedAdjustmentTargetValue:
 
     def test_get_attributes_has_comment_phase_a(self):
         """Lines 343-346: get_attributes returns comment about PCS Remote Control Mode."""
-        from sigenergy2mqtt.sensors.plant_read_write import PhaseActivePowerFixedAdjustmentTargetValue
-        sensor = PhaseActivePowerFixedAdjustmentTargetValue(
-            PLANT_INDEX, _make_remote_ems_mock(), _make_independent_phase_mock(), THREE_PHASE, "A"
+        from sigenergy2mqtt.sensors.plant_read_write import (
+            PhaseActivePowerFixedAdjustmentTargetValue,
         )
+
+        sensor = PhaseActivePowerFixedAdjustmentTargetValue(PLANT_INDEX, _make_remote_ems_mock(), _make_independent_phase_mock(), THREE_PHASE, "A")
         # Configure MQTT topics so COMMAND_TOPIC is set before get_attributes() accesses command_topic
         sensor.configure_mqtt_topics("test_device")
         attrs = sensor.get_attributes()
         assert "comment" in attrs
-        assert "PCS Remote Control Mode" in attrs["comment"]
+        assert "PCS Remote Control Mode" in cast(str, attrs["comment"])
 
     def test_invalid_phase_raises_value_error(self):
         """Lines 308-309: ValueError when phase is not A/B/C."""
-        from sigenergy2mqtt.sensors.plant_read_write import PhaseActivePowerFixedAdjustmentTargetValue
+        from sigenergy2mqtt.sensors.plant_read_write import (
+            PhaseActivePowerFixedAdjustmentTargetValue,
+        )
+
         with pytest.raises(ValueError, match="Phase must be 'A', 'B', or 'C'"):
-            PhaseActivePowerFixedAdjustmentTargetValue(
-                PLANT_INDEX, _make_remote_ems_mock(), _make_independent_phase_mock(), THREE_PHASE, "X"
-            )
+            PhaseActivePowerFixedAdjustmentTargetValue(PLANT_INDEX, _make_remote_ems_mock(), _make_independent_phase_mock(), THREE_PHASE, "X")
 
     @pytest.mark.asyncio
     async def test_value_is_valid_fails_when_not_in_pcs_mode(self):
         """Lines 349-351: value_is_valid returns False when EMS mode is 0."""
-        from sigenergy2mqtt.sensors.plant_read_write import PhaseActivePowerFixedAdjustmentTargetValue
-        remote_ems_mode = _make_remote_ems_mock(pcs_mode=0)
-        sensor = PhaseActivePowerFixedAdjustmentTargetValue(
-            PLANT_INDEX, remote_ems_mode, _make_independent_phase_mock(), THREE_PHASE, "B"
+        from sigenergy2mqtt.sensors.plant_read_write import (
+            PhaseActivePowerFixedAdjustmentTargetValue,
         )
+
+        remote_ems_mode = _make_remote_ems_mock(pcs_mode=0)
+        sensor = PhaseActivePowerFixedAdjustmentTargetValue(PLANT_INDEX, remote_ems_mode, _make_independent_phase_mock(), THREE_PHASE, "B")
         result = await sensor.value_is_valid(None, 5.0)
         assert result is False
 
     @pytest.mark.asyncio
     async def test_value_is_valid_passes_when_in_pcs_mode(self):
         """Lines 348-352: calls super when EMS mode != 0."""
-        from sigenergy2mqtt.sensors.plant_read_write import PhaseActivePowerFixedAdjustmentTargetValue
-        remote_ems_mode = _make_remote_ems_mock(pcs_mode=1)
-        sensor = PhaseActivePowerFixedAdjustmentTargetValue(
-            PLANT_INDEX, remote_ems_mode, _make_independent_phase_mock(), THREE_PHASE, "C"
+        from sigenergy2mqtt.sensors.plant_read_write import (
+            PhaseActivePowerFixedAdjustmentTargetValue,
         )
+
+        remote_ems_mode = _make_remote_ems_mock(pcs_mode=1)
+        sensor = PhaseActivePowerFixedAdjustmentTargetValue(PLANT_INDEX, remote_ems_mode, _make_independent_phase_mock(), THREE_PHASE, "C")
         result = await sensor.value_is_valid(None, 5.0)
         # Within valid range (min/max are set dynamically, but base call will accept)
         assert isinstance(result, bool)
@@ -172,42 +185,46 @@ class TestPhaseReactivePowerFixedAdjustmentTargetValue:
 
     def test_get_attributes_has_comment(self):
         """Lines 399-402: get_attributes returns comment about PCS Remote Control Mode."""
-        from sigenergy2mqtt.sensors.plant_read_write import PhaseReactivePowerFixedAdjustmentTargetValue
-        sensor = PhaseReactivePowerFixedAdjustmentTargetValue(
-            PLANT_INDEX, _make_remote_ems_mock(), _make_independent_phase_mock(), THREE_PHASE, "A"
+        from sigenergy2mqtt.sensors.plant_read_write import (
+            PhaseReactivePowerFixedAdjustmentTargetValue,
         )
+
+        sensor = PhaseReactivePowerFixedAdjustmentTargetValue(PLANT_INDEX, _make_remote_ems_mock(), _make_independent_phase_mock(), THREE_PHASE, "A")
         # Configure MQTT topics so COMMAND_TOPIC is set before get_attributes() accesses command_topic
         sensor.configure_mqtt_topics("test_device")
         attrs = sensor.get_attributes()
         assert "comment" in attrs
-        assert "PCS Remote Control Mode" in attrs["comment"]
+        assert "PCS Remote Control Mode" in cast(str, attrs["comment"])
 
     def test_invalid_phase_raises_value_error(self):
         """Lines 364-365: ValueError when phase is not A/B/C."""
-        from sigenergy2mqtt.sensors.plant_read_write import PhaseReactivePowerFixedAdjustmentTargetValue
+        from sigenergy2mqtt.sensors.plant_read_write import (
+            PhaseReactivePowerFixedAdjustmentTargetValue,
+        )
+
         with pytest.raises(ValueError, match="Phase must be 'A', 'B', or 'C'"):
-            PhaseReactivePowerFixedAdjustmentTargetValue(
-                PLANT_INDEX, _make_remote_ems_mock(), _make_independent_phase_mock(), THREE_PHASE, "D"
-            )
+            PhaseReactivePowerFixedAdjustmentTargetValue(PLANT_INDEX, _make_remote_ems_mock(), _make_independent_phase_mock(), THREE_PHASE, "D")
 
     @pytest.mark.asyncio
     async def test_value_is_valid_fails_when_not_in_pcs_mode(self):
         """Lines 405-407: value_is_valid returns False when EMS mode is 0."""
-        from sigenergy2mqtt.sensors.plant_read_write import PhaseReactivePowerFixedAdjustmentTargetValue
-        remote_ems_mode = _make_remote_ems_mock(pcs_mode=0)
-        sensor = PhaseReactivePowerFixedAdjustmentTargetValue(
-            PLANT_INDEX, remote_ems_mode, _make_independent_phase_mock(), THREE_PHASE, "A"
+        from sigenergy2mqtt.sensors.plant_read_write import (
+            PhaseReactivePowerFixedAdjustmentTargetValue,
         )
+
+        remote_ems_mode = _make_remote_ems_mock(pcs_mode=0)
+        sensor = PhaseReactivePowerFixedAdjustmentTargetValue(PLANT_INDEX, remote_ems_mode, _make_independent_phase_mock(), THREE_PHASE, "A")
         result = await sensor.value_is_valid(None, 10.0)
         assert result is False
 
     @pytest.mark.asyncio
     async def test_value_is_valid_passes_when_in_pcs_mode(self):
         """Lines 404-408: calls super when EMS mode != 0."""
-        from sigenergy2mqtt.sensors.plant_read_write import PhaseReactivePowerFixedAdjustmentTargetValue
-        remote_ems_mode = _make_remote_ems_mock(pcs_mode=1)
-        sensor = PhaseReactivePowerFixedAdjustmentTargetValue(
-            PLANT_INDEX, remote_ems_mode, _make_independent_phase_mock(), THREE_PHASE, "B"
+        from sigenergy2mqtt.sensors.plant_read_write import (
+            PhaseReactivePowerFixedAdjustmentTargetValue,
         )
+
+        remote_ems_mode = _make_remote_ems_mock(pcs_mode=1)
+        sensor = PhaseReactivePowerFixedAdjustmentTargetValue(PLANT_INDEX, remote_ems_mode, _make_independent_phase_mock(), THREE_PHASE, "B")
         result = await sensor.value_is_valid(None, 10.0)
         assert isinstance(result, bool)

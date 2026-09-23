@@ -7,7 +7,11 @@ from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.devices.base.device import Device, bind_cross_device_sensors
 from sigenergy2mqtt.devices.base.registry import DeviceRegistry
 from sigenergy2mqtt.modbus import ModbusDataType
-from sigenergy2mqtt.sensors.base import CrossDeviceDerivedSensor, ReadableSensorMixin, Sensor
+from sigenergy2mqtt.sensors.base import (
+    CrossDeviceDerivedSensor,
+    ReadableSensorMixin,
+    Sensor,
+)
 
 
 class MockSensor(ReadableSensorMixin, Sensor):

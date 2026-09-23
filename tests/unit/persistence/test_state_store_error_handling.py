@@ -25,10 +25,11 @@ def test_disk_backend_errors(temp_state_dir):
     backend = _DiskBackend(temp_state_dir, "1.0.0")
 
     # OS Error on load
-    with patch("pathlib.Path.read_text", side_effect=OSError("denied")):
-        # Mock is_file so it tries to read
-        with patch("pathlib.Path.is_file", return_value=True):
-            assert backend.load("sensor", "key") is None
+    with (
+        patch("pathlib.Path.read_text", side_effect=OSError("denied")),
+        patch("pathlib.Path.is_file", return_value=True),
+    ):
+        assert backend.load("sensor", "key") is None
 
     # OS Error on delete
     with patch("pathlib.Path.unlink", side_effect=OSError("denied")):
@@ -77,11 +78,12 @@ async def test_initialise_mqtt_failure_and_timeout(temp_state_dir, mock_persiste
     # 2. Timeout failure
     store = StateStore()
     mock_client = MagicMock()
-    with patch("sigenergy2mqtt.mqtt.mqtt_setup", return_value=(mock_client, MagicMock())):
-        # Provide a wait_for_sentinel that times out
-        with patch.object(store._mqtt, "wait_for_sentinel", return_value=False):
-            await store.initialise(temp_state_dir, mock_persistence_config)
-            assert store.is_initialised
+    with (
+        patch("sigenergy2mqtt.mqtt.mqtt_setup", return_value=(mock_client, MagicMock())),
+        patch.object(store._mqtt, "wait_for_sentinel", return_value=False),
+    ):
+        await store.initialise(temp_state_dir, mock_persistence_config)
+        assert store.is_initialised
 
 
 @pytest.mark.asyncio

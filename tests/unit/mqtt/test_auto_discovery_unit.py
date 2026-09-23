@@ -182,13 +182,13 @@ async def test_scan_host_full_discovery():
                 return True
             if address == 30578 and device_id in (1, 2):
                 return True
-            if address == 32000 and device_id == 3:
-                return True
-            return False
+            return bool(address == 32000 and device_id == 3)
 
-        with patch("sigenergy2mqtt.config.auto_discovery.probe_register", side_effect=mock_probe):
-            with patch("sigenergy2mqtt.config.auto_discovery.get_serial_number", side_effect=["SN1", "SN2"]):
-                await auto_discovery.scan_host("1.2.3.4", 502, results)
+        with (
+            patch("sigenergy2mqtt.config.auto_discovery.probe_register", side_effect=mock_probe),
+            patch("sigenergy2mqtt.config.auto_discovery.get_serial_number", side_effect=["SN1", "SN2"]),
+        ):
+            await auto_discovery.scan_host("1.2.3.4", 502, results)
 
     assert len(results) == 1
     device = results[0]
@@ -211,9 +211,7 @@ async def test_scan_host_ignored_serials():
         async def mock_probe(m, address, count=1, device_id=247):
             if address == 30051:
                 return True
-            if address == 31501 and device_id == 1:
-                return True
-            return False
+            return bool(address == 31501 and device_id == 1)
 
     assert len(results) == 0
 
@@ -249,19 +247,23 @@ async def test_ping_scan_timeout():
 
 @pytest.mark.asyncio
 async def test_ping_scan_exception_in_tasks():
-    with patch("sigenergy2mqtt.config.auto_discovery.asyncio.open_connection", side_effect=RuntimeError("TCP fail")):
-        with patch("sigenergy2mqtt.config.auto_discovery.logger.debug") as mock_log:
-            results = await auto_discovery.ping_scan(["1.2.3.4"])
-            assert results == {}
-            assert any("TCP check raised" in str(call) for call in mock_log.call_args_list)
+    with (
+        patch("sigenergy2mqtt.config.auto_discovery.asyncio.open_connection", side_effect=RuntimeError("TCP fail")),
+        patch("sigenergy2mqtt.config.auto_discovery.logger.debug") as mock_log,
+    ):
+        results = await auto_discovery.ping_scan(["1.2.3.4"])
+        assert results == {}
+        assert any("TCP check raised" in str(call) for call in mock_log.call_args_list)
 
 
 @pytest.mark.asyncio
 async def test_ping_scan_interrupted_at_checkpoint():
     # Hit line 147 via line 124
-    with patch("sigenergy2mqtt.config.auto_discovery._check_interrupted", side_effect=auto_discovery.DiscoveryInterruptedError("interrupted")):
-        with pytest.raises(KeyboardInterrupt):
-            await auto_discovery.ping_scan(["1.2.3.4"])
+    with (
+        patch("sigenergy2mqtt.config.auto_discovery._check_interrupted", side_effect=auto_discovery.DiscoveryInterruptedError("interrupted")),
+        pytest.raises(KeyboardInterrupt),
+    ):
+        await auto_discovery.ping_scan(["1.2.3.4"])
 
 
 @pytest.mark.asyncio
@@ -278,9 +280,11 @@ async def test_ping_scan_gather_cancelled():
         return []
 
     # Patch BOTH asyncio.gather in the module
-    with patch("sigenergy2mqtt.config.auto_discovery.asyncio.gather", side_effect=mock_gather):
-        with pytest.raises(asyncio.CancelledError):
-            await auto_discovery.ping_scan(["1.2.3.4"])
+    with (
+        patch("sigenergy2mqtt.config.auto_discovery.asyncio.gather", side_effect=mock_gather),
+        pytest.raises(asyncio.CancelledError),
+    ):
+        await auto_discovery.ping_scan(["1.2.3.4"])
 
 
 @pytest.mark.asyncio
@@ -289,10 +293,12 @@ async def test_ping_scan_exception_on_gather_is_logged():
     async def fake_open(host, port):
         raise RuntimeError("TCP fail")
 
-    with patch("sigenergy2mqtt.config.auto_discovery.asyncio.open_connection", side_effect=fake_open):
-        with patch("sigenergy2mqtt.config.auto_discovery.logger.debug") as mock_log:
-            await auto_discovery.ping_scan(["1.2.3.4"])
-            assert any("TCP check raised" in str(call) or "TCP port scan failed" in str(call) for call in mock_log.call_args_list)
+    with (
+        patch("sigenergy2mqtt.config.auto_discovery.asyncio.open_connection", side_effect=fake_open),
+        patch("sigenergy2mqtt.config.auto_discovery.logger.debug") as mock_log,
+    ):
+        await auto_discovery.ping_scan(["1.2.3.4"])
+        assert any("TCP check raised" in str(call) or "TCP port scan failed" in str(call) for call in mock_log.call_args_list)
 
 
 @pytest.mark.asyncio
@@ -300,10 +306,12 @@ async def test_ping_scan_top_level_exception():
     # Hit 151
     # To hit 151, the Exception must happen OUTSIDE of the loop or be one that propagates
     # In this case, if we mock the whole loop or concurrent chunking
-    with patch("sigenergy2mqtt.config.auto_discovery.range", side_effect=RuntimeError("loop fail")):
-        with patch("sigenergy2mqtt.config.auto_discovery.logger.debug") as mock_log:
-            await auto_discovery.ping_scan(["1.2.3.4"])
-            assert any("TCP port scan failed" in str(call) for call in mock_log.call_args_list)
+    with (
+        patch("sigenergy2mqtt.config.auto_discovery.range", side_effect=RuntimeError("loop fail")),
+        patch("sigenergy2mqtt.config.auto_discovery.logger.debug") as mock_log,
+    ):
+        await auto_discovery.ping_scan(["1.2.3.4"])
+        assert any("TCP port scan failed" in str(call) for call in mock_log.call_args_list)
 
 
 @pytest.mark.asyncio
@@ -404,10 +412,12 @@ async def test_scan_host_interrupted_during_gather():
         async def mock_probe(m, address, count=1, device_id=247):
             return True
 
-        with patch("sigenergy2mqtt.config.auto_discovery.probe_register", side_effect=mock_probe):
-            with patch("sigenergy2mqtt.config.auto_discovery._check_interrupted", side_effect=auto_discovery.DiscoveryInterruptedError("interrupted")):
-                with pytest.raises(KeyboardInterrupt):
-                    await auto_discovery.scan_host("1.2.3.4", 502, [])
+        with (
+            patch("sigenergy2mqtt.config.auto_discovery.probe_register", side_effect=mock_probe),
+            patch("sigenergy2mqtt.config.auto_discovery._check_interrupted", side_effect=auto_discovery.DiscoveryInterruptedError("interrupted")),
+            pytest.raises(KeyboardInterrupt),
+        ):
+            await auto_discovery.scan_host("1.2.3.4", 502, [])
 
 
 @pytest.mark.asyncio
@@ -441,49 +451,57 @@ async def test_probe_device_id_ignored_serial_combined():
     device = DiscoveredDevice("host", 502)
     auto_discovery.serial_numbers = ["SN1"]
 
-    with patch("sigenergy2mqtt.config.auto_discovery.probe_register", return_value=True):
-        with patch("sigenergy2mqtt.config.auto_discovery.get_serial_number", return_value="SN1"):
-            with patch("sigenergy2mqtt.config.auto_discovery.logger.info") as mock_log:
-                await auto_discovery._probe_device_id(modbus, 1, device)
-                assert any("already discovered" in str(call) for call in mock_log.call_args_list)
+    with (
+        patch("sigenergy2mqtt.config.auto_discovery.probe_register", return_value=True),
+        patch("sigenergy2mqtt.config.auto_discovery.get_serial_number", return_value="SN1"),
+        patch("sigenergy2mqtt.config.auto_discovery.logger.info") as mock_log,
+    ):
+        await auto_discovery._probe_device_id(modbus, 1, device)
+        assert any("already discovered" in str(call) for call in mock_log.call_args_list)
 
 
 @pytest.mark.asyncio
 async def test_scan_full_flow():
-    with patch("sigenergy2mqtt.config.auto_discovery._local_networks") as mock_nets:
+    with (
+        patch("sigenergy2mqtt.config.auto_discovery._local_networks") as mock_nets,
+        patch("sigenergy2mqtt.config.auto_discovery.ping_scan", return_value={"192.168.1.1": 0.1}),
+        patch("sigenergy2mqtt.config.auto_discovery.scan_host") as mock_scan_host,
+    ):
         mock_nets.return_value = {"192.168.1.10": MagicMock(hosts=lambda: [MagicMock(__str__=lambda s: "192.168.1.1")])}
-        with patch("sigenergy2mqtt.config.auto_discovery.ping_scan", return_value={"192.168.1.1": 0.1}):
-            with patch("sigenergy2mqtt.config.auto_discovery.scan_host") as mock_scan_host:
 
-                async def fake_scan(ip, port, results, **kwargs):
-                    results.append({"host": ip})
+        async def fake_scan(ip, port, results, **kwargs):
+            results.append({"host": ip})
 
-                mock_scan_host.side_effect = fake_scan
+        mock_scan_host.side_effect = fake_scan
 
-                final = await auto_discovery.scan()
-                assert len(final) == 1
-                assert any(r["host"] == "192.168.1.1" for r in final)
+        final = await auto_discovery.scan()
+        assert len(final) == 1
+        assert any(r["host"] == "192.168.1.1" for r in final)
 
 
 @pytest.mark.asyncio
 async def test_scan_interrupted_error_handling():
     # We need the exception to happen INSIDE the try block at line 372
     # So we patch scan_with_sem or gather.
-    with patch("sigenergy2mqtt.config.auto_discovery.asyncio.gather", side_effect=auto_discovery.DiscoveryInterruptedError):
-        with pytest.raises(KeyboardInterrupt):
-            await auto_discovery.scan()
+    with (
+        patch("sigenergy2mqtt.config.auto_discovery.asyncio.gather", side_effect=auto_discovery.DiscoveryInterruptedError),
+        pytest.raises(KeyboardInterrupt),
+    ):
+        await auto_discovery.scan()
 
 
 @pytest.mark.asyncio
 async def test_scan_generic_exception_logging():
     # Mock _local_networks to return empty so 127.0.0.1 fallback is used,
     # and mock ping_scan to return 127.0.0.1 as responsive so scan_host is called.
-    with patch("sigenergy2mqtt.config.auto_discovery._local_networks", return_value={}):
-        with patch("sigenergy2mqtt.config.auto_discovery.ping_scan", return_value={"127.0.0.1": 0.001}):
-            with patch("sigenergy2mqtt.config.auto_discovery.scan_host", side_effect=RuntimeError("boom")):
-                with patch("sigenergy2mqtt.config.auto_discovery.logger.debug") as mock_log:
-                    await auto_discovery.scan()
-                    assert any("Scan failed: boom" in str(call) for call in mock_log.call_args_list)
+    with (
+        patch("sigenergy2mqtt.config.auto_discovery._local_networks", return_value={}),
+        patch("sigenergy2mqtt.config.auto_discovery.ping_scan", return_value={"127.0.0.1": 0.001}),
+        patch("sigenergy2mqtt.config.auto_discovery.scan_host", side_effect=RuntimeError("boom")),
+        patch("sigenergy2mqtt.config.auto_discovery.logger.debug") as mock_log,
+    ):
+        await auto_discovery.scan()
+        assert any("Scan failed: boom" in str(call) for call in mock_log.call_args_list)
 
 
 def test_install_async_signal_handlers():
@@ -524,10 +542,12 @@ async def test_scan_host_cancelled_error_in_chunk():
         mock_client.connected = True
         mock_client.close = MagicMock()
 
-        with patch("sigenergy2mqtt.config.auto_discovery.probe_register", return_value=True):
-            with patch("sigenergy2mqtt.config.auto_discovery._probe_device_id", side_effect=asyncio.CancelledError):
-                with pytest.raises(asyncio.CancelledError):
-                    await auto_discovery.scan_host("1.2.3.4", 502, [])
+        with (
+            patch("sigenergy2mqtt.config.auto_discovery.probe_register", return_value=True),
+            patch("sigenergy2mqtt.config.auto_discovery._probe_device_id", side_effect=asyncio.CancelledError),
+            pytest.raises(asyncio.CancelledError),
+        ):
+            await auto_discovery.scan_host("1.2.3.4", 502, [])
 
 
 # =============================================================================

@@ -248,7 +248,7 @@ class TestPVOutputStatus:
     def test_status_ignored_field(self, caplog):
         """Hits status.py unrecognized field logic."""
         caplog.set_level(logging.DEBUG)
-        PVOutputStatusService({"FAKE": []}, {})
+        PVOutputStatusService({"FAKE": []}, {})  # type: ignore[arg-type]
         assert "IGNORED unrecognized FAKE" in caplog.text
 
     @pytest.mark.asyncio
@@ -360,8 +360,8 @@ class TestPVOutputStatus:
                 status_code = 200
 
                 @staticmethod
-                def json():
-                    return {"state": bad_state}
+                def json(_bad_state=bad_state):
+                    return {"state": _bad_state}
 
             caplog.clear()
             with patch.dict("os.environ", {"SUPERVISOR_TOKEN": "tok"}, clear=False), patch("requests.get", return_value=Resp()):
@@ -431,7 +431,7 @@ class TestPVOutputStatus:
         async def raising_lock(*args, **kwargs):
             svc.online = False
             raise TimeoutError
-            yield  # noqa: unreachable - needed to make this an async generator
+            yield  # Unreachable - needed to make this an async generator
 
         with (
             patch.object(svc, "seconds_until_status_upload", side_effect=fake_seconds_until),

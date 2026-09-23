@@ -5,7 +5,14 @@ import pytest
 from sigenergy2mqtt.common import DeviceClass, InputType, ProtocolVersion, UnitOfPower
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.modbus import ModbusDataType
-from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, AlarmSensor, NumericSensor, RunningStateSensor, SelectSensor, Sensor
+from sigenergy2mqtt.sensors.base import (
+    AlarmCombinedSensor,
+    AlarmSensor,
+    NumericSensor,
+    RunningStateSensor,
+    SelectSensor,
+    Sensor,
+)
 
 
 @pytest.fixture(autouse=True)

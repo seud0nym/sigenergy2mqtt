@@ -1,7 +1,7 @@
 import asyncio
 import time
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import paho.mqtt.client as mqtt
@@ -13,7 +13,14 @@ from sigenergy2mqtt.devices import Device, DeviceRegistry
 from sigenergy2mqtt.devices.base.poller import SensorGroupPoller
 from sigenergy2mqtt.devices.base.scan_groups import create_sensor_scan_groups
 from sigenergy2mqtt.modbus.client import ModbusClient
-from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, ModbusSensorMixin, ReadableSensorMixin, ReservedSensor, Sensor
+from sigenergy2mqtt.sensors.base import (
+    AlarmCombinedSensor,
+    AlarmSensor,
+    ModbusSensorMixin,
+    ReadableSensorMixin,
+    ReservedSensor,
+    Sensor,
+)
 
 
 class DummyModbusSensor(ModbusSensorMixin, ReadableSensorMixin):
@@ -34,7 +41,7 @@ class DummyModbusSensor(ModbusSensorMixin, ReadableSensorMixin):
         object.__setattr__(self, "debug_logging", False)
         object.__setattr__(self, "_log_identity", unique_id)
 
-    async def publish(self, mqtt_client: mqtt.Client, modbus_client: ModbusClient | None = None, republish: bool = False) -> bool:
+    async def publish(self, mqtt_client: mqtt.Client, transport: Any | None = None, republish: bool = False) -> bool:
         self._states.append((time.time(), 1))
         return True
 
@@ -46,26 +53,16 @@ class DummyModbusSensor(ModbusSensorMixin, ReadableSensorMixin):
         return ""
 
 
-class DummyAlarmSensor(ModbusSensorMixin, ReadableSensorMixin):
+class DummyAlarmSensor(AlarmSensor):
     def __init__(self, name, plant_index, device_address, address, protocol_version=ProtocolVersion.V2_4):
         super().__init__(
-            input_type=InputType.INPUT,
+            name=name,
+            object_id=f"sigen_alarm_{address}",
             plant_index=plant_index,
             device_address=device_address,
             address=address,
-            count=1,
-            unique_id_override=f"sigen_alarm_{address}",
-            name=name,
-            unique_id=f"sigen_alarm_{address}",
-            object_id=f"sigen_alarm_{address}",
-            scan_interval=10,
-            unit=None,
-            device_class=None,
-            state_class=None,
-            icon="mdi:test",
-            gain=None,
-            precision=None,
             protocol_version=protocol_version,
+            alarm_type="test",
         )
         self._publishable = True
 
@@ -73,10 +70,14 @@ class DummyAlarmSensor(ModbusSensorMixin, ReadableSensorMixin):
         self.set_state("No Alarm")
         return True
 
-    def set_state(self, state):
-        self._states.append((time.time(), state))
+    def decode_alarm_bit(self, bit_position: int) -> str | None:
+        return super().decode_alarm_bit(bit_position)
 
-    async def get_state(self, **kwargs):
+    def set_state(self, state) -> bool:
+        self._states.append((time.time(), state))
+        return True
+
+    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
         return "No Alarm"
 
 
@@ -103,7 +104,7 @@ def mock_config():
 
     cfg = Config()
 
-    mc = ModbusConfig(host="127.0.0.1", port=502, inverters=[1])
+    mc = ModbusConfig(host="127.0.0.1", port=502, inverters=[1])  # pyright: ignore[reportCallIssue]
     cfg.modbus = [mc]
 
     # Set scan intervals on the first Modbus device for testing purposes
@@ -417,7 +418,7 @@ class TestSensorScanGroupsRecursion:
         # Assert
         # All sensors should be in one group because they are contiguous and have the same device address
         assert len(groups) == 1
-        group_sensors = list(groups.values())[0]
+        group_sensors = next(iter(groups.values()))
         assert len(group_sensors) == 3
         assert s_root in group_sensors
         assert s_child in group_sensors
@@ -439,7 +440,7 @@ class TestSensorScanGroupsRecursion:
         # Verify grouping
         groups = create_sensor_scan_groups(root)
         assert len(groups) == 1
-        group_name = list(groups.keys())[0]
+        group_name = next(iter(groups.keys()))
         assert combined in groups[group_name]
         assert s3 in groups[group_name]
 

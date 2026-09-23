@@ -40,7 +40,7 @@ async def test_check_mqtt_debug_logging(monkeypatch):
     monkeypatch.setattr("sigenergy2mqtt.monitor.service.mqtt_health_registry.snapshot", lambda: {"Monitor": MockMqttHealth(), "Other": MockMqttHealthNoMsg()})
 
     # Enable debug logging to cover lines 107-110
-    monkeypatch.setattr(logging.getLogger(), "isEnabledFor", lambda level: True if level == logging.DEBUG else False)
+    monkeypatch.setattr(logging.getLogger(), "isEnabledFor", lambda level: level == logging.DEBUG)
 
     # This covers lines 103-110 (both if and else branches)
     connected, count = svc._check_mqtt(mqtt_client)

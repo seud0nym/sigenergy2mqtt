@@ -1,12 +1,13 @@
-from datetime import timezone
 import inspect
+from collections import deque
+from datetime import UTC
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 import sigenergy2mqtt.sensors.plant_read_only as pro
 import sigenergy2mqtt.sensors.plant_read_write as prw
-from sigenergy2mqtt.common import ConsumptionMethod, ProtocolVersion, FirmwareVersion
+from sigenergy2mqtt.common import ConsumptionMethod, FirmwareVersion, ProtocolVersion
 from sigenergy2mqtt.devices.plant.plant import PowerPlant
 from sigenergy2mqtt.sensors.base import AvailabilityMixin, Sensor
 
@@ -30,7 +31,7 @@ def mock_config():
 
 class MockAvailabilitySensor(AvailabilityMixin):
     def __init__(self, *args, **kwargs):
-        self._states = [(0.0, 0)]
+        self._states = deque([(0.0, 0)])
         self.name = "mock_avail"
         self.unique_id = "sigen_mock_avail"
         self.object_id = "sigen_mock_avail"
@@ -38,8 +39,11 @@ class MockAvailabilitySensor(AvailabilityMixin):
         self.address = 30000
         self._protocol_version = ProtocolVersion.V1_8
 
+    async def _update_internal_state(self, **kwargs) -> bool:
+        return True
+
     def items(self):
-        return [].items()
+        return {}.items()
 
     def __getitem__(self, key):
         return None
@@ -111,10 +115,10 @@ async def test_plant_read_only_coverage():
                     sensor.state2raw(10)
                     if cls.__name__ == "SystemTimeZone":
                         sensor.state2raw("UTC+10:00")
-                except Exception:
+                except Exception:  # noqa: BLE001, S110
                     pass
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print(f"Failed to test {cls.__name__}: {e}")
 
 
@@ -179,23 +183,19 @@ async def test_plant_read_write_coverage():
                 with patch("sigenergy2mqtt.config.active_config.home_assistant.enabled", True), patch("sigenergy2mqtt.config.active_config.ems_mode_check", True):
                     await sensor.publish(mock_mqtt, mock_modbus)
 
-            if hasattr(sensor, "value_is_valid"):
-                await sensor.value_is_valid(mock_modbus, 1)
+            value_is_valid = getattr(sensor, "value_is_valid", None)
+            if callable(value_is_valid):
+                res = value_is_valid(mock_modbus, 1)
+                if inspect.isawaitable(res):
+                    await res
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print(f"Failed to test {cls.__name__}: {e}")
 
 
 def test_powerplant_register_sensors_calculated_consumption_uses_grid_sensors_by_type():
     plant = PowerPlant(0, MagicMock(), ProtocolVersion.V2_8)
     plant._consumption_source = ConsumptionMethod.CALCULATED
-
-    class FakeTotalPV:
-        def register_source_sensors(self, *args, **kwargs):
-            return None
-
-    plant._total_pv_power = FakeTotalPV()
-    plant._plant_3rd_party_pv_power = None
 
     active_power = object()
     grid_status = object()
@@ -240,7 +240,7 @@ def test_powerplant_register_sensors_calculated_consumption_uses_grid_sensors_by
         asyncio.run(
             plant._register_sensors(
                 FirmwareVersion("V122R001C00SPC113"),
-                timezone.utc,
+                UTC,
                 output_type=2,
                 power_phases=3,
                 rated_charging_power=MagicMock(),

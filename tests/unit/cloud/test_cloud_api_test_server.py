@@ -8,11 +8,6 @@ from sigenergy2mqtt.sensors.inverter_read_only import (
     InverterSerialNumber,
     RatedActivePower,
 )
-from tests.utils.modbus_test_server import (
-    CloudApiTestServer,
-    CustomDataBlock,
-    LatencyBudget,
-)
 from tests.utils.modbus_sensors import (
     AC_CHARGER_SERIAL,
     DC_CHARGER_SERIAL,
@@ -23,6 +18,11 @@ from tests.utils.modbus_sensors import (
     PV_INVERTER_MODEL,
     PV_INVERTER_RATED_ACTIVE_POWER,
     PV_INVERTER_SERIAL,
+)
+from tests.utils.modbus_test_server import (
+    CloudApiTestServer,
+    CustomDataBlock,
+    LatencyBudget,
 )
 
 

@@ -10,7 +10,7 @@ PVInverter devices, causing a failure because PACKBCUCount only applies
 to HybridInverter devices.
 """
 
-from datetime import timezone
+from datetime import UTC
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -93,7 +93,7 @@ class TestInverterCreateWithDeviceType:
                 device_address=1,
                 device_type=device_type,
                 protocol_version=ProtocolVersion.V2_4,
-                tz=timezone.utc,
+                tz=UTC,
                 modbus_client=mock_modbus,
             )
 
@@ -112,7 +112,7 @@ class TestInverterCreateWithDeviceType:
                 device_address=1,
                 device_type=device_type,
                 protocol_version=ProtocolVersion.V2_4,
-                tz=timezone.utc,
+                tz=UTC,
                 modbus_client=mock_modbus,
             )
 
@@ -135,7 +135,7 @@ class TestInverterSensorDeviceTypeInheritance:
                 device_address=1,
                 device_type=device_type,
                 protocol_version=ProtocolVersion.V2_4,
-                tz=timezone.utc,
+                tz=UTC,
                 modbus_client=mock_modbus,
             )
 
@@ -154,7 +154,7 @@ class TestInverterSensorDeviceTypeInheritance:
                 device_address=1,
                 device_type=device_type,
                 protocol_version=ProtocolVersion.V2_4,
-                tz=timezone.utc,
+                tz=UTC,
                 modbus_client=mock_modbus,
             )
 
@@ -176,20 +176,23 @@ class TestInverterSensorDeviceTypeInheritance:
                 device_address=1,
                 device_type=HybridInverter(),
                 protocol_version=ProtocolVersion.V2_4,
-                tz=timezone.utc,
+                tz=UTC,
                 modbus_client=mock_modbus,
             )
 
-        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            with patch("sigenergy2mqtt.sensors.base.ReadOnlySensor.get_state", _mock_get_state()):
-                pv = await Inverter.create(
-                    plant_index=0,
-                    device_address=1,
-                    device_type=PVInverter(),
-                    protocol_version=ProtocolVersion.V2_4,
-                    tz=timezone.utc,
-                    modbus_client=mock_modbus,
-                )
+        with (
+            patch.dict(Sensor._used_unique_ids, clear=True),
+            patch.dict(Sensor._used_object_ids, clear=True),
+            patch("sigenergy2mqtt.sensors.base.ReadOnlySensor.get_state", _mock_get_state()),
+        ):
+            pv = await Inverter.create(
+                plant_index=0,
+                device_address=1,
+                device_type=PVInverter(),
+                protocol_version=ProtocolVersion.V2_4,
+                tz=UTC,
+                modbus_client=mock_modbus,
+            )
 
         hybrid_count = len(hybrid.all_sensors)
         pv_count = len(pv.all_sensors)
@@ -207,23 +210,26 @@ class TestInverterSensorDeviceTypeInheritance:
                 device_address=1,
                 device_type=HybridInverter(),
                 protocol_version=ProtocolVersion.V2_4,
-                tz=timezone.utc,
+                tz=UTC,
                 modbus_client=mock_modbus,
             )
 
         has_pack_bcu_on_hybrid = any(isinstance(s, PACKBCUCount) for s in hybrid.all_sensors.values())
         assert has_pack_bcu_on_hybrid, "PACKBCUCount should be registered on HybridInverter"
 
-        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            with patch("sigenergy2mqtt.sensors.base.ReadOnlySensor.get_state", _mock_get_state()):
-                pv = await Inverter.create(
-                    plant_index=0,
-                    device_address=1,
-                    device_type=PVInverter(),
-                    protocol_version=ProtocolVersion.V2_4,
-                    tz=timezone.utc,
-                    modbus_client=mock_modbus,
-                )
+        with (
+            patch.dict(Sensor._used_unique_ids, clear=True),
+            patch.dict(Sensor._used_object_ids, clear=True),
+            patch("sigenergy2mqtt.sensors.base.ReadOnlySensor.get_state", _mock_get_state()),
+        ):
+            pv = await Inverter.create(
+                plant_index=0,
+                device_address=1,
+                device_type=PVInverter(),
+                protocol_version=ProtocolVersion.V2_4,
+                tz=UTC,
+                modbus_client=mock_modbus,
+            )
 
         has_pack_bcu_on_pv = any(isinstance(s, PACKBCUCount) for s in pv.all_sensors.values())
         assert not has_pack_bcu_on_pv, "PACKBCUCount should NOT be registered on PVInverter"

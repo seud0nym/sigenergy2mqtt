@@ -8,7 +8,10 @@ import pytest
 
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.influxdb.writers import V1HttpWriter, V2HttpWriter
-from tests.unit.influxdb.conftest import FakeResponse, _bring_online, disabled_hass_history_sync, disabled_influx_config
+from tests.unit.influxdb.conftest import (
+    FakeResponse,
+    _bring_online,
+)
 
 
 @pytest.fixture

@@ -112,7 +112,7 @@ class TestBatteryStatusUpdateFromSourceSensor:
     def test_battery_power_none_state_returns_false(self):
         """Line 166-167: BatteryPower branch early-return when raw state is None."""
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            sensor, bp_mock, _, _, _, _ = _make_battery_status()
+            sensor, _, _, _, _, _ = _make_battery_status()
             bp_source = MagicMock(spec=BatteryPower)
             bp_source.latest_raw_state = None  # Triggers line 166-167
             result = sensor.update_from_source_sensor(bp_source)

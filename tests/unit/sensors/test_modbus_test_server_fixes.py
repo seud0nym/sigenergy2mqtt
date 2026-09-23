@@ -6,21 +6,21 @@ Covers:
   so that build_sim_device() includes the address in SimData (preventing ILLEGAL_ADDRESS).
 - DEBUG log records are emitted when the logger level is set to DEBUG.
 """
+
 from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import cast
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.config import Config, _swap_active_config
-from sigenergy2mqtt.sensors.base import Sensor, WriteOnlySensorMixin
+from sigenergy2mqtt.sensors.base import Sensor
 from sigenergy2mqtt.sensors.inverter_read_write import DCChargerStatus
 from sigenergy2mqtt.sensors.plant_read_write import PlantStatus
 from tests.utils.modbus_test_server import CustomDataBlock, LatencyBudget
-
 
 # ---------------------------------------------------------------------------
 # Shared fixtures
@@ -32,7 +32,7 @@ def mock_config():
     from sigenergy2mqtt.config.settings import ModbusConfig
 
     cfg = Config()
-    mc = ModbusConfig(host="127.0.0.1", port=502, inverters=[1])
+    mc = ModbusConfig(host="127.0.0.1", port=502, inverters=[1])  # pyright: ignore[reportCallIssue]
     cfg.modbus = [mc]
     cfg.home_assistant.unique_id_prefix = "sigen"
     cfg.home_assistant.entity_id_prefix = "sigen"
@@ -93,22 +93,18 @@ class TestGetInitialValueWriteOnly:
         sensor = _make_dc_charger_status(mock_config)
         block = _make_data_block(device_address=sensor.device_address)
 
-        value, source = block._get_initial_value(sensor)
+        _, source = block._get_initial_value(sensor)
 
-        assert source == "write_only_sensor", (
-            f"Expected source='write_only_sensor', got {source!r}"
-        )
+        assert source == "write_only_sensor", f"Expected source='write_only_sensor', got {source!r}"
 
     def test_dc_charger_status_value_is_off(self, mock_config):
         """_get_initial_value should return value_off (0) as the initial value."""
         sensor = _make_dc_charger_status(mock_config)
         block = _make_data_block(device_address=sensor.device_address)
 
-        value, source = block._get_initial_value(sensor)
+        value, _ = block._get_initial_value(sensor)
 
-        assert value == sensor._values["off"], (
-            f"Expected value={sensor._values['off']!r}, got {value!r}"
-        )
+        assert value == sensor._values["off"], f"Expected value={sensor._values['off']!r}, got {value!r}"
 
     def test_plant_status_source(self, mock_config):
         """PlantStatus _get_initial_value should also return 'write_only_sensor'."""
@@ -140,9 +136,7 @@ class TestAddSensorWriteOnly:
 
         block.add_sensor(sensor)
 
-        assert sensor.address in block.addresses, (
-            f"Address {sensor.address} not found in block.addresses after add_sensor()"
-        )
+        assert sensor.address in block.addresses, f"Address {sensor.address} not found in block.addresses after add_sensor()"
 
     def test_initial_registers_seeded(self, mock_config):
         """add_sensor must write at least one value into _initial_registers."""
@@ -151,15 +145,8 @@ class TestAddSensorWriteOnly:
 
         block.add_sensor(sensor)
 
-        seeded = [
-            addr
-            for addr in range(sensor.address, sensor.address + sensor.count)
-            if addr in block._initial_registers
-        ]
-        assert seeded, (
-            f"No registers seeded for addresses {sensor.address}-{sensor.address + sensor.count - 1}; "
-            "build_sim_device() would omit them from SimData, causing ILLEGAL_ADDRESS on writes."
-        )
+        seeded = [addr for addr in range(sensor.address, sensor.address + sensor.count) if addr in block._initial_registers]
+        assert seeded, f"No registers seeded for addresses {sensor.address}-{sensor.address + sensor.count - 1}; build_sim_device() would omit them from SimData, causing ILLEGAL_ADDRESS on writes."
 
     def test_build_sim_device_includes_address(self, mock_config):
         """build_sim_device must include write-only sensor addresses in the SimData list."""
@@ -169,11 +156,8 @@ class TestAddSensorWriteOnly:
 
         sim_device = block.build_sim_device()
 
-        sim_addresses = {sd.address for sd in sim_device.simdata}
-        assert sensor.address in sim_addresses, (
-            f"Address {sensor.address} missing from SimDevice.simdata; "
-            "Modbus writes to this address will return ILLEGAL_ADDRESS."
-        )
+        sim_addresses = {sd.address for sd in cast(list, sim_device.simdata)}
+        assert sensor.address in sim_addresses, f"Address {sensor.address} missing from SimDevice.simdata; Modbus writes to this address will return ILLEGAL_ADDRESS."
 
     def test_no_mqtt_subscription_attempted(self, mock_config):
         """add_sensor must not attempt MQTT subscription for write-only sensors."""
@@ -223,9 +207,7 @@ class TestDebugLogging:
 
             logger.debug("test_debug_record")
 
-            assert any(r.getMessage() == "test_debug_record" for r in records), (
-                "No DEBUG record captured — logger is not emitting at DEBUG level."
-            )
+            assert any(r.getMessage() == "test_debug_record" for r in records), "No DEBUG record captured — logger is not emitting at DEBUG level."
         finally:
             logger.removeHandler(handler)
             logger.setLevel(original_level)
@@ -253,9 +235,7 @@ class TestDebugLogging:
 
             logger.debug("should_not_appear")
 
-            assert not any(r.getMessage() == "should_not_appear" for r in records), (
-                "DEBUG record appeared even though logger level is INFO."
-            )
+            assert not any(r.getMessage() == "should_not_appear" for r in records), "DEBUG record appeared even though logger level is INFO."
         finally:
             logger.removeHandler(handler)
             logger.setLevel(original_level)
@@ -274,9 +254,7 @@ class TestDebugLogging:
         try:
             TestConfig.registers_to_debug = [41000]
             await run_async_server(mqtt_client=None, modbus_client=None, use_simplified_topics=False, host="127.0.0.1", port=0, log_level=logging.INFO)
-            assert server_module._logger.isEnabledFor(logging.DEBUG), (
-                "_logger must be at DEBUG level when registers_to_debug is non-empty."
-            )
+            assert server_module._logger.isEnabledFor(logging.DEBUG), "_logger must be at DEBUG level when registers_to_debug is non-empty."
         finally:
             TestConfig.registers_to_debug = original_registers
             server_module._logger.setLevel(original_level)

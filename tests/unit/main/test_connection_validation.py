@@ -148,11 +148,14 @@ def test_validate_pvoutput_connection_testing(mock_config_main):
 
 @pytest.mark.asyncio
 async def test_validate_connections_all(mock_config_main):
-    with patch("sigenergy2mqtt.main.validation._validate_modbus_connections") as m1, patch("sigenergy2mqtt.main.validation._validate_mqtt_connection") as m3:
-        with patch("sigenergy2mqtt.main.validation._validate_influxdb_connection") as m4:
-            with patch("sigenergy2mqtt.main.validation._validate_pvoutput_connection") as m5:
-                await validate_connections(True)
-                m1.assert_called()
-                m3.assert_called()
-                m4.assert_called()
-                m5.assert_called()
+    with (
+        patch("sigenergy2mqtt.main.validation._validate_modbus_connections") as m1,
+        patch("sigenergy2mqtt.main.validation._validate_mqtt_connection") as m3,
+        patch("sigenergy2mqtt.main.validation._validate_influxdb_connection") as m4,
+        patch("sigenergy2mqtt.main.validation._validate_pvoutput_connection") as m5,
+    ):
+        await validate_connections(True)
+        m1.assert_called()
+        m3.assert_called()
+        m4.assert_called()
+        m5.assert_called()

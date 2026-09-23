@@ -51,13 +51,37 @@ from pymodbus.simulator import DataType, SimData, SimDevice
 
 from sigenergy2mqtt.common import Constants, DeviceClass, ProtocolVersion
 from sigenergy2mqtt.modbus.client import ModbusClient
-from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerChargingPower, ACChargerInputBreaker, ACChargerRatedCurrent
+from sigenergy2mqtt.sensors.ac_charger_read_only import (
+    ACChargerChargingPower,
+    ACChargerInputBreaker,
+    ACChargerRatedCurrent,
+)
 from sigenergy2mqtt.sensors.base import WriteOnlySensorMixin
-from sigenergy2mqtt.sensors.inverter_read_only import DCChargerOutputPower, InverterFirmwareVersion, InverterModel, InverterSerialNumber, OutputType, PhaseCurrent, PhaseVoltage, PowerFactor, RatedActivePower
+from sigenergy2mqtt.sensors.inverter_read_only import (
+    DCChargerOutputPower,
+    InverterFirmwareVersion,
+    InverterModel,
+    InverterSerialNumber,
+    OutputType,
+    PhaseCurrent,
+    PhaseVoltage,
+    PowerFactor,
+    RatedActivePower,
+)
 from sigenergy2mqtt.sensors.plant_read_only import GridStatus
 from sigenergy2mqtt.sensors.plant_read_write import RemoteEMS
 from tests.utils import get_sensor_instances
-from tests.utils.modbus_sensors import AC_CHARGER_SERIAL, DC_CHARGER_SERIAL, FIRMWARE_VERSION, HYBRID_INVERTER_MODEL, HYBRID_INVERTER_RATED_ACTIVE_POWER, HYBRID_INVERTER_SERIAL, PV_INVERTER_MODEL, PV_INVERTER_RATED_ACTIVE_POWER, PV_INVERTER_SERIAL
+from tests.utils.modbus_sensors import (
+    AC_CHARGER_SERIAL,
+    DC_CHARGER_SERIAL,
+    FIRMWARE_VERSION,
+    HYBRID_INVERTER_MODEL,
+    HYBRID_INVERTER_RATED_ACTIVE_POWER,
+    HYBRID_INVERTER_SERIAL,
+    PV_INVERTER_MODEL,
+    PV_INVERTER_RATED_ACTIVE_POWER,
+    PV_INVERTER_SERIAL,
+)
 
 logging.getLogger("asyncio").setLevel(logging.CRITICAL)
 logging.getLogger("pymodbus.logging").setLevel(logging.CRITICAL)
@@ -97,7 +121,9 @@ class CloudApiTestServer:
         self.username = username
         self.encrypted_password = None
         if password is not None:
-            from sigenergy2mqtt.cloud.vendor.solidfox.sigenergy_cloud.auth import encrypt_password
+            from sigenergy2mqtt.cloud.vendor.solidfox.sigenergy_cloud.auth import (
+                encrypt_password,
+            )
 
             self.encrypted_password = encrypt_password(password)
         self.access_token: str | None = None
@@ -207,17 +233,9 @@ class CloudApiTestServer:
         form = await request.post()
         grant_type = form.get("grant_type")
         if grant_type == "password":
-            authenticated = (
-                self.username is not None
-                and self.encrypted_password is not None
-                and form.get("username") == self.username
-                and form.get("password") == self.encrypted_password
-            )
+            authenticated = self.username is not None and self.encrypted_password is not None and form.get("username") == self.username and form.get("password") == self.encrypted_password
         elif grant_type == "refresh_token":
-            authenticated = (
-                self.refresh_token is not None
-                and form.get("refresh_token") == self.refresh_token
-            )
+            authenticated = self.refresh_token is not None and form.get("refresh_token") == self.refresh_token
         else:
             authenticated = False
 
@@ -231,13 +249,11 @@ class CloudApiTestServer:
         # for password and refresh-token grants.
         self.access_token = secrets.token_urlsafe(24)
         self.refresh_token = secrets.token_urlsafe(24)
-        return self._success(
-            {
-                "access_token": self.access_token,
-                "refresh_token": self.refresh_token,
-                "expires_in": 3600,
-            }
-        )
+        return self._success({
+            "access_token": self.access_token,
+            "refresh_token": self.refresh_token,
+            "expires_in": 3600,
+        })
 
     async def authorized(self, request: web.Request) -> web.Response | None:
         if request.headers.get("Authorization") != f"Bearer {self.access_token}":
@@ -247,9 +263,7 @@ class CloudApiTestServer:
     async def station_home(self, request: web.Request) -> web.Response:
         if (response := await self.authorized(request)) is not None:
             return response
-        return self._success(
-            {"stationId": CLOUD_TEST_STATION_ID, "acSnList": [AC_CHARGER_SERIAL], "dcSnList": [DC_CHARGER_SERIAL]}
-        )
+        return self._success({"stationId": CLOUD_TEST_STATION_ID, "acSnList": [AC_CHARGER_SERIAL], "dcSnList": [DC_CHARGER_SERIAL]})
 
     async def get_device_topology(self, request: web.Request) -> web.Response:
         if (response := await self.authorized(request)) is not None:
@@ -259,29 +273,25 @@ class CloudApiTestServer:
     async def available_modes(self, request: web.Request) -> web.Response:
         if (response := await self.authorized(request)) is not None:
             return response
-        return self._success(
-            {
-                "defaultWorkingModes": [
-                    {"label": label, "sortOrder": 0, "remarks": "", "value": value}
-                    for label, value in (
-                        ("Maximum Self-Powered", "0"),
-                        ("Sigen AI Mode", "1"),
-                        ("TOU", "2"),
-                        ("Fully Fed to Grid", "5"),
-                        ("Remote EMS Mode", "7"),
-                        ("Custom Operation Mode", "9"),
-                    )
-                ],
-                "energyProfileItems": [],
-            }
-        )
+        return self._success({
+            "defaultWorkingModes": [
+                {"label": label, "sortOrder": 0, "remarks": "", "value": value}
+                for label, value in (
+                    ("Maximum Self-Powered", "0"),
+                    ("Sigen AI Mode", "1"),
+                    ("TOU", "2"),
+                    ("Fully Fed to Grid", "5"),
+                    ("Remote EMS Mode", "7"),
+                    ("Custom Operation Mode", "9"),
+                )
+            ],
+            "energyProfileItems": [],
+        })
 
     async def get_operational_mode(self, request: web.Request) -> web.Response:
         if (response := await self.authorized(request)) is not None:
             return response
-        return self._success(
-            {"currentMode": self.operational_mode, "currentProfileId": self.profile_id}
-        )
+        return self._success({"currentMode": self.operational_mode, "currentProfileId": self.profile_id})
 
     async def set_operational_mode(self, request: web.Request) -> web.Response:
         if (response := await self.authorized(request)) is not None:
@@ -305,9 +315,7 @@ class CloudApiTestServer:
         self.instant_control = {
             "enable": enabled,
             "mode": payload.get("mode") or "1",
-            "endTime": int(time.time()) + int(duration) * 60
-            if enabled and duration
-            else None,
+            "endTime": int(time.time()) + int(duration) * 60 if enabled and duration else None,
         }
         return self._success()
 
@@ -384,76 +392,72 @@ class CloudApiTestServer:
 
     def app(self) -> web.Application:
         app = web.Application()
-        app.add_routes(
-            [
-                web.post("/auth/oauth/token", self.authenticate),
-                web.get("/device/owner/station/home", self.station_home),
-                web.get(
-                    "/device/devicetreepanel/topology", self.get_device_topology
-                ),
-                web.get(
-                    "/device/energy-profile/mode/all/{station_id}",
-                    self.available_modes,
-                ),
-                web.get(
-                    "/device/energy-profile/mode/current/{station_id}",
-                    self.get_operational_mode,
-                ),
-                web.put("/device/energy-profile/mode", self.set_operational_mode),
-                web.get(
-                    "/device/energy-profile/instant/manunal/{station_id}",
-                    self.get_instant_control,
-                ),
-                web.put(
-                    "/device/energy-profile/instant/manunal",
-                    self.set_instant_control,
-                ),
-                web.get(
-                    "/device/energy-profile/grid/limitation/export/{station_id}",
-                    self.get_limit,
-                ),
-                web.get(
-                    "/device/energy-profile/grid/limitation/import/{station_id}",
-                    self.get_limit,
-                ),
-                web.put(
-                    "/device/energy-profile/grid/limitation/{direction}",
-                    self.set_grid_limit,
-                ),
-                web.get(
-                    "/device/energy-profile/parallel/off/grid/{station_id}",
-                    self.get_limit,
-                ),
-                web.put(
-                    "/device/energy-profile/parallel/off/grid",
-                    self.set_grid_connection_limit,
-                ),
-                web.get(
-                    "/device/energy-profile/battery/limit/{station_id}",
-                    self.get_limit,
-                ),
-                web.put(
-                    "/device/energy-profile/battery/limit",
-                    self.set_battery_power_limit,
-                ),
-                web.get(
-                    "/device/energy-profile/solar/limit/{station_id}",
-                    self.get_limit,
-                ),
-                web.put(
-                    "/device/energy-profile/solar/limit",
-                    self.set_solar_power_limit,
-                ),
-                web.get(
-                    "/device/energy-profile/battery/export/limitation/{station_id}",
-                    self.get_limit,
-                ),
-                web.put(
-                    "/device/energy-profile/battery/export/limitation",
-                    self.set_battery_export_limitation,
-                ),
-            ]
-        )
+        app.add_routes([
+            web.post("/auth/oauth/token", self.authenticate),
+            web.get("/device/owner/station/home", self.station_home),
+            web.get("/device/devicetreepanel/topology", self.get_device_topology),
+            web.get(
+                "/device/energy-profile/mode/all/{station_id}",
+                self.available_modes,
+            ),
+            web.get(
+                "/device/energy-profile/mode/current/{station_id}",
+                self.get_operational_mode,
+            ),
+            web.put("/device/energy-profile/mode", self.set_operational_mode),
+            web.get(
+                "/device/energy-profile/instant/manunal/{station_id}",
+                self.get_instant_control,
+            ),
+            web.put(
+                "/device/energy-profile/instant/manunal",
+                self.set_instant_control,
+            ),
+            web.get(
+                "/device/energy-profile/grid/limitation/export/{station_id}",
+                self.get_limit,
+            ),
+            web.get(
+                "/device/energy-profile/grid/limitation/import/{station_id}",
+                self.get_limit,
+            ),
+            web.put(
+                "/device/energy-profile/grid/limitation/{direction}",
+                self.set_grid_limit,
+            ),
+            web.get(
+                "/device/energy-profile/parallel/off/grid/{station_id}",
+                self.get_limit,
+            ),
+            web.put(
+                "/device/energy-profile/parallel/off/grid",
+                self.set_grid_connection_limit,
+            ),
+            web.get(
+                "/device/energy-profile/battery/limit/{station_id}",
+                self.get_limit,
+            ),
+            web.put(
+                "/device/energy-profile/battery/limit",
+                self.set_battery_power_limit,
+            ),
+            web.get(
+                "/device/energy-profile/solar/limit/{station_id}",
+                self.get_limit,
+            ),
+            web.put(
+                "/device/energy-profile/solar/limit",
+                self.set_solar_power_limit,
+            ),
+            web.get(
+                "/device/energy-profile/battery/export/limitation/{station_id}",
+                self.get_limit,
+            ),
+            web.put(
+                "/device/energy-profile/battery/export/limitation",
+                self.set_battery_export_limitation,
+            ),
+        ])
         return app
 
 
@@ -641,7 +645,7 @@ class CustomDataBlock:
       to the register store — matching the behaviour of the real device exactly.
     """
 
-    def __init__(self, device_address: int, mqtt_client: mqtt.Client, latency_budget: LatencyBudget):
+    def __init__(self, device_address: int, mqtt_client: mqtt.Client | None, latency_budget: LatencyBudget):
         """Initialise an empty data block for *device_address*.
 
         Args:
@@ -1733,9 +1737,7 @@ async def async_helper() -> None:
 
     server_host = _env("MODBUS_TEST_SERVER_HOST") or "0.0.0.0"
     server_port = _env_int("MODBUS_TEST_SERVER_PORT", 502)
-    cloud_port = _env_int(
-        "MODBUS_TEST_SERVER_CLOUD_PORT", CLOUD_TEST_SERVER_DEFAULT_PORT
-    )
+    cloud_port = _env_int("MODBUS_TEST_SERVER_CLOUD_PORT", CLOUD_TEST_SERVER_DEFAULT_PORT)
 
     try:
         await run_async_server(

@@ -1,5 +1,6 @@
-import pytest
 from typing import Any
+
+import pytest
 
 from sigenergy2mqtt.config.merge import (
     _flatten_modbus,

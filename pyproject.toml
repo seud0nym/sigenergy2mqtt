@@ -63,7 +63,7 @@ exclude = [
     "tests",
 ]
 extraPaths = ["./src"]
-ignore = [".git", ".venv", "tests"]
+ignore = [".git", ".venv"]
 typeCheckingMode = "standard"
 
 [tool.pytest.ini_options]

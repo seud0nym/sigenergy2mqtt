@@ -42,7 +42,7 @@ class MockAvailabilitySensor(AvailabilityMixin):
         self.publishable = True
 
     def items(self):
-        return [].items()
+        return {}.items()
 
     def __getitem__(self, key):
         return None
@@ -84,9 +84,7 @@ async def run_coverage_on_module(module):
                     kwargs[name] = "A"
                 elif name == "output_type":
                     kwargs[name] = 2
-                elif name == "rated_charging_power":
-                    kwargs[name] = 5000
-                elif name == "rated_discharging_power":
+                elif name == "rated_charging_power" or name == "rated_discharging_power":
                     kwargs[name] = 5000
                 elif name == "address":
                     kwargs[name] = 30000
@@ -107,9 +105,7 @@ async def run_coverage_on_module(module):
                     m.count = 1
                     m.protocol_version = ProtocolVersion.V1_8
                     kwargs[name] = [m]
-                elif issubclass(param.annotation, AvailabilityMixin) if hasattr(param.annotation, "__mro__") else False:
-                    kwargs[name] = MockAvailabilitySensor()
-                elif "control" in name or "sensor" in name or "mode" in name:
+                elif (issubclass(param.annotation, AvailabilityMixin) if hasattr(param.annotation, "__mro__") else False) or "control" in name or "sensor" in name or "mode" in name:
                     kwargs[name] = MockAvailabilitySensor()
                 else:
                     kwargs[name] = MagicMock()
@@ -123,10 +119,10 @@ async def run_coverage_on_module(module):
             if hasattr(sensor, "update_from_source_sensor"):
                 try:
                     sensor.update_from_source_sensor(1)
-                except:
+                except Exception:  # noqa: BLE001, S110
                     pass
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print(f"Failed to test {cls.__name__} in {module.__name__}: {e}")
 
 

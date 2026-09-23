@@ -1,11 +1,11 @@
 from unittest.mock import MagicMock
 
 import pytest
-from sigenergy2mqtt.metrics.service import MetricsService
 
 from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.config.config import _swap_active_config
+from sigenergy2mqtt.metrics.service import MetricsService
 
 
 class TestMetricsServiceCoverage:

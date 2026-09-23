@@ -1,9 +1,16 @@
+from collections import deque
 from unittest.mock import patch
 
 import pytest
 
 from sigenergy2mqtt import i18n
-from sigenergy2mqtt.common import DeviceClass, InputType, ProtocolVersion, StateClass, UnitOfPower
+from sigenergy2mqtt.common import (
+    DeviceClass,
+    InputType,
+    ProtocolVersion,
+    StateClass,
+    UnitOfPower,
+)
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.modbus import ModbusDataType
@@ -136,7 +143,7 @@ async def test_alarm_bit_translation():
 
     with patch.object(ReadOnlySensor, "_update_internal_state", return_value=True):
         sensor = Alarm1Sensor()
-        sensor._states = [(0.0, 1)]
+        sensor._states = deque([(0.0, 1)])
         state = await sensor.get_state()
         assert state == "1001: Incompatibilité de version logicielle"
 
@@ -173,25 +180,21 @@ def test_get_available_translations():
 @pytest.mark.no_language_mock
 def test_get_default_language_fallback():
     # Test fallback to 'en' when system language is not available
-    with patch("locale.getlocale", return_value=(None, None)):
-        with patch("os.environ.get", return_value="xx_XX.UTF-8"):
-            # xx.yaml does NOT exist, so should fall back to 'en'
-            assert i18n.get_default_language() == "en"
+    with patch("locale.getlocale", return_value=(None, None)), patch("os.environ.get", return_value="xx_XX.UTF-8"):
+        # xx.yaml does NOT exist, so should fall back to 'en'
+        assert i18n.get_default_language() == "en"
 
 
 @pytest.mark.no_language_mock
 def test_get_default_language_system():
     # Test picking up system language if it exists
     # We'll mock the exists check for a fake language
-    with patch("locale.getlocale", return_value=("fr_FR", "UTF-8")):
-        with patch("sigenergy2mqtt.i18n.Path.exists", return_value=True):
-            assert i18n.get_default_language() == "fr"
+    with patch("locale.getlocale", return_value=("fr_FR", "UTF-8")), patch("sigenergy2mqtt.i18n.Path.exists", return_value=True):
+        assert i18n.get_default_language() == "fr"
 
 
 @pytest.mark.no_language_mock
 def test_get_default_language_env():
     # Test picking up system language via LANG env var if getlocale() fails
-    with patch("locale.getlocale", return_value=(None, None)):
-        with patch("os.environ.get", return_value="de_DE.UTF-8"):
-            with patch("sigenergy2mqtt.i18n.Path.exists", return_value=True):
-                assert i18n.get_default_language() == "de"
+    with patch("locale.getlocale", return_value=(None, None)), patch("os.environ.get", return_value="de_DE.UTF-8"), patch("sigenergy2mqtt.i18n.Path.exists", return_value=True):
+        assert i18n.get_default_language() == "de"

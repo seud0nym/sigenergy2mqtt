@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import time
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -8,6 +7,7 @@ from aiohttp import web
 from aiohttp.test_utils import make_mocked_request
 
 from sigenergy2mqtt.diagnostics.server import DiagnosticsServer
+
 
 @pytest.mark.asyncio
 async def test_configure_routes_no_app():

@@ -6,7 +6,12 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 import requests
 
-from sigenergy2mqtt.config import ConsumptionSource, OutputField, StatusField, active_config
+from sigenergy2mqtt.config import (
+    ConsumptionSource,
+    OutputField,
+    StatusField,
+    active_config,
+)
 from sigenergy2mqtt.pvoutput.output import PVOutputOutputService
 from sigenergy2mqtt.pvoutput.service import Service
 from sigenergy2mqtt.pvoutput.settings import PVOutputSettings
@@ -37,7 +42,9 @@ class TestPVOutputService:
             class DummyResp:
                 text = response_text
                 status_code = 200
-                headers = {"X-Rate-Limit-Limit": "60", "X-Rate-Limit-Remaining": "59", "X-Rate-Limit-Reset": str(time.time() + 60)}
+
+                def __init__(self):
+                    self.headers = {"X-Rate-Limit-Limit": "60", "X-Rate-Limit-Remaining": "59", "X-Rate-Limit-Reset": str(time.time() + 60)}
 
                 def __enter__(self):
                     return self
@@ -47,7 +54,7 @@ class TestPVOutputService:
 
             monkeypatch.setattr("requests.get", lambda *a, **k: DummyResp())
 
-            seconds, next_time = await svc.seconds_until_status_upload()
+            seconds, _next_time = await svc.seconds_until_status_upload()
 
             assert isinstance(seconds, float)
             assert PVOutputSettings.interval == 10
@@ -63,7 +70,7 @@ class TestPVOutputService:
 
         with patch.object(active_config.pvoutput, "testing", False):
             monkeypatch.setattr("requests.get", MagicMock(side_effect=requests.RequestException("Network error")))
-            seconds, next_time = await svc.seconds_until_status_upload()
+            seconds, _next_time = await svc.seconds_until_status_upload()
             assert isinstance(seconds, float)
             assert PVOutputSettings.interval == 5
             assert PVOutputSettings.donator is False
@@ -78,7 +85,7 @@ class TestPVOutputService:
         with patch.object(active_config.pvoutput, "testing", False):
             mock_get = MagicMock(side_effect=requests.RequestException("Should not be called"))
             monkeypatch.setattr("requests.get", mock_get)
-            seconds, next_time = await svc.seconds_until_status_upload()
+            seconds, _next_time = await svc.seconds_until_status_upload()
             assert isinstance(seconds, float)
             assert not mock_get.called
             assert PVOutputSettings.interval == 7
@@ -127,7 +134,9 @@ class TestPVOutputService:
 
         class RespLowRate:
             status_code = 500
-            headers = {"X-Rate-Limit-Limit": "60", "X-Rate-Limit-Remaining": "5", "X-Rate-Limit-Reset": str(time.time() + 30)}
+
+            def __init__(self):
+                self.headers = {"X-Rate-Limit-Limit": "60", "X-Rate-Limit-Remaining": "5", "X-Rate-Limit-Reset": str(time.time() + 30)}
 
             def __enter__(self):
                 return self
@@ -208,6 +217,7 @@ class TestPVOutputService:
         svc._lock.release()
 
     @pytest.mark.asyncio
+    @pytest.mark.asyncio
     async def test_seconds_until_status_upload_non_200(self, monkeypatch, caplog):
         svc = make_service()
         PVOutputSettings.interval_updated = None
@@ -216,7 +226,9 @@ class TestPVOutputService:
             class DummyResp:
                 status_code = 403
                 reason = "Forbidden"
-                headers = {"X-Rate-Limit-Limit": "60", "X-Rate-Limit-Remaining": "59", "X-Rate-Limit-Reset": str(time.time() + 60)}
+
+                def __init__(self):
+                    self.headers = {"X-Rate-Limit-Limit": "60", "X-Rate-Limit-Remaining": "59", "X-Rate-Limit-Reset": str(time.time() + 60)}
 
             monkeypatch.setattr("requests.get", lambda *a, **k: DummyResp())
             await svc.seconds_until_status_upload()
@@ -231,7 +243,9 @@ class TestPVOutputService:
                 status_code = 301
                 reason = "Moved Permanently"
                 text = "redirect"
-                headers = {"X-Rate-Limit-Limit": "60", "X-Rate-Limit-Remaining": "59", "X-Rate-Limit-Reset": str(time.time() + 60)}
+
+                def __init__(self):
+                    self.headers = {"X-Rate-Limit-Limit": "60", "X-Rate-Limit-Remaining": "59", "X-Rate-Limit-Reset": str(time.time() + 60)}
 
             monkeypatch.setattr(asyncio, "sleep", AsyncMock())
             monkeypatch.setattr("requests.post", lambda *a, **k: Resp3xx())
@@ -245,7 +259,9 @@ class TestPVOutputService:
 
             class RespNoRaise:
                 status_code = 418
-                headers = {"X-Rate-Limit-Limit": "60", "X-Rate-Limit-Remaining": "59", "X-Rate-Limit-Reset": str(time.time() + 60)}
+
+                def __init__(self):
+                    self.headers = {"X-Rate-Limit-Limit": "60", "X-Rate-Limit-Remaining": "59", "X-Rate-Limit-Reset": str(time.time() + 60)}
 
                 def raise_for_status(self):
                     pass  # cover break
@@ -306,7 +322,9 @@ class TestPVOutputService:
             # Test rate limit sleep cancellation
             class RespRateLimit:
                 status_code = 500
-                headers = {"X-Rate-Limit-Limit": "60", "X-Rate-Limit-Remaining": "5", "X-Rate-Limit-Reset": str(time.time() + 60)}
+
+                def __init__(self):
+                    self.headers = {"X-Rate-Limit-Limit": "60", "X-Rate-Limit-Remaining": "5", "X-Rate-Limit-Reset": str(time.time() + 60)}
 
                 def raise_for_status(self):
                     err = requests.exceptions.HTTPError("Err")

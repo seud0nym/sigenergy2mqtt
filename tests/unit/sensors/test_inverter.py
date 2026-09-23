@@ -5,9 +5,23 @@ import pytest
 from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.sensors.base import Sensor
-from sigenergy2mqtt.sensors.inverter_derived import InverterBatteryChargingPower, InverterBatteryDischargingPower, PVStringPower
-from sigenergy2mqtt.sensors.inverter_read_only import ChargeDischargePower, InverterFirmwareVersion, InverterModel, PVCurrentSensor, PVVoltageSensor
-from sigenergy2mqtt.sensors.inverter_read_write import DCChargerStatus, InverterActivePowerPercentageAdjustment, InverterStatus
+from sigenergy2mqtt.sensors.inverter_derived import (
+    InverterBatteryChargingPower,
+    InverterBatteryDischargingPower,
+    PVStringPower,
+)
+from sigenergy2mqtt.sensors.inverter_read_only import (
+    ChargeDischargePower,
+    InverterFirmwareVersion,
+    InverterModel,
+    PVCurrentSensor,
+    PVVoltageSensor,
+)
+from sigenergy2mqtt.sensors.inverter_read_write import (
+    DCChargerStatus,
+    InverterActivePowerPercentageAdjustment,
+    InverterStatus,
+)
 
 
 @pytest.fixture(autouse=True)

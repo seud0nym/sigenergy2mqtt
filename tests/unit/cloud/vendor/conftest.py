@@ -6,7 +6,6 @@ from types import SimpleNamespace
 import aiohttp
 import aioresponses.core
 
-
 if "stream_writer" in signature(aiohttp.ClientResponse).parameters:
     # Remove when https://github.com/pnuckowski/aioresponses/pull/288 is released.
     class _CompatibleClientResponse(aiohttp.ClientResponse):

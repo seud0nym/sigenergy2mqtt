@@ -2,16 +2,27 @@ from __future__ import annotations
 
 import asyncio
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, cast
 from unittest.mock import AsyncMock, MagicMock
 
 from pymodbus.client.mixin import ModbusClientMixin
 
 from sigenergy2mqtt.config import Config, _swap_active_config
-from sigenergy2mqtt.sensors.base import NumericSensor, SelectSensor, SwitchSensor, WriteableSensorMixin, WriteOnlySensorMixin
+from sigenergy2mqtt.sensors.base import (
+    NumericSensor,
+    SelectSensor,
+    SwitchSensor,
+    WriteableSensorMixin,
+    WriteOnlySensor,
+)
 from sigenergy2mqtt.sensors.base.constants import DiscoveryKeys
 from sigenergy2mqtt.sensors.metrics import ResetMetrics
-from sigenergy2mqtt.sensors.plant_read_write import MaxChargingLimit, MaxDischargingLimit, PVMaxPowerLimit, RemoteEMSLimit
+from sigenergy2mqtt.sensors.plant_read_write import (
+    MaxChargingLimit,
+    MaxDischargingLimit,
+    PVMaxPowerLimit,
+    RemoteEMSLimit,
+)
 from tests.utils.modbus_sensors import get_sensor_instances
 
 REMOTE_EMS_LIMIT_TYPES = (MaxChargingLimit, MaxDischargingLimit, PVMaxPowerLimit)
@@ -129,18 +140,19 @@ def test_all_writable_sensor_types_write_expected_registers_and_set_force_publis
                     sensor.force_publish = False
                     try:
                         await sensor.set_value(modbus, mqtt, invalid, topic, handler)
-                    except Exception:
+                    except Exception:  # noqa: BLE001, S110
                         pass
                     assert sensor.force_publish is True
 
             elif isinstance(sensor, SelectSensor):
-                options = [option for option in sensor[DiscoveryKeys.OPTIONS] if option != ""]
+                assert DiscoveryKeys.OPTIONS in sensor and isinstance(sensor[DiscoveryKeys.OPTIONS], list) and sensor[DiscoveryKeys.OPTIONS] is not None
+                options = [option for option in cast(list, sensor[DiscoveryKeys.OPTIONS]) if option != ""]
                 assert options
                 valid = options[0]
                 invalid: Any = "" if "" in sensor[DiscoveryKeys.OPTIONS] else "__invalid_option__"
 
                 assert await sensor.set_value(modbus, mqtt, valid, topic, handler) is True
-                expected_index = sensor[DiscoveryKeys.OPTIONS].index(valid)
+                expected_index = cast(list, sensor[DiscoveryKeys.OPTIONS]).index(valid)
                 modbus.write_register.assert_awaited_with(sensor.address, expected_index, device_id=sensor.device_address, no_response_expected=False)
 
                 if invalid is not None:
@@ -150,7 +162,7 @@ def test_all_writable_sensor_types_write_expected_registers_and_set_force_publis
                     assert sensor.force_publish is True
 
             elif isinstance(sensor, SwitchSensor):
-                valid = sensor[DiscoveryKeys.PAYLOAD_ON]
+                valid = cast(str, sensor[DiscoveryKeys.PAYLOAD_ON])
                 assert await sensor.set_value(modbus, mqtt, valid, topic, handler) is True
                 modbus.write_register.assert_awaited_with(sensor.address, int(valid), device_id=sensor.device_address, no_response_expected=False)
 
@@ -169,7 +181,7 @@ def test_all_writable_sensor_types_write_expected_registers_and_set_force_publis
                 assert await sensor.set_value(modbus, mqtt, "__invalid_payload__", topic, handler) is False
                 assert sensor.force_publish is True
 
-            elif isinstance(sensor, WriteOnlySensorMixin):
+            elif isinstance(sensor, WriteOnlySensor):
                 valid = sensor._payloads["on"]
                 assert await sensor.set_value(modbus, mqtt, valid, topic, handler) is True
                 modbus.write_register.assert_awaited_with(sensor.address, sensor._values["on"], device_id=sensor.device_address, no_response_expected=False)
@@ -198,7 +210,8 @@ def test_availability_control_sensor_gates_writes_for_non_remote_ems_sensors() -
         for sensor in targets:
             control = sensor._availability_control_sensor
             assert control is not None
-            valid = sensor[DiscoveryKeys.OPTIONS][0] if sensor[DiscoveryKeys.OPTIONS][0] != "" else sensor[DiscoveryKeys.OPTIONS][1]
+            options = cast(list[str], sensor[DiscoveryKeys.OPTIONS])
+            valid = options[0] if options[0] != "" else options[1]
             topic = _ensure_command_topic(sensor)
 
             modbus = _build_modbus()
@@ -272,7 +285,7 @@ def test_remote_ems_limit_skips_checks_when_availability_control_sensor_is_none(
             topic = _ensure_command_topic(sensor)
 
             sensor._availability_control_sensor = None
-            sensor._remote_ems_mode = SimpleNamespace(_latest_raw_state=0, latest_raw_state=0)
+            sensor._remote_ems_mode = cast(Any, SimpleNamespace(_latest_raw_state=0, latest_raw_state=0))
 
             modbus = _build_modbus()
             sensor.force_publish = False

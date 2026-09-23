@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -23,10 +23,21 @@ def setup_configs():
         yield
 
 
-from sigenergy2mqtt.common import ProtocolVersion  # noqa: E402
-from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerAlarm1, ACChargerAlarm2, ACChargerAlarm3  # noqa: E402
-from sigenergy2mqtt.sensors.base import Alarm1Sensor, Alarm2Sensor, Alarm3Sensor, Alarm4Sensor, Alarm5Sensor, Sensor  # noqa: E402
-from sigenergy2mqtt.sensors.plant_read_only import Alarm6, Alarm7  # noqa: E402
+from sigenergy2mqtt.common import ProtocolVersion
+from sigenergy2mqtt.sensors.ac_charger_read_only import (
+    ACChargerAlarm1,
+    ACChargerAlarm2,
+    ACChargerAlarm3,
+)
+from sigenergy2mqtt.sensors.base import (
+    Alarm1Sensor,
+    Alarm2Sensor,
+    Alarm3Sensor,
+    Alarm4Sensor,
+    Alarm5Sensor,
+    Sensor,
+)
+from sigenergy2mqtt.sensors.plant_read_only import Alarm6, Alarm7
 
 
 @pytest.fixture(autouse=True)

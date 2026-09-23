@@ -4,7 +4,12 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.common import ConsumptionMethod, DeviceClass, ProtocolVersion, StateClass
+from sigenergy2mqtt.common import (
+    ConsumptionMethod,
+    DeviceClass,
+    ProtocolVersion,
+    StateClass,
+)
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.base import PVPowerSensor, Sensor
@@ -108,8 +113,18 @@ class TestBasicDerivedSensorsCoverage:
             assert "Attempt to call" in caplog.text
 
     def test_daily_accumulation_sensors(self):
-        from sigenergy2mqtt.sensors.plant_derived import GridSensorDailyExportEnergy, GridSensorDailyImportEnergy, PlantDailyChargeEnergy, PlantDailyDischargeEnergy, PlantDailyPVEnergy, TotalDailyPVEnergy
-        from sigenergy2mqtt.sensors.plant_read_only import PlantTotalExportedEnergy, PlantTotalImportedEnergy
+        from sigenergy2mqtt.sensors.plant_derived import (
+            GridSensorDailyExportEnergy,
+            GridSensorDailyImportEnergy,
+            PlantDailyChargeEnergy,
+            PlantDailyDischargeEnergy,
+            PlantDailyPVEnergy,
+            TotalDailyPVEnergy,
+        )
+        from sigenergy2mqtt.sensors.plant_read_only import (
+            PlantTotalExportedEnergy,
+            PlantTotalImportedEnergy,
+        )
 
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             # Export
@@ -156,7 +171,10 @@ class TestBasicDerivedSensorsCoverage:
             assert "PlantLifetimePVEnergy" in str(s_pdpv.get_attributes()["source"])
 
             # Plant Daily Charge
-            from sigenergy2mqtt.sensors.plant_read_only import ESSTotalChargedEnergy, ESSTotalDischargedEnergy
+            from sigenergy2mqtt.sensors.plant_read_only import (
+                ESSTotalChargedEnergy,
+                ESSTotalDischargedEnergy,
+            )
 
             source_charge = MagicMock(spec=ESSTotalChargedEnergy)
             source_charge.unique_id = "ch_uid"
@@ -476,7 +494,10 @@ class TestPlantSelfConsumedPowerCoverage:
 
 class TestPlantDailySelfConsumedEnergyCoverage:
     def test_daily_self_consumed_energy(self):
-        from sigenergy2mqtt.sensors.plant_derived import PlantDailySelfConsumedEnergy, PlantSelfConsumedPower
+        from sigenergy2mqtt.sensors.plant_derived import (
+            PlantDailySelfConsumedEnergy,
+            PlantSelfConsumedPower,
+        )
 
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             source = MagicMock(spec=PlantSelfConsumedPower)

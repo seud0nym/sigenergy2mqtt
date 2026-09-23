@@ -48,7 +48,7 @@ class TestReadAhead:
             copied_pdu = MagicMock(spec=ModbusPDU)
             mock_copy.deepcopy.return_value = copied_pdu
 
-            result = read_ahead.get_registers(address=1002, count=3)
+            read_ahead.get_registers(address=1002, count=3)
 
             # Verify the copied PDU was modified
             assert copied_pdu.address == 1002
@@ -61,7 +61,7 @@ class TestReadAhead:
             copied_pdu = MagicMock(spec=ModbusPDU)
             mock_copy.deepcopy.return_value = copied_pdu
 
-            result = read_ahead.get_registers(address=1000, count=1)
+            read_ahead.get_registers(address=1000, count=1)
 
             assert copied_pdu.registers == [100]
 
@@ -71,7 +71,7 @@ class TestReadAhead:
             copied_pdu = MagicMock(spec=ModbusPDU)
             mock_copy.deepcopy.return_value = copied_pdu
 
-            result = read_ahead.get_registers(address=1009, count=1)
+            read_ahead.get_registers(address=1009, count=1)
 
             assert copied_pdu.registers == [1000]
 
@@ -81,7 +81,7 @@ class TestReadAhead:
             copied_pdu = MagicMock(spec=ModbusPDU)
             mock_copy.deepcopy.return_value = copied_pdu
 
-            result = read_ahead.get_registers(address=1000, count=10)
+            read_ahead.get_registers(address=1000, count=10)
 
             assert copied_pdu.registers == [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
 
@@ -109,7 +109,7 @@ class TestReadAhead:
             mock_copy.deepcopy.return_value = copied_pdu
 
             # Address 1007, count 3: last address = 1007 + 3 - 1 = 1009 (exactly at boundary)
-            result = read_ahead.get_registers(address=1007, count=3)
+            read_ahead.get_registers(address=1007, count=3)
 
             assert copied_pdu.registers == [800, 900, 1000]
 

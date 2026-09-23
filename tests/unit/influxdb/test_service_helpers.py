@@ -8,7 +8,6 @@ import pytest
 import requests
 
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.influxdb.hass_history_sync import HassHistorySync
 from sigenergy2mqtt.influxdb.service import InfluxService
 
 
@@ -553,16 +552,19 @@ class TestHassHistorySyncCoverage:
     async def test_sync_from_homeassistant_success(self, disabled_hass_history_sync):
         # Hit 527-570
         hass_sync = disabled_hass_history_sync
-        with patch.object(hass_sync, "detect_homeassistant_db", return_value=True), patch.object(hass_sync, "get_earliest_timestamp", return_value=1704067200):
-            with patch.object(hass_sync, "copy_records_from_homeassistant", return_value=5):
-                topic_cache = {"t1": {"object_id": "obj1", "uom": "W"}}
-                # Need to mock online for sync_sensor loop
-                fut = asyncio.Future()
-                fut.set_result(True)
-                hass_sync.online = fut
+        with (
+            patch.object(hass_sync, "detect_homeassistant_db", return_value=True),
+            patch.object(hass_sync, "get_earliest_timestamp", return_value=1704067200),
+            patch.object(hass_sync, "copy_records_from_homeassistant", return_value=5),
+        ):
+            topic_cache = {"t1": {"object_id": "obj1", "uom": "W"}}
+            # Need to mock online for sync_sensor loop
+            fut = asyncio.Future()
+            fut.set_result(True)
+            hass_sync.online = fut
 
-                res = await hass_sync.sync_from_homeassistant(topic_cache)
-                assert res == {"W[entity_id=obj1]": 5}
+            res = await hass_sync.sync_from_homeassistant(topic_cache)
+            assert res == {"W[entity_id=obj1]": 5}
 
 
 class TestInfluxServiceMissingCoverage:
@@ -684,10 +686,13 @@ class TestInfluxServiceMissingCoverage:
                     "s3": DummySensor("o3", "t3", True),
                 }
 
-        with patch("sigenergy2mqtt.devices.DeviceRegistry.get", return_value=[DummyDevice()]), patch.object(active_config.influxdb, "include", ["o2"]):
-            with patch.object(active_config.influxdb, "exclude", ["o2"]):
-                caplog.set_level(logging.DEBUG)
-                service.subscribe(MagicMock(), MagicMock())
-                assert "Skipping sensor 'o1': no state_topic" in caplog.text
-                assert "Skipping 't3' because object_id 'o3' is not in include list" in caplog.text
-                assert "Skipping 't2' because object_id 'o2' is excluded" in caplog.text
+        with (
+            patch("sigenergy2mqtt.devices.DeviceRegistry.get", return_value=[DummyDevice()]),
+            patch.object(active_config.influxdb, "include", ["o2"]),
+            patch.object(active_config.influxdb, "exclude", ["o2"]),
+        ):
+            caplog.set_level(logging.DEBUG)
+            service.subscribe(MagicMock(), MagicMock())
+            assert "Skipping sensor 'o1': no state_topic" in caplog.text
+            assert "Skipping 't3' because object_id 'o3' is not in include list" in caplog.text
+            assert "Skipping 't2' because object_id 'o2' is excluded" in caplog.text

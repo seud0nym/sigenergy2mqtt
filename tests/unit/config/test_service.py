@@ -57,7 +57,11 @@ async def test_application_log_level_write_updates_config_and_logger(config):
 
 
 def test_settings_sensor_get_value(config):
-    from sigenergy2mqtt.sensors.settings import ModbusLogLevel, PersistenceDebugging, RepeatedStatePublishInterval
+    from sigenergy2mqtt.sensors.settings import (
+        ModbusLogLevel,
+        PersistenceDebugging,
+        RepeatedStatePublishInterval,
+    )
 
     config.log_level = logging.DEBUG
     app_log = ApplicationLogLevel()

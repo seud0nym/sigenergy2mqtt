@@ -4,6 +4,7 @@ import asyncio
 from unittest.mock import patch as mpatch
 
 import pytest
+from pydantic import ValidationError
 
 from sigenergy2mqtt.config.models.diagnostics import DiagnosticsConfig
 
@@ -45,12 +46,12 @@ class TestDiagnosticsConfigValidation:
 
     def test_port_minimum(self):
         """port must be >= 1."""
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             DiagnosticsConfig(port=0)
 
     def test_port_maximum(self):
         """port must be <= 65535."""
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             DiagnosticsConfig(port=65536)
 
     def test_port_minimum_valid(self):
@@ -65,12 +66,12 @@ class TestDiagnosticsConfigValidation:
 
     def test_refresh_interval_zero_invalid(self):
         """refresh-interval must be > 0."""
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             DiagnosticsConfig(**{"refresh-interval": 0.0})
 
     def test_refresh_interval_negative_invalid(self):
         """refresh-interval must be > 0 (negative is invalid)."""
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             DiagnosticsConfig(**{"refresh-interval": -1.0})
 
     def test_refresh_interval_small_positive_valid(self):
@@ -91,31 +92,37 @@ class TestDiagnosticsConfigEnvVars:
         from sigenergy2mqtt.config import Config, _swap_active_config
 
         monkeypatch.setenv("SIGENERGY2MQTT_DIAGNOSTICS_HOST", "192.168.1.1")
-        with mpatch("sigenergy2mqtt.config.config.Config._perform_auto_discovery", return_value=None):
-            with _swap_active_config(Config()) as cfg:
-                cfg.persistent_state_path = tmp_path
-                asyncio.run(cfg.reload())
-                assert cfg.diagnostics.host == "192.168.1.1"
+        with (
+            mpatch("sigenergy2mqtt.config.config.Config._perform_auto_discovery", return_value=None),
+            _swap_active_config(Config()) as cfg,
+        ):
+            cfg.persistent_state_path = tmp_path
+            asyncio.run(cfg.reload())
+            assert cfg.diagnostics.host == "192.168.1.1"
 
     def test_env_port_override(self, monkeypatch, tmp_path):
         from sigenergy2mqtt.config import Config, _swap_active_config
 
         monkeypatch.setenv("SIGENERGY2MQTT_DIAGNOSTICS_PORT", "9999")
-        with mpatch("sigenergy2mqtt.config.config.Config._perform_auto_discovery", return_value=None):
-            with _swap_active_config(Config()) as cfg:
-                cfg.persistent_state_path = tmp_path
-                asyncio.run(cfg.reload())
-                assert cfg.diagnostics.port == 9999
+        with (
+            mpatch("sigenergy2mqtt.config.config.Config._perform_auto_discovery", return_value=None),
+            _swap_active_config(Config()) as cfg,
+        ):
+            cfg.persistent_state_path = tmp_path
+            asyncio.run(cfg.reload())
+            assert cfg.diagnostics.port == 9999
 
     def test_env_refresh_interval_override(self, monkeypatch, tmp_path):
         from sigenergy2mqtt.config import Config, _swap_active_config
 
         monkeypatch.setenv("SIGENERGY2MQTT_DIAGNOSTICS_REFRESH_INTERVAL", "15.0")
-        with mpatch("sigenergy2mqtt.config.config.Config._perform_auto_discovery", return_value=None):
-            with _swap_active_config(Config()) as cfg:
-                cfg.persistent_state_path = tmp_path
-                asyncio.run(cfg.reload())
-                assert cfg.diagnostics.refresh_interval == pytest.approx(15.0)
+        with (
+            mpatch("sigenergy2mqtt.config.config.Config._perform_auto_discovery", return_value=None),
+            _swap_active_config(Config()) as cfg,
+        ):
+            cfg.persistent_state_path = tmp_path
+            asyncio.run(cfg.reload())
+            assert cfg.diagnostics.refresh_interval == pytest.approx(15.0)
 
     def test_defaults_when_no_env_vars_set(self, monkeypatch, tmp_path):
         """Without any env vars, diagnostics defaults should apply."""
@@ -124,10 +131,12 @@ class TestDiagnosticsConfigEnvVars:
         monkeypatch.delenv("SIGENERGY2MQTT_DIAGNOSTICS_HOST", raising=False)
         monkeypatch.delenv("SIGENERGY2MQTT_DIAGNOSTICS_PORT", raising=False)
         monkeypatch.delenv("SIGENERGY2MQTT_DIAGNOSTICS_REFRESH_INTERVAL", raising=False)
-        with mpatch("sigenergy2mqtt.config.config.Config._perform_auto_discovery", return_value=None):
-            with _swap_active_config(Config()) as cfg:
-                cfg.persistent_state_path = tmp_path
-                asyncio.run(cfg.reload())
-                assert cfg.diagnostics.host == "127.0.0.1"
-                assert cfg.diagnostics.port == 8502
-                assert cfg.diagnostics.refresh_interval == pytest.approx(5.0)
+        with (
+            mpatch("sigenergy2mqtt.config.config.Config._perform_auto_discovery", return_value=None),
+            _swap_active_config(Config()) as cfg,
+        ):
+            cfg.persistent_state_path = tmp_path
+            asyncio.run(cfg.reload())
+            assert cfg.diagnostics.host == "127.0.0.1"
+            assert cfg.diagnostics.port == 8502
+            assert cfg.diagnostics.refresh_interval == pytest.approx(5.0)

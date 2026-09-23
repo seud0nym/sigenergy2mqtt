@@ -1,14 +1,30 @@
 import datetime
 import sys
+from collections import deque
+from typing import cast
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 
-from sigenergy2mqtt.common import DeviceClass, InputType, ProtocolVersion, StateClass, UnitOfPower
+from sigenergy2mqtt.common import (
+    DeviceClass,
+    InputType,
+    ProtocolVersion,
+    StateClass,
+    UnitOfPower,
+)
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.modbus import ModbusDataType
-from sigenergy2mqtt.sensors.base import EnergyDailyAccumulationSensor, EnergyLifetimeAccumulationSensor, NumericSensor, ReadOnlySensor, SelectSensor, Sensor, TimestampSensor
+from sigenergy2mqtt.sensors.base import (
+    EnergyDailyAccumulationSensor,
+    EnergyLifetimeAccumulationSensor,
+    NumericSensor,
+    ReadOnlySensor,
+    SelectSensor,
+    Sensor,
+    TimestampSensor,
+)
 
 
 # Fixtures for mocking to avoid background thread issues
@@ -250,7 +266,7 @@ class TestModbusSensor:
                 {30005: {"object_id": "sigen_local_ts_name", "gain": 1.0, "unit": "s"}},
                 clear=True,
             ):
-                sensor = TimestampSensor("TS", "sigen_ts", InputType.INPUT, 0, 1, 30005, 10, ProtocolVersion.V2_4, tz=datetime.timezone.utc)
+                sensor = TimestampSensor("TS", "sigen_ts", InputType.INPUT, 0, 1, 30005, 10, ProtocolVersion.V2_4, tz=datetime.UTC)
 
             assert sensor.object_id == "sigen_local_ts_name"
             assert getattr(sensor, "unit", sensor.get("unit_of_measurement")) is None
@@ -297,19 +313,19 @@ class TestTimestampSensor:
     @pytest.mark.asyncio
     async def test_get_state_timestamp(self):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            sensor = TimestampSensor("TS", "sigen_ts", InputType.INPUT, 0, 1, 30005, 10, ProtocolVersion.V2_4, tz=datetime.timezone.utc)
+            sensor = TimestampSensor("TS", "sigen_ts", InputType.INPUT, 0, 1, 30005, 10, ProtocolVersion.V2_4, tz=datetime.UTC)
 
             ts = 1700000000  # 2023-11-14 22:13:20 UTC
             with patch("sigenergy2mqtt.sensors.base.ReadOnlySensor.get_state", new_callable=AsyncMock) as mock_super_get:
                 mock_super_get.return_value = ts
 
                 state = await sensor.get_state()
-                expected_dt = datetime.datetime.fromtimestamp(ts, datetime.timezone.utc).isoformat()
+                expected_dt = datetime.datetime.fromtimestamp(ts, datetime.UTC).isoformat()
                 assert state == expected_dt
 
     def test_state2raw_timestamp(self):
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            sensor = TimestampSensor("TS", "sigen_ts", InputType.INPUT, 0, 1, 30005, 10, ProtocolVersion.V2_4, tz=datetime.timezone.utc)
+            sensor = TimestampSensor("TS", "sigen_ts", InputType.INPUT, 0, 1, 30005, 10, ProtocolVersion.V2_4, tz=datetime.UTC)
             iso_str = "2023-11-14T22:13:20+00:00"
             raw = sensor.state2raw(iso_str)
             assert raw == 1700000000
@@ -405,7 +421,7 @@ class TestEnergyAccumulationSensors:
                 sensor = EnergyDailyAccumulationSensor("Daily", "sigen_daily", "sigen_daily", source)
                 sensor._state_at_midnight = 1000.0
 
-                values = [(time_day1, 1100.0), (time_day2, 1105.0)]
+                values = deque([(time_day1, 1100.0), (time_day2, 1105.0)])
                 source._states = values
 
                 mock_t1 = MagicMock()
@@ -422,16 +438,14 @@ class TestEnergyAccumulationSensors:
                     coro.close()
                     return MagicMock()
 
-                with patch("sigenergy2mqtt.sensors.base.time.localtime", side_effect=mock_localtime):
-                    with patch("asyncio.run_coroutine_threadsafe", side_effect=mock_run_coro):
-                        sensor.update_from_source_sensor(source)
+                with patch("sigenergy2mqtt.sensors.base.time.localtime", side_effect=mock_localtime), patch("asyncio.run_coroutine_threadsafe", side_effect=mock_run_coro):
+                    sensor.update_from_source_sensor(source)
 
     @pytest.mark.asyncio
     async def test_readonly_update_internal_state_unknown_type(self):
-        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True), pytest.raises(AssertionError, match="Invalid data type UNKNOWN"):
             # name, object_id, input_type, plant_index, device_address, address, count, data_type, scan_interval, unit, device_class, state_class, icon, gain, precision, protocol_version
-            with pytest.raises(AssertionError, match="Invalid data type UNKNOWN"):
-                ReadOnlySensor("RO", "sigen_ro", InputType.HOLDING, 0, 1, 30001, 1, "UNKNOWN", 10, "W", DeviceClass.POWER, StateClass.MEASUREMENT, "mdi:p", 1.0, 2, ProtocolVersion.V2_4)  # type: ignore
+            ReadOnlySensor("RO", "sigen_ro", InputType.HOLDING, 0, 1, 30001, 1, "UNKNOWN", 10, "W", DeviceClass.POWER, StateClass.MEASUREMENT, "mdi:p", 1.0, 2, ProtocolVersion.V2_4)  # type: ignore
 
     @pytest.mark.asyncio
     async def test_readonly_update_internal_state_failed(self):
@@ -455,8 +469,9 @@ class TestReadWriteSensor:
             sensor = ReadWriteSensor(None, "RW", "sigen_rw", InputType.HOLDING, 0, 1, 30001, 1, ModbusDataType.UINT16, 10, "W", DeviceClass.POWER, StateClass.MEASUREMENT, "mdi:p", 1.0, 2, ProtocolVersion.V2_4)
             sensor.configure_mqtt_topics("sigen")
             from sigenergy2mqtt.modbus import ModbusClient
+
             client = AsyncMock(spec=ModbusClient)
             client.write_register = AsyncMock(return_value=MagicMock(isError=lambda: False))
             # set_value(self, modbus_client, mqtt_client, value, source, handler)
-            await sensor.set_value(client, MagicMock(), 123, sensor["command_topic"], MagicMock())
+            await sensor.set_value(client, MagicMock(), 123, cast(str, sensor["command_topic"]), MagicMock())
             client.write_register.assert_called_once()

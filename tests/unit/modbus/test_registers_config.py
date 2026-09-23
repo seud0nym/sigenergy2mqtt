@@ -19,36 +19,36 @@ MODBUS_DATA_TYPE = ModbusClient.DATATYPE
 
 class TestModbusRegistersConfig:
     def test_default_values(self):
-        config = ModbusConfig(host="dummy")
+        config = ModbusConfig(host="dummy")  # pyright: ignore[reportCallIssue]
         assert config.registers.no_remote_ems is False
         assert config.registers.read_only is True
         assert config.registers.read_write is True
         assert config.registers.write_only is True
 
     def test_configure_registers_individually(self):
-        config = ModbusConfig(host="dummy", registers={"no-remote-ems": True})
+        config = ModbusConfig(host="dummy", registers={"no-remote-ems": True})  # pyright: ignore[reportCallIssue]
         assert config.registers.no_remote_ems is True
 
-        config = ModbusConfig(host="dummy", registers={"read-only": False})
+        config = ModbusConfig(host="dummy", registers={"read-only": False})  # pyright: ignore[reportCallIssue]
         assert config.registers.read_only is False
 
-        config = ModbusConfig(host="dummy", registers={"read-write": False})
+        config = ModbusConfig(host="dummy", registers={"read-write": False})  # pyright: ignore[reportCallIssue]
         assert config.registers.read_write is False
 
-        config = ModbusConfig(host="dummy", registers={"write-only": False})
+        config = ModbusConfig(host="dummy", registers={"write-only": False})  # pyright: ignore[reportCallIssue]
         assert config.registers.write_only is False
 
     def test_instance_isolation(self):
-        c1 = ModbusConfig(host="dummy", registers={"read-only": False})
-        c2 = ModbusConfig(host="dummy")
+        c1 = ModbusConfig(host="dummy", registers={"read-only": False})  # pyright: ignore[reportCallIssue]
+        c2 = ModbusConfig(host="dummy")  # pyright: ignore[reportCallIssue]
 
         assert c1.registers.read_only is False
         assert c2.registers.read_only is True
         assert c1.registers is not c2.registers
 
     def test_scan_interval_isolation(self):
-        c1 = ModbusConfig(host="dummy", scan_interval={"low": 999})
-        c2 = ModbusConfig(host="dummy")
+        c1 = ModbusConfig(host="dummy", scan_interval={"low": 999})  # pyright: ignore[reportCallIssue]
+        c2 = ModbusConfig(host="dummy")  # pyright: ignore[reportCallIssue]
 
         assert c1.scan_interval.low == 999
         assert c2.scan_interval.low == 600
@@ -141,9 +141,8 @@ class TestSensorPublishableState:
         cfg.sensor_overrides = {}
         cfg.persistent_state_path = tmp_path
 
-        with _swap_active_config(cfg):
-            with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-                yield
+        with _swap_active_config(cfg), patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            yield
 
     def test_no_remote_ems_override(self):
         reg_access = RegisterAccess(no_remote_ems=True)

@@ -15,7 +15,11 @@ from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.devices.base.poller import SensorGroupPoller
 from sigenergy2mqtt.modbus.client import ModbusClient
 from sigenergy2mqtt.modbus.lock_factory import ModbusLockFactory
-from sigenergy2mqtt.sensors.base import EnergyDailyAccumulationSensor, ModbusSensorMixin, ReadableSensorMixin
+from sigenergy2mqtt.sensors.base import (
+    EnergyDailyAccumulationSensor,
+    ModbusSensorMixin,
+    ReadableSensorMixin,
+)
 
 
 class FakeLock:
@@ -437,7 +441,6 @@ async def test_poller_read_ahead_exception_codes(monkeypatch, caplog):
     async def _mock_publish_no_stop(mqtt_client, modbus_client=None, republish=False):
         # We need to use 'self' here but it's a mock.
         # Actually it's monkeypatched on s1 and s2 directly.
-        pass
         return True
 
     monkeypatch.setattr(s1, "publish", _mock_publish_no_stop)
@@ -452,12 +455,12 @@ async def test_poller_read_ahead_exception_codes(monkeypatch, caplog):
     async def _mock_sleep_no_recursion(delay, result=None):
         if modbus.read_ahead_called >= len(modbus.codes_to_return):
             dev._online = False
-            return None
+            return
         current_time[0] += 60.0  # Advance time
         s1.force_publish = True
         s2.force_publish = True
         await original_sleep(0)  # Yield without recursion
-        return None
+        return
 
     monkeypatch.setattr(asyncio, "sleep", _mock_sleep_no_recursion)
 
@@ -542,7 +545,6 @@ async def test_poller_run_sleep_cancelled(monkeypatch, caplog):
 
     # MUST override publish because DummyModbusSensor.publish stops the loop!
     async def _mock_publish_no_stop(mqtt_client, modbus_client=None, republish=False):
-        pass
         return True
 
     monkeypatch.setattr(s1, "publish", _mock_publish_no_stop)
@@ -556,7 +558,6 @@ async def test_poller_run_sleep_cancelled(monkeypatch, caplog):
         asyncio.current_task().cancel()
         # Yield to allow cancellation to raise
         await original_sleep(0.1)
-        return None
 
     monkeypatch.setattr("sigenergy2mqtt.devices.base.poller.asyncio.sleep", _mock_sleep)
     monkeypatch.setattr("sigenergy2mqtt.modbus.lock_factory.ModbusLockFactory.get", lambda modbus: FakeLock())
@@ -566,9 +567,9 @@ async def test_poller_run_sleep_cancelled(monkeypatch, caplog):
 
     with caplog.at_level(logging.DEBUG):
         try:
-            logging.debug("BEFORE RUN WAIT")
+            logging.getLogger(__name__).debug("BEFORE RUN WAIT")
             await asyncio.wait_for(coro, timeout=5)
-            logging.debug("AFTER RUN WAIT")
+            logging.getLogger(__name__).debug("AFTER RUN WAIT")
         except asyncio.CancelledError:
             pytest.fail("CancelledError leaked out of run loop")
 

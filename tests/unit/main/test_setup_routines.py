@@ -8,8 +8,15 @@ from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices import Inverter
 from sigenergy2mqtt.main import main as main_mod
-from sigenergy2mqtt.main.device_setup import _setup_dc_chargers, _setup_pid, setup_devices
-from sigenergy2mqtt.sensors.plant_read_write import ActivePowerFixedAdjustmentTargetValue, ReactivePowerFixedAdjustmentTargetValue
+from sigenergy2mqtt.main.device_setup import (
+    _setup_dc_chargers,
+    _setup_pid,
+    setup_devices,
+)
+from sigenergy2mqtt.sensors.plant_read_write import (
+    ActivePowerFixedAdjustmentTargetValue,
+    ReactivePowerFixedAdjustmentTargetValue,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -37,18 +44,19 @@ async def test_setup_devices_read_only_mode(caplog):
     mock_modbus.registers.read_write = False
     mock_modbus.registers.write_only = False
 
-    with patch("sigenergy2mqtt.config.active_config.modbus", [mock_modbus]), patch("sigenergy2mqtt.main.main.thread_config_registry.get_all", return_value=[]):
-        # we will break the inner loop immediately by making connect fail to avoid complex mocking
-        # Wait, if connect fails, sys.exit(1) is called (line 438). So we need to mock ModbusClient.
-        with patch("sigenergy2mqtt.main.device_setup.ModbusClient", autospec=True) as mock_mc:
-            # mock async context manager
-            mock_client = AsyncMock()
-            mock_client.connected = False
-            mock_mc.return_value = mock_client
-            mock_client.__aenter__.return_value = mock_client
+    with (
+        patch("sigenergy2mqtt.config.active_config.modbus", [mock_modbus]),
+        patch("sigenergy2mqtt.main.main.thread_config_registry.get_all", return_value=[]),
+        patch("sigenergy2mqtt.main.device_setup.ModbusClient", autospec=True) as mock_mc,
+    ):
+        # mock async context manager
+        mock_client = AsyncMock()
+        mock_client.connected = False
+        mock_mc.return_value = mock_client
+        mock_client.__aenter__.return_value = mock_client
 
-            with pytest.raises(SystemExit):
-                await setup_devices(set())
+        with pytest.raises(SystemExit):
+            await setup_devices(set())
 
     assert "Read-only mode enabled: No write operations can be performed." in caplog.text
 

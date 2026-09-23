@@ -1,6 +1,6 @@
 import os
 from types import SimpleNamespace
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import patch
 
 from sigenergy2mqtt.config import _promote_cli_to_env, const
 

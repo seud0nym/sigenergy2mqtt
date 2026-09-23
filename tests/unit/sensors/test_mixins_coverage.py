@@ -1,15 +1,16 @@
-import asyncio
 import importlib
 import logging
-import sys
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
+from paho.mqtt.client import Client
+from pymodbus import ModbusException
 from pymodbus.pdu import ExceptionResponse
 
-from sigenergy2mqtt.common import DeviceClass, InputType, ProtocolVersion
-from sigenergy2mqtt.config import active_config
+from sigenergy2mqtt.common import InputType, ProtocolVersion
 from sigenergy2mqtt.modbus import ModbusDataType
+from sigenergy2mqtt.mqtt.handler import MqttHandler
 from sigenergy2mqtt.sensors.base import DiscoveryKeys
 from sigenergy2mqtt.sensors.base.mixins import (
     ModbusSensorMixin,
@@ -36,6 +37,9 @@ class DummyReadable(ReadableSensorMixin, Sensor):
         kwargs.setdefault("data_type", ModbusDataType.UINT16)
         super().__init__(**kwargs)
 
+    async def _update_internal_state(self, **kwargs):
+        return True
+
 
 class DummyModbus(ModbusSensorMixin, Sensor):
     def __init__(self, **kwargs):
@@ -50,6 +54,9 @@ class DummyModbus(ModbusSensorMixin, Sensor):
         kwargs.setdefault("protocol_version", ProtocolVersion.V2_9)
         kwargs.setdefault("data_type", ModbusDataType.UINT16)
         super().__init__(**kwargs)
+
+    async def _update_internal_state(self, **kwargs):
+        return True
 
 
 def test_readable_sensor_mixin_init_exceptions():
@@ -75,10 +82,10 @@ def test_modbus_sensor_mixin_init_exceptions():
 
 def test_modbus_sensor_mixin_check_register_response_fallthrough(monkeypatch):
     sensor = DummyModbus(input_type=InputType.HOLDING, plant_index=0, device_address=1, address=30000, count=1)
-    
+
     # Mock handle methods to not raise so we hit line 189
     monkeypatch.setattr(sensor, "_handle_illegal_function", lambda *a, **kw: None)
-    
+
     rr = MagicMock()
     rr.isError.return_value = True
     rr.exception_code = 1
@@ -90,24 +97,24 @@ def test_modbus_sensor_mixin_debug_logging(caplog):
     caplog.set_level(logging.DEBUG)
     sensor = DummyModbus(input_type=InputType.HOLDING, plant_index=0, device_address=1, address=30000, count=1)
     sensor.debug_logging = True
-    
+
     # Line 198
     rr = ExceptionResponse(1)
-    with pytest.raises(Exception):
+    with pytest.raises(ModbusException):
         sensor._handle_illegal_function("test", rr)
     assert "Exception Response" in caplog.text or str(rr) in caplog.text
     caplog.clear()
-    
+
     # Line 231
     rr = ExceptionResponse(3)
-    with pytest.raises(Exception):
+    with pytest.raises(ModbusException):
         sensor._handle_illegal_data_value("test", rr)
     assert "Exception Response" in caplog.text or str(rr) in caplog.text
     caplog.clear()
-    
+
     # Line 241
     rr = ExceptionResponse(4)
-    with pytest.raises(Exception):
+    with pytest.raises(ModbusException):
         sensor._handle_slave_device_failure("test", rr)
     assert "Exception Response" in caplog.text or str(rr) in caplog.text
 
@@ -115,12 +122,12 @@ def test_modbus_sensor_mixin_debug_logging(caplog):
 @pytest.mark.asyncio
 async def test_observable_mixin_notify():
     class DummyObs(ObservableMixin):
-        async def notify(self, modbus_client, mqtt_client, value, source, handler):
+        async def notify(self, transport, mqtt_client, value, source, handler):
             # Line 277
-            return await super().notify(modbus_client, mqtt_client, value, source, handler)
-            
+            return await super().notify(transport, mqtt_client, value, source, handler)
+
     d = DummyObs()
-    await d.notify(None, None, 0, "", None)
+    await d.notify(None, MagicMock(spec=Client), 0, "", MagicMock(spec=MqttHandler))
 
 
 class DummyWriteable(WriteableSensorMixin, DummyModbus):
@@ -128,26 +135,22 @@ class DummyWriteable(WriteableSensorMixin, DummyModbus):
         kwargs.setdefault("data_type", ModbusDataType.UINT16)
         super().__init__(**kwargs)
 
+    async def _write_value(self, transport: Any, mqtt_client: Client, value: float | str, source: str, handler: MqttHandler) -> bool:
+        return await super()._write_value(transport, mqtt_client, value, source, handler)
+
 
 def test_writable_sensor_mixin_command_topic():
     sensor = DummyWriteable(input_type=InputType.HOLDING, plant_index=0, device_address=1, address=30000, count=1)
     sensor[DiscoveryKeys.COMMAND_TOPIC] = "   "
-    
+
     # Line 319
     with pytest.raises(RuntimeError, match="command topic is not defined"):
         _ = sensor.command_topic
 
 
 def test_writable_sensor_mixin_raw2state_writeonly():
-    sensor = WriteOnlySensor(
-        name="test_wo",
-        object_id="sigen_test_obj",
-        plant_index=0,
-        device_address=1,
-        address=30000,
-        protocol_version=ProtocolVersion.V2_9
-    )
-    sensor._values = {"off": "0", "on": "1"}
+    sensor = WriteOnlySensor(name="test_wo", object_id="sigen_test_obj", plant_index=0, device_address=1, address=30000, protocol_version=ProtocolVersion.V2_9)
+    sensor._values = {"off": 0, "on": 1}
     sensor._names = {"off": "Disabled", "on": "Enabled"}
     # Lines 345-349
     assert sensor._raw2state("0") == "Disabled"
@@ -166,7 +169,7 @@ def test_writable_sensor_mixin_raw2state_switch():
         scan_interval=10,
         protocol_version=ProtocolVersion.V2_9,
         payload_off="OFF_VAL",
-        payload_on="ON_VAL"
+        payload_on="ON_VAL",
     )
     sensor[DiscoveryKeys.PAYLOAD_OFF] = "OFF_VAL"
     sensor[DiscoveryKeys.PAYLOAD_ON] = "ON_VAL"
@@ -178,18 +181,19 @@ def test_writable_sensor_mixin_raw2state_switch():
 
 def test_mixins_importerror_handling():
     # Lines 28-29
-    import sigenergy2mqtt.sensors.base.mixins as mixins
-    
+    from sigenergy2mqtt.sensors.base import mixins
+
     # Force ImportError on reload
     original_import = __import__
+
     def failing_import(name, *args, **kwargs):
         if "_sigenergy_local_modbus_registers" in name:
             raise ImportError("Fake ImportError")
         return original_import(name, *args, **kwargs)
-        
+
     with patch("builtins.__import__", side_effect=failing_import):
         importlib.reload(mixins)
         assert mixins.SIGENERGY_LOCAL_MODBUS_REGISTERS == {}
-        
+
     # Restore
     importlib.reload(mixins)

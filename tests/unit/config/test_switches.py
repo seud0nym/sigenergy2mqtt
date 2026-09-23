@@ -3,11 +3,14 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.common import ProtocolVersion  # noqa: E402
-from sigenergy2mqtt.config import active_config  # noqa: E402
-from sigenergy2mqtt.config.settings import HomeAssistantConfig  # noqa: E402
-from sigenergy2mqtt.sensors.base import AvailabilityMixin, Sensor  # noqa: E402
-from sigenergy2mqtt.sensors.plant_read_write import MaxChargingLimit, RemoteEMSControlMode  # noqa: E402
+from sigenergy2mqtt.common import ProtocolVersion
+from sigenergy2mqtt.config import active_config
+from sigenergy2mqtt.config.settings import HomeAssistantConfig
+from sigenergy2mqtt.sensors.base import AvailabilityMixin, Sensor
+from sigenergy2mqtt.sensors.plant_read_write import (
+    MaxChargingLimit,
+    RemoteEMSControlMode,
+)
 
 
 class MockSensor(Sensor):

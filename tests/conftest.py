@@ -23,7 +23,7 @@ with patch.object(sys, "argv", ["sigenergy2mqtt"]):
     except SystemExit:
         # If it still correctly exits (validation failure?), capture it.
         pass
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"Failed to load sigenergy2mqtt components during conftest setup: {e}")
 
 

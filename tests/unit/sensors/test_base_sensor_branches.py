@@ -10,7 +10,14 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.common import DeviceClass, InputType, ProtocolVersion, RegisterAccess, StateClass, UnitOfPower
+from sigenergy2mqtt.common import (
+    DeviceClass,
+    InputType,
+    ProtocolVersion,
+    RegisterAccess,
+    StateClass,
+    UnitOfPower,
+)
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.base import ReadOnlySensor, Sensor
@@ -82,20 +89,19 @@ class TestSensorInitValidation:
     def test_invalid_icon_raises(self):
         """Line 105: AssertionError when icon does not start with 'mdi:'."""
         cfg = _make_cfg()
-        with _swap_active_config(cfg), patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            with pytest.raises(AssertionError, match="does not start with 'mdi:'"):
-                _ConcreteSensor(
-                    name="Bad Icon",
-                    unique_id="sigen_bad_icon",
-                    object_id="sigen_bad_icon",
-                    unit=None,
-                    device_class=None,
-                    state_class=None,
-                    icon="bad_icon",  # Triggers line 105
-                    gain=None,
-                    precision=None,
-                    protocol_version=ProtocolVersion.V2_4,
-                )
+        with _swap_active_config(cfg), patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True), pytest.raises(AssertionError, match="does not start with 'mdi:'"):
+            _ConcreteSensor(
+                name="Bad Icon",
+                unique_id="sigen_bad_icon",
+                object_id="sigen_bad_icon",
+                unit=None,
+                device_class=None,
+                state_class=None,
+                icon="bad_icon",  # Triggers line 105
+                gain=None,
+                precision=None,
+                protocol_version=ProtocolVersion.V2_4,
+            )
 
     def test_invalid_protocol_version_type_raises(self):
         """Line 109: TypeError when protocol_version is not a ProtocolVersion instance."""
@@ -111,7 +117,7 @@ class TestSensorInitValidation:
                 icon=None,
                 gain=None,
                 precision=None,
-                protocol_version="2.4",  # Triggers line 109
+                protocol_version="2.4",  # pyright: ignore[reportArgumentType] because the error is what is being tested
             )
 
 
@@ -124,38 +130,36 @@ class TestSensorIDValidation:
     def test_unique_id_wrong_prefix_raises(self):
         """Line 203: AssertionError when unique_id doesn't start with correct prefix."""
         cfg = _make_cfg()
-        with _swap_active_config(cfg), patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            with pytest.raises(AssertionError, match="does not start with 'sigen'"):
-                _ConcreteSensor(
-                    name="Wrong Prefix",
-                    unique_id="wrong_prefix_uid",  # Triggers line 203
-                    object_id="sigen_wrong",
-                    unit=None,
-                    device_class=None,
-                    state_class=None,
-                    icon=None,
-                    gain=None,
-                    precision=None,
-                    protocol_version=ProtocolVersion.V2_4,
-                )
+        with _swap_active_config(cfg), patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True), pytest.raises(AssertionError, match="does not start with 'sigen'"):
+            _ConcreteSensor(
+                name="Wrong Prefix",
+                unique_id="wrong_prefix_uid",  # Triggers line 203
+                object_id="sigen_wrong",
+                unit=None,
+                device_class=None,
+                state_class=None,
+                icon=None,
+                gain=None,
+                precision=None,
+                protocol_version=ProtocolVersion.V2_4,
+            )
 
     def test_object_id_wrong_prefix_raises(self):
         """Line 215: AssertionError when object_id doesn't start with correct prefix."""
         cfg = _make_cfg()
-        with _swap_active_config(cfg), patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            with pytest.raises(AssertionError, match="does not start with 'sigen'"):
-                _ConcreteSensor(
-                    name="Wrong OID",
-                    unique_id="sigen_valid",
-                    object_id="wrong_oid",  # Triggers line 215
-                    unit=None,
-                    device_class=None,
-                    state_class=None,
-                    icon=None,
-                    gain=None,
-                    precision=None,
-                    protocol_version=ProtocolVersion.V2_4,
-                )
+        with _swap_active_config(cfg), patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True), pytest.raises(AssertionError, match="does not start with 'sigen'"):
+            _ConcreteSensor(
+                name="Wrong OID",
+                unique_id="sigen_valid",
+                object_id="wrong_oid",  # Triggers line 215
+                unit=None,
+                device_class=None,
+                state_class=None,
+                icon=None,
+                gain=None,
+                precision=None,
+                protocol_version=ProtocolVersion.V2_4,
+            )
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -181,7 +185,7 @@ class TestMonitorableSetter:
         """Line 360: TypeError when monitorable set to non-bool value."""
         s = _make_sensor("mon_type")
         with pytest.raises(TypeError, match=".monitorable must be a bool"):
-            s.monitorable = "yes"  # Triggers line 360
+            s.monitorable = "yes"  # pyright: ignore[reportAttributeAccessIssue] because this is what is being tested
 
     def test_unchanged_with_debug_logs(self, caplog):
         """Lines 363-364: debug branch when monitorable is set to same value with debug_logging=True."""
@@ -227,7 +231,10 @@ class TestApplyDeviceOverrides:
         """Lines 449-452: writable sensor set to not-publishable when registers.read_write=False."""
 
         class _MockWriteable(WriteableSensorMixin, ReadOnlySensor):
-            async def value_is_valid(self, modbus_client, raw_value):
+            async def value_is_valid(self, transport, raw_value):
+                return True
+
+            async def _write_value(self, transport, mqtt_client, value, source, handler) -> bool:
                 return True
 
         cfg = _make_cfg()
@@ -311,7 +318,7 @@ class TestApplyDeviceOverrides:
         registers = MagicMock(spec=RegisterAccess)
         registers.no_remote_ems = True
 
-        with patch("sigenergy2mqtt.sensors.base.sensor.logger") as mock_log:
+        with patch("sigenergy2mqtt.sensors.base.sensor.logger"):
             s.apply_device_overrides(registers)
 
         assert s.publishable is False

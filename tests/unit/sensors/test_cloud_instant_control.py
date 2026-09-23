@@ -17,11 +17,11 @@ from sigenergy2mqtt.devices.base.poller import SensorGroupPoller
 from sigenergy2mqtt.devices.plant.cloud_control import SigenergyCloudControl
 from sigenergy2mqtt.sensors.base import CloudReadWriteSensor, DiscoveryKeys
 from sigenergy2mqtt.sensors.plant_cloud_control import (
+    INSTANT_CONTROL_OPTIONS,
     BatteryExportLimitation,
     GridConnectionLimit,
     GridExportLimit,
     GridImportLimit,
-    INSTANT_CONTROL_OPTIONS,
     InstantControlDuration,
     InstantControlMode,
     InstantControlSwitch,

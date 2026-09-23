@@ -10,7 +10,15 @@ import pytest
 from sigenergy2mqtt.config import Config, _swap_active_config, active_config
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.mqtt import mqtt_setup
-from sigenergy2mqtt.mqtt.client import MqttClient, on_connect, on_disconnect, on_message, on_publish, on_subscribe, on_unsubscribe
+from sigenergy2mqtt.mqtt.client import (
+    MqttClient,
+    on_connect,
+    on_disconnect,
+    on_message,
+    on_publish,
+    on_subscribe,
+    on_unsubscribe,
+)
 from sigenergy2mqtt.mqtt.handler import MqttHandler
 
 
@@ -831,7 +839,7 @@ class TestMqttSetup:
 
         loop = asyncio.new_event_loop()
         try:
-            with pytest.raises(Exception):
+            with pytest.raises(OSError):
                 await mqtt_setup("cid2", None, loop)
         finally:
             loop.close()

@@ -1,6 +1,5 @@
 """Focused coverage for the writer boundary used by InfluxBase."""
 
-import asyncio
 from unittest.mock import MagicMock
 
 import pytest

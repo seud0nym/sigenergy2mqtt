@@ -10,12 +10,32 @@ import pytest
 from pymodbus import ModbusException
 
 from sigenergy2mqtt.cloud.exceptions import CloudControlAuthError
-from sigenergy2mqtt.common import ConsumptionMethod, DeviceClass, FirmwareVersion, InputType, ProtocolVersion, StateClass, UnitOfPower
+from sigenergy2mqtt.common import (
+    ConsumptionMethod,
+    DeviceClass,
+    FirmwareVersion,
+    InputType,
+    ProtocolVersion,
+    StateClass,
+    UnitOfPower,
+)
 from sigenergy2mqtt.config import _swap_active_config, active_config
 from sigenergy2mqtt.devices import DeviceRegistry, Inverter
 from sigenergy2mqtt.main import main as main_mod
-from sigenergy2mqtt.main.device_factories import get_state, make_ac_charger, make_dc_charger, make_plant_and_inverter
-from sigenergy2mqtt.main.device_setup import _cloud_control_plant_index, _discover_cloud_control_plant_index, _is_grid_outage, _setup_ac_chargers, _setup_dc_chargers, setup_devices
+from sigenergy2mqtt.main.device_factories import (
+    get_state,
+    make_ac_charger,
+    make_dc_charger,
+    make_plant_and_inverter,
+)
+from sigenergy2mqtt.main.device_setup import (
+    _cloud_control_plant_index,
+    _discover_cloud_control_plant_index,
+    _is_grid_outage,
+    _setup_ac_chargers,
+    _setup_dc_chargers,
+    setup_devices,
+)
 from sigenergy2mqtt.main.logging_setup import _configure_logger, configure_logging
 from sigenergy2mqtt.main.main import async_main, thread_config_registry
 from sigenergy2mqtt.main.modbus_helpers import get_modbus_url, read_registers
@@ -23,7 +43,12 @@ from sigenergy2mqtt.main.protocol_probe import probe_optional_interface, probe_p
 from sigenergy2mqtt.main.restart import restart_controller
 from sigenergy2mqtt.main.service_setup import setup_services, setup_signals
 from sigenergy2mqtt.main.thread_config import ThreadConfig
-from sigenergy2mqtt.main.validation import _PUBLISHABLE_SENSOR_VALIDATION_CACHE_VERSION, _inverter_firmware_payload, _validation_hash, validate_publishable_sensors
+from sigenergy2mqtt.main.validation import (
+    _PUBLISHABLE_SENSOR_VALIDATION_CACHE_VERSION,
+    _inverter_firmware_payload,
+    _validation_hash,
+    validate_publishable_sensors,
+)
 from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerRunningState
 from sigenergy2mqtt.sensors.base import Sensor
 from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion
@@ -825,7 +850,7 @@ async def test_setup_devices_ignored_host(clean_config):
     clean_config.modbus[0].registers.write_only = False
     seen = set()
     thread_config_registry.clear()
-    configs, proto = await setup_devices(seen)
+    configs, _proto = await setup_devices(seen)
     assert len(configs) == 0
 
 
@@ -897,7 +922,7 @@ async def test_coverage_gap_closers(clean_config, monkeypatch):
         patch("sigenergy2mqtt.main.device_factories.probe_optional_interface", AsyncMock(return_value=False)),
         patch("sigenergy2mqtt.devices.Inverter.create", AsyncMock(return_value=MagicMock())),
     ):
-        inv, plant = await make_plant_and_inverter(0, mock_client, 1, mock_plant, seen)
+        _inv, plant = await make_plant_and_inverter(0, mock_client, 1, mock_plant, seen)
         assert plant is mock_plant
 
     from sigenergy2mqtt.modbus import ModbusDataType
@@ -1089,7 +1114,7 @@ def test_exit_on_signal(clean_config):
     with patch("signal.signal") as mock_sig:
         setup_signals(configs)
         # Find SIGINT handler
-        handler = [call.args[1] for call in mock_sig.call_args_list if call.args[0] == signal.SIGINT][0]
+        handler = next(call.args[1] for call in mock_sig.call_args_list if call.args[0] == signal.SIGINT)
         handler(signal.SIGINT, None)
         assert mock_config.offline.called
 
@@ -1171,7 +1196,7 @@ class TestSignals:
         with patch("signal.signal") as mock_sig:
             mock_config = MagicMock()
             setup_signals([mock_config])
-            handler = [call.args[1] for call in mock_sig.call_args_list if call.args[0] == signal.SIGUSR1][0]
+            handler = next(call.args[1] for call in mock_sig.call_args_list if call.args[0] == signal.SIGUSR1)
             handler(signal.SIGUSR1, None)
             assert active_config.home_assistant.enabled is False
             mock_config.offline.assert_called_once()
@@ -1180,7 +1205,7 @@ class TestSignals:
         """Test reload_on_signal signal handler."""
         with patch("signal.signal") as mock_sig, patch.object(active_config, "reload") as mock_reload, patch.object(restart_controller, "request") as mock_request:
             setup_signals([MagicMock()])
-            handler = [call.args[1] for call in mock_sig.call_args_list if call.args[0] == signal.SIGHUP][0]
+            handler = next(call.args[1] for call in mock_sig.call_args_list if call.args[0] == signal.SIGHUP)
             with patch("asyncio.get_running_loop") as mock_get_loop:
                 mock_loop = MagicMock()
                 mock_get_loop.return_value = mock_loop

@@ -1,7 +1,6 @@
 """Contract tests for CloudControlPort implementations."""
 
 import asyncio
-
 from datetime import timedelta
 from types import SimpleNamespace
 from unittest.mock import AsyncMock

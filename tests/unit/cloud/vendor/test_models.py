@@ -4,8 +4,6 @@ from dataclasses import FrozenInstanceError
 
 import pytest
 
-from sigenergy2mqtt.config import Config, _swap_active_config
-from sigenergy2mqtt.config.models.cloud import CloudConfig
 from sigenergy2mqtt.cloud.vendor.solidfox.sigenergy_cloud import (
     BatteryLevelSettings,
     InstantManualControl,
@@ -16,6 +14,8 @@ from sigenergy2mqtt.cloud.vendor.solidfox.sigenergy_cloud import (
 from sigenergy2mqtt.cloud.vendor.solidfox.sigenergy_cloud.regions import (
     base_url_for_region,
 )
+from sigenergy2mqtt.config import Config, _swap_active_config
+from sigenergy2mqtt.config.models.cloud import CloudConfig
 
 
 def test_battery_level_settings_round_trip() -> None:

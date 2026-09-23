@@ -8,7 +8,11 @@ import pytest
 from sigenergy2mqtt.config import OutputField, StatusField, active_config
 from sigenergy2mqtt.config.settings import PvOutputConfig
 from sigenergy2mqtt.pvoutput.service import Service
-from sigenergy2mqtt.pvoutput.service_topics import Calculation, ServiceTopics, TimePeriodServiceTopics
+from sigenergy2mqtt.pvoutput.service_topics import (
+    Calculation,
+    ServiceTopics,
+    TimePeriodServiceTopics,
+)
 from sigenergy2mqtt.pvoutput.topic import Topic
 
 

@@ -7,9 +7,11 @@ Covers missing lines:
 
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from pymodbus.pdu import ExceptionResponse
 
 from sigenergy2mqtt.common import InputType, ProtocolVersion
 from sigenergy2mqtt.config import Config, _swap_active_config
@@ -30,7 +32,7 @@ def mock_config_all():
     cfg.home_assistant.entity_id_prefix = "sigen"
     cfg.home_assistant.enabled = True
     cfg.sensor_overrides = {}
-    cfg.persistent_state_path = "."
+    cfg.persistent_state_path = Path(".")
 
     with _swap_active_config(cfg):
         yield cfg
@@ -192,11 +194,14 @@ class TestReadWriteSensorConfigureMqttTopics:
     def test_raises_when_control_sensor_topic_not_configured(self):
         """Line 253: RuntimeError when availability control sensor topic is empty."""
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            # Create a control sensor mock that passes isinstance(_, AvailabilityMixin)
-            mock_control = MagicMock(spec=AvailabilityMixin)
-            mock_control.__class__ = AvailabilityMixin  # make isinstance() pass
-            mock_control.state_topic = ""  # Empty → triggers RuntimeError
-            mock_control.raw_state_topic = ""
+            # Create a real AvailabilityMixin instance so isinstance(...) passes.
+            class _AvailabilityControl(AvailabilityMixin):
+                async def _update_internal_state(self, **kwargs) -> bool | Exception | ExceptionResponse:
+                    return True
+
+            mock_control = _AvailabilityControl()
+            mock_control[DiscoveryKeys.STATE_TOPIC] = ""  # Empty → triggers RuntimeError
+            mock_control[DiscoveryKeys.RAW_STATE_TOPIC] = ""
             mock_control.publish_raw = False
 
             sensor = NumericSensor(
@@ -446,30 +451,31 @@ class TestNumericSensorGetState:
 class TestThreePhaseAdjustmentTargetValue:
     def test_missing_output_type_raises(self):
         """Line 581: ValueError when output_type not in kwargs."""
-        from sigenergy2mqtt.sensors.base.writeable import ThreePhaseAdjustmentTargetValue
+        from sigenergy2mqtt.sensors.base.writeable import (
+            ThreePhaseAdjustmentTargetValue,
+        )
 
-        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True), pytest.raises(ValueError, match="output_type parameter is required"):
             # output_type is passed through **kwargs by ThreePhaseAdjustmentTargetValue
             # but we need to NOT pass it to trigger line 581
             # ThreePhaseAdjustmentTargetValue calls super().__init__(**kwargs) first,
             # then checks for output_type. We call it without output_type.
-            with pytest.raises(ValueError, match="output_type parameter is required"):
-                ThreePhaseAdjustmentTargetValue(
-                    availability_control_sensor=None,
-                    name="Test",
-                    object_id="sigen_three_phase",
-                    input_type=InputType.HOLDING,
-                    plant_index=0,
-                    device_address=1,
-                    address=40008,
-                    count=2,
-                    data_type=ModbusDataType.INT32,
-                    scan_interval=60,
-                    unit=None,
-                    device_class=None,
-                    icon="mdi:power",
-                    gain=None,
-                    precision=None,
-                    protocol_version=ProtocolVersion.V1_8,
-                    # output_type intentionally omitted → triggers line 581
-                )
+            ThreePhaseAdjustmentTargetValue(
+                availability_control_sensor=None,
+                name="Test",
+                object_id="sigen_three_phase",
+                input_type=InputType.HOLDING,
+                plant_index=0,
+                device_address=1,
+                address=40008,
+                count=2,
+                data_type=ModbusDataType.INT32,
+                scan_interval=60,
+                unit=None,
+                device_class=None,
+                icon="mdi:power",
+                gain=None,
+                precision=None,
+                protocol_version=ProtocolVersion.V1_8,
+                # output_type intentionally omitted → triggers line 581
+            )

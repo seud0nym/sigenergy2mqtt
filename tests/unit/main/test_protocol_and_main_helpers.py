@@ -130,7 +130,7 @@ def test_main_validate_calls_validate_main(monkeypatch):
 
     with (
         patch("sigenergy2mqtt.__main__.asyncio.run") as mock_run,
-        patch("sigenergy2mqtt.__main__._validate_main", new_callable=MagicMock) as mock_validate,
+        patch("sigenergy2mqtt.__main__._validate_main", new_callable=MagicMock),
         patch("sigenergy2mqtt.__main__.validate_connections", new_callable=MagicMock),
         pytest.raises(SystemExit),
     ):

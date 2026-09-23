@@ -240,11 +240,13 @@ async def test_pvoutput_upload_failure_marks_health_unhealthy(monkeypatch):
         status_code = 500
         reason = "Internal Server Error"
         text = "failed"
-        headers = {
-            "X-Rate-Limit-Limit": "60",
-            "X-Rate-Limit-Remaining": "59",
-            "X-Rate-Limit-Reset": str(int(time.time()) + 60),
-        }
+
+        def __init__(self):
+            self.headers = {
+                "X-Rate-Limit-Limit": "60",
+                "X-Rate-Limit-Remaining": "59",
+                "X-Rate-Limit-Reset": str(int(time.time()) + 60),
+            }
 
         def raise_for_status(self):
             raise requests.RequestException("boom")

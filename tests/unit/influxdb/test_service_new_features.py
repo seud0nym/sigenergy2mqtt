@@ -7,7 +7,7 @@ import pytest
 import requests
 
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.influxdb.writers import V1HttpWriter, V2HttpWriter
+from sigenergy2mqtt.influxdb.writers import V2HttpWriter
 from tests.unit.influxdb.conftest import FakeResponse, _bring_online
 
 
@@ -71,7 +71,7 @@ class TestInfluxRateLimiting:
         # Use a real lock/semaphore but mock sleep to verify it's called
         service._query_interval = 1.0
 
-        with patch.object(service._session, "post", return_value=FakeResponse(200)) as mock_post, patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
+        with patch.object(service._session, "post", return_value=FakeResponse(200)), patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
             # First query sets the time
             await service.query_v2("http://base", "org", "tok", "q1")
 

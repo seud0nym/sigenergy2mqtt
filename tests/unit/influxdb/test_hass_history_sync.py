@@ -1,5 +1,4 @@
 import asyncio
-import logging
 from _asyncio import Future
 from collections.abc import Generator
 from typing import Any

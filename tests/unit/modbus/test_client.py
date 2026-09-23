@@ -197,9 +197,8 @@ class TestModbusClient:
     @pytest.mark.asyncio
     async def test_read_registers_unknown_input_type(self, client):
         """Test _read_registers with unknown input type."""
-        with patch("sigenergy2mqtt.metrics.Metrics"):
-            with pytest.raises(Exception, match="Unknown input type"):
-                await client._read_registers(address=100, count=1, device_id=1, input_type="INVALID", use_pre_read=False)
+        with patch("sigenergy2mqtt.metrics.Metrics"), pytest.raises(TypeError, match="Unknown input type"):
+            await client._read_registers(address=100, count=1, device_id=1, input_type="INVALID", use_pre_read=False)
 
     def test_bypass_read_ahead(self, client, mock_pdu):
         """Test bypass_read_ahead clears cache for specified registers."""

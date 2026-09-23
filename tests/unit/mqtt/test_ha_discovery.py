@@ -1,5 +1,5 @@
 import json
-from datetime import timezone
+from datetime import UTC
 from typing import cast
 from unittest.mock import MagicMock
 
@@ -9,7 +9,13 @@ from sigenergy2mqtt.common import InputType, ProtocolVersion, StateClass, UnitOf
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.devices import Device, DeviceRegistry
 from sigenergy2mqtt.modbus import ModbusDataType
-from sigenergy2mqtt.sensors.base import AlarmSensor, EnergyDailyAccumulationSensor, ReadableSensorMixin, Sensor, TimestampSensor
+from sigenergy2mqtt.sensors.base import (
+    AlarmSensor,
+    EnergyDailyAccumulationSensor,
+    ReadableSensorMixin,
+    Sensor,
+    TimestampSensor,
+)
 
 SUPPORTED_DISCOVERY_KEYS = {
     "act_t",
@@ -362,24 +368,17 @@ SUPPORTED_DISCOVERY_KEYS = {
     "latest_version_template",
     "last_reset_topic",
     "last_reset_value_template",
-    "max",
     "max_humidity",
     "max_kelvin",
     "max_mireds",
-    "max_temp",
     "migrate_discovery",
-    "min",
     "min_humidity",
     "min_kelvin",
     "min_mireds",
-    "min_temp",
-    "mode",
     "mode_command_topic",
     "mode_command_template",
     "mode_state_topic",
     "mode_state_template",
-    "modes",
-    "name",
     "origin",
     "off_delay",
     "on_command_type",
@@ -459,7 +458,6 @@ SUPPORTED_DISCOVERY_KEYS = {
     "rgbww_state_topic",
     "rgbww_value_template",
     "send_command_topic",
-    "send_if_off",
     "set_fan_speed_topic",
     "set_position_topic",
     "set_position_template",
@@ -484,7 +482,6 @@ SUPPORTED_DISCOVERY_KEYS = {
     "state_topic",
     "state_template",
     "state_value_template",
-    "step",
     "subtype",
     "suggested_display_precision",
     "supported_color_modes",
@@ -512,8 +509,6 @@ SUPPORTED_DISCOVERY_KEYS = {
     "tilt_closed_value",
     "tilt_command_topic",
     "tilt_command_template",
-    "tilt_max",
-    "tilt_min",
     "tilt_opened_value",
     "tilt_optimistic",
     "tilt_status_topic",
@@ -550,7 +545,6 @@ SUPPORTED_DEVICE_KEYS = {
     "configuration_url",
     "connections",
     "identifiers",
-    "name",
     "manufacturer",
     "model",
     "model_id",
@@ -568,7 +562,7 @@ def assert_keys_valid(data, allowed_keys, context=""):
     """Helper to assert that all keys in a dictionary are in the allowed set."""
     if not isinstance(data, dict) or not data:
         return
-    invalid_keys = [k for k in data.keys() if k not in allowed_keys]
+    invalid_keys = [k for k in data if k not in allowed_keys]
     assert not invalid_keys, f"Invalid keys found in {context}: {invalid_keys}. Allowed keys: {allowed_keys}"
 
 
@@ -710,7 +704,7 @@ def test_timestamp_sensor_discovery(mock_config):
     dev = Device("TestDevice", 0, "sigen_uid", "Sigenergy", "SigenStor", ProtocolVersion.V1_8)
 
     # name, object_id, input_type, plant_index, device_address, address, scan_interval, protocol_version
-    sensor = TimestampSensor("UpdateTime", "sigen_ts1", InputType.INPUT, 0, 1, 30005, 60, ProtocolVersion.V1_8, tz=timezone.utc)
+    sensor = TimestampSensor("UpdateTime", "sigen_ts1", InputType.INPUT, 0, 1, 30005, 60, ProtocolVersion.V1_8, tz=UTC)
     dev._add_sensor(cast(Sensor, sensor))
 
     mqtt_client = MagicMock()
@@ -751,13 +745,13 @@ def test_discovery_keys_validity(mock_config):
     dev._add_sensor(cast(Sensor, source))
     energy_sensor = EnergyDailyAccumulationSensor("Daily Energy", "sigen_daily", "sigen_daily", source)
     dev._add_to_all_sensors(energy_sensor)
-    ts_sensor = TimestampSensor("UpdateTime", "sigen_ts1", InputType.INPUT, 0, 1, 30005, 60, ProtocolVersion.V1_8, tz=timezone.utc)
+    ts_sensor = TimestampSensor("UpdateTime", "sigen_ts1", InputType.INPUT, 0, 1, 30005, 60, ProtocolVersion.V1_8, tz=UTC)
     dev._add_sensor(cast(Sensor, ts_sensor))
 
     mqtt_client = MagicMock()
     dev.publish_discovery(mqtt_client)
 
-    topic, discovery = get_discovery_payload(mqtt_client)
+    _topic, discovery = get_discovery_payload(mqtt_client)
 
     # Validate main discovery keys
     assert_keys_valid(discovery, SUPPORTED_DISCOVERY_KEYS, "main discovery")

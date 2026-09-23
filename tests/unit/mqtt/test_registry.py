@@ -1,5 +1,5 @@
 import time
-import pytest
+
 from sigenergy2mqtt.mqtt.registry import MqttHealthRegistry
 
 

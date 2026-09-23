@@ -6,8 +6,19 @@ from sigenergy2mqtt.common import PERCENTAGE, UnitOfEnergy, UnitOfPower
 from sigenergy2mqtt.config import ConsumptionSource, StatusField, VoltageSource, const
 from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.pvoutput import get_gain, get_pvoutput_services
-from sigenergy2mqtt.sensors.inverter_read_only import DailyChargeEnergy, DailyDischargeEnergy, PhaseVoltage, PVVoltageSensor
-from sigenergy2mqtt.sensors.plant_derived import GridSensorDailyExportEnergy, GridSensorDailyImportEnergy, TotalDailyPVEnergy, TotalLifetimePVEnergy, TotalPVPower
+from sigenergy2mqtt.sensors.inverter_read_only import (
+    DailyChargeEnergy,
+    DailyDischargeEnergy,
+    PhaseVoltage,
+    PVVoltageSensor,
+)
+from sigenergy2mqtt.sensors.plant_derived import (
+    GridSensorDailyExportEnergy,
+    GridSensorDailyImportEnergy,
+    TotalDailyPVEnergy,
+    TotalLifetimePVEnergy,
+    TotalPVPower,
+)
 from sigenergy2mqtt.sensors.plant_read_only import (
     ESSTotalChargedEnergy,
     ESSTotalDischargedEnergy,
@@ -173,10 +184,10 @@ def test_get_pvoutput_services_donation_logging(caplog):
         patch.object(active_config.pvoutput, "enabled", True),
         patch.object(active_config.pvoutput, "log_level", logging.WARNING),
         patch.object(active_config.pvoutput, "extended", {k: "" for k in StatusField if k.value.startswith("v") and k.value not in ("v1", "v2", "v3", "v4", "v5", "v6")} | {StatusField.V8: "MockTypedSensor"}),
+        caplog.at_level(logging.WARNING, logger="pvoutput"),
     ):
-        with caplog.at_level(logging.WARNING, logger="pvoutput"):
-            get_pvoutput_services([mock_thread_config])
-            assert "does not have a numeric data type" in caplog.text
+        get_pvoutput_services([mock_thread_config])
+        assert "does not have a numeric data type" in caplog.text
 
 
 def test_get_gain_additional():

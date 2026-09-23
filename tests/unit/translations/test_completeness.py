@@ -1,7 +1,6 @@
+import ast
 import glob
 import os
-
-import ast
 from pathlib import Path
 
 import pytest
@@ -46,26 +45,23 @@ def get_ast_string_values(node):
         left = get_ast_string_values(node.left)
         right = get_ast_string_values(node.right)
         if left and right:
-            return [l + r for l in left for r in right]  # noqa: E741
+            return [l + r for l in left for r in right]
         return left or right
     if isinstance(node, ast.List):
         res = []
         for elt in node.elts:
             res.extend(get_ast_string_values(elt))
         return res
-    if isinstance(node, ast.Call):
-        # Handle " ".join(words)
-        if isinstance(node.func, ast.Attribute) and node.func.attr == "join":
-            if isinstance(node.func.value, ast.Constant) and isinstance(node.func.value.value, str):
-                sep = node.func.value.value
-                if node.args:
-                    vals = get_ast_string_values(node.args[0])
-                    if vals:
-                        return [sep.join(vals)]
-                    else:
-                        found_names = [n.id for n in ast.walk(node.args[0]) if isinstance(n, ast.Name)]
-                        if found_names:
-                            return [f"{{{found_names[0]}}}"]
+    if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == "join" and isinstance(node.func.value, ast.Constant) and isinstance(node.func.value.value, str):
+        sep = node.func.value.value
+        if node.args:
+            vals = get_ast_string_values(node.args[0])
+            if vals:
+                return [sep.join(vals)]
+            else:
+                found_names = [n.id for n in ast.walk(node.args[0]) if isinstance(n, ast.Name)]
+                if found_names:
+                    return [f"{{{found_names[0]}}}"]
     return []
 
 
@@ -93,29 +89,28 @@ class TranslationExtractor(ast.NodeVisitor):
             return
 
         # Handle super().__init__(name="...")
-        if isinstance(node.func, ast.Attribute) and node.func.attr == "__init__":
-            if isinstance(node.func.value, ast.Call) and isinstance(node.func.value.func, ast.Name) and node.func.value.func.id == "super":
-                for keyword in node.keywords:
-                    if keyword.arg == "name":
-                        vals = get_ast_string_values(keyword.value)
-                        if vals and self.current_class not in self.ignore_name_classes:
-                            self._add_translation(self.current_class, "name", vals[0])
-                # Handle positional name if it's the first argument
-                if node.args:
-                    vals = get_ast_string_values(node.args[0])
+        if isinstance(node.func, ast.Attribute) and node.func.attr == "__init__" and isinstance(node.func.value, ast.Call) and isinstance(node.func.value.func, ast.Name) and node.func.value.func.id == "super":
+            for keyword in node.keywords:
+                if keyword.arg == "name":
+                    vals = get_ast_string_values(keyword.value)
                     if vals and self.current_class not in self.ignore_name_classes:
                         self._add_translation(self.current_class, "name", vals[0])
+            # Handle positional name if it's the first argument
+            if node.args:
+                vals = get_ast_string_values(node.args[0])
+                if vals and self.current_class not in self.ignore_name_classes:
+                    self._add_translation(self.current_class, "name", vals[0])
 
-                # Handle options=[...]
-                for keyword in node.keywords:
-                    if keyword.arg == "options" and isinstance(keyword.value, ast.List):
-                        options = {}
-                        for i, elt in enumerate(keyword.value.elts):
-                            vals = get_ast_string_values(elt)
-                            if vals and vals[0].strip():
-                                options[str(i)] = vals[0]
-                        if options:
-                            self._add_translation(self.current_class, "options", options)
+            # Handle options=[...]
+            for keyword in node.keywords:
+                if keyword.arg == "options" and isinstance(keyword.value, ast.List):
+                    options = {}
+                    for i, elt in enumerate(keyword.value.elts):
+                        vals = get_ast_string_values(elt)
+                        if vals and vals[0].strip():
+                            options[str(i)] = vals[0]
+                    if options:
+                        self._add_translation(self.current_class, "options", options)
 
         self.generic_visit(node)
 
@@ -134,29 +129,25 @@ class TranslationExtractor(ast.NodeVisitor):
             return
 
         for target in node.targets:
-            if isinstance(target, ast.Subscript):
-                if isinstance(target.value, ast.Name) and target.value.id == "self":
-                    if isinstance(target.slice, ast.Constant) and target.slice.value == "options":
-                        if isinstance(node.value, ast.List):
-                            options = {}
-                            for i, elt in enumerate(node.value.elts):
-                                vals = get_ast_string_values(elt)
-                                if vals and vals[0].strip():
-                                    options[str(i)] = vals[0]
-                            if options:
-                                self._add_translation(self.current_class, "options", options)
+            if isinstance(target, ast.Subscript) and isinstance(target.value, ast.Name) and target.value.id == "self":
+                if isinstance(target.slice, ast.Constant) and target.slice.value == "options" and isinstance(node.value, ast.List):
+                    options = {}
+                    for i, elt in enumerate(node.value.elts):
+                        vals = get_ast_string_values(elt)
+                        if vals and vals[0].strip():
+                            options[str(i)] = vals[0]
+                    if options:
+                        self._add_translation(self.current_class, "options", options)
 
-                    if isinstance(target.slice, ast.Constant) and target.slice.value == "comment":
-                        vals = get_ast_string_values(node.value)
-                        if vals:
-                            self._add_attr(self.current_class, "comment", vals[0])
+                if isinstance(target.slice, ast.Constant) and target.slice.value == "comment":
+                    vals = get_ast_string_values(node.value)
+                    if vals:
+                        self._add_attr(self.current_class, "comment", vals[0])
 
-            if isinstance(target, ast.Subscript):
-                if isinstance(target.value, ast.Name) and target.value.id == "attributes":
-                    if isinstance(target.slice, ast.Constant) and isinstance(target.slice.value, str):
-                        vals = get_ast_string_values(node.value)
-                        if vals:
-                            self._add_attr(self.current_class, target.slice.value, vals[0])
+            if isinstance(target, ast.Subscript) and isinstance(target.value, ast.Name) and target.value.id == "attributes" and isinstance(target.slice, ast.Constant) and isinstance(target.slice.value, str):
+                vals = get_ast_string_values(node.value)
+                if vals:
+                    self._add_attr(self.current_class, target.slice.value, vals[0])
 
         self.generic_visit(node)
 
@@ -172,14 +163,13 @@ class TranslationExtractor(ast.NodeVisitor):
             self.generic_visit(node)
             return
 
-        if isinstance(node.pattern, ast.MatchValue):
-            if isinstance(node.pattern.value, ast.Constant) and isinstance(node.pattern.value.value, int):
-                bit = str(node.pattern.value.value)
-                for body_node in node.body:
-                    if isinstance(body_node, ast.Return):
-                        vals = get_ast_string_values(body_node.value)
-                        if vals:
-                            self._add_alarm(self.current_class, bit, vals[0])
+        if isinstance(node.pattern, ast.MatchValue) and isinstance(node.pattern.value, ast.Constant) and isinstance(node.pattern.value.value, int):
+            bit = str(node.pattern.value.value)
+            for body_node in node.body:
+                if isinstance(body_node, ast.Return):
+                    vals = get_ast_string_values(body_node.value)
+                    if vals:
+                        self._add_alarm(self.current_class, bit, vals[0])
 
         self.generic_visit(node)
 
@@ -258,7 +248,7 @@ def test_en_yaml_completeness():
             assert key in classes[cls], f"Key {cls}.{key} is missing from en.yaml"
 
             if isinstance(value, dict):
-                for subkey, subvalue in value.items():
+                for subkey in value:
                     assert subkey in classes[cls][key], f"Subkey {cls}.{key}.{subkey} is missing from en.yaml"
                     # We don't necessarily check the value matches exactly (strings might be edited),
                     # but we ensure the key exists.
@@ -270,7 +260,6 @@ def test_en_yaml_completeness():
 def test_en_yaml_no_extra_keys():
     """Optional: Check if en.yaml has keys that no longer exist in code?
     Maybe not strictly required, but keeps it clean."""
-    pass
 
 
 class CLIHelpExtractor(ast.NodeVisitor):
@@ -327,7 +316,7 @@ def test_cli_translations_completeness():
     assert "cli" in current_translations, "cli section is missing from en.yaml"
 
     # Verify all CLI help texts are present
-    for dest, content in extractor.cli_translations.items():
+    for dest in extractor.cli_translations:
         assert dest in current_translations["cli"], f"CLI key '{dest}' is missing from en.yaml"
         assert "help" in current_translations["cli"][dest], f"CLI key '{dest}' is missing 'help' in en.yaml"
 

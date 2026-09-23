@@ -330,7 +330,9 @@ class TestSimpleEnergyDailyAccumulationSensor:
         source.unique_id = "source_uid"
 
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            from sigenergy2mqtt.sensors.base.accumulation import SimpleEnergyDailyAccumulationSensor
+            from sigenergy2mqtt.sensors.base.accumulation import (
+                SimpleEnergyDailyAccumulationSensor,
+            )
 
             sensor = SimpleEnergyDailyAccumulationSensor(
                 name="Daily Energy",
@@ -352,7 +354,9 @@ class TestSimpleEnergyDailyAccumulationSensor:
         source.unique_id = "source_uid"
 
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            from sigenergy2mqtt.sensors.base.accumulation import SimpleEnergyDailyAccumulationSensor
+            from sigenergy2mqtt.sensors.base.accumulation import (
+                SimpleEnergyDailyAccumulationSensor,
+            )
 
             sensor = SimpleEnergyDailyAccumulationSensor(
                 name="Daily Energy",
@@ -388,7 +392,9 @@ class TestSimpleEnergyDailyAccumulationSensor:
         source.unique_id = "source_uid"
 
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            from sigenergy2mqtt.sensors.base.accumulation import SimpleEnergyDailyAccumulationSensor
+            from sigenergy2mqtt.sensors.base.accumulation import (
+                SimpleEnergyDailyAccumulationSensor,
+            )
 
             sensor = SimpleEnergyDailyAccumulationSensor(
                 name="Daily Energy",
@@ -422,7 +428,9 @@ class TestEnergyDailyAccumulationSensor:
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             import time
 
-            from sigenergy2mqtt.sensors.base.accumulation import EnergyDailyAccumulationSensor
+            from sigenergy2mqtt.sensors.base.accumulation import (
+                EnergyDailyAccumulationSensor,
+            )
             from sigenergy2mqtt.sensors.inverter_derived import PVStringDailyEnergy
 
             source = PVStringDailyEnergy(plant_index=0, device_address=1, string_number=1, source=string)

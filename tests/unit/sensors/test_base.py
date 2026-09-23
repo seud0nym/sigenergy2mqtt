@@ -21,8 +21,7 @@ class TestSensorBase:
         cfg.home_assistant.unique_id_prefix = "sigen"
         cfg.home_assistant.entity_id_prefix = "sigen"
 
-        with _swap_active_config(cfg):
-            with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+        with _swap_active_config(cfg), patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
                 s = ConcreteSensor(
                     name="Test Sensor",
                     unique_id="sigen_test_unique_id",
@@ -130,7 +129,11 @@ class TestSensorLogic:
     def test_resettable_accumulation_negative_increase(self, tmp_path):
 
         from sigenergy2mqtt.modbus import ModbusDataType
-        from sigenergy2mqtt.sensors.base import EnergyLifetimeAccumulationSensor, ReadOnlySensor, Sensor
+        from sigenergy2mqtt.sensors.base import (
+            EnergyLifetimeAccumulationSensor,
+            ReadOnlySensor,
+            Sensor,
+        )
 
         source = MagicMock(spec=ReadOnlySensor)
         source.unique_id = "src"
@@ -140,8 +143,7 @@ class TestSensorLogic:
         cfg.home_assistant.unique_id_prefix = "sigen"
         cfg.home_assistant.entity_id_prefix = "sigen"
 
-        with _swap_active_config(cfg):
-            with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+        with _swap_active_config(cfg), patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
                 sensor = EnergyLifetimeAccumulationSensor("Accumulated", "sigen_acc", "sigen_acc", source, ModbusDataType.UINT32, "kWh", DeviceClass.ENERGY, StateClass.TOTAL, "mdi:energy", 1.0, 2)
                 sensor._current_total = 100.0
                 source.state_count = 2
@@ -158,8 +160,7 @@ class TestSensorLogic:
         cfg.home_assistant.unique_id_prefix = "sigen"
         cfg.home_assistant.entity_id_prefix = "sigen"
 
-        with _swap_active_config(cfg):
-            with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+        with _swap_active_config(cfg), patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
 
                 class ConcreteAlarm(AlarmSensor):
                     def decode_alarm_bit(self, bit_position: int) -> str | None:
@@ -247,8 +248,7 @@ class TestSensorLogic:
         cfg.home_assistant.unique_id_prefix = "sigen"
         cfg.home_assistant.entity_id_prefix = "sigen"
 
-        with _swap_active_config(cfg):
-            with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+        with _swap_active_config(cfg), patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
                 # name, object_id, plant_index, device_address, address, protocol_version
                 s = WriteOnlySensor("WO", "sigen_wo", 0, 1, 30001, ProtocolVersion.V2_4)
                 assert s.publishable is True
