@@ -7,6 +7,7 @@ import logging
 import math
 from typing import Any, cast
 
+from aiohttp import ClientError
 import paho.mqtt.client as mqtt
 
 from sigenergy2mqtt.cloud.exceptions import CloudControlError
@@ -35,7 +36,7 @@ class CloudSensor(ReadableSensorMixin, AvailabilityMixin):
             return False
         try:
             value = await self._read_cloud_state(port)
-        except CloudControlError as exc:
+        except (ClientError, CloudControlError) as exc:
             logger.warning(f"{self.log_identity} cloud read failed: {exc!r}")
             return False
         if value is None:
@@ -106,7 +107,7 @@ class CloudReadWriteSensor(WriteableSensorMixin, CloudSensor):
             return False
         try:
             return await self._write_cloud_value(port, value)
-        except CloudControlError as exc:
+        except (ClientError, CloudControlError) as exc:
             logger.error(f"{self.log_identity} cloud write failed: {exc!r}")
             return False
 
@@ -185,11 +186,10 @@ class CloudGridLimitSensor(NumericSensorMixin, CloudReadWriteSensor):
         installer_maximum, installer_valid = self._parse_number(
             payload, self._installer_key
         )
+        # A write enables the limit in the same request, so a currently disabled
+        # limit remains writable whenever its installer maximum is usable.
         self._updates_allowed = (
-            enabled
-            and current_valid
-            and installer_valid
-            and installer_maximum is not None
+            current_valid and installer_valid and installer_maximum is not None
         )
         self._update_installer_maximum(installer_maximum)
         if (

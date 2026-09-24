@@ -6,6 +6,7 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
+from aiohttp import ClientPayloadError, ServerDisconnectedError
 
 from sigenergy2mqtt.cloud.community_adapter import CommunityCloudAdapter
 from sigenergy2mqtt.cloud.exceptions import (
@@ -114,6 +115,29 @@ def community_adapter() -> CommunityCloudAdapter:
         set_battery_export_limitation=AsyncMock(return_value={"ok": True}),
     )
     return adapter
+
+
+@pytest.mark.asyncio
+async def test_connect_normalizes_aiohttp_transport_errors(
+    community_adapter: CommunityCloudAdapter,
+) -> None:
+    community_adapter._client.connect.side_effect = ServerDisconnectedError()  # type: ignore[reportPrivateUsage]
+
+    with pytest.raises(CloudControlUnavailableError):
+        await community_adapter.connect()
+
+
+@pytest.mark.asyncio
+async def test_operation_normalizes_aiohttp_transport_errors(
+    community_adapter: CommunityCloudAdapter,
+) -> None:
+    community_adapter._connected = True  # type: ignore[reportPrivateUsage]
+    community_adapter._client.get_operational_mode.side_effect = ClientPayloadError(  # type: ignore[reportPrivateUsage]
+        "truncated response"
+    )
+
+    with pytest.raises(CloudControlUnavailableError, match="truncated response"):
+        await community_adapter.get_operational_mode()
 
 
 async def test_device_list_uses_official_api_shape(
