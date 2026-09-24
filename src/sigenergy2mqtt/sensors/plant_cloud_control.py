@@ -18,8 +18,8 @@ from sigenergy2mqtt.common import (
 )
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.sensors.base import (
-    CloudReadWriteSensor,
     CloudGridLimitSensor,
+    CloudReadWriteSensor,
     NumericSensorMixin,
     SelectSensorMixin,
     SwitchSensorMixin,
@@ -98,6 +98,7 @@ class InstantControlMode(SelectSensorMixin, CloudReadWriteSensor):
             precision=None,
             protocol_version=ProtocolVersion.N_A,
         )
+        self.monitorable = False  # only need to monitor InstantControlSwitch
         self._payload_available, self._payload_not_available = 0, 1
         self._pending_value: int | None = None
         self._status_snapshot = _InstantControlStatusSnapshot()
@@ -109,9 +110,7 @@ class InstantControlMode(SelectSensorMixin, CloudReadWriteSensor):
             return None
         return _MODE_TO_OPTION.get(status.mode)
 
-    async def _write_cloud_value(
-        self, port: CloudControlPort, value: float | str
-    ) -> bool:
+    async def _write_cloud_value(self, port: CloudControlPort, value: float | str) -> bool:
         changed = self.set_latest_state(value)
         self._pending_value = int(value)
         return changed
@@ -139,6 +138,7 @@ class InstantControlDuration(NumericSensorMixin, CloudReadWriteSensor):
             maximum=1440.0,
             protocol_version=ProtocolVersion.N_A,
         )
+        self.monitorable = False  # only need to monitor InstantControlSwitch
         self._payload_available, self._payload_not_available = 0, 1
         self._pending_value: float | None = None
         self._status_snapshot = _InstantControlStatusSnapshot()
@@ -151,9 +151,7 @@ class InstantControlDuration(NumericSensorMixin, CloudReadWriteSensor):
         remaining = max(0.0, (status.ends_at - time.time()) / 60)
         return round(remaining, self.precision or 0)
 
-    async def _write_cloud_value(
-        self, port: CloudControlPort, value: float | str
-    ) -> bool:
+    async def _write_cloud_value(self, port: CloudControlPort, value: float | str) -> bool:
         changed = self.set_latest_state(value)
         self._pending_value = float(value)
         return changed
@@ -196,9 +194,7 @@ class InstantControlSwitch(SwitchSensorMixin, CloudReadWriteSensor):
         status = await self._status_snapshot.read(port)
         return int(status.enabled)
 
-    async def _write_cloud_value(
-        self, port: CloudControlPort, value: float | str
-    ) -> bool:
+    async def _write_cloud_value(self, port: CloudControlPort, value: float | str) -> bool:
         if int(value) == 0:
             await port.clear_instant_override()
             return True
@@ -317,17 +313,11 @@ class BatteryExportLimitation(SwitchSensorMixin, CloudReadWriteSensor):
 
     async def _read_cloud_state(self, port: CloudControlPort) -> int | str:
         payload = await port.battery_export_limitation()
-        if not isinstance(payload, dict) or not isinstance(
-            payload.get("currentEnable"), bool
-        ):
-            logger.warning(
-                f"{self.log_identity} cloud response contains invalid currentEnable: {payload!r}"
-            )
+        if not isinstance(payload, dict) or not isinstance(payload.get("currentEnable"), bool):
+            logger.warning(f"{self.log_identity} cloud response contains invalid currentEnable: {payload!r}")
             return "None"
         return int(payload["currentEnable"])
 
-    async def _write_cloud_value(
-        self, port: CloudControlPort, value: float | str
-    ) -> bool:
+    async def _write_cloud_value(self, port: CloudControlPort, value: float | str) -> bool:
         await port.set_battery_export_limitation(bool(int(value)))
         return True
