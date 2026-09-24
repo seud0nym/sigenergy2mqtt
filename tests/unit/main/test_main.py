@@ -117,6 +117,17 @@ async def test_cloud_control_discovery_failure_disables_cloud_control(caplog):
 
 
 @pytest.mark.asyncio
+async def test_cloud_control_discovery_closes_startup_loop_connection():
+    cloud_port = MagicMock()
+    cloud_port.device_list = AsyncMock(return_value=[])
+    cloud_port.close = AsyncMock()
+
+    assert await _discover_cloud_control_plant_index(cloud_port) == 0
+
+    cloud_port.close.assert_awaited_once_with()
+
+
+@pytest.mark.asyncio
 async def test_cloud_control_close_failure_does_not_abort_startup(caplog):
     cloud_port = MagicMock()
     cloud_port.device_list = AsyncMock(side_effect=CloudControlAuthError("bad credentials"))
@@ -125,7 +136,7 @@ async def test_cloud_control_close_failure_does_not_abort_startup(caplog):
     with caplog.at_level(logging.ERROR):
         assert await _discover_cloud_control_plant_index(cloud_port) is None
 
-    assert "Failed to close cloud adapter after discovery failure" in caplog.text
+    assert "Failed to close cloud adapter after discovery" in caplog.text
 
 
 def make_validation_sensor(suffix: str, address: int = 30001):
