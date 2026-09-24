@@ -24,7 +24,7 @@ class CloudControlRegistry:
             return
         if not config.accept_unofficial_api_risk:
             raise ValueError("cloud.accept-unofficial-api-risk must be true to use the unofficial mySigen cloud API")
-        logger.warning("Using the unofficial mySigen cloud API. Use a delegated 'View and Edit' account created with mySigen System Share rather than the primary account.")
+        logger.warning("Using the unofficial mySigen cloud API.")
         self._adapter = MySigenCloudAdapter(config.username, config.password, config.region)
         self._provider = "mysigen"
 
