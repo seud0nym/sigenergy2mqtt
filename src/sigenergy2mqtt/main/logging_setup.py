@@ -62,6 +62,7 @@ def configure_logging() -> None:
     configure_root_logger(active_config.log_level, active_config.log_fmt)
 
     _configure_logger("sigenergy2mqtt", active_config.log_level)
+    _configure_logger("sigenergy2mqtt.cloud", active_config.cloud.log_level)
     _configure_logger("sigenergy2mqtt.diagnostics", active_config.diagnostics.log_level)
     _configure_logger("sigenergy2mqtt.influxdb", active_config.influxdb.log_level)
     _configure_logger("sigenergy2mqtt.pvoutput", active_config.pvoutput.log_level)

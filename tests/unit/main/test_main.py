@@ -103,7 +103,7 @@ def test_cloud_control_plant_index_disables_unmatched_cloud(caplog):
     with caplog.at_level(logging.WARNING):
         assert _cloud_control_plant_index([{"deviceType": "Inverter", "serialNumber": "CLOUD-SN"}]) is None
 
-    assert "cloud control will be disabled" in caplog.text
+    assert "Cloud API disabled" in caplog.text
 
 
 def test_cloud_control_plant_index_disables_single_unreadable_serial(caplog):
@@ -170,7 +170,7 @@ async def test_cloud_control_discovery_failure_disables_cloud_control(caplog):
         assert await _discover_cloud_control_plant_index(cloud_port) is None
 
     assert "Cloud inverter discovery failed" in caplog.text
-    assert "cloud control will be disabled" in caplog.text
+    assert "Cloud API will be disabled" in caplog.text
     assert "bad credentials" in caplog.text
     cloud_port.close.assert_awaited_once_with()
 
@@ -222,7 +222,7 @@ async def test_cloud_control_close_failure_does_not_abort_startup(caplog):
         assert await _discover_cloud_control_plant_index(cloud_port) is None
 
     assert "Failed to close cloud adapter after discovery" in caplog.text
-    assert "cloud control will be disabled" in caplog.text
+    assert "Cloud API will be disabled" in caplog.text
 
 
 def make_validation_sensor(suffix: str, address: int = 30001):

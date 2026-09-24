@@ -1,4 +1,4 @@
-"""Selection and lifecycle ownership for cloud control."""
+"""Selection and lifecycle ownership for Cloud API."""
 
 import logging
 from typing import Literal

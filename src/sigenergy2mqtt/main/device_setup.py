@@ -43,6 +43,7 @@ _GRID_RESTORE_WATCH_TASKS: set[tuple[str, int, int]] = set()
 
 def _cloud_control_plant_index(device_list: list[dict[str, Any]]) -> int | None:
     """Find the local plant containing an inverter reported by the cloud."""
+    cloud_logger = logging.getLogger("sigenergy2mqtt.cloud")
     cloud_serial_numbers = {
         str(device.get("serialNumber") or device.get("serial_number") or device.get("sn"))
         for device in device_list
@@ -58,16 +59,14 @@ def _cloud_control_plant_index(device_list: list[dict[str, Any]]) -> int | None:
                 plants_with_unreadable_serials.add(device.plant_index)
                 continue
             if str(serial_number) in cloud_serial_numbers:
+                cloud_logger.info(f"Cloud inverter serial number {serial_number} matched local inverter at plant index {device.plant_index}; Cloud API enabled")
                 return device.plant_index
 
     if plants_with_unreadable_serials:
-        logger.warning(
-            "Local inverter serial numbers are unavailable for plant indexes %s; cloud control cannot be matched safely and will be disabled for this run",
-            sorted(plants_with_unreadable_serials),
-        )
+        cloud_logger.warning(f"Local inverter serial numbers are unavailable for plant indexes {sorted(plants_with_unreadable_serials)}; Cloud API cannot be matched safely and will be disabled")
         return None
 
-    logger.warning("No cloud inverter matched a local inverter; cloud control will be disabled for this run")
+    cloud_logger.warning("No cloud inverter matched a local inverter; Cloud API disabled")
     return None
 
 
@@ -83,7 +82,7 @@ async def _discover_cloud_control_plant_index(cloud_port: CloudControlPort) -> i
         device_list = await cloud_port.device_list()
     except (ClientError, CloudControlError) as exc:
         logger.warning(
-            "Cloud inverter discovery failed; cloud control will be disabled for this run: %s",
+            "Cloud inverter discovery failed; Cloud API will be disabled for this run: %s",
             exc,
         )
     finally:
@@ -92,7 +91,7 @@ async def _discover_cloud_control_plant_index(cloud_port: CloudControlPort) -> i
         except Exception:
             device_list = None
             logger.exception(
-                "Failed to close cloud adapter after discovery; cloud control will be disabled for this run: %s",
+                "Failed to close cloud adapter after discovery; Cloud API will be disabled for this run: %s",
             )
     if device_list is None:
         return None

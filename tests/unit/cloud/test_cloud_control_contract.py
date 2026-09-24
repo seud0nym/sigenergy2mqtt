@@ -40,6 +40,8 @@ from sigenergy2mqtt.config.models.cloud import CloudConfig
 def mysigen_adapter() -> MySigenCloudAdapter:
     adapter = MySigenCloudAdapter("delegated@example.com", "secret", "eu")
     adapter._client = SimpleNamespace(  # type: ignore[reportPrivateUsage]
+        base_url="https://api.sigenergy.cloud/",
+        region="testing",
         connect=AsyncMock(),
         close=AsyncMock(),
         set_instant_manual_control=AsyncMock(),

@@ -78,7 +78,7 @@ class CloudConfig(BaseModel):
             raise ValueError("testing URL must end with '/'")
         return value
 
-    log_level: int = Field(logging.WARNING, alias="log-level")
+    log_level: int = Field(logging.INFO, alias="log-level")
     """Cloud subsystem log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)"""
     _validate_log_level = field_validator("log_level", mode="before")(validate_log_level)
 

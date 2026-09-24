@@ -102,7 +102,7 @@ cloud:
     #                 'aus', 'eu', 'cn', 'apac', 'us'.
     region: ""
     # log-level
-    #   default: "WARNING"
+    #   default: "INFO"
     #   description:  The log level for the cloud service. Must be one of:
     #                 DEBUG, INFO, WARNING, ERROR, or CRITICAL
     log-level: "INFO"

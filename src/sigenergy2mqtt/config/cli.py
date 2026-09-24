@@ -931,7 +931,7 @@ def get_parser() -> argparse.ArgumentParser:
         dest=const.SIGENERGY2MQTT_CLOUD_LOG_LEVEL,
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
         default=os.getenv(const.SIGENERGY2MQTT_CLOUD_LOG_LEVEL, None),
-        help="Cloud subsystem log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)",
+        help="Cloud subsystem log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is INFO.",
     )
     parser.add_argument(
         "--cloud-accept-unofficial-api-risk",
