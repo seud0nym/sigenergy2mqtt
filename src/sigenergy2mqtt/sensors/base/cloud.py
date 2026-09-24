@@ -189,7 +189,10 @@ class CloudGridLimitSensor(NumericSensorMixin, CloudReadWriteSensor):
         # A write enables the limit in the same request, so a currently disabled
         # limit remains writable whenever its installer maximum is usable.
         self._updates_allowed = (
-            current_valid and installer_valid and installer_maximum is not None
+            enabled_valid
+            and current_valid
+            and installer_valid
+            and installer_maximum is not None
         )
         self._update_installer_maximum(installer_maximum)
         if (

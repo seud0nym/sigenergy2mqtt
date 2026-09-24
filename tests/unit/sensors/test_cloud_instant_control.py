@@ -399,6 +399,26 @@ async def test_grid_limit_empty_states_and_disallowed_updates(payload) -> None:
     assert await sensor._write_cloud_value(port, 4.0) is bool(
         payload["maxLimitationInstaller"]
     )
+    if payload["maxLimitationInstaller"]:
+        port.set_grid_export_limit.assert_awaited_once_with(4.0, enabled=True)
+    else:
+        port.set_grid_export_limit.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("enable", [None, "false", 0, 1])
+async def test_grid_limit_invalid_enable_status_disallows_updates(enable) -> None:
+    sensor = GridExportLimit(0)
+    port = AsyncMock()
+    port.grid_export_limit.return_value = {
+        "enable": enable,
+        "maxLimitation": "5.000",
+        "maxLimitationInstaller": "10.000",
+    }
+
+    assert await sensor._read_cloud_state(port) == "None"
+    assert await sensor._write_cloud_value(port, 4.0) is False
+    port.set_grid_export_limit.assert_not_awaited()
 
 
 @pytest.mark.asyncio
