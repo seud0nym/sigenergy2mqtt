@@ -115,7 +115,7 @@ SYNTHESIZED_INVERTER_VALUES = {
 
 
 class CloudApiTestServer:
-    """Stateful facsimile of the cloud endpoints used by CommunityCloudAdapter."""
+    """Stateful facsimile of the cloud endpoints used by MySigenCloudAdapter."""
 
     def __init__(self, username: str | None, password: str | None) -> None:
         self.username = username
