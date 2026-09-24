@@ -537,6 +537,16 @@ class Config:
         if name == "_settings":
             raise AttributeError("_settings not initialised")
         if self._settings is None:
+            from pydantic_core import PydanticUndefined
+
+            from .settings import Settings
+
+            field = Settings.model_fields.get(name)
+            if field is not None:
+                if field.default_factory is not None:
+                    return field.default_factory()  # type: ignore[reportCallIssue] Pydantic's FieldInfo.default_factory signature sometimes specifies that it could take arguments depending on the internal field context, leading Pylance to complain. However, for standard default factories, calling it without arguments is perfectly valid, and the ignore safely suppresses the false positive.
+                if field.default is not PydanticUndefined:
+                    return field.default
             raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}' (settings not loaded)")
         # Fall through to settings for all data attributes
         try:
