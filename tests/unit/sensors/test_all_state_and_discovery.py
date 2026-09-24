@@ -3,12 +3,12 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-import sigenergy2mqtt.sensors.ac_charger_read_only as acro
-import sigenergy2mqtt.sensors.ac_charger_read_write as acrw
-import sigenergy2mqtt.sensors.inverter_derived as idrv
-import sigenergy2mqtt.sensors.inverter_read_only as iro
-import sigenergy2mqtt.sensors.inverter_read_write as irw
-import sigenergy2mqtt.sensors.plant_derived as pdrv
+import sigenergy2mqtt.sensors.ev.ac_charger_read_only as acro
+import sigenergy2mqtt.sensors.ev.ac_charger_read_write as acrw
+import sigenergy2mqtt.sensors.inverter.derived as idrv
+import sigenergy2mqtt.sensors.inverter.read_only as iro
+import sigenergy2mqtt.sensors.inverter.read_write as irw
+import sigenergy2mqtt.sensors.plant.derived as pdrv
 from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.sensors.base import AvailabilityMixin, Sensor
 

@@ -13,12 +13,12 @@ from sigenergy2mqtt.common import (
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.base import PVPowerSensor, Sensor
-from sigenergy2mqtt.sensors.plant_derived import (
+from sigenergy2mqtt.sensors.plant.derived import (
     PlantConsumedPower,
     TotalLifetimePVEnergy,
     TotalPVPower,
 )
-from sigenergy2mqtt.sensors.plant_read_only import (
+from sigenergy2mqtt.sensors.plant.read_only import (
     BatteryPower,
     GridSensorActivePower,
     GridStatus,
@@ -51,7 +51,7 @@ def mock_config():
 
 class TestBasicDerivedSensorsCoverage:
     def test_battery_charging_power(self, caplog):
-        from sigenergy2mqtt.sensors.plant_derived import BatteryChargingPower
+        from sigenergy2mqtt.sensors.plant.derived import BatteryChargingPower
 
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             bp = MagicMock(spec=BatteryPower)
@@ -66,7 +66,7 @@ class TestBasicDerivedSensorsCoverage:
             assert "Attempt to call" in caplog.text
 
     def test_battery_discharging_power(self, caplog):
-        from sigenergy2mqtt.sensors.plant_derived import BatteryDischargingPower
+        from sigenergy2mqtt.sensors.plant.derived import BatteryDischargingPower
 
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             bp = MagicMock(spec=BatteryPower)
@@ -81,7 +81,7 @@ class TestBasicDerivedSensorsCoverage:
             assert "Attempt to call" in caplog.text
 
     def test_grid_export_power(self, caplog):
-        from sigenergy2mqtt.sensors.plant_derived import GridSensorExportPower
+        from sigenergy2mqtt.sensors.plant.derived import GridSensorExportPower
 
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             gp = MagicMock(spec=GridSensorActivePower)
@@ -97,7 +97,7 @@ class TestBasicDerivedSensorsCoverage:
             assert "Attempt to call" in caplog.text
 
     def test_grid_import_power(self, caplog):
-        from sigenergy2mqtt.sensors.plant_derived import GridSensorImportPower
+        from sigenergy2mqtt.sensors.plant.derived import GridSensorImportPower
 
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             gp = MagicMock(spec=GridSensorActivePower)
@@ -113,7 +113,7 @@ class TestBasicDerivedSensorsCoverage:
             assert "Attempt to call" in caplog.text
 
     def test_daily_accumulation_sensors(self):
-        from sigenergy2mqtt.sensors.plant_derived import (
+        from sigenergy2mqtt.sensors.plant.derived import (
             GridSensorDailyExportEnergy,
             GridSensorDailyImportEnergy,
             PlantDailyChargeEnergy,
@@ -121,7 +121,7 @@ class TestBasicDerivedSensorsCoverage:
             PlantDailyPVEnergy,
             TotalDailyPVEnergy,
         )
-        from sigenergy2mqtt.sensors.plant_read_only import (
+        from sigenergy2mqtt.sensors.plant.read_only import (
             PlantTotalExportedEnergy,
             PlantTotalImportedEnergy,
         )
@@ -171,7 +171,7 @@ class TestBasicDerivedSensorsCoverage:
             assert "PlantLifetimePVEnergy" in str(s_pdpv.get_attributes()["source"])
 
             # Plant Daily Charge
-            from sigenergy2mqtt.sensors.plant_read_only import (
+            from sigenergy2mqtt.sensors.plant.read_only import (
                 ESSTotalChargedEnergy,
                 ESSTotalDischargedEnergy,
             )
@@ -258,7 +258,7 @@ class TestPlantConsumedPowerCoverage:
                     assert v.state is None
 
     def test_finalise_binding_with_chargers(self):
-        from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerChargingPower
+        from sigenergy2mqtt.sensors.ev.ac_charger_read_only import ACChargerChargingPower
 
         charger = MagicMock()
         # Create a dummy ACChargerChargingPower instance without calling its __init__
@@ -407,7 +407,7 @@ class TestTotalLifetimePVEnergyCoverage:
 class TestPlantSelfConsumedPowerCoverage:
     def test_finalise_binding_no_sources(self, caplog):
         from sigenergy2mqtt.devices.base.registry import DeviceRegistry
-        from sigenergy2mqtt.sensors.plant_derived import PlantSelfConsumedPower
+        from sigenergy2mqtt.sensors.plant.derived import PlantSelfConsumedPower
 
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             sensor = PlantSelfConsumedPower(0)
@@ -420,8 +420,8 @@ class TestPlantSelfConsumedPowerCoverage:
     def test_finalise_binding_with_sources(self):
         from sigenergy2mqtt.devices.base.device import Device
         from sigenergy2mqtt.devices.base.registry import DeviceRegistry
-        from sigenergy2mqtt.sensors.inverter_derived import InverterSelfConsumedPower
-        from sigenergy2mqtt.sensors.plant_derived import PlantSelfConsumedPower
+        from sigenergy2mqtt.sensors.inverter.derived import InverterSelfConsumedPower
+        from sigenergy2mqtt.sensors.plant.derived import PlantSelfConsumedPower
 
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             sensor = PlantSelfConsumedPower(0)
@@ -444,7 +444,7 @@ class TestPlantSelfConsumedPowerCoverage:
                 assert "inv_sensor" in sensor._values
 
     def test_get_attributes(self):
-        from sigenergy2mqtt.sensors.plant_derived import PlantSelfConsumedPower
+        from sigenergy2mqtt.sensors.plant.derived import PlantSelfConsumedPower
 
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             sensor = PlantSelfConsumedPower(0)
@@ -454,7 +454,7 @@ class TestPlantSelfConsumedPowerCoverage:
     async def test_publish_skipped_and_ready(self, caplog):
         import logging
 
-        from sigenergy2mqtt.sensors.plant_derived import PlantSelfConsumedPower
+        from sigenergy2mqtt.sensors.plant.derived import PlantSelfConsumedPower
 
         caplog.set_level(logging.DEBUG)
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
@@ -472,8 +472,8 @@ class TestPlantSelfConsumedPowerCoverage:
                 assert sensor._values["s1"] is None
 
     def test_set_source_values(self, caplog):
-        from sigenergy2mqtt.sensors.inverter_derived import InverterSelfConsumedPower
-        from sigenergy2mqtt.sensors.plant_derived import PlantSelfConsumedPower
+        from sigenergy2mqtt.sensors.inverter.derived import InverterSelfConsumedPower
+        from sigenergy2mqtt.sensors.plant.derived import PlantSelfConsumedPower
 
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             sensor = PlantSelfConsumedPower(0)
@@ -494,7 +494,7 @@ class TestPlantSelfConsumedPowerCoverage:
 
 class TestPlantDailySelfConsumedEnergyCoverage:
     def test_daily_self_consumed_energy(self):
-        from sigenergy2mqtt.sensors.plant_derived import (
+        from sigenergy2mqtt.sensors.plant.derived import (
             PlantDailySelfConsumedEnergy,
             PlantSelfConsumedPower,
         )

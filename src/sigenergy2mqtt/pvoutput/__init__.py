@@ -23,9 +23,9 @@ from sigenergy2mqtt.common import UnitOfEnergy, UnitOfPower
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.base import Sensor, TypedSensorMixin
-from sigenergy2mqtt.sensors.inverter_read_only import DailyChargeEnergy, DailyDischargeEnergy, PhaseVoltage, PVVoltageSensor
-from sigenergy2mqtt.sensors.plant_derived import GridSensorDailyExportEnergy, GridSensorDailyImportEnergy, TotalDailyPVEnergy, TotalLifetimePVEnergy, TotalPVPower
-from sigenergy2mqtt.sensors.plant_read_only import (
+from sigenergy2mqtt.sensors.inverter.read_only import DailyChargeEnergy, DailyDischargeEnergy, PhaseVoltage, PVVoltageSensor
+from sigenergy2mqtt.sensors.plant.derived import GridSensorDailyExportEnergy, GridSensorDailyImportEnergy, TotalDailyPVEnergy, TotalLifetimePVEnergy, TotalPVPower
+from sigenergy2mqtt.sensors.plant.read_only import (
     ESSTotalChargedEnergy,
     ESSTotalDischargedEnergy,
     PlantBatterySoC,

@@ -4,7 +4,7 @@ import pytest
 
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.modbus import ModbusDataType
-from sigenergy2mqtt.sensors.ac_charger_read_only import (
+from sigenergy2mqtt.sensors.ev.ac_charger_read_only import (
     ACChargerAlarm1,
     ACChargerAlarm2,
     ACChargerAlarm3,
@@ -12,7 +12,7 @@ from sigenergy2mqtt.sensors.ac_charger_read_only import (
     ACChargerRunningState,
     ACChargerTotalEnergyConsumed,
 )
-from sigenergy2mqtt.sensors.ac_charger_read_write import (
+from sigenergy2mqtt.sensors.ev.ac_charger_read_write import (
     ACChargerOutputCurrent,
     ACChargerStatus,
 )

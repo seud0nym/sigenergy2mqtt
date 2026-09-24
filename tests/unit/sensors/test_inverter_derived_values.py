@@ -7,7 +7,7 @@ import pytest
 from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.sensors.base import Sensor
-from sigenergy2mqtt.sensors.inverter_derived import (
+from sigenergy2mqtt.sensors.inverter.derived import (
     InverterBatteryChargingPower,
     InverterBatteryDischargingPower,
     InverterSelfConsumedPower,
@@ -15,7 +15,7 @@ from sigenergy2mqtt.sensors.inverter_derived import (
     PVStringLifetimeEnergy,
     PVStringPower,
 )
-from sigenergy2mqtt.sensors.inverter_read_only import (
+from sigenergy2mqtt.sensors.inverter.read_only import (
     ChargeDischargePower,
     PVCurrentSensor,
     PVVoltageSensor,
@@ -200,7 +200,7 @@ class TestInverterSelfConsumedPowerCoverage:
             sensor._source_timestamps["pv_string_power_1"] = 100.0
             sensor._source_consumed["pv_string_power_1"] = False
 
-            with patch("sigenergy2mqtt.sensors.inverter_derived.time.time", return_value=110.0):
+            with patch("sigenergy2mqtt.sensors.inverter.derived.time.time", return_value=110.0):
                 sensor._discard_stale_snapshot()
 
             assert sensor.active_power is None
@@ -223,18 +223,18 @@ class TestInverterSelfConsumedPowerCoverage:
             sensor._source_timestamps["pv_string_power_1"] = 100.0
             sensor._source_consumed["pv_string_power_1"] = False
 
-            with patch("sigenergy2mqtt.sensors.inverter_derived.time.time", return_value=110.0):
+            with patch("sigenergy2mqtt.sensors.inverter.derived.time.time", return_value=110.0):
                 sensor._discard_stale_snapshot()
 
             assert sensor.pv_string_power[1] is None
             assert sensor._source_timestamps["pv_string_power_1"] is None
 
     def test_get_attributes(self):
-        from sigenergy2mqtt.sensors.inverter_derived import (
+        from sigenergy2mqtt.sensors.inverter.derived import (
             InverterSelfConsumedPower,
             PVStringPower,
         )
-        from sigenergy2mqtt.sensors.inverter_read_only import (
+        from sigenergy2mqtt.sensors.inverter.read_only import (
             ActivePower,
             ChargeDischargePower,
         )
@@ -255,11 +255,11 @@ class TestInverterSelfConsumedPowerCoverage:
     async def test_publish_skipped_and_ready(self, caplog):
         import logging
 
-        from sigenergy2mqtt.sensors.inverter_derived import (
+        from sigenergy2mqtt.sensors.inverter.derived import (
             InverterSelfConsumedPower,
             PVStringPower,
         )
-        from sigenergy2mqtt.sensors.inverter_read_only import (
+        from sigenergy2mqtt.sensors.inverter.read_only import (
             ActivePower,
             ChargeDischargePower,
         )
@@ -293,11 +293,11 @@ class TestInverterSelfConsumedPowerCoverage:
                 assert sensor.pv_string_power[1] is None
 
     def test_set_source_values_error_and_calculation(self, caplog):
-        from sigenergy2mqtt.sensors.inverter_derived import (
+        from sigenergy2mqtt.sensors.inverter.derived import (
             InverterSelfConsumedPower,
             PVStringPower,
         )
-        from sigenergy2mqtt.sensors.inverter_read_only import (
+        from sigenergy2mqtt.sensors.inverter.read_only import (
             ActivePower,
             ChargeDischargePower,
         )

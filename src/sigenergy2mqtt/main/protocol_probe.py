@@ -4,7 +4,7 @@ from pymodbus.exceptions import ModbusException
 
 from sigenergy2mqtt.common import Constants, InputType, ProtocolVersion
 from sigenergy2mqtt.modbus import ModbusClient
-from sigenergy2mqtt.sensors.plant_read_only import (
+from sigenergy2mqtt.sensors.plant.read_only import (
     PlantBatterySoH,
     PlantPVTotalGenerationToday,
     ThirdPartyPVPower,

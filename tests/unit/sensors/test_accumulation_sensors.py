@@ -431,7 +431,7 @@ class TestEnergyDailyAccumulationSensor:
             from sigenergy2mqtt.sensors.base.accumulation import (
                 EnergyDailyAccumulationSensor,
             )
-            from sigenergy2mqtt.sensors.inverter_derived import PVStringDailyEnergy
+            from sigenergy2mqtt.sensors.inverter.derived import PVStringDailyEnergy
 
             source = PVStringDailyEnergy(plant_index=0, device_address=1, string_number=1, source=string)
             sensor = EnergyDailyAccumulationSensor(

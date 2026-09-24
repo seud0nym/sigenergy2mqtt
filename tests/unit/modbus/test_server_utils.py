@@ -6,14 +6,14 @@ from pymodbus.client.mixin import ModbusClientMixin
 from pymodbus.constants import ExcCodes
 
 from sigenergy2mqtt.common import DeviceClass
-from sigenergy2mqtt.sensors.inverter_read_only import (
+from sigenergy2mqtt.sensors.inverter.read_only import (
     InverterFirmwareVersion,
     PhaseCurrent,
     PhaseVoltage,
     PowerFactor,
 )
-from sigenergy2mqtt.sensors.plant_read_only import GridStatus
-from sigenergy2mqtt.sensors.plant_read_write import RemoteEMS
+from sigenergy2mqtt.sensors.plant.read_only import GridStatus
+from sigenergy2mqtt.sensors.plant.read_write import RemoteEMS
 from tests.utils import modbus_test_server as server
 
 

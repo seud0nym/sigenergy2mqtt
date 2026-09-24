@@ -51,13 +51,13 @@ from pymodbus.simulator import DataType, SimData, SimDevice
 
 from sigenergy2mqtt.common import Constants, DeviceClass, ProtocolVersion
 from sigenergy2mqtt.modbus.client import ModbusClient
-from sigenergy2mqtt.sensors.ac_charger_read_only import (
+from sigenergy2mqtt.sensors.ev.ac_charger_read_only import (
     ACChargerChargingPower,
     ACChargerInputBreaker,
     ACChargerRatedCurrent,
 )
 from sigenergy2mqtt.sensors.base import WriteOnlySensorMixin
-from sigenergy2mqtt.sensors.inverter_read_only import (
+from sigenergy2mqtt.sensors.inverter.read_only import (
     DCChargerOutputPower,
     InverterFirmwareVersion,
     InverterModel,
@@ -68,8 +68,8 @@ from sigenergy2mqtt.sensors.inverter_read_only import (
     PowerFactor,
     RatedActivePower,
 )
-from sigenergy2mqtt.sensors.plant_read_only import GridStatus
-from sigenergy2mqtt.sensors.plant_read_write import RemoteEMS
+from sigenergy2mqtt.sensors.plant.read_only import GridStatus
+from sigenergy2mqtt.sensors.plant.read_write import RemoteEMS
 from tests.utils import get_sensor_instances
 from tests.utils.modbus_sensors import (
     AC_CHARGER_SERIAL,

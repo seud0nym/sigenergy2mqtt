@@ -12,8 +12,8 @@ from sigenergy2mqtt.sensors.base import (
     Sensor,
     WriteableSensorMixin,
 )
-from sigenergy2mqtt.sensors.plant_ess_preheating_read_write import ESSPreHeatingTOUTime
-from sigenergy2mqtt.sensors.plant_read_write import RemoteEMSLimit
+from sigenergy2mqtt.sensors.plant.ess_preheating_read_write import ESSPreHeatingTOUTime
+from sigenergy2mqtt.sensors.plant.read_write import RemoteEMSLimit
 
 
 def test_framework_contracts_have_intentional_abstract_status() -> None:

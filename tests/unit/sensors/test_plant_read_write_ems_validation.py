@@ -14,7 +14,7 @@ import pytest
 from sigenergy2mqtt.common import Constants
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.sensors.base import AvailabilityMixin, Sensor
-from sigenergy2mqtt.sensors.plant_read_write import (
+from sigenergy2mqtt.sensors.plant.read_write import (
     IndependentPhasePowerControl,
     RemoteEMSControlMode,
 )
@@ -76,7 +76,7 @@ class TestPowerFactorAdjustmentTargetValue:
 
     def test_get_attributes_has_comment(self):
         """Lines 288-290: get_attributes returns comment about PCS Remote Control Mode."""
-        from sigenergy2mqtt.sensors.plant_read_write import (
+        from sigenergy2mqtt.sensors.plant.read_write import (
             PowerFactorAdjustmentTargetValue,
         )
 
@@ -95,7 +95,7 @@ class TestPowerFactorAdjustmentTargetValue:
     @pytest.mark.asyncio
     async def test_value_is_valid_fails_when_not_in_pcs_mode(self):
         """Lines 293-295: value_is_valid returns False when EMS mode is 0 (not PCS Remote Control Mode)."""
-        from sigenergy2mqtt.sensors.plant_read_write import (
+        from sigenergy2mqtt.sensors.plant.read_write import (
             PowerFactorAdjustmentTargetValue,
         )
 
@@ -113,7 +113,7 @@ class TestPowerFactorAdjustmentTargetValue:
     @pytest.mark.asyncio
     async def test_value_is_valid_passes_when_in_pcs_mode(self):
         """Lines 292-296: value_is_valid calls super when EMS mode != 0."""
-        from sigenergy2mqtt.sensors.plant_read_write import (
+        from sigenergy2mqtt.sensors.plant.read_write import (
             PowerFactorAdjustmentTargetValue,
         )
 
@@ -134,7 +134,7 @@ class TestPhaseActivePowerFixedAdjustmentTargetValue:
 
     def test_get_attributes_has_comment_phase_a(self):
         """Lines 343-346: get_attributes returns comment about PCS Remote Control Mode."""
-        from sigenergy2mqtt.sensors.plant_read_write import (
+        from sigenergy2mqtt.sensors.plant.read_write import (
             PhaseActivePowerFixedAdjustmentTargetValue,
         )
 
@@ -147,7 +147,7 @@ class TestPhaseActivePowerFixedAdjustmentTargetValue:
 
     def test_invalid_phase_raises_value_error(self):
         """Lines 308-309: ValueError when phase is not A/B/C."""
-        from sigenergy2mqtt.sensors.plant_read_write import (
+        from sigenergy2mqtt.sensors.plant.read_write import (
             PhaseActivePowerFixedAdjustmentTargetValue,
         )
 
@@ -157,7 +157,7 @@ class TestPhaseActivePowerFixedAdjustmentTargetValue:
     @pytest.mark.asyncio
     async def test_value_is_valid_fails_when_not_in_pcs_mode(self):
         """Lines 349-351: value_is_valid returns False when EMS mode is 0."""
-        from sigenergy2mqtt.sensors.plant_read_write import (
+        from sigenergy2mqtt.sensors.plant.read_write import (
             PhaseActivePowerFixedAdjustmentTargetValue,
         )
 
@@ -169,7 +169,7 @@ class TestPhaseActivePowerFixedAdjustmentTargetValue:
     @pytest.mark.asyncio
     async def test_value_is_valid_passes_when_in_pcs_mode(self):
         """Lines 348-352: calls super when EMS mode != 0."""
-        from sigenergy2mqtt.sensors.plant_read_write import (
+        from sigenergy2mqtt.sensors.plant.read_write import (
             PhaseActivePowerFixedAdjustmentTargetValue,
         )
 
@@ -185,7 +185,7 @@ class TestPhaseReactivePowerFixedAdjustmentTargetValue:
 
     def test_get_attributes_has_comment(self):
         """Lines 399-402: get_attributes returns comment about PCS Remote Control Mode."""
-        from sigenergy2mqtt.sensors.plant_read_write import (
+        from sigenergy2mqtt.sensors.plant.read_write import (
             PhaseReactivePowerFixedAdjustmentTargetValue,
         )
 
@@ -198,7 +198,7 @@ class TestPhaseReactivePowerFixedAdjustmentTargetValue:
 
     def test_invalid_phase_raises_value_error(self):
         """Lines 364-365: ValueError when phase is not A/B/C."""
-        from sigenergy2mqtt.sensors.plant_read_write import (
+        from sigenergy2mqtt.sensors.plant.read_write import (
             PhaseReactivePowerFixedAdjustmentTargetValue,
         )
 
@@ -208,7 +208,7 @@ class TestPhaseReactivePowerFixedAdjustmentTargetValue:
     @pytest.mark.asyncio
     async def test_value_is_valid_fails_when_not_in_pcs_mode(self):
         """Lines 405-407: value_is_valid returns False when EMS mode is 0."""
-        from sigenergy2mqtt.sensors.plant_read_write import (
+        from sigenergy2mqtt.sensors.plant.read_write import (
             PhaseReactivePowerFixedAdjustmentTargetValue,
         )
 
@@ -220,7 +220,7 @@ class TestPhaseReactivePowerFixedAdjustmentTargetValue:
     @pytest.mark.asyncio
     async def test_value_is_valid_passes_when_in_pcs_mode(self):
         """Lines 404-408: calls super when EMS mode != 0."""
-        from sigenergy2mqtt.sensors.plant_read_write import (
+        from sigenergy2mqtt.sensors.plant.read_write import (
             PhaseReactivePowerFixedAdjustmentTargetValue,
         )
 

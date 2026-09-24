@@ -17,7 +17,7 @@ from sigenergy2mqtt.sensors.base import (
 )
 from sigenergy2mqtt.sensors.base.constants import DiscoveryKeys
 from sigenergy2mqtt.sensors.metrics import ResetMetrics
-from sigenergy2mqtt.sensors.plant_read_write import (
+from sigenergy2mqtt.sensors.plant.read_write import (
     MaxChargingLimit,
     MaxDischargingLimit,
     PVMaxPowerLimit,

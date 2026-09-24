@@ -11,10 +11,10 @@ from sigenergy2mqtt.common import DeviceClass, HybridInverter, ProtocolVersion, 
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.base import SanityCheckException
-from sigenergy2mqtt.sensors.inverter_read_only import ActivePower
+from sigenergy2mqtt.sensors.inverter.read_only import ActivePower
 
-from .base import DerivedSensor, EnergyDailyAccumulationSensor, EnergyLifetimeAccumulationSensor, Sensor
-from .inverter_read_only import ChargeDischargePower, PVCurrentSensor, PVVoltageSensor
+from ..base import DerivedSensor, EnergyDailyAccumulationSensor, EnergyLifetimeAccumulationSensor, Sensor
+from .read_only import ChargeDischargePower, PVCurrentSensor, PVVoltageSensor
 
 logger = logging.getLogger(__name__)
 

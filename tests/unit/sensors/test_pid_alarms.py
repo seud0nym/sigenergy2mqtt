@@ -1,4 +1,4 @@
-from sigenergy2mqtt.sensors.pid_read_only import PIDAlarm1, PIDAlarm2
+from sigenergy2mqtt.sensors.pid.read_only import PIDAlarm1, PIDAlarm2
 
 
 def test_decode_alarm_bit():

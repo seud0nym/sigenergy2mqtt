@@ -3,13 +3,13 @@ import logging
 from datetime import timezone
 from typing import cast
 
-import sigenergy2mqtt.sensors.inverter_read_only as ro
-import sigenergy2mqtt.sensors.inverter_read_write as rw
+import sigenergy2mqtt.sensors.inverter.read_only as ro
+import sigenergy2mqtt.sensors.inverter.read_write as rw
 from sigenergy2mqtt.common import DeviceType, FirmwareVersion, HybridInverter, ProtocolVersion, PVInverter
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import ModbusDevice
 from sigenergy2mqtt.modbus import ModbusClient
-from sigenergy2mqtt.sensors.inverter_derived import InverterSelfConsumedPower, PVStringPower
+from sigenergy2mqtt.sensors.inverter.derived import InverterSelfConsumedPower, PVStringPower
 
 from .ess import ESS
 from .pv_string import PVString

@@ -3,7 +3,7 @@ from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.base import DiscoveryKeys, ScanInterval
 
-from .base import AlarmCombinedSensor, AlarmSensor, ReadOnlySensor
+from ..base import AlarmCombinedSensor, AlarmSensor, ReadOnlySensor
 
 # 5.5 AC-Charger running information address definition (read-only register)
 

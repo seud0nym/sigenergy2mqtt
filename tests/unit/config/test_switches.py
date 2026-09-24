@@ -7,7 +7,7 @@ from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.config.settings import HomeAssistantConfig
 from sigenergy2mqtt.sensors.base import AvailabilityMixin, Sensor
-from sigenergy2mqtt.sensors.plant_read_write import (
+from sigenergy2mqtt.sensors.plant.read_write import (
     MaxChargingLimit,
     RemoteEMSControlMode,
 )
@@ -246,7 +246,7 @@ class TestConfigSwitches:
 
     def test_edit_percentage_with_box(self):
         """Test if 'mode' attribute is 'slider' or 'box' based on edit_percentage_with_box."""
-        from sigenergy2mqtt.sensors.plant_read_write import ESSBackupSOC
+        from sigenergy2mqtt.sensors.plant.read_write import ESSBackupSOC
 
         active_config.home_assistant.enabled = True
         active_config.home_assistant.edit_percentage_with_box = False

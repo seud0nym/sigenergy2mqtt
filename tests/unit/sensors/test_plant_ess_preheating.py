@@ -3,7 +3,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from sigenergy2mqtt.sensors.plant_ess_preheating_read_write import (
+from sigenergy2mqtt.sensors.plant.ess_preheating_read_write import (
     ESSPreHeatingAdvanceEnable,
     ESSPreHeatingEnable,
     ESSPreHeatingMode,

@@ -57,12 +57,12 @@ from sigenergy2mqtt.devices import (
 )
 from sigenergy2mqtt.metrics import MetricsService
 from sigenergy2mqtt.modbus import ModbusDataType
-from sigenergy2mqtt.sensors.ac_charger_read_only import (
+from sigenergy2mqtt.sensors.ev.ac_charger_read_only import (
     ACChargerInputBreaker,
     ACChargerRatedCurrent,
     ACChargerRunningState,
 )
-from sigenergy2mqtt.sensors.ac_charger_read_write import ACChargerStatus
+from sigenergy2mqtt.sensors.ev.ac_charger_read_write import ACChargerStatus
 from sigenergy2mqtt.sensors.base import (
     AlarmCombinedSensor,
     AlarmSensor,
@@ -74,7 +74,7 @@ from sigenergy2mqtt.sensors.base import (
     TimestampSensor,
     WriteOnlySensorMixin,
 )
-from sigenergy2mqtt.sensors.inverter_read_only import (
+from sigenergy2mqtt.sensors.inverter.read_only import (
     DCChargerRatedChargingPower,
     DCChargerRatedDischargingPower,
     DCChargerVehicleBatteryVoltage,
@@ -87,23 +87,23 @@ from sigenergy2mqtt.sensors.inverter_read_only import (
     PVStringCount,
     RatedGridVoltage,
 )
-from sigenergy2mqtt.sensors.inverter_read_write import (
+from sigenergy2mqtt.sensors.inverter.read_write import (
     DCChargerStatus,
     InverterStatus,
     ReservedInverterRemoteEMSDispatch,
 )
 from sigenergy2mqtt.sensors.metrics import Started
-from sigenergy2mqtt.sensors.pid_read_only import (
+from sigenergy2mqtt.sensors.pid.read_only import (
     PIDMachineFirmwareVersion,
     PIDModelType,
     PIDSerialNumber,
 )
-from sigenergy2mqtt.sensors.pid_read_write import PIDStartStop
-from sigenergy2mqtt.sensors.plant_ess_preheating_read_write import (
+from sigenergy2mqtt.sensors.pid.read_write import PIDStartStop
+from sigenergy2mqtt.sensors.plant.ess_preheating_read_write import (
     ESSPreHeatingEnable,
     ESSPreHeatingTOUTime,
 )
-from sigenergy2mqtt.sensors.plant_read_only import (
+from sigenergy2mqtt.sensors.plant.read_only import (
     ChargeCutOffSoC,
     CurrentControlCommandValue,
     DischargeCutOffSoC,
@@ -112,15 +112,15 @@ from sigenergy2mqtt.sensors.plant_read_only import (
     PlantRatedDischargingPower,
     SystemTimeZone,
 )
-from sigenergy2mqtt.sensors.plant_read_write import (
+from sigenergy2mqtt.sensors.plant.read_write import (
     ActivePowerFixedAdjustmentTargetValue,
     PhaseActivePowerFixedAdjustmentTargetValue,
     PhaseReactivePowerFixedAdjustmentTargetValue,
     PlantStatus,
     ReactivePowerFixedAdjustmentTargetValue,
 )
-from sigenergy2mqtt.sensors.pss_read_only import PSSModelType, PSSSerialNumber
-from sigenergy2mqtt.sensors.pss_read_write import PSSMVCabinetG3CircuitBreakerSwitchOn
+from sigenergy2mqtt.sensors.pss.read_only import PSSModelType, PSSSerialNumber
+from sigenergy2mqtt.sensors.pss.read_write import PSSMVCabinetG3CircuitBreakerSwitchOn
 
 logger = logging.getLogger(__name__)
 

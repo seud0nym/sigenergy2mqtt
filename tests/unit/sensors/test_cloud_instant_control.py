@@ -17,7 +17,7 @@ from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.devices.base.poller import SensorGroupPoller
 from sigenergy2mqtt.devices.plant.cloud_control import SigenergyCloudControl
 from sigenergy2mqtt.sensors.base import CloudReadWriteSensor, DiscoveryKeys
-from sigenergy2mqtt.sensors.plant_cloud_control import (
+from sigenergy2mqtt.sensors.cloud.read_write import (
     INSTANT_CONTROL_OPTIONS,
     BatteryExportLimitation,
     GridConnectionLimit,
@@ -149,7 +149,7 @@ async def test_selection_sensors_read_authoritative_cloud_values(monkeypatch) ->
         return_value=InstantControlStatus(True, DomainMode.HOLD, 1_800_000_599)
     )
     monkeypatch.setattr(
-        "sigenergy2mqtt.sensors.plant_cloud_control.time.time",
+        "sigenergy2mqtt.sensors.cloud.read_write.time.time",
         lambda: 1_800_000_000,
     )
 
