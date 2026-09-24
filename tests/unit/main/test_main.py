@@ -142,6 +142,19 @@ async def test_unmatched_cloud_control_is_closed() -> None:
 
 
 @pytest.mark.asyncio
+async def test_matched_cloud_control_discovery_connection_is_closed() -> None:
+    _registered_inverter(2, sn="CLOUD-SN")
+    cloud_port = MagicMock()
+    cloud_port.device_list = AsyncMock(
+        return_value=[{"deviceType": "Inverter", "serialNumber": "CLOUD-SN"}]
+    )
+    cloud_port.close = AsyncMock()
+
+    assert await _discover_cloud_control_plant_index(cloud_port) == 2
+    cloud_port.close.assert_awaited_once_with()
+
+
+@pytest.mark.asyncio
 async def test_unreadable_local_serial_does_not_bind_cloud_control() -> None:
     _registered_inverter(2)
     cloud_port = MagicMock()
@@ -170,8 +183,11 @@ async def test_cloud_control_discovery_failure_disables_cloud_control(caplog):
 
 
 def test_cloud_control_discovery_replaces_session_across_event_loops():
+    _registered_inverter(0, sn="CLOUD-SN")
     cloud_port = CommunityCloudAdapter("user", "password", "eu")
-    cloud_port.device_list = AsyncMock(return_value=[])  # type: ignore[method-assign]
+    cloud_port.device_list = AsyncMock(  # type: ignore[method-assign]
+        return_value=[{"deviceType": "Inverter", "serialNumber": "CLOUD-SN"}]
+    )
 
     async def discover():
         startup_session = await cloud_port._client._http_session()

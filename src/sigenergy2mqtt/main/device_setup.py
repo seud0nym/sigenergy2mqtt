@@ -96,13 +96,7 @@ async def _discover_cloud_control_plant_index(cloud_port: CloudControlPort) -> i
             )
     if device_list is None:
         return None
-    plant_index = _cloud_control_plant_index(device_list)
-    if plant_index is None:
-        try:
-            await cloud_port.close()
-        except Exception:
-            logger.exception("Failed to close cloud adapter after discovery mismatch")
-    return plant_index
+    return _cloud_control_plant_index(device_list)
 
 
 async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfig], ProtocolVersion | None]:

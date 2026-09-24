@@ -41,8 +41,10 @@ async def read_and_publish_device_sensors(
 
     Once all tasks are gathered they run until cancelled or an error occurs.
     Commencement and completion hooks are called on each device around the
-    task lifetime.  Modbus and MQTT connections are always closed in a
-    ``finally`` block, regardless of how the coroutine exits.
+    task lifetime. MQTT and the transport returned by ``transport_factory``
+    are always closed in this coroutine's ``finally`` block, while their
+    owning event loop is still running. Modbus connections are returned to
+    :class:`ModbusClientFactory` there as well.
 
     Args:
         config:     Thread-level configuration describing the host, port,
@@ -142,6 +144,9 @@ async def read_and_publish_device_sensors(
             if modbus_client is not None and config.host is not None:
                 ModbusClientFactory.remove(modbus_client)
             elif modbus_client is not None:
+                # Non-Modbus transports (currently CloudControlPort) are
+                # created and connected in this thread's event loop. Close
+                # them here, before run_modbus_event_loop closes that loop.
                 close = getattr(modbus_client, "close", None)
                 if close is not None:
                     await close()
