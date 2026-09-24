@@ -27,7 +27,7 @@ from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.base import DiscoveryKeys, SanityCheckException, ScanInterval, UnpublishResetSensorMixin
 
-from .base import (
+from ..base import (
     Alarm1Sensor,
     Alarm2Sensor,
     Alarm3Sensor,

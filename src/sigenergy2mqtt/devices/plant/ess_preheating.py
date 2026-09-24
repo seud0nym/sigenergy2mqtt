@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import sigenergy2mqtt.sensors.plant_ess_preheating_read_write as rw
+import sigenergy2mqtt.sensors.plant.ess_preheating_read_write as rw
 from sigenergy2mqtt.common import DeviceType, ProtocolVersion
 from sigenergy2mqtt.devices import ModbusDevice
 

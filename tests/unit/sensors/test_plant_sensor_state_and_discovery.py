@@ -5,8 +5,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-import sigenergy2mqtt.sensors.plant_read_only as pro
-import sigenergy2mqtt.sensors.plant_read_write as prw
+import sigenergy2mqtt.sensors.plant.read_only as pro
+import sigenergy2mqtt.sensors.plant.read_write as prw
 from sigenergy2mqtt.common import ConsumptionMethod, FirmwareVersion, ProtocolVersion
 from sigenergy2mqtt.devices.plant.plant import PowerPlant
 from sigenergy2mqtt.sensors.base import AvailabilityMixin, Sensor

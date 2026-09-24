@@ -13,7 +13,7 @@ from sigenergy2mqtt.main.device_setup import (
     _setup_pid,
     setup_devices,
 )
-from sigenergy2mqtt.sensors.plant_read_write import (
+from sigenergy2mqtt.sensors.plant.read_write import (
     ActivePowerFixedAdjustmentTargetValue,
     ReactivePowerFixedAdjustmentTargetValue,
 )

@@ -51,50 +51,50 @@ class TestPSSTeleindication1AlarmBitDecoding:
     """
 
     def test_decode_alarm_bit_case_1(self):
-        from sigenergy2mqtt.sensors.pss_read_only import PSSTeleindication1
+        from sigenergy2mqtt.sensors.pss.read_only import PSSTeleindication1
 
         s = PSSTeleindication1(PLANT_INDEX, DEVICE_ADDRESS)
         assert s.decode_alarm_bit(1) == "Measurement & control unit general alarm"
 
     def test_decode_alarm_bit_case_3(self):
-        from sigenergy2mqtt.sensors.pss_read_only import PSSTeleindication1
+        from sigenergy2mqtt.sensors.pss.read_only import PSSTeleindication1
 
         s = PSSTeleindication1(PLANT_INDEX, DEVICE_ADDRESS)
         assert s.decode_alarm_bit(3) == "Transformer light gas alarm"
 
     def test_decode_alarm_bit_case_5(self):
-        from sigenergy2mqtt.sensors.pss_read_only import PSSTeleindication1
+        from sigenergy2mqtt.sensors.pss.read_only import PSSTeleindication1
 
         s = PSSTeleindication1(PLANT_INDEX, DEVICE_ADDRESS)
         assert s.decode_alarm_bit(5) == "Transformer low oil level alarm"
 
     def test_decode_alarm_bit_case_7(self):
-        from sigenergy2mqtt.sensors.pss_read_only import PSSTeleindication1
+        from sigenergy2mqtt.sensors.pss.read_only import PSSTeleindication1
 
         s = PSSTeleindication1(PLANT_INDEX, DEVICE_ADDRESS)
         assert s.decode_alarm_bit(7) == "Transformer oil high temperature alarm"
 
     def test_decode_alarm_bit_case_9(self):
-        from sigenergy2mqtt.sensors.pss_read_only import PSSTeleindication1
+        from sigenergy2mqtt.sensors.pss.read_only import PSSTeleindication1
 
         s = PSSTeleindication1(PLANT_INDEX, DEVICE_ADDRESS)
         assert s.decode_alarm_bit(9) == "Transformer winding high temperature alarm"
 
     def test_decode_alarm_bit_case_11(self):
-        from sigenergy2mqtt.sensors.pss_read_only import PSSTeleindication1
+        from sigenergy2mqtt.sensors.pss.read_only import PSSTeleindication1
 
         s = PSSTeleindication1(PLANT_INDEX, DEVICE_ADDRESS)
         assert s.decode_alarm_bit(11) == "Low voltage room dual smoke sensor trip"
 
     def test_decode_alarm_bit_case_13(self):
-        from sigenergy2mqtt.sensors.pss_read_only import PSSTeleindication1
+        from sigenergy2mqtt.sensors.pss.read_only import PSSTeleindication1
 
         s = PSSTeleindication1(PLANT_INDEX, DEVICE_ADDRESS)
         assert s.decode_alarm_bit(13) == "Low voltage room maintenance door open trip"
 
     def test_decode_alarm_bit_even_cases(self):
         """Test even-numbered cases to ensure complete mapping."""
-        from sigenergy2mqtt.sensors.pss_read_only import PSSTeleindication1
+        from sigenergy2mqtt.sensors.pss.read_only import PSSTeleindication1
 
         s = PSSTeleindication1(PLANT_INDEX, DEVICE_ADDRESS)
         assert s.decode_alarm_bit(2) == "Transformer heavy gas trip"
@@ -113,50 +113,50 @@ class TestPSSTeleindication2AlarmBitDecoding:
     """
 
     def test_decode_alarm_bit_case_1(self):
-        from sigenergy2mqtt.sensors.pss_read_only import PSSTeleindication2
+        from sigenergy2mqtt.sensors.pss.read_only import PSSTeleindication2
 
         s = PSSTeleindication2(PLANT_INDEX, DEVICE_ADDRESS)
         assert s.decode_alarm_bit(1) == "Medium voltage room over-temperature trip"
 
     def test_decode_alarm_bit_case_3(self):
-        from sigenergy2mqtt.sensors.pss_read_only import PSSTeleindication2
+        from sigenergy2mqtt.sensors.pss.read_only import PSSTeleindication2
 
         s = PSSTeleindication2(PLANT_INDEX, DEVICE_ADDRESS)
         assert s.decode_alarm_bit(3) == "Emergency stop"
 
     def test_decode_alarm_bit_case_5(self):
-        from sigenergy2mqtt.sensors.pss_read_only import PSSTeleindication2
+        from sigenergy2mqtt.sensors.pss.read_only import PSSTeleindication2
 
         s = PSSTeleindication2(PLANT_INDEX, DEVICE_ADDRESS)
         assert s.decode_alarm_bit(5) == "LA Low voltage room heat exchanger fault"
 
     def test_decode_alarm_bit_case_7(self):
-        from sigenergy2mqtt.sensors.pss_read_only import PSSTeleindication2
+        from sigenergy2mqtt.sensors.pss.read_only import PSSTeleindication2
 
         s = PSSTeleindication2(PLANT_INDEX, DEVICE_ADDRESS)
         assert s.decode_alarm_bit(7) == "Low voltage room smoke sensor alarm"
 
     def test_decode_alarm_bit_case_9(self):
-        from sigenergy2mqtt.sensors.pss_read_only import PSSTeleindication2
+        from sigenergy2mqtt.sensors.pss.read_only import PSSTeleindication2
 
         s = PSSTeleindication2(PLANT_INDEX, DEVICE_ADDRESS)
         assert s.decode_alarm_bit(9) == "Medium voltage cabinet G3 circuit breaker switch-off failure"
 
     def test_decode_alarm_bit_case_11(self):
-        from sigenergy2mqtt.sensors.pss_read_only import PSSTeleindication2
+        from sigenergy2mqtt.sensors.pss.read_only import PSSTeleindication2
 
         s = PSSTeleindication2(PLANT_INDEX, DEVICE_ADDRESS)
         assert s.decode_alarm_bit(11) == "LB low voltage cabinet SPD fault"
 
     def test_decode_alarm_bit_case_13(self):
-        from sigenergy2mqtt.sensors.pss_read_only import PSSTeleindication2
+        from sigenergy2mqtt.sensors.pss.read_only import PSSTeleindication2
 
         s = PSSTeleindication2(PLANT_INDEX, DEVICE_ADDRESS)
         assert s.decode_alarm_bit(13) == "LA low voltage cabinet over-temperature alarm"
 
     def test_decode_alarm_bit_even_cases(self):
         """Test even-numbered cases to ensure complete mapping."""
-        from sigenergy2mqtt.sensors.pss_read_only import PSSTeleindication2
+        from sigenergy2mqtt.sensors.pss.read_only import PSSTeleindication2
 
         s = PSSTeleindication2(PLANT_INDEX, DEVICE_ADDRESS)
         assert s.decode_alarm_bit(2) == "Medium voltage cabinet insulation gas low pressure alarm"

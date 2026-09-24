@@ -24,7 +24,7 @@ def setup_configs():
 
 
 from sigenergy2mqtt.common import ProtocolVersion
-from sigenergy2mqtt.sensors.ac_charger_read_only import (
+from sigenergy2mqtt.sensors.ev.ac_charger_read_only import (
     ACChargerAlarm1,
     ACChargerAlarm2,
     ACChargerAlarm3,
@@ -37,7 +37,7 @@ from sigenergy2mqtt.sensors.base import (
     Alarm5Sensor,
     Sensor,
 )
-from sigenergy2mqtt.sensors.plant_read_only import Alarm6, Alarm7
+from sigenergy2mqtt.sensors.plant.read_only import Alarm6, Alarm7
 
 
 @pytest.fixture(autouse=True)

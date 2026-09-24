@@ -1,7 +1,7 @@
 from typing import cast
 
-import sigenergy2mqtt.sensors.inverter_read_only as ro
-import sigenergy2mqtt.sensors.inverter_read_write as rw
+import sigenergy2mqtt.sensors.inverter.read_only as ro
+import sigenergy2mqtt.sensors.inverter.read_write as rw
 from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.common.types import NonInverter
 from sigenergy2mqtt.devices import ModbusDevice

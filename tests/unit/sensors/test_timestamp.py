@@ -6,7 +6,7 @@ from types import SimpleNamespace
 import pytest
 
 from sigenergy2mqtt.sensors.base.readable import ReadOnlySensor
-from sigenergy2mqtt.sensors.plant_read_only import SystemTime
+from sigenergy2mqtt.sensors.plant.read_only import SystemTime
 
 
 @pytest.fixture(autouse=True)

@@ -18,8 +18,8 @@ import pytest
 
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.sensors.base import Sensor
-from sigenergy2mqtt.sensors.inverter_read_write import DCChargerStatus
-from sigenergy2mqtt.sensors.plant_read_write import PlantStatus
+from sigenergy2mqtt.sensors.inverter.read_write import DCChargerStatus
+from sigenergy2mqtt.sensors.plant.read_write import PlantStatus
 from tests.utils.modbus_test_server import CustomDataBlock, LatencyBudget
 
 # ---------------------------------------------------------------------------

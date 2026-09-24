@@ -19,7 +19,7 @@ from sigenergy2mqtt.common import HybridInverter, ProtocolVersion, PVInverter
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.devices.inverter.inverter import Inverter
 from sigenergy2mqtt.sensors.base import Sensor
-from sigenergy2mqtt.sensors.inverter_read_only import PACKBCUCount
+from sigenergy2mqtt.sensors.inverter.read_only import PACKBCUCount
 
 
 @pytest.fixture(autouse=True)

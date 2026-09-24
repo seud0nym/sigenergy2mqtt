@@ -6,9 +6,9 @@ import pytest
 from sigenergy2mqtt.common import ConsumptionMethod
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.sensors.base import AvailabilityMixin, DiscoveryKeys, Sensor
-from sigenergy2mqtt.sensors.plant_derived import PlantConsumedPower
-from sigenergy2mqtt.sensors.plant_read_only import EMSWorkMode, SystemTimeZone
-from sigenergy2mqtt.sensors.plant_read_write import (
+from sigenergy2mqtt.sensors.plant.derived import PlantConsumedPower
+from sigenergy2mqtt.sensors.plant.read_only import EMSWorkMode, SystemTimeZone
+from sigenergy2mqtt.sensors.plant.read_write import (
     ActivePowerFixedAdjustmentTargetValue,
     ActivePowerPercentageAdjustmentTargetValue,
     IndependentPhasePowerControl,

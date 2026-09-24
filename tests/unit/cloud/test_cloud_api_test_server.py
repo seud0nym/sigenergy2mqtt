@@ -3,7 +3,7 @@
 from aiohttp.test_utils import TestClient, TestServer
 from pymodbus.client.mixin import ModbusClientMixin
 
-from sigenergy2mqtt.sensors.inverter_read_only import (
+from sigenergy2mqtt.sensors.inverter.read_only import (
     InverterModel,
     InverterSerialNumber,
     RatedActivePower,

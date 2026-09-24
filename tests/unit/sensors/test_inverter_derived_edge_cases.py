@@ -13,13 +13,13 @@ import pytest
 from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.sensors.base import Sensor
-from sigenergy2mqtt.sensors.inverter_derived import (
+from sigenergy2mqtt.sensors.inverter.derived import (
     InverterBatteryChargingPower,
     InverterBatteryDischargingPower,
     InverterSelfConsumedPower,
     PVStringPower,
 )
-from sigenergy2mqtt.sensors.inverter_read_only import (
+from sigenergy2mqtt.sensors.inverter.read_only import (
     ActivePower,
     ChargeDischargePower,
     PVCurrentSensor,
@@ -167,7 +167,7 @@ class TestPVStringPowerPublishGapWarning:
             sensor.amperes.value = 10.0
             sensor.amperes.timestamp = now
 
-            with patch("sigenergy2mqtt.sensors.base.DerivedSensor.publish", new_callable=AsyncMock), patch("sigenergy2mqtt.sensors.inverter_derived.logger") as mock_log:
+            with patch("sigenergy2mqtt.sensors.base.DerivedSensor.publish", new_callable=AsyncMock), patch("sigenergy2mqtt.sensors.inverter.derived.logger") as mock_log:
                 result = await sensor.publish(MagicMock(), None)
                 assert result is True
                 # Should have logged the gap warning (line 148)
@@ -234,7 +234,7 @@ class TestPVStringPowerUpdateFromSourceSensor:
             c_source.latest_raw_state = 1000  # 10A with divisor 100
             c_source.latest_time = time.time()
 
-            with patch("sigenergy2mqtt.sensors.inverter_derived.logger") as mock_log:
+            with patch("sigenergy2mqtt.sensors.inverter.derived.logger") as mock_log:
                 result = sensor.update_from_source_sensor(c_source)
                 assert result is True  # Both populated now
                 debug_calls = [str(c) for c in mock_log.debug.call_args_list]
@@ -312,7 +312,7 @@ class TestInverterSelfConsumedPowerEdgeCases:
             sensor.update_from_source_sensor(bp)
 
             pv1.latest_raw_state = 100
-            with patch("sigenergy2mqtt.sensors.inverter_derived.logger") as mock_log:
+            with patch("sigenergy2mqtt.sensors.inverter.derived.logger") as mock_log:
                 result = sensor.update_from_source_sensor(pv1)
                 assert result is True
                 # Negative state should be corrected to 0
@@ -346,7 +346,7 @@ class TestInverterSelfConsumedPowerEdgeCases:
             pv1.latest_raw_state = 100
 
             # Patch set_latest_state to raise SanityCheckException
-            with patch.object(sensor, "set_latest_state", side_effect=SanityCheckException("test sanity check")), patch("sigenergy2mqtt.sensors.inverter_derived.logger") as mock_log:
+            with patch.object(sensor, "set_latest_state", side_effect=SanityCheckException("test sanity check")), patch("sigenergy2mqtt.sensors.inverter.derived.logger") as mock_log:
                 result = sensor.update_from_source_sensor(pv1)
                 assert result is True  # Returns True even when SanityCheckException is caught
                 debug_calls = [str(c) for c in mock_log.debug.call_args_list]
@@ -375,7 +375,7 @@ class TestInverterSelfConsumedPowerEdgeCases:
             bp.latest_raw_state = 0
             pv1.latest_raw_state = 0
 
-            with patch("sigenergy2mqtt.sensors.inverter_derived.logger") as mock_log:
+            with patch("sigenergy2mqtt.sensors.inverter.derived.logger") as mock_log:
                 sensor.update_from_source_sensor(ap)
                 sensor.update_from_source_sensor(bp)
                 sensor.update_from_source_sensor(pv1)
@@ -432,7 +432,7 @@ class TestInverterSelfConsumedPowerEdgeCases:
             bp.latest_raw_state = 0
             bp.last_successful_read_time = time.time()
 
-            with patch("sigenergy2mqtt.sensors.inverter_derived.logger") as mock_log:
+            with patch("sigenergy2mqtt.sensors.inverter.derived.logger") as mock_log:
                 sensor.update_from_source_sensor(bp)
                 mock_log.warning.assert_called_once()
                 assert "Discarding stale incomplete source snapshot" in mock_log.warning.call_args[0][0]
@@ -468,7 +468,7 @@ class TestInverterSelfConsumedPowerEdgeCases:
             ap.last_successful_read_time = now + 10
             ap.latest_raw_state = 0
 
-            with patch("sigenergy2mqtt.sensors.inverter_derived.logger") as mock_log:
+            with patch("sigenergy2mqtt.sensors.inverter.derived.logger") as mock_log:
                 sensor.update_from_source_sensor(ap)
                 assert mock_log.warning.call_count == 0
 
@@ -517,7 +517,7 @@ class TestInverterSelfConsumedPowerEdgeCases:
 
             # Cycle 2 at t1 = 1010.0 (10s later; >4s expected_interval, but <60s publish interval)
             t1 = 1010.0
-            with patch("time.time", return_value=t1), patch("sigenergy2mqtt.sensors.inverter_derived.logger") as mock_log:
+            with patch("time.time", return_value=t1), patch("sigenergy2mqtt.sensors.inverter.derived.logger") as mock_log:
                 v_source.latest_raw_state = 0
                 v_source.last_successful_read_time = t1
                 c_source.latest_raw_state = 0

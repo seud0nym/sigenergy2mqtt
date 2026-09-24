@@ -9,12 +9,12 @@ from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import PID, PSS, ACCharger, DCCharger, Inverter, PowerPlant
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.sensors.base import SanityCheckException
-from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion, InverterModel, InverterSerialNumber, OutputType, PACKBCUCount
-from sigenergy2mqtt.sensors.pid_read_only import PIDSerialNumber
-from sigenergy2mqtt.sensors.plant_ess_preheating_read_write import ESSPreHeatingEnable
-from sigenergy2mqtt.sensors.plant_read_only import SystemTimeZone
-from sigenergy2mqtt.sensors.plant_read_write import GridCodeLVRT, IndependentPhasePowerControl
-from sigenergy2mqtt.sensors.pss_read_only import PSSSerialNumber
+from sigenergy2mqtt.sensors.inverter.read_only import InverterFirmwareVersion, InverterModel, InverterSerialNumber, OutputType, PACKBCUCount
+from sigenergy2mqtt.sensors.pid.read_only import PIDSerialNumber
+from sigenergy2mqtt.sensors.plant.ess_preheating_read_write import ESSPreHeatingEnable
+from sigenergy2mqtt.sensors.plant.read_only import SystemTimeZone
+from sigenergy2mqtt.sensors.plant.read_write import GridCodeLVRT, IndependentPhasePowerControl
+from sigenergy2mqtt.sensors.pss.read_only import PSSSerialNumber
 
 from .modbus_helpers import get_modbus_url, get_state
 from .protocol_probe import probe_optional_interface, probe_protocol

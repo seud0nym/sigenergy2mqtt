@@ -14,8 +14,8 @@ from sigenergy2mqtt.common import Constants, ProtocolVersion
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import DeviceRegistry, Inverter, PowerPlant, SigenergyCloudControl, bind_cross_device_sensors
 from sigenergy2mqtt.modbus import ModbusClient
-from sigenergy2mqtt.sensors.inverter_read_only import RatedActivePower
-from sigenergy2mqtt.sensors.plant_read_only import (
+from sigenergy2mqtt.sensors.inverter.read_only import RatedActivePower
+from sigenergy2mqtt.sensors.plant.read_only import (
     GridStatus,
     SITotalChargedEnergy,
     SITotalDischargedEnergy,
@@ -23,7 +23,7 @@ from sigenergy2mqtt.sensors.plant_read_only import (
     SITotalEVDCChargedEnergy,
     SITotalEVDCDischargedEnergy,
 )
-from sigenergy2mqtt.sensors.plant_read_write import (
+from sigenergy2mqtt.sensors.plant.read_write import (
     ActivePowerFixedAdjustmentTargetValue,
     PhaseActivePowerFixedAdjustmentTargetValue,
     PhaseReactivePowerFixedAdjustmentTargetValue,

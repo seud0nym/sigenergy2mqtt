@@ -53,10 +53,10 @@ from sigenergy2mqtt.main.validation import (
     _validation_hash,
     validate_publishable_sensors,
 )
-from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerRunningState
+from sigenergy2mqtt.sensors.ev.ac_charger_read_only import ACChargerRunningState
 from sigenergy2mqtt.sensors.base import Sensor
-from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion
-from sigenergy2mqtt.sensors.plant_read_only import SystemTimeZone
+from sigenergy2mqtt.sensors.inverter.read_only import InverterFirmwareVersion
+from sigenergy2mqtt.sensors.plant.read_only import SystemTimeZone
 
 
 class FmtMock(MagicMock):
@@ -771,12 +771,12 @@ class TestFactories:
             patch("sigenergy2mqtt.main.device_factories.probe_protocol", AsyncMock(return_value=ProtocolVersion.V2_8)),
             patch("sigenergy2mqtt.main.device_factories.probe_optional_interface", AsyncMock(return_value=False)),
             patch("sigenergy2mqtt.devices.PowerPlant.create", AsyncMock(return_value=MagicMock(protocol_version=ProtocolVersion.V2_8, unique_id="p1"))),
-            patch("sigenergy2mqtt.sensors.inverter_read_only.InverterFirmwareVersion.get_state", AsyncMock(return_value="V122R001C00SPC113B717A")),
-            patch("sigenergy2mqtt.sensors.inverter_read_only.InverterModel.get_state", AsyncMock(return_value="MDL1")),
-            patch("sigenergy2mqtt.sensors.inverter_read_only.PACKBCUCount.get_state", AsyncMock(return_value=1)),
-            patch("sigenergy2mqtt.sensors.inverter_read_only.PVStringCount.get_state", AsyncMock(return_value=1)),
-            patch("sigenergy2mqtt.sensors.inverter_read_only.InverterSerialNumber.get_state", AsyncMock(return_value="SN1")),
-            patch("sigenergy2mqtt.sensors.inverter_read_only.OutputType.get_state", AsyncMock(return_value=1)),
+            patch("sigenergy2mqtt.sensors.inverter.read_only.InverterFirmwareVersion.get_state", AsyncMock(return_value="V122R001C00SPC113B717A")),
+            patch("sigenergy2mqtt.sensors.inverter.read_only.InverterModel.get_state", AsyncMock(return_value="MDL1")),
+            patch("sigenergy2mqtt.sensors.inverter.read_only.PACKBCUCount.get_state", AsyncMock(return_value=1)),
+            patch("sigenergy2mqtt.sensors.inverter.read_only.PVStringCount.get_state", AsyncMock(return_value=1)),
+            patch("sigenergy2mqtt.sensors.inverter.read_only.InverterSerialNumber.get_state", AsyncMock(return_value="SN1")),
+            patch("sigenergy2mqtt.sensors.inverter.read_only.OutputType.get_state", AsyncMock(return_value=1)),
             patch("sigenergy2mqtt.devices.inverter.inverter.logger.debug") as mock_debug,
         ):
             await make_plant_and_inverter(0, mock_client, 1, None, seen)
@@ -796,12 +796,12 @@ class TestFactories:
             patch("sigenergy2mqtt.main.device_factories.probe_protocol", AsyncMock(return_value=ProtocolVersion.V2_8)),
             patch("sigenergy2mqtt.main.device_factories.probe_optional_interface", AsyncMock(return_value=False)),
             patch("sigenergy2mqtt.devices.PowerPlant.create", AsyncMock(return_value=MagicMock(protocol_version=ProtocolVersion.V2_8, unique_id="p1"))),
-            patch("sigenergy2mqtt.sensors.inverter_read_only.InverterFirmwareVersion.get_state", AsyncMock(return_value="V122R001C00SPC112B701P")),
-            patch("sigenergy2mqtt.sensors.inverter_read_only.InverterModel.get_state", AsyncMock(return_value="MDL1")),
-            patch("sigenergy2mqtt.sensors.inverter_read_only.PACKBCUCount.get_state", AsyncMock(return_value=1)),
-            patch("sigenergy2mqtt.sensors.inverter_read_only.PVStringCount.get_state", AsyncMock(return_value=1)),
-            patch("sigenergy2mqtt.sensors.inverter_read_only.InverterSerialNumber.get_state", AsyncMock(return_value="SN1")),
-            patch("sigenergy2mqtt.sensors.inverter_read_only.OutputType.get_state", AsyncMock(return_value=1)),
+            patch("sigenergy2mqtt.sensors.inverter.read_only.InverterFirmwareVersion.get_state", AsyncMock(return_value="V122R001C00SPC112B701P")),
+            patch("sigenergy2mqtt.sensors.inverter.read_only.InverterModel.get_state", AsyncMock(return_value="MDL1")),
+            patch("sigenergy2mqtt.sensors.inverter.read_only.PACKBCUCount.get_state", AsyncMock(return_value=1)),
+            patch("sigenergy2mqtt.sensors.inverter.read_only.PVStringCount.get_state", AsyncMock(return_value=1)),
+            patch("sigenergy2mqtt.sensors.inverter.read_only.InverterSerialNumber.get_state", AsyncMock(return_value="SN1")),
+            patch("sigenergy2mqtt.sensors.inverter.read_only.OutputType.get_state", AsyncMock(return_value=1)),
         ):
             await make_plant_and_inverter(0, mock_client, 1, None, seen)
             assert clean_config.ems_mode_check is True

@@ -9,11 +9,11 @@ from sigenergy2mqtt.common import ConsumptionMethod, DeviceClass, HybridInverter
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus import ModbusDataType
 
-from .ac_charger_read_only import ACChargerChargingPower
-from .base import CrossDeviceDerivedSensor, DerivedSensor, DiscoveryKeys, EnergyDailyAccumulationSensor, PVPowerSensor, Sensor, SimpleEnergyDailyAccumulationSensor, UnpublishResetSensorMixin
-from .inverter_derived import InverterSelfConsumedPower
-from .inverter_read_only import DCChargerOutputPower
-from .plant_read_only import (
+from ..ev.ac_charger_read_only import ACChargerChargingPower
+from ..base import CrossDeviceDerivedSensor, DerivedSensor, DiscoveryKeys, EnergyDailyAccumulationSensor, PVPowerSensor, Sensor, SimpleEnergyDailyAccumulationSensor, UnpublishResetSensorMixin
+from ..inverter.derived import InverterSelfConsumedPower
+from ..inverter.read_only import DCChargerOutputPower
+from .read_only import (
     BatteryPower,
     ESSTotalChargedEnergy,
     ESSTotalDischargedEnergy,
@@ -29,7 +29,7 @@ from .plant_read_only import (
     ThirdPartyLifetimePVEnergy,
     TotalLoadPower,
 )
-from .plant_read_write import ESSBackupSOC, ESSChargeCutOffSOC, ESSDischargeCutOffSOC
+from .read_write import ESSBackupSOC, ESSChargeCutOffSOC, ESSDischargeCutOffSOC
 
 logger = logging.getLogger(__name__)
 
@@ -610,8 +610,8 @@ class PlantConsumedPower(CrossDeviceDerivedSensor, HybridInverter, PVInverter):
 
         if self.method == ConsumptionMethod.CALCULATED:
             from sigenergy2mqtt.devices.base.registry import DeviceRegistry
-            from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerChargingPower
-            from sigenergy2mqtt.sensors.inverter_read_only import DCChargerOutputPower
+            from sigenergy2mqtt.sensors.ev.ac_charger_read_only import ACChargerChargingPower
+            from sigenergy2mqtt.sensors.inverter.read_only import DCChargerOutputPower
 
             for device in DeviceRegistry.get(plant_index):
                 for sensor in device.get_all_sensors(search_children=True).values():
@@ -903,7 +903,7 @@ class PlantSelfConsumedPower(CrossDeviceDerivedSensor, HybridInverter):
         sources are discovered from the ``DeviceRegistry`` at binding time.
         """
         from sigenergy2mqtt.devices.base.registry import DeviceRegistry
-        from sigenergy2mqtt.sensors.inverter_derived import InverterSelfConsumedPower
+        from sigenergy2mqtt.sensors.inverter.derived import InverterSelfConsumedPower
 
         sources: list[InverterSelfConsumedPower] = []
         for device in DeviceRegistry.get(plant_index):
