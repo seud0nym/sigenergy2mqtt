@@ -5,6 +5,8 @@ from collections.abc import Awaitable, Callable
 from datetime import timedelta
 from typing import Any, TypeVar
 
+from aiohttp import ClientError
+
 from .exceptions import (
     CloudControlAuthError,
     CloudControlRateLimitedError,
@@ -82,7 +84,7 @@ class CommunityCloudAdapter:
             raise CloudControlAuthError(str(exc)) from exc
         except SigenergyCloudRateLimitError as exc:
             raise CloudControlRateLimitedError(str(exc)) from exc
-        except (SigenergyCloudError, OSError, TimeoutError) as exc:
+        except (ClientError, SigenergyCloudError, OSError, TimeoutError) as exc:
             raise CloudControlUnavailableError(str(exc)) from exc
         self._connected = True
         self._connection_generation += 1
@@ -198,7 +200,7 @@ class CommunityCloudAdapter:
                 if reject_api_errors:
                     raise CloudControlRejectedError(str(exc)) from exc
                 raise CloudControlUnavailableError(str(exc)) from exc
-            except (SigenergyCloudError, OSError, TimeoutError) as exc:
+            except (ClientError, SigenergyCloudError, OSError, TimeoutError) as exc:
                 raise CloudControlUnavailableError(str(exc)) from exc
         raise AssertionError("cloud operation retry loop exhausted")
 

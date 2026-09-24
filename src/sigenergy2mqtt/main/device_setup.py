@@ -4,6 +4,7 @@ import sys
 from collections.abc import Mapping
 from typing import Any, cast
 
+from aiohttp import ClientError
 from pymodbus.exceptions import ModbusException
 
 from sigenergy2mqtt.cloud.exceptions import CloudControlError
@@ -40,7 +41,7 @@ logger = logging.getLogger(__name__)
 _GRID_RESTORE_WATCH_TASKS: set[tuple[str, int, int]] = set()
 
 
-def _cloud_control_plant_index(device_list: list[dict[str, Any]]) -> int:
+def _cloud_control_plant_index(device_list: list[dict[str, Any]]) -> int | None:
     """Find the local plant containing an inverter reported by the cloud."""
     cloud_serial_numbers = {
         str(device.get("serialNumber") or device.get("serial_number") or device.get("sn"))
@@ -48,16 +49,30 @@ def _cloud_control_plant_index(device_list: list[dict[str, Any]]) -> int:
         if device.get("deviceType") == "Inverter"
         and (device.get("serialNumber") or device.get("serial_number") or device.get("sn"))
     }
+    plants_with_unreadable_serials: set[int] = set()
     for devices in DeviceRegistry._devices.values():
         for device in devices:
             if not isinstance(device, Inverter):
                 continue
             serial_number = device.get("sn") or device.get("serial_number")
-            if serial_number is not None and str(serial_number) in cloud_serial_numbers:
+            if serial_number is None:
+                plants_with_unreadable_serials.add(device.plant_index)
+                continue
+            if str(serial_number) in cloud_serial_numbers:
                 return device.plant_index
 
-    logger.warning("No cloud inverter matched a local inverter; defaulting cloud control to plant index 0")
-    return 0
+    if plants_with_unreadable_serials:
+        logger.warning(
+            "Local inverter serial numbers are unavailable for plant indexes %s; "
+            "cloud control cannot be matched safely and will be disabled for this run",
+            sorted(plants_with_unreadable_serials),
+        )
+        return None
+
+    logger.warning(
+        "No cloud inverter matched a local inverter; cloud control will be disabled for this run"
+    )
+    return None
 
 
 async def _discover_cloud_control_plant_index(cloud_port: CloudControlPort) -> int | None:
@@ -70,7 +85,7 @@ async def _discover_cloud_control_plant_index(cloud_port: CloudControlPort) -> i
     device_list: list[dict[str, Any]] | None = None
     try:
         device_list = await cloud_port.device_list()
-    except CloudControlError as exc:
+    except (ClientError, CloudControlError) as exc:
         logger.warning(
             "Cloud inverter discovery failed; cloud control will be disabled for this run: %s",
             exc,
@@ -88,7 +103,13 @@ async def _discover_cloud_control_plant_index(cloud_port: CloudControlPort) -> i
             )
     if device_list is None:
         return None
-    return _cloud_control_plant_index(device_list)
+    plant_index = _cloud_control_plant_index(device_list)
+    if plant_index is None:
+        try:
+            await cloud_port.close()
+        except Exception:
+            logger.exception("Failed to close cloud adapter after discovery mismatch")
+    return plant_index
 
 
 async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfig], ProtocolVersion | None]:

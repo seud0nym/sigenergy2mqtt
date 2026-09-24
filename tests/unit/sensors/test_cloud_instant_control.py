@@ -4,6 +4,7 @@ from datetime import timedelta
 from unittest.mock import AsyncMock
 
 import pytest
+from aiohttp import ClientPayloadError, ServerDisconnectedError
 
 from sigenergy2mqtt.cloud.exceptions import CloudControlUnavailableError
 from sigenergy2mqtt.cloud.models import (
@@ -237,6 +238,11 @@ async def test_cloud_sensor_handles_failed_and_unknown_reads(caplog) -> None:
     assert await switch._update_internal_state(modbus_client=port) is False
     assert "cloud read failed" in caplog.text
 
+    switch._read_cloud_state = AsyncMock(  # type: ignore[method-assign]
+        side_effect=ClientPayloadError("truncated response")
+    )
+    assert await switch._update_internal_state(modbus_client=port) is False
+
     switch._read_cloud_state = AsyncMock(return_value=None)  # type: ignore[method-assign]
     assert await switch._update_internal_state(modbus_client=port) is False
 
@@ -279,6 +285,16 @@ async def test_cloud_write_handles_missing_transport_and_domain_error(caplog) ->
         is False
     )
     assert "cloud write failed" in caplog.text
+
+    mode._write_cloud_value = AsyncMock(  # type: ignore[method-assign]
+        side_effect=ServerDisconnectedError()
+    )
+    assert (
+        await mode._write_value(
+            FakeCloudControlPort(), AsyncMock(), 1, "source", AsyncMock()
+        )
+        is False
+    )
 
 
 @pytest.mark.asyncio
@@ -380,9 +396,29 @@ async def test_grid_limit_empty_states_and_disallowed_updates(payload) -> None:
         assert state == 5.0
     else:
         assert state == "None"
-    assert await sensor._write_cloud_value(port, 4.0) is (
-        payload["enable"] and bool(payload["maxLimitationInstaller"])
+    assert await sensor._write_cloud_value(port, 4.0) is bool(
+        payload["maxLimitationInstaller"]
     )
+    if payload["maxLimitationInstaller"]:
+        port.set_grid_export_limit.assert_awaited_once_with(4.0, enabled=True)
+    else:
+        port.set_grid_export_limit.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("enable", [None, "false", 0, 1])
+async def test_grid_limit_invalid_enable_status_disallows_updates(enable) -> None:
+    sensor = GridExportLimit(0)
+    port = AsyncMock()
+    port.grid_export_limit.return_value = {
+        "enable": enable,
+        "maxLimitation": "5.000",
+        "maxLimitationInstaller": "10.000",
+    }
+
+    assert await sensor._read_cloud_state(port) == "None"
+    assert await sensor._write_cloud_value(port, 4.0) is False
+    port.set_grid_export_limit.assert_not_awaited()
 
 
 @pytest.mark.asyncio

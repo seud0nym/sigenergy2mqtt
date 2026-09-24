@@ -7,6 +7,7 @@ import sys
 from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
 
 import pytest
+from aiohttp import ServerDisconnectedError
 from pymodbus import ModbusException
 
 from sigenergy2mqtt.cloud.community_adapter import CommunityCloudAdapter
@@ -91,15 +92,66 @@ def test_cloud_control_plant_index_matches_local_inverter(serial_key):
     ]) == 3
 
 
-def test_cloud_control_plant_index_defaults_to_zero(caplog):
+def test_cloud_control_plant_index_disables_unmatched_cloud(caplog):
     _registered_inverter(2, sn="OTHER-SN")
 
     with caplog.at_level(logging.WARNING):
         assert _cloud_control_plant_index([
             {"deviceType": "Inverter", "serialNumber": "CLOUD-SN"}
-        ]) == 0
+        ]) is None
 
-    assert "defaulting cloud control to plant index 0" in caplog.text
+    assert "cloud control will be disabled" in caplog.text
+
+
+def test_cloud_control_plant_index_disables_single_unreadable_serial(caplog):
+    _registered_inverter(2)
+
+    with caplog.at_level(logging.WARNING):
+        assert _cloud_control_plant_index([
+            {"deviceType": "Inverter", "serialNumber": "CLOUD-SN"}
+        ]) is None
+
+    assert "serial numbers are unavailable for plant indexes [2]" in caplog.text
+    assert "cannot be matched safely" in caplog.text
+
+
+def test_cloud_control_plant_index_disables_ambiguous_unreadable_serials(caplog):
+    _registered_inverter(1)
+    _registered_inverter(2)
+
+    with caplog.at_level(logging.WARNING):
+        assert _cloud_control_plant_index([
+            {"deviceType": "Inverter", "serialNumber": "CLOUD-SN"}
+        ]) is None
+
+    assert "cannot be matched safely" in caplog.text
+    assert "will be disabled" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_unmatched_cloud_control_is_closed() -> None:
+    _registered_inverter(2, sn="OTHER-SN")
+    cloud_port = MagicMock()
+    cloud_port.device_list = AsyncMock(
+        return_value=[{"deviceType": "Inverter", "serialNumber": "CLOUD-SN"}]
+    )
+    cloud_port.close = AsyncMock()
+
+    assert await _discover_cloud_control_plant_index(cloud_port) is None
+    cloud_port.close.assert_awaited_once_with()
+
+
+@pytest.mark.asyncio
+async def test_unreadable_local_serial_does_not_bind_cloud_control() -> None:
+    _registered_inverter(2)
+    cloud_port = MagicMock()
+    cloud_port.device_list = AsyncMock(
+        return_value=[{"deviceType": "Inverter", "serialNumber": "CLOUD-SN"}]
+    )
+    cloud_port.close = AsyncMock()
+
+    assert await _discover_cloud_control_plant_index(cloud_port) is None
+    cloud_port.close.assert_awaited_once_with()
 
 
 @pytest.mark.asyncio
@@ -139,6 +191,16 @@ def test_cloud_control_discovery_replaces_session_across_event_loops():
             await cloud_port.close()
 
     asyncio.run(open_polling_session())
+
+
+@pytest.mark.asyncio
+async def test_cloud_control_transport_failure_disables_cloud_control() -> None:
+    cloud_port = MagicMock()
+    cloud_port.device_list = AsyncMock(side_effect=ServerDisconnectedError())
+    cloud_port.close = AsyncMock()
+
+    assert await _discover_cloud_control_plant_index(cloud_port) is None
+    cloud_port.close.assert_awaited_once_with()
 
 
 @pytest.mark.asyncio
