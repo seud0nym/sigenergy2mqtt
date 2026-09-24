@@ -53,7 +53,7 @@ _TOPOLOGY_DEVICE_TYPES = {
 }
 
 
-class CommunityCloudAdapter:
+class MySigenCloudAdapter:
     """Translate domain commands to the unofficial, vendored cloud client."""
 
     def __init__(self, username: str, password: str, region: str) -> None:
@@ -146,7 +146,7 @@ class CommunityCloudAdapter:
         if command.starts_at is not None:
             unsupported.append("scheduled start")
         if unsupported:
-            raise CloudControlUnsupportedError(f"Community backend does not support {', '.join(unsupported)}")
+            raise CloudControlUnsupportedError(f"mySigen cloud backend does not support {', '.join(unsupported)}")
         if not self.capabilities.min_duration <= command.duration <= self.capabilities.max_duration:
             raise CloudControlRejectedError("Duration must be between 1 and 1440 minutes")
         duration_minutes = round(command.duration.total_seconds() / 60)

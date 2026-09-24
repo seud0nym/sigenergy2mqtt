@@ -7,8 +7,8 @@ from datetime import timedelta
 
 import pytest
 
-from sigenergy2mqtt.cloud.community_adapter import CommunityCloudAdapter
 from sigenergy2mqtt.cloud.models import InstantControlMode, InstantOverrideCommand
+from sigenergy2mqtt.cloud.mysigen_adapter import MySigenCloudAdapter
 from sigenergy2mqtt.config import Config, _swap_active_config
 from tests.utils.modbus_test_server import run_async_server, wait_for_server_start
 
@@ -20,16 +20,14 @@ def _free_port() -> int:
 
 
 @pytest.mark.integration
-async def test_community_cloud_adapter_against_test_server(
+async def test_mysigen_cloud_adapter_against_test_server(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     modbus_port = _free_port()
     cloud_port = _free_port()
     monkeypatch.setenv("MODBUS_TEST_SERVER_CLOUD_USERNAME", "cloud-user")
     monkeypatch.setenv("MODBUS_TEST_SERVER_CLOUD_PASSWORD", "cloud-password")
-    monkeypatch.setenv(
-        "SIGENERGY2MQTT_CLOUD_TESTING_URL", f"http://127.0.0.1:{cloud_port}/"
-    )
+    monkeypatch.setenv("SIGENERGY2MQTT_CLOUD_TESTING_URL", f"http://127.0.0.1:{cloud_port}/")
     task = asyncio.create_task(
         run_async_server(
             None,
@@ -43,10 +41,10 @@ async def test_community_cloud_adapter_against_test_server(
     assert await wait_for_server_start("127.0.0.1", modbus_port)
     assert await wait_for_server_start("127.0.0.1", cloud_port)
 
-    adapter: CommunityCloudAdapter | None = None
+    adapter: MySigenCloudAdapter | None = None
     try:
         with _swap_active_config(Config()):
-            adapter = CommunityCloudAdapter("cloud-user", "cloud-password", "testing")
+            adapter = MySigenCloudAdapter("cloud-user", "cloud-password", "testing")
             status = await adapter.instant_control_status()
             assert status.enabled is False
             assert status.mode is InstantControlMode.DISCHARGE

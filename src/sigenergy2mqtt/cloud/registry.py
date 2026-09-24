@@ -5,11 +5,11 @@ from typing import Literal
 
 from sigenergy2mqtt.config.models.cloud import CloudConfig
 
-from .community_adapter import CommunityCloudAdapter
+from .mysigen_adapter import MySigenCloudAdapter
 from .port import CloudControlPort
 
 logger = logging.getLogger("sigenergy2mqtt.cloud")
-Provider = Literal["community", "official"]
+Provider = Literal["mysigen", "official"]
 
 
 class CloudControlRegistry:
@@ -23,17 +23,10 @@ class CloudControlRegistry:
             self._provider = None
             return
         if not config.accept_unofficial_api_risk:
-            raise ValueError(
-                "cloud.accept-unofficial-api-risk must be true to use the unofficial mySigen cloud API"
-            )
-        logger.warning(
-            "Using the unofficial mySigen cloud API. Use a delegated 'View and Edit' "
-            "account created with mySigen System Share rather than the primary account."
-        )
-        self._adapter = CommunityCloudAdapter(
-            config.username, config.password, config.region
-        )
-        self._provider = "community"
+            raise ValueError("cloud.accept-unofficial-api-risk must be true to use the unofficial mySigen cloud API")
+        logger.warning("Using the unofficial mySigen cloud API. Use a delegated 'View and Edit' account created with mySigen System Share rather than the primary account.")
+        self._adapter = MySigenCloudAdapter(config.username, config.password, config.region)
+        self._provider = "mysigen"
 
     @property
     def active(self) -> CloudControlPort | None:
@@ -54,9 +47,7 @@ class CloudControlRegistry:
                 try:
                     await self._adapter.close()
                 except Exception:
-                    logger.exception(
-                        "Failed to close cloud adapter after connect failure"
-                    )
+                    logger.exception("Failed to close cloud adapter after connect failure")
                 raise
         return self._adapter
 

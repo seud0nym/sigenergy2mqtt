@@ -8,7 +8,6 @@ from unittest.mock import AsyncMock
 import pytest
 from aiohttp import ClientPayloadError, ServerDisconnectedError
 
-from sigenergy2mqtt.cloud.community_adapter import CommunityCloudAdapter
 from sigenergy2mqtt.cloud.exceptions import (
     CloudControlAuthError,
     CloudControlRateLimitedError,
@@ -21,6 +20,7 @@ from sigenergy2mqtt.cloud.models import (
     InstantControlMode,
     InstantOverrideCommand,
 )
+from sigenergy2mqtt.cloud.mysigen_adapter import MySigenCloudAdapter
 from sigenergy2mqtt.cloud.port import CloudControlPort
 from sigenergy2mqtt.cloud.registry import CloudControlRegistry
 from sigenergy2mqtt.cloud.vendor.solidfox.sigenergy_cloud import (
@@ -37,8 +37,8 @@ from sigenergy2mqtt.config.models.cloud import CloudConfig
 
 
 @pytest.fixture
-def community_adapter() -> CommunityCloudAdapter:
-    adapter = CommunityCloudAdapter("delegated@example.com", "secret", "eu")
+def mysigen_adapter() -> MySigenCloudAdapter:
+    adapter = MySigenCloudAdapter("delegated@example.com", "secret", "eu")
     adapter._client = SimpleNamespace(  # type: ignore[reportPrivateUsage]
         connect=AsyncMock(),
         close=AsyncMock(),
@@ -89,9 +89,7 @@ def community_adapter() -> CommunityCloudAdapter:
         ),
         iter_topology_nodes=SigenergyCloudClient.iter_topology_nodes,
         topology_node_is_offline=SigenergyCloudClient.topology_node_is_offline,
-        available_operational_modes=AsyncMock(
-            return_value={"defaultWorkingModes": [], "energyProfileItems": []}
-        ),
+        available_operational_modes=AsyncMock(return_value={"defaultWorkingModes": [], "energyProfileItems": []}),
         get_operational_mode=AsyncMock(return_value=(2, -1)),
         set_operational_mode=AsyncMock(return_value={"ok": True}),
         grid_export_limit=AsyncMock(return_value={"enable": True}),
@@ -119,31 +117,31 @@ def community_adapter() -> CommunityCloudAdapter:
 
 @pytest.mark.asyncio
 async def test_connect_normalizes_aiohttp_transport_errors(
-    community_adapter: CommunityCloudAdapter,
+    mysigen_adapter: MySigenCloudAdapter,
 ) -> None:
-    community_adapter._client.connect.side_effect = ServerDisconnectedError()  # type: ignore[reportPrivateUsage]
+    mysigen_adapter._client.connect.side_effect = ServerDisconnectedError()  # type: ignore[reportPrivateUsage]
 
     with pytest.raises(CloudControlUnavailableError):
-        await community_adapter.connect()
+        await mysigen_adapter.connect()
 
 
 @pytest.mark.asyncio
 async def test_operation_normalizes_aiohttp_transport_errors(
-    community_adapter: CommunityCloudAdapter,
+    mysigen_adapter: MySigenCloudAdapter,
 ) -> None:
-    community_adapter._connected = True  # type: ignore[reportPrivateUsage]
-    community_adapter._client.get_operational_mode.side_effect = ClientPayloadError(  # type: ignore[reportPrivateUsage]
+    mysigen_adapter._connected = True  # type: ignore[reportPrivateUsage]
+    mysigen_adapter._client.get_operational_mode.side_effect = ClientPayloadError(  # type: ignore[reportPrivateUsage]
         "truncated response"
     )
 
     with pytest.raises(CloudControlUnavailableError, match="truncated response"):
-        await community_adapter.get_operational_mode()
+        await mysigen_adapter.get_operational_mode()
 
 
 async def test_device_list_uses_official_api_shape(
-    community_adapter: CommunityCloudAdapter,
+    mysigen_adapter: MySigenCloudAdapter,
 ) -> None:
-    assert await community_adapter.device_list() == [
+    assert await mysigen_adapter.device_list() == [
         {
             "systemId": "123",
             "serialNumber": "INV",
@@ -165,104 +163,98 @@ async def test_device_list_uses_official_api_shape(
     ]
 
 
-def test_community_adapter_satisfies_port_and_reports_capabilities(
-    community_adapter: CommunityCloudAdapter,
+def test_mysigen_adapter_satisfies_port_and_reports_capabilities(
+    mysigen_adapter: MySigenCloudAdapter,
 ) -> None:
-    assert isinstance(community_adapter, CloudControlPort)
-    assert community_adapter.model == "mySigen Cloud (unofficial)"
-    assert community_adapter.capabilities.features == frozenset()
-    assert community_adapter.capabilities.min_duration == timedelta(minutes=1)
-    assert community_adapter.capabilities.max_duration == timedelta(minutes=1440)
-    assert not community_adapter.capabilities.supports(ControlFeature.SCHEDULING)
+    assert isinstance(mysigen_adapter, CloudControlPort)
+    assert mysigen_adapter.model == "mySigen Cloud (unofficial)"
+    assert mysigen_adapter.capabilities.features == frozenset()
+    assert mysigen_adapter.capabilities.min_duration == timedelta(minutes=1)
+    assert mysigen_adapter.capabilities.max_duration == timedelta(minutes=1440)
+    assert not mysigen_adapter.capabilities.supports(ControlFeature.SCHEDULING)
 
 
 @pytest.mark.asyncio
 async def test_port_lifecycle_is_idempotent(
-    community_adapter: CommunityCloudAdapter,
+    mysigen_adapter: MySigenCloudAdapter,
 ) -> None:
-    await community_adapter.connect()
-    await community_adapter.connect()
-    community_adapter._client.connect.assert_awaited_once()  # type: ignore[reportPrivateUsage]
+    await mysigen_adapter.connect()
+    await mysigen_adapter.connect()
+    mysigen_adapter._client.connect.assert_awaited_once()  # type: ignore[reportPrivateUsage]
 
-    await community_adapter.close()
-    community_adapter._client.close.assert_awaited_once()  # type: ignore[reportPrivateUsage]
+    await mysigen_adapter.close()
+    mysigen_adapter._client.close.assert_awaited_once()  # type: ignore[reportPrivateUsage]
 
 
 @pytest.mark.asyncio
 async def test_port_translates_command_and_authoritative_status(
-    community_adapter: CommunityCloudAdapter,
+    mysigen_adapter: MySigenCloudAdapter,
 ) -> None:
-    await community_adapter.set_instant_override(
+    await mysigen_adapter.set_instant_override(
         InstantOverrideCommand(
             InstantControlMode.CHARGE,
             timedelta(minutes=75),
         )
     )
-    community_adapter._client.set_instant_manual_control.assert_awaited_once_with(  # type: ignore[reportPrivateUsage]
+    mysigen_adapter._client.set_instant_manual_control.assert_awaited_once_with(  # type: ignore[reportPrivateUsage]
         InstantManualMode.CHARGING,
         duration_minutes=75,
     )
 
-    status = await community_adapter.instant_control_status()
+    status = await mysigen_adapter.instant_control_status()
     assert status.enabled is True
     assert status.mode is InstantControlMode.DISCHARGE
     assert status.ends_at == 1_800_000_000.0
-    assert await community_adapter.available_operational_modes() == {
+    assert await mysigen_adapter.available_operational_modes() == {
         "defaultWorkingModes": [],
         "energyProfileItems": [],
     }
-    assert await community_adapter.get_operational_mode() == (2, -1)
-    assert await community_adapter.set_operational_mode(9, 7) == {"ok": True}
-    community_adapter._client.set_operational_mode.assert_awaited_once_with(9, 7)  # type: ignore[reportPrivateUsage]
+    assert await mysigen_adapter.get_operational_mode() == (2, -1)
+    assert await mysigen_adapter.set_operational_mode(9, 7) == {"ok": True}
+    mysigen_adapter._client.set_operational_mode.assert_awaited_once_with(9, 7)  # type: ignore[reportPrivateUsage]
 
 
 @pytest.mark.asyncio
-async def test_port_clears_override(community_adapter: CommunityCloudAdapter) -> None:
-    await community_adapter.clear_instant_override()
-    community_adapter._client.disable_instant_manual_control.assert_awaited_once()  # type: ignore[reportPrivateUsage]
+async def test_port_clears_override(mysigen_adapter: MySigenCloudAdapter) -> None:
+    await mysigen_adapter.clear_instant_override()
+    mysigen_adapter._client.disable_instant_manual_control.assert_awaited_once()  # type: ignore[reportPrivateUsage]
 
 
 @pytest.mark.asyncio
 async def test_port_delegates_all_limit_operations(
-    community_adapter: CommunityCloudAdapter,
+    mysigen_adapter: MySigenCloudAdapter,
 ) -> None:
-    assert await community_adapter.grid_export_limit() == {"enable": True}
-    assert await community_adapter.set_grid_export_limit(4.5, enabled=False) == {
-        "ok": True
-    }
-    assert await community_adapter.grid_import_limit() == {"enable": True}
-    assert await community_adapter.set_grid_import_limit(6.5) == {"ok": True}
-    assert await community_adapter.grid_connection_limit() == {"enable": True}
-    assert await community_adapter.set_grid_connection_limit(32.0) == {"ok": True}
-    assert await community_adapter.battery_power_limit() == {
-        "batteryMaxChargingPower": "5"
-    }
-    assert await community_adapter.set_battery_power_limit(
-        max_charge_kw=3.0, max_discharge_kw=None
-    ) == {"ok": True}
-    assert await community_adapter.solar_power_limit() == {"powerLimit": "6"}
-    assert await community_adapter.set_solar_power_limit(None) == {"ok": True}
-    assert await community_adapter.battery_export_limitation() == {
+    assert await mysigen_adapter.grid_export_limit() == {"enable": True}
+    assert await mysigen_adapter.set_grid_export_limit(4.5, enabled=False) == {"ok": True}
+    assert await mysigen_adapter.grid_import_limit() == {"enable": True}
+    assert await mysigen_adapter.set_grid_import_limit(6.5) == {"ok": True}
+    assert await mysigen_adapter.grid_connection_limit() == {"enable": True}
+    assert await mysigen_adapter.set_grid_connection_limit(32.0) == {"ok": True}
+    assert await mysigen_adapter.battery_power_limit() == {"batteryMaxChargingPower": "5"}
+    assert await mysigen_adapter.set_battery_power_limit(max_charge_kw=3.0, max_discharge_kw=None) == {"ok": True}
+    assert await mysigen_adapter.solar_power_limit() == {"powerLimit": "6"}
+    assert await mysigen_adapter.set_solar_power_limit(None) == {"ok": True}
+    assert await mysigen_adapter.battery_export_limitation() == {
         "currentEnable": False,
         "ownerSetEnable": None,
         "installerSetEnable": None,
         "nearModify": None,
     }
-    assert await community_adapter.set_battery_export_limitation(False) == {"ok": True}
+    assert await mysigen_adapter.set_battery_export_limitation(False) == {"ok": True}
 
-    community_adapter._client.set_grid_export_limit.assert_awaited_once_with(  # type: ignore[reportPrivateUsage]
+    mysigen_adapter._client.set_grid_export_limit.assert_awaited_once_with(  # type: ignore[reportPrivateUsage]
         4.5, enabled=False
     )
-    community_adapter._client.set_grid_import_limit.assert_awaited_once_with(  # type: ignore[reportPrivateUsage]
+    mysigen_adapter._client.set_grid_import_limit.assert_awaited_once_with(  # type: ignore[reportPrivateUsage]
         6.5, enabled=True
     )
-    community_adapter._client.set_grid_connection_limit.assert_awaited_once_with(  # type: ignore[reportPrivateUsage]
+    mysigen_adapter._client.set_grid_connection_limit.assert_awaited_once_with(  # type: ignore[reportPrivateUsage]
         32.0, enabled=True
     )
-    community_adapter._client.set_battery_power_limit.assert_awaited_once_with(  # type: ignore[reportPrivateUsage]
+    mysigen_adapter._client.set_battery_power_limit.assert_awaited_once_with(  # type: ignore[reportPrivateUsage]
         max_charge_kw=3.0, max_discharge_kw=None
     )
-    community_adapter._client.set_battery_export_limitation.assert_awaited_once_with(  # type: ignore[reportPrivateUsage]
+    mysigen_adapter._client.set_battery_export_limitation.assert_awaited_once_with(  # type: ignore[reportPrivateUsage]
         False
     )
 
@@ -289,21 +281,21 @@ async def test_port_delegates_all_limit_operations(
     ],
 )
 async def test_port_rejects_unsupported_features(
-    community_adapter: CommunityCloudAdapter,
+    mysigen_adapter: MySigenCloudAdapter,
     command: InstantOverrideCommand,
 ) -> None:
     with pytest.raises(CloudControlUnsupportedError):
-        await community_adapter.set_instant_override(command)
+        await mysigen_adapter.set_instant_override(command)
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("minutes", [0, 1441])
 async def test_port_rejects_duration_outside_capabilities(
-    community_adapter: CommunityCloudAdapter,
+    mysigen_adapter: MySigenCloudAdapter,
     minutes: int,
 ) -> None:
     with pytest.raises(CloudControlRejectedError):
-        await community_adapter.set_instant_override(
+        await mysigen_adapter.set_instant_override(
             InstantOverrideCommand(
                 InstantControlMode.HOLD,
                 timedelta(minutes=minutes),
@@ -313,7 +305,7 @@ async def test_port_rejects_duration_outside_capabilities(
 
 def test_registry_requires_explicit_unofficial_api_opt_in() -> None:
     registry = CloudControlRegistry()
-    config = CloudConfig(username="user", password="password", region="eu")
+    config = CloudConfig(username="user", password="password", region="eu")  # pyright: ignore[reportCallIssue]
 
     with pytest.raises(ValueError, match="accept-unofficial-api-risk"):
         registry.configure(config)
@@ -327,10 +319,10 @@ async def test_registry_owns_selected_adapter_lifecycle() -> None:
             username="user",
             password="password",
             region="eu",
-            **{"accept-unofficial-api-risk": True},
+            **{"accept-unofficial-api-risk": True},  # pyright: ignore[reportArgumentType]
         )
     )
-    assert registry.provider == "community"
+    assert registry.provider == "mysigen"
     assert registry.active is not None
     registry.active.connect = AsyncMock()  # type: ignore[method-assign]
     registry.active.close = AsyncMock()  # type: ignore[method-assign]
@@ -349,7 +341,7 @@ async def test_registry_closes_partially_connected_adapter() -> None:
             username="user",
             password="password",
             region="eu",
-            **{"accept-unofficial-api-risk": True},
+            **{"accept-unofficial-api-risk": True},  # pyright: ignore[reportArgumentType]
         )
     )
     assert registry.active is not None
@@ -373,14 +365,14 @@ async def test_registry_closes_partially_connected_adapter() -> None:
     ],
 )
 async def test_connect_translates_vendor_errors(
-    community_adapter: CommunityCloudAdapter,
+    mysigen_adapter: MySigenCloudAdapter,
     vendor_error: Exception,
     domain_error: type[Exception],
 ) -> None:
-    community_adapter._client.connect.side_effect = vendor_error  # type: ignore[reportPrivateUsage]
+    mysigen_adapter._client.connect.side_effect = vendor_error  # type: ignore[reportPrivateUsage]
 
     with pytest.raises(domain_error):
-        await community_adapter.connect()
+        await mysigen_adapter.connect()
 
 
 @pytest.mark.asyncio
@@ -455,28 +447,26 @@ async def test_connect_translates_vendor_errors(
     ],
 )
 async def test_operations_translate_vendor_errors(
-    community_adapter: CommunityCloudAdapter,
+    mysigen_adapter: MySigenCloudAdapter,
     method_name: str,
     vendor_error: Exception,
     domain_error: type[Exception],
 ) -> None:
-    community_adapter._connected = True  # type: ignore[reportPrivateUsage]
-    getattr(community_adapter._client, method_name).side_effect = vendor_error  # type: ignore[reportPrivateUsage]
+    mysigen_adapter._connected = True  # type: ignore[reportPrivateUsage]
+    getattr(mysigen_adapter._client, method_name).side_effect = vendor_error  # type: ignore[reportPrivateUsage]
 
     with pytest.raises(domain_error):
         if method_name == "set_instant_manual_control":
-            await community_adapter.set_instant_override(
-                InstantOverrideCommand(InstantControlMode.CHARGE, timedelta(minutes=30))
-            )
+            await mysigen_adapter.set_instant_override(InstantOverrideCommand(InstantControlMode.CHARGE, timedelta(minutes=30)))
         elif method_name == "disable_instant_manual_control":
-            await community_adapter.clear_instant_override()
+            await mysigen_adapter.clear_instant_override()
         elif method_name == "instant_manual_control":
-            await community_adapter.instant_control_status()
+            await mysigen_adapter.instant_control_status()
         else:
-            await community_adapter.get_operational_mode()
+            await mysigen_adapter.get_operational_mode()
 
     if isinstance(vendor_error, SigenergyCloudAuthError):
-        assert community_adapter._connected is False  # type: ignore[reportPrivateUsage]
+        assert mysigen_adapter._connected is False  # type: ignore[reportPrivateUsage]
 
 
 @pytest.mark.asyncio
@@ -485,11 +475,7 @@ async def test_operations_translate_vendor_errors(
     [
         (
             "set_instant_manual_control",
-            lambda adapter: adapter.set_instant_override(
-                InstantOverrideCommand(
-                    InstantControlMode.CHARGE, timedelta(minutes=30)
-                )
-            ),
+            lambda adapter: adapter.set_instant_override(InstantOverrideCommand(InstantControlMode.CHARGE, timedelta(minutes=30))),
             None,
         ),
         (
@@ -509,21 +495,21 @@ async def test_operations_translate_vendor_errors(
     ],
 )
 async def test_operations_reauthenticate_and_retry_after_session_termination(
-    community_adapter: CommunityCloudAdapter,
+    mysigen_adapter: MySigenCloudAdapter,
     method_name: str,
     invoke,
     recovered_value,
 ) -> None:
-    community_adapter._connected = True  # type: ignore[reportPrivateUsage]
-    community_adapter._connection_generation = 1  # type: ignore[reportPrivateUsage]
-    operation = getattr(community_adapter._client, method_name)  # type: ignore[reportPrivateUsage]
+    mysigen_adapter._connected = True  # type: ignore[reportPrivateUsage]
+    mysigen_adapter._connection_generation = 1  # type: ignore[reportPrivateUsage]
+    operation = getattr(mysigen_adapter._client, method_name)  # type: ignore[reportPrivateUsage]
     operation.side_effect = [SigenergyCloudAuthError("session terminated"), recovered_value]
 
-    result = await invoke(community_adapter)
+    result = await invoke(mysigen_adapter)
 
-    assert community_adapter._connected is True  # type: ignore[reportPrivateUsage]
-    assert community_adapter._connection_generation == 2  # type: ignore[reportPrivateUsage]
-    community_adapter._client.connect.assert_awaited_once()  # type: ignore[reportPrivateUsage]
+    assert mysigen_adapter._connected is True  # type: ignore[reportPrivateUsage]
+    assert mysigen_adapter._connection_generation == 2  # type: ignore[reportPrivateUsage]
+    mysigen_adapter._client.connect.assert_awaited_once()  # type: ignore[reportPrivateUsage]
     assert operation.await_count == 2
     if method_name == "instant_manual_control":
         assert result.mode is InstantControlMode.CHARGE
@@ -534,10 +520,10 @@ async def test_operations_reauthenticate_and_retry_after_session_termination(
 
 @pytest.mark.asyncio
 async def test_stale_authentication_failure_does_not_invalidate_new_connection(
-    community_adapter: CommunityCloudAdapter,
+    mysigen_adapter: MySigenCloudAdapter,
 ) -> None:
-    community_adapter._connected = True  # type: ignore[reportPrivateUsage]
-    community_adapter._connection_generation = 1  # type: ignore[reportPrivateUsage]
+    mysigen_adapter._connected = True  # type: ignore[reportPrivateUsage]
+    mysigen_adapter._connection_generation = 1  # type: ignore[reportPrivateUsage]
     stale_retry_started = asyncio.Event()
     allow_stale_retry_to_fail = asyncio.Event()
     call_count = 0
@@ -555,20 +541,20 @@ async def test_stale_authentication_failure_does_not_invalidate_new_connection(
             raise SigenergyCloudAuthError("replacement session terminated")
         return (2, -1)
 
-    community_adapter._client.get_operational_mode.side_effect = (  # type: ignore[reportPrivateUsage]
+    mysigen_adapter._client.get_operational_mode.side_effect = (  # type: ignore[reportPrivateUsage]
         get_operational_mode
     )
-    stale_operation = asyncio.create_task(community_adapter.get_operational_mode())
+    stale_operation = asyncio.create_task(mysigen_adapter.get_operational_mode())
     await stale_retry_started.wait()
 
-    assert await community_adapter.get_operational_mode() == (2, -1)
+    assert await mysigen_adapter.get_operational_mode() == (2, -1)
     allow_stale_retry_to_fail.set()
     with pytest.raises(CloudControlAuthError, match="stale retry rejected"):
         await stale_operation
 
-    assert community_adapter._connected is True  # type: ignore[reportPrivateUsage]
-    assert community_adapter._connection_generation == 3  # type: ignore[reportPrivateUsage]
-    assert community_adapter._client.connect.await_count == 2  # type: ignore[reportPrivateUsage]
+    assert mysigen_adapter._connected is True  # type: ignore[reportPrivateUsage]
+    assert mysigen_adapter._connection_generation == 3  # type: ignore[reportPrivateUsage]
+    assert mysigen_adapter._client.connect.await_count == 2  # type: ignore[reportPrivateUsage]
 
 
 def test_official_adapter_is_explicitly_unavailable() -> None:

@@ -38,6 +38,7 @@ class SigenergyCloudControl(Device):
         self._add_sensor(switch)
         self._add_sensor(mode)
         self._add_sensor(duration)
+
         self._add_sensor(GridExportLimit(plant_index))
         self._add_sensor(GridImportLimit(plant_index))
         self._add_sensor(GridConnectionLimit(plant_index))

@@ -4,14 +4,16 @@ import logging
 import os
 import signal
 import sys
+from pathlib import Path
+from typing import cast
 from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
 
 import pytest
 from aiohttp import ServerDisconnectedError
 from pymodbus import ModbusException
 
-from sigenergy2mqtt.cloud.community_adapter import CommunityCloudAdapter
 from sigenergy2mqtt.cloud.exceptions import CloudControlAuthError
+from sigenergy2mqtt.cloud.mysigen_adapter import MySigenCloudAdapter
 from sigenergy2mqtt.common import (
     ConsumptionMethod,
     DeviceClass,
@@ -86,19 +88,20 @@ def _registered_inverter(plant_index: int, **attributes: str) -> Inverter:
 def test_cloud_control_plant_index_matches_local_inverter(serial_key):
     _registered_inverter(3, **{serial_key: "LOCAL-SN"})
 
-    assert _cloud_control_plant_index([
-        {"deviceType": "Battery", "serialNumber": "LOCAL-SN"},
-        {"deviceType": "Inverter", "serialNumber": "LOCAL-SN"},
-    ]) == 3
+    assert (
+        _cloud_control_plant_index([
+            {"deviceType": "Battery", "serialNumber": "LOCAL-SN"},
+            {"deviceType": "Inverter", "serialNumber": "LOCAL-SN"},
+        ])
+        == 3
+    )
 
 
 def test_cloud_control_plant_index_disables_unmatched_cloud(caplog):
     _registered_inverter(2, sn="OTHER-SN")
 
     with caplog.at_level(logging.WARNING):
-        assert _cloud_control_plant_index([
-            {"deviceType": "Inverter", "serialNumber": "CLOUD-SN"}
-        ]) is None
+        assert _cloud_control_plant_index([{"deviceType": "Inverter", "serialNumber": "CLOUD-SN"}]) is None
 
     assert "cloud control will be disabled" in caplog.text
 
@@ -107,9 +110,7 @@ def test_cloud_control_plant_index_disables_single_unreadable_serial(caplog):
     _registered_inverter(2)
 
     with caplog.at_level(logging.WARNING):
-        assert _cloud_control_plant_index([
-            {"deviceType": "Inverter", "serialNumber": "CLOUD-SN"}
-        ]) is None
+        assert _cloud_control_plant_index([{"deviceType": "Inverter", "serialNumber": "CLOUD-SN"}]) is None
 
     assert "serial numbers are unavailable for plant indexes [2]" in caplog.text
     assert "cannot be matched safely" in caplog.text
@@ -120,9 +121,7 @@ def test_cloud_control_plant_index_disables_ambiguous_unreadable_serials(caplog)
     _registered_inverter(2)
 
     with caplog.at_level(logging.WARNING):
-        assert _cloud_control_plant_index([
-            {"deviceType": "Inverter", "serialNumber": "CLOUD-SN"}
-        ]) is None
+        assert _cloud_control_plant_index([{"deviceType": "Inverter", "serialNumber": "CLOUD-SN"}]) is None
 
     assert "cannot be matched safely" in caplog.text
     assert "will be disabled" in caplog.text
@@ -132,9 +131,7 @@ def test_cloud_control_plant_index_disables_ambiguous_unreadable_serials(caplog)
 async def test_unmatched_cloud_control_is_closed() -> None:
     _registered_inverter(2, sn="OTHER-SN")
     cloud_port = MagicMock()
-    cloud_port.device_list = AsyncMock(
-        return_value=[{"deviceType": "Inverter", "serialNumber": "CLOUD-SN"}]
-    )
+    cloud_port.device_list = AsyncMock(return_value=[{"deviceType": "Inverter", "serialNumber": "CLOUD-SN"}])
     cloud_port.close = AsyncMock()
 
     assert await _discover_cloud_control_plant_index(cloud_port) is None
@@ -145,9 +142,7 @@ async def test_unmatched_cloud_control_is_closed() -> None:
 async def test_matched_cloud_control_discovery_connection_is_closed() -> None:
     _registered_inverter(2, sn="CLOUD-SN")
     cloud_port = MagicMock()
-    cloud_port.device_list = AsyncMock(
-        return_value=[{"deviceType": "Inverter", "serialNumber": "CLOUD-SN"}]
-    )
+    cloud_port.device_list = AsyncMock(return_value=[{"deviceType": "Inverter", "serialNumber": "CLOUD-SN"}])
     cloud_port.close = AsyncMock()
 
     assert await _discover_cloud_control_plant_index(cloud_port) == 2
@@ -158,9 +153,7 @@ async def test_matched_cloud_control_discovery_connection_is_closed() -> None:
 async def test_unreadable_local_serial_does_not_bind_cloud_control() -> None:
     _registered_inverter(2)
     cloud_port = MagicMock()
-    cloud_port.device_list = AsyncMock(
-        return_value=[{"deviceType": "Inverter", "serialNumber": "CLOUD-SN"}]
-    )
+    cloud_port.device_list = AsyncMock(return_value=[{"deviceType": "Inverter", "serialNumber": "CLOUD-SN"}])
     cloud_port.close = AsyncMock()
 
     assert await _discover_cloud_control_plant_index(cloud_port) is None
@@ -184,7 +177,7 @@ async def test_cloud_control_discovery_failure_disables_cloud_control(caplog):
 
 def test_cloud_control_discovery_replaces_session_across_event_loops():
     _registered_inverter(0, sn="CLOUD-SN")
-    cloud_port = CommunityCloudAdapter("user", "password", "eu")
+    cloud_port = MySigenCloudAdapter("user", "password", "eu")
     cloud_port.device_list = AsyncMock(  # type: ignore[method-assign]
         return_value=[{"deviceType": "Inverter", "serialNumber": "CLOUD-SN"}]
     )
@@ -298,7 +291,7 @@ def clean_config(monkeypatch):
     cfg.metrics_enabled = False
     cfg.clean = False
     cfg.log_level = logging.INFO
-    cfg.persistent_state_path = "/tmp"
+    cfg.persistent_state_path = Path("/tmp")
     cfg.mqtt.anonymous = True
 
     with _swap_active_config(cfg):
@@ -422,6 +415,7 @@ class TestConfigureLogging:
             configure_logging()
             filter_obj = next((f for f in logger.filters if f.__class__.__name__ == "_FramerSkipFilter"), None)
             assert filter_obj is not None
+            assert isinstance(filter_obj, logging.Filter)
 
             record1 = logging.LogRecord("name", logging.ERROR, "pathname", 1, "ERROR: request ask for transaction_id=2560 but got id=2559, Skipping.", None, None)
 
@@ -613,8 +607,8 @@ class TestModbusHelpers:
 
     def test_get_modbus_url_unknown(self):
         """Test get_modbus_url with unknown client."""
-        assert get_modbus_url(None) == "modbus://unknown"
-        assert get_modbus_url(object()) == "modbus://unknown"
+        assert get_modbus_url(None) == "modbus://unknown"  # type: ignore[arg-type]
+        assert get_modbus_url(object()) == "modbus://unknown"  # type: ignore[arg-type]
 
     @pytest.mark.asyncio
     async def test_read_registers_input(self):
@@ -627,14 +621,14 @@ class TestModbusHelpers:
     async def test_read_registers_none_client(self):
         """Test read_registers with None client."""
         with pytest.raises(ValueError, match="modbus_client cannot be None"):
-            await read_registers(None, 0, 1, 1, InputType.HOLDING)
+            await read_registers(None, 0, 1, 1, InputType.HOLDING)  # type: ignore[arg-type]
 
     @pytest.mark.asyncio
     async def test_read_registers_invalid_type(self):
         """Test read_registers with invalid type."""
         mock_client = AsyncMock()
         with pytest.raises(ValueError, match="Unknown input type"):
-            await read_registers(mock_client, 0, 1, 1, "INVALID")
+            await read_registers(mock_client, 0, 1, 1, "INVALID")  # type: ignore[arg-type]
 
 
 class TestDiscovery:
@@ -709,7 +703,7 @@ class TestFactories:
         mock_plant = MagicMock(unique_id="plant_id", protocol_version=ProtocolVersion.V2_8)
         with patch("sigenergy2mqtt.devices.ACCharger.create", new_callable=AsyncMock) as mock_create:
             mock_create.return_value = MagicMock()
-            charger = await make_ac_charger(0, mock_client, 1, mock_plant)
+            charger = await make_ac_charger(0, 1, mock_client, mock_plant)
             assert charger.via_device == "plant_id"
 
     @pytest.mark.asyncio
@@ -817,7 +811,7 @@ class TestFactories:
         mock_client = AsyncMock()
         mock_client.comm_params.host = "h"
         mock_client.comm_params.port = 502
-        mock_client.__format__ = lambda s, f: "h:502"
+        mock_client.__format__ = lambda f: "h:502"  # type: ignore[assignment]
         seen = set()
         clean_config.consumption = ConsumptionMethod.CALCULATED
         # SN, Model, PACKBCUCount, SystemTimeZone, InverterFirmwareVersion, OutputType, ESSPreHeatingEnable
@@ -847,6 +841,7 @@ class TestFactories:
             asyncio.run(make_plant_and_inverter(0, mock_client, 1, None, seen))
 
             assert mock_plant_create.await_count == 1
+            assert mock_plant_create.await_args is not None
             assert str(mock_plant_create.await_args.args[2]) == "V122R001C00SPC113B717A"
 
     def test_make_plant_and_inverter_existing_plant_skips_output_type_and_firmware_reads(self):
@@ -872,7 +867,7 @@ class TestFactories:
         mock_client = AsyncMock()
         mock_client.comm_params.host = "h"
         mock_client.comm_params.port = 502
-        mock_client.__format__ = lambda s, f: "h:502"
+        mock_client.__format__ = lambda f: "h:502"  # type: ignore[assignment]
         seen = set()
         # SN, Model, PACKBCUCount, SystemTimeZone, InverterFirmwareVersion, OutputType (returns None)
         with (
@@ -984,7 +979,7 @@ async def test_setup_devices_connection_failure(clean_config, monkeypatch):
     mock_client.comm_params = FmtMock()
     mock_client.comm_params.host = "h"
     mock_client.comm_params.port = 502
-    mock_client.__str__ = lambda x: "h:502"
+    mock_client.__str__ = lambda: "h:502"  # type: ignore[assignment]
     mock_client.__aenter__.return_value = mock_client
     monkeypatch.setattr("sigenergy2mqtt.main.device_setup.ModbusClient", lambda *a, **k: mock_client)
 
@@ -1083,9 +1078,10 @@ async def test_validate_publishable_sensors_saves_illegal_address_cache(clean_co
     await main_mod.validate_publishable_sensors(mock_client, device, firmware_versions)
 
     assert sensor.publishable is False
-    main_mod.read_registers.assert_awaited_once()
-    main_mod.state_store.save.assert_awaited_once()
-    saved_payload = json.loads(main_mod.state_store.save.await_args.args[2])
+    main_mod.read_registers.assert_awaited_once()  # type: ignore[union-attr]
+    main_mod.state_store.save.assert_awaited_once()  # type: ignore[union-attr]
+    assert main_mod.state_store.save.await_args is not None  # type: ignore[union-attr]
+    saved_payload = json.loads(main_mod.state_store.save.await_args.args[2])  # type: ignore[union-attr]
     assert saved_payload["inverter_firmware_versions"] == {"1": firmware_versions[1], "2": firmware_versions[2]}
     assert saved_payload["modbus_config_hash"] == "modbus-a"
     assert saved_payload["illegal_sensor_unique_ids"] == [sensor.unique_id]
@@ -1213,10 +1209,10 @@ def test_exit_on_signal(clean_config):
     """Test exit_on_signal logic."""
     mock_config = MagicMock()
     configs = [mock_config]
-    setup_signals(configs)
+    setup_signals(cast(list, configs))
 
     with patch("signal.signal") as mock_sig:
-        setup_signals(configs)
+        setup_signals(cast(list, configs))
         # Find SIGINT handler
         handler = next(call.args[1] for call in mock_sig.call_args_list if call.args[0] == signal.SIGINT)
         handler(signal.SIGINT, None)
