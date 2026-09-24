@@ -102,16 +102,16 @@ def test_cloud_control_plant_index_disables_unmatched_cloud(caplog):
     assert "cloud control will be disabled" in caplog.text
 
 
-def test_cloud_control_plant_index_uses_only_plant_with_unreadable_serial(caplog):
+def test_cloud_control_plant_index_disables_single_unreadable_serial(caplog):
     _registered_inverter(2)
 
     with caplog.at_level(logging.WARNING):
         assert _cloud_control_plant_index([
             {"deviceType": "Inverter", "serialNumber": "CLOUD-SN"}
-        ]) == 2
+        ]) is None
 
-    assert "serial number is unavailable" in caplog.text
-    assert "only possible local plant (index 2)" in caplog.text
+    assert "serial numbers are unavailable for plant indexes [2]" in caplog.text
+    assert "cannot be matched safely" in caplog.text
 
 
 def test_cloud_control_plant_index_disables_ambiguous_unreadable_serials(caplog):
@@ -123,12 +123,26 @@ def test_cloud_control_plant_index_disables_ambiguous_unreadable_serials(caplog)
             {"deviceType": "Inverter", "serialNumber": "CLOUD-SN"}
         ]) is None
 
-    assert "cloud control will be disabled" in caplog.text
+    assert "cannot be matched safely" in caplog.text
+    assert "will be disabled" in caplog.text
 
 
 @pytest.mark.asyncio
 async def test_unmatched_cloud_control_is_closed() -> None:
     _registered_inverter(2, sn="OTHER-SN")
+    cloud_port = MagicMock()
+    cloud_port.device_list = AsyncMock(
+        return_value=[{"deviceType": "Inverter", "serialNumber": "CLOUD-SN"}]
+    )
+    cloud_port.close = AsyncMock()
+
+    assert await _discover_cloud_control_plant_index(cloud_port) is None
+    cloud_port.close.assert_awaited_once_with()
+
+
+@pytest.mark.asyncio
+async def test_unreadable_local_serial_does_not_bind_cloud_control() -> None:
+    _registered_inverter(2)
     cloud_port = MagicMock()
     cloud_port.device_list = AsyncMock(
         return_value=[{"deviceType": "Inverter", "serialNumber": "CLOUD-SN"}]

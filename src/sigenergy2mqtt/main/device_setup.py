@@ -61,19 +61,11 @@ def _cloud_control_plant_index(device_list: list[dict[str, Any]]) -> int | None:
             if str(serial_number) in cloud_serial_numbers:
                 return device.plant_index
 
-    if cloud_serial_numbers and len(plants_with_unreadable_serials) == 1:
-        plant_index = next(iter(plants_with_unreadable_serials))
+    if plants_with_unreadable_serials:
         logger.warning(
-            "A local inverter serial number is unavailable; associating cloud control "
-            "with the only possible local plant (index %s)",
-            plant_index,
-        )
-        return plant_index
-
-    if len(plants_with_unreadable_serials) > 1:
-        logger.warning(
-            "Local inverter serial numbers are unavailable for multiple plants; "
-            "cloud control will be disabled for this run"
+            "Local inverter serial numbers are unavailable for plant indexes %s; "
+            "cloud control cannot be matched safely and will be disabled for this run",
+            sorted(plants_with_unreadable_serials),
         )
         return None
 
