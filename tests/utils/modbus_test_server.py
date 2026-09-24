@@ -483,7 +483,7 @@ class TestConfig:
 
     initial_firmware: str = "V100R001C00SPC112B107G"
     upgrade_firmware: str = "V100R001C00SPC113"
-    protocol_version: ProtocolVersion | None = None
+    protocol_version: ProtocolVersion = ProtocolVersion(list(ProtocolVersion)[-1])
 
     use_simplified_topics: bool = False
 
@@ -781,7 +781,7 @@ class CustomDataBlock:
             # matches that initial state.
             if set_values is None and TestConfig.grid_status_initial_state in (1, 2) and any(32000 <= addr <= 32014 for addr in range(address, address + count)) and block._server is not None:
                 grid_status = await block._server.context.async_getValues(Constants.PLANT_DEVICE_ADDRESS, 0x03, GridStatus.ADDRESS, 1)
-                if grid_status and grid_status[0] == TestConfig.grid_status_initial_state:
+                if isinstance(grid_status, list) and grid_status and grid_status[0] == TestConfig.grid_status_initial_state:
                     return ExcCodes.DEVICE_FAILURE
 
             # ── Simulated latency ──────────────────────────────────────────
@@ -807,7 +807,7 @@ class CustomDataBlock:
             # and let pymodbus send ILLEGAL_ADDRESS to the client.
             if set_values is not None and address in gated_addrs and block._server is not None:
                 ems = await block._server.context.async_getValues(dev_addr, 0x03, RemoteEMS.ADDRESS, 1)
-                if ems and ems[0] == 0:
+                if isinstance(ems, list) and ems and ems[0] == 0:
                     return ExcCodes.ILLEGAL_ADDRESS
 
             # ── Phase / PV-string mirroring ────────────────────────────────
@@ -1438,7 +1438,7 @@ async def run_async_server(
         count = sensor.count
         device_address = sensor.device_address
         input_type = sensor.input_type
-        if device_address not in devices:
+        if device_address is not None and device_address not in devices:
             devices[device_address] = sensor.parent_device.name
 
     if modbus_client is not None:
@@ -1676,10 +1676,10 @@ async def async_helper() -> None:
             return default
         return logging.getLevelNamesMapping()[value.upper()]
 
-    def _env_protocol(name: str) -> ProtocolVersion | None:
+    def _env_protocol(name: str) -> ProtocolVersion:
         value = _env(name)
         if value is None:
-            return None
+            return ProtocolVersion(list(ProtocolVersion)[-1])
         normalized = value.upper()
         if not normalized.startswith("V"):
             normalized = f"V{normalized.replace('.', '_')}"
@@ -1727,7 +1727,7 @@ async def async_helper() -> None:
     TestConfig.registers_to_debug = _env_registers("MODBUS_TEST_SERVER_REGISTERS_TO_DEBUG")
     TestConfig.use_simplified_topics = _env_bool("MODBUS_TEST_SERVER_USE_SIMPLIFIED_TOPICS", True)
     TestConfig.simulate_grid_outages = _env_bool("MODBUS_TEST_SERVER_SIMULATE_GRID_OUTAGES", False)
-    TestConfig.grid_status_initial_state = _env_int("MODBUS_TEST_SERVER_GRID_STATUS_INITIAL_STATE", None)  # 0=On Grid, 1=Off Grid (auto), 2=Off Grid (manual), None=source/random
+    TestConfig.grid_status_initial_state = _env_int("MODBUS_TEST_SERVER_GRID_STATUS_INITIAL_STATE", 0)  # 0=On Grid, 1=Off Grid (auto), 2=Off Grid (manual), None=source/random
     TestConfig.grid_outage_initial_delay_seconds = _env_int("MODBUS_TEST_SERVER_GRID_OUTAGE_INITIAL_DELAY", 30)
     TestConfig.grid_outage_duration_seconds = _env_int("MODBUS_TEST_SERVER_GRID_OUTAGE_DURATION", 30)
     TestConfig.grid_outage_repeated = _env_bool("MODBUS_TEST_SERVER_GRID_OUTAGE_REPEATED", True)
