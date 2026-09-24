@@ -46,8 +46,7 @@ def _cloud_control_plant_index(device_list: list[dict[str, Any]]) -> int | None:
     cloud_serial_numbers = {
         str(device.get("serialNumber") or device.get("serial_number") or device.get("sn"))
         for device in device_list
-        if device.get("deviceType") == "Inverter"
-        and (device.get("serialNumber") or device.get("serial_number") or device.get("sn"))
+        if device.get("deviceType") == "Inverter" and (device.get("serialNumber") or device.get("serial_number") or device.get("sn"))
     }
     plants_with_unreadable_serials: set[int] = set()
     for devices in DeviceRegistry._devices.values():
@@ -63,15 +62,12 @@ def _cloud_control_plant_index(device_list: list[dict[str, Any]]) -> int | None:
 
     if plants_with_unreadable_serials:
         logger.warning(
-            "Local inverter serial numbers are unavailable for plant indexes %s; "
-            "cloud control cannot be matched safely and will be disabled for this run",
+            "Local inverter serial numbers are unavailable for plant indexes %s; cloud control cannot be matched safely and will be disabled for this run",
             sorted(plants_with_unreadable_serials),
         )
         return None
 
-    logger.warning(
-        "No cloud inverter matched a local inverter; cloud control will be disabled for this run"
-    )
+    logger.warning("No cloud inverter matched a local inverter; cloud control will be disabled for this run")
     return None
 
 
@@ -93,13 +89,10 @@ async def _discover_cloud_control_plant_index(cloud_port: CloudControlPort) -> i
     finally:
         try:
             await cloud_port.close()
-        except Exception as exc:
+        except Exception:
             device_list = None
-            logger.error(
-                "Failed to close cloud adapter after discovery; cloud control "
-                "will be disabled for this run: %s",
-                exc,
-                exc_info=True,
+            logger.exception(
+                "Failed to close cloud adapter after discovery; cloud control will be disabled for this run: %s",
             )
     if device_list is None:
         return None
