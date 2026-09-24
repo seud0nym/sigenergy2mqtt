@@ -113,6 +113,20 @@ class Config:
         pass
 
     @property
+    def log_fmt(self) -> str | None:
+        return self._settings.log_fmt if self._settings else None
+
+    @log_fmt.setter
+    def log_fmt(self, value: str | None):
+        if not self._settings:
+            raise AttributeError("settings not initialised")
+        self._settings.log_fmt = value
+
+    @log_fmt.deleter
+    def log_fmt(self):
+        pass
+
+    @property
     def language(self) -> str:
         return self._settings.language if self._settings else "en"
 
