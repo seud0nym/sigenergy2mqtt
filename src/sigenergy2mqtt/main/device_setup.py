@@ -67,6 +67,7 @@ async def _discover_cloud_control_plant_index(cloud_port: CloudControlPort) -> i
     Closing the discovery connection here lets the transport factory reconnect
     in that thread instead of reusing an aiohttp session bound to this loop.
     """
+    device_list: list[dict[str, Any]] | None = None
     try:
         device_list = await cloud_port.device_list()
     except CloudControlError as exc:
@@ -74,12 +75,19 @@ async def _discover_cloud_control_plant_index(cloud_port: CloudControlPort) -> i
             "Cloud inverter discovery failed; cloud control will be disabled for this run: %s",
             exc,
         )
-        return None
     finally:
         try:
             await cloud_port.close()
-        except Exception:
-            logger.exception("Failed to close cloud adapter after discovery")
+        except Exception as exc:
+            device_list = None
+            logger.error(
+                "Failed to close cloud adapter after discovery; cloud control "
+                "will be disabled for this run: %s",
+                exc,
+                exc_info=True,
+            )
+    if device_list is None:
+        return None
     return _cloud_control_plant_index(device_list)
 
 

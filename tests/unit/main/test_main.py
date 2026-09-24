@@ -9,6 +9,7 @@ from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
 import pytest
 from pymodbus import ModbusException
 
+from sigenergy2mqtt.cloud.community_adapter import CommunityCloudAdapter
 from sigenergy2mqtt.cloud.exceptions import CloudControlAuthError
 from sigenergy2mqtt.common import (
     ConsumptionMethod,
@@ -116,27 +117,41 @@ async def test_cloud_control_discovery_failure_disables_cloud_control(caplog):
     cloud_port.close.assert_awaited_once_with()
 
 
-@pytest.mark.asyncio
-async def test_cloud_control_discovery_closes_startup_loop_connection():
-    cloud_port = MagicMock()
-    cloud_port.device_list = AsyncMock(return_value=[])
-    cloud_port.close = AsyncMock()
+def test_cloud_control_discovery_replaces_session_across_event_loops():
+    cloud_port = CommunityCloudAdapter("user", "password", "eu")
+    cloud_port.device_list = AsyncMock(return_value=[])  # type: ignore[method-assign]
 
-    assert await _discover_cloud_control_plant_index(cloud_port) == 0
+    async def discover():
+        startup_session = await cloud_port._client._http_session()
+        cloud_port._connected = True
+        assert await _discover_cloud_control_plant_index(cloud_port) == 0
+        assert startup_session.closed
+        return startup_session
 
-    cloud_port.close.assert_awaited_once_with()
+    startup_session = asyncio.run(discover())
+
+    async def open_polling_session():
+        polling_session = await cloud_port._client._http_session()
+        try:
+            assert polling_session is not startup_session
+            assert polling_session._loop is asyncio.get_running_loop()
+        finally:
+            await cloud_port.close()
+
+    asyncio.run(open_polling_session())
 
 
 @pytest.mark.asyncio
 async def test_cloud_control_close_failure_does_not_abort_startup(caplog):
     cloud_port = MagicMock()
-    cloud_port.device_list = AsyncMock(side_effect=CloudControlAuthError("bad credentials"))
+    cloud_port.device_list = AsyncMock(return_value=[])
     cloud_port.close = AsyncMock(side_effect=OSError("close failed"))
 
     with caplog.at_level(logging.ERROR):
         assert await _discover_cloud_control_plant_index(cloud_port) is None
 
     assert "Failed to close cloud adapter after discovery" in caplog.text
+    assert "cloud control will be disabled" in caplog.text
 
 
 def make_validation_sensor(suffix: str, address: int = 30001):
