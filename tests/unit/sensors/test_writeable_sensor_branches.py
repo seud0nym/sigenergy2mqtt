@@ -199,7 +199,17 @@ class TestReadWriteSensorConfigureMqttTopics:
                 async def _update_internal_state(self, **kwargs) -> bool | Exception | ExceptionResponse:
                     return True
 
-            mock_control = _AvailabilityControl()
+            mock_control = _AvailabilityControl(
+                name="Mock",
+                unique_id="sigen_mock_uid",
+                object_id="sigen_mock_obj",
+                unit="W",
+                device_class="power",
+                state_class="measurement",
+                icon=None,
+                gain=1,
+                precision=1
+            )
             mock_control[DiscoveryKeys.STATE_TOPIC] = ""  # Empty → triggers RuntimeError
             mock_control[DiscoveryKeys.RAW_STATE_TOPIC] = ""
             mock_control.publish_raw = False
