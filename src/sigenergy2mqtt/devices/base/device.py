@@ -259,8 +259,7 @@ class Device(HaPublisherMixin, dict[str, str | list[str]]):
         """Set the rediscover flag.
 
         When set to True, the next completed poll cycle in SensorGroupPoller.run()
-        will call :meth:`publish_discovery()`. Logged at INFO when enabled, DEBUG
-        when cleared.
+        will call :meth:`publish_discovery()`.
 
         Args:
             value: Boolean flag value.
@@ -273,7 +272,7 @@ class Device(HaPublisherMixin, dict[str, str | list[str]]):
         self._rediscover = value
         if active_config.home_assistant.enabled:
             if value:
-                logger.info(f"{self.log_identity} set to rediscover")
+                logger.debug(f"{self.log_identity} set to rediscover")
             else:
                 logger.debug(f"{self.log_identity} no longer set to rediscover")
 

@@ -53,12 +53,13 @@ class ModbusClientFactory:
     def clear(cls):
         """Close and remove all pooled clients and host mappings."""
         for key, client in cls._clients.items():
+            host = key[0]
+            port = key[1]
             try:
                 client.close()
+                logger.info(f"Disconnected from modbus://{host}:{port}")
             except (ValueError, TypeError, ModbusException, OSError, RuntimeError) as e:
-                host = key[0]
-                port = key[1]
-                logger.debug(f"Non-critical exception disconnecting from modbus://{host}:{port}: {e}")
+                logger.info(f"Disconnecting from modbus://{host}:{port} raised non-critical exception: {e}")
         cls._clients.clear()
         cls._hosts.clear()
 
@@ -89,7 +90,7 @@ class ModbusClientFactory:
 
         # Always attempt to close the client.
         try:
-            logger.info(f"Disconnecting from modbus://{host}:{port}")
             client.close()
+            logger.info(f"Disconnected from modbus://{host}:{port}")
         except (ModbusException, OSError, RuntimeError) as e:
-            logger.debug(f"Non-critical exception disconnecting from modbus://{host}:{port}: {e}")
+            logger.info(f"Disconnecting from modbus://{host}:{port} raised non-critical exception: {e}")

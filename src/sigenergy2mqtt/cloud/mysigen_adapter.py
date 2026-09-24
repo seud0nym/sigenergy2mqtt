@@ -1,6 +1,7 @@
 """Adapter for the vendored, unofficial mySigen app API."""
 
 import asyncio
+import logging
 from collections.abc import Awaitable, Callable
 from datetime import timedelta
 from typing import Any, TypeVar
@@ -52,6 +53,8 @@ _TOPOLOGY_DEVICE_TYPES = {
     9: "Meter",
 }
 
+logger = logging.getLogger(__name__)
+
 
 class MySigenCloudAdapter:
     """Translate domain commands to the unofficial, vendored cloud client."""
@@ -80,6 +83,7 @@ class MySigenCloudAdapter:
             return
         try:
             await self._client.connect()
+            logger.info(f"Connected to {self._client.base_url} Cloud API (region={self._client.region})")
         except SigenergyCloudAuthError as exc:
             raise CloudControlAuthError(str(exc)) from exc
         except SigenergyCloudRateLimitError as exc:
@@ -92,6 +96,7 @@ class MySigenCloudAdapter:
     async def _reconnect(self, failed_generation: int) -> None:
         """Replace an invalid cloud login unless another task already did so."""
         async with self._connect_lock:
+            logger.debug(f"Reconnecting to {self._client.base_url} Cloud API (_connection_generation={self._connection_generation}, failed_generation={failed_generation})")
             if self._connection_generation != failed_generation:
                 return
             self._connected = False
@@ -102,10 +107,12 @@ class MySigenCloudAdapter:
         async with self._connect_lock:
             if self._connection_generation == failed_generation:
                 self._connected = False
+                logger.debug(f"Connection to {self._client.base_url} Cloud API invalidated (_connection_generation={self._connection_generation}, failed_generation={failed_generation})")
 
     async def close(self) -> None:
         await self._client.close()
         self._connected = False
+        logger.info(f"Disconnected from {self._client.base_url} Cloud API")
 
     async def device_list(self) -> list[dict[str, Any]]:
         """Return app topology devices in the official cloud API shape."""
@@ -182,7 +189,10 @@ class MySigenCloudAdapter:
         generation = self._connection_generation
         for attempt in range(2):
             try:
-                return await operation()
+                logger.debug(f"mySigen {operation.__name__} executing (attempt {attempt + 1}/2, generation={generation})")
+                result = await operation()
+                logger.debug(f"mySigen {operation.__name__} returned: {result}")
+                return result
             except SigenergyCloudRateLimitError as exc:
                 raise CloudControlRateLimitedError(str(exc)) from exc
             except SigenergyCloudAuthError as exc:
