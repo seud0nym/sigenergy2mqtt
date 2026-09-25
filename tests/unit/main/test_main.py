@@ -12,7 +12,12 @@ import pytest
 from aiohttp import ServerDisconnectedError
 from pymodbus import ModbusException
 
-from sigenergy2mqtt.cloud.exceptions import CloudControlAuthError
+from sigenergy2mqtt.cloud.exceptions import (
+    CloudControlAuthError,
+    CloudControlError,
+    CloudControlRateLimitedError,
+    CloudControlUnavailableError,
+)
 from sigenergy2mqtt.cloud.mysigen_adapter import MySigenCloudAdapter
 from sigenergy2mqtt.common import (
     ConsumptionMethod,
@@ -34,6 +39,7 @@ from sigenergy2mqtt.main.device_factories import (
 )
 from sigenergy2mqtt.main.device_setup import (
     _cloud_control_plant_index,
+    _discover_cloud_gateway_info,
     _discover_cloud_control_plant_index,
     _is_grid_outage,
     _setup_ac_chargers,
@@ -173,6 +179,64 @@ async def test_cloud_control_discovery_failure_disables_cloud_control(caplog):
     assert "Cloud API will be disabled" in caplog.text
     assert "bad credentials" in caplog.text
     cloud_port.close.assert_awaited_once_with()
+
+
+@pytest.mark.asyncio
+async def test_gateway_discovery_retries_transient_failures() -> None:
+    cloud_port = MagicMock()
+    cloud_port.gateway_info = AsyncMock(
+        side_effect=[
+            CloudControlUnavailableError("temporary failure"),
+            {"snCode": "GATEWAY"},
+        ]
+    )
+
+    with patch("sigenergy2mqtt.main.device_setup.asyncio.sleep", new_callable=AsyncMock) as sleep:
+        assert await _discover_cloud_gateway_info(cloud_port) == {"snCode": "GATEWAY"}
+
+    assert cloud_port.gateway_info.await_count == 2
+    sleep.assert_awaited_once_with(1.0)
+
+
+@pytest.mark.asyncio
+async def test_gateway_discovery_gives_up_after_bounded_retries(caplog) -> None:
+    cloud_port = MagicMock()
+    cloud_port.gateway_info = AsyncMock(
+        side_effect=CloudControlUnavailableError("persistent failure")
+    )
+
+    with (
+        patch("sigenergy2mqtt.main.device_setup.asyncio.sleep", new_callable=AsyncMock) as sleep,
+        caplog.at_level(logging.WARNING),
+    ):
+        assert await _discover_cloud_gateway_info(cloud_port) is None
+
+    assert cloud_port.gateway_info.await_count == 3
+    assert sleep.await_count == 2
+    assert "failed after 3 attempts" in caplog.text
+
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        CloudControlAuthError("authentication failed"),
+        CloudControlRateLimitedError("rate limited", retry_after=60),
+    ],
+)
+@pytest.mark.asyncio
+async def test_gateway_discovery_does_not_retry_auth_or_rate_limits(
+    error: CloudControlError,
+) -> None:
+    cloud_port = MagicMock()
+    cloud_port.gateway_info = AsyncMock(side_effect=error)
+
+    with patch(
+        "sigenergy2mqtt.main.device_setup.asyncio.sleep", new_callable=AsyncMock
+    ) as sleep:
+        assert await _discover_cloud_gateway_info(cloud_port) is None
+
+    cloud_port.gateway_info.assert_awaited_once_with()
+    sleep.assert_not_awaited()
 
 
 def test_cloud_control_discovery_replaces_session_across_event_loops():

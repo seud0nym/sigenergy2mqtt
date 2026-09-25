@@ -7,7 +7,10 @@ from typing import Any, cast
 from aiohttp import ClientError
 from pymodbus.exceptions import ModbusException
 
-from sigenergy2mqtt.cloud.exceptions import CloudControlError
+from sigenergy2mqtt.cloud.exceptions import (
+    CloudControlError,
+    CloudControlUnavailableError,
+)
 from sigenergy2mqtt.cloud.port import CloudControlPort
 from sigenergy2mqtt.cloud.registry import cloud_control_registry
 from sigenergy2mqtt.common import Constants, ProtocolVersion
@@ -39,6 +42,8 @@ from .validation import validate_publishable_sensors
 logger = logging.getLogger(__name__)
 
 _GRID_RESTORE_WATCH_TASKS: set[tuple[str, int, int]] = set()
+_GATEWAY_DISCOVERY_ATTEMPTS = 3
+_GATEWAY_DISCOVERY_RETRY_DELAY = 1.0
 
 
 def _cloud_control_plant_index(device_list: list[dict[str, Any]]) -> int | None:
@@ -96,6 +101,37 @@ async def _discover_cloud_control_plant_index(cloud_port: CloudControlPort) -> i
     if device_list is None:
         return None
     return _cloud_control_plant_index(device_list)
+
+
+async def _discover_cloud_gateway_info(
+    cloud_port: CloudControlPort,
+) -> dict[str, Any] | None:
+    """Read gateway metadata, retrying transient startup failures."""
+    for attempt in range(1, _GATEWAY_DISCOVERY_ATTEMPTS + 1):
+        try:
+            return await cloud_port.gateway_info()
+        except CloudControlUnavailableError as exc:
+            if attempt == _GATEWAY_DISCOVERY_ATTEMPTS:
+                logger.warning(
+                    "Cloud gateway discovery failed after %d attempts; gateway sensors will be disabled: %s",
+                    attempt,
+                    exc,
+                )
+                return None
+            logger.warning(
+                "Cloud gateway discovery failed (attempt %d/%d); retrying: %s",
+                attempt,
+                _GATEWAY_DISCOVERY_ATTEMPTS,
+                exc,
+            )
+            await asyncio.sleep(_GATEWAY_DISCOVERY_RETRY_DELAY)
+        except (ClientError, CloudControlError) as exc:
+            logger.warning(
+                "Cloud gateway discovery failed without retry; gateway sensors will be disabled: %s",
+                exc,
+            )
+            return None
+    raise AssertionError("gateway discovery retry loop exhausted")
 
 
 async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfig], ProtocolVersion | None]:
@@ -246,11 +282,12 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
 
     cloud_control_registry.configure(active_config.cloud)
     if (cloud_port := cloud_control_registry.active) is not None:
+        gateway_info = await _discover_cloud_gateway_info(cloud_port)
         plant_index = await _discover_cloud_control_plant_index(cloud_port)
         if plant_index is not None:
             cloud_config = ThreadConfig.create(host=None, port=None, name="Sigenergy Cloud")
             cloud_config.transport_factory = cloud_control_registry.transport_factory
-            cloud_config.add_device(SigenergyCloudControl(plant_index, cloud_port))
+            cloud_config.add_device(SigenergyCloudControl(plant_index, cloud_port, gateway_info))
 
     return thread_config_registry.get_all(), protocol_version
 

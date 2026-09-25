@@ -10,7 +10,11 @@ import pytest
 from sigenergy2mqtt.cloud.models import InstantControlMode, InstantOverrideCommand
 from sigenergy2mqtt.cloud.mysigen_adapter import MySigenCloudAdapter
 from sigenergy2mqtt.config import Config, _swap_active_config
-from tests.utils.modbus_test_server import run_async_server, wait_for_server_start
+from tests.utils.modbus_test_server import (
+    CLOUD_TEST_GATEWAY_SERIAL,
+    run_async_server,
+    wait_for_server_start,
+)
 
 
 def _free_port() -> int:
@@ -102,6 +106,19 @@ async def test_mysigen_cloud_adapter_against_test_server(
                     "attrMap": {},
                 },
             ]
+            gateway = await adapter.gateway_info()
+            assert gateway["snCode"] == CLOUD_TEST_GATEWAY_SERIAL
+            assert {
+                item["paramKey"]
+                for item in gateway["gridSideInfoList"]
+            } >= {
+                "Phase A Voltage",
+                "Phase B Voltage",
+                "Phase C Voltage",
+                "Phase A Current",
+                "Phase B Current",
+                "Phase C Current",
+            }
             assert await adapter.get_operational_mode() == (0, -1)
             await adapter.set_operational_mode(7)
             assert await adapter.get_operational_mode() == (7, -1)

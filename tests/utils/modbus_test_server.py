@@ -100,6 +100,7 @@ UNSIGNED_DATA_TYPES = (ModbusClientMixin.DATATYPE.UINT16, ModbusClientMixin.DATA
 
 CLOUD_TEST_SERVER_DEFAULT_PORT = 8080
 CLOUD_TEST_STATION_ID = 10000000000001
+CLOUD_TEST_GATEWAY_SERIAL = "110G12BR00001"
 SYNTHESIZED_INVERTER_VALUES = {
     1: {
         InverterModel.ADDRESS: HYBRID_INVERTER_MODEL,
@@ -193,6 +194,51 @@ class CloudApiTestServer:
             ],
         }
 
+        self.gateway_info = {
+            "parallelNumType": 0,
+            "gatewayCabinetType": 0,
+            "gatewayDeviceCode": "1111001401",
+            "machineModel": None,
+            "snCode": CLOUD_TEST_GATEWAY_SERIAL,
+            "showSnCode": CLOUD_TEST_GATEWAY_SERIAL,
+            "deviceType": 8,
+            "communicationStatus": 2,
+            "deviceName": "",
+            "softVersion": FIRMWARE_VERSION,
+            "deviceModel": "Sigen Gateway TP",
+            "modelTypeCode": "0",
+            "gatewayMacAddress": "02-00-00-00-00-01",
+            "deviceCode": "1111001401",
+            "gridSideInfoList": [
+                {"paramKey": "Phase A Voltage", "paramValue": "233.29 V"},
+                {"paramKey": "Phase B Voltage", "paramValue": "232.81 V"},
+                {"paramKey": "Phase C Voltage", "paramValue": "233.04 V"},
+                {"paramKey": "Phase A Current", "paramValue": "10.76 A"},
+                {"paramKey": "Phase B Current", "paramValue": "10.31 A"},
+                {"paramKey": "Phase C Current", "paramValue": "10.54 A"},
+                {"paramKey": "Voltage Frequency", "paramValue": "49.99 Hz"},
+                {"paramKey": "Total Active Power", "paramValue": "7.250 kW"},
+                {"paramKey": "Total Reactive Power", "paramValue": "-1.180 kVar"},
+                {"paramKey": "Grid Side Contactor Status", "paramValue": "Close"},
+                {"paramKey": "Maximum Phase A voltage in the past minute", "paramValue": "233.93 V"},
+                {"paramKey": "Minimum Phase A voltage in the past minute", "paramValue": "231.38 V"},
+                {"paramKey": "Maximum Phase B voltage in the past minute", "paramValue": "233.47 V"},
+                {"paramKey": "Minimum Phase B voltage in the past minute", "paramValue": "231.12 V"},
+                {"paramKey": "Maximum Phase C voltage in the past minute", "paramValue": "233.65 V"},
+                {"paramKey": "Minimum Phase C voltage in the past minute", "paramValue": "231.26 V"},
+            ],
+            "realTimeInfoVOList": [],
+            "newGridSideInfoList": [
+                {"paramKey": "Voltage Frequency", "paramValue": "49.99 Hz"}
+            ],
+            "inverterSideInfoList": [],
+            "generatorSideInfoList": [],
+            "generatorRealTimeInfoVOList": [],
+            "extraGeneratorInfoList": [],
+            "extraInverterInfoList": [],
+            "inverterRealTimeInfoVOList": [],
+        }
+
         self.grid_export_limit = {
             "enable": True,
             "maxLimitation": "10.000",
@@ -269,6 +315,11 @@ class CloudApiTestServer:
         if (response := await self.authorized(request)) is not None:
             return response
         return self._success(self.device_topology)
+
+    async def get_gateway_info(self, request: web.Request) -> web.Response:
+        if (response := await self.authorized(request)) is not None:
+            return response
+        return self._success(self.gateway_info)
 
     async def available_modes(self, request: web.Request) -> web.Response:
         if (response := await self.authorized(request)) is not None:
@@ -396,6 +447,7 @@ class CloudApiTestServer:
             web.post("/auth/oauth/token", self.authenticate),
             web.get("/device/owner/station/home", self.station_home),
             web.get("/device/devicetreepanel/topology", self.get_device_topology),
+            web.get("/device/gateway/{station_id}", self.get_gateway_info),
             web.get(
                 "/device/energy-profile/mode/all/{station_id}",
                 self.available_modes,
