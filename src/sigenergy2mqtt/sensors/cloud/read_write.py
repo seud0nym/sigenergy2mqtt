@@ -3,12 +3,17 @@
 from __future__ import annotations
 
 import logging
+import math
 import time
 from datetime import timedelta
 
 from sigenergy2mqtt.cloud.models import InstantControlMode as Mode
 from sigenergy2mqtt.cloud.models import InstantControlStatus, InstantOverrideCommand
 from sigenergy2mqtt.cloud.port import CloudControlPort
+from sigenergy2mqtt.cloud.vendor.solidfox.sigenergy_cloud import (
+    UNLIMITED_POWER_KW,
+    is_unlimited_power,
+)
 from sigenergy2mqtt.common import (
     DeviceClass,
     ProtocolVersion,
@@ -75,6 +80,31 @@ class _InstantControlStatusSnapshot:
                 self._error = exc
                 raise
         return self._status
+
+
+class _BatteryPowerLimitSnapshot:
+    """Share one battery power-limit response across both limit sensors."""
+
+    def __init__(self) -> None:
+        self._payload: dict[str, object] | None = None
+        self._error: Exception | None = None
+
+    def begin_refresh(self) -> None:
+        """Invalidate the previous polling batch's snapshot."""
+        self._payload = None
+        self._error = None
+
+    async def read(self, port: CloudControlPort) -> dict[str, object]:
+        if self._error is not None:
+            raise self._error
+        if self._payload is None:
+            try:
+                payload = await port.battery_power_limit()
+                self._payload = payload if isinstance(payload, dict) else {}
+            except Exception as exc:
+                self._error = exc
+                raise
+        return self._payload
 
 
 class InstantControlMode(SelectSensorMixin, CloudReadWriteSensor):
@@ -289,6 +319,156 @@ class GridConnectionLimit(CloudGridLimitSensor):
             precision=1,
             protocol_version=ProtocolVersion.N_A,
         )
+
+
+def _parse_power_limit(sensor: CloudReadWriteSensor, value: object, key: str) -> float | str:
+    """Convert a cloud power-limit value into a number entity state."""
+    if value in (None, "") or is_unlimited_power(value):
+        return "None"
+    try:
+        parsed = float(value)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        parsed = math.nan
+    if not math.isfinite(parsed) or parsed < 0:
+        logger.warning(f"{sensor.log_identity} cloud response contains invalid {key}={value!r}")
+        return "None"
+    return parsed
+
+
+class _BatteryPowerLimit(NumericSensorMixin, CloudReadWriteSensor):
+    """Common behavior for one half of the battery power-limit setting."""
+
+    _CHARGE_KEY = "batteryMaxChargingPower"
+    _DISCHARGE_KEY = "batteryMaxDischargingPower"
+
+    def __init__(
+        self,
+        plant_index: int,
+        *,
+        key: str,
+        name: str,
+        suffix: str,
+        icon: str,
+        snapshot: _BatteryPowerLimitSnapshot | None = None,
+    ) -> None:
+        self._key = key
+        self._snapshot = snapshot or _BatteryPowerLimitSnapshot()
+        self._polling_coordinator = self._snapshot
+        object_id, unique_id = _identity(plant_index, suffix)
+        super().__init__(
+            availability_control_sensor=None,
+            name=name,
+            object_id=object_id,
+            unique_id=unique_id,
+            scan_interval=active_config.cloud.scan_interval,
+            unit=UnitOfPower.KILO_WATT,
+            device_class=DeviceClass.POWER,
+            state_class=None,
+            icon=icon,
+            gain=1,
+            precision=3,
+            minimum=0.0,
+            maximum=UNLIMITED_POWER_KW,
+            protocol_version=ProtocolVersion.N_A,
+        )
+
+    def _parse_limits(self, payload: object) -> dict[str, float | None] | None:
+        if not isinstance(payload, dict):
+            logger.warning(f"{self.log_identity} cloud response is not an object: {payload!r}")
+            return None
+        if any(key not in payload for key in (self._CHARGE_KEY, self._DISCHARGE_KEY)):
+            logger.warning(f"{self.log_identity} cloud response contains incomplete battery limits: {payload!r}")
+            return None
+        limits: dict[str, float | None] = {}
+        for key in (self._CHARGE_KEY, self._DISCHARGE_KEY):
+            state = _parse_power_limit(self, payload.get(key), key)
+            if state == "None" and payload.get(key) not in (None, "") and not is_unlimited_power(payload.get(key)):
+                return None
+            limits[key] = None if state == "None" else float(state)
+        return limits
+
+    async def _read_cloud_state(self, port: CloudControlPort) -> float | str:
+        limits = self._parse_limits(await self._snapshot.read(port))
+        if limits is None:
+            return "None"
+        state = limits[self._key]
+        return "None" if state is None else state
+
+    async def _write_cloud_value(self, port: CloudControlPort, value: float | str) -> bool:
+        # The endpoint replaces both limits, so always refresh immediately
+        # before writing, without invalidating an in-progress polling snapshot.
+        limits = self._parse_limits(await port.battery_power_limit())
+        if limits is None:
+            logger.warning(f"{self.log_identity} cannot write without both current battery power limits")
+            return False
+        limits[self._key] = float(value)
+        await port.set_battery_power_limit(
+            max_charge_kw=limits[self._CHARGE_KEY],
+            max_discharge_kw=limits[self._DISCHARGE_KEY],
+        )
+        return True
+
+
+class BatteryChargePowerLimit(_BatteryPowerLimit):
+    """Maximum battery charging power requested by the owner."""
+
+    def __init__(self, plant_index: int, snapshot: _BatteryPowerLimitSnapshot | None = None) -> None:
+        super().__init__(
+            plant_index,
+            key=self._CHARGE_KEY,
+            name="Battery Charge Power Limit",
+            suffix="battery_charge_power_limit",
+            icon="mdi:battery-arrow-down-outline",
+            snapshot=snapshot,
+        )
+
+
+class BatteryDischargePowerLimit(_BatteryPowerLimit):
+    """Maximum battery discharging power requested by the owner."""
+
+    def __init__(self, plant_index: int, snapshot: _BatteryPowerLimitSnapshot | None = None) -> None:
+        super().__init__(
+            plant_index,
+            key=self._DISCHARGE_KEY,
+            name="Battery Discharge Power Limit",
+            suffix="battery_discharge_power_limit",
+            icon="mdi:battery-arrow-up-outline",
+            snapshot=snapshot,
+        )
+
+
+class SolarPowerLimit(NumericSensorMixin, CloudReadWriteSensor):
+    """Maximum solar generation power requested by the owner."""
+
+    def __init__(self, plant_index: int) -> None:
+        object_id, unique_id = _identity(plant_index, "solar_power_limit")
+        super().__init__(
+            availability_control_sensor=None,
+            name="Solar Power Limit",
+            object_id=object_id,
+            unique_id=unique_id,
+            scan_interval=active_config.cloud.scan_interval,
+            unit=UnitOfPower.KILO_WATT,
+            device_class=DeviceClass.POWER,
+            state_class=None,
+            icon="mdi:solar-power",
+            gain=1,
+            precision=3,
+            minimum=0.0,
+            maximum=UNLIMITED_POWER_KW,
+            protocol_version=ProtocolVersion.N_A,
+        )
+
+    async def _read_cloud_state(self, port: CloudControlPort) -> float | str:
+        payload = await port.solar_power_limit()
+        if not isinstance(payload, dict):
+            logger.warning(f"{self.log_identity} cloud response is not an object: {payload!r}")
+            return "None"
+        return _parse_power_limit(self, payload.get("powerLimit"), "powerLimit")
+
+    async def _write_cloud_value(self, port: CloudControlPort, value: float | str) -> bool:
+        await port.set_solar_power_limit(float(value))
+        return True
 
 
 class BatteryExportLimitation(SwitchSensorMixin, CloudReadWriteSensor):

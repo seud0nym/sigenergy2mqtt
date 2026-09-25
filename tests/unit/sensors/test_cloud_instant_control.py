@@ -19,6 +19,8 @@ from sigenergy2mqtt.devices.cloud import SigenergyCloudControl
 from sigenergy2mqtt.sensors.base import CloudReadWriteSensor, DiscoveryKeys
 from sigenergy2mqtt.sensors.cloud.read_write import (
     INSTANT_CONTROL_OPTIONS,
+    BatteryChargePowerLimit,
+    BatteryDischargePowerLimit,
     BatteryExportLimitation,
     GridConnectionLimit,
     GridExportLimit,
@@ -26,6 +28,7 @@ from sigenergy2mqtt.sensors.cloud.read_write import (
     InstantControlDuration,
     InstantControlMode,
     InstantControlSwitch,
+    SolarPowerLimit,
 )
 
 
@@ -91,17 +94,35 @@ def test_cloud_control_device_registers_normal_mqtt_entities() -> None:
         GridExportLimit,
         GridImportLimit,
         GridConnectionLimit,
+        BatteryChargePowerLimit,
+        BatteryDischargePowerLimit,
+        SolarPowerLimit,
         BatteryExportLimitation,
     ]
     assert sensors[0][DiscoveryKeys.PLATFORM] == "switch"
     assert sensors[1][DiscoveryKeys.PLATFORM] == "select"
     assert sensors[2][DiscoveryKeys.PLATFORM] == "number"
-    assert all(sensor[DiscoveryKeys.PLATFORM] == "number" for sensor in sensors[3:6])
-    assert sensors[6][DiscoveryKeys.PLATFORM] == "switch"
+    assert all(sensor[DiscoveryKeys.PLATFORM] == "number" for sensor in sensors[3:9])
+    assert sensors[9][DiscoveryKeys.PLATFORM] == "switch"
     assert device.protocol_version is ProtocolVersion.N_A
     assert device.name == "Sigenergy Cloud"
     assert device["model"] == "Test Cloud"
     assert all(sensor.protocol_version is ProtocolVersion.N_A for sensor in sensors)
+
+
+def test_cloud_power_limit_sensors_expose_vendor_maximum() -> None:
+    device = SigenergyCloudControl(0, FakeCloudControlPort())
+    power_limits = [
+        sensor
+        for sensor in device.sensors.values()
+        if isinstance(
+            sensor,
+            (BatteryChargePowerLimit, BatteryDischargePowerLimit, SolarPowerLimit),
+        )
+    ]
+
+    assert len(power_limits) == 3
+    assert all(sensor[DiscoveryKeys.MAX] == 4_294_967.295 for sensor in power_limits)
 
 
 def test_mode_and_duration_are_available_only_while_switch_is_off() -> None:
@@ -427,6 +448,115 @@ async def test_battery_export_limitation_reads_current_state_and_writes_owner_st
     assert await sensor._read_cloud_state(port) == 0
     assert await sensor._write_cloud_value(port, 1) is True
     port.set_battery_export_limitation.assert_awaited_once_with(True)
+
+
+@pytest.mark.asyncio
+async def test_battery_power_limits_share_read_and_preserve_other_limit_on_write() -> None:
+    device = SigenergyCloudControl(0, FakeCloudControlPort())
+    charge = next(sensor for sensor in device.sensors.values() if isinstance(sensor, BatteryChargePowerLimit))
+    discharge = next(sensor for sensor in device.sensors.values() if isinstance(sensor, BatteryDischargePowerLimit))
+    port = FakeCloudControlPort()
+    port.battery_power_limit.side_effect = [
+        {
+            "batteryMaxChargingPower": "4.500",
+            "batteryMaxDischargingPower": "6.250",
+        },
+        {
+            "batteryMaxChargingPower": "4.500",
+            "batteryMaxDischargingPower": "7.750",
+        },
+    ]
+
+    SensorGroupPoller._begin_coordinated_refresh([charge, discharge])
+    assert await charge._read_cloud_state(port) == 4.5
+    port.battery_power_limit.assert_awaited_once()
+
+    # A command between the two sensor reads fetches the current limits for its
+    # replacement write, but must not invalidate the polling batch's snapshot.
+    assert await charge._write_cloud_value(port, 3) is True
+    assert await discharge._read_cloud_state(port) == 6.25
+    assert port.battery_power_limit.await_count == 2
+    port.set_battery_power_limit.assert_awaited_once_with(
+        max_charge_kw=3.0,
+        max_discharge_kw=7.75,
+    )
+
+
+@pytest.mark.asyncio
+async def test_battery_power_limit_preserves_unlimited_sentinel_as_none() -> None:
+    charge = BatteryChargePowerLimit(0)
+    port = FakeCloudControlPort()
+    port.battery_power_limit.return_value = {
+        "batteryMaxChargingPower": "4294967.295",
+        "batteryMaxDischargingPower": "6.000",
+    }
+
+    assert await charge._read_cloud_state(port) == "None"
+    assert await charge._write_cloud_value(port, 2) is True
+    port.set_battery_power_limit.assert_awaited_once_with(
+        max_charge_kw=2.0,
+        max_discharge_kw=6.0,
+    )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("sensor", "read_payload", "expected_call"),
+    [
+        (
+            BatteryChargePowerLimit(0),
+            {
+                "batteryMaxChargingPower": "4.000",
+                "batteryMaxDischargingPower": "6.000",
+            },
+            ("battery", {"max_charge_kw": 3.5, "max_discharge_kw": 6.0}),
+        ),
+        (
+            SolarPowerLimit(0),
+            None,
+            ("solar", 3.5),
+        ),
+    ],
+)
+async def test_power_limit_mqtt_command_reaches_cloud(sensor, read_payload, expected_call) -> None:
+    port = FakeCloudControlPort()
+    if read_payload is not None:
+        port.battery_power_limit.return_value = read_payload
+    sensor.configure_mqtt_topics("cloud-device")
+
+    assert await sensor.set_value(
+        port,
+        AsyncMock(),
+        "3.5",
+        sensor.command_topic,
+        AsyncMock(),
+    ) is True
+    assert sensor.gain == 1
+    if expected_call[0] == "battery":
+        port.set_battery_power_limit.assert_awaited_once_with(**expected_call[1])
+    else:
+        port.set_solar_power_limit.assert_awaited_once_with(expected_call[1])
+
+
+@pytest.mark.asyncio
+async def test_solar_power_limit_reads_and_writes() -> None:
+    sensor = SolarPowerLimit(0)
+    port = FakeCloudControlPort()
+    port.solar_power_limit.return_value = {"powerLimit": "8.125"}
+
+    assert await sensor._read_cloud_state(port) == 8.125
+    assert await sensor._write_cloud_value(port, 7.5) is True
+    port.set_solar_power_limit.assert_awaited_once_with(7.5)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("payload", [{}, [], {"powerLimit": "invalid"}])
+async def test_solar_power_limit_malformed_payload_is_unavailable(payload) -> None:
+    sensor = SolarPowerLimit(0)
+    port = FakeCloudControlPort()
+    port.solar_power_limit.return_value = payload
+
+    assert await sensor._read_cloud_state(port) == "None"
 
 
 @pytest.mark.asyncio

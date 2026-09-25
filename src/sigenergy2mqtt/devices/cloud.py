@@ -5,6 +5,8 @@ from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices.base.device import Device
 from sigenergy2mqtt.sensors.cloud.read_write import (
+    BatteryChargePowerLimit,
+    BatteryDischargePowerLimit,
     BatteryExportLimitation,
     GridConnectionLimit,
     GridExportLimit,
@@ -12,6 +14,7 @@ from sigenergy2mqtt.sensors.cloud.read_write import (
     InstantControlDuration,
     InstantControlMode,
     InstantControlSwitch,
+    SolarPowerLimit,
 )
 
 
@@ -42,4 +45,11 @@ class SigenergyCloudControl(Device):
         self._add_sensor(GridExportLimit(plant_index))
         self._add_sensor(GridImportLimit(plant_index))
         self._add_sensor(GridConnectionLimit(plant_index))
+        battery_charge_limit = BatteryChargePowerLimit(plant_index)
+        battery_discharge_limit = BatteryDischargePowerLimit(
+            plant_index, battery_charge_limit._snapshot
+        )
+        self._add_sensor(battery_charge_limit)
+        self._add_sensor(battery_discharge_limit)
+        self._add_sensor(SolarPowerLimit(plant_index))
         self._add_sensor(BatteryExportLimitation(plant_index))
