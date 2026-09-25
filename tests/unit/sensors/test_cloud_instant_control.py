@@ -92,7 +92,7 @@ def test_cloud_identity_uses_cloud_object_id_and_station_unique_id() -> None:
 
     with _swap_active_config(config):
         assert _identity(2, "station-123", "solar_power") == (
-            "unique_2_cloud_solar_power",
+            "entity_2_cloud_solar_power",
             "unique_2_station-123_solar_power",
         )
 
