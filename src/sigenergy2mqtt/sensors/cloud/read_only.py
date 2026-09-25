@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import re
 from typing import Any
 
@@ -118,6 +119,7 @@ class GatewayGridSideInfoSensor(GatewaySensor):
         device_class: DeviceClass | None,
     ) -> None:
         self.param_key = param_key
+        self._api_units = {"kVar", "kvar"} if unit == "kvar" else {unit}
         super().__init__(
             plant_index,
             station_id,
@@ -141,11 +143,14 @@ class GatewayGridSideInfoSensor(GatewaySensor):
                 return None
             if self.unit is None:
                 return value
-            number = value.rsplit(maxsplit=1)[0]
+            parts = value.rsplit(maxsplit=1)
+            if len(parts) != 2 or parts[1] not in self._api_units:
+                return None
             try:
-                return float(number)
+                number = float(parts[0])
             except ValueError:
                 return None
+            return number if math.isfinite(number) else None
         return None
 
 

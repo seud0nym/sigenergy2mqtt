@@ -83,3 +83,36 @@ async def test_gateway_sensors_share_one_endpoint_read_per_refresh() -> None:
 
     assert values == ["Online", 233.29, 10.76, 49.99, 2.444, -0.406, "Close"]
     port.gateway_info.assert_awaited_once_with()
+
+
+@pytest.mark.parametrize("param_value", ["233.29 kV", "NaN V", "inf V", "-inf V"])
+@pytest.mark.asyncio
+async def test_gateway_numeric_sensor_rejects_changed_units_and_non_finite_values(
+    param_value: str,
+) -> None:
+    port = FakeCloudControlPort()
+    payload = {
+        **GATEWAY_INFO,
+        "gridSideInfoList": [
+            {"paramKey": "Phase A Voltage", "paramValue": param_value}
+        ],
+    }
+    port.gateway_info = AsyncMock(return_value=payload)
+    gateway = SigenergyGateway(
+        0,
+        port.station_id,
+        model="model",
+        sn="serial",
+        hw="firmware",
+        grid_side_info=[
+            {"paramKey": "Phase A Voltage", "paramValue": "233.29 V"}
+        ],
+    )
+    sensor = next(
+        sensor
+        for sensor in gateway.sensors.values()
+        if isinstance(sensor, GatewayGridVoltage)
+    )
+
+    sensor._polling_coordinator.begin_refresh()  # type: ignore[attr-defined]
+    assert await sensor._read_cloud_state(port) is None  # type: ignore[attr-defined]
