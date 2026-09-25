@@ -354,7 +354,6 @@ class _BatteryPowerLimit(NumericSensorMixin, CloudReadWriteSensor):
         self._key = key
         self._snapshot = snapshot or _BatteryPowerLimitSnapshot()
         self._polling_coordinator = self._snapshot
-        self._limits: dict[str, float | None] | None = None
         object_id, unique_id = _identity(plant_index, suffix)
         super().__init__(
             availability_control_sensor=None,
@@ -373,38 +372,40 @@ class _BatteryPowerLimit(NumericSensorMixin, CloudReadWriteSensor):
             protocol_version=ProtocolVersion.N_A,
         )
 
-    async def _read_cloud_state(self, port: CloudControlPort) -> float | str:
-        payload = await self._snapshot.read(port)
+    def _parse_limits(self, payload: object) -> dict[str, float | None] | None:
+        if not isinstance(payload, dict):
+            logger.warning(f"{self.log_identity} cloud response is not an object: {payload!r}")
+            return None
         if any(key not in payload for key in (self._CHARGE_KEY, self._DISCHARGE_KEY)):
             logger.warning(f"{self.log_identity} cloud response contains incomplete battery limits: {payload!r}")
-            self._limits = None
-            return "None"
+            return None
         limits: dict[str, float | None] = {}
         for key in (self._CHARGE_KEY, self._DISCHARGE_KEY):
             state = _parse_power_limit(self, payload.get(key), key)
             if state == "None" and payload.get(key) not in (None, "") and not is_unlimited_power(payload.get(key)):
-                self._limits = None
-                return "None"
+                return None
             limits[key] = None if state == "None" else float(state)
-        self._limits = limits
+        return limits
+
+    async def _read_cloud_state(self, port: CloudControlPort) -> float | str:
+        limits = self._parse_limits(await self._snapshot.read(port))
+        if limits is None:
+            return "None"
         state = limits[self._key]
         return "None" if state is None else state
 
     async def _write_cloud_value(self, port: CloudControlPort, value: float | str) -> bool:
         # The endpoint replaces both limits, so always refresh immediately
-        # before writing rather than trusting a value cached by the poller.
-        self._snapshot.begin_refresh()
-        await self._read_cloud_state(port)
-        if self._limits is None:
+        # before writing, without invalidating an in-progress polling snapshot.
+        limits = self._parse_limits(await port.battery_power_limit())
+        if limits is None:
             logger.warning(f"{self.log_identity} cannot write without both current battery power limits")
             return False
-        limits = dict(self._limits)
         limits[self._key] = float(value)
         await port.set_battery_power_limit(
             max_charge_kw=limits[self._CHARGE_KEY],
             max_discharge_kw=limits[self._DISCHARGE_KEY],
         )
-        self._limits = limits
         return True
 
 

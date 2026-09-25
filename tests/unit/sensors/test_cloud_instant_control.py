@@ -456,20 +456,25 @@ async def test_battery_power_limits_share_read_and_preserve_other_limit_on_write
     charge = next(sensor for sensor in device.sensors.values() if isinstance(sensor, BatteryChargePowerLimit))
     discharge = next(sensor for sensor in device.sensors.values() if isinstance(sensor, BatteryDischargePowerLimit))
     port = FakeCloudControlPort()
-    port.battery_power_limit.return_value = {
-        "batteryMaxChargingPower": "4.500",
-        "batteryMaxDischargingPower": "6.250",
-    }
+    port.battery_power_limit.side_effect = [
+        {
+            "batteryMaxChargingPower": "4.500",
+            "batteryMaxDischargingPower": "6.250",
+        },
+        {
+            "batteryMaxChargingPower": "4.500",
+            "batteryMaxDischargingPower": "7.750",
+        },
+    ]
 
     SensorGroupPoller._begin_coordinated_refresh([charge, discharge])
     assert await charge._read_cloud_state(port) == 4.5
-    assert await discharge._read_cloud_state(port) == 6.25
     port.battery_power_limit.assert_awaited_once()
 
-    # The sibling changed after the polling snapshot. The write must refresh
-    # both limits so it does not restore the stale discharge value.
-    port.battery_power_limit.return_value["batteryMaxDischargingPower"] = "7.750"
+    # A command between the two sensor reads fetches the current limits for its
+    # replacement write, but must not invalidate the polling batch's snapshot.
     assert await charge._write_cloud_value(port, 3) is True
+    assert await discharge._read_cloud_state(port) == 6.25
     assert port.battery_power_limit.await_count == 2
     port.set_battery_power_limit.assert_awaited_once_with(
         max_charge_kw=3.0,
