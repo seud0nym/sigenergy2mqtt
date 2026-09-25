@@ -438,9 +438,6 @@ class TestGetDiscovery:
     def test_get_discovery_publishable_removes_persistent_file(self, tmp_path):
         """When publishable and file exists, it's removed."""
         s = self._sensor_with_topics("gd_pub")
-        pfile = tmp_path / "test.publishable"
-        pfile.write_text("0")
-        s._persistent_publish_state_file = pfile
         mqtt = _mqtt_mock()
         cfg = Config()
         cfg.clean = False
@@ -454,7 +451,6 @@ class TestGetDiscovery:
         """When not publishable, attributes topic cleared."""
         s = self._sensor_with_topics("gd_unpub")
         s._publishable = False
-        s._persistent_publish_state_file = tmp_path / "gd_unpub.publishable"
         mqtt = _mqtt_mock()
         cfg = Config()
         cfg.clean = False
@@ -467,7 +463,6 @@ class TestGetDiscovery:
         """In clean mode, components dict is empty."""
         s = self._sensor_with_topics("gd_clean")
         s._publishable = False
-        s._persistent_publish_state_file = tmp_path / "gd_clean.publishable"
         mqtt = _mqtt_mock()
         cfg = Config()
         cfg.clean = True
@@ -480,8 +475,6 @@ class TestGetDiscovery:
         """When unpublishable and file does not exist, file is written."""
         s = self._sensor_with_topics("gd_persist")
         s._publishable = False
-        pfile = tmp_path / "gd_persist.publishable"
-        s._persistent_publish_state_file = pfile
         mqtt = _mqtt_mock()
         cfg = Config()
         cfg.clean = False
