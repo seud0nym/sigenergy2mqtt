@@ -246,11 +246,16 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
 
     cloud_control_registry.configure(active_config.cloud)
     if (cloud_port := cloud_control_registry.active) is not None:
+        gateway_info: dict[str, Any] | None = None
+        try:
+            gateway_info = await cloud_port.gateway_info()
+        except (ClientError, CloudControlError) as exc:
+            logger.warning("Cloud gateway discovery failed; gateway sensors will be disabled: %s", exc)
         plant_index = await _discover_cloud_control_plant_index(cloud_port)
         if plant_index is not None:
             cloud_config = ThreadConfig.create(host=None, port=None, name="Sigenergy Cloud")
             cloud_config.transport_factory = cloud_control_registry.transport_factory
-            cloud_config.add_device(SigenergyCloudControl(plant_index, cloud_port))
+            cloud_config.add_device(SigenergyCloudControl(plant_index, cloud_port, gateway_info))
 
     return thread_config_registry.get_all(), protocol_version
 

@@ -151,6 +151,10 @@ class MySigenCloudAdapter:
             })
         return devices
 
+    async def gateway_info(self) -> dict[str, Any]:
+        """Return details and live grid-side values for the station gateway."""
+        return await self._cloud_operation(self._client.gateway_info)
+
     async def set_instant_override(self, command: InstantOverrideCommand) -> None:
         unsupported = []
         if command.power_kw is not None:

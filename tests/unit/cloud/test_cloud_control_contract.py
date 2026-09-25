@@ -89,6 +89,7 @@ def mysigen_adapter() -> MySigenCloudAdapter:
                 ],
             }
         ),
+        gateway_info=AsyncMock(return_value={"snCode": "GATEWAY"}),
         iter_topology_nodes=SigenergyCloudClient.iter_topology_nodes,
         topology_node_is_offline=SigenergyCloudClient.topology_node_is_offline,
         available_operational_modes=AsyncMock(return_value={"defaultWorkingModes": [], "energyProfileItems": []}),
@@ -174,6 +175,14 @@ def test_mysigen_adapter_satisfies_port_and_reports_capabilities(
     assert mysigen_adapter.capabilities.min_duration == timedelta(minutes=1)
     assert mysigen_adapter.capabilities.max_duration == timedelta(minutes=1440)
     assert not mysigen_adapter.capabilities.supports(ControlFeature.SCHEDULING)
+
+
+@pytest.mark.asyncio
+async def test_gateway_info_delegates_to_cloud_client(
+    mysigen_adapter: MySigenCloudAdapter,
+) -> None:
+    assert await mysigen_adapter.gateway_info() == {"snCode": "GATEWAY"}
+    mysigen_adapter._client.gateway_info.assert_awaited_once_with()  # type: ignore[reportPrivateUsage]
 
 
 @pytest.mark.asyncio
