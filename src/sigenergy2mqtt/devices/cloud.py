@@ -30,9 +30,10 @@ class SigenergyCloudControl(Device):
             model=port.model,
             protocol_version=ProtocolVersion.N_A,
         )
-        mode = InstantControlMode(plant_index)
-        duration = InstantControlDuration(plant_index)
-        switch = InstantControlSwitch(plant_index, mode, duration)
+        station_id = port.station_id
+        mode = InstantControlMode(plant_index, station_id)
+        duration = InstantControlDuration(plant_index, station_id)
+        switch = InstantControlSwitch(plant_index, station_id, mode, duration)
         mode.set_availability_control_sensor(switch)
         duration.set_availability_control_sensor(switch)
 
@@ -42,14 +43,14 @@ class SigenergyCloudControl(Device):
         self._add_sensor(mode)
         self._add_sensor(duration)
 
-        self._add_sensor(GridExportLimit(plant_index))
-        self._add_sensor(GridImportLimit(plant_index))
-        self._add_sensor(GridConnectionLimit(plant_index))
-        battery_charge_limit = BatteryChargePowerLimit(plant_index)
+        self._add_sensor(GridExportLimit(plant_index, station_id))
+        self._add_sensor(GridImportLimit(plant_index, station_id))
+        self._add_sensor(GridConnectionLimit(plant_index, station_id))
+        battery_charge_limit = BatteryChargePowerLimit(plant_index, station_id)
         battery_discharge_limit = BatteryDischargePowerLimit(
-            plant_index, battery_charge_limit._snapshot
+            plant_index, station_id, battery_charge_limit._snapshot
         )
         self._add_sensor(battery_charge_limit)
         self._add_sensor(battery_discharge_limit)
-        self._add_sensor(SolarPowerLimit(plant_index))
-        self._add_sensor(BatteryExportLimitation(plant_index))
+        self._add_sensor(SolarPowerLimit(plant_index, station_id))
+        self._add_sensor(BatteryExportLimitation(plant_index, station_id))

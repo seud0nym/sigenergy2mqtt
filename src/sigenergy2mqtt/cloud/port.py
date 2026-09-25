@@ -8,6 +8,9 @@ from .models import Capabilities, InstantControlStatus, InstantOverrideCommand
 @runtime_checkable
 class CloudControlPort(Protocol):
     @property
+    def station_id(self) -> str: ...
+
+    @property
     def model(self) -> str: ...
 
     @property
