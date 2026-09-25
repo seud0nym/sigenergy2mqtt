@@ -110,6 +110,21 @@ def test_cloud_control_device_registers_normal_mqtt_entities() -> None:
     assert all(sensor.protocol_version is ProtocolVersion.N_A for sensor in sensors)
 
 
+def test_cloud_power_limit_sensors_expose_vendor_maximum() -> None:
+    device = SigenergyCloudControl(0, FakeCloudControlPort())
+    power_limits = [
+        sensor
+        for sensor in device.sensors.values()
+        if isinstance(
+            sensor,
+            (BatteryChargePowerLimit, BatteryDischargePowerLimit, SolarPowerLimit),
+        )
+    ]
+
+    assert len(power_limits) == 3
+    assert all(sensor[DiscoveryKeys.MAX] == 4_294_967.295 for sensor in power_limits)
+
+
 def test_mode_and_duration_are_available_only_while_switch_is_off() -> None:
     config = Config()
     config.home_assistant.enabled = True

@@ -10,7 +10,10 @@ from datetime import timedelta
 from sigenergy2mqtt.cloud.models import InstantControlMode as Mode
 from sigenergy2mqtt.cloud.models import InstantControlStatus, InstantOverrideCommand
 from sigenergy2mqtt.cloud.port import CloudControlPort
-from sigenergy2mqtt.cloud.vendor.solidfox.sigenergy_cloud import is_unlimited_power
+from sigenergy2mqtt.cloud.vendor.solidfox.sigenergy_cloud import (
+    UNLIMITED_POWER_KW,
+    is_unlimited_power,
+)
 from sigenergy2mqtt.common import (
     DeviceClass,
     ProtocolVersion,
@@ -366,7 +369,7 @@ class _BatteryPowerLimit(NumericSensorMixin, CloudReadWriteSensor):
             gain=1,
             precision=3,
             minimum=0.0,
-            maximum=None,
+            maximum=UNLIMITED_POWER_KW,
             protocol_version=ProtocolVersion.N_A,
         )
 
@@ -451,7 +454,7 @@ class SolarPowerLimit(NumericSensorMixin, CloudReadWriteSensor):
             gain=1,
             precision=3,
             minimum=0.0,
-            maximum=None,
+            maximum=UNLIMITED_POWER_KW,
             protocol_version=ProtocolVersion.N_A,
         )
 
