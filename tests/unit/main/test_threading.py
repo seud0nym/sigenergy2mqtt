@@ -48,6 +48,9 @@ class DummyDevice:
         self._subscribed = False
         self._availability = []
 
+    def clean_state(self, mqtt_client):
+        pass
+
     def publish_discovery(self, mqtt_client, clean: bool = False):
         return None
 

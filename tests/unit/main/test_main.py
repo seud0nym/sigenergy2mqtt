@@ -1023,6 +1023,7 @@ async def test_setup_devices_omits_cloud_control_when_discovery_fails(clean_conf
     clean_config.modbus[0].registers.read_write = False
     clean_config.modbus[0].registers.write_only = False
     cloud_port = MagicMock()
+    cloud_port.gateway_info = AsyncMock(return_value=None)
     cloud_port.device_list = AsyncMock(side_effect=CloudControlAuthError("bad credentials"))
     cloud_port.close = AsyncMock()
     thread_config_registry.clear()

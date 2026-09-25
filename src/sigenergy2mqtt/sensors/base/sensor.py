@@ -709,6 +709,12 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
                 if key in self:
                     logger.debug(f"{self.log_identity} >>> {key}={self[key]})")
 
+    def clean_state(self, mqtt_client: mqtt.Client) -> None:
+        """Clean up published sensor state."""
+        for key in (DiscoveryKeys.STATE_TOPIC, DiscoveryKeys.RAW_STATE_TOPIC):
+            if key in self:
+                self._publish_message(mqtt_client, cast(str, self[key]), b"", qos=1)
+
     def get_attributes(self) -> dict[str, float | int | str]:
         """Get sensor attributes for MQTT publishing.
 
@@ -793,7 +799,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         """
         # Clear retained attributes
         if DiscoveryKeys.JSON_ATTRIBUTES_TOPIC in self:
-            self._publish_message(mqtt_client, cast(str, self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC]), b"", qos=0, retain=False)
+            self._publish_message(mqtt_client, cast(str, self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC]), b"", qos=1)
             if self.debug_logging:
                 logger.debug(f"{self.log_identity} unpublished - removed any retained messages in topic {self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC]}")
 
@@ -1091,7 +1097,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         if self.debug_logging:
             logger.debug(f"{self.log_identity} cleaning attributes")
 
-        self._publish_message(mqtt_client, cast(str, self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC]), b"", qos=0, retain=True)
+        self._publish_message(mqtt_client, cast(str, self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC]), b"", qos=1)
 
     def _publish_current_attributes(self, mqtt_client: mqtt.Client, **kwargs) -> None:
         """Publish current sensor attributes.
