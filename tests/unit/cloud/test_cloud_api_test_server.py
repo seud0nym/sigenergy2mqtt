@@ -20,6 +20,7 @@ from tests.utils.modbus_sensors import (
     PV_INVERTER_SERIAL,
 )
 from tests.utils.modbus_test_server import (
+    CLOUD_TEST_GATEWAY_SERIAL,
     CloudApiTestServer,
     CustomDataBlock,
     LatencyBudget,
@@ -81,6 +82,23 @@ async def test_cloud_api_test_server_exposes_all_limit_endpoints() -> None:
                 "nodeList": [],
             },
         ]
+
+        response = await client.get(
+            f"/device/gateway/{api.device_topology['stationId']}", headers=headers
+        )
+        gateway = (await response.json())["data"]
+        assert gateway["snCode"] == CLOUD_TEST_GATEWAY_SERIAL
+        assert gateway["deviceModel"] == "Sigen Gateway TP"
+        grid_values = {
+            item["paramKey"]: item["paramValue"]
+            for item in gateway["gridSideInfoList"]
+        }
+        assert grid_values["Phase A Voltage"] == "233.29 V"
+        assert grid_values["Phase B Voltage"] == "232.81 V"
+        assert grid_values["Phase C Voltage"] == "233.04 V"
+        assert grid_values["Phase A Current"] == "10.76 A"
+        assert grid_values["Phase B Current"] == "10.31 A"
+        assert grid_values["Phase C Current"] == "10.54 A"
 
         response = await client.put(
             "/device/energy-profile/grid/limitation/export",
