@@ -12,7 +12,12 @@ import pytest
 from aiohttp import ServerDisconnectedError
 from pymodbus import ModbusException
 
-from sigenergy2mqtt.cloud.exceptions import CloudControlAuthError
+from sigenergy2mqtt.cloud.exceptions import (
+    CloudControlAuthError,
+    CloudControlError,
+    CloudControlRateLimitedError,
+    CloudControlUnavailableError,
+)
 from sigenergy2mqtt.cloud.mysigen_adapter import MySigenCloudAdapter
 from sigenergy2mqtt.common import (
     ConsumptionMethod,
@@ -181,7 +186,7 @@ async def test_gateway_discovery_retries_transient_failures() -> None:
     cloud_port = MagicMock()
     cloud_port.gateway_info = AsyncMock(
         side_effect=[
-            CloudControlAuthError("temporary failure"),
+            CloudControlUnavailableError("temporary failure"),
             {"snCode": "GATEWAY"},
         ]
     )
@@ -197,7 +202,7 @@ async def test_gateway_discovery_retries_transient_failures() -> None:
 async def test_gateway_discovery_gives_up_after_bounded_retries(caplog) -> None:
     cloud_port = MagicMock()
     cloud_port.gateway_info = AsyncMock(
-        side_effect=CloudControlAuthError("persistent failure")
+        side_effect=CloudControlUnavailableError("persistent failure")
     )
 
     with (
@@ -209,6 +214,29 @@ async def test_gateway_discovery_gives_up_after_bounded_retries(caplog) -> None:
     assert cloud_port.gateway_info.await_count == 3
     assert sleep.await_count == 2
     assert "failed after 3 attempts" in caplog.text
+
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        CloudControlAuthError("authentication failed"),
+        CloudControlRateLimitedError("rate limited", retry_after=60),
+    ],
+)
+@pytest.mark.asyncio
+async def test_gateway_discovery_does_not_retry_auth_or_rate_limits(
+    error: CloudControlError,
+) -> None:
+    cloud_port = MagicMock()
+    cloud_port.gateway_info = AsyncMock(side_effect=error)
+
+    with patch(
+        "sigenergy2mqtt.main.device_setup.asyncio.sleep", new_callable=AsyncMock
+    ) as sleep:
+        assert await _discover_cloud_gateway_info(cloud_port) is None
+
+    cloud_port.gateway_info.assert_awaited_once_with()
+    sleep.assert_not_awaited()
 
 
 def test_cloud_control_discovery_replaces_session_across_event_loops():

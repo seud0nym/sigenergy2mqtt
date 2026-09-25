@@ -7,7 +7,10 @@ from typing import Any, cast
 from aiohttp import ClientError
 from pymodbus.exceptions import ModbusException
 
-from sigenergy2mqtt.cloud.exceptions import CloudControlError
+from sigenergy2mqtt.cloud.exceptions import (
+    CloudControlError,
+    CloudControlUnavailableError,
+)
 from sigenergy2mqtt.cloud.port import CloudControlPort
 from sigenergy2mqtt.cloud.registry import cloud_control_registry
 from sigenergy2mqtt.common import Constants, ProtocolVersion
@@ -107,7 +110,7 @@ async def _discover_cloud_gateway_info(
     for attempt in range(1, _GATEWAY_DISCOVERY_ATTEMPTS + 1):
         try:
             return await cloud_port.gateway_info()
-        except (ClientError, CloudControlError) as exc:
+        except CloudControlUnavailableError as exc:
             if attempt == _GATEWAY_DISCOVERY_ATTEMPTS:
                 logger.warning(
                     "Cloud gateway discovery failed after %d attempts; gateway sensors will be disabled: %s",
@@ -122,6 +125,12 @@ async def _discover_cloud_gateway_info(
                 exc,
             )
             await asyncio.sleep(_GATEWAY_DISCOVERY_RETRY_DELAY)
+        except (ClientError, CloudControlError) as exc:
+            logger.warning(
+                "Cloud gateway discovery failed without retry; gateway sensors will be disabled: %s",
+                exc,
+            )
+            return None
     raise AssertionError("gateway discovery retry loop exhausted")
 
 
