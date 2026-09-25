@@ -15,7 +15,7 @@ from sigenergy2mqtt.cloud.models import InstantControlMode as DomainMode
 from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.devices.base.poller import SensorGroupPoller
-from sigenergy2mqtt.devices.plant.cloud_control import SigenergyCloudControl
+from sigenergy2mqtt.devices.cloud import SigenergyCloudControl
 from sigenergy2mqtt.sensors.base import CloudReadWriteSensor, DiscoveryKeys
 from sigenergy2mqtt.sensors.cloud.read_write import (
     INSTANT_CONTROL_OPTIONS,
@@ -41,6 +41,22 @@ class FakeCloudControlPort:
         self.enabled = enabled
         self.command = None
         self.clear_instant_override = AsyncMock(side_effect=self._clear)
+        self.device_list = AsyncMock()
+        self.available_operational_modes = AsyncMock()
+        self.get_operational_mode = AsyncMock()
+        self.set_operational_mode = AsyncMock()
+        self.grid_export_limit = AsyncMock()
+        self.set_grid_export_limit = AsyncMock()
+        self.grid_import_limit = AsyncMock()
+        self.set_grid_import_limit = AsyncMock()
+        self.grid_connection_limit = AsyncMock()
+        self.set_grid_connection_limit = AsyncMock()
+        self.battery_power_limit = AsyncMock()
+        self.set_battery_power_limit = AsyncMock()
+        self.solar_power_limit = AsyncMock()
+        self.set_solar_power_limit = AsyncMock()
+        self.battery_export_limitation = AsyncMock()
+        self.set_battery_export_limitation = AsyncMock()
 
     async def connect(self) -> None: ...
 
@@ -57,9 +73,7 @@ class FakeCloudControlPort:
         return InstantControlStatus(self.enabled, None, None)
 
 
-def _controls() -> tuple[
-    InstantControlMode, InstantControlDuration, InstantControlSwitch
-]:
+def _controls() -> tuple[InstantControlMode, InstantControlDuration, InstantControlSwitch]:
     mode = InstantControlMode(0)
     duration = InstantControlDuration(0)
     switch = InstantControlSwitch(0, mode, duration)
@@ -99,9 +113,9 @@ def test_mode_and_duration_are_available_only_while_switch_is_off() -> None:
 
         for selector in (mode, duration):
             availability = selector[DiscoveryKeys.AVAILABILITY]
-            gate = next(
-                item for item in availability if item["topic"] == switch.state_topic
-            )
+            assert isinstance(availability, list)
+            gate = next(item for item in availability if isinstance(item, dict) and item.get("topic") == switch.state_topic)
+            assert isinstance(gate, dict)
             assert gate["payload_available"] == 0
             assert gate["payload_not_available"] == 1
 
@@ -121,12 +135,11 @@ async def test_switch_reads_authoritative_cloud_state() -> None:
 async def test_switch_submits_current_mode_and_duration() -> None:
     mode, duration, switch = _controls()
     port = FakeCloudControlPort()
-    await mode._write_cloud_value(
-        port, INSTANT_CONTROL_OPTIONS.index("Self-Consumption")
-    )
+    await mode._write_cloud_value(port, INSTANT_CONTROL_OPTIONS.index("Self-Consumption"))
     await duration._write_cloud_value(port, 90)
 
     assert await switch._write_cloud_value(port, 1) is True
+    assert port.command is not None
     assert port.command.mode is DomainMode.SELF_CONSUMPTION
     assert port.command.duration == timedelta(minutes=90)
 
@@ -145,9 +158,7 @@ async def test_selection_sensors_read_authoritative_cloud_values(monkeypatch) ->
     mode, duration, switch = _controls()
     port = FakeCloudControlPort()
     port.enabled = True
-    port.instant_control_status = AsyncMock(
-        return_value=InstantControlStatus(True, DomainMode.HOLD, 1_800_000_599)
-    )
+    port.instant_control_status = AsyncMock(return_value=InstantControlStatus(True, DomainMode.HOLD, 1_800_000_599))
     monkeypatch.setattr(
         "sigenergy2mqtt.sensors.cloud.read_write.time.time",
         lambda: 1_800_000_000,
@@ -193,13 +204,12 @@ async def test_selection_sensors_keep_pending_values_separate_from_cloud_state()
 
     await mode._write_cloud_value(port, 1)
     await duration._write_cloud_value(port, 45)
-    port.instant_control_status = AsyncMock(
-        return_value=InstantControlStatus(True, DomainMode.HOLD, None)
-    )
+    port.instant_control_status = AsyncMock(return_value=InstantControlStatus(True, DomainMode.HOLD, None))
 
     assert await mode._read_cloud_state(port) == 2
     assert await duration._read_cloud_state(port) is None
     assert await switch._write_cloud_value(port, 1) is True
+    assert port.command is not None
     assert port.command.mode is DomainMode.DISCHARGE
     assert port.command.duration == timedelta(minutes=45)
 
@@ -217,9 +227,7 @@ async def test_selection_sensors_have_no_arbitrary_initial_values() -> None:
 
 
 @pytest.mark.asyncio
-async def test_cloud_sensor_requires_transport_keyword_and_ignores_missing_port() -> (
-    None
-):
+async def test_cloud_sensor_requires_transport_keyword_and_ignores_missing_port() -> None:
     mode, _, _ = _controls()
 
     with pytest.raises(ValueError, match="modbus_client"):
@@ -278,23 +286,13 @@ async def test_cloud_write_handles_missing_transport_and_domain_error(caplog) ->
     mode._write_cloud_value = AsyncMock(  # type: ignore[method-assign]
         side_effect=CloudControlUnavailableError("offline")
     )
-    assert (
-        await mode._write_value(
-            FakeCloudControlPort(), AsyncMock(), 1, "source", AsyncMock()
-        )
-        is False
-    )
+    assert await mode._write_value(FakeCloudControlPort(), AsyncMock(), 1, "source", AsyncMock()) is False
     assert "cloud write failed" in caplog.text
 
     mode._write_cloud_value = AsyncMock(  # type: ignore[method-assign]
         side_effect=ServerDisconnectedError()
     )
-    assert (
-        await mode._write_value(
-            FakeCloudControlPort(), AsyncMock(), 1, "source", AsyncMock()
-        )
-        is False
-    )
+    assert await mode._write_value(FakeCloudControlPort(), AsyncMock(), 1, "source", AsyncMock()) is False
 
 
 @pytest.mark.asyncio
@@ -349,16 +347,12 @@ async def test_cloud_write_delegates_successfully() -> None:
         ),
     ],
 )
-async def test_grid_limit_reads_installer_maximum_and_writes_owner_value(
-    sensor_type, read_method, write_method, payload, maximum
-) -> None:
+async def test_grid_limit_reads_installer_maximum_and_writes_owner_value(sensor_type, read_method, write_method, payload, maximum) -> None:
     sensor = sensor_type(0)
     port = AsyncMock()
     getattr(port, read_method).return_value = payload
 
-    assert await sensor._read_cloud_state(port) == float(
-        payload.get("maxLimitation", payload.get("currentLimitation"))
-    )
+    assert await sensor._read_cloud_state(port) == float(payload.get("maxLimitation", payload.get("currentLimitation")))
     assert sensor[DiscoveryKeys.MIN] == 0.0
     assert sensor[DiscoveryKeys.MAX] == maximum
     assert await sensor._write_cloud_value(port, maximum / 2) is True
@@ -396,9 +390,7 @@ async def test_grid_limit_empty_states_and_disallowed_updates(payload) -> None:
         assert state == 5.0
     else:
         assert state == "None"
-    assert await sensor._write_cloud_value(port, 4.0) is bool(
-        payload["maxLimitationInstaller"]
-    )
+    assert await sensor._write_cloud_value(port, 4.0) is bool(payload["maxLimitationInstaller"])
     if payload["maxLimitationInstaller"]:
         port.set_grid_export_limit.assert_awaited_once_with(4.0, enabled=True)
     else:
@@ -422,9 +414,7 @@ async def test_grid_limit_invalid_enable_status_disallows_updates(enable) -> Non
 
 
 @pytest.mark.asyncio
-async def test_battery_export_limitation_reads_current_state_and_writes_owner_state() -> (
-    None
-):
+async def test_battery_export_limitation_reads_current_state_and_writes_owner_state() -> None:
     sensor = BatteryExportLimitation(0)
     port = AsyncMock()
     port.battery_export_limitation.return_value = {
@@ -464,9 +454,7 @@ async def test_grid_limit_malformed_payload_publishes_unavailable_without_raisin
 @pytest.mark.asyncio
 async def test_grid_limit_maximum_changes_request_discovery_republish() -> None:
     device = SigenergyCloudControl(0, FakeCloudControlPort())
-    sensor = next(
-        item for item in device.sensors.values() if isinstance(item, GridExportLimit)
-    )
+    sensor = next(item for item in device.sensors.values() if isinstance(item, GridExportLimit))
     port = AsyncMock()
     port.grid_export_limit.return_value = {
         "enable": True,
