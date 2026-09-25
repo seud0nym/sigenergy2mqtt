@@ -595,6 +595,14 @@ class RemoteEMSControlMode(SelectSensor, HybridInverter, PVInverter):
             protocol_version=ProtocolVersion.V1_8,
         )
 
+    def clean_state(self, mqtt_client: mqtt.Client) -> None:
+        """Clean up published sensor state."""
+        for key in ("is_charging_discharging_topic", "is_charging_mode_topic", "is_discharging_mode_topic", "is_pcs_remote_control_mode_topic"):
+            topic = getattr(self, key, None)
+            if topic:
+                self._publish_message(mqtt_client, topic, b"", qos=1)
+        return super().clean_state(mqtt_client)
+
     def configure_mqtt_topics(self, device_id: str) -> str:
         base = super().configure_mqtt_topics(device_id)
         self.is_pcs_remote_control_mode_topic = f"{base}/is_pcs_remote_control_mode"

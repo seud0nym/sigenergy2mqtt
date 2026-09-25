@@ -88,6 +88,8 @@ async def read_and_publish_device_sensors(
             await mqtt_handler.wait_for(5, device.name, method, mqtt_client, clean=active_config.clean)
 
             if active_config.home_assistant.enabled and (active_config.clean or active_config.home_assistant.discovery_only):
+                if active_config.clean:
+                    device.clean_state(mqtt_client)
                 logger.info(f"{device.log_identity} configured for {'clean' if active_config.clean else 'discovery'} only - shutting down...")
             else:
                 logger.debug(f"{device.log_identity} registering MQTT subscriptions")

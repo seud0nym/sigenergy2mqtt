@@ -262,7 +262,7 @@ class TestPublishAttributes:
         s = self._sensor_with_attrs("pa_clean")
         mqtt = _mqtt_mock()
         s.publish_attributes(mqtt, clean=True)
-        mqtt.publish.assert_called_with("test/attributes", b"", qos=0, retain=True)
+        mqtt.publish.assert_called_with("test/attributes", b"", qos=1, retain=True)
 
     def test_publish_attributes_clean_with_debug(self):
         """clean=True with debug_logging=True covers debug branch."""
@@ -438,9 +438,6 @@ class TestGetDiscovery:
     def test_get_discovery_publishable_removes_persistent_file(self, tmp_path):
         """When publishable and file exists, it's removed."""
         s = self._sensor_with_topics("gd_pub")
-        pfile = tmp_path / "test.publishable"
-        pfile.write_text("0")
-        s._persistent_publish_state_file = pfile
         mqtt = _mqtt_mock()
         cfg = Config()
         cfg.clean = False
@@ -454,20 +451,18 @@ class TestGetDiscovery:
         """When not publishable, attributes topic cleared."""
         s = self._sensor_with_topics("gd_unpub")
         s._publishable = False
-        s._persistent_publish_state_file = tmp_path / "gd_unpub.publishable"
         mqtt = _mqtt_mock()
         cfg = Config()
         cfg.clean = False
         cfg.home_assistant.enabled = False
         with _swap_active_config(cfg):
             s.get_discovery(mqtt)
-        mqtt.publish.assert_called_with("test/attributes", b"", qos=0, retain=False)
+        mqtt.publish.assert_called_with("test/attributes", b"", qos=1, retain=True)
 
     def test_get_discovery_clean_mode_clears_all(self, tmp_path):
         """In clean mode, components dict is empty."""
         s = self._sensor_with_topics("gd_clean")
         s._publishable = False
-        s._persistent_publish_state_file = tmp_path / "gd_clean.publishable"
         mqtt = _mqtt_mock()
         cfg = Config()
         cfg.clean = True
@@ -480,8 +475,6 @@ class TestGetDiscovery:
         """When unpublishable and file does not exist, file is written."""
         s = self._sensor_with_topics("gd_persist")
         s._publishable = False
-        pfile = tmp_path / "gd_persist.publishable"
-        s._persistent_publish_state_file = pfile
         mqtt = _mqtt_mock()
         cfg = Config()
         cfg.clean = False
