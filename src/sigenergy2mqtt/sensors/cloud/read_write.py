@@ -363,7 +363,7 @@ class _BatteryPowerLimit(NumericSensorMixin, CloudReadWriteSensor):
             device_class=DeviceClass.POWER,
             state_class=None,
             icon=icon,
-            gain=None,
+            gain=1,
             precision=3,
             minimum=0.0,
             maximum=None,
@@ -388,8 +388,12 @@ class _BatteryPowerLimit(NumericSensorMixin, CloudReadWriteSensor):
         return "None" if state is None else state
 
     async def _write_cloud_value(self, port: CloudControlPort, value: float | str) -> bool:
+        # The endpoint replaces both limits, so always refresh immediately
+        # before writing rather than trusting a value cached by the poller.
+        self._snapshot.begin_refresh()
+        await self._read_cloud_state(port)
         if self._limits is None:
-            logger.warning(f"{self.log_identity} cannot write before both battery power limits are read")
+            logger.warning(f"{self.log_identity} cannot write without both current battery power limits")
             return False
         limits = dict(self._limits)
         limits[self._key] = float(value)
@@ -397,6 +401,7 @@ class _BatteryPowerLimit(NumericSensorMixin, CloudReadWriteSensor):
             max_charge_kw=limits[self._CHARGE_KEY],
             max_discharge_kw=limits[self._DISCHARGE_KEY],
         )
+        self._limits = limits
         return True
 
 
@@ -443,7 +448,7 @@ class SolarPowerLimit(NumericSensorMixin, CloudReadWriteSensor):
             device_class=DeviceClass.POWER,
             state_class=None,
             icon="mdi:solar-power",
-            gain=None,
+            gain=1,
             precision=3,
             minimum=0.0,
             maximum=None,

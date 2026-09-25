@@ -451,10 +451,14 @@ async def test_battery_power_limits_share_read_and_preserve_other_limit_on_write
     assert await discharge._read_cloud_state(port) == 6.25
     port.battery_power_limit.assert_awaited_once()
 
+    # The sibling changed after the polling snapshot. The write must refresh
+    # both limits so it does not restore the stale discharge value.
+    port.battery_power_limit.return_value["batteryMaxDischargingPower"] = "7.750"
     assert await charge._write_cloud_value(port, 3) is True
+    assert port.battery_power_limit.await_count == 2
     port.set_battery_power_limit.assert_awaited_once_with(
         max_charge_kw=3.0,
-        max_discharge_kw=6.25,
+        max_discharge_kw=7.75,
     )
 
 
@@ -473,6 +477,45 @@ async def test_battery_power_limit_preserves_unlimited_sentinel_as_none() -> Non
         max_charge_kw=2.0,
         max_discharge_kw=6.0,
     )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("sensor", "read_payload", "expected_call"),
+    [
+        (
+            BatteryChargePowerLimit(0),
+            {
+                "batteryMaxChargingPower": "4.000",
+                "batteryMaxDischargingPower": "6.000",
+            },
+            ("battery", {"max_charge_kw": 3.5, "max_discharge_kw": 6.0}),
+        ),
+        (
+            SolarPowerLimit(0),
+            None,
+            ("solar", 3.5),
+        ),
+    ],
+)
+async def test_power_limit_mqtt_command_reaches_cloud(sensor, read_payload, expected_call) -> None:
+    port = FakeCloudControlPort()
+    if read_payload is not None:
+        port.battery_power_limit.return_value = read_payload
+    sensor.configure_mqtt_topics("cloud-device")
+
+    assert await sensor.set_value(
+        port,
+        AsyncMock(),
+        "3.5",
+        sensor.command_topic,
+        AsyncMock(),
+    ) is True
+    assert sensor.gain == 1
+    if expected_call[0] == "battery":
+        port.set_battery_power_limit.assert_awaited_once_with(**expected_call[1])
+    else:
+        port.set_solar_power_limit.assert_awaited_once_with(expected_call[1])
 
 
 @pytest.mark.asyncio
