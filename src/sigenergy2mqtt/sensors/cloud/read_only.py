@@ -7,7 +7,6 @@ import re
 from typing import Any
 
 from sigenergy2mqtt.cloud.port import CloudControlPort
-from sigenergy2mqtt.cloud.vendor.solidfox.sigenergy_cloud import SigenergyCloudClient
 from sigenergy2mqtt.common import DeviceClass, ProtocolVersion, StateClass
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.sensors.base import CloudSensor
@@ -76,9 +75,7 @@ class GatewaySensor(CloudSensor):
 
 
 class GatewayCommunicationStatus(GatewaySensor):
-    def __init__(
-        self, plant_index: int, station_id: str, snapshot: GatewayInfoSnapshot
-    ) -> None:
+    def __init__(self, plant_index: int, station_id: str, snapshot: GatewayInfoSnapshot) -> None:
         super().__init__(
             plant_index,
             station_id,
@@ -98,9 +95,9 @@ class GatewayCommunicationStatus(GatewaySensor):
             status = int(status)
         except (TypeError, ValueError):
             return "Unknown"
-        if status == SigenergyCloudClient.TOPO_COMMUNICATE_STATUS_OFFLINE:
+        if status == 1:
             return "Offline"
-        if status == SigenergyCloudClient.TOPO_COMMUNICATE_STATUS_ONLINE:
+        if status == 2:
             return "Online"
         return "Unknown"
 
@@ -121,11 +118,11 @@ class GatewayGridSideInfoSensor(GatewaySensor):
         self.param_key = param_key
         self._api_units = {"kVar", "kvar"} if unit == "kvar" else {unit}
         super().__init__(
-            plant_index,
-            station_id,
-            gateway_sensor_suffix(param_key),
-            param_key,
-            snapshot,
+            plant_index=plant_index,
+            station_id=station_id,
+            suffix=gateway_sensor_suffix(param_key),
+            name=param_key,
+            snapshot=snapshot,
             unit=unit,
             device_class=device_class,
             state_class=StateClass.MEASUREMENT if unit else None,
@@ -153,6 +150,11 @@ class GatewayGridSideInfoSensor(GatewaySensor):
             return number if math.isfinite(number) else None
         return None
 
+    def get_attributes(self) -> dict[str, float | int | str]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Grid-Side state read from the Gateway via the Cloud API"
+        return attributes
+
 
 class GatewayGridVoltage(GatewayGridSideInfoSensor):
     pass
@@ -178,9 +180,7 @@ class GatewayGridText(GatewayGridSideInfoSensor):
     pass
 
 
-GRID_SENSOR_TYPES: dict[
-    str, tuple[type[GatewayGridSideInfoSensor], DeviceClass | None]
-] = {
+GRID_SENSOR_TYPES: dict[str, tuple[type[GatewayGridSideInfoSensor], DeviceClass | None]] = {
     "V": (GatewayGridVoltage, DeviceClass.VOLTAGE),
     "A": (GatewayGridCurrent, DeviceClass.CURRENT),
     "Hz": (GatewayGridFrequency, DeviceClass.FREQUENCY),
