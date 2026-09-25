@@ -17,6 +17,7 @@ from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.devices.base.poller import SensorGroupPoller
 from sigenergy2mqtt.devices.cloud import SigenergyCloudControl
 from sigenergy2mqtt.sensors.base import CloudReadWriteSensor, DiscoveryKeys
+from sigenergy2mqtt.sensors.cloud.functions import _identity
 from sigenergy2mqtt.sensors.cloud.read_write import (
     INSTANT_CONTROL_OPTIONS,
     BatteryChargePowerLimit,
@@ -34,6 +35,7 @@ from sigenergy2mqtt.sensors.cloud.read_write import (
 
 class FakeCloudControlPort:
     model = "Test Cloud"
+    station_id = "station-123"
     capabilities = Capabilities(
         features=frozenset(),
         min_duration=timedelta(minutes=1),
@@ -77,10 +79,22 @@ class FakeCloudControlPort:
 
 
 def _controls() -> tuple[InstantControlMode, InstantControlDuration, InstantControlSwitch]:
-    mode = InstantControlMode(0)
-    duration = InstantControlDuration(0)
-    switch = InstantControlSwitch(0, mode, duration)
+    mode = InstantControlMode(0, FakeCloudControlPort.station_id)
+    duration = InstantControlDuration(0, FakeCloudControlPort.station_id)
+    switch = InstantControlSwitch(0, FakeCloudControlPort.station_id, mode, duration)
     return mode, duration, switch
+
+
+def test_cloud_identity_uses_cloud_object_id_and_station_unique_id() -> None:
+    config = Config()
+    config.home_assistant.entity_id_prefix = "entity"
+    config.home_assistant.unique_id_prefix = "unique"
+
+    with _swap_active_config(config):
+        assert _identity(2, "station-123", "solar_power") == (
+            "unique_2_cloud_solar_power",
+            "unique_2_station-123_solar_power",
+        )
 
 
 def test_cloud_control_device_registers_normal_mqtt_entities() -> None:
@@ -369,7 +383,7 @@ async def test_cloud_write_delegates_successfully() -> None:
     ],
 )
 async def test_grid_limit_reads_installer_maximum_and_writes_owner_value(sensor_type, read_method, write_method, payload, maximum) -> None:
-    sensor = sensor_type(0)
+    sensor = sensor_type(0, FakeCloudControlPort.station_id)
     port = AsyncMock()
     getattr(port, read_method).return_value = payload
 
@@ -402,7 +416,7 @@ async def test_grid_limit_reads_installer_maximum_and_writes_owner_value(sensor_
     ],
 )
 async def test_grid_limit_empty_states_and_disallowed_updates(payload) -> None:
-    sensor = GridExportLimit(0)
+    sensor = GridExportLimit(0, FakeCloudControlPort.station_id)
     port = AsyncMock()
     port.grid_export_limit.return_value = payload
 
@@ -421,7 +435,7 @@ async def test_grid_limit_empty_states_and_disallowed_updates(payload) -> None:
 @pytest.mark.asyncio
 @pytest.mark.parametrize("enable", [None, "false", 0, 1])
 async def test_grid_limit_invalid_enable_status_disallows_updates(enable) -> None:
-    sensor = GridExportLimit(0)
+    sensor = GridExportLimit(0, FakeCloudControlPort.station_id)
     port = AsyncMock()
     port.grid_export_limit.return_value = {
         "enable": enable,
@@ -436,7 +450,7 @@ async def test_grid_limit_invalid_enable_status_disallows_updates(enable) -> Non
 
 @pytest.mark.asyncio
 async def test_battery_export_limitation_reads_current_state_and_writes_owner_state() -> None:
-    sensor = BatteryExportLimitation(0)
+    sensor = BatteryExportLimitation(0, FakeCloudControlPort.station_id)
     port = AsyncMock()
     port.battery_export_limitation.return_value = {
         "currentEnable": False,
@@ -484,7 +498,7 @@ async def test_battery_power_limits_share_read_and_preserve_other_limit_on_write
 
 @pytest.mark.asyncio
 async def test_battery_power_limit_preserves_unlimited_sentinel_as_none() -> None:
-    charge = BatteryChargePowerLimit(0)
+    charge = BatteryChargePowerLimit(0, FakeCloudControlPort.station_id)
     port = FakeCloudControlPort()
     port.battery_power_limit.return_value = {
         "batteryMaxChargingPower": "4294967.295",
@@ -504,7 +518,7 @@ async def test_battery_power_limit_preserves_unlimited_sentinel_as_none() -> Non
     ("sensor", "read_payload", "expected_call"),
     [
         (
-            BatteryChargePowerLimit(0),
+            BatteryChargePowerLimit(0, FakeCloudControlPort.station_id),
             {
                 "batteryMaxChargingPower": "4.000",
                 "batteryMaxDischargingPower": "6.000",
@@ -512,7 +526,7 @@ async def test_battery_power_limit_preserves_unlimited_sentinel_as_none() -> Non
             ("battery", {"max_charge_kw": 3.5, "max_discharge_kw": 6.0}),
         ),
         (
-            SolarPowerLimit(0),
+            SolarPowerLimit(0, FakeCloudControlPort.station_id),
             None,
             ("solar", 3.5),
         ),
@@ -540,7 +554,7 @@ async def test_power_limit_mqtt_command_reaches_cloud(sensor, read_payload, expe
 
 @pytest.mark.asyncio
 async def test_solar_power_limit_reads_and_writes() -> None:
-    sensor = SolarPowerLimit(0)
+    sensor = SolarPowerLimit(0, FakeCloudControlPort.station_id)
     port = FakeCloudControlPort()
     port.solar_power_limit.return_value = {"powerLimit": "8.125"}
 
@@ -552,7 +566,7 @@ async def test_solar_power_limit_reads_and_writes() -> None:
 @pytest.mark.asyncio
 @pytest.mark.parametrize("payload", [{}, [], {"powerLimit": "invalid"}])
 async def test_solar_power_limit_malformed_payload_is_unavailable(payload) -> None:
-    sensor = SolarPowerLimit(0)
+    sensor = SolarPowerLimit(0, FakeCloudControlPort.station_id)
     port = FakeCloudControlPort()
     port.solar_power_limit.return_value = payload
 
@@ -572,7 +586,7 @@ async def test_solar_power_limit_malformed_payload_is_unavailable(payload) -> No
 async def test_grid_limit_malformed_payload_publishes_unavailable_without_raising(
     payload,
 ) -> None:
-    sensor = GridExportLimit(0)
+    sensor = GridExportLimit(0, FakeCloudControlPort.station_id)
     port = AsyncMock()
     port.grid_export_limit.return_value = payload
 
@@ -610,7 +624,7 @@ async def test_grid_limit_maximum_changes_request_discovery_republish() -> None:
     [{}, {"currentEnable": None}, {"currentEnable": "false"}, []],
 )
 async def test_battery_export_malformed_payload_publishes_unavailable(payload) -> None:
-    sensor = BatteryExportLimitation(0)
+    sensor = BatteryExportLimitation(0, FakeCloudControlPort.station_id)
     port = AsyncMock()
     port.battery_export_limitation.return_value = payload
 

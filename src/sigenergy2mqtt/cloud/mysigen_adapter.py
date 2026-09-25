@@ -70,6 +70,13 @@ class MySigenCloudAdapter:
         return "mySigen Cloud (unofficial)"
 
     @property
+    def station_id(self) -> str:
+        """Return the station selected during cloud discovery."""
+        if self._client.station_id is None:
+            raise CloudControlUnavailableError("Cloud station has not been discovered")
+        return self._client.station_id
+
+    @property
     def capabilities(self) -> Capabilities:
         return _CAPABILITIES
 

@@ -29,6 +29,7 @@ from sigenergy2mqtt.sensors.base import (
     SelectSensorMixin,
     SwitchSensorMixin,
 )
+from sigenergy2mqtt.sensors.cloud.functions import _identity
 
 logger = logging.getLogger(__name__)
 
@@ -45,15 +46,6 @@ _OPTION_TO_MODE = {
     3: Mode.SELF_CONSUMPTION,
 }
 _MODE_TO_OPTION = {mode: option for option, mode in _OPTION_TO_MODE.items()}
-
-
-def _identity(plant_index: int, suffix: str) -> tuple[str, str]:
-    entity_prefix = active_config.home_assistant.entity_id_prefix
-    unique_prefix = active_config.home_assistant.unique_id_prefix
-    return (
-        f"{entity_prefix}_{plant_index}_{suffix}",
-        f"{unique_prefix}_{plant_index}_cloud_{suffix}",
-    )
 
 
 class _InstantControlStatusSnapshot:
@@ -110,8 +102,8 @@ class _BatteryPowerLimitSnapshot:
 class InstantControlMode(SelectSensorMixin, CloudReadWriteSensor):
     """Mode to use the next time Instant Manual Control is enabled."""
 
-    def __init__(self, plant_index: int) -> None:
-        object_id, unique_id = _identity(plant_index, "instant_control_mode")
+    def __init__(self, plant_index: int, station_id: str) -> None:
+        object_id, unique_id = _identity(plant_index, station_id, "instant_control_mode")
         self.plant_index = plant_index
         super().__init__(
             availability_control_sensor=None,
@@ -149,8 +141,8 @@ class InstantControlMode(SelectSensorMixin, CloudReadWriteSensor):
 class InstantControlDuration(NumericSensorMixin, CloudReadWriteSensor):
     """Duration in minutes for the next Instant Manual Control request."""
 
-    def __init__(self, plant_index: int) -> None:
-        object_id, unique_id = _identity(plant_index, "instant_control_duration")
+    def __init__(self, plant_index: int, station_id: str) -> None:
+        object_id, unique_id = _identity(plant_index, station_id, "instant_control_duration")
         self.plant_index = plant_index
         super().__init__(
             availability_control_sensor=None,
@@ -193,10 +185,11 @@ class InstantControlSwitch(SwitchSensorMixin, CloudReadWriteSensor):
     def __init__(
         self,
         plant_index: int,
+        station_id: str,
         mode: InstantControlMode,
         duration: InstantControlDuration,
     ) -> None:
-        object_id, unique_id = _identity(plant_index, "instant_control")
+        object_id, unique_id = _identity(plant_index, station_id, "instant_control")
         self.plant_index = plant_index
         self._mode = mode
         self._duration = duration
@@ -249,8 +242,8 @@ class InstantControlSwitch(SwitchSensorMixin, CloudReadWriteSensor):
 class GridExportLimit(CloudGridLimitSensor):
     """Maximum power that the owner permits the plant to export."""
 
-    def __init__(self, plant_index: int) -> None:
-        object_id, unique_id = _identity(plant_index, "grid_export_limit")
+    def __init__(self, plant_index: int, station_id: str) -> None:
+        object_id, unique_id = _identity(plant_index, station_id, "grid_export_limit")
         super().__init__(
             availability_control_sensor=None,
             read_method="grid_export_limit",
@@ -274,8 +267,8 @@ class GridExportLimit(CloudGridLimitSensor):
 class GridImportLimit(CloudGridLimitSensor):
     """Maximum power that the owner permits the plant to import."""
 
-    def __init__(self, plant_index: int) -> None:
-        object_id, unique_id = _identity(plant_index, "grid_import_limit")
+    def __init__(self, plant_index: int, station_id: str) -> None:
+        object_id, unique_id = _identity(plant_index, station_id, "grid_import_limit")
         super().__init__(
             availability_control_sensor=None,
             read_method="grid_import_limit",
@@ -299,8 +292,8 @@ class GridImportLimit(CloudGridLimitSensor):
 class GridConnectionLimit(CloudGridLimitSensor):
     """Maximum phase current allowed at the grid connection point."""
 
-    def __init__(self, plant_index: int) -> None:
-        object_id, unique_id = _identity(plant_index, "grid_connection_limit")
+    def __init__(self, plant_index: int, station_id: str) -> None:
+        object_id, unique_id = _identity(plant_index, station_id, "grid_connection_limit")
         super().__init__(
             availability_control_sensor=None,
             read_method="grid_connection_limit",
@@ -344,6 +337,7 @@ class _BatteryPowerLimit(NumericSensorMixin, CloudReadWriteSensor):
     def __init__(
         self,
         plant_index: int,
+        station_id: str,
         *,
         key: str,
         name: str,
@@ -354,7 +348,7 @@ class _BatteryPowerLimit(NumericSensorMixin, CloudReadWriteSensor):
         self._key = key
         self._snapshot = snapshot or _BatteryPowerLimitSnapshot()
         self._polling_coordinator = self._snapshot
-        object_id, unique_id = _identity(plant_index, suffix)
+        object_id, unique_id = _identity(plant_index, station_id, suffix)
         super().__init__(
             availability_control_sensor=None,
             name=name,
@@ -412,9 +406,10 @@ class _BatteryPowerLimit(NumericSensorMixin, CloudReadWriteSensor):
 class BatteryChargePowerLimit(_BatteryPowerLimit):
     """Maximum battery charging power requested by the owner."""
 
-    def __init__(self, plant_index: int, snapshot: _BatteryPowerLimitSnapshot | None = None) -> None:
+    def __init__(self, plant_index: int, station_id: str, snapshot: _BatteryPowerLimitSnapshot | None = None) -> None:
         super().__init__(
             plant_index,
+            station_id,
             key=self._CHARGE_KEY,
             name="Battery Charge Power Limit",
             suffix="battery_charge_power_limit",
@@ -426,9 +421,10 @@ class BatteryChargePowerLimit(_BatteryPowerLimit):
 class BatteryDischargePowerLimit(_BatteryPowerLimit):
     """Maximum battery discharging power requested by the owner."""
 
-    def __init__(self, plant_index: int, snapshot: _BatteryPowerLimitSnapshot | None = None) -> None:
+    def __init__(self, plant_index: int, station_id: str, snapshot: _BatteryPowerLimitSnapshot | None = None) -> None:
         super().__init__(
             plant_index,
+            station_id,
             key=self._DISCHARGE_KEY,
             name="Battery Discharge Power Limit",
             suffix="battery_discharge_power_limit",
@@ -440,8 +436,8 @@ class BatteryDischargePowerLimit(_BatteryPowerLimit):
 class SolarPowerLimit(NumericSensorMixin, CloudReadWriteSensor):
     """Maximum solar generation power requested by the owner."""
 
-    def __init__(self, plant_index: int) -> None:
-        object_id, unique_id = _identity(plant_index, "solar_power_limit")
+    def __init__(self, plant_index: int, station_id: str) -> None:
+        object_id, unique_id = _identity(plant_index, station_id, "solar_power_limit")
         super().__init__(
             availability_control_sensor=None,
             name="Solar Power Limit",
@@ -474,8 +470,8 @@ class SolarPowerLimit(NumericSensorMixin, CloudReadWriteSensor):
 class BatteryExportLimitation(SwitchSensorMixin, CloudReadWriteSensor):
     """Control whether the battery is permitted to export to the grid."""
 
-    def __init__(self, plant_index: int) -> None:
-        object_id, unique_id = _identity(plant_index, "battery_export_limitation")
+    def __init__(self, plant_index: int, station_id: str) -> None:
+        object_id, unique_id = _identity(plant_index, station_id, "battery_export_limitation")
         super().__init__(
             availability_control_sensor=None,
             name="Battery Export Limitation",
