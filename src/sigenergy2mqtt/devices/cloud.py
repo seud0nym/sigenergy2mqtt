@@ -6,6 +6,12 @@ from sigenergy2mqtt.cloud.port import CloudControlPort
 from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices.base.device import Device
+from sigenergy2mqtt.sensors.cloud.read_only import (
+    GatewayCommunicationStatus,
+    GatewayInfoSnapshot,
+    gateway_sensor_suffix,
+    grid_sensor_details,
+)
 from sigenergy2mqtt.sensors.cloud.read_write import (
     BatteryChargePowerLimit,
     BatteryDischargePowerLimit,
@@ -17,12 +23,6 @@ from sigenergy2mqtt.sensors.cloud.read_write import (
     InstantControlMode,
     InstantControlSwitch,
     SolarPowerLimit,
-)
-from sigenergy2mqtt.sensors.cloud.read_only import (
-    GatewayCommunicationStatus,
-    GatewayInfoSnapshot,
-    gateway_sensor_suffix,
-    grid_sensor_details,
 )
 
 
@@ -60,9 +60,7 @@ class SigenergyGateway(Device):
             if not suffix or suffix in seen_suffixes:
                 continue
             seen_suffixes.add(suffix)
-            sensor_type, unit, device_class = grid_sensor_details(
-                entry.get("paramValue")
-            )
+            sensor_type, unit, device_class = grid_sensor_details(entry.get("paramValue"))
             self._add_sensor(
                 sensor_type(
                     plant_index,
@@ -78,9 +76,7 @@ class SigenergyGateway(Device):
 class SigenergyCloudControl(Device):
     """Expose cloud Instant Manual Control through normal MQTT sensors."""
 
-    def __init__(
-        self, plant_index: int, port: CloudControlPort, gateway_info: dict | None = None
-    ) -> None:
+    def __init__(self, plant_index: int, port: CloudControlPort, gateway_info: dict | None = None) -> None:
         super().__init__(
             name="Sigenergy Cloud",
             plant_index=plant_index,
@@ -106,9 +102,7 @@ class SigenergyCloudControl(Device):
         self._add_sensor(GridImportLimit(plant_index, station_id))
         self._add_sensor(GridConnectionLimit(plant_index, station_id))
         battery_charge_limit = BatteryChargePowerLimit(plant_index, station_id)
-        battery_discharge_limit = BatteryDischargePowerLimit(
-            plant_index, station_id, battery_charge_limit._snapshot
-        )
+        battery_discharge_limit = BatteryDischargePowerLimit(plant_index, station_id, battery_charge_limit._snapshot)
         self._add_sensor(battery_charge_limit)
         self._add_sensor(battery_discharge_limit)
         self._add_sensor(SolarPowerLimit(plant_index, station_id))
@@ -116,21 +110,13 @@ class SigenergyCloudControl(Device):
 
         if gateway_info:
             raw_grid_side_info = gateway_info.get("gridSideInfoList")
-            grid_side_info = (
-                [entry for entry in raw_grid_side_info if isinstance(entry, dict)]
-                if isinstance(raw_grid_side_info, list)
-                else []
-            )
+            grid_side_info = [entry for entry in raw_grid_side_info if isinstance(entry, dict)] if isinstance(raw_grid_side_info, list) else []
             self._add_child_device(
                 SigenergyGateway(
                     plant_index,
                     station_id,
                     model=str(gateway_info.get("deviceModel") or "Sigenergy Gateway"),
-                    sn=str(
-                        gateway_info.get("snCode")
-                        or gateway_info.get("showSnCode")
-                        or ""
-                    ),
+                    sn=str(gateway_info.get("snCode") or gateway_info.get("showSnCode") or ""),
                     hw=str(gateway_info.get("softVersion") or ""),
                     grid_side_info=grid_side_info,
                 )

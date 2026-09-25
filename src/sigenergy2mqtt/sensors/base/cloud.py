@@ -7,8 +7,8 @@ import logging
 import math
 from typing import Any, cast
 
-from aiohttp import ClientError
 import paho.mqtt.client as mqtt
+from aiohttp import ClientError
 
 from sigenergy2mqtt.cloud.exceptions import CloudControlError
 from sigenergy2mqtt.cloud.port import CloudControlPort
@@ -17,8 +17,8 @@ from sigenergy2mqtt.mqtt import MqttHandler
 
 from .constants import DiscoveryKeys
 from .mixins import ReadableSensorMixin, WriteableSensorMixin
-from .writeable import NumericSensorMixin
 from .sensor import AvailabilityMixin
+from .writeable import NumericSensorMixin
 
 logger = logging.getLogger(__name__)
 
@@ -28,9 +28,7 @@ class CloudSensor(ReadableSensorMixin, AvailabilityMixin):
 
     async def _update_internal_state(self, **kwargs) -> bool:
         if "modbus_client" not in kwargs:
-            raise ValueError(
-                f"{self.log_identity}: Required argument 'modbus_client' not supplied"
-            )
+            raise ValueError(f"{self.log_identity}: Required argument 'modbus_client' not supplied")
         port = cast(CloudControlPort | None, kwargs.pop("modbus_client"))
         if port is None:
             return False
@@ -44,9 +42,7 @@ class CloudSensor(ReadableSensorMixin, AvailabilityMixin):
         return self.set_latest_state(cast(Any, value))
 
     @abc.abstractmethod
-    async def _read_cloud_state(
-        self, port: CloudControlPort
-    ) -> bytes | float | int | str | None: ...
+    async def _read_cloud_state(self, port: CloudControlPort) -> bytes | float | int | str | None: ...
 
 
 class CloudReadWriteSensor(WriteableSensorMixin, CloudSensor):
@@ -57,12 +53,8 @@ class CloudReadWriteSensor(WriteableSensorMixin, CloudSensor):
         availability_control_sensor: AvailabilityMixin | None,
         **kwargs,
     ) -> None:
-        if availability_control_sensor is not None and not isinstance(
-            availability_control_sensor, AvailabilityMixin
-        ):
-            raise ValueError(
-                "availability_control_sensor must be an AvailabilityMixin instance"
-            )
+        if availability_control_sensor is not None and not isinstance(availability_control_sensor, AvailabilityMixin):
+            raise ValueError("availability_control_sensor must be an AvailabilityMixin instance")
         self._availability_control_sensor = availability_control_sensor
         self._payload_available = 1
         self._payload_not_available = 0
@@ -80,17 +72,13 @@ class CloudReadWriteSensor(WriteableSensorMixin, CloudSensor):
         if gate is not None and active_config.home_assistant.enabled:
             gate_topic = gate.get(DiscoveryKeys.STATE_TOPIC)
             if not gate_topic:
-                raise RuntimeError(
-                    f"{self.log_identity} availability sensor topic is not configured"
-                )
+                raise RuntimeError(f"{self.log_identity} availability sensor topic is not configured")
             availability = cast(list[dict[str, Any]], self[DiscoveryKeys.AVAILABILITY])
-            availability.append(
-                {
-                    "topic": gate_topic,
-                    "payload_available": self._payload_available,
-                    "payload_not_available": self._payload_not_available,
-                }
-            )
+            availability.append({
+                "topic": gate_topic,
+                "payload_available": self._payload_available,
+                "payload_not_available": self._payload_not_available,
+            })
         return base
 
     async def _write_value(
@@ -112,9 +100,7 @@ class CloudReadWriteSensor(WriteableSensorMixin, CloudSensor):
             return False
 
     @abc.abstractmethod
-    async def _write_cloud_value(
-        self, port: CloudControlPort, value: float | str
-    ) -> bool: ...
+    async def _write_cloud_value(self, port: CloudControlPort, value: float | str) -> bool: ...
 
 
 class CloudGridLimitSensor(NumericSensorMixin, CloudReadWriteSensor):
@@ -146,72 +132,45 @@ class CloudGridLimitSensor(NumericSensorMixin, CloudReadWriteSensor):
         if previous != self.get(DiscoveryKeys.MAX) and self.parent_device is not None:
             self.parent_device.rediscover = True
 
-    def _parse_number(
-        self, payload: dict[str, Any], key: str
-    ) -> tuple[float | None, bool]:
+    def _parse_number(self, payload: dict[str, Any], key: str) -> tuple[float | None, bool]:
         value = payload.get(key)
         if value in (None, ""):
             return None, True
         try:
             parsed = float(value)
         except (TypeError, ValueError):
-            logger.warning(
-                f"{self.log_identity} cloud response contains invalid {key}={value!r}"
-            )
+            logger.warning(f"{self.log_identity} cloud response contains invalid {key}={value!r}")
             return None, False
         if not math.isfinite(parsed):
-            logger.warning(
-                f"{self.log_identity} cloud response contains invalid {key}={value!r}"
-            )
+            logger.warning(f"{self.log_identity} cloud response contains invalid {key}={value!r}")
             return None, False
         return parsed, True
 
     async def _read_cloud_state(self, port: CloudControlPort) -> float | str:
         payload = await getattr(port, self._read_method)()
         if not isinstance(payload, dict):
-            logger.warning(
-                f"{self.log_identity} cloud response is not an object: {payload!r}"
-            )
+            logger.warning(f"{self.log_identity} cloud response is not an object: {payload!r}")
             self._updates_allowed = False
             self._update_installer_maximum(None)
             return "None"
         enabled_value = payload.get("enable")
         enabled_valid = isinstance(enabled_value, bool)
         if not enabled_valid:
-            logger.warning(
-                f"{self.log_identity} cloud response contains invalid enable={enabled_value!r}"
-            )
+            logger.warning(f"{self.log_identity} cloud response contains invalid enable={enabled_value!r}")
         enabled = enabled_value is True
         current, current_valid = self._parse_number(payload, self._current_key)
-        installer_maximum, installer_valid = self._parse_number(
-            payload, self._installer_key
-        )
+        installer_maximum, installer_valid = self._parse_number(payload, self._installer_key)
         # A write enables the limit in the same request, so a currently disabled
         # limit remains writable whenever its installer maximum is usable.
-        self._updates_allowed = (
-            enabled_valid
-            and current_valid
-            and installer_valid
-            and installer_maximum is not None
-        )
+        self._updates_allowed = enabled_valid and current_valid and installer_valid and installer_maximum is not None
         self._update_installer_maximum(installer_maximum)
-        if (
-            not enabled_valid
-            or not current_valid
-            or not installer_valid
-            or not enabled
-            or current is None
-        ):
+        if not enabled_valid or not current_valid or not installer_valid or not enabled or current is None:
             return "None"
         return current
 
-    async def _write_cloud_value(
-        self, port: CloudControlPort, value: float | str
-    ) -> bool:
+    async def _write_cloud_value(self, port: CloudControlPort, value: float | str) -> bool:
         if not self._updates_allowed:
-            logger.warning(
-                f"{self.log_identity} cannot write: grid limit is disabled or has no installer limit"
-            )
+            logger.warning(f"{self.log_identity} cannot write: grid limit is disabled or has no installer limit")
             return False
         await getattr(port, self._write_method)(float(value), enabled=True)
         return True
