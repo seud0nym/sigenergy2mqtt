@@ -48,6 +48,9 @@ class DummyDevice:
         self._subscribed = False
         self._availability = []
 
+    def clean_state(self, mqtt_client):
+        pass
+
     def publish_discovery(self, mqtt_client, clean: bool = False):
         return None
 
@@ -84,7 +87,7 @@ async def test_read_and_publish_device_sensors_no_modbus(monkeypatch):
     with _swap_active_config(cfg_obj):
         # Prepare ThreadConfig with no host
         cfg = ThreadConfig.create(name="Test", host=None, port=None)
-        cfg.add_device(DummyDevice("dev1"))
+        cfg.add_device(DummyDevice("dev1"))  # type: ignore[arg-type]
 
         # Patch mqtt_setup to return dummy client and handler
         mqtt_client = DummyMQTTClient()
@@ -120,7 +123,7 @@ async def test_read_and_publish_device_sensors_uses_and_closes_custom_transport(
     with _swap_active_config(cfg_obj):
         cfg = ThreadConfig.create(name="Cloud", host=None, port=None)
         cfg.transport_factory = factory
-        cfg.add_device(DummyDevice("cloud-device"))
+        cfg.add_device(DummyDevice("cloud-device"))  # type: ignore[arg-type]
         mqtt_client = DummyMQTTClient()
         mqtt_handler = DummyMQTTHandler()
         monkeypatch.setattr(
@@ -169,7 +172,7 @@ async def test_read_and_publish_device_sensors_with_modbus_and_tasks(monkeypatch
     with _swap_active_config(cfg_obj):
         # Create ThreadConfig with host so Modbus client is used
         cfg = ThreadConfig.create(name="TestHost", host="127.0.0.1", port=502)
-        cfg.add_device(DummyDevice("dev2"))
+        cfg.add_device(DummyDevice("dev2"))  # type: ignore[arg-type]
 
         # Mock Modbus client
         class MockModbus:
@@ -246,7 +249,7 @@ async def test_read_and_publish_device_sensors_discovery_only(monkeypatch):
         cfg = ThreadConfig.create(name="DiscoveryOnly", host="127.0.0.1", port=502)
         mock_device = DummyDevice("disc_only")
         mock_device.schedule = MagicMock(return_value=[])
-        cfg.add_device(mock_device)
+        cfg.add_device(mock_device)  # type: ignore[arg-type]
 
         mock_mqtt_client = DummyMQTTClient()
         mock_mqtt_handler = DummyMQTTHandler()

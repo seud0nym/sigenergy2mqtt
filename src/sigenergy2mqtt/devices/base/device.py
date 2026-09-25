@@ -412,6 +412,13 @@ class Device(HaPublisherMixin, dict[str, str | list[str]]):
         self._add_to_all_sensors(sensor)
         return True
 
+    def clean_state(self, mqtt_client: mqtt.Client) -> None:
+        """Cleans all sensor current MQTT topic values"""
+        for sensor in self.get_all_sensors(search_children=False).values():
+            sensor.clean_state(mqtt_client)
+        for child in self.children:
+            child.clean_state(mqtt_client)
+
     def get_all_sensors(self, search_children: bool = True) -> dict[str, Sensor]:
         """Return all sensors owned by this device, optionally including child devices.
 

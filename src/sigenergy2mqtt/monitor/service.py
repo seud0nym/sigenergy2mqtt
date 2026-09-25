@@ -347,7 +347,7 @@ class MonitorService(Device):
             try:
                 for topic in (service._health_state_topic, service._health_attributes_topic):
                     logger.debug(f"MonitorService: Removing topic {topic}")
-                    info = client.publish(topic, b"", qos=2, retain=True)
+                    info = client.publish(topic, b"", qos=1, retain=True)
                     if info.rc == mqtt.MQTT_ERR_SUCCESS:
                         info.wait_for_publish(timeout=5.0)
                         logger.info(f"MonitorService: Topic {topic} removed successfully")
