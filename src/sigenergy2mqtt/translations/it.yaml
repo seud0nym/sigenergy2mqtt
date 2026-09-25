@@ -310,14 +310,20 @@ class:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Tensione Media Celle
+  BatteryChargePowerLimit:
+    name: Battery Charge Power Limit
   BatteryChargingPower:
     attributes:
       source: BatteryPower > 0 #verify:ignore
     name: Potenza di Carica Batteria
+  BatteryDischargePowerLimit:
+    name: Battery Discharge Power Limit
   BatteryDischargingPower:
     attributes:
       source: BatteryPower < 0 × -1 #verify:ignore
     name: Potenza di Scarica Batteria
+  BatteryExportLimitation:
+    name: Battery Export Limitation
   BatteryPower:
     attributes:
       comment: "Potenza ESS: <0 = scarica, >0 = carica"
@@ -602,6 +608,8 @@ class:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Energia Scarica CC VE Totale
+  GatewayCommunicationStatus:
+    name: communication_status
   GeneralAlarm1:
     alarm:
       '0': Mancata corrispondenza versione software
@@ -828,11 +836,17 @@ class:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Frequenza di Attivazione per Sottofrequenza
+  GridConnectionLimit:
+    name: Grid Connection Current Limit
+  GridExportLimit:
+    name: Grid Export Limit
   GridFrequency:
     attributes:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Frequenza di Rete
+  GridImportLimit:
+    name: Grid Import Limit
   GridMaxExportLimit:
     attributes:
       comment: La potenza attiva massima immessa in rete non deve superare il valore configurato in questo sensore. È necessario il sensore di rete. Ha effetto a livello globale indipendentemente dalla modalità operativa EMS
@@ -948,6 +962,12 @@ class:
     name: Scritture InfluxDB
   InfluxService:
     name: Servizio Aggiornamento Sigenergy InfluxDB (Impianto {plant_index})
+  InstantControlDuration:
+    name: Instant Manual Control Duration
+  InstantControlMode:
+    name: Instant Manual Control Mode
+  InstantControlSwitch:
+    name: Instant Manual Control
   InsulationResistance:
     attributes:
       source: Registro Modbus {address}
@@ -2743,6 +2763,8 @@ class:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Consumo totale carico intelligente {smart_load_index}
+  SolarPowerLimit:
+    name: Solar Power Limit
   Started:
     name: Avviato
   StartupTime:
@@ -2842,8 +2864,10 @@ class:
     name_off: Spegnere
     name_on: Accendere
 cli:
+  SIGENERGY2MQTT_CLOUD_ACCEPT_UNOFFICIAL_API_RISK:
+    help: Explicitly allow the unpublished mySigen API (a delegated account is recommended).
   SIGENERGY2MQTT_CLOUD_LOG_LEVEL:
-    help: 'Livello di log del sottosistema cloud. I valori validi sono: DEBUG, INFO, WARNING, ERROR o CRITICAL. Il valore predefinito è WARNING (avvisi, errori e guasti critici)'
+    help: 'Cloud subsystem log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is INFO.'
   SIGENERGY2MQTT_CLOUD_PASSWORD:
     help: La password per il servizio cloud.
   SIGENERGY2MQTT_CLOUD_REGION:

@@ -310,14 +310,20 @@ class:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Gemiddelde Celspanning
+  BatteryChargePowerLimit:
+    name: Battery Charge Power Limit
   BatteryChargingPower:
     attributes:
       source: BatteryPower > 0 #verify:ignore
     name: Batterij Laadvermogen
+  BatteryDischargePowerLimit:
+    name: Battery Discharge Power Limit
   BatteryDischargingPower:
     attributes:
       source: BatteryPower < 0 × -1 #verify:ignore
     name: Batterij Ontlaadvermogen
+  BatteryExportLimitation:
+    name: Battery Export Limitation
   BatteryPower:
     attributes:
       comment: "ESS Vermogen: <0 = ontladen, >0 = laden"
@@ -602,6 +608,8 @@ class:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Totale DC EV Ontlaadenergie
+  GatewayCommunicationStatus:
+    name: communication_status
   GeneralAlarm1:
     alarm:
       '0': Softwareversie komt niet overeen
@@ -828,11 +836,17 @@ class:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Onderfrequentie Vermogensverhoging Triggerfrequentie
+  GridConnectionLimit:
+    name: Grid Connection Current Limit
+  GridExportLimit:
+    name: Grid Export Limit
   GridFrequency:
     attributes:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Netfrequentie
+  GridImportLimit:
+    name: Grid Import Limit
   GridMaxExportLimit:
     attributes:
       comment: Het maximale actieve vermogen dat aan het elektriciteitsnet wordt geleverd, mag de in deze sensor geconfigureerde waarde niet overschrijden. Rastersensor nodig. Wordt wereldwijd van kracht, ongeacht de EMS-bedrijfsmodus
@@ -948,6 +962,12 @@ class:
     name: InfluxDB-schrijfacties
   InfluxService:
     name: Sigenergy InfluxDB Updater Service (Installatie {plant_index})
+  InstantControlDuration:
+    name: Instant Manual Control Duration
+  InstantControlMode:
+    name: Instant Manual Control Mode
+  InstantControlSwitch:
+    name: Instant Manual Control
   InsulationResistance:
     attributes:
       source: Modbus-register {address}
@@ -2743,6 +2763,8 @@ class:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Totaal verbruik slimme verbruiker {smart_load_index}
+  SolarPowerLimit:
+    name: Solar Power Limit
   Started:
     name: Gestart
   StartupTime:
@@ -2842,8 +2864,10 @@ class:
     name_off: Uitschakelen
     name_on: Inschakelen
 cli:
+  SIGENERGY2MQTT_CLOUD_ACCEPT_UNOFFICIAL_API_RISK:
+    help: Explicitly allow the unpublished mySigen API (a delegated account is recommended).
   SIGENERGY2MQTT_CLOUD_LOG_LEVEL:
-    help: 'Logboekniveau van het cloud-subsysteem. Geldige waarden zijn: DEBUG, INFO, WARNING, ERROR of CRITICAL. De standaardinstelling is WARNING (waarschuwingen, fouten en kritieke storingen)'
+    help: 'Cloud subsystem log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is INFO.'
   SIGENERGY2MQTT_CLOUD_PASSWORD:
     help: Het wachtwoord voor de clouddienst.
   SIGENERGY2MQTT_CLOUD_REGION:

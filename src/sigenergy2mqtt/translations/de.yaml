@@ -310,14 +310,20 @@ class:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
     name: Durchschnittliche Zellenspannung
+  BatteryChargePowerLimit:
+    name: Battery Charge Power Limit
   BatteryChargingPower:
     attributes:
       source: BatteryPower > 0 #verify:ignore
     name: Batterieladeleistung
+  BatteryDischargePowerLimit:
+    name: Battery Discharge Power Limit
   BatteryDischargingPower:
     attributes:
       source: BatteryPower < 0 × -1 #verify:ignore
     name: Batterieentladeleistung
+  BatteryExportLimitation:
+    name: Battery Export Limitation
   BatteryPower:
     attributes:
       comment: "ESS-Leistung: <0 = Entladen, >0 = Laden"
@@ -602,6 +608,8 @@ class:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
     name: Gesamte DC-EV-Entladeenergie
+  GatewayCommunicationStatus:
+    name: communication_status
   GeneralAlarm1:
     alarm:
       '0': Softwareversionskonflikt
@@ -828,11 +836,17 @@ class:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
     name: Unterfrequenz-Leistungsverstärkung Auslösefrequenz
+  GridConnectionLimit:
+    name: Grid Connection Current Limit
+  GridExportLimit:
+    name: Grid Export Limit
   GridFrequency:
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
     name: Netzfrequenz
+  GridImportLimit:
+    name: Grid Import Limit
   GridMaxExportLimit:
     attributes:
       comment: Die maximal ins Netz eingespeiste Wirkleistung darf den in diesem Sensor konfigurierten Wert nicht überschreiten. Gittersensor erforderlich. Wirkt global unabhängig von der EMS-Betriebsart
@@ -948,6 +962,12 @@ class:
     name: InfluxDB-Schreibvorgänge
   InfluxService:
     name: 'Sigenergy InfluxDB Aktualisierungsdienst (Anlage {plant_index})'
+  InstantControlDuration:
+    name: Instant Manual Control Duration
+  InstantControlMode:
+    name: Instant Manual Control Mode
+  InstantControlSwitch:
+    name: Instant Manual Control
   InsulationResistance:
     attributes:
       source: Modbus-Register {address}
@@ -2743,6 +2763,8 @@ class:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
     name: Smart Load {smart_load_index} Gesamtverbrauch
+  SolarPowerLimit:
+    name: Solar Power Limit
   Started:
     name: Gestartet
   StartupTime:
@@ -2842,8 +2864,10 @@ class:
     name_off: Ausschalten
     name_on: Einschalten
 cli:
+  SIGENERGY2MQTT_CLOUD_ACCEPT_UNOFFICIAL_API_RISK:
+    help: Explicitly allow the unpublished mySigen API (a delegated account is recommended).
   SIGENERGY2MQTT_CLOUD_LOG_LEVEL:
-    help: 'Protokollierungsstufe des Cloud-Subsystems. Gültige Werte sind: DEBUG, INFO, WARNING, ERROR oder CRITICAL. Die Standardeinstellung ist WARNING (Warnungen, Fehler und kritische Ausfälle).'
+    help: 'Cloud subsystem log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is INFO.'
   SIGENERGY2MQTT_CLOUD_PASSWORD:
     help: Das Passwort für den Cloud-Dienst.
   SIGENERGY2MQTT_CLOUD_REGION:

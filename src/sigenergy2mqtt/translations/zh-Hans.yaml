@@ -310,14 +310,20 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 平均电芯电压
+  BatteryChargePowerLimit:
+    name: Battery Charge Power Limit
   BatteryChargingPower:
     attributes:
       source: BatteryPower > 0 #verify:ignore
     name: 电池充电功率
+  BatteryDischargePowerLimit:
+    name: Battery Discharge Power Limit
   BatteryDischargingPower:
     attributes:
       source: BatteryPower < 0 × -1 #verify:ignore
     name: 电池放电功率
+  BatteryExportLimitation:
+    name: Battery Export Limitation
   BatteryPower:
     attributes:
       comment: "ESS功率：<0 = 放电，>0 = 充电"
@@ -602,6 +608,8 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 直流电动汽车累计放电电量
+  GatewayCommunicationStatus:
+    name: communication_status
   GeneralAlarm1:
     alarm:
       '0': 软件版本不匹配
@@ -828,11 +836,17 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 欠频功率提升触发频率
+  GridConnectionLimit:
+    name: Grid Connection Current Limit
+  GridExportLimit:
+    name: Grid Export Limit
   GridFrequency:
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 电网频率
+  GridImportLimit:
+    name: Grid Import Limit
   GridMaxExportLimit:
     attributes:
       comment: 馈入电网的最大有功功率不得超过该传感器中配置的值。需要网格传感器。无论EMS运行模式如何，在全球范围内生效
@@ -948,6 +962,12 @@ class:
     name: InfluxDB 写入
   InfluxService:
     name: Sigenergy InfluxDB 更新服务 (电站 {plant_index})
+  InstantControlDuration:
+    name: Instant Manual Control Duration
+  InstantControlMode:
+    name: Instant Manual Control Mode
+  InstantControlSwitch:
+    name: Instant Manual Control
   InsulationResistance:
     attributes:
       source: Modbus 寄存器 {address}
@@ -2743,6 +2763,8 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 智能负载 {smart_load_index} 总消耗
+  SolarPowerLimit:
+    name: Solar Power Limit
   Started:
     name: 已启动
   StartupTime:
@@ -2842,8 +2864,10 @@ class:
     name_off: 关机
     name_on: 开机
 cli:
+  SIGENERGY2MQTT_CLOUD_ACCEPT_UNOFFICIAL_API_RISK:
+    help: Explicitly allow the unpublished mySigen API (a delegated account is recommended).
   SIGENERGY2MQTT_CLOUD_LOG_LEVEL:
-    help: '云子系统的日志级别。有效值为：DEBUG、INFO、WARNING、ERROR 或 CRITICAL。默认值为 WARNING（警告、错误和严重故障）'
+    help: 'Cloud subsystem log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is INFO.'
   SIGENERGY2MQTT_CLOUD_PASSWORD:
     help: 云服务的密码。
   SIGENERGY2MQTT_CLOUD_REGION:

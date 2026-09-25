@@ -1,22 +1,6 @@
 class:
   ACCharger:
     name: Sigenergy AC Charger {sequence_suffix}
-  BatteryExportLimitation:
-    name: Battery Export Limitation
-  GridConnectionLimit:
-    name: Grid Connection Current Limit
-  GridExportLimit:
-    name: Grid Export Limit
-  GridImportLimit:
-    name: Grid Import Limit
-  InstantControlDuration:
-    name: Instant Manual Control Duration
-  InstantControlMode:
-    name: Instant Manual Control Mode
-  InstantControlSwitch:
-    name: Instant Manual Control
-  SigenergyCloudControl:
-    name: Sigenergy Cloud
   ACChargerAlarm1:
     alarm:
       '0': Grid over-voltage
@@ -326,14 +310,20 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Average Cell Voltage
+  BatteryChargePowerLimit:
+    name: Battery Charge Power Limit
   BatteryChargingPower:
     attributes:
       source: BatteryPower > 0
     name: Battery Charging Power
+  BatteryDischargePowerLimit:
+    name: Battery Discharge Power Limit
   BatteryDischargingPower:
     attributes:
       source: BatteryPower < 0 × -1
     name: Battery Discharging Power
+  BatteryExportLimitation:
+    name: Battery Export Limitation
   BatteryPower:
     attributes:
       comment: 'ESS Power: <0 = discharging >0 = charging'
@@ -618,6 +608,8 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Lifetime DC EV Discharge Energy
+  GatewayCommunicationStatus:
+    name: communication_status
   GeneralAlarm1:
     alarm:
       '0': Software version mismatch
@@ -844,11 +836,17 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Under-Frequency Power Boost Trigger Frequency
+  GridConnectionLimit:
+    name: Grid Connection Current Limit
+  GridExportLimit:
+    name: Grid Export Limit
   GridFrequency:
     attributes:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Grid Frequency
+  GridImportLimit:
+    name: Grid Import Limit
   GridMaxExportLimit:
     attributes:
       comment: The maximum active power fed into the grid must not exceed the value configured in this sensor. Grid Sensor needed. Takes effect globally regardless of the EMS operating mode
@@ -964,6 +962,12 @@ class:
     name: InfluxDB Writes
   InfluxService:
     name: Sigenergy InfluxDB Updater Service (Plant {plant_index})
+  InstantControlDuration:
+    name: Instant Manual Control Duration
+  InstantControlMode:
+    name: Instant Manual Control Mode
+  InstantControlSwitch:
+    name: Instant Manual Control
   InsulationResistance:
     attributes:
       source: Modbus Register {address}
@@ -2759,6 +2763,8 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: Smart Load {smart_load_index} Total Consumption
+  SolarPowerLimit:
+    name: Solar Power Limit
   Started:
     name: Started
   StartupTime:
@@ -2861,7 +2867,7 @@ cli:
   SIGENERGY2MQTT_CLOUD_ACCEPT_UNOFFICIAL_API_RISK:
     help: Explicitly allow the unpublished mySigen API (a delegated account is recommended).
   SIGENERGY2MQTT_CLOUD_LOG_LEVEL:
-    help: 'Cloud subsystem log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)'
+    help: 'Cloud subsystem log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is INFO.'
   SIGENERGY2MQTT_CLOUD_PASSWORD:
     help: The password for the cloud service.
   SIGENERGY2MQTT_CLOUD_REGION:

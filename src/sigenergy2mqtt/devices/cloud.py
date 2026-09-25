@@ -39,8 +39,10 @@ class SigenergyGateway(Device):
         hw: str,
         grid_side_info: list[dict[str, Any]],
     ) -> None:
+        name = "Sigenergy Gateway"
+        plant_suffix = "" if plant_index == 0 else str(plant_index + 1)
         super().__init__(
-            name="Sigenergy Gateway",
+            name=name,
             plant_index=plant_index,
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_{station_id}_gateway",
             manufacturer="Sigenergy",
@@ -48,6 +50,7 @@ class SigenergyGateway(Device):
             protocol_version=ProtocolVersion.N_A,
             sn=sn,
             hw=hw,
+            plant_suffix=plant_suffix,
         )
         snapshot = GatewayInfoSnapshot()
         self._add_sensor(GatewayCommunicationStatus(plant_index, station_id, snapshot))
@@ -77,13 +80,16 @@ class SigenergyCloudControl(Device):
     """Expose cloud Instant Manual Control through normal MQTT sensors."""
 
     def __init__(self, plant_index: int, port: CloudControlPort, gateway_info: dict | None = None) -> None:
+        name = "Sigenergy Cloud"
+        plant_suffix = "" if plant_index == 0 else str(plant_index + 1)
         super().__init__(
-            name="Sigenergy Cloud",
+            name=name,
             plant_index=plant_index,
-            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_cloud_control",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_{port.station_id}_cloud_control",
             manufacturer="Sigenergy",
             model=port.model,
             protocol_version=ProtocolVersion.N_A,
+            plant_suffix=plant_suffix,
         )
         station_id = port.station_id
         mode = InstantControlMode(plant_index, station_id)
