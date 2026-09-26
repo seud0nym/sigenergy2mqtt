@@ -37,7 +37,8 @@ class Inverter(ModbusDevice):
             protocol_version=protocol_version,
             # HA device registry attributes
             sn=serial,
-            hw=firmware,  # MUST use hw abbreviation - see InverterFirmwareVersion
+            sw=firmware,  # MUST use sw abbreviation - see InverterFirmwareVersion
+            hw=model_id,  # Setting to None or "" does not remove, so use model_id for now
             model_id=model_id,
             serial=serial,
         )

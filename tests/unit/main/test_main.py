@@ -39,8 +39,8 @@ from sigenergy2mqtt.main.device_factories import (
 )
 from sigenergy2mqtt.main.device_setup import (
     _cloud_control_plant_index,
-    _discover_cloud_gateway_info,
     _discover_cloud_control_plant_index,
+    _discover_cloud_gateway_info,
     _is_grid_outage,
     _setup_ac_chargers,
     _setup_dc_chargers,
@@ -59,8 +59,8 @@ from sigenergy2mqtt.main.validation import (
     _validation_hash,
     validate_publishable_sensors,
 )
-from sigenergy2mqtt.sensors.ev.ac_charger_read_only import ACChargerRunningState
 from sigenergy2mqtt.sensors.base import Sensor
+from sigenergy2mqtt.sensors.ev.ac_charger_read_only import ACChargerRunningState
 from sigenergy2mqtt.sensors.inverter.read_only import InverterFirmwareVersion
 from sigenergy2mqtt.sensors.plant.read_only import SystemTimeZone
 
@@ -201,9 +201,7 @@ async def test_gateway_discovery_retries_transient_failures() -> None:
 @pytest.mark.asyncio
 async def test_gateway_discovery_gives_up_after_bounded_retries(caplog) -> None:
     cloud_port = MagicMock()
-    cloud_port.gateway_info = AsyncMock(
-        side_effect=CloudControlUnavailableError("persistent failure")
-    )
+    cloud_port.gateway_info = AsyncMock(side_effect=CloudControlUnavailableError("persistent failure"))
 
     with (
         patch("sigenergy2mqtt.main.device_setup.asyncio.sleep", new_callable=AsyncMock) as sleep,
@@ -230,9 +228,7 @@ async def test_gateway_discovery_does_not_retry_auth_or_rate_limits(
     cloud_port = MagicMock()
     cloud_port.gateway_info = AsyncMock(side_effect=error)
 
-    with patch(
-        "sigenergy2mqtt.main.device_setup.asyncio.sleep", new_callable=AsyncMock
-    ) as sleep:
+    with patch("sigenergy2mqtt.main.device_setup.asyncio.sleep", new_callable=AsyncMock) as sleep:
         assert await _discover_cloud_gateway_info(cloud_port) is None
 
     cloud_port.gateway_info.assert_awaited_once_with()
@@ -577,16 +573,16 @@ class TestGetState:
         ):
             sensor = InverterFirmwareVersion(plant_index=0, device_address=1)
             mock_device = MagicMock()
-            hw = {"value": "V1R1C1SPC1"}
+            sw = {"value": "V1R1C1SPC1"}
 
             def _getitem(key):
-                if key == "hw":
-                    return hw["value"]
+                if key == "sw":
+                    return sw["value"]
                 return None
 
             def _setitem(key, value):
-                if key == "hw":
-                    hw["value"] = value
+                if key == "sw":
+                    sw["value"] = value
 
             mock_device.__getitem__.side_effect = _getitem
             mock_device.__setitem__.side_effect = _setitem
@@ -613,16 +609,16 @@ class TestGetState:
         ):
             sensor = InverterFirmwareVersion(plant_index=0, device_address=1)
             mock_device = MagicMock()
-            hw = {"value": "V1R1C1SPC1B1"}
+            sw = {"value": "V1R1C1SPC1B1"}
 
             def _getitem(key):
-                if key == "hw":
-                    return hw["value"]
+                if key == "sw":
+                    return sw["value"]
                 return None
 
             def _setitem(key, value):
-                if key == "hw":
-                    hw["value"] = value
+                if key == "sw":
+                    sw["value"] = value
 
             mock_device.__getitem__.side_effect = _getitem
             mock_device.__setitem__.side_effect = _setitem
@@ -644,16 +640,16 @@ class TestGetState:
         ):
             sensor = InverterFirmwareVersion(plant_index=0, device_address=1)
             mock_device = MagicMock()
-            hw = {"value": "V1R1C1SPC1"}
+            sw = {"value": "V1R1C1SPC1"}
 
             def _getitem(key):
-                if key == "hw":
-                    return hw["value"]
+                if key == "sw":
+                    return sw["value"]
                 return None
 
             def _setitem(key, value):
-                if key == "hw":
-                    hw["value"] = value
+                if key == "sw":
+                    sw["value"] = value
 
             mock_device.__getitem__.side_effect = _getitem
             mock_device.__setitem__.side_effect = _setitem

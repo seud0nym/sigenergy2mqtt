@@ -33,6 +33,11 @@ from .alarms import (  # noqa: F401
     AlarmSensor,
     RunningStateSensor,
 )
+from .cloud import (  # noqa: F401
+    CloudGridLimitSensor,
+    CloudReadWriteSensor,
+    CloudSensor,
+)
 
 # Constants and utilities
 from .constants import (  # noqa: F401
@@ -45,8 +50,6 @@ from .constants import (  # noqa: F401
     StateHistory,
     _sanitize_path_component,
 )
-
-from .cloud import CloudGridLimitSensor, CloudReadWriteSensor, CloudSensor  # noqa: F401
 
 # Derived sensors
 from .derived import CrossDeviceDerivedSensor, DerivedSensor  # noqa: F401

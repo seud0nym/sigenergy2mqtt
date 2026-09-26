@@ -368,7 +368,7 @@ class Started(MetricsSensor):
             device_class=DeviceClass.TIMESTAMP,
             icon="mdi:calendar-clock",
         )
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
 
 class ProtocolVersionSensor(MetricsSensor):
@@ -382,7 +382,7 @@ class ProtocolVersionSensor(MetricsSensor):
             object_id="sigenergy2mqtt_modbus_protocol",
             icon="mdi:book-information-variant",
         )
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
         self.protocol_version = protocol_version
 
     async def _update_internal_state(self, **kwargs) -> bool:
@@ -402,7 +402,7 @@ class ProtocolPublished(MetricsSensor):
             object_id="sigenergy2mqtt_modbus_protocol_published",
             icon="mdi:book-clock",
         )
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
         self.protocol_version = protocol_version
 
     async def _update_internal_state(self, **kwargs) -> bool:

@@ -91,7 +91,7 @@ class SystemTimeZone(ReadOnlySensor, HybridInverter, PVInverter):
             precision=None,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
         self.sanity_check.min_raw = -1440  # -24 hours
         self.sanity_check.max_raw = 1440  # +24 hours
 
@@ -342,7 +342,7 @@ class MaxActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             precision=2,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -372,7 +372,7 @@ class MaxApparentPower(ReadOnlySensor, HybridInverter, PVInverter):
             precision=2,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -683,7 +683,7 @@ class AvailableMaxActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             protocol_version=ProtocolVersion.V1_8,
         )
         self.sanity_check.delta = False
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -714,7 +714,7 @@ class AvailableMinActivePower(ReadOnlySensor, HybridInverter):
             protocol_version=ProtocolVersion.V1_8,
         )
         self.sanity_check.delta = False
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -745,7 +745,7 @@ class AvailableMaxReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             protocol_version=ProtocolVersion.V1_8,
         )
         self.sanity_check.delta = False
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -776,7 +776,7 @@ class AvailableMinReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             protocol_version=ProtocolVersion.V1_8,
         )
         self.sanity_check.delta = False
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -1013,7 +1013,7 @@ class PlantRatedChargingPower(ReadOnlySensor, HybridInverter):
             protocol_version=ProtocolVersion.V1_8,
         )
         self.sanity_check.delta = False
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
 
 class PlantRatedDischargingPower(ReadOnlySensor, HybridInverter):
@@ -1039,7 +1039,7 @@ class PlantRatedDischargingPower(ReadOnlySensor, HybridInverter):
             protocol_version=ProtocolVersion.V1_8,
         )
         self.sanity_check.delta = False
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
 
 class GeneralAlarm5(Alarm5Sensor, HybridInverter):
@@ -1106,7 +1106,7 @@ class PlantRatedEnergyCapacity(ReadOnlySensor, HybridInverter):
             protocol_version=ProtocolVersion.V2_5,
         )
         self.sanity_check.delta = False
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
 
 class ChargeCutOffSoC(ReadOnlySensor, HybridInverter):
@@ -1805,7 +1805,7 @@ class GridCodeRatedFrequency(ReadOnlySensor, HybridInverter, PVInverter):
             protocol_version=ProtocolVersion.V2_8,
         )
         self.sanity_check.delta = False
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
 
 class GridCodeRatedVoltage(ReadOnlySensor, HybridInverter, PVInverter):
@@ -1831,7 +1831,7 @@ class GridCodeRatedVoltage(ReadOnlySensor, HybridInverter, PVInverter):
             protocol_version=ProtocolVersion.V2_8,
         )
         self.sanity_check.delta = False
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
 
 class CurrentControlCommandValue(ReadOnlySensor, HybridInverter, PVInverter):

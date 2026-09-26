@@ -9,7 +9,7 @@ from typing import Any
 from sigenergy2mqtt.cloud.port import CloudControlPort
 from sigenergy2mqtt.common import DeviceClass, ProtocolVersion, StateClass
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.sensors.base import CloudSensor
+from sigenergy2mqtt.sensors.base import CloudSensor, DiscoveryKeys
 from sigenergy2mqtt.sensors.cloud.functions import _identity
 
 
@@ -55,6 +55,7 @@ class GatewaySensor(CloudSensor):
         unit: str | None,
         device_class: DeviceClass | None,
         state_class: StateClass | None,
+        icon: str | None,
     ) -> None:
         object_id, unique_id = _identity(plant_index, station_id, f"gateway_{suffix}")
         super().__init__(
@@ -65,7 +66,7 @@ class GatewaySensor(CloudSensor):
             unit=unit,
             device_class=device_class,
             state_class=state_class,
-            icon=None,
+            icon=icon,
             gain=None,
             precision=None,
             protocol_version=ProtocolVersion.N_A,
@@ -77,17 +78,18 @@ class GatewaySensor(CloudSensor):
 class GatewayCommunicationStatus(GatewaySensor):
     def __init__(self, plant_index: int, station_id: str, snapshot: GatewayInfoSnapshot) -> None:
         super().__init__(
-            plant_index,
-            station_id,
-            "communication_status",
-            "Communication Status",
-            snapshot,
+            plant_index=plant_index,
+            station_id=station_id,
+            suffix="communication_status",
+            name="Communication Status",
+            snapshot=snapshot,
             unit=None,
             device_class=None,
             state_class=None,
+            icon="mdi:signal-variant",
         )
 
-    async def _read_cloud_state(self, port: CloudControlPort) -> str:
+    async def _read_cloud_state(self, port: CloudControlPort) -> float | str | None:
         status = (await self._snapshot.read(port)).get("communicationStatus")
         if status is None:
             return "Unknown"
@@ -100,6 +102,63 @@ class GatewayCommunicationStatus(GatewaySensor):
         if status == 2:
             return "Online"
         return "Unknown"
+
+
+class GatewayFirmwareVersion(GatewaySensor):
+    def __init__(self, plant_index: int, station_id: str, snapshot: GatewayInfoSnapshot) -> None:
+        super().__init__(
+            plant_index=plant_index,
+            station_id=station_id,
+            suffix="firmware_version",
+            name="Firmware Version",
+            snapshot=snapshot,
+            unit=None,
+            device_class=None,
+            state_class=None,
+            icon="mdi:text-short",
+        )
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
+
+    async def _read_cloud_state(self, port: CloudControlPort) -> float | str | None:
+        return str((await self._snapshot.read(port)).get("softVersion") or "")
+
+
+class GatewayModel(GatewaySensor):
+    def __init__(self, plant_index: int, station_id: str, snapshot: GatewayInfoSnapshot) -> None:
+        super().__init__(
+            plant_index=plant_index,
+            station_id=station_id,
+            suffix="model",
+            name="Model",
+            snapshot=snapshot,
+            unit=None,
+            device_class=None,
+            state_class=None,
+            icon="mdi:text-short",
+        )
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
+
+    async def _read_cloud_state(self, port: CloudControlPort) -> float | str | None:
+        return str((await self._snapshot.read(port)).get("deviceModel") or "")
+
+
+class GatewaySerialNumber(GatewaySensor):
+    def __init__(self, plant_index: int, station_id: str, snapshot: GatewayInfoSnapshot) -> None:
+        super().__init__(
+            plant_index=plant_index,
+            station_id=station_id,
+            suffix="serial_number",
+            name="Serial Number",
+            snapshot=snapshot,
+            unit=None,
+            device_class=None,
+            state_class=None,
+            icon="mdi:text-short",
+        )
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
+
+    async def _read_cloud_state(self, port: CloudControlPort) -> float | str | None:
+        return str((await self._snapshot.read(port)).get("snCode") or (await self._snapshot.read(port)).get("showSnCode") or "")
 
 
 class GatewayGridSideInfoSensor(GatewaySensor):
@@ -117,6 +176,20 @@ class GatewayGridSideInfoSensor(GatewaySensor):
     ) -> None:
         self.param_key = param_key
         self._api_units = {"kVar", "kvar"} if unit == "kvar" else {unit}
+        match unit:
+            case "A":
+                icon = "mdi:current-ac"
+            case "kW" | "kVar" | "kvar":
+                icon = "mdi:flash"
+            case "Hz":
+                icon = "mdi:sine-wave"
+            case "V":
+                icon = "mdi:lightning-bolt"
+            case _:
+                if "Contactor" in param_key:
+                    icon = "mdi:toggle-switch-variant-off"
+                else:
+                    icon = None
         super().__init__(
             plant_index=plant_index,
             station_id=station_id,
@@ -126,6 +199,7 @@ class GatewayGridSideInfoSensor(GatewaySensor):
             unit=unit,
             device_class=device_class,
             state_class=StateClass.MEASUREMENT if unit else None,
+            icon=icon,
         )
 
     async def _read_cloud_state(self, port: CloudControlPort) -> float | str | None:
