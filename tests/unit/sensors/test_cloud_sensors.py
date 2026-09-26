@@ -612,13 +612,15 @@ async def test_grid_limit_maximum_changes_request_discovery_republish() -> None:
 
     assert await sensor._read_cloud_state(port) == 5.0
     assert sensor[DiscoveryKeys.MAX] == 10.0
+    assert sensor.sanity_check.min_raw == 0.0
     assert device.rediscover is True
 
     device.rediscover = False
     port.grid_export_limit.return_value["maxLimitationInstaller"] = ""
     assert await sensor._read_cloud_state(port) == 5.0
     assert DiscoveryKeys.MAX not in sensor
-    assert sensor.sanity_check.max_raw is None
+    assert sensor.sanity_check.min_raw == 0.0
+    assert sensor.sanity_check.max_raw == 0.0
     assert device.rediscover is True
 
 

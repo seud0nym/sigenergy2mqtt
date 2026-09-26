@@ -120,13 +120,13 @@ class CloudGridLimitSensor(NumericSensorMixin, CloudReadWriteSensor):
         self._current_key = current_key
         self._installer_key = installer_key
         self._updates_allowed = False
-        super().__init__(minimum=0.0, maximum=None, **kwargs)
+        super().__init__(minimum=0.0, maximum=0.0, **kwargs)
 
     def _update_installer_maximum(self, maximum: float | None) -> None:
         previous = self.get(DiscoveryKeys.MAX)
         if maximum is None:
             self.pop(DiscoveryKeys.MAX, None)
-            self.sanity_check.max_raw = None
+            self.sanity_check.max_raw = 0.0  # If no installer maximum is set, the user cannot apply an override
         else:
             self.apply_min_max(0.0, maximum)
         if previous != self.get(DiscoveryKeys.MAX) and self.parent_device is not None:

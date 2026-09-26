@@ -143,8 +143,8 @@ class NumericSensorMixin(WriteableSensorMixin):
         if minimum is None or maximum is None:
             return
         if isinstance(minimum, (int, float)) and isinstance(maximum, (int, float)):
-            if minimum >= maximum:
-                raise AssertionError(f"{self.__class__.__name__}: Invalid min/max values: {minimum}/{maximum} (min must be < max)")
+            if minimum > maximum:
+                raise AssertionError(f"{self.__class__.__name__}: Invalid min/max values: {minimum}/{maximum} (min must be <= max)")
             return
         if isinstance(minimum, tuple) and isinstance(maximum, tuple):
             if len(minimum) != len(maximum):
@@ -152,8 +152,8 @@ class NumericSensorMixin(WriteableSensorMixin):
             for mn, mx in zip(minimum, maximum):
                 if not (isinstance(mn, (int, float)) and isinstance(mx, (int, float))):
                     raise TypeError(f"{self.__class__.__name__}: Invalid tuple values: {mn}/{mx} (must be numeric)")
-                if mn >= mx:
-                    raise ValueError(f"{self.__class__.__name__}: Invalid tuple values: {mn}/{mx} (min must be < max)")
+                if mn > mx:
+                    raise ValueError(f"{self.__class__.__name__}: Invalid tuple values: {mn}/{mx} (min must be <= max)")
             return
         raise ValueError(f"{self.__class__.__name__}: Invalid min/max types: {type(minimum)}/{type(maximum)}")
 
