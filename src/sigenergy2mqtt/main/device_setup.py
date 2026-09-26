@@ -201,7 +201,7 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
                 if inverter is not None:
                     inverters[device_address] = inverter.unique_id
                     inverter_devices.append(inverter)
-                    inverter_firmware_versions[device_address] = str(inverter["hw"])
+                    inverter_firmware_versions[device_address] = str(inverter["sw"])
                     config.add_device(inverter)
 
             if plant is not None:
