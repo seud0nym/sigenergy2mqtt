@@ -51,12 +51,12 @@ from pymodbus.simulator import DataType, SimData, SimDevice
 
 from sigenergy2mqtt.common import Constants, DeviceClass, ProtocolVersion
 from sigenergy2mqtt.modbus.client import ModbusClient
+from sigenergy2mqtt.sensors.base import WriteOnlySensorMixin
 from sigenergy2mqtt.sensors.ev.ac_charger_read_only import (
     ACChargerChargingPower,
     ACChargerInputBreaker,
     ACChargerRatedCurrent,
 )
-from sigenergy2mqtt.sensors.base import WriteOnlySensorMixin
 from sigenergy2mqtt.sensors.inverter.read_only import (
     DCChargerOutputPower,
     InverterFirmwareVersion,
@@ -212,26 +212,77 @@ class CloudApiTestServer:
             "gatewayMacAddress": "02-00-00-00-00-01",
             "deviceCode": "1111001401",
             "gridSideInfoList": [
-                {"paramKey": "Phase A Voltage", "paramValue": "233.29 V"},
-                {"paramKey": "Phase B Voltage", "paramValue": "232.81 V"},
-                {"paramKey": "Phase C Voltage", "paramValue": "233.04 V"},
-                {"paramKey": "Phase A Current", "paramValue": "10.76 A"},
-                {"paramKey": "Phase B Current", "paramValue": "10.31 A"},
-                {"paramKey": "Phase C Current", "paramValue": "10.54 A"},
-                {"paramKey": "Voltage Frequency", "paramValue": "49.99 Hz"},
-                {"paramKey": "Total Active Power", "paramValue": "7.250 kW"},
-                {"paramKey": "Total Reactive Power", "paramValue": "-1.180 kVar"},
-                {"paramKey": "Grid Side Contactor Status", "paramValue": "Close"},
-                {"paramKey": "Maximum Phase A voltage in the past minute", "paramValue": "233.93 V"},
-                {"paramKey": "Minimum Phase A voltage in the past minute", "paramValue": "231.38 V"},
-                {"paramKey": "Maximum Phase B voltage in the past minute", "paramValue": "233.47 V"},
-                {"paramKey": "Minimum Phase B voltage in the past minute", "paramValue": "231.12 V"},
-                {"paramKey": "Maximum Phase C voltage in the past minute", "paramValue": "233.65 V"},
-                {"paramKey": "Minimum Phase C voltage in the past minute", "paramValue": "231.26 V"},
+                {
+                    "paramKey": "Phase A Voltage",
+                    "paramValue": "233.29 V",
+                },
+                {
+                    "paramKey": "Phase B Voltage",
+                    "paramValue": "232.81 V",
+                },
+                {
+                    "paramKey": "Phase C Voltage",
+                    "paramValue": "233.04 V",
+                },
+                {
+                    "paramKey": "Phase A Current",
+                    "paramValue": "10.76 A",
+                },
+                {
+                    "paramKey": "Phase B Current",
+                    "paramValue": "10.31 A",
+                },
+                {
+                    "paramKey": "Phase C Current",
+                    "paramValue": "10.54 A",
+                },
+                {
+                    "paramKey": "Voltage Frequency",
+                    "paramValue": "49.99 Hz",
+                },
+                {
+                    "paramKey": "Total Active Power",
+                    "paramValue": "7.250 kW",
+                },
+                {
+                    "paramKey": "Total Reactive Power",
+                    "paramValue": "-1.180 kVar",
+                },
+                {
+                    "paramKey": "Grid Side Contactor Status",
+                    "paramValue": "Close",
+                },
+                {
+                    "paramKey": "Maximum Phase A voltage in the past minute",
+                    "paramValue": "233.93 V",
+                },
+                {
+                    "paramKey": "Minimum Phase A voltage in the past minute",
+                    "paramValue": "231.38 V",
+                },
+                {
+                    "paramKey": "Maximum Phase B voltage in the past minute",
+                    "paramValue": "233.47 V",
+                },
+                {
+                    "paramKey": "Minimum Phase B voltage in the past minute",
+                    "paramValue": "231.12 V",
+                },
+                {
+                    "paramKey": "Maximum Phase C voltage in the past minute",
+                    "paramValue": "233.65 V",
+                },
+                {
+                    "paramKey": "Minimum Phase C voltage in the past minute",
+                    "paramValue": "231.26 V",
+                },
             ],
             "realTimeInfoVOList": [],
             "newGridSideInfoList": [
-                {"paramKey": "Voltage Frequency", "paramValue": "49.99 Hz"}
+                {
+                    "paramKey": "Voltage Frequency",
+                    "paramValue": "49.99 Hz",
+                }
             ],
             "inverterSideInfoList": [],
             "generatorSideInfoList": [],
@@ -278,9 +329,7 @@ class CloudApiTestServer:
         return web.json_response({"code": 0, "msg": "Success", "data": data})
 
     @web.middleware
-    async def internet_outage_middleware(
-        self, request: web.Request, handler: Any
-    ) -> web.StreamResponse:
+    async def internet_outage_middleware(self, request: web.Request, handler: Any) -> web.StreamResponse:
         """Reject cloud API requests while an internet outage is active."""
         if not self.internet_available:
             return web.json_response(
