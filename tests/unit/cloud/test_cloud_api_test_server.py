@@ -1,6 +1,7 @@
 """Tests for the stateful cloud API facsimile used by integration tests."""
 
 import asyncio
+from unittest.mock import AsyncMock
 
 import pytest
 from aiohttp.test_utils import TestClient, TestServer
@@ -29,6 +30,7 @@ from tests.utils.modbus_test_server import (
     LatencyBudget,
     simulate_internet_outage,
 )
+from tests.utils import modbus_test_server as server_module
 
 
 async def test_cloud_api_test_server_rejects_requests_during_internet_outage() -> None:
@@ -77,6 +79,47 @@ async def test_simulate_internet_outage_rejects_non_server_error() -> None:
             repeated=False,
             status_code=404,
         )
+
+
+async def test_run_async_server_schedules_configured_internet_outage(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Exercise the startup branch controlled by TestConfig's outage flag."""
+    simulated_outage = AsyncMock()
+    monkeypatch.setattr(server_module, "simulate_internet_outage", simulated_outage)
+    monkeypatch.setattr(server_module, "get_sensor_instances", AsyncMock(return_value={}))
+    monkeypatch.setattr(
+        server_module.ModbusTcpServer,
+        "serve_forever",
+        AsyncMock(),
+    )
+    monkeypatch.setattr(server_module.TestConfig, "simulate_internet_outage", True)
+    monkeypatch.setattr(
+        server_module.TestConfig, "internet_outage_initial_delay_seconds", 11
+    )
+    monkeypatch.setattr(
+        server_module.TestConfig, "internet_outage_duration_seconds", 22
+    )
+    monkeypatch.setattr(server_module.TestConfig, "internet_outage_repeated", False)
+    monkeypatch.setattr(server_module.TestConfig, "internet_outage_status_code", 502)
+
+    await server_module.run_async_server(
+        mqtt_client=None,
+        modbus_client=None,
+        use_simplified_topics=True,
+        host="127.0.0.1",
+        port=0,
+        cloud_port=0,
+    )
+
+    simulated_outage.assert_awaited_once()
+    _, kwargs = simulated_outage.await_args
+    assert kwargs == {
+        "wait_for_seconds": 11,
+        "duration_seconds": 22,
+        "repeated": False,
+        "status_code": 502,
+    }
 
 
 async def test_cloud_api_test_server_exposes_all_limit_endpoints() -> None:
