@@ -947,7 +947,7 @@ def get_parser() -> argparse.ArgumentParser:
         default=os.getenv(const.SIGENERGY2MQTT_SCAN_INTERVAL_CLOUD, None),
         dest=const.SIGENERGY2MQTT_SCAN_INTERVAL_CLOUD,
         type=int,
-        help="The scan interval in seconds for retrieving cloud data. Default is 30 (seconds), and the minimum value is 10",
+        help="The scan interval in seconds for retrieving cloud data. Default is 5 (seconds), and the minimum value is 1",
     )
     # endregion
 

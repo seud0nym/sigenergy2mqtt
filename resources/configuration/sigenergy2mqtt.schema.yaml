@@ -76,8 +76,8 @@ properties:
         default: INFO
       scan-interval:
         type: integer
-        minimum: 10
-        default: 30
+        minimum: 1
+        default: 5
       accept-unofficial-api-risk:
         description: "Explicitly allow the unofficial mySigen cloud API. A delegated account with View and Edit access is recommended."
         type: boolean

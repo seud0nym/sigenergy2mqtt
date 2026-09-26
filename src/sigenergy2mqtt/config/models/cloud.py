@@ -82,8 +82,8 @@ class CloudConfig(BaseModel):
     """Cloud subsystem log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is WARNING (warnings, errors and critical failures)"""
     _validate_log_level = field_validator("log_level", mode="before")(validate_log_level)
 
-    scan_interval: int = Field(ScanIntervalDefault.CLOUD, ge=10, alias="scan-interval")
-    """The scan interval in seconds for retrieving cloud data. Default is 30 (seconds), and the minimum value is 10."""
+    scan_interval: int = Field(ScanIntervalDefault.CLOUD, ge=1, alias="scan-interval")
+    """The scan interval in seconds for retrieving cloud data. Default is 5 (seconds), and the minimum value is 1."""
 
     accept_unofficial_api_risk: bool = Field(False, alias="accept-unofficial-api-risk")
     """Explicit opt-in required because this backend uses an unpublished API."""

@@ -48,7 +48,7 @@ If the username, password and region are all supplied, `sigenergy2mqtt` can acce
 | `SIGENERGY2MQTT_CLOUD_ACCEPT_UNOFFICIAL_API_RISK` | Explicitly opt in to the unofficial mySigen cloud API. This must be `true` when cloud credentials are configured. Use a delegated account with **View and Edit** access rather than the primary account. [<sup>(More…)</sup>](README.md#opt_cloud_accept_unofficial_api_risk) | 2026.9.16 |
 | `SIGENERGY2MQTT_CLOUD_TESTING_URL` | Base URL of the cloud API test server. Must use `http` or `https` and end with `/`; intended only for integration testing with cloud region `testing`. | 2026.9.18 |
 | `SIGENERGY2MQTT_CLOUD_LOG_LEVEL` | Set the cloud module log level. Valid values are: `DEBUG`, `INFO`, `WARNING`, `ERROR` or `CRITICAL`. Default is `INFO` [<sup>(More…)</sup>](README.md#opt_cloud_log_level) | 2026.9.10 |
-| `SIGENERGY2MQTT_SCAN_INTERVAL_CLOUD` | The scan interval in seconds for retrieving cloud data. Default is `30` (seconds), and the minimum value is `10`. [<sup>(More…)</sup>](README.md#opt_cloud_scan_interval) | 2025.6.11 |
+| `SIGENERGY2MQTT_SCAN_INTERVAL_CLOUD` | The scan interval in seconds for retrieving cloud data. Default is `5` (seconds), and the minimum value is `1`. [<sup>(More…)</sup>](README.md#opt_cloud_scan_interval) | 2025.6.11 |
 
 ## Modbus Configuration Variables
 

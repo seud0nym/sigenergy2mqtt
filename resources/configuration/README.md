@@ -299,7 +299,7 @@ The default is `INFO`.
 <tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
 <tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
 </table>
-The scan interval in seconds for retrieving cloud data. Default is `30` (seconds), and the minimum value is `10`.
+The scan interval in seconds for retrieving cloud data. Default is `5` (seconds), and the minimum value is `1`.
 
 
 ## Diagnostics

@@ -108,9 +108,9 @@ cloud:
     log-level: "INFO"
     # scan-interval
     #   default: 30
-    #   description:  The scan interval in seconds for retrieving cloud data. Default is 30
-    #                 (seconds), and the minimum value is 10.
-    scan-interval: 30
+    #   description:  The scan interval in seconds for retrieving cloud data. Default is 5
+    #                 (seconds), and the minimum value is 1.
+    scan-interval: 5
     # accept-unofficial-api-risk
     #   default: false
     #   description:  Explicit opt-in required to use the unofficial mySigen cloud API.
