@@ -453,12 +453,14 @@ class TestCloudMetrics:
         await Metrics.drain()
 
         await Metrics.cloud_connection(connected=True)
+        await Metrics.cloud_availability(False)
         await Metrics.cloud_connection_attempt(0.025)
         await Metrics.cloud_connection(connected=False, reconnect=True)
         await Metrics.cloud_connection(connected=False, error=True)
         await Metrics.drain()
 
         assert Metrics.sigenergy2mqtt_cloud_connected is False
+        assert Metrics.sigenergy2mqtt_cloud_available is False
         assert Metrics.sigenergy2mqtt_cloud_connections == 1
         assert Metrics.sigenergy2mqtt_cloud_reconnections == 1
         assert Metrics.sigenergy2mqtt_cloud_connection_errors == 1

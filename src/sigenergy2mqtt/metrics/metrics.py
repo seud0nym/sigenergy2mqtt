@@ -271,6 +271,9 @@ class Metrics:
     sigenergy2mqtt_cloud_connected: bool = False
     """Whether the unofficial cloud adapter currently has a valid login."""
 
+    sigenergy2mqtt_cloud_available: bool = False
+    """Whether the most recent cloud connectivity attempt succeeded."""
+
     # ------------------------------------------------------------------
     # Service identity
     # ------------------------------------------------------------------
@@ -848,6 +851,10 @@ class Metrics:
             def _operation() -> None:
                 cls.sigenergy2mqtt_cloud_connected = connected
                 if connected:
+                    cls.sigenergy2mqtt_cloud_available = True
+                elif not reconnect:
+                    cls.sigenergy2mqtt_cloud_available = False
+                if connected:
                     cls.sigenergy2mqtt_cloud_connections += 1
                 if error:
                     cls.sigenergy2mqtt_cloud_connection_errors += 1
@@ -855,6 +862,18 @@ class Metrics:
                     cls.sigenergy2mqtt_cloud_reconnections += 1
 
             cls._update_with_lock(_operation, "cloud connection metrics collection")
+
+        cls._submit(_update)
+
+    @classmethod
+    async def cloud_availability(cls, available: bool) -> None:
+        """Record whether the cloud API was reachable without changing login state."""
+
+        def _update() -> None:
+            def _operation() -> None:
+                cls.sigenergy2mqtt_cloud_available = available
+
+            cls._update_with_lock(_operation, "cloud availability metrics collection")
 
         cls._submit(_update)
 

@@ -117,12 +117,14 @@ async def test_collect_cloud_metrics(monkeypatch):
     monkeypatch.setattr(active_config.cloud, "scan_interval", 30, raising=False)
     monkeypatch.setattr(active_config.cloud, "accept_unofficial_api_risk", True, raising=False)
     monkeypatch.setattr(Metrics, "sigenergy2mqtt_cloud_connected", True)
+    monkeypatch.setattr(Metrics, "sigenergy2mqtt_cloud_available", True)
     monkeypatch.setattr(Metrics, "sigenergy2mqtt_cloud_queries", 3)
     monkeypatch.setattr(Metrics, "sigenergy2mqtt_cloud_query_min", 12.5)
 
     metrics = await DiagnosticsCollectors._diagnostics_collect_cloud_metrics()
 
     assert metrics["status"] == "healthy"
+    assert metrics["Available"] is True
     assert metrics["Query Count"] == 3
     assert metrics["Query Min_ms"] == 12.5
     assert metrics["config"] == {
@@ -130,3 +132,8 @@ async def test_collect_cloud_metrics(monkeypatch):
         "scan_interval_secs": 30,
         "unofficial_api_risk_accepted": "yes",
     }
+
+    monkeypatch.setattr(Metrics, "sigenergy2mqtt_cloud_available", False)
+    degraded = await DiagnosticsCollectors._diagnostics_collect_cloud_metrics()
+    assert degraded["status"] == "degraded"
+    assert degraded["Connected"] is True

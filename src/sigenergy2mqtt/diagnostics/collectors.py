@@ -191,9 +191,13 @@ class DiagnosticsCollectors:
     async def _diagnostics_collect_cloud_metrics(cls) -> dict[str, Any]:
         """Diagnostics provider callback for the unofficial mySigen cloud adapter."""
         async with Metrics.lock(timeout=1.0):
+            connected = Metrics.sigenergy2mqtt_cloud_connected
+            available = Metrics.sigenergy2mqtt_cloud_available
+            status = "healthy" if connected and available else "degraded" if connected else "unknown"
             return {
-                "status": "healthy" if Metrics.sigenergy2mqtt_cloud_connected else "unknown",
-                "Connected": Metrics.sigenergy2mqtt_cloud_connected,
+                "status": status,
+                "Connected": connected,
+                "Available": available,
                 "Query Count": Metrics.sigenergy2mqtt_cloud_queries,
                 "Query Errors": Metrics.sigenergy2mqtt_cloud_query_errors,
                 "Query Max_ms": Metrics.sigenergy2mqtt_cloud_query_max,

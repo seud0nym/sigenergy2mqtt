@@ -225,9 +225,11 @@ class MySigenCloudAdapter:
                     # station-discovery latency is tracked independently.
                     await Metrics.cloud_query(time.monotonic() - started)
                 logger.debug(f"mySigen {operation.__name__} returned: {result}")
+                await Metrics.cloud_availability(True)
                 return result
             except SigenergyCloudRateLimitError as exc:
                 await Metrics.cloud_query_error(rate_limited=True)
+                await Metrics.cloud_availability(False)
                 raise CloudControlRateLimitedError(str(exc)) from exc
             except SigenergyCloudAuthError as exc:
                 await Metrics.cloud_query_error(auth=True)
@@ -244,17 +246,23 @@ class MySigenCloudAdapter:
                 raise
             except SigenergyCloudAPIError as exc:
                 await Metrics.cloud_query_error()
+                await Metrics.cloud_availability(False)
                 if reject_api_errors:
                     raise CloudControlRejectedError(str(exc)) from exc
                 raise CloudControlUnavailableError(str(exc)) from exc
             except (ClientError, SigenergyCloudError, OSError, TimeoutError) as exc:
                 await Metrics.cloud_query_error()
-                await self._invalidate_connection(generation)
+                # A transport failure says nothing about whether the server has
+                # invalidated the authenticated session. Preserve it so the next
+                # operation can retry without an avoidable password login and
+                # station discovery, while reporting degraded reachability.
+                await Metrics.cloud_availability(False)
                 raise CloudControlUnavailableError(str(exc)) from exc
             except Exception:
                 # Malformed or otherwise unexpected vendor responses are still
                 # failed queries even when their exception is not normalized.
                 await Metrics.cloud_query_error()
+                await Metrics.cloud_availability(False)
                 raise
         raise AssertionError("cloud operation retry loop exhausted")
 

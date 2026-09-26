@@ -152,10 +152,17 @@ async def test_operation_normalizes_aiohttp_transport_errors(
         "truncated response"
     )
 
-    with pytest.raises(CloudControlUnavailableError, match="truncated response"):
-        await mysigen_adapter.get_operational_mode()
+    with patch("sigenergy2mqtt.cloud.mysigen_adapter.Metrics.cloud_availability", new_callable=AsyncMock) as availability_metric:
+        with pytest.raises(CloudControlUnavailableError, match="truncated response"):
+            await mysigen_adapter.get_operational_mode()
 
-    assert mysigen_adapter._connected is False  # type: ignore[reportPrivateUsage]
+    assert mysigen_adapter._connected is True  # type: ignore[reportPrivateUsage]
+    availability_metric.assert_awaited_once_with(False)
+
+    mysigen_adapter._client.get_operational_mode.side_effect = None  # type: ignore[reportPrivateUsage]
+    mysigen_adapter._client.get_operational_mode.return_value = (2, -1)  # type: ignore[reportPrivateUsage]
+    assert await mysigen_adapter.get_operational_mode() == (2, -1)
+    mysigen_adapter._client.connect.assert_not_awaited()  # type: ignore[reportPrivateUsage]
 
 
 @pytest.mark.asyncio
