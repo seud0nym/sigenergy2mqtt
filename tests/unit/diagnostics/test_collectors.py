@@ -108,3 +108,25 @@ async def test_collect_runtime_config_with_metrics_reset():
     finally:
         DeviceRegistry.clear()
 
+
+@pytest.mark.asyncio
+async def test_collect_cloud_metrics(monkeypatch):
+    from sigenergy2mqtt.metrics import Metrics
+
+    monkeypatch.setattr(active_config.cloud, "region", "eu", raising=False)
+    monkeypatch.setattr(active_config.cloud, "scan_interval", 30, raising=False)
+    monkeypatch.setattr(active_config.cloud, "accept_unofficial_api_risk", True, raising=False)
+    monkeypatch.setattr(Metrics, "sigenergy2mqtt_cloud_connected", True)
+    monkeypatch.setattr(Metrics, "sigenergy2mqtt_cloud_queries", 3)
+    monkeypatch.setattr(Metrics, "sigenergy2mqtt_cloud_query_min", 12.5)
+
+    metrics = await DiagnosticsCollectors._diagnostics_collect_cloud_metrics()
+
+    assert metrics["status"] == "healthy"
+    assert metrics["Query Count"] == 3
+    assert metrics["Query Min_ms"] == 12.5
+    assert metrics["config"] == {
+        "region": "eu",
+        "scan_interval_secs": 30,
+        "unofficial_api_risk_accepted": "yes",
+    }

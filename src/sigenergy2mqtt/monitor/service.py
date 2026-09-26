@@ -106,7 +106,13 @@ class MonitorService(Device):
         return bool(mqtt_healthy_connections == len(mqtt_snapshot)), len(mqtt_snapshot)
 
     def _check_service_health(self) -> tuple[bool, dict[str, bool]]:
-        """Evaluate optional service health contributors."""
+        """Evaluate optional service health contributors.
+
+        Cloud control is deliberately excluded: it is an optional remote control
+        path, is not required for telemetry, and transient Internet/vendor API
+        failures should not restart an otherwise healthy local service. Cloud
+        connectivity remains visible through the diagnostics metrics card.
+        """
         contributors: dict[str, bool] = {}
         healthy = True
 

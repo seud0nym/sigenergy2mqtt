@@ -20,6 +20,8 @@ class DiagnosticsCollectors:
             diagnostics_registry.register("influxdb", cls._diagnostics_collect_influxdb_metrics)
         if active_config.pvoutput.enabled:
             diagnostics_registry.register("pvoutput", cls._diagnostics_collect_pvoutput_metrics)
+        if active_config.cloud.enabled:
+            diagnostics_registry.register("mysigen_cloud", cls._diagnostics_collect_cloud_metrics)
         diagnostics_registry.register("runtime_configuration", cls._diagnostics_collect_runtime_config)
         diagnostics_registry.register("sensor_debug_logging", cls._diagnostics_collect_sensor_debug)
 
@@ -182,6 +184,30 @@ class DiagnosticsCollectors:
                     "retry_delay_secs": active_config.mqtt.retry_delay,
                     "tls": "yes" if active_config.mqtt.tls else "no",
                     "tls_insecure": "yes" if active_config.mqtt.tls_insecure else "no",
+                },
+            }
+
+    @classmethod
+    async def _diagnostics_collect_cloud_metrics(cls) -> dict[str, Any]:
+        """Diagnostics provider callback for the unofficial mySigen cloud adapter."""
+        async with Metrics.lock(timeout=1.0):
+            return {
+                "status": "healthy" if Metrics.sigenergy2mqtt_cloud_connected else "unknown",
+                "Connected": Metrics.sigenergy2mqtt_cloud_connected,
+                "Query Count": Metrics.sigenergy2mqtt_cloud_queries,
+                "Query Errors": Metrics.sigenergy2mqtt_cloud_query_errors,
+                "Query Max_ms": Metrics.sigenergy2mqtt_cloud_query_max,
+                "Query Mean_ms": Metrics.sigenergy2mqtt_cloud_query_mean,
+                "Query Min_ms": Metrics.sigenergy2mqtt_cloud_query_min if Metrics.sigenergy2mqtt_cloud_query_min != float("inf") else 0.0,
+                "Connections": Metrics.sigenergy2mqtt_cloud_connections,
+                "Connection Errors": Metrics.sigenergy2mqtt_cloud_connection_errors,
+                "Reconnections": Metrics.sigenergy2mqtt_cloud_reconnections,
+                "Authentication Errors": Metrics.sigenergy2mqtt_cloud_auth_errors,
+                "Rate Limits": Metrics.sigenergy2mqtt_cloud_rate_limits,
+                "config": {
+                    "region": active_config.cloud.region,
+                    "scan_interval_secs": active_config.cloud.scan_interval,
+                    "unofficial_api_risk_accepted": "yes" if active_config.cloud.accept_unofficial_api_risk else "no",
                 },
             }
 
