@@ -367,10 +367,10 @@ class CloudApiTestServer:
             "isUltra": False,
         }
         self.grid_import_limit = {
-            "enable": True,
-            "maxLimitation": "12.000",
-            "maxLimitationOwner": "12.000",
-            "maxLimitationInstaller": "25.000",
+            "enable": False,
+            "maxLimitation": "",
+            "maxLimitationOwner": "",
+            "maxLimitationInstaller": "",
             "isUltra": False,
         }
         self.grid_connection_limit = {
