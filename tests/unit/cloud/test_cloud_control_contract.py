@@ -544,6 +544,7 @@ async def test_rejected_command_keeps_cloud_available(
     [
         SigenergyCloudAPIError("server error", status_code=503, response_body='{"error": "unavailable"}'),
         SigenergyCloudAPIError("invalid JSON", status_code=200, response_body="not-json"),
+        SigenergyCloudAPIError("bad request with HTML", status_code=400, response_body="<html>bad gateway</html>"),
     ],
 )
 async def test_failed_command_marks_cloud_unavailable(
@@ -558,6 +559,22 @@ async def test_failed_command_marks_cloud_unavailable(
             await mysigen_adapter.set_instant_override(InstantOverrideCommand(InstantControlMode.CHARGE, timedelta(minutes=30)))
 
     availability_metric.assert_awaited_once_with(False)
+
+
+@pytest.mark.asyncio
+async def test_application_error_from_read_keeps_cloud_available(
+    mysigen_adapter: MySigenCloudAdapter,
+) -> None:
+    mysigen_adapter._connected = True  # type: ignore[reportPrivateUsage]
+    mysigen_adapter._client.get_operational_mode.side_effect = SigenergyCloudAPIError(  # type: ignore[reportPrivateUsage]
+        "application error", status_code=200, response_body='{"code": 123, "message": "not ready"}'
+    )
+
+    with patch("sigenergy2mqtt.cloud.mysigen_adapter.Metrics.cloud_availability", new_callable=AsyncMock) as availability_metric:
+        with pytest.raises(CloudControlUnavailableError, match="application error"):
+            await mysigen_adapter.get_operational_mode()
+
+    availability_metric.assert_awaited_once_with(True)
 
 
 @pytest.mark.asyncio

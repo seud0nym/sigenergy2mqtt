@@ -60,13 +60,9 @@ _TOPOLOGY_DEVICE_TYPES = {
 logger = logging.getLogger(__name__)
 
 
-def _is_command_rejection(exc: SigenergyCloudAPIError, *, reject_api_errors: bool) -> bool:
-    """Return whether an API error is a valid rejection from a reachable API."""
-    if not reject_api_errors or exc.status_code is None or exc.status_code >= 500:
-        return False
-    if 400 <= exc.status_code < 500:
-        return True
-    if exc.response_body is None:
+def _api_error_indicates_availability(exc: SigenergyCloudAPIError) -> bool:
+    """Return whether an API error contains a well-formed response from the cloud."""
+    if exc.status_code is None or exc.status_code >= 500 or exc.response_body is None:
         return False
     try:
         payload = json.loads(exc.response_body)
@@ -264,9 +260,10 @@ class MySigenCloudAdapter:
                 raise
             except SigenergyCloudAPIError as exc:
                 await Metrics.cloud_query_error()
-                # Only a well-formed command rejection proves availability.
+                # Any well-formed non-5xx response proves availability, whether
+                # it rejects a command or reports an application-level error.
                 # Server errors and malformed responses indicate an outage.
-                await Metrics.cloud_availability(_is_command_rejection(exc, reject_api_errors=reject_api_errors))
+                await Metrics.cloud_availability(_api_error_indicates_availability(exc))
                 if reject_api_errors:
                     raise CloudControlRejectedError(str(exc)) from exc
                 raise CloudControlUnavailableError(str(exc)) from exc
