@@ -68,7 +68,14 @@ def _api_error_indicates_availability(exc: SigenergyCloudAPIError) -> bool:
         payload = json.loads(exc.response_body)
     except json.JSONDecodeError:
         return False
-    return isinstance(payload, dict)
+    if not isinstance(payload, dict):
+        return False
+    code = payload.get("code")
+    try:
+        numeric_code = int(code) if isinstance(code, (int, str)) else None
+    except ValueError:
+        numeric_code = None
+    return numeric_code is None or numeric_code < 500
 
 
 class MySigenCloudAdapter:

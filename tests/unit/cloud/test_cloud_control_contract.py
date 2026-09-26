@@ -545,6 +545,8 @@ async def test_rejected_command_keeps_cloud_available(
         SigenergyCloudAPIError("server error", status_code=503, response_body='{"error": "unavailable"}'),
         SigenergyCloudAPIError("invalid JSON", status_code=200, response_body="not-json"),
         SigenergyCloudAPIError("bad request with HTML", status_code=400, response_body="<html>bad gateway</html>"),
+        SigenergyCloudAPIError("application server error", status_code=200, response_body='{"code": 500, "message": "unavailable"}'),
+        SigenergyCloudAPIError("string application server error", status_code=200, response_body='{"code": "503", "message": "unavailable"}'),
     ],
 )
 async def test_failed_command_marks_cloud_unavailable(
