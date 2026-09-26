@@ -1,5 +1,8 @@
 """Tests for the stateful cloud API facsimile used by integration tests."""
 
+import asyncio
+
+import pytest
 from aiohttp.test_utils import TestClient, TestServer
 from pymodbus.client.mixin import ModbusClientMixin
 
@@ -24,7 +27,56 @@ from tests.utils.modbus_test_server import (
     CloudApiTestServer,
     CustomDataBlock,
     LatencyBudget,
+    simulate_internet_outage,
 )
+
+
+async def test_cloud_api_test_server_rejects_requests_during_internet_outage() -> None:
+    api = CloudApiTestServer(None, None)
+    api.internet_available = False
+    api.internet_outage_status = 502
+
+    async with TestClient(TestServer(api.app())) as client:
+        response = await client.get("/device/owner/station/home")
+        assert response.status == 502
+        assert await response.json() == {
+            "code": 502,
+            "msg": "Cloud API unavailable due to simulated internet outage",
+        }
+
+
+async def test_simulate_internet_outage_cycles_and_restores_service(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    api = CloudApiTestServer(None, None)
+    availability_during_sleeps: list[bool] = []
+
+    async def record_sleep(_seconds: int) -> None:
+        availability_during_sleeps.append(api.internet_available)
+
+    monkeypatch.setattr(asyncio, "sleep", record_sleep)
+    await simulate_internet_outage(
+        api,
+        wait_for_seconds=10,
+        duration_seconds=20,
+        repeated=False,
+        status_code=502,
+    )
+
+    assert availability_during_sleeps == [True, False]
+    assert api.internet_available is True
+    assert api.internet_outage_status == 502
+
+
+async def test_simulate_internet_outage_rejects_non_server_error() -> None:
+    with pytest.raises(ValueError, match="between 500 and 599"):
+        await simulate_internet_outage(
+            CloudApiTestServer(None, None),
+            wait_for_seconds=0,
+            duration_seconds=0,
+            repeated=False,
+            status_code=404,
+        )
 
 
 async def test_cloud_api_test_server_exposes_all_limit_endpoints() -> None:

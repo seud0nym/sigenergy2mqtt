@@ -119,6 +119,8 @@ class CloudApiTestServer:
     """Stateful facsimile of the cloud endpoints used by MySigenCloudAdapter."""
 
     def __init__(self, username: str | None, password: str | None) -> None:
+        self.internet_available = True
+        self.internet_outage_status = web.HTTPServiceUnavailable.status_code
         self.username = username
         self.encrypted_password = None
         if password is not None:
@@ -274,6 +276,21 @@ class CloudApiTestServer:
     @staticmethod
     def _success(data: Any = None) -> web.Response:
         return web.json_response({"code": 0, "msg": "Success", "data": data})
+
+    @web.middleware
+    async def internet_outage_middleware(
+        self, request: web.Request, handler: Any
+    ) -> web.StreamResponse:
+        """Reject cloud API requests while an internet outage is active."""
+        if not self.internet_available:
+            return web.json_response(
+                {
+                    "code": self.internet_outage_status,
+                    "msg": "Cloud API unavailable due to simulated internet outage",
+                },
+                status=self.internet_outage_status,
+            )
+        return await handler(request)
 
     async def authenticate(self, request: web.Request) -> web.Response:
         form = await request.post()
@@ -442,7 +459,7 @@ class CloudApiTestServer:
         return self._success()
 
     def app(self) -> web.Application:
-        app = web.Application()
+        app = web.Application(middlewares=[self.internet_outage_middleware])
         app.add_routes([
             web.post("/auth/oauth/token", self.authenticate),
             web.get("/device/owner/station/home", self.station_home),
@@ -546,6 +563,11 @@ class TestConfig:
     grid_outage_initial_delay_seconds: int = 30
     grid_outage_duration_seconds: int = 30
     grid_outage_repeated: bool = True
+    simulate_internet_outage: bool = False
+    internet_outage_initial_delay_seconds: int = 30
+    internet_outage_duration_seconds: int = 30
+    internet_outage_repeated: bool = True
+    internet_outage_status_code: int = web.HTTPServiceUnavailable.status_code
     simulate_firmware_upgrade: bool = False
     simulate_power_factor_errors: bool = False
 
@@ -1359,6 +1381,56 @@ async def simulate_grid_outage(data_block: CustomDataBlock, wait_for_seconds: in
             break
 
 
+async def simulate_internet_outage(
+    server: CloudApiTestServer,
+    wait_for_seconds: int,
+    duration_seconds: int,
+    repeated: bool = True,
+    status_code: int = web.HTTPServiceUnavailable.status_code,
+) -> None:
+    """Periodically make the test cloud API return a server error.
+
+    The listener remains reachable so clients receive a realistic HTTP failure
+    rather than hanging indefinitely. ``status_code`` permits testing gateway
+    failures such as 502 as well as the default 503 service-unavailable case.
+    Normal request handling is restored when the outage ends or the task is
+    cancelled.
+
+    Args:
+        server: Cloud API test server whose requests should be rejected.
+        wait_for_seconds: Idle time between outage cycles, in seconds.
+        duration_seconds: Duration of each simulated outage, in seconds.
+        repeated: Whether to repeat the internet outage simulation.
+        status_code: HTTP error returned during an outage.
+    """
+    if not 500 <= status_code <= 599:
+        raise ValueError("internet outage status code must be between 500 and 599")
+
+    server.internet_outage_status = status_code
+    try:
+        while True:
+            _logger.info(
+                "Waiting for %s seconds before simulating internet outage...",
+                wait_for_seconds,
+            )
+            await asyncio.sleep(wait_for_seconds)
+            _logger.info(
+                "Simulating internet outage for %s seconds (HTTP %s)...",
+                duration_seconds,
+                status_code,
+            )
+            server.internet_available = False
+            await asyncio.sleep(duration_seconds)
+            server.internet_available = True
+            _logger.info("Internet outage simulation ended.")
+            if not repeated:
+                break
+    except asyncio.CancelledError:
+        pass
+    finally:
+        server.internet_available = True
+
+
 async def prepopulate(modbus_client: ModbusClient, groups: dict[int, list]) -> None:
     """Pre-populate register values from a live Modbus source.
 
@@ -1428,7 +1500,9 @@ async def run_async_server(
        post-initialisation writes (MQTT, simulation helpers) can reach the
        server's :class:`SimDevice` context.
     8. Optionally co-schedules :func:`simulate_grid_outage` for the plant device.
-    9. Optionally co-schedules :func:`simulate_firmware_version_upgrade` for the
+    9. Optionally co-schedules :func:`simulate_internet_outage` for the cloud
+       API server.
+    10. Optionally co-schedules :func:`simulate_firmware_version_upgrade` for the
        inverter device.
 
     Args:
@@ -1600,7 +1674,17 @@ async def run_async_server(
         if TestConfig.simulate_firmware_upgrade:
             for idx in inverter_device_address:
                 tasks.append(simulate_firmware_version_upgrade(context[idx], wait_for_seconds=randint(30, 60)))
-        async with run_cloud_api_test_server(host, cloud_port):
+        async with run_cloud_api_test_server(host, cloud_port) as cloud_server:
+            if TestConfig.simulate_internet_outage:
+                tasks.append(
+                    simulate_internet_outage(
+                        cloud_server,
+                        wait_for_seconds=TestConfig.internet_outage_initial_delay_seconds,
+                        duration_seconds=TestConfig.internet_outage_duration_seconds,
+                        repeated=TestConfig.internet_outage_repeated,
+                        status_code=TestConfig.internet_outage_status_code,
+                    )
+                )
             await asyncio.gather(*tasks)
     except asyncio.CancelledError as e:
         _logger.debug(f"Modbus TCP Testing Server cancelled: {e}")
@@ -1783,6 +1867,11 @@ async def async_helper() -> None:
     TestConfig.grid_outage_initial_delay_seconds = _env_int("MODBUS_TEST_SERVER_GRID_OUTAGE_INITIAL_DELAY", 30)
     TestConfig.grid_outage_duration_seconds = _env_int("MODBUS_TEST_SERVER_GRID_OUTAGE_DURATION", 30)
     TestConfig.grid_outage_repeated = _env_bool("MODBUS_TEST_SERVER_GRID_OUTAGE_REPEATED", True)
+    TestConfig.simulate_internet_outage = _env_bool("MODBUS_TEST_SERVER_SIMULATE_INTERNET_OUTAGE", False)
+    TestConfig.internet_outage_initial_delay_seconds = _env_int("MODBUS_TEST_SERVER_INTERNET_OUTAGE_INITIAL_DELAY", 30)
+    TestConfig.internet_outage_duration_seconds = _env_int("MODBUS_TEST_SERVER_INTERNET_OUTAGE_DURATION", 30)
+    TestConfig.internet_outage_repeated = _env_bool("MODBUS_TEST_SERVER_INTERNET_OUTAGE_REPEATED", True)
+    TestConfig.internet_outage_status_code = _env_int("MODBUS_TEST_SERVER_INTERNET_OUTAGE_STATUS_CODE", web.HTTPServiceUnavailable.status_code)
     TestConfig.simulate_firmware_upgrade = _env_bool("MODBUS_TEST_SERVER_SIMULATE_FIRMWARE_UPGRADE", False)
     TestConfig.simulate_power_factor_errors = _env_bool("MODBUS_TEST_SERVER_SIMULATE_POWER_FACTOR_ERRORS", False)
     TestConfig.force_sensor_values = _env_json("MODBUS_TEST_SERVER_FORCE_SENSOR_VALUES_JSON")
