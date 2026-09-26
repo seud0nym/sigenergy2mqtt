@@ -18,7 +18,7 @@ from sigenergy2mqtt.sensors.cloud.read_only import (
     GatewayModel,
     GatewaySerialNumber,
 )
-from tests.unit.sensors.test_cloud_instant_control import FakeCloudControlPort
+from tests.unit.sensors.test_cloud_sensors import FakeCloudControlPort
 
 GATEWAY_INFO = {
     "deviceModel": "Sigen Gateway SP AU",
