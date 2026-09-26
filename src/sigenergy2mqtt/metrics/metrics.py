@@ -244,6 +244,21 @@ class Metrics:
     sigenergy2mqtt_cloud_connection_errors: int = 0
     """Number of failed cloud connection attempts."""
 
+    sigenergy2mqtt_cloud_connection_attempts: int = 0
+    """Total number of cloud login and station-discovery attempts."""
+
+    sigenergy2mqtt_cloud_connection_total: float = 0.0
+    """Cumulative cloud login and station-discovery time, in milliseconds."""
+
+    sigenergy2mqtt_cloud_connection_max: float = 0.0
+    """Maximum cloud login and station-discovery duration, in milliseconds."""
+
+    sigenergy2mqtt_cloud_connection_mean: float = 0.0
+    """Mean cloud login and station-discovery duration, in milliseconds."""
+
+    sigenergy2mqtt_cloud_connection_min: float = float("inf")
+    """Minimum cloud login and station-discovery duration, in milliseconds."""
+
     sigenergy2mqtt_cloud_reconnections: int = 0
     """Number of cloud reconnection attempts after an expired login."""
 
@@ -840,6 +855,23 @@ class Metrics:
                     cls.sigenergy2mqtt_cloud_reconnections += 1
 
             cls._update_with_lock(_operation, "cloud connection metrics collection")
+
+        cls._submit(_update)
+
+    @classmethod
+    async def cloud_connection_attempt(cls, seconds: float) -> None:
+        """Record the duration of one login and station-discovery attempt."""
+
+        def _update() -> None:
+            def _operation() -> None:
+                elapsed = seconds * 1000.0
+                cls.sigenergy2mqtt_cloud_connection_attempts += 1
+                cls.sigenergy2mqtt_cloud_connection_total += elapsed
+                cls.sigenergy2mqtt_cloud_connection_max = max(cls.sigenergy2mqtt_cloud_connection_max, elapsed)
+                cls.sigenergy2mqtt_cloud_connection_min = min(cls.sigenergy2mqtt_cloud_connection_min, elapsed)
+                cls.sigenergy2mqtt_cloud_connection_mean = cls.sigenergy2mqtt_cloud_connection_total / cls.sigenergy2mqtt_cloud_connection_attempts
+
+            cls._update_with_lock(_operation, "cloud connection timing metrics collection")
 
         cls._submit(_update)
 

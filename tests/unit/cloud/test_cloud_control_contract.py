@@ -3,7 +3,7 @@
 import asyncio
 from datetime import timedelta
 from types import SimpleNamespace
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from aiohttp import ClientPayloadError, ServerDisconnectedError
@@ -129,6 +129,21 @@ async def test_connect_normalizes_aiohttp_transport_errors(
 
 
 @pytest.mark.asyncio
+async def test_connect_records_login_timing(
+    mysigen_adapter: MySigenCloudAdapter,
+) -> None:
+    with (
+        patch("sigenergy2mqtt.cloud.mysigen_adapter.time.monotonic", side_effect=[10.0, 10.25]),
+        patch("sigenergy2mqtt.cloud.mysigen_adapter.Metrics.cloud_connection", new_callable=AsyncMock) as connection_metric,
+        patch("sigenergy2mqtt.cloud.mysigen_adapter.Metrics.cloud_connection_attempt", new_callable=AsyncMock) as timing_metric,
+    ):
+        await mysigen_adapter.connect()
+
+    connection_metric.assert_awaited_once_with(connected=True)
+    timing_metric.assert_awaited_once_with(0.25)
+
+
+@pytest.mark.asyncio
 async def test_operation_normalizes_aiohttp_transport_errors(
     mysigen_adapter: MySigenCloudAdapter,
 ) -> None:
@@ -139,6 +154,26 @@ async def test_operation_normalizes_aiohttp_transport_errors(
 
     with pytest.raises(CloudControlUnavailableError, match="truncated response"):
         await mysigen_adapter.get_operational_mode()
+
+    assert mysigen_adapter._connected is False  # type: ignore[reportPrivateUsage]
+
+
+@pytest.mark.asyncio
+async def test_unexpected_operation_error_is_counted(
+    mysigen_adapter: MySigenCloudAdapter,
+) -> None:
+    mysigen_adapter._connected = True  # type: ignore[reportPrivateUsage]
+    mysigen_adapter._client.get_operational_mode.side_effect = KeyError("missing field")  # type: ignore[reportPrivateUsage]
+
+    with (
+        patch("sigenergy2mqtt.cloud.mysigen_adapter.Metrics.cloud_query", new_callable=AsyncMock) as query_metric,
+        patch("sigenergy2mqtt.cloud.mysigen_adapter.Metrics.cloud_query_error", new_callable=AsyncMock) as error_metric,
+    ):
+        with pytest.raises(KeyError, match="missing field"):
+            await mysigen_adapter.get_operational_mode()
+
+    query_metric.assert_awaited_once()
+    error_metric.assert_awaited_once_with()
 
 
 async def test_device_list_uses_official_api_shape(

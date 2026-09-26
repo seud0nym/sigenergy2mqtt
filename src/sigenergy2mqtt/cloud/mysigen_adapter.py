@@ -91,6 +91,7 @@ class MySigenCloudAdapter:
         """Connect while the caller holds ``_connect_lock``."""
         if self._connected:
             return
+        started = time.monotonic()
         try:
             await self._client.connect()
             logger.info(f"Connected to {self._client.base_url} Cloud API (region={self._client.region})")
@@ -103,6 +104,11 @@ class MySigenCloudAdapter:
         except (ClientError, SigenergyCloudError, OSError, TimeoutError) as exc:
             await Metrics.cloud_connection(connected=False, error=True)
             raise CloudControlUnavailableError(str(exc)) from exc
+        except Exception:
+            await Metrics.cloud_connection(connected=False, error=True)
+            raise
+        finally:
+            await Metrics.cloud_connection_attempt(time.monotonic() - started)
         self._connected = True
         self._connection_generation += 1
         await Metrics.cloud_connection(connected=True)
@@ -211,8 +217,13 @@ class MySigenCloudAdapter:
         for attempt in range(2):
             started = time.monotonic()
             try:
-                logger.debug(f"mySigen {operation.__name__} executing (attempt {attempt + 1}/2, generation={generation})")
-                result = await operation()
+                try:
+                    logger.debug(f"mySigen {operation.__name__} executing (attempt {attempt + 1}/2, generation={generation})")
+                    result = await operation()
+                finally:
+                    # Stop timing before error handling can reconnect. Login and
+                    # station-discovery latency is tracked independently.
+                    await Metrics.cloud_query(time.monotonic() - started)
                 logger.debug(f"mySigen {operation.__name__} returned: {result}")
                 return result
             except SigenergyCloudRateLimitError as exc:
@@ -238,9 +249,13 @@ class MySigenCloudAdapter:
                 raise CloudControlUnavailableError(str(exc)) from exc
             except (ClientError, SigenergyCloudError, OSError, TimeoutError) as exc:
                 await Metrics.cloud_query_error()
+                await self._invalidate_connection(generation)
                 raise CloudControlUnavailableError(str(exc)) from exc
-            finally:
-                await Metrics.cloud_query(time.monotonic() - started)
+            except Exception:
+                # Malformed or otherwise unexpected vendor responses are still
+                # failed queries even when their exception is not normalized.
+                await Metrics.cloud_query_error()
+                raise
         raise AssertionError("cloud operation retry loop exhausted")
 
     async def available_operational_modes(self) -> dict[str, Any]:

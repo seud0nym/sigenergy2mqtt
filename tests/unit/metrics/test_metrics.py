@@ -453,6 +453,7 @@ class TestCloudMetrics:
         await Metrics.drain()
 
         await Metrics.cloud_connection(connected=True)
+        await Metrics.cloud_connection_attempt(0.025)
         await Metrics.cloud_connection(connected=False, reconnect=True)
         await Metrics.cloud_connection(connected=False, error=True)
         await Metrics.drain()
@@ -461,3 +462,7 @@ class TestCloudMetrics:
         assert Metrics.sigenergy2mqtt_cloud_connections == 1
         assert Metrics.sigenergy2mqtt_cloud_reconnections == 1
         assert Metrics.sigenergy2mqtt_cloud_connection_errors == 1
+        assert Metrics.sigenergy2mqtt_cloud_connection_attempts == 1
+        assert Metrics.sigenergy2mqtt_cloud_connection_min == pytest.approx(25.0)
+        assert Metrics.sigenergy2mqtt_cloud_connection_mean == pytest.approx(25.0)
+        assert Metrics.sigenergy2mqtt_cloud_connection_max == pytest.approx(25.0)
