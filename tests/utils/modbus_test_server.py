@@ -15,6 +15,73 @@ Run directly for manual testing::
 
 or import :func:`run_async_server` and :func:`wait_for_server_start` from
 automated test fixtures.
+
+The following environment variables control the operation of the test server:
+
+MODBUS_TEST_SERVER_CLOUD_PASSWORD
+    - The password for authenticating to the test Cloud API server
+MODBUS_TEST_SERVER_CLOUD_PORT
+    - The port on which the test Cloud API server will listen
+MODBUS_TEST_SERVER_CLOUD_USERNAME
+    - The username for authenticating to the test Cloud API server
+MODBUS_TEST_SERVER_FORCE_SENSOR_VALUES_JSON
+    - Force the Modbus test server to return the specified values
+      e.g. {"PVVoltageSensor": -3, "PVCurrentSensor": -3}
+MODBUS_TEST_SERVER_GRID_OUTAGE_DURATION
+    - The duration in seconds of a simulated grid outages for testing the Modbus Test server (default: 30 seconds)
+MODBUS_TEST_SERVER_GRID_OUTAGE_INITIAL_DELAY (default: 30 seconds)
+    - The initial delay in seconds after Modbus test server startup before the grid outage is simulated (default: 30 seconds)
+MODBUS_TEST_SERVER_GRID_OUTAGE_REPEATED
+    - True if grid outages are to be repeated; False if it is only to occur once (default: True)
+MODBUS_TEST_SERVER_GRID_STATUS_INITIAL_STATE
+    - The initial state of the grid: 0=On Grid, 1=Off Grid (auto), 2=Off Grid (manual), None=source/random (default: 0)
+MODBUS_TEST_SERVER_HOST
+    - The interface IP address on which the Modbus test server will listen (default: 0.0.0.0)
+MODBUS_TEST_SERVER_INITIAL_FIRMWARE
+    - The initial firmware version returned by the test servers
+MODBUS_TEST_SERVER_INTERNET_OUTAGE_DURATION
+    - The duration in seconds of a simulated internet outage for testing the Cloud API server (default: 30 seconds)
+MODBUS_TEST_SERVER_INTERNET_OUTAGE_INITIAL_DELAY
+    - The initial delay in seconds after test Cloud API server startup before the internet outage is simulated (default: 30 seconds)
+MODBUS_TEST_SERVER_INTERNET_OUTAGE_REPEATED
+    - True if internet outages are to be repeated; False if it is only to occur once (default: True)
+MODBUS_TEST_SERVER_INTERNET_OUTAGE_STATUS_CODE
+    - The status to be returned to clients during the Cloud API simulated internet outage (default: 503)
+MODBUS_TEST_SERVER_LOG_LEVEL
+    - The Modbus Test server logging level (default: INFO)
+MODBUS_TEST_SERVER_MODBUS_HOST
+    - The host address of the Modbus server that will be used to populate the test Modbus server, or None if MQTT/random values are to be used
+MODBUS_TEST_SERVER_MODBUS_PORT
+    - The listening port of the Modbus server that will be used to populate the test Modbus server
+MODBUS_TEST_SERVER_MQTT_BROKER
+    - The host address of the MQTT broker that will be used to populate the test Modbus server, or None if Modbus/random values are to be used
+MODBUS_TEST_SERVER_MQTT_LOG_LEVEL
+    - The logging level applied to MQTT messages handle by the CustomMqttHandler (default: INFO)
+MODBUS_TEST_SERVER_MQTT_PASSWORD
+    - The password for the MQTT broker that will be used to populate the test Modbus server
+MODBUS_TEST_SERVER_MQTT_PORT
+    - The listening port of the MQTT broker that will be used to populate the test Modbus server (default: 1883)
+MODBUS_TEST_SERVER_MQTT_USERNAME
+    - The username for the MQTT broker that will be used to populate the test Modbus server
+MODBUS_TEST_SERVER_PORT
+    - The port on which the Modbus test server will listen (default: 502)
+MODBUS_TEST_SERVER_PROTOCOL_VERSION
+    - The protocol version that will be applied to the Modbus test server (default: latest version)
+MODBUS_TEST_SERVER_REGISTERS_TO_DEBUG
+    - A comma separated list of register numbers that will be logged when accessed or updated
+MODBUS_TEST_SERVER_SIMULATE_FIRMWARE_UPGRADE
+    - True if a firmware upgrade is to be simulated; otherwise False (default: False)
+MODBUS_TEST_SERVER_SIMULATE_GRID_OUTAGES
+    - True if grid outages are to be simulated; otherwise False (default: False)
+MODBUS_TEST_SERVER_SIMULATE_INTERNET_OUTAGE
+    - True if an internet outage is to be simulated; otherwise False (default: False)
+MODBUS_TEST_SERVER_SIMULATE_POWER_FACTOR_ERRORS
+    - True if invalid power factor values are to be returned by the Modbus Test server; otherwise False (default: False)
+MODBUS_TEST_SERVER_UPGRADE_FIRMWARE
+    - The firmware version that will be returned returned by the test servers after a simulated firmware upgrade
+MODBUS_TEST_SERVER_USE_SIMPLIFIED_TOPICS
+    - True if simplified topics are used on the source MQTT broker
+
 """
 
 import asyncio
