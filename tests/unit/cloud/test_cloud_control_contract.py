@@ -3,7 +3,7 @@
 import asyncio
 from datetime import timedelta
 from types import SimpleNamespace
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from aiohttp import ClientPayloadError, ServerDisconnectedError
@@ -129,6 +129,21 @@ async def test_connect_normalizes_aiohttp_transport_errors(
 
 
 @pytest.mark.asyncio
+async def test_connect_records_login_timing(
+    mysigen_adapter: MySigenCloudAdapter,
+) -> None:
+    with (
+        patch("sigenergy2mqtt.cloud.mysigen_adapter.time.monotonic", side_effect=[10.0, 10.25]),
+        patch("sigenergy2mqtt.cloud.mysigen_adapter.Metrics.cloud_connection", new_callable=AsyncMock) as connection_metric,
+        patch("sigenergy2mqtt.cloud.mysigen_adapter.Metrics.cloud_connection_attempt", new_callable=AsyncMock) as timing_metric,
+    ):
+        await mysigen_adapter.connect()
+
+    connection_metric.assert_awaited_once_with(connected=True)
+    timing_metric.assert_awaited_once_with(0.25)
+
+
+@pytest.mark.asyncio
 async def test_operation_normalizes_aiohttp_transport_errors(
     mysigen_adapter: MySigenCloudAdapter,
 ) -> None:
@@ -137,8 +152,35 @@ async def test_operation_normalizes_aiohttp_transport_errors(
         "truncated response"
     )
 
-    with pytest.raises(CloudControlUnavailableError, match="truncated response"):
-        await mysigen_adapter.get_operational_mode()
+    with patch("sigenergy2mqtt.cloud.mysigen_adapter.Metrics.cloud_availability", new_callable=AsyncMock) as availability_metric:
+        with pytest.raises(CloudControlUnavailableError, match="truncated response"):
+            await mysigen_adapter.get_operational_mode()
+
+    assert mysigen_adapter._connected is True  # type: ignore[reportPrivateUsage]
+    availability_metric.assert_awaited_once_with(False)
+
+    mysigen_adapter._client.get_operational_mode.side_effect = None  # type: ignore[reportPrivateUsage]
+    mysigen_adapter._client.get_operational_mode.return_value = (2, -1)  # type: ignore[reportPrivateUsage]
+    assert await mysigen_adapter.get_operational_mode() == (2, -1)
+    mysigen_adapter._client.connect.assert_not_awaited()  # type: ignore[reportPrivateUsage]
+
+
+@pytest.mark.asyncio
+async def test_unexpected_operation_error_is_counted(
+    mysigen_adapter: MySigenCloudAdapter,
+) -> None:
+    mysigen_adapter._connected = True  # type: ignore[reportPrivateUsage]
+    mysigen_adapter._client.get_operational_mode.side_effect = KeyError("missing field")  # type: ignore[reportPrivateUsage]
+
+    with (
+        patch("sigenergy2mqtt.cloud.mysigen_adapter.Metrics.cloud_query", new_callable=AsyncMock) as query_metric,
+        patch("sigenergy2mqtt.cloud.mysigen_adapter.Metrics.cloud_query_error", new_callable=AsyncMock) as error_metric,
+    ):
+        with pytest.raises(KeyError, match="missing field"):
+            await mysigen_adapter.get_operational_mode()
+
+    query_metric.assert_awaited_once()
+    error_metric.assert_awaited_once_with()
 
 
 async def test_device_list_uses_official_api_shape(
@@ -478,6 +520,63 @@ async def test_operations_translate_vendor_errors(
 
     if isinstance(vendor_error, SigenergyCloudAuthError):
         assert mysigen_adapter._connected is False  # type: ignore[reportPrivateUsage]
+
+
+@pytest.mark.asyncio
+async def test_rejected_command_keeps_cloud_available(
+    mysigen_adapter: MySigenCloudAdapter,
+) -> None:
+    mysigen_adapter._connected = True  # type: ignore[reportPrivateUsage]
+    mysigen_adapter._client.set_instant_manual_control.side_effect = SigenergyCloudAPIError(  # type: ignore[reportPrivateUsage]
+        "rejected", status_code=400, response_body='{"code": 123, "message": "rejected"}'
+    )
+
+    with patch("sigenergy2mqtt.cloud.mysigen_adapter.Metrics.cloud_availability", new_callable=AsyncMock) as availability_metric:
+        with pytest.raises(CloudControlRejectedError, match="rejected"):
+            await mysigen_adapter.set_instant_override(InstantOverrideCommand(InstantControlMode.CHARGE, timedelta(minutes=30)))
+
+    availability_metric.assert_awaited_once_with(True)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "vendor_error",
+    [
+        SigenergyCloudAPIError("server error", status_code=503, response_body='{"error": "unavailable"}'),
+        SigenergyCloudAPIError("invalid JSON", status_code=200, response_body="not-json"),
+        SigenergyCloudAPIError("bad request with HTML", status_code=400, response_body="<html>bad gateway</html>"),
+        SigenergyCloudAPIError("application server error", status_code=200, response_body='{"code": 500, "message": "unavailable"}'),
+        SigenergyCloudAPIError("string application server error", status_code=200, response_body='{"code": "503", "message": "unavailable"}'),
+    ],
+)
+async def test_failed_command_marks_cloud_unavailable(
+    mysigen_adapter: MySigenCloudAdapter,
+    vendor_error: SigenergyCloudAPIError,
+) -> None:
+    mysigen_adapter._connected = True  # type: ignore[reportPrivateUsage]
+    mysigen_adapter._client.set_instant_manual_control.side_effect = vendor_error  # type: ignore[reportPrivateUsage]
+
+    with patch("sigenergy2mqtt.cloud.mysigen_adapter.Metrics.cloud_availability", new_callable=AsyncMock) as availability_metric:
+        with pytest.raises(CloudControlRejectedError):
+            await mysigen_adapter.set_instant_override(InstantOverrideCommand(InstantControlMode.CHARGE, timedelta(minutes=30)))
+
+    availability_metric.assert_awaited_once_with(False)
+
+
+@pytest.mark.asyncio
+async def test_application_error_from_read_keeps_cloud_available(
+    mysigen_adapter: MySigenCloudAdapter,
+) -> None:
+    mysigen_adapter._connected = True  # type: ignore[reportPrivateUsage]
+    mysigen_adapter._client.get_operational_mode.side_effect = SigenergyCloudAPIError(  # type: ignore[reportPrivateUsage]
+        "application error", status_code=200, response_body='{"code": 123, "message": "not ready"}'
+    )
+
+    with patch("sigenergy2mqtt.cloud.mysigen_adapter.Metrics.cloud_availability", new_callable=AsyncMock) as availability_metric:
+        with pytest.raises(CloudControlUnavailableError, match="application error"):
+            await mysigen_adapter.get_operational_mode()
+
+    availability_metric.assert_awaited_once_with(True)
 
 
 @pytest.mark.asyncio

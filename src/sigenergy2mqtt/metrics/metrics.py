@@ -217,6 +217,64 @@ class Metrics:
     """Minimum single PVOutput upload duration, in milliseconds."""
 
     # ------------------------------------------------------------------
+    # mySigen Cloud metrics
+    # ------------------------------------------------------------------
+
+    sigenergy2mqtt_cloud_queries: int = 0
+    """Total number of unofficial cloud API request attempts."""
+
+    sigenergy2mqtt_cloud_query_total: float = 0.0
+    """Cumulative elapsed time of cloud API requests, in milliseconds."""
+
+    sigenergy2mqtt_cloud_query_max: float = 0.0
+    """Maximum cloud API request duration, in milliseconds."""
+
+    sigenergy2mqtt_cloud_query_mean: float = 0.0
+    """Mean cloud API request duration, in milliseconds."""
+
+    sigenergy2mqtt_cloud_query_min: float = float("inf")
+    """Minimum cloud API request duration, in milliseconds."""
+
+    sigenergy2mqtt_cloud_query_errors: int = 0
+    """Number of failed cloud API request attempts."""
+
+    sigenergy2mqtt_cloud_connections: int = 0
+    """Number of successful cloud connections."""
+
+    sigenergy2mqtt_cloud_connection_errors: int = 0
+    """Number of failed cloud connection attempts."""
+
+    sigenergy2mqtt_cloud_connection_attempts: int = 0
+    """Total number of cloud login and station-discovery attempts."""
+
+    sigenergy2mqtt_cloud_connection_total: float = 0.0
+    """Cumulative cloud login and station-discovery time, in milliseconds."""
+
+    sigenergy2mqtt_cloud_connection_max: float = 0.0
+    """Maximum cloud login and station-discovery duration, in milliseconds."""
+
+    sigenergy2mqtt_cloud_connection_mean: float = 0.0
+    """Mean cloud login and station-discovery duration, in milliseconds."""
+
+    sigenergy2mqtt_cloud_connection_min: float = float("inf")
+    """Minimum cloud login and station-discovery duration, in milliseconds."""
+
+    sigenergy2mqtt_cloud_reconnections: int = 0
+    """Number of cloud reconnection attempts after an expired login."""
+
+    sigenergy2mqtt_cloud_rate_limits: int = 0
+    """Number of cloud API requests rejected by rate limiting."""
+
+    sigenergy2mqtt_cloud_auth_errors: int = 0
+    """Number of cloud API requests rejected due to authentication."""
+
+    sigenergy2mqtt_cloud_connected: bool = False
+    """Whether the unofficial cloud adapter currently has a valid login."""
+
+    sigenergy2mqtt_cloud_available: bool = False
+    """Whether the most recent cloud connectivity attempt succeeded."""
+
+    # ------------------------------------------------------------------
     # Service identity
     # ------------------------------------------------------------------
 
@@ -749,6 +807,90 @@ class Metrics:
                 cls.sigenergy2mqtt_pvoutput_upload_skipped += 1
 
             cls._update_with_lock(_operation, "pvoutput upload skipped metrics collection")
+
+        cls._submit(_update)
+
+    @classmethod
+    async def cloud_query(cls, seconds: float) -> None:
+        """Record one unofficial cloud API request attempt."""
+
+        def _update() -> None:
+            def _operation() -> None:
+                elapsed = seconds * 1000.0
+                cls.sigenergy2mqtt_cloud_queries += 1
+                cls.sigenergy2mqtt_cloud_query_total += elapsed
+                cls.sigenergy2mqtt_cloud_query_max = max(cls.sigenergy2mqtt_cloud_query_max, elapsed)
+                cls.sigenergy2mqtt_cloud_query_min = min(cls.sigenergy2mqtt_cloud_query_min, elapsed)
+                cls.sigenergy2mqtt_cloud_query_mean = cls.sigenergy2mqtt_cloud_query_total / cls.sigenergy2mqtt_cloud_queries
+
+            cls._update_with_lock(_operation, "cloud query metrics collection")
+
+        cls._submit(_update)
+
+    @classmethod
+    async def cloud_query_error(cls, *, auth: bool = False, rate_limited: bool = False) -> None:
+        """Record a failed cloud request, including its useful classification."""
+
+        def _update() -> None:
+            def _operation() -> None:
+                cls.sigenergy2mqtt_cloud_query_errors += 1
+                if auth:
+                    cls.sigenergy2mqtt_cloud_auth_errors += 1
+                if rate_limited:
+                    cls.sigenergy2mqtt_cloud_rate_limits += 1
+
+            cls._update_with_lock(_operation, "cloud query error metrics collection")
+
+        cls._submit(_update)
+
+    @classmethod
+    async def cloud_connection(cls, *, connected: bool, error: bool = False, reconnect: bool = False) -> None:
+        """Update unofficial cloud connection state and counters."""
+
+        def _update() -> None:
+            def _operation() -> None:
+                cls.sigenergy2mqtt_cloud_connected = connected
+                if connected:
+                    cls.sigenergy2mqtt_cloud_available = True
+                elif not reconnect:
+                    cls.sigenergy2mqtt_cloud_available = False
+                if connected:
+                    cls.sigenergy2mqtt_cloud_connections += 1
+                if error:
+                    cls.sigenergy2mqtt_cloud_connection_errors += 1
+                if reconnect:
+                    cls.sigenergy2mqtt_cloud_reconnections += 1
+
+            cls._update_with_lock(_operation, "cloud connection metrics collection")
+
+        cls._submit(_update)
+
+    @classmethod
+    async def cloud_availability(cls, available: bool) -> None:
+        """Record whether the cloud API was reachable without changing login state."""
+
+        def _update() -> None:
+            def _operation() -> None:
+                cls.sigenergy2mqtt_cloud_available = available
+
+            cls._update_with_lock(_operation, "cloud availability metrics collection")
+
+        cls._submit(_update)
+
+    @classmethod
+    async def cloud_connection_attempt(cls, seconds: float) -> None:
+        """Record the duration of one login and station-discovery attempt."""
+
+        def _update() -> None:
+            def _operation() -> None:
+                elapsed = seconds * 1000.0
+                cls.sigenergy2mqtt_cloud_connection_attempts += 1
+                cls.sigenergy2mqtt_cloud_connection_total += elapsed
+                cls.sigenergy2mqtt_cloud_connection_max = max(cls.sigenergy2mqtt_cloud_connection_max, elapsed)
+                cls.sigenergy2mqtt_cloud_connection_min = min(cls.sigenergy2mqtt_cloud_connection_min, elapsed)
+                cls.sigenergy2mqtt_cloud_connection_mean = cls.sigenergy2mqtt_cloud_connection_total / cls.sigenergy2mqtt_cloud_connection_attempts
+
+            cls._update_with_lock(_operation, "cloud connection timing metrics collection")
 
         cls._submit(_update)
 

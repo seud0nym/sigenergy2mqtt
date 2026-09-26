@@ -1,12 +1,16 @@
 """Adapter for the vendored, unofficial mySigen app API."""
 
 import asyncio
+import json
 import logging
+import time
 from collections.abc import Awaitable, Callable
 from datetime import timedelta
 from typing import Any, TypeVar
 
 from aiohttp import ClientError
+
+from sigenergy2mqtt.metrics.metrics import Metrics
 
 from .exceptions import (
     CloudControlAuthError,
@@ -56,6 +60,24 @@ _TOPOLOGY_DEVICE_TYPES = {
 logger = logging.getLogger(__name__)
 
 
+def _api_error_indicates_availability(exc: SigenergyCloudAPIError) -> bool:
+    """Return whether an API error contains a well-formed response from the cloud."""
+    if exc.status_code is None or exc.status_code >= 500 or exc.response_body is None:
+        return False
+    try:
+        payload = json.loads(exc.response_body)
+    except json.JSONDecodeError:
+        return False
+    if not isinstance(payload, dict):
+        return False
+    code = payload.get("code")
+    try:
+        numeric_code = int(code) if isinstance(code, (int, str)) else None
+    except ValueError:
+        numeric_code = None
+    return numeric_code is None or numeric_code < 500
+
+
 class MySigenCloudAdapter:
     """Translate domain commands to the unofficial, vendored cloud client."""
 
@@ -88,17 +110,27 @@ class MySigenCloudAdapter:
         """Connect while the caller holds ``_connect_lock``."""
         if self._connected:
             return
+        started = time.monotonic()
         try:
             await self._client.connect()
             logger.info(f"Connected to {self._client.base_url} Cloud API (region={self._client.region})")
         except SigenergyCloudAuthError as exc:
+            await Metrics.cloud_connection(connected=False, error=True)
             raise CloudControlAuthError(str(exc)) from exc
         except SigenergyCloudRateLimitError as exc:
+            await Metrics.cloud_connection(connected=False, error=True)
             raise CloudControlRateLimitedError(str(exc)) from exc
         except (ClientError, SigenergyCloudError, OSError, TimeoutError) as exc:
+            await Metrics.cloud_connection(connected=False, error=True)
             raise CloudControlUnavailableError(str(exc)) from exc
+        except Exception:
+            await Metrics.cloud_connection(connected=False, error=True)
+            raise
+        finally:
+            await Metrics.cloud_connection_attempt(time.monotonic() - started)
         self._connected = True
         self._connection_generation += 1
+        await Metrics.cloud_connection(connected=True)
 
     async def _reconnect(self, failed_generation: int) -> None:
         """Replace an invalid cloud login unless another task already did so."""
@@ -107,6 +139,7 @@ class MySigenCloudAdapter:
             if self._connection_generation != failed_generation:
                 return
             self._connected = False
+            await Metrics.cloud_connection(connected=False, reconnect=True)
             await self._connect_locked()
 
     async def _invalidate_connection(self, failed_generation: int) -> None:
@@ -114,11 +147,13 @@ class MySigenCloudAdapter:
         async with self._connect_lock:
             if self._connection_generation == failed_generation:
                 self._connected = False
+                await Metrics.cloud_connection(connected=False)
                 logger.debug(f"Connection to {self._client.base_url} Cloud API invalidated (_connection_generation={self._connection_generation}, failed_generation={failed_generation})")
 
     async def close(self) -> None:
         await self._client.close()
         self._connected = False
+        await Metrics.cloud_connection(connected=False)
         logger.info(f"Disconnected from {self._client.base_url} Cloud API")
 
     async def device_list(self) -> list[dict[str, Any]]:
@@ -199,14 +234,26 @@ class MySigenCloudAdapter:
         await self.connect()
         generation = self._connection_generation
         for attempt in range(2):
+            started = time.monotonic()
             try:
-                logger.debug(f"mySigen {operation.__name__} executing (attempt {attempt + 1}/2, generation={generation})")
-                result = await operation()
+                try:
+                    logger.debug(f"mySigen {operation.__name__} executing (attempt {attempt + 1}/2, generation={generation})")
+                    result = await operation()
+                finally:
+                    # Stop timing before error handling can reconnect. Login and
+                    # station-discovery latency is tracked independently.
+                    await Metrics.cloud_query(time.monotonic() - started)
                 logger.debug(f"mySigen {operation.__name__} returned: {result}")
+                await Metrics.cloud_availability(True)
                 return result
             except SigenergyCloudRateLimitError as exc:
+                await Metrics.cloud_query_error(rate_limited=True)
+                # A rate-limit response proves the API is reachable even though
+                # it did not accept this request.
+                await Metrics.cloud_availability(True)
                 raise CloudControlRateLimitedError(str(exc)) from exc
             except SigenergyCloudAuthError as exc:
+                await Metrics.cloud_query_error(auth=True)
                 if attempt == 0:
                     await self._reconnect(generation)
                     generation = self._connection_generation
@@ -214,15 +261,33 @@ class MySigenCloudAdapter:
                 await self._invalidate_connection(generation)
                 raise CloudControlAuthError(str(exc)) from exc
             except ValueError as exc:
+                await Metrics.cloud_query_error()
                 if reject_api_errors:
                     raise CloudControlRejectedError(str(exc)) from exc
                 raise
             except SigenergyCloudAPIError as exc:
+                await Metrics.cloud_query_error()
+                # Any well-formed non-5xx response proves availability, whether
+                # it rejects a command or reports an application-level error.
+                # Server errors and malformed responses indicate an outage.
+                await Metrics.cloud_availability(_api_error_indicates_availability(exc))
                 if reject_api_errors:
                     raise CloudControlRejectedError(str(exc)) from exc
                 raise CloudControlUnavailableError(str(exc)) from exc
             except (ClientError, SigenergyCloudError, OSError, TimeoutError) as exc:
+                await Metrics.cloud_query_error()
+                # A transport failure says nothing about whether the server has
+                # invalidated the authenticated session. Preserve it so the next
+                # operation can retry without an avoidable password login and
+                # station discovery, while reporting degraded reachability.
+                await Metrics.cloud_availability(False)
                 raise CloudControlUnavailableError(str(exc)) from exc
+            except Exception:
+                # Malformed or otherwise unexpected vendor responses are still
+                # failed queries even when their exception is not normalized.
+                await Metrics.cloud_query_error()
+                await Metrics.cloud_availability(False)
+                raise
         raise AssertionError("cloud operation retry loop exhausted")
 
     async def available_operational_modes(self) -> dict[str, Any]:

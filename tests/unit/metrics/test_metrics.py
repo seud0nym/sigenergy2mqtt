@@ -424,3 +424,47 @@ class TestMetricsMqttPublish:
         await Metrics.drain()
 
         assert Metrics.sigenergy2mqtt_mqtt_publish_failures == 2
+
+class TestCloudMetrics:
+    """Tests for unofficial mySigen cloud metric aggregation."""
+
+    @pytest.mark.asyncio
+    async def test_cloud_query_timings_and_errors(self):
+        await Metrics.reset()
+        await Metrics.drain()
+
+        await Metrics.cloud_query(0.010)
+        await Metrics.cloud_query(0.030)
+        await Metrics.cloud_query_error(auth=True)
+        await Metrics.cloud_query_error(rate_limited=True)
+        await Metrics.drain()
+
+        assert Metrics.sigenergy2mqtt_cloud_queries == 2
+        assert Metrics.sigenergy2mqtt_cloud_query_min == pytest.approx(10.0)
+        assert Metrics.sigenergy2mqtt_cloud_query_mean == pytest.approx(20.0)
+        assert Metrics.sigenergy2mqtt_cloud_query_max == pytest.approx(30.0)
+        assert Metrics.sigenergy2mqtt_cloud_query_errors == 2
+        assert Metrics.sigenergy2mqtt_cloud_auth_errors == 1
+        assert Metrics.sigenergy2mqtt_cloud_rate_limits == 1
+
+    @pytest.mark.asyncio
+    async def test_cloud_connection_lifecycle(self):
+        await Metrics.reset()
+        await Metrics.drain()
+
+        await Metrics.cloud_connection(connected=True)
+        await Metrics.cloud_availability(False)
+        await Metrics.cloud_connection_attempt(0.025)
+        await Metrics.cloud_connection(connected=False, reconnect=True)
+        await Metrics.cloud_connection(connected=False, error=True)
+        await Metrics.drain()
+
+        assert Metrics.sigenergy2mqtt_cloud_connected is False
+        assert Metrics.sigenergy2mqtt_cloud_available is False
+        assert Metrics.sigenergy2mqtt_cloud_connections == 1
+        assert Metrics.sigenergy2mqtt_cloud_reconnections == 1
+        assert Metrics.sigenergy2mqtt_cloud_connection_errors == 1
+        assert Metrics.sigenergy2mqtt_cloud_connection_attempts == 1
+        assert Metrics.sigenergy2mqtt_cloud_connection_min == pytest.approx(25.0)
+        assert Metrics.sigenergy2mqtt_cloud_connection_mean == pytest.approx(25.0)
+        assert Metrics.sigenergy2mqtt_cloud_connection_max == pytest.approx(25.0)
