@@ -8,15 +8,17 @@ from sigenergy2mqtt.devices.cloud import SigenergyCloudControl, SigenergyGateway
 from sigenergy2mqtt.sensors.base import DiscoveryKeys
 from sigenergy2mqtt.sensors.cloud.read_only import (
     GatewayCommunicationStatus,
+    GatewayFirmwareVersion,
     GatewayGridCurrent,
     GatewayGridFrequency,
     GatewayGridPower,
     GatewayGridReactivePower,
     GatewayGridText,
     GatewayGridVoltage,
+    GatewayModel,
+    GatewaySerialNumber,
 )
 from tests.unit.sensors.test_cloud_instant_control import FakeCloudControlPort
-
 
 GATEWAY_INFO = {
     "deviceModel": "Sigen Gateway SP AU",
@@ -42,12 +44,15 @@ def test_cloud_control_adds_gateway_child_with_dynamic_sensors() -> None:
     assert len(device.children) == 1
     gateway = device.children[0]
     assert isinstance(gateway, SigenergyGateway)
-    assert gateway["model"] == "Sigen Gateway SP AU"
+    assert gateway["model_id"] == "Sigen Gateway SP AU"
     assert gateway["sn"] == "GW-SN"
-    assert gateway["hw"] == "V100R001C00"
+    assert gateway["sw"] == "V100R001C00"
     assert gateway.via_device == device.unique_id
     assert [type(sensor) for sensor in gateway.sensors.values()] == [
         GatewayCommunicationStatus,
+        GatewayFirmwareVersion,
+        GatewayModel,
+        GatewaySerialNumber,
         GatewayGridVoltage,
         GatewayGridCurrent,
         GatewayGridFrequency,
@@ -55,11 +60,7 @@ def test_cloud_control_adds_gateway_child_with_dynamic_sensors() -> None:
         GatewayGridReactivePower,
         GatewayGridText,
     ]
-    reactive = next(
-        sensor
-        for sensor in gateway.sensors.values()
-        if isinstance(sensor, GatewayGridReactivePower)
-    )
+    reactive = next(sensor for sensor in gateway.sensors.values() if isinstance(sensor, GatewayGridReactivePower))
     assert reactive[DiscoveryKeys.UNIT_OF_MEASUREMENT] == "kvar"
 
 
@@ -68,11 +69,11 @@ async def test_gateway_sensors_share_one_endpoint_read_per_refresh() -> None:
     port = FakeCloudControlPort()
     port.gateway_info = AsyncMock(return_value=GATEWAY_INFO)
     gateway = SigenergyGateway(
-        0,
-        port.station_id,
+        plant_index=0,
+        station_id=port.station_id,
         model="model",
         sn="serial",
-        hw="firmware",
+        sw="firmware",
         grid_side_info=GATEWAY_INFO["gridSideInfoList"],
     )
     sensors = list(gateway.sensors.values())
@@ -81,7 +82,7 @@ async def test_gateway_sensors_share_one_endpoint_read_per_refresh() -> None:
     coordinator.begin_refresh()
     values = [await sensor._read_cloud_state(port) for sensor in sensors]  # type: ignore[attr-defined]
 
-    assert values == ["Online", 233.29, 10.76, 49.99, 2.444, -0.406, "Close"]
+    assert values == ["Online", "V100R001C00", "Sigen Gateway SP AU", "GW-SN", 233.29, 10.76, 49.99, 2.444, -0.406, "Close"]
     port.gateway_info.assert_awaited_once_with()
 
 
@@ -93,26 +94,18 @@ async def test_gateway_numeric_sensor_rejects_changed_units_and_non_finite_value
     port = FakeCloudControlPort()
     payload = {
         **GATEWAY_INFO,
-        "gridSideInfoList": [
-            {"paramKey": "Phase A Voltage", "paramValue": param_value}
-        ],
+        "gridSideInfoList": [{"paramKey": "Phase A Voltage", "paramValue": param_value}],
     }
     port.gateway_info = AsyncMock(return_value=payload)
     gateway = SigenergyGateway(
-        0,
-        port.station_id,
+        plant_index=0,
+        station_id=port.station_id,
         model="model",
         sn="serial",
-        hw="firmware",
-        grid_side_info=[
-            {"paramKey": "Phase A Voltage", "paramValue": "233.29 V"}
-        ],
+        sw="firmware",
+        grid_side_info=[{"paramKey": "Phase A Voltage", "paramValue": "233.29 V"}],
     )
-    sensor = next(
-        sensor
-        for sensor in gateway.sensors.values()
-        if isinstance(sensor, GatewayGridVoltage)
-    )
+    sensor = next(sensor for sensor in gateway.sensors.values() if isinstance(sensor, GatewayGridVoltage))
 
     sensor._polling_coordinator.begin_refresh()  # type: ignore[attr-defined]
     assert await sensor._read_cloud_state(port) is None  # type: ignore[attr-defined]

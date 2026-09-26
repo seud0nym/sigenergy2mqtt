@@ -39,7 +39,6 @@ class SigenergyGateway(Device):
         *,
         model: str,
         sn: str,
-        hw: str,
         sw: str,
         grid_side_info: list[dict[str, Any]],
     ) -> None:
@@ -54,7 +53,6 @@ class SigenergyGateway(Device):
             protocol_version=ProtocolVersion.N_A,
             sn=sn,
             sw=sw,
-            hw=hw,
             plant_suffix=plant_suffix,
         )
         seen_suffixes: set[str] = set()
@@ -133,7 +131,6 @@ class SigenergyCloudControl(Device):
                     station_id=station_id,
                     model=str(gateway_info.get("deviceModel") or "Sigenergy Gateway"),
                     sn=str(gateway_info.get("snCode") or gateway_info.get("showSnCode") or ""),
-                    hw=str(gateway_info.get("gatewayMacAddress") or ""),
                     sw=str(gateway_info.get("softVersion") or ""),
                     grid_side_info=grid_side_info,
                 )

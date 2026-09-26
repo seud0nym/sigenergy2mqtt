@@ -41,6 +41,7 @@ class FakeCloudControlPort:
         min_duration=timedelta(minutes=1),
         max_duration=timedelta(minutes=1440),
     )
+    gateway_info = AsyncMock()
 
     def __init__(self, enabled: bool = False) -> None:
         self.enabled = enabled
@@ -538,13 +539,16 @@ async def test_power_limit_mqtt_command_reaches_cloud(sensor, read_payload, expe
         port.battery_power_limit.return_value = read_payload
     sensor.configure_mqtt_topics("cloud-device")
 
-    assert await sensor.set_value(
-        port,
-        AsyncMock(),
-        "3.5",
-        sensor.command_topic,
-        AsyncMock(),
-    ) is True
+    assert (
+        await sensor.set_value(
+            port,
+            AsyncMock(),
+            "3.5",
+            sensor.command_topic,
+            AsyncMock(),
+        )
+        is True
+    )
     assert sensor.gain == 1
     if expected_call[0] == "battery":
         port.set_battery_power_limit.assert_awaited_once_with(**expected_call[1])
