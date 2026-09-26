@@ -527,13 +527,37 @@ async def test_rejected_command_keeps_cloud_available(
     mysigen_adapter: MySigenCloudAdapter,
 ) -> None:
     mysigen_adapter._connected = True  # type: ignore[reportPrivateUsage]
-    mysigen_adapter._client.set_instant_manual_control.side_effect = SigenergyCloudAPIError("rejected")  # type: ignore[reportPrivateUsage]
+    mysigen_adapter._client.set_instant_manual_control.side_effect = SigenergyCloudAPIError(  # type: ignore[reportPrivateUsage]
+        "rejected", status_code=400, response_body='{"code": 123, "message": "rejected"}'
+    )
 
     with patch("sigenergy2mqtt.cloud.mysigen_adapter.Metrics.cloud_availability", new_callable=AsyncMock) as availability_metric:
         with pytest.raises(CloudControlRejectedError, match="rejected"):
             await mysigen_adapter.set_instant_override(InstantOverrideCommand(InstantControlMode.CHARGE, timedelta(minutes=30)))
 
     availability_metric.assert_awaited_once_with(True)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "vendor_error",
+    [
+        SigenergyCloudAPIError("server error", status_code=503, response_body='{"error": "unavailable"}'),
+        SigenergyCloudAPIError("invalid JSON", status_code=200, response_body="not-json"),
+    ],
+)
+async def test_failed_command_marks_cloud_unavailable(
+    mysigen_adapter: MySigenCloudAdapter,
+    vendor_error: SigenergyCloudAPIError,
+) -> None:
+    mysigen_adapter._connected = True  # type: ignore[reportPrivateUsage]
+    mysigen_adapter._client.set_instant_manual_control.side_effect = vendor_error  # type: ignore[reportPrivateUsage]
+
+    with patch("sigenergy2mqtt.cloud.mysigen_adapter.Metrics.cloud_availability", new_callable=AsyncMock) as availability_metric:
+        with pytest.raises(CloudControlRejectedError):
+            await mysigen_adapter.set_instant_override(InstantOverrideCommand(InstantControlMode.CHARGE, timedelta(minutes=30)))
+
+    availability_metric.assert_awaited_once_with(False)
 
 
 @pytest.mark.asyncio

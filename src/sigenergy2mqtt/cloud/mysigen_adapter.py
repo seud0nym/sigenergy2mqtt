@@ -1,6 +1,7 @@
 """Adapter for the vendored, unofficial mySigen app API."""
 
 import asyncio
+import json
 import logging
 import time
 from collections.abc import Awaitable, Callable
@@ -57,6 +58,21 @@ _TOPOLOGY_DEVICE_TYPES = {
 }
 
 logger = logging.getLogger(__name__)
+
+
+def _is_command_rejection(exc: SigenergyCloudAPIError, *, reject_api_errors: bool) -> bool:
+    """Return whether an API error is a valid rejection from a reachable API."""
+    if not reject_api_errors or exc.status_code is None or exc.status_code >= 500:
+        return False
+    if 400 <= exc.status_code < 500:
+        return True
+    if exc.response_body is None:
+        return False
+    try:
+        payload = json.loads(exc.response_body)
+    except json.JSONDecodeError:
+        return False
+    return isinstance(payload, dict)
 
 
 class MySigenCloudAdapter:
@@ -248,9 +264,9 @@ class MySigenCloudAdapter:
                 raise
             except SigenergyCloudAPIError as exc:
                 await Metrics.cloud_query_error()
-                # An unsuccessful API response (including a rejected control
-                # command) is an application error, not a connectivity outage.
-                await Metrics.cloud_availability(True)
+                # Only a well-formed command rejection proves availability.
+                # Server errors and malformed responses indicate an outage.
+                await Metrics.cloud_availability(_is_command_rejection(exc, reject_api_errors=reject_api_errors))
                 if reject_api_errors:
                     raise CloudControlRejectedError(str(exc)) from exc
                 raise CloudControlUnavailableError(str(exc)) from exc
