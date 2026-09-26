@@ -125,7 +125,7 @@ class InverterFirmwareVersion(ReadOnlySensor, HybridInverter, PVInverter):
             if device and device["sw"] != value:
                 logger.info(f"{device.log_identity} firmware change detected: {device['sw']} -> {value}")
                 try:
-                    previous_version = FirmwareVersion(device["hw"])
+                    previous_version = FirmwareVersion(device["sw"])
                     current_version = FirmwareVersion(cast(str, value))
                     previous_identity = (
                         previous_version.platform,
