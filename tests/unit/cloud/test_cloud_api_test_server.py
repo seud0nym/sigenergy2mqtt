@@ -70,6 +70,40 @@ async def test_simulate_internet_outage_cycles_and_restores_service(
     assert api.internet_outage_status == 502
 
 
+async def test_simulate_internet_outage_restores_service_when_cancelled(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    api = CloudApiTestServer(None, None)
+    outage_started = asyncio.Event()
+    hold_outage = asyncio.Event()
+    sleep_count = 0
+
+    async def controlled_sleep(_seconds: int) -> None:
+        nonlocal sleep_count
+        sleep_count += 1
+        if sleep_count == 2:
+            outage_started.set()
+            await hold_outage.wait()
+
+    monkeypatch.setattr(asyncio, "sleep", controlled_sleep)
+    task = asyncio.create_task(
+        simulate_internet_outage(
+            api,
+            wait_for_seconds=10,
+            duration_seconds=20,
+            repeated=True,
+        )
+    )
+
+    await outage_started.wait()
+    assert api.internet_available is False
+
+    task.cancel()
+    await task
+
+    assert api.internet_available is True
+
+
 async def test_simulate_internet_outage_rejects_non_server_error() -> None:
     with pytest.raises(ValueError, match="between 500 and 599"):
         await simulate_internet_outage(
