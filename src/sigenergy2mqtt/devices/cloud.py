@@ -8,7 +8,10 @@ from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices.base.device import Device
 from sigenergy2mqtt.sensors.cloud.read_only import (
     GatewayCommunicationStatus,
+    GatewayFirmwareVersion,
     GatewayInfoSnapshot,
+    GatewayModel,
+    GatewaySerialNumber,
     gateway_sensor_suffix,
     grid_sensor_details,
 )
@@ -37,24 +40,31 @@ class SigenergyGateway(Device):
         model: str,
         sn: str,
         hw: str,
+        sw: str,
         grid_side_info: list[dict[str, Any]],
     ) -> None:
-        name = "Sigenergy Gateway"
         plant_suffix = "" if plant_index == 0 else str(plant_index + 1)
         super().__init__(
-            name=name,
+            name=model,
             plant_index=plant_index,
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_{station_id}_gateway",
             manufacturer="Sigenergy",
-            model=model,
+            model="Gateway",
+            model_id=model,
             protocol_version=ProtocolVersion.N_A,
             sn=sn,
+            sw=sw,
             hw=hw,
             plant_suffix=plant_suffix,
         )
-        snapshot = GatewayInfoSnapshot()
-        self._add_sensor(GatewayCommunicationStatus(plant_index, station_id, snapshot))
         seen_suffixes: set[str] = set()
+        snapshot = GatewayInfoSnapshot()
+
+        self._add_sensor(GatewayCommunicationStatus(plant_index, station_id, snapshot))
+        self._add_sensor(GatewayFirmwareVersion(plant_index, station_id, snapshot))
+        self._add_sensor(GatewayModel(plant_index, station_id, snapshot))
+        self._add_sensor(GatewaySerialNumber(plant_index, station_id, snapshot))
+
         for entry in grid_side_info:
             param_key = entry.get("paramKey")
             if not isinstance(param_key, str) or not param_key:
@@ -119,11 +129,12 @@ class SigenergyCloudControl(Device):
             grid_side_info = [entry for entry in raw_grid_side_info if isinstance(entry, dict)] if isinstance(raw_grid_side_info, list) else []
             self._add_child_device(
                 SigenergyGateway(
-                    plant_index,
-                    station_id,
+                    plant_index=plant_index,
+                    station_id=station_id,
                     model=str(gateway_info.get("deviceModel") or "Sigenergy Gateway"),
                     sn=str(gateway_info.get("snCode") or gateway_info.get("showSnCode") or ""),
-                    hw=str(gateway_info.get("softVersion") or ""),
+                    hw=str(gateway_info.get("gatewayMacAddress") or ""),
+                    sw=str(gateway_info.get("softVersion") or ""),
                     grid_side_info=grid_side_info,
                 )
             )
