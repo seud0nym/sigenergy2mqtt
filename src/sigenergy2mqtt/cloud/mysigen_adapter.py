@@ -229,7 +229,9 @@ class MySigenCloudAdapter:
                 return result
             except SigenergyCloudRateLimitError as exc:
                 await Metrics.cloud_query_error(rate_limited=True)
-                await Metrics.cloud_availability(False)
+                # A rate-limit response proves the API is reachable even though
+                # it did not accept this request.
+                await Metrics.cloud_availability(True)
                 raise CloudControlRateLimitedError(str(exc)) from exc
             except SigenergyCloudAuthError as exc:
                 await Metrics.cloud_query_error(auth=True)
@@ -246,7 +248,9 @@ class MySigenCloudAdapter:
                 raise
             except SigenergyCloudAPIError as exc:
                 await Metrics.cloud_query_error()
-                await Metrics.cloud_availability(False)
+                # An unsuccessful API response (including a rejected control
+                # command) is an application error, not a connectivity outage.
+                await Metrics.cloud_availability(True)
                 if reject_api_errors:
                     raise CloudControlRejectedError(str(exc)) from exc
                 raise CloudControlUnavailableError(str(exc)) from exc

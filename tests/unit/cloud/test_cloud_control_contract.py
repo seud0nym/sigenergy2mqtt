@@ -523,6 +523,20 @@ async def test_operations_translate_vendor_errors(
 
 
 @pytest.mark.asyncio
+async def test_rejected_command_keeps_cloud_available(
+    mysigen_adapter: MySigenCloudAdapter,
+) -> None:
+    mysigen_adapter._connected = True  # type: ignore[reportPrivateUsage]
+    mysigen_adapter._client.set_instant_manual_control.side_effect = SigenergyCloudAPIError("rejected")  # type: ignore[reportPrivateUsage]
+
+    with patch("sigenergy2mqtt.cloud.mysigen_adapter.Metrics.cloud_availability", new_callable=AsyncMock) as availability_metric:
+        with pytest.raises(CloudControlRejectedError, match="rejected"):
+            await mysigen_adapter.set_instant_override(InstantOverrideCommand(InstantControlMode.CHARGE, timedelta(minutes=30)))
+
+    availability_metric.assert_awaited_once_with(True)
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     ("method_name", "invoke", "recovered_value"),
     [
