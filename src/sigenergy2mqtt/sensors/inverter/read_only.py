@@ -152,7 +152,7 @@ class InverterFirmwareVersion(ReadOnlySensor, HybridInverter, PVInverter):
 
                     logger.warning(f"Unable to parse firmware versions for restart decision: old={device['hw']} new={value}")
                     restart_controller.request(f"unparseable firmware version change on inverter {device.device_address}")
-                device["hw"] = value
+                device["sw"] = value
         return value
 
 
