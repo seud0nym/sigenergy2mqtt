@@ -1,5 +1,9 @@
 """Tests for the stateful cloud API facsimile used by integration tests."""
 
+import asyncio
+from unittest.mock import AsyncMock
+
+import pytest
 from aiohttp.test_utils import TestClient, TestServer
 from pymodbus.client.mixin import ModbusClientMixin
 
@@ -24,7 +28,132 @@ from tests.utils.modbus_test_server import (
     CloudApiTestServer,
     CustomDataBlock,
     LatencyBudget,
+    simulate_internet_outage,
 )
+from tests.utils import modbus_test_server as server_module
+
+
+async def test_cloud_api_test_server_rejects_requests_during_internet_outage() -> None:
+    api = CloudApiTestServer(None, None)
+    api.internet_available = False
+    api.internet_outage_status = 502
+
+    async with TestClient(TestServer(api.app())) as client:
+        response = await client.get("/device/owner/station/home")
+        assert response.status == 502
+        assert await response.json() == {
+            "code": 502,
+            "msg": "Cloud API unavailable due to simulated internet outage",
+        }
+
+
+async def test_simulate_internet_outage_cycles_and_restores_service(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    api = CloudApiTestServer(None, None)
+    availability_during_sleeps: list[bool] = []
+
+    async def record_sleep(_seconds: int) -> None:
+        availability_during_sleeps.append(api.internet_available)
+
+    monkeypatch.setattr(asyncio, "sleep", record_sleep)
+    await simulate_internet_outage(
+        api,
+        wait_for_seconds=10,
+        duration_seconds=20,
+        repeated=False,
+        status_code=502,
+    )
+
+    assert availability_during_sleeps == [True, False]
+    assert api.internet_available is True
+    assert api.internet_outage_status == 502
+
+
+async def test_simulate_internet_outage_restores_service_when_cancelled(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    api = CloudApiTestServer(None, None)
+    outage_started = asyncio.Event()
+    hold_outage = asyncio.Event()
+    sleep_count = 0
+
+    async def controlled_sleep(_seconds: int) -> None:
+        nonlocal sleep_count
+        sleep_count += 1
+        if sleep_count == 2:
+            outage_started.set()
+            await hold_outage.wait()
+
+    monkeypatch.setattr(asyncio, "sleep", controlled_sleep)
+    task = asyncio.create_task(
+        simulate_internet_outage(
+            api,
+            wait_for_seconds=10,
+            duration_seconds=20,
+            repeated=True,
+        )
+    )
+
+    await outage_started.wait()
+    assert api.internet_available is False
+
+    task.cancel()
+    await task
+
+    assert api.internet_available is True
+
+
+async def test_simulate_internet_outage_rejects_non_server_error() -> None:
+    with pytest.raises(ValueError, match="between 500 and 599"):
+        await simulate_internet_outage(
+            CloudApiTestServer(None, None),
+            wait_for_seconds=0,
+            duration_seconds=0,
+            repeated=False,
+            status_code=404,
+        )
+
+
+async def test_run_async_server_schedules_configured_internet_outage(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Exercise the startup branch controlled by TestConfig's outage flag."""
+    simulated_outage = AsyncMock()
+    monkeypatch.setattr(server_module, "simulate_internet_outage", simulated_outage)
+    monkeypatch.setattr(server_module, "get_sensor_instances", AsyncMock(return_value={}))
+    monkeypatch.setattr(
+        server_module.ModbusTcpServer,
+        "serve_forever",
+        AsyncMock(),
+    )
+    monkeypatch.setattr(server_module.TestConfig, "simulate_internet_outage", True)
+    monkeypatch.setattr(
+        server_module.TestConfig, "internet_outage_initial_delay_seconds", 11
+    )
+    monkeypatch.setattr(
+        server_module.TestConfig, "internet_outage_duration_seconds", 22
+    )
+    monkeypatch.setattr(server_module.TestConfig, "internet_outage_repeated", False)
+    monkeypatch.setattr(server_module.TestConfig, "internet_outage_status_code", 502)
+
+    await server_module.run_async_server(
+        mqtt_client=None,
+        modbus_client=None,
+        use_simplified_topics=True,
+        host="127.0.0.1",
+        port=0,
+        cloud_port=0,
+    )
+
+    simulated_outage.assert_awaited_once()
+    _, kwargs = simulated_outage.await_args
+    assert kwargs == {
+        "wait_for_seconds": 11,
+        "duration_seconds": 22,
+        "repeated": False,
+        "status_code": 502,
+    }
 
 
 async def test_cloud_api_test_server_exposes_all_limit_endpoints() -> None:
