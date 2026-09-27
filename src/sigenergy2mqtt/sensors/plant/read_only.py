@@ -1,5 +1,5 @@
 from datetime import timedelta, timezone
-from typing import cast
+from typing import Any, cast
 
 from sigenergy2mqtt.common import (
     PERCENTAGE,
@@ -58,7 +58,7 @@ class SystemTime(TimestampSensor, HybridInverter, PVInverter):
         )
         self.sanity_check.min_raw = 1640995200  # 1 January 2022 at 00:00:00 UTC
 
-    def set_state(self, state: float | str | list[bool] | list[int] | list[float]) -> bool:
+    def set_state(self, state: Any) -> bool:
         min_raw: float | int | None = None
         if isinstance(state, (int, float)) and state == 0 and self.sanity_check.min_raw is not None and self.sanity_check.min_raw > 0:
             min_raw = self.sanity_check.min_raw
@@ -95,7 +95,7 @@ class SystemTimeZone(ReadOnlySensor, HybridInverter, PVInverter):
         self.sanity_check.min_raw = -1440  # -24 hours
         self.sanity_check.max_raw = 1440  # +24 hours
 
-    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
+    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> Any:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
         if value is None:
             return None
@@ -109,7 +109,7 @@ class SystemTimeZone(ReadOnlySensor, HybridInverter, PVInverter):
         else:
             return None
 
-    def state2raw(self, state: float | str | None) -> float | int | str | None:
+    def state2raw(self, state: Any) -> Any:
         if state is None:
             return None
         if isinstance(state, str):
@@ -119,7 +119,7 @@ class SystemTimeZone(ReadOnlySensor, HybridInverter, PVInverter):
             sign = 1 if offset[0] == "+" else -1
             hours, minutes = map(int, offset[1:].split(":"))
             return sign * (hours * 60 + minutes)
-        return int(state)
+        return super().state2raw(state)
 
 
 class EMSWorkMode(ReadOnlySensor, HybridInverter, PVInverter):
@@ -159,7 +159,7 @@ class EMSWorkMode(ReadOnlySensor, HybridInverter, PVInverter):
         self.sanity_check.min_raw = 0
         self.sanity_check.max_raw = len(cast(list[str], self[DiscoveryKeys.OPTIONS])) - 1  # pyrefly: ignore
 
-    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
+    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> Any:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
         if raw or value is None:
             return value
@@ -203,7 +203,7 @@ class GridSensorStatus(ReadOnlySensor, HybridInverter, PVInverter):
         self.sanity_check.min_raw = 0
         self.sanity_check.max_raw = len(cast(list[str], self[DiscoveryKeys.OPTIONS])) - 1  # pyrefly: ignore
 
-    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
+    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> Any:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
         if raw or value is None:
             return value
@@ -310,7 +310,7 @@ class GridStatus(ReadOnlySensor, HybridInverter):
         self.sanity_check.min_raw = 0
         self.sanity_check.max_raw = len(cast(list[str], self[DiscoveryKeys.OPTIONS])) - 1  # pyrefly: ignore
 
-    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
+    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> Any:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
         if raw or value is None:
             return value

@@ -42,7 +42,7 @@ class CloudSensor(ReadableSensorMixin, AvailabilityMixin):
         return self.set_latest_state(cast(Any, value))
 
     @abc.abstractmethod
-    async def _read_cloud_state(self, port: CloudControlPort) -> bytes | float | int | str | None: ...
+    async def _read_cloud_state(self, port: CloudControlPort) -> Any: ...
 
 
 class CloudReadWriteSensor(WriteableSensorMixin, CloudSensor):

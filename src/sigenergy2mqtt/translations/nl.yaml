@@ -609,7 +609,34 @@ class:
       source_range: Modbus-registers {start}-{end}
     name: Totale DC EV Ontlaadenergie
   GatewayCommunicationStatus:
-    name: communication_status
+    name: Communication Status
+  GatewayFirmwareVersion:
+    name: Firmware Version
+  GatewayGridCurrent:
+    attributes:
+      comment: Grid-Side state read from the Gateway via the Cloud API
+  GatewayGridFrequency:
+    attributes:
+      comment: Grid-Side state read from the Gateway via the Cloud API
+  GatewayGridPower:
+    attributes:
+      comment: Grid-Side state read from the Gateway via the Cloud API
+  GatewayGridReactivePower:
+    attributes:
+      comment: Grid-Side state read from the Gateway via the Cloud API
+  GatewayGridSideInfoSensor:
+    attributes:
+      comment: Grid-Side state read from the Gateway via the Cloud API
+  GatewayGridText:
+    attributes:
+      comment: Grid-Side state read from the Gateway via the Cloud API
+  GatewayGridVoltage:
+    attributes:
+      comment: Grid-Side state read from the Gateway via the Cloud API
+  GatewayModel:
+    name: Model
+  GatewaySerialNumber:
+    name: Serial Number
   GeneralAlarm1:
     alarm:
       '0': Softwareversie komt niet overeen
@@ -3081,7 +3108,7 @@ cli:
   SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW:
     help: 'De standaardwaarde in kW die gebruikt wordt voor plausibiliteitscontroles om de maximale en minimale waarden voor de werkelijke waarde van vermogenssensoren en de deltawaarde van energiesensoren te valideren. De standaardwaarde is 500 kW per seconde, en metingen buiten het bereik worden genegeerd.'
   SIGENERGY2MQTT_SCAN_INTERVAL_CLOUD:
-    help: Het scaninterval in seconden voor het ophalen van cloudgegevens. De standaardwaarde is 30 (seconden) en de minimumwaarde is 10
+    help: The scan interval in seconds for retrieving cloud data. Default is 5 (seconds), and the minimum value is 1
   SIGENERGY2MQTT_SCAN_INTERVAL_HIGH:
     help: 'Scaninterval in seconden voor registers met hoge frequentie. Standaard: 10.'
   SIGENERGY2MQTT_SCAN_INTERVAL_LOW:

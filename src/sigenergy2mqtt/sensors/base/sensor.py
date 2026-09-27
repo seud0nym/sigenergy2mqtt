@@ -274,12 +274,12 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         self._update_generation += 1
 
     @property
-    def latest_raw_state(self) -> float | int | str | None:
+    def latest_raw_state(self) -> Any:
         """Get the most recent raw state value."""
         return None if len(self._states) == 0 else self._states[-1][1]
 
     @latest_raw_state.setter
-    def latest_raw_state(self, value: float | str):
+    def latest_raw_state(self, value: Any) -> None:
         """Update the most recent raw state value."""
         if len(self._states) > 0:
             latest = self._states.pop()
@@ -296,7 +296,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         return 0 if len(self._states) < 2 else self._states[-2][0]
 
     @property
-    def previous_raw_state(self) -> float | int | str | None:
+    def previous_raw_state(self) -> Any:
         """Get previous raw state value."""
         return None if len(self._states) < 2 else self._states[-2][1]
 
@@ -836,7 +836,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
 
         return {self.unique_id: dict(components)}
 
-    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
+    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> Any:
         """Get current sensor state.
 
         Args:
@@ -847,7 +847,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         Returns:
             Current state value or None
         """
-        state: float | int | str | None = None
+        state: Any = None
 
         if republish and len(self._states) > 0:
             state = self._states[-1][1]
@@ -923,7 +923,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
 
         return should_publish
 
-    async def _pre_publish(self, state: float | str | None, mqtt_client: mqtt.Client, transport: Any, republish: bool) -> None:
+    async def _pre_publish(self, state: Any, mqtt_client: mqtt.Client, transport: Any, republish: bool) -> None:
         """Extension point to allow sub-classes to participate in the publish process.
 
         Called after acquiring current state, but before passing to MQTT for publishing.
@@ -1148,7 +1148,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
                 except (ValueError, TypeError, RuntimeError) as error:
                     logger.warning(f"{self.log_identity} Failed to update derived sensor {sensor.log_identity} source values: {error!r}")
 
-    def set_latest_state(self, state: float | str | list[bool] | list[int] | list[float]) -> bool:
+    def set_latest_state(self, state: Any) -> bool:
         """Update latest state and propagate to derived sensors.
 
         Args:
@@ -1244,13 +1244,16 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         logger.warning(f"{self.log_identity} ignored attempt to change debug logging setting with value '{value}'")
         return False
 
-    def set_state(self, state: float | str | list[bool] | list[int] | list[float]) -> bool:
+    def set_state(self, state: Any) -> bool:
         """Update latest state without propagating to derived sensors.
 
         Args:
             state: The new state value
         """
-        if isinstance(state, str) or (isinstance(state, (int, float)) and self.sanity_check.is_sane(state, list(self._states))):
+        # Sanity ranges only apply to numeric states. Other state types are
+        # deliberately retained unchanged so sensors can expose structured
+        # values without the base class imposing a closed set of types.
+        if state is not None and (not isinstance(state, (int, float)) or self.sanity_check.is_sane(state, list(self._states))):
             if self.debug_logging:
                 logger.debug(f"{self.log_identity} Acquired raw state={state}")
 
@@ -1262,7 +1265,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
     # Helper Methods
     # =========================================================================
 
-    def _apply_gain_and_precision(self, state: float | None, raw: bool = False) -> float | int | None:
+    def _apply_gain_and_precision(self, state: Any, raw: bool = False) -> Any:
         """Apply gain and precision transformations to a state value.
 
         Args:
@@ -1355,7 +1358,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
 
         raise ValueError(f"'{value}' is not a valid option")
 
-    def state2raw(self, state: float | str | None) -> float | int | str | None:
+    def state2raw(self, state: Any) -> Any:
         """Convert processed state back to raw value.
 
         Args:
@@ -1388,7 +1391,10 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         if isinstance(value, (float, int)) and self.gain is not None and self.gain != 1:
             value *= self.gain
 
-        return int(value)
+        # Preserve structured and other non-numeric state types. Numeric
+        # values retain the historical integer conversion used for Modbus
+        # writes.
+        return int(value) if isinstance(value, (float, int)) else value
 
     def __eq__(self, other: object) -> bool:
         """Check equality based on unique_id."""
