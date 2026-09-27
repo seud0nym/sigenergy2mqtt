@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import time
 from unittest.mock import MagicMock, patch
 
@@ -113,6 +114,44 @@ class TestPublishMethod:
         assert published is True
         # Both state and raw should be published
         assert mqtt.publish.call_count >= 2
+
+    @pytest.mark.asyncio
+    async def test_publish_dict_uses_key_subtopics_and_json_raw_state(self):
+        s = self._sensor_with_topics("pub_dict")
+        s._publish_raw = True
+        mqtt = _mqtt_mock()
+        raw_state = {"power": 100.126, "status": "online"}
+
+        async def _update(**kw):
+            s._states.append((time.time(), raw_state))
+            return True
+
+        with patch.object(s, "_update_internal_state", side_effect=_update):
+            published = await s.publish(mqtt, None)
+
+        assert published is True
+        assert mqtt.publish.call_count == 3
+        state_calls = {call.args[0]: call.args[1] for call in mqtt.publish.call_args_list[:2]}
+        assert state_calls == {"test/state/power": "100.13", "test/state/status": "online"}
+        raw_call = mqtt.publish.call_args_list[2]
+        assert raw_call.args[0] == "test/raw"
+        assert json.loads(raw_call.args[1]) == raw_state
+
+    @pytest.mark.asyncio
+    async def test_publish_rejects_unsupported_state_type(self, caplog):
+        s = self._sensor_with_topics("pub_unsupported")
+        mqtt = _mqtt_mock()
+
+        async def _update(**kw):
+            s._states.append((time.time(), [1, 2, 3]))
+            return True
+
+        with patch.object(s, "_update_internal_state", side_effect=_update):
+            published = await s.publish(mqtt, None)
+
+        assert published is False
+        mqtt.publish.assert_not_called()
+        assert "Unsupported state type list" in caplog.text
 
     @pytest.mark.asyncio
     async def test_publish_exception_increments_failures(self):

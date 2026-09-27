@@ -961,6 +961,11 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
             await Metrics.mqtt_publish_attempt(physical_publish=False)
             return False
 
+        if not isinstance(state, (str, int, float, dict)):
+            logger.warning(f"{self.log_identity} Publishing SKIPPED: Unsupported state type {type(state).__name__} ({state=})")
+            await Metrics.mqtt_publish_attempt(physical_publish=False)
+            return False
+
         # Reset failure count on successful state acquisition
         if self._failures > 0:
             logger.info(f"{self.log_identity} Resetting failure count from {self._failures} to 0 because valid state acquired (state={state})")
@@ -970,12 +975,22 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         # Pre-publish handling
         await self._pre_publish(state, mqtt_client, transport, republish)
 
-        # Publish state
-        if self.debug_logging:
-            logger.debug(f"{self.log_identity} Publishing state={state} to topic {self[DiscoveryKeys.STATE_TOPIC]}")
+        # Publish state. Structured dictionary states use one subtopic per key.
+        state_topic = cast(str, self[DiscoveryKeys.STATE_TOPIC])
+        if isinstance(state, dict):
+            publish_results: list[bool] = []
+            for key, value in state.items():
+                topic = f"{state_topic}/{key}"
+                if self.debug_logging:
+                    logger.debug(f"{self.log_identity} Publishing state={value} to topic {topic}")
+                publish_results.append(self._publish_message(mqtt_client, topic, f"{value}", self._qos, self._retain))
+            published = bool(publish_results) and all(publish_results)
+        else:
+            if self.debug_logging:
+                logger.debug(f"{self.log_identity} Publishing state={state} to topic {state_topic}")
+            # Don't catch exceptions here - they will be handled by the caller
+            published = self._publish_message(mqtt_client, state_topic, f"{state}", self._qos, self._retain)
 
-        # Don't catch exceptions here - they will be handled by the caller
-        published = self._publish_message(mqtt_client, cast(str, self[DiscoveryKeys.STATE_TOPIC]), f"{state}", self._qos, self._retain)
         await Metrics.mqtt_publish_attempt(physical_publish=published)
         if not published:
             await Metrics.mqtt_publish_failure()
@@ -985,7 +1000,8 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
             if self.debug_logging:
                 logger.debug(f"{self.log_identity} Publishing raw state={self.latest_raw_state} to topic {self[DiscoveryKeys.RAW_STATE_TOPIC]}")
             try:
-                self._publish_message(mqtt_client, cast(str, self[DiscoveryKeys.RAW_STATE_TOPIC]), f"{self.latest_raw_state}", self._qos, self._retain, timeout=0.1)
+                raw_payload = json.dumps(self.latest_raw_state) if isinstance(state, dict) else f"{self.latest_raw_state}"
+                self._publish_message(mqtt_client, cast(str, self[DiscoveryKeys.RAW_STATE_TOPIC]), raw_payload, self._qos, self._retain, timeout=0.1)
             except ValueError:
                 logger.warning(f"{self.log_identity} Failed to publish raw state={self.latest_raw_state} to topic {self[DiscoveryKeys.RAW_STATE_TOPIC]} - Queue full")
             except RuntimeError:
@@ -1279,6 +1295,11 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
             if self.debug_logging:
                 logger.debug(f"{self.log_identity} Skipped applying gain={self.gain} and precision={self.precision} to state={state}")
             return None
+
+        if isinstance(state, dict):
+            if raw:
+                return state
+            return {key: self._apply_gain_and_precision(value) if isinstance(value, (int, float, dict)) else value for key, value in state.items()}
 
         if not isinstance(state, (float, int)) or raw:
             return state
