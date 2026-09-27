@@ -923,6 +923,20 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
 
         return should_publish
 
+    async def _pre_publish(self, state: float | str | None, mqtt_client: mqtt.Client, transport: Any, republish: bool) -> None:
+        """Extension point to allow sub-classes to participate in the publish process.
+
+        Called after acquiring current state, but before passing to MQTT for publishing.
+
+        Will NOT be called if state is not going to be published (i.e. if state is None).
+
+        Args:
+            state: The current state about to be published
+            mqtt_client: MQTT client for publishing
+            transport: Transport client for reading values
+            republish: If True, last known state is being republished
+        """
+
     async def _attempt_publish(self, mqtt_client: mqtt.Client, transport: Any, republish: bool) -> bool:
         from sigenergy2mqtt.metrics import Metrics
 
@@ -930,7 +944,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
 
         Args:
             mqtt_client: MQTT client for publishing
-            modbus_client: Modbus client for reading values
+            transport: Transport client for reading values
             republish: If True, republish last known state
 
         Returns:
@@ -952,6 +966,9 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
             logger.info(f"{self.log_identity} Resetting failure count from {self._failures} to 0 because valid state acquired (state={state})")
             self._failures = 0
             self._next_retry = None
+
+        # Pre-publish handling
+        await self._pre_publish(state, mqtt_client, transport, republish)
 
         # Publish state
         if self.debug_logging:
