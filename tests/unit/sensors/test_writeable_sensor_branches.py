@@ -208,7 +208,7 @@ class TestReadWriteSensorConfigureMqttTopics:
                 state_class="measurement",
                 icon=None,
                 gain=1,
-                precision=1
+                precision=1,
             )
             mock_control[DiscoveryKeys.STATE_TOPIC] = ""  # Empty → triggers RuntimeError
             mock_control[DiscoveryKeys.RAW_STATE_TOPIC] = ""
@@ -247,7 +247,7 @@ class TestReadWriteSensorConfigureMqttTopics:
 class TestNumericSensorValidateMinMaxRanges:
     def test_simple_min_greater_than_max_raises(self):
         """Line 345: AssertionError when minimum >= maximum (simple numbers)."""
-        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True), pytest.raises(AssertionError, match="min must be < max"):
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True), pytest.raises(AssertionError, match="min must be <= max"):
             NumericSensor(
                 None,
                 "Test",
@@ -315,7 +315,7 @@ class TestNumericSensorValidateMinMaxRanges:
                 None,
                 ProtocolVersion.V2_4,
             )
-            with pytest.raises(ValueError, match="min must be < max"):
+            with pytest.raises(ValueError, match="min must be <= max"):
                 sensor._validate_min_max_ranges((10.0, 20.0), (5.0, 1.0))  # Triggers line 357
 
 
