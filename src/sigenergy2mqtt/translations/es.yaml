@@ -609,7 +609,34 @@ class:
       source_range: Registros Modbus {start}-{end}
     name: Energía de Descarga CC VE Total
   GatewayCommunicationStatus:
-    name: communication_status
+    name: Communication Status
+  GatewayFirmwareVersion:
+    name: Firmware Version
+  GatewayGridCurrent:
+    attributes:
+      comment: Grid-Side state read from the Gateway via the Cloud API
+  GatewayGridFrequency:
+    attributes:
+      comment: Grid-Side state read from the Gateway via the Cloud API
+  GatewayGridPower:
+    attributes:
+      comment: Grid-Side state read from the Gateway via the Cloud API
+  GatewayGridReactivePower:
+    attributes:
+      comment: Grid-Side state read from the Gateway via the Cloud API
+  GatewayGridSideInfoSensor:
+    attributes:
+      comment: Grid-Side state read from the Gateway via the Cloud API
+  GatewayGridText:
+    attributes:
+      comment: Grid-Side state read from the Gateway via the Cloud API
+  GatewayGridVoltage:
+    attributes:
+      comment: Grid-Side state read from the Gateway via the Cloud API
+  GatewayModel:
+    name: Model
+  GatewaySerialNumber:
+    name: Serial Number
   GeneralAlarm1:
     alarm:
       '0': Discrepancia de versión de software
@@ -3081,7 +3108,7 @@ cli:
   SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW:
     help: El valor predeterminado en kW usado para comprobaciones de cordura para validar los valores máximo y mínimo de sensores de potencia y el valor delta de sensores de energía. El valor predeterminado es 500 kW por segundo, y las lecturas fuera del rango se ignoran.
   SIGENERGY2MQTT_SCAN_INTERVAL_CLOUD:
-    help: El intervalo de exploración, en segundos, para la obtención de datos de la nube. El valor por defecto es 30 (segundos) y el valor mínimo es 10.
+    help: The scan interval in seconds for retrieving cloud data. Default is 5 (seconds), and the minimum value is 1
   SIGENERGY2MQTT_SCAN_INTERVAL_HIGH:
     help: El intervalo de escaneo en segundos para registros Modbus que se escanean a alta frecuencia. El predeterminado es 10 (segundos), y el valor mínimo es 1.
   SIGENERGY2MQTT_SCAN_INTERVAL_LOW:

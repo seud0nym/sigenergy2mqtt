@@ -609,7 +609,34 @@ class:
       source_range: Modbus 寄存器 {start}-{end}
     name: 直流电动汽车累计放电电量
   GatewayCommunicationStatus:
-    name: communication_status
+    name: Communication Status
+  GatewayFirmwareVersion:
+    name: Firmware Version
+  GatewayGridCurrent:
+    attributes:
+      comment: Grid-Side state read from the Gateway via the Cloud API
+  GatewayGridFrequency:
+    attributes:
+      comment: Grid-Side state read from the Gateway via the Cloud API
+  GatewayGridPower:
+    attributes:
+      comment: Grid-Side state read from the Gateway via the Cloud API
+  GatewayGridReactivePower:
+    attributes:
+      comment: Grid-Side state read from the Gateway via the Cloud API
+  GatewayGridSideInfoSensor:
+    attributes:
+      comment: Grid-Side state read from the Gateway via the Cloud API
+  GatewayGridText:
+    attributes:
+      comment: Grid-Side state read from the Gateway via the Cloud API
+  GatewayGridVoltage:
+    attributes:
+      comment: Grid-Side state read from the Gateway via the Cloud API
+  GatewayModel:
+    name: Model
+  GatewaySerialNumber:
+    name: Serial Number
   GeneralAlarm1:
     alarm:
       '0': 软件版本不匹配
@@ -3081,7 +3108,7 @@ cli:
   SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW:
     help: '用于合理性检查的默认值（kW），用于验证功率传感器的当前值和能量传感器的增量值的最大和最小。默认值为每秒 500 kW，超出范围的读数将被忽略。'
   SIGENERGY2MQTT_SCAN_INTERVAL_CLOUD:
-    help: 用于获取云端数据的扫描间隔（单位：秒）。默认值为 30（秒），最小值为 10
+    help: The scan interval in seconds for retrieving cloud data. Default is 5 (seconds), and the minimum value is 1
   SIGENERGY2MQTT_SCAN_INTERVAL_HIGH:
     help: 高频寄存器扫描间隔。默认：10。
   SIGENERGY2MQTT_SCAN_INTERVAL_LOW:

@@ -60,6 +60,17 @@ class TestSensorBase:
         # Raw value (no gain/precision applied)
         assert sensor._apply_gain_and_precision(10.1234, raw=True) == 10.1234
 
+        # Numeric dictionary values are processed while other values are preserved
+        sensor._gain = 10.0
+        sensor.precision = 2
+        state = {"power": 100.126, "status": "online", "nested": {"current": 25.555}}
+        assert sensor._apply_gain_and_precision(state) == {
+            "power": 10.01,
+            "status": "online",
+            "nested": {"current": 2.56},
+        }
+        assert sensor._apply_gain_and_precision(state, raw=True) is state
+
     def test_configure_mqtt_topics(self, sensor):
         # Use _swap_active_config to ensure consistent behaviour
         cfg = Config()

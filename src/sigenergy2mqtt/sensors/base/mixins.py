@@ -305,7 +305,7 @@ class WriteableSensorMixin(Sensor):
             raise RuntimeError(f"{self.log_identity} command topic is not defined")
         return topic
 
-    def _raw2state(self, raw_value: float | str) -> float | int | str:
+    def _raw2state(self, raw_value: Any) -> Any:
         """Convert raw value to display state.
 
         Args:

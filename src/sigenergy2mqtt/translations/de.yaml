@@ -609,7 +609,34 @@ class:
       source_range: Modbus-Register {start}-{end}
     name: Gesamte DC-EV-Entladeenergie
   GatewayCommunicationStatus:
-    name: communication_status
+    name: Communication Status
+  GatewayFirmwareVersion:
+    name: Firmware Version
+  GatewayGridCurrent:
+    attributes:
+      comment: Grid-Side state read from the Gateway via the Cloud API
+  GatewayGridFrequency:
+    attributes:
+      comment: Grid-Side state read from the Gateway via the Cloud API
+  GatewayGridPower:
+    attributes:
+      comment: Grid-Side state read from the Gateway via the Cloud API
+  GatewayGridReactivePower:
+    attributes:
+      comment: Grid-Side state read from the Gateway via the Cloud API
+  GatewayGridSideInfoSensor:
+    attributes:
+      comment: Grid-Side state read from the Gateway via the Cloud API
+  GatewayGridText:
+    attributes:
+      comment: Grid-Side state read from the Gateway via the Cloud API
+  GatewayGridVoltage:
+    attributes:
+      comment: Grid-Side state read from the Gateway via the Cloud API
+  GatewayModel:
+    name: Model
+  GatewaySerialNumber:
+    name: Serial Number
   GeneralAlarm1:
     alarm:
       '0': Softwareversionskonflikt
@@ -3081,7 +3108,7 @@ cli:
   SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW:
     help: Der Standardwert in kW für Plausibilitätsprüfungen zur Validierung der Maximal- und Minimalwerte für Leistungssensoren und den Deltawert von Energiesensoren. Der Standardwert ist 500 kW pro Sekunde, Messwerte außerhalb des Bereichs werden ignoriert.
   SIGENERGY2MQTT_SCAN_INTERVAL_CLOUD:
-    help: Das Abfrageintervall in Sekunden zum Abrufen von Cloud-Daten. Der Standardwert beträgt 30 (Sekunden), der Mindestwert 10.
+    help: The scan interval in seconds for retrieving cloud data. Default is 5 (seconds), and the minimum value is 1
   SIGENERGY2MQTT_SCAN_INTERVAL_HIGH:
     help: Das Abtastintervall in Sekunden für Modbus-Register mit hoher Abtastfrequenz. Standard ist 10 (Sekunden), Minimalwert ist 1.
   SIGENERGY2MQTT_SCAN_INTERVAL_LOW:

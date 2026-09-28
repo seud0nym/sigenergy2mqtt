@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timezone
-from typing import cast
+from typing import Any, cast
 
 from sigenergy2mqtt.common import DeviceClass, InputType, ProtocolVersion
 from sigenergy2mqtt.modbus import ModbusDataType
@@ -58,7 +58,7 @@ class TimestampSensor(ReadOnlySensor):
         self._tz = tz
         self._tz_offset_seconds = tz.utcoffset(None).total_seconds()
 
-    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
+    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> Any:
         """Get timestamp state in ISO 8601 format.
 
         Args:
@@ -91,7 +91,7 @@ class TimestampSensor(ReadOnlySensor):
 
         return iso8601
 
-    def state2raw(self, state: float | str | None) -> float | int | str | None:
+    def state2raw(self, state: Any) -> Any:
         """Convert ISO 8601 timestamp back to Unix timestamp.
 
         Args:
@@ -105,6 +105,9 @@ class TimestampSensor(ReadOnlySensor):
 
         if isinstance(state, (float, int)):
             return int(state)
+
+        if not isinstance(state, str):
+            return super().state2raw(state)
 
         if state == "--":  # Home Assistant uses "--" to represent unavailable timestamps??
             return 0
