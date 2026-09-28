@@ -1,9 +1,9 @@
-import sigenergy2mqtt.sensors.plant.derived as derived
 import sigenergy2mqtt.sensors.plant.read_only as ro
 import sigenergy2mqtt.sensors.plant.read_write as rw
 from sigenergy2mqtt.common import DeviceType, ProtocolVersion
 from sigenergy2mqtt.devices import ModbusDevice
 from sigenergy2mqtt.modbus import ModbusClient
+from sigenergy2mqtt.sensors.plant import derived
 
 
 class GridSensor(ModbusDevice):

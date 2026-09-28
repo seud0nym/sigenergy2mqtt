@@ -3,7 +3,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, cast
 
-from sigenergy2mqtt.common import PERCENTAGE, DeviceClass, StateClass, UnitOfEnergy, UnitOfPower
+from sigenergy2mqtt.common import (
+    PERCENTAGE,
+    DeviceClass,
+    StateClass,
+    UnitOfEnergy,
+    UnitOfPower,
+)
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus import ModbusDataType
 

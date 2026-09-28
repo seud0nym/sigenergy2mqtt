@@ -152,9 +152,8 @@ async def test_operation_normalizes_aiohttp_transport_errors(
         "truncated response"
     )
 
-    with patch("sigenergy2mqtt.cloud.mysigen_adapter.Metrics.cloud_availability", new_callable=AsyncMock) as availability_metric:
-        with pytest.raises(CloudControlUnavailableError, match="truncated response"):
-            await mysigen_adapter.get_operational_mode()
+    with patch("sigenergy2mqtt.cloud.mysigen_adapter.Metrics.cloud_availability", new_callable=AsyncMock) as availability_metric, pytest.raises(CloudControlUnavailableError, match="truncated response"):
+        await mysigen_adapter.get_operational_mode()
 
     assert mysigen_adapter._connected is True  # type: ignore[reportPrivateUsage]
     availability_metric.assert_awaited_once_with(False)
@@ -175,9 +174,9 @@ async def test_unexpected_operation_error_is_counted(
     with (
         patch("sigenergy2mqtt.cloud.mysigen_adapter.Metrics.cloud_query", new_callable=AsyncMock) as query_metric,
         patch("sigenergy2mqtt.cloud.mysigen_adapter.Metrics.cloud_query_error", new_callable=AsyncMock) as error_metric,
+        pytest.raises(KeyError, match="missing field"),
     ):
-        with pytest.raises(KeyError, match="missing field"):
-            await mysigen_adapter.get_operational_mode()
+        await mysigen_adapter.get_operational_mode()
 
     query_metric.assert_awaited_once()
     error_metric.assert_awaited_once_with()
@@ -531,9 +530,8 @@ async def test_rejected_command_keeps_cloud_available(
         "rejected", status_code=400, response_body='{"code": 123, "message": "rejected"}'
     )
 
-    with patch("sigenergy2mqtt.cloud.mysigen_adapter.Metrics.cloud_availability", new_callable=AsyncMock) as availability_metric:
-        with pytest.raises(CloudControlRejectedError, match="rejected"):
-            await mysigen_adapter.set_instant_override(InstantOverrideCommand(InstantControlMode.CHARGE, timedelta(minutes=30)))
+    with patch("sigenergy2mqtt.cloud.mysigen_adapter.Metrics.cloud_availability", new_callable=AsyncMock) as availability_metric, pytest.raises(CloudControlRejectedError, match="rejected"):
+        await mysigen_adapter.set_instant_override(InstantOverrideCommand(InstantControlMode.CHARGE, timedelta(minutes=30)))
 
     availability_metric.assert_awaited_once_with(True)
 
@@ -556,9 +554,8 @@ async def test_failed_command_marks_cloud_unavailable(
     mysigen_adapter._connected = True  # type: ignore[reportPrivateUsage]
     mysigen_adapter._client.set_instant_manual_control.side_effect = vendor_error  # type: ignore[reportPrivateUsage]
 
-    with patch("sigenergy2mqtt.cloud.mysigen_adapter.Metrics.cloud_availability", new_callable=AsyncMock) as availability_metric:
-        with pytest.raises(CloudControlRejectedError):
-            await mysigen_adapter.set_instant_override(InstantOverrideCommand(InstantControlMode.CHARGE, timedelta(minutes=30)))
+    with patch("sigenergy2mqtt.cloud.mysigen_adapter.Metrics.cloud_availability", new_callable=AsyncMock) as availability_metric, pytest.raises(CloudControlRejectedError):
+        await mysigen_adapter.set_instant_override(InstantOverrideCommand(InstantControlMode.CHARGE, timedelta(minutes=30)))
 
     availability_metric.assert_awaited_once_with(False)
 
@@ -572,9 +569,8 @@ async def test_application_error_from_read_keeps_cloud_available(
         "application error", status_code=200, response_body='{"code": 123, "message": "not ready"}'
     )
 
-    with patch("sigenergy2mqtt.cloud.mysigen_adapter.Metrics.cloud_availability", new_callable=AsyncMock) as availability_metric:
-        with pytest.raises(CloudControlUnavailableError, match="application error"):
-            await mysigen_adapter.get_operational_mode()
+    with patch("sigenergy2mqtt.cloud.mysigen_adapter.Metrics.cloud_availability", new_callable=AsyncMock) as availability_metric, pytest.raises(CloudControlUnavailableError, match="application error"):
+        await mysigen_adapter.get_operational_mode()
 
     availability_metric.assert_awaited_once_with(True)
 

@@ -11,7 +11,13 @@ import os
 import signal
 import sys
 
-from sigenergy2mqtt.config import ConfigurationError, active_config, auto_discovery, initialize, initialize_async
+from sigenergy2mqtt.config import (
+    ConfigurationError,
+    active_config,
+    auto_discovery,
+    initialize,
+    initialize_async,
+)
 from sigenergy2mqtt.main import async_main, validate_connections
 from sigenergy2mqtt.metrics.metrics import Metrics
 

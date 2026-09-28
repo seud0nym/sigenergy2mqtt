@@ -18,10 +18,21 @@ from datetime import time as time_obj
 from typing import Any
 
 from pydantic import Field, field_validator, model_validator
-from pydantic_settings import BaseSettings, InitSettingsSource, PydanticBaseSettingsSource, SettingsConfigDict
+from pydantic_settings import (
+    BaseSettings,
+    InitSettingsSource,
+    PydanticBaseSettingsSource,
+    SettingsConfigDict,
+)
 
 from sigenergy2mqtt import i18n
-from sigenergy2mqtt.common import WEEKDAYS, WEEKENDS, ConsumptionMethod, OutputField, TariffType
+from sigenergy2mqtt.common import (
+    WEEKDAYS,
+    WEEKENDS,
+    ConsumptionMethod,
+    OutputField,
+    TariffType,
+)
 from sigenergy2mqtt.config.coerce import _bool
 from sigenergy2mqtt.config.merge import (
     apply_modbus_env_override,
@@ -43,7 +54,10 @@ from sigenergy2mqtt.config.sources import (
     EnvSettingsSource,
     RuamelYamlSettingsSource,
 )
-from sigenergy2mqtt.config.validators import validate_log_level, validate_sensor_overrides
+from sigenergy2mqtt.config.validators import (
+    validate_log_level,
+    validate_sensor_overrides,
+)
 
 logger = logging.getLogger(__name__)
 

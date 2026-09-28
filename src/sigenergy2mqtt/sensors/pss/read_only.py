@@ -18,7 +18,13 @@ from sigenergy2mqtt.common import (
 from sigenergy2mqtt.common.types import NonInverter
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus import ModbusDataType
-from sigenergy2mqtt.sensors.base import AlarmSensor, DiscoveryKeys, NumericSensor, ReadOnlySensor, ScanInterval
+from sigenergy2mqtt.sensors.base import (
+    AlarmSensor,
+    DiscoveryKeys,
+    NumericSensor,
+    ReadOnlySensor,
+    ScanInterval,
+)
 
 
 class PSSModelType(ReadOnlySensor, NonInverter):

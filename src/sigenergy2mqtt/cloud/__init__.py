@@ -10,8 +10,8 @@ from .models import (
 from .port import CloudControlPort
 
 __all__ = [
-    "CloudControlPort",
     "Capabilities",
+    "CloudControlPort",
     "ControlFeature",
     "InstantControlMode",
     "InstantControlStatus",

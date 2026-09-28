@@ -6,9 +6,21 @@ values over MQTT.
 import logging
 from typing import Any, cast
 
-from sigenergy2mqtt.common import DeviceClass, ProtocolVersion, ScanIntervalDefault, UnitOfTime
+from sigenergy2mqtt.common import (
+    DeviceClass,
+    ProtocolVersion,
+    ScanIntervalDefault,
+    UnitOfTime,
+)
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.sensors.base import DiscoveryKeys, NumericSensorMixin, ReadableSensorMixin, SelectSensorMixin, SwitchSensorMixin, WriteableSensorMixin
+from sigenergy2mqtt.sensors.base import (
+    DiscoveryKeys,
+    NumericSensorMixin,
+    ReadableSensorMixin,
+    SelectSensorMixin,
+    SwitchSensorMixin,
+    WriteableSensorMixin,
+)
 
 logger = logging.getLogger(__name__)
 

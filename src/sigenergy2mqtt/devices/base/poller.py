@@ -9,7 +9,12 @@ from pymodbus import ModbusException
 
 from sigenergy2mqtt.common import Constants
 from sigenergy2mqtt.modbus import ModbusClient, ModbusLock, ModbusLockFactory
-from sigenergy2mqtt.sensors.base import EnergyDailyAccumulationSensor, ModbusSensorMixin, ReadableSensorMixin, Sensor
+from sigenergy2mqtt.sensors.base import (
+    EnergyDailyAccumulationSensor,
+    ModbusSensorMixin,
+    ReadableSensorMixin,
+    Sensor,
+)
 
 from .scan_groups import ReadableSensorGroup
 

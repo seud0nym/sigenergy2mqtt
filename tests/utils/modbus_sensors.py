@@ -28,7 +28,6 @@ os.environ["SIGENERGY2MQTT_MODBUS_HOST"] = "127.0.0.1"
 if __name__ == "__main__":
     sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
-from pymodbus.client.mixin import ModbusClientMixin
 from pymodbus.pdu import ExceptionResponse, ModbusPDU
 
 from sigenergy2mqtt.common import (
@@ -56,13 +55,7 @@ from sigenergy2mqtt.devices import (
     PowerPlant,
 )
 from sigenergy2mqtt.metrics import MetricsService
-from sigenergy2mqtt.modbus import ModbusDataType
-from sigenergy2mqtt.sensors.ev.ac_charger_read_only import (
-    ACChargerInputBreaker,
-    ACChargerRatedCurrent,
-    ACChargerRunningState,
-)
-from sigenergy2mqtt.sensors.ev.ac_charger_read_write import ACChargerStatus
+from sigenergy2mqtt.modbus import ModbusClient, ModbusDataType
 from sigenergy2mqtt.sensors.base import (
     AlarmCombinedSensor,
     AlarmSensor,
@@ -74,6 +67,12 @@ from sigenergy2mqtt.sensors.base import (
     TimestampSensor,
     WriteOnlySensorMixin,
 )
+from sigenergy2mqtt.sensors.ev.ac_charger_read_only import (
+    ACChargerInputBreaker,
+    ACChargerRatedCurrent,
+    ACChargerRunningState,
+)
+from sigenergy2mqtt.sensors.ev.ac_charger_read_write import ACChargerStatus
 from sigenergy2mqtt.sensors.inverter.read_only import (
     DCChargerRatedChargingPower,
     DCChargerRatedDischargingPower,
@@ -148,7 +147,7 @@ RATED_FREQUENCY: float = 50.0
 TIME_ZONE: int = 600
 
 
-class DummyModbusClient(ModbusClientMixin):
+class DummyModbusClient(ModbusClient):
     """A simulated Modbus client that serves pre-populated register data from memory.
 
     Implements the same async read interface as the real Modbus client, returning
@@ -162,7 +161,7 @@ class DummyModbusClient(ModbusClientMixin):
     """
 
     def __init__(self, data: dict[int, list[int]]):
-        super().__init__()
+        super().__init__(host="127.0.0.1")
 
         self.data = data
 
@@ -187,11 +186,11 @@ class DummyModbusClient(ModbusClientMixin):
             return ExceptionResponse(function_code=0x03, exception_code=0x02, device_id=device_id)  # Modbus exception response for "Illegal Data Address"
         return ModbusPDU(registers=result)
 
-    async def read_holding_registers(self, address: int, count: int, device_id: int, trace: bool = False) -> ModbusPDU:  # noqa: unused arguments required to match real implementation
+    async def read_holding_registers(self, address: int, *, count: int = 1, device_id: int = 1, no_response_expected: bool = False, trace: bool = False) -> ModbusPDU:
         """Simulate a holding register read by returning pre-populated data for ``address``."""
         return self.get_state(address, device_id)
 
-    async def read_input_registers(self, address: int, count: int, device_id: int, trace: bool = False) -> ModbusPDU:  # noqa: unused arguments required to match real implementation
+    async def read_input_registers(self, address: int, *, count: int = 1, device_id: int = 1, no_response_expected: bool = False, trace: bool = False) -> ModbusPDU:
         """Simulate an input register read by returning pre-populated data for ``address``."""
         return self.get_state(address, device_id)
 
@@ -266,7 +265,7 @@ async def get_sensor_instances(
     ac_charger_device_address: int = 2,
     firmware_version: str = FIRMWARE_VERSION,
     protocol_version: ProtocolVersion | None = None,
-    output_type: OutputType = OUTPUT_TYPE,
+    output_type: int = OUTPUT_TYPE,
     concrete_sensor_check: bool = False,
 ) -> dict[str, Sensor]:
     """Instantiate the full sensor graph and return all sensors keyed by unique ID.
@@ -413,8 +412,9 @@ async def get_sensor_instances(
 
         for d in s.derived_sensors.values():
             add_sensor_instance(d)
-        if hasattr(s, "alarms") and isinstance(s.alarms, list):
-            for alarm in s.alarms:
+        alarms = getattr(s, "alarms", None)
+        if isinstance(alarms, list):
+            for alarm in alarms:
                 add_sensor_instance(alarm)
 
     find_concrete_classes(Sensor)

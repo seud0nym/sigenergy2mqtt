@@ -40,7 +40,7 @@ class TokenBundle:
     expires_at: float
 
     @classmethod
-    def from_api(cls, payload: dict[str, Any]) -> "TokenBundle":
+    def from_api(cls, payload: dict[str, Any]) -> TokenBundle:
         """Create a token bundle from Sigenergy's OAuth response shape."""
         expires_in = int(payload["expires_in"])
         return cls(

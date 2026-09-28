@@ -17,6 +17,7 @@ from .models import (
 )
 
 __all__ = [
+    "UNLIMITED_POWER_KW",
     "BatteryLevelSettings",
     "InstantManualControl",
     "InstantManualMode",
@@ -28,6 +29,5 @@ __all__ = [
     "SigenergyCloudError",
     "SigenergyCloudRateLimitError",
     "SigenergyCloudTokenExpiredError",
-    "UNLIMITED_POWER_KW",
     "is_unlimited_power",
 ]

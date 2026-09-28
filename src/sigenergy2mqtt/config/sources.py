@@ -17,7 +17,15 @@ from typing import Any
 
 from pydantic_settings import BaseSettings, PydanticBaseSettingsSource
 
-from sigenergy2mqtt.config.coerce import _bool, _float, _int, _int_list, _invert_bool, _set, _str_list
+from sigenergy2mqtt.config.coerce import (
+    _bool,
+    _float,
+    _int,
+    _int_list,
+    _invert_bool,
+    _set,
+    _str_list,
+)
 
 from . import const
 

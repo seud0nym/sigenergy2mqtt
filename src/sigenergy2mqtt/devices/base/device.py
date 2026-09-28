@@ -7,12 +7,26 @@ from typing import Any, Literal, cast
 
 import paho.mqtt.client as mqtt
 
-from sigenergy2mqtt.common import DeviceType, HybridInverter, ProtocolVersion, PVInverter
+from sigenergy2mqtt.common import (
+    DeviceType,
+    HybridInverter,
+    ProtocolVersion,
+    PVInverter,
+)
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.config.models import RegisterAccess
 from sigenergy2mqtt.i18n import _t
 from sigenergy2mqtt.mqtt import MqttHandler
-from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, CrossDeviceDerivedSensor, DerivedSensor, ObservableMixin, ReadableSensorMixin, Sensor, WriteableSensorMixin, WriteOnlySensorMixin
+from sigenergy2mqtt.sensors.base import (
+    AlarmCombinedSensor,
+    CrossDeviceDerivedSensor,
+    DerivedSensor,
+    ObservableMixin,
+    ReadableSensorMixin,
+    Sensor,
+    WriteableSensorMixin,
+    WriteOnlySensorMixin,
+)
 
 from .ha_publisher import HaPublisherMixin
 from .poller import SensorGroupPoller

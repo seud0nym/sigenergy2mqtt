@@ -258,7 +258,9 @@ class TestPlantConsumedPowerCoverage:
                     assert v.state is None
 
     def test_finalise_binding_with_chargers(self):
-        from sigenergy2mqtt.sensors.ev.ac_charger_read_only import ACChargerChargingPower
+        from sigenergy2mqtt.sensors.ev.ac_charger_read_only import (
+            ACChargerChargingPower,
+        )
 
         charger = MagicMock()
         # Create a dummy ACChargerChargingPower instance without calling its __init__

@@ -12,6 +12,7 @@ from sigenergy2mqtt.sensors.inverter.read_only import (
     InverterSerialNumber,
     RatedActivePower,
 )
+from tests.utils import modbus_test_server as server_module
 from tests.utils.modbus_sensors import (
     AC_CHARGER_SERIAL,
     DC_CHARGER_SERIAL,
@@ -30,7 +31,6 @@ from tests.utils.modbus_test_server import (
     LatencyBudget,
     simulate_internet_outage,
 )
-from tests.utils import modbus_test_server as server_module
 
 
 async def test_cloud_api_test_server_rejects_requests_during_internet_outage() -> None:

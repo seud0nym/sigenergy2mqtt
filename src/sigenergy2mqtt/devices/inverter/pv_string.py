@@ -1,7 +1,11 @@
 from sigenergy2mqtt.common import DeviceType, ProtocolVersion
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import ModbusDevice
-from sigenergy2mqtt.sensors.inverter.derived import PVStringDailyEnergy, PVStringLifetimeEnergy, PVStringPower
+from sigenergy2mqtt.sensors.inverter.derived import (
+    PVStringDailyEnergy,
+    PVStringLifetimeEnergy,
+    PVStringPower,
+)
 from sigenergy2mqtt.sensors.inverter.read_only import PVCurrentSensor, PVVoltageSensor
 
 

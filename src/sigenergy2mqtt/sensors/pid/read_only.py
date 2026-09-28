@@ -1,10 +1,25 @@
 from __future__ import annotations
 
-from sigenergy2mqtt.common import DeviceClass, InputType, ProtocolVersion, UnitOfElectricCurrent, UnitOfElectricPotential, UnitOfFrequency, UnitOfTemperature
+from sigenergy2mqtt.common import (
+    DeviceClass,
+    InputType,
+    ProtocolVersion,
+    UnitOfElectricCurrent,
+    UnitOfElectricPotential,
+    UnitOfFrequency,
+    UnitOfTemperature,
+)
 from sigenergy2mqtt.common.types import NonInverter
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus import ModbusDataType
-from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, AlarmSensor, DiscoveryKeys, NumericSensor, ReadOnlySensor, ScanInterval
+from sigenergy2mqtt.sensors.base import (
+    AlarmCombinedSensor,
+    AlarmSensor,
+    DiscoveryKeys,
+    NumericSensor,
+    ReadOnlySensor,
+    ScanInterval,
+)
 
 
 class PIDModelType(ReadOnlySensor, NonInverter):

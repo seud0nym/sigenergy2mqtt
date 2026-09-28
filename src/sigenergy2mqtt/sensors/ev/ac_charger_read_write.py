@@ -1,4 +1,9 @@
-from sigenergy2mqtt.common import DeviceClass, InputType, ProtocolVersion, UnitOfElectricCurrent
+from sigenergy2mqtt.common import (
+    DeviceClass,
+    InputType,
+    ProtocolVersion,
+    UnitOfElectricCurrent,
+)
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus import ModbusDataType
 

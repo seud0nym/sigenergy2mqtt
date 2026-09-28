@@ -7,13 +7,25 @@ from typing import Any
 
 import paho.mqtt.client as mqtt
 
-from sigenergy2mqtt.common import DeviceClass, HybridInverter, ProtocolVersion, PVInverter, StateClass, UnitOfPower
+from sigenergy2mqtt.common import (
+    DeviceClass,
+    HybridInverter,
+    ProtocolVersion,
+    PVInverter,
+    StateClass,
+    UnitOfPower,
+)
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.base import SanityCheckException
 from sigenergy2mqtt.sensors.inverter.read_only import ActivePower
 
-from ..base import DerivedSensor, EnergyDailyAccumulationSensor, EnergyLifetimeAccumulationSensor, Sensor
+from ..base import (
+    DerivedSensor,
+    EnergyDailyAccumulationSensor,
+    EnergyLifetimeAccumulationSensor,
+    Sensor,
+)
 from .read_only import ChargeDischargePower, PVCurrentSensor, PVVoltageSensor
 
 logger = logging.getLogger(__name__)

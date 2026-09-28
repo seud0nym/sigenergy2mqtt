@@ -5,12 +5,31 @@ from typing import Any
 
 import paho.mqtt.client as mqtt
 
-from sigenergy2mqtt.common import ConsumptionMethod, DeviceClass, HybridInverter, ProtocolVersion, PVInverter, StateClass, UnitOfEnergy, UnitOfPower, UnitOfTime
+from sigenergy2mqtt.common import (
+    ConsumptionMethod,
+    DeviceClass,
+    HybridInverter,
+    ProtocolVersion,
+    PVInverter,
+    StateClass,
+    UnitOfEnergy,
+    UnitOfPower,
+    UnitOfTime,
+)
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus import ModbusDataType
 
+from ..base import (
+    CrossDeviceDerivedSensor,
+    DerivedSensor,
+    DiscoveryKeys,
+    EnergyDailyAccumulationSensor,
+    PVPowerSensor,
+    Sensor,
+    SimpleEnergyDailyAccumulationSensor,
+    UnpublishResetSensorMixin,
+)
 from ..ev.ac_charger_read_only import ACChargerChargingPower
-from ..base import CrossDeviceDerivedSensor, DerivedSensor, DiscoveryKeys, EnergyDailyAccumulationSensor, PVPowerSensor, Sensor, SimpleEnergyDailyAccumulationSensor, UnpublishResetSensorMixin
 from ..inverter.derived import InverterSelfConsumedPower
 from ..inverter.read_only import DCChargerOutputPower
 from .read_only import (
@@ -610,7 +629,9 @@ class PlantConsumedPower(CrossDeviceDerivedSensor, HybridInverter, PVInverter):
 
         if self.method == ConsumptionMethod.CALCULATED:
             from sigenergy2mqtt.devices.base.registry import DeviceRegistry
-            from sigenergy2mqtt.sensors.ev.ac_charger_read_only import ACChargerChargingPower
+            from sigenergy2mqtt.sensors.ev.ac_charger_read_only import (
+                ACChargerChargingPower,
+            )
             from sigenergy2mqtt.sensors.inverter.read_only import DCChargerOutputPower
 
             for device in DeviceRegistry.get(plant_index):

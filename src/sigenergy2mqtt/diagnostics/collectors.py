@@ -4,7 +4,12 @@ from sigenergy2mqtt.config import ConsumptionSource, active_config
 from sigenergy2mqtt.i18n import _t
 from sigenergy2mqtt.metrics.metrics import Metrics
 from sigenergy2mqtt.sensors.base.constants import DiscoveryKeys
-from sigenergy2mqtt.sensors.base.writeable import NumericSensorMixin, SelectSensorMixin, SwitchSensorMixin, WriteOnlySensorMixin
+from sigenergy2mqtt.sensors.base.writeable import (
+    NumericSensorMixin,
+    SelectSensorMixin,
+    SwitchSensorMixin,
+    WriteOnlySensorMixin,
+)
 
 from .registry import diagnostics_registry
 

@@ -10,7 +10,13 @@ from typing import Any, Final, cast
 
 from pymodbus.pdu import ExceptionResponse
 
-from sigenergy2mqtt.common import DeviceClass, HybridInverter, InputType, ProtocolVersion, PVInverter
+from sigenergy2mqtt.common import (
+    DeviceClass,
+    HybridInverter,
+    InputType,
+    ProtocolVersion,
+    PVInverter,
+)
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.i18n import _t
 from sigenergy2mqtt.modbus import ModbusDataType
@@ -207,7 +213,7 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
         if state == AlarmSensor.NO_ALARM:
             return 0
         if isinstance(state, str):
-            raise ValueError(f"Unknown alarm state: {state}")
+            raise TypeError(f"Unknown alarm state: {state}")
         return super().state2raw(state)
 
 

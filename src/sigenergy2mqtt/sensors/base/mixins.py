@@ -336,7 +336,11 @@ class WriteableSensorMixin(Sensor):
         # Early return removed to allow string processing below
 
         # Lazy import to avoid circular dependencies
-        from .writeable import SelectSensorMixin, SwitchSensorMixin, WriteOnlySensorMixin
+        from .writeable import (
+            SelectSensorMixin,
+            SwitchSensorMixin,
+            WriteOnlySensorMixin,
+        )
 
         # Handle Option-based sensors
         if DiscoveryKeys.OPTIONS in self and isinstance(raw_value, (int, float)):

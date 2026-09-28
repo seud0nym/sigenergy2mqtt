@@ -11,13 +11,23 @@ from typing import Any
 import paho.mqtt.client as mqtt
 from paho.mqtt import MQTTException
 
-from sigenergy2mqtt.common import PERCENTAGE, ProtocolVersion, UnitOfTemperature, service_health_registry
+from sigenergy2mqtt.common import (
+    PERCENTAGE,
+    ProtocolVersion,
+    UnitOfTemperature,
+    service_health_registry,
+)
 from sigenergy2mqtt.config import active_config, is_docker
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.diagnostics import diagnostics_registry
 from sigenergy2mqtt.i18n import _t
 from sigenergy2mqtt.modbus import ModbusClientFactory
-from sigenergy2mqtt.mqtt import MqttHandler, mqtt_health_registry, mqtt_setup, mqtt_teardown
+from sigenergy2mqtt.mqtt import (
+    MqttHandler,
+    mqtt_health_registry,
+    mqtt_setup,
+    mqtt_teardown,
+)
 from sigenergy2mqtt.sensors.base import DerivedSensor, ReadableSensorMixin
 from sigenergy2mqtt.sensors.monitor import MonitoredSensor
 
@@ -338,7 +348,9 @@ class MonitorService(Device):
                     self._health_check_failures += 1
                     logger.warning(f"{self.log_identity} Health check failure count: {self._health_check_failures}/{active_config.health_check.retries}")
                     if self._health_check_failures >= active_config.health_check.retries:
-                        from sigenergy2mqtt.main.restart import restart_controller  # lazy import to avoid circular dependency
+                        from sigenergy2mqtt.main.restart import (
+                            restart_controller,  # lazy import to avoid circular dependency
+                        )
 
                         restart_controller.request("Health check failed repeatedly")
                         self._health_check_failures = 0  # reset to suppress repeat calls until restart completes

@@ -1,6 +1,15 @@
 from typing import Any
 
-from sigenergy2mqtt.common import DeviceClass, InputType, ProtocolVersion, StateClass, UnitOfElectricCurrent, UnitOfElectricPotential, UnitOfEnergy, UnitOfPower
+from sigenergy2mqtt.common import (
+    DeviceClass,
+    InputType,
+    ProtocolVersion,
+    StateClass,
+    UnitOfElectricCurrent,
+    UnitOfElectricPotential,
+    UnitOfEnergy,
+    UnitOfPower,
+)
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.base import DiscoveryKeys, ScanInterval

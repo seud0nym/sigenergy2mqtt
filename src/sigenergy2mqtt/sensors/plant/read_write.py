@@ -5,7 +5,18 @@ from typing import Any, cast
 
 import paho.mqtt.client as mqtt
 
-from sigenergy2mqtt.common import PERCENTAGE, Constants, DeviceClass, HybridInverter, InputType, ProtocolVersion, PVInverter, UnitOfFrequency, UnitOfPower, UnitOfReactivePower
+from sigenergy2mqtt.common import (
+    PERCENTAGE,
+    Constants,
+    DeviceClass,
+    HybridInverter,
+    InputType,
+    ProtocolVersion,
+    PVInverter,
+    UnitOfFrequency,
+    UnitOfPower,
+    UnitOfReactivePower,
+)
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.base import (
