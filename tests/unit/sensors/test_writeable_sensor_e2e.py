@@ -224,7 +224,7 @@ def test_availability_control_sensor_gates_writes_for_non_remote_ems_sensors() -
             _set_latest_raw_state(control, 0)
             sensor.force_publish = False
             assert await sensor.set_value(modbus, mqtt, valid, topic, handler) is False
-            assert sensor.force_publish is True
+            assert sensor.force_publish is False
 
     asyncio.run(_run())
 
@@ -252,7 +252,7 @@ def test_remote_ems_limit_requires_both_checks_when_availability_control_is_set(
             _set_latest_raw_state(mode, 0)
             sensor.force_publish = False
             assert await sensor.set_value(modbus, mqtt, valid, topic, handler) is False
-            assert sensor.force_publish is True
+            assert sensor.force_publish is False
 
             modbus = _build_modbus()
             _set_latest_raw_state(control, 1)

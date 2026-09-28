@@ -392,14 +392,17 @@ class WriteableSensorMixin(Sensor):
                 topic_name = "raw_state_topic" if use_raw_topic else "state_topic"
                 raise RuntimeError(f"{self.log_identity} - {gate.__class__.__name__} topic is not configured; {topic_name} has not been configured")
             availability = cast(list[dict[str, Any]], self[DiscoveryKeys.AVAILABILITY])
-            availability.append({"topic": control_topic, "payload_available": gate.payload_available, "payload_not_available": gate.payload_not_available})
+            availability.append({
+                "topic": control_topic,
+                "payload_available": gate._to_mqtt_payload(gate.payload_available),
+                "payload_not_available": gate._to_mqtt_payload(gate.payload_not_available),
+            })
         if self.debug_logging:
             logger.debug(f"{self.log_identity} >>> {DiscoveryKeys.COMMAND_TOPIC}={self[DiscoveryKeys.COMMAND_TOPIC]})")
         return base
 
     async def set_value(self, transport: Any, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
         """Validate and dispatch an MQTT command through ``_write_value``."""
-        self.force_publish = True
         gate = self._availability_control_sensor
         if gate is not None and gate.latest_raw_state != gate.payload_available:
             logger.error(
@@ -407,6 +410,7 @@ class WriteableSensorMixin(Sensor):
                 f"state {gate.latest_raw_state!r} does not match available payload {gate.payload_available!r}"
             )
             return False
+        self.force_publish = True
         try:
             if not await self.value_is_valid(transport, value):
                 return False
