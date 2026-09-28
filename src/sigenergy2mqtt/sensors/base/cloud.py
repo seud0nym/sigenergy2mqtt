@@ -26,6 +26,14 @@ logger = logging.getLogger(__name__)
 class CloudSensor(ReadableSensorMixin, AvailabilityMixin):
     """Readable sensor whose transport implements :class:`CloudControlPort`."""
 
+    @property
+    def payload_available(self) -> bool | int | float | str | None:
+        return 1
+
+    @property
+    def payload_not_available(self) -> bool | int | float | str | None:
+        return 0
+
     async def _update_internal_state(self, **kwargs) -> bool:
         """Read the current value from the cloud backend and update internal state.
 
@@ -95,46 +103,7 @@ class CloudReadWriteSensor(WriteableSensorMixin, CloudSensor):
             ValueError: If *availability_control_sensor* is provided but is not an
                 :class:`AvailabilityMixin` instance.
         """
-        if availability_control_sensor is not None and not isinstance(availability_control_sensor, AvailabilityMixin):
-            raise ValueError("availability_control_sensor must be an AvailabilityMixin instance")
-        self._availability_control_sensor = availability_control_sensor
-        self._payload_available = 1
-        self._payload_not_available = 0
-        super().__init__(**kwargs)
-
-    def set_availability_control_sensor(self, sensor: AvailabilityMixin | None) -> None:
-        """Set the availability gate before MQTT topics are configured."""
-        if sensor is not None and not isinstance(sensor, AvailabilityMixin):
-            raise ValueError("sensor must be an AvailabilityMixin instance")
-        self._availability_control_sensor = sensor
-
-    def configure_mqtt_topics(self, device_id: str) -> str:
-        """Configure MQTT topics and, when Home Assistant is enabled, append the
-        availability gate sensor's topic to the discovery availability list.
-
-        Args:
-            device_id: The unique device identifier used to build MQTT topic paths.
-
-        Returns:
-            The base MQTT topic string returned by the parent implementation.
-
-        Raises:
-            RuntimeError: If the availability gate sensor has not yet had its state
-                topic configured.
-        """
-        base = super().configure_mqtt_topics(device_id)
-        gate = self._availability_control_sensor
-        if gate is not None and active_config.home_assistant.enabled:
-            gate_topic = gate.get(DiscoveryKeys.STATE_TOPIC)
-            if not gate_topic:
-                raise RuntimeError(f"{self.log_identity} availability sensor topic is not configured")
-            availability = cast(list[dict[str, Any]], self[DiscoveryKeys.AVAILABILITY])
-            availability.append({
-                "topic": gate_topic,
-                "payload_available": self._payload_available,
-                "payload_not_available": self._payload_not_available,
-            })
-        return base
+        super().__init__(availability_control_sensor=availability_control_sensor, **kwargs)
 
     async def _write_value(
         self,

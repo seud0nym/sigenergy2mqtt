@@ -551,6 +551,14 @@ class Reserved40026(ReservedSensor, HybridInverter, PVInverter):
 class RemoteEMS(SwitchSensor, HybridInverter, PVInverter, AvailabilityMixin):
     ADDRESS = 40029
 
+    @property
+    def payload_available(self) -> bool | int | float | str | None:
+        return 1
+
+    @property
+    def payload_not_available(self) -> bool | int | float | str | None:
+        return 0
+
     def __init__(self, plant_index: int):
         super().__init__(
             availability_control_sensor=None,
@@ -650,6 +658,14 @@ class RemoteEMSControlMode(SelectSensor, HybridInverter, PVInverter):
 
 class IndependentPhasePowerControl(SwitchSensor, AvailabilityMixin, HybridInverter):
     ADDRESS = 40030
+
+    @property
+    def payload_available(self) -> bool | int | float | str | None:
+        return 1
+
+    @property
+    def payload_not_available(self) -> bool | int | float | str | None:
+        return 0
 
     # Valid only when Output Type is L1/L2/L3/N. To enable independent phase control, this parameter must be enabled.
     def __init__(self, plant_index: int, output_type: int):

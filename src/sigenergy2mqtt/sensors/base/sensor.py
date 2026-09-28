@@ -1512,3 +1512,13 @@ class AvailabilityMixin(Sensor):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
+    @property
+    @abc.abstractmethod
+    def payload_available(self) -> bool | int | float | str | None:
+        """Return the state payload which indicates that controls are available."""
+
+    @property
+    @abc.abstractmethod
+    def payload_not_available(self) -> bool | int | float | str | None:
+        """Return the state payload which indicates that controls are unavailable."""

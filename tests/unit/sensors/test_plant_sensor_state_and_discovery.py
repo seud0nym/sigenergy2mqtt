@@ -30,6 +30,9 @@ def mock_config():
 
 
 class MockAvailabilitySensor(AvailabilityMixin):
+    payload_available = property(lambda self: 1)
+    payload_not_available = property(lambda self: 0)
+
     def __init__(self, *args, **kwargs):
         self._states = deque([(0.0, 0)])
         self.name = "mock_avail"

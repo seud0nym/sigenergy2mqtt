@@ -152,8 +152,8 @@ def test_mode_and_duration_are_available_only_while_switch_is_off() -> None:
             assert isinstance(availability, list)
             gate = next(item for item in availability if isinstance(item, dict) and item.get("topic") == switch.state_topic)
             assert isinstance(gate, dict)
-            assert gate["payload_available"] == 0
-            assert gate["payload_not_available"] == 1
+            assert gate["payload_available"] == "0"
+            assert gate["payload_not_available"] == "1"
 
 
 @pytest.mark.asyncio
