@@ -1018,7 +1018,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
                 topic = f"{state_topic}/{key}"
                 if self.debug_logging:
                     logger.debug(f"{self.log_identity} Publishing state={value} to topic {topic}")
-                publish_results.append(self._publish_message(mqtt_client, topic, f"{value}", self._qos, self._retain))
+                publish_results.append(self._publish_message(mqtt_client, topic, self._to_mqtt_payload(value), self._qos, self._retain))
             published = bool(publish_results) and all(publish_results)
         else:
             if self.debug_logging:
