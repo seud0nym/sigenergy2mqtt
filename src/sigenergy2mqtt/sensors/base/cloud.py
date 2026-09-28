@@ -277,9 +277,8 @@ class CloudGridLimitSensor(NumericSensorMixin, CloudReadWriteSensor):
         from sigenergy2mqtt.devices.base.ha_publisher import HaPublisherMixin
 
         if self.parent_device.rediscover and isinstance(self.parent_device, HaPublisherMixin) and active_config.home_assistant.enabled:
-            info = self.parent_device.publish_discovery(mqtt_client, clean=False)
-            if info:
-                info.wait_for_publish(self.scan_interval / 2)
+            self.parent_device.publish_discovery(mqtt_client, clean=False)
+            self.parent_device.rediscover = False  # pyright: ignore[reportAttributeAccessIssue]
 
     async def _read_cloud_state(self, port: CloudControlPort) -> float | str:
         """Read the current grid-limit state from the cloud backend.
