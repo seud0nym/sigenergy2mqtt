@@ -121,7 +121,6 @@ class InstantControlMode(SelectSensorMixin, CloudReadWriteSensor):
             protocol_version=ProtocolVersion.N_A,
         )
         self.monitorable = False  # only need to monitor InstantControlSwitch
-        self._payload_available, self._payload_not_available = 0, 1
         self._pending_value: int | None = None
         self._status_snapshot = _InstantControlStatusSnapshot()
         self._polling_coordinator = self._status_snapshot
@@ -161,7 +160,6 @@ class InstantControlDuration(NumericSensorMixin, CloudReadWriteSensor):
             protocol_version=ProtocolVersion.N_A,
         )
         self.monitorable = False  # only need to monitor InstantControlSwitch
-        self._payload_available, self._payload_not_available = 0, 1
         self._pending_value: float | None = None
         self._status_snapshot = _InstantControlStatusSnapshot()
         self._polling_coordinator = self._status_snapshot
@@ -181,6 +179,14 @@ class InstantControlDuration(NumericSensorMixin, CloudReadWriteSensor):
 
 class InstantControlSwitch(SwitchSensorMixin, CloudReadWriteSensor):
     """Authoritative enabled state and command switch for an instant override."""
+
+    @property
+    def payload_available(self) -> bool | int | float | str | None:
+        return 0
+
+    @property
+    def payload_not_available(self) -> bool | int | float | str | None:
+        return 1
 
     def __init__(
         self,

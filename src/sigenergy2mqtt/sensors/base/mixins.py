@@ -297,6 +297,25 @@ class WriteableSensorMixin(Sensor):
     the existing Modbus register implementation.
     """
 
+    def __init__(self, availability_control_sensor=None, **kwargs):
+        # Imported lazily because AvailabilityMixin is defined in sensor.py,
+        # which also supplies the base class for this mixin.
+        from .sensor import AvailabilityMixin
+
+        if availability_control_sensor is not None and not isinstance(availability_control_sensor, AvailabilityMixin):
+            raise ValueError(f"{self.__class__.__name__}: availability_control_sensor must be an instance of AvailabilityMixin")
+        self._availability_control_sensor = availability_control_sensor
+        self._use_raw_for_availability = False
+        super().__init__(**kwargs)
+
+    def set_availability_control_sensor(self, sensor) -> None:
+        """Set the sensor which gates writes and Home Assistant availability."""
+        from .sensor import AvailabilityMixin
+
+        if sensor is not None and not isinstance(sensor, AvailabilityMixin):
+            raise ValueError("sensor must be an AvailabilityMixin instance")
+        self._availability_control_sensor = sensor
+
     @property
     def command_topic(self) -> str:
         """Get the MQTT topic used to receive commands."""
@@ -365,6 +384,15 @@ class WriteableSensorMixin(Sensor):
         """Configure the command topic in addition to normal sensor topics."""
         base = super().configure_mqtt_topics(device_id)
         self[DiscoveryKeys.COMMAND_TOPIC] = f"{base}/set"
+        gate = self._availability_control_sensor
+        if gate is not None and active_config.home_assistant.enabled:
+            use_raw_topic = self._use_raw_for_availability and gate.publish_raw
+            control_topic = cast(str | None, gate.get(DiscoveryKeys.RAW_STATE_TOPIC if use_raw_topic else DiscoveryKeys.STATE_TOPIC))
+            if not control_topic or control_topic.isspace():
+                topic_name = "raw_state_topic" if use_raw_topic else "state_topic"
+                raise RuntimeError(f"{self.log_identity} - {gate.__class__.__name__} topic is not configured; {topic_name} has not been configured")
+            availability = cast(list[dict[str, Any]], self[DiscoveryKeys.AVAILABILITY])
+            availability.append({"topic": control_topic, "payload_available": gate.payload_available, "payload_not_available": gate.payload_not_available})
         if self.debug_logging:
             logger.debug(f"{self.log_identity} >>> {DiscoveryKeys.COMMAND_TOPIC}={self[DiscoveryKeys.COMMAND_TOPIC]})")
         return base
@@ -372,6 +400,13 @@ class WriteableSensorMixin(Sensor):
     async def set_value(self, transport: Any, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
         """Validate and dispatch an MQTT command through ``_write_value``."""
         self.force_publish = True
+        gate = self._availability_control_sensor
+        if gate is not None and gate.latest_raw_state != gate.payload_available:
+            logger.error(
+                f"{self.log_identity} Failed to write value '{value}': {gate.log_identity} "
+                f"state {gate.latest_raw_state!r} does not match available payload {gate.payload_available!r}"
+            )
+            return False
         try:
             if not await self.value_is_valid(transport, value):
                 return False

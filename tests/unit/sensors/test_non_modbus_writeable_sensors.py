@@ -7,6 +7,7 @@ import pytest
 from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.sensors.base import (
+    AvailabilityMixin,
     NumericSensorMixin,
     SelectSensorMixin,
     Sensor,
@@ -43,6 +44,19 @@ class NonModbusSwitchSensor(SwitchSensorMixin, _NonModbusWriteableSensor):
 
 class NonModbusWriteOnlySensor(WriteOnlySensorMixin, _NonModbusWriteableSensor):
     pass
+
+
+class _StringAvailabilitySensor(AvailabilityMixin):
+    @property
+    def payload_available(self) -> bool | int | float | str | None:
+        return "ready"
+
+    @property
+    def payload_not_available(self) -> bool | int | float | str | None:
+        return "blocked"
+
+    async def _update_internal_state(self, **kwargs):
+        return False
 
 
 @pytest.fixture(autouse=True)
@@ -95,6 +109,33 @@ async def test_writable_entity_mixins_dispatch_commands_without_modbus(sensor_cl
     assert sensor.written_value == expected
     assert sensor.written_source == sensor.command_topic
     assert not hasattr(sensor, "address")
+
+
+@pytest.mark.asyncio
+async def test_non_modbus_write_is_gated_by_availability_payload(caplog):
+    gate = _StringAvailabilitySensor(**sensor_kwargs("availability_gate"))
+    sensor = NonModbusNumericSensor(
+        **sensor_kwargs("gated_numeric"),
+        minimum=0,
+        maximum=100,
+        availability_control_sensor=gate,
+    )
+    with patch("sigenergy2mqtt.sensors.base.mixins.active_config.home_assistant.enabled", True):
+        gate.configure_mqtt_topics("test-device")
+        sensor.configure_mqtt_topics("test-device")
+
+    gate.set_latest_state("blocked")
+    assert await sensor.set_value(None, MagicMock(), "12", sensor.command_topic, MagicMock()) is False
+    assert not hasattr(sensor, "written_value")
+    assert "does not match available payload 'ready'" in caplog.text
+
+    gate.set_latest_state("ready")
+    assert await sensor.set_value(None, MagicMock(), "12", sensor.command_topic, MagicMock()) is True
+    assert sensor.written_value == 12
+
+    availability = sensor["availability"][-1]
+    assert availability["payload_available"] == "ready"
+    assert availability["payload_not_available"] == "blocked"
 
 
 def test_switch_mixin_sets_binary_raw_sanity_bounds():

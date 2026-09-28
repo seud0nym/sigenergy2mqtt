@@ -196,6 +196,9 @@ class TestReadWriteSensorConfigureMqttTopics:
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             # Create a real AvailabilityMixin instance so isinstance(...) passes.
             class _AvailabilityControl(AvailabilityMixin):
+                payload_available = property(lambda self: 1)
+                payload_not_available = property(lambda self: 0)
+
                 async def _update_internal_state(self, **kwargs) -> bool | Exception | ExceptionResponse:
                     return True
 

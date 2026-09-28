@@ -43,6 +43,14 @@ class ESSPreHeatingEnable(SwitchSensor, HybridInverter):
 class ESSPreHeatingMode(SelectSensor, AvailabilityMixin, HybridInverter):
     ADDRESS = 50001
 
+    @property
+    def payload_available(self) -> bool | int | float | str | None:
+        return 1
+
+    @property
+    def payload_not_available(self) -> bool | int | float | str | None:
+        return 0
+
     def __init__(self, plant_index: int):
         super().__init__(
             availability_control_sensor=None,
