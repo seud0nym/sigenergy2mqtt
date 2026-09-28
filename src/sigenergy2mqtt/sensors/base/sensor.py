@@ -24,7 +24,13 @@ from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.mqtt import MqttHandler
 from sigenergy2mqtt.persistence import Category, state_store
 
-from .constants import _DEFAULT_STATE_HISTORY_SIZE, DiscoveryKeys, SensorAttribute, SensorAttributeKeys, _sanitize_path_component
+from .constants import (
+    _DEFAULT_STATE_HISTORY_SIZE,
+    DiscoveryKeys,
+    SensorAttribute,
+    SensorAttributeKeys,
+    _sanitize_path_component,
+)
 from .sanity_check import SanityCheck, SanityCheckException
 
 if TYPE_CHECKING:
@@ -130,6 +136,8 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         self[DiscoveryKeys.ENABLED_BY_DEFAULT] = active_config.home_assistant.enabled_by_default
 
         self._gain: float | None = gain
+
+        self._state_topic_dict_key: str | None = None
 
         # Publishing state
         self._attributes_published: bool = False
@@ -426,6 +434,27 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         """Get the MQTT topic for publishing processed state values."""
         return cast(str, self[DiscoveryKeys.STATE_TOPIC])
 
+    @property
+    def state_topic_dict_key(self) -> str | None:
+        """Get the name of the key in the state value dict that will be appended to the state topic for Home Assistant discovery."""
+        return getattr(self, "_state_topic_dict_key", None)
+
+    @state_topic_dict_key.setter
+    def state_topic_dict_key(self, value: str | None):
+        """Set the name of the key in the state value dict that will be appended to the state topic for Home Assistant discovery."""
+        if not isinstance(value, str) and value is not None:
+            raise TypeError(f"{self.log_identity}.state_topic_dict_key must be a string or None")
+
+        if DiscoveryKeys.STATE_TOPIC in self:
+            raise AssertionError(f"{self.log_identity}.state_topic_dict_key cannot be set when STATE_TOPIC has already been set")
+
+        if self._state_topic_dict_key == value:
+            if self.debug_logging:
+                logger.debug(f"{self.log_identity}.state_topic_dict_key unchanged ({value})")
+        else:
+            self._state_topic_dict_key = value
+            logger.debug(f"{self.log_identity}.state_topic_dict_key set to {value}")
+
     # =========================================================================
     # Abstract Methods
     # =========================================================================
@@ -669,7 +698,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         """
         base = self._get_base_topic(device_id)
 
-        self[DiscoveryKeys.STATE_TOPIC] = f"{base}/state"
+        self[DiscoveryKeys.STATE_TOPIC] = f"{base}/state" if self.state_topic_dict_key is None else f"{base}/state/{self.state_topic_dict_key}"
         self[DiscoveryKeys.RAW_STATE_TOPIC] = f"{base}/raw"
         self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC] = f"{base}/attributes"
 
@@ -978,6 +1007,8 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         # Publish state. Structured dictionary states use one subtopic per key.
         state_topic = cast(str, self[DiscoveryKeys.STATE_TOPIC])
         if isinstance(state, dict):
+            if self.state_topic_dict_key is not None:
+                state_topic = state_topic.rsplit("/", 1)[0]
             publish_results: list[bool] = []
             for key, value in state.items():
                 topic = f"{state_topic}/{key}"
