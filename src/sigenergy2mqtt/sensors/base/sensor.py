@@ -10,6 +10,10 @@ import logging
 import re
 import time
 from collections import deque
+from dataclasses import asdict, is_dataclass
+from datetime import datetime
+from decimal import Decimal
+from enum import Enum
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 import paho.mqtt.client as mqtt
@@ -1020,7 +1024,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
             if self.debug_logging:
                 logger.debug(f"{self.log_identity} Publishing state={state} to topic {state_topic}")
             # Don't catch exceptions here - they will be handled by the caller
-            published = self._publish_message(mqtt_client, state_topic, f"{state}", self._qos, self._retain)
+            published = self._publish_message(mqtt_client, state_topic, self._to_mqtt_payload(state), self._qos, self._retain)
 
         await Metrics.mqtt_publish_attempt(physical_publish=published)
         if not published:
@@ -1031,14 +1035,40 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
             if self.debug_logging:
                 logger.debug(f"{self.log_identity} Publishing raw state={self.latest_raw_state} to topic {self[DiscoveryKeys.RAW_STATE_TOPIC]}")
             try:
-                raw_payload = json.dumps(self.latest_raw_state) if isinstance(state, dict) else f"{self.latest_raw_state}"
-                self._publish_message(mqtt_client, cast(str, self[DiscoveryKeys.RAW_STATE_TOPIC]), raw_payload, self._qos, self._retain, timeout=0.1)
-            except ValueError:
-                logger.warning(f"{self.log_identity} Failed to publish raw state={self.latest_raw_state} to topic {self[DiscoveryKeys.RAW_STATE_TOPIC]} - Queue full")
-            except RuntimeError:
-                logger.warning(f"{self.log_identity} Failed to publish raw state={self.latest_raw_state} to topic {self[DiscoveryKeys.RAW_STATE_TOPIC]} - Other error")
+                self._publish_message(mqtt_client, cast(str, self[DiscoveryKeys.RAW_STATE_TOPIC]), self._to_mqtt_payload(self.latest_raw_state), self._qos, self._retain, timeout=0.1)
+            except ValueError as e:
+                logger.warning(f"{self.log_identity} Failed to publish raw state={self.latest_raw_state} to topic {self[DiscoveryKeys.RAW_STATE_TOPIC]} - Queue full ({e})")
+            except RuntimeError as e:
+                logger.warning(f"{self.log_identity} Failed to publish raw state={self.latest_raw_state} to topic {self[DiscoveryKeys.RAW_STATE_TOPIC]} - Other error ({e})")
 
         return published
+
+    def _to_mqtt_payload(self, state: Any) -> str:
+        """Convert the state to appropriate MQTT payload.
+
+        Args:
+            state: the state instance to be converted.
+
+        Returns:
+            The MQTT payload.
+        """
+
+        def _json_default(o):
+            if isinstance(o, Enum):
+                return o.value
+            if isinstance(o, Decimal):
+                return float(o)
+            if isinstance(o, datetime):
+                return o.isoformat()
+            raise TypeError(f"Not serializable: {type(o)}")
+
+        if isinstance(state, bool):
+            return "online" if state else "offline"
+        if isinstance(state, (dict, list, tuple)):
+            return json.dumps(state, default=_json_default)
+        if is_dataclass(state) and not isinstance(state, type):
+            return json.dumps(asdict(state), default=_json_default)
+        return f"{state}"  # str/int/float unchanged
 
     def _publish_message(self, mqtt_client: mqtt.Client, topic: str, payload: bytes | str, qos: int = 0, retain: bool = False, timeout: float | None = 0.5) -> bool:
         """Publish a message to MQTT.
