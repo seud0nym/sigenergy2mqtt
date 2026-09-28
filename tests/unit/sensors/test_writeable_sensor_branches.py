@@ -208,7 +208,7 @@ class TestReadWriteSensorConfigureMqttTopics:
                 state_class="measurement",
                 icon=None,
                 gain=1,
-                precision=1
+                precision=1,
             )
             mock_control[DiscoveryKeys.STATE_TOPIC] = ""  # Empty → triggers RuntimeError
             mock_control[DiscoveryKeys.RAW_STATE_TOPIC] = ""

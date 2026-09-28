@@ -117,6 +117,32 @@ class TestState2Raw:
         s = self._sensor_with_options(["Alpha", "Beta"], "s2r_fallback")
         assert s.state2raw("Alpha") == 0
 
+    def test_state2raw_preserves_structured_state(self):
+        s = _make_sensor(uid_suffix="s2r_structured")
+        state = {"enabled": True, "limits": [1, 2, 3]}
+
+        assert s.state2raw(state) is state
+
+
+class TestArbitraryStateTypes:
+    @pytest.mark.asyncio
+    async def test_structured_state_round_trip(self):
+        s = _make_sensor(uid_suffix="structured_state")
+        first_state = {"status": "ready", "phases": [True, False, True]}
+        second_state = ("running", 42)
+
+        assert s.set_state(first_state) is True
+        assert s.set_state(second_state) is True
+        assert s.previous_raw_state is first_state
+        assert s.latest_raw_state is second_state
+        assert await s.get_state(raw=False, republish=True) is second_state
+
+    def test_gain_processing_preserves_structured_state(self):
+        s = _make_sensor(uid_suffix="structured_gain")
+        state = [1, "two", {"three": 3}]
+
+        assert s._apply_gain_and_precision(state) is state
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 10. _check_register_response() exception code branches

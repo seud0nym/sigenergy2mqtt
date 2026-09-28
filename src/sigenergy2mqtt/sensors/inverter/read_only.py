@@ -2,7 +2,7 @@ import logging
 import math
 import time
 from datetime import timezone
-from typing import cast
+from typing import Any, cast
 
 from sigenergy2mqtt.common import (
     PERCENTAGE,
@@ -118,7 +118,7 @@ class InverterFirmwareVersion(ReadOnlySensor, HybridInverter, PVInverter):
         )
         self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
-    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
+    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> Any:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
         if value is not None:
             device = getattr(self, "parent_device", None)
@@ -1393,7 +1393,7 @@ class OutputType(ReadOnlySensor, HybridInverter, PVInverter):
             case _:
                 raise ValueError(f"Unknown Output Type: {output_type}")
 
-    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
+    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> Any:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
         if raw or value is None:
             return value
@@ -1544,7 +1544,7 @@ class PowerFactor(ReadOnlySensor, HybridInverter, PVInverter):
         self._active_power = active_power
         self._reactive_power = reactive_power
 
-    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
+    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> Any:
         try:
             return await super().get_state(raw, republish, **kwargs)
         except SanityCheckException as e:
@@ -1556,7 +1556,7 @@ class PowerFactor(ReadOnlySensor, HybridInverter, PVInverter):
                 return None
             raise
 
-    def set_state(self, state: float | str | list[bool] | list[int] | list[float]) -> bool:
+    def set_state(self, state: Any) -> bool:
         try:
             return super().set_state(state)
         except SanityCheckException as e:
@@ -2050,7 +2050,7 @@ class DCChargerRunningState(ReadOnlySensor, HybridInverter):  # Not applicable t
         self.sanity_check.min_raw = 0
         self.sanity_check.max_raw = len(cast(list[str], self[DiscoveryKeys.OPTIONS])) - 1
 
-    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
+    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> Any:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
         if raw or value is None:
             return value

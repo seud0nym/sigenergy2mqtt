@@ -609,7 +609,34 @@ class:
       source_range: Modbus Registers {start}-{end}
     name: Lifetime DC EV Discharge Energy
   GatewayCommunicationStatus:
-    name: communication_status
+    name: Communication Status
+  GatewayFirmwareVersion:
+    name: Firmware Version
+  GatewayGridCurrent:
+    attributes:
+      comment: Grid-Side state read from the Gateway via the Cloud API
+  GatewayGridFrequency:
+    attributes:
+      comment: Grid-Side state read from the Gateway via the Cloud API
+  GatewayGridPower:
+    attributes:
+      comment: Grid-Side state read from the Gateway via the Cloud API
+  GatewayGridReactivePower:
+    attributes:
+      comment: Grid-Side state read from the Gateway via the Cloud API
+  GatewayGridSideInfoSensor:
+    attributes:
+      comment: Grid-Side state read from the Gateway via the Cloud API
+  GatewayGridText:
+    attributes:
+      comment: Grid-Side state read from the Gateway via the Cloud API
+  GatewayGridVoltage:
+    attributes:
+      comment: Grid-Side state read from the Gateway via the Cloud API
+  GatewayModel:
+    name: Model
+  GatewaySerialNumber:
+    name: Serial Number
   GeneralAlarm1:
     alarm:
       '0': Software version mismatch
@@ -3081,7 +3108,7 @@ cli:
   SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW:
     help: The default value in kW used for sanity checks to validate the maximum and minimum values for actual value of power sensors and the delta value of energy sensors. The default value is 500 kW per second, and readings outside the range are ignored.
   SIGENERGY2MQTT_SCAN_INTERVAL_CLOUD:
-    help: The scan interval in seconds for retrieving cloud data. Default is 30 (seconds), and the minimum value is 10
+    help: The scan interval in seconds for retrieving cloud data. Default is 5 (seconds), and the minimum value is 1
   SIGENERGY2MQTT_SCAN_INTERVAL_HIGH:
     help: The scan interval in seconds for Modbus registers that are to be scanned at a high frequency. Default is 10 (seconds), and the minimum value is 1.
   SIGENERGY2MQTT_SCAN_INTERVAL_LOW:

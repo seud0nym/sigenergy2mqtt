@@ -144,7 +144,7 @@ class NumericSensorMixin(WriteableSensorMixin):
             return
         if isinstance(minimum, (int, float)) and isinstance(maximum, (int, float)):
             if minimum > maximum:
-                raise AssertionError(f"{self.__class__.__name__}: Invalid min/max values: {minimum}/{maximum} (min must be <= max)")
+                raise AssertionError(f"{self.__class__.__name__}: Invalid min/max values: {minimum}/{maximum} (min must be < max)")
             return
         if isinstance(minimum, tuple) and isinstance(maximum, tuple):
             if len(minimum) != len(maximum):
@@ -153,7 +153,7 @@ class NumericSensorMixin(WriteableSensorMixin):
                 if not (isinstance(mn, (int, float)) and isinstance(mx, (int, float))):
                     raise TypeError(f"{self.__class__.__name__}: Invalid tuple values: {mn}/{mx} (must be numeric)")
                 if mn > mx:
-                    raise ValueError(f"{self.__class__.__name__}: Invalid tuple values: {mn}/{mx} (min must be <= max)")
+                    raise ValueError(f"{self.__class__.__name__}: Invalid tuple values: {mn}/{mx} (min must be < max)")
             return
         raise ValueError(f"{self.__class__.__name__}: Invalid min/max types: {type(minimum)}/{type(maximum)}")
 
@@ -189,7 +189,7 @@ class NumericSensorMixin(WriteableSensorMixin):
             components[self.unique_id][DiscoveryKeys.MAX] = max(cast(Iterable[float], self[DiscoveryKeys.MAX]))
         return components
 
-    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
+    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> Any:
         state = await super().get_state(raw=raw, republish=republish, **kwargs)
         if not isinstance(state, (float, int)):
             return state
@@ -265,7 +265,7 @@ class SelectSensorMixin(WriteableSensorMixin):
         self.sanity_check.min_raw = 0
         self.sanity_check.max_raw = len(options) - 1
 
-    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
+    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> Any:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
         if raw or value is None:
             return value

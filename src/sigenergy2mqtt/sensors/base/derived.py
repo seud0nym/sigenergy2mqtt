@@ -116,7 +116,7 @@ class DerivedSensor(TypedSensorMixin, Sensor):
         timestamp = getattr(sensor, "latest_time", None)
         return timestamp if isinstance(timestamp, (int, float)) and timestamp > 0 else None
 
-    def set_latest_state(self, state: float | str | list[bool] | list[int] | list[float]) -> bool:
+    def set_latest_state(self, state: Any) -> bool:
         """Update latest state and track pending updates for publishing."""
         self.mark_successful_read()
         try:
