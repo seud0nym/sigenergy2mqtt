@@ -298,22 +298,18 @@ class WriteableSensorMixin(Sensor):
     """
 
     def __init__(self, availability_control_sensor=None, **kwargs):
-        # Imported lazily because AvailabilityMixin is defined in sensor.py,
-        # which also supplies the base class for this mixin.
-        from .sensor import AvailabilityMixin
-
-        if availability_control_sensor is not None and not isinstance(availability_control_sensor, AvailabilityMixin):
-            raise ValueError(f"{self.__class__.__name__}: availability_control_sensor must be an instance of AvailabilityMixin")
-        self._availability_control_sensor = availability_control_sensor
+        self.set_availability_control_sensor(availability_control_sensor)
         self._use_raw_for_availability = False
         super().__init__(**kwargs)
 
     def set_availability_control_sensor(self, sensor) -> None:
         """Set the sensor which gates writes and Home Assistant availability."""
+        # Imported lazily because AvailabilityMixin is defined in sensor.py,
+        # which also supplies the base class for this mixin.
         from .sensor import AvailabilityMixin
 
         if sensor is not None and not isinstance(sensor, AvailabilityMixin):
-            raise ValueError("sensor must be an AvailabilityMixin instance")
+            raise TypeError(f"{self.__class__.__name__}: availability_control_sensor must be an instance of AvailabilityMixin")
         self._availability_control_sensor = sensor
 
     @property
@@ -409,10 +405,7 @@ class WriteableSensorMixin(Sensor):
         """Validate and dispatch an MQTT command through ``_write_value``."""
         gate = self._availability_control_sensor
         if gate is not None and gate.latest_raw_state != gate.payload_available:
-            logger.error(
-                f"{self.log_identity} Failed to write value '{value}': {gate.log_identity} "
-                f"state {gate.latest_raw_state!r} does not match available payload {gate.payload_available!r}"
-            )
+            logger.error(f"{self.log_identity} Failed to write value '{value}': {gate.log_identity} state {gate.latest_raw_state!r} does not match available payload {gate.payload_available!r}")
             return False
         self.force_publish = True
         try:
@@ -535,10 +528,7 @@ class ModbusWriteableSensorMixin(TypedSensorMixin, ModbusSensorMixin, WriteableS
     async def _write_value(self, transport: Any, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
         """Write a validated command value to this sensor's Modbus register."""
         if not isinstance(transport, ModbusClient):
-            raise TypeError(
-                f"{self.log_identity}: _write_value requires a ModbusClient transport, "
-                f"got {type(transport)!r}"
-            )
+            raise TypeError(f"{self.log_identity}: _write_value requires a ModbusClient transport, got {type(transport)!r}")
         return await self._write_registers(transport, value, mqtt_client)
 
     async def value_is_valid(self, transport: Any, raw_value: float | str) -> bool:
