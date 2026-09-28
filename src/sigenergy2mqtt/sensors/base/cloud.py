@@ -278,7 +278,7 @@ class CloudGridLimitSensor(NumericSensorMixin, CloudReadWriteSensor):
 
         if self.parent_device.rediscover and isinstance(self.parent_device, HaPublisherMixin) and active_config.home_assistant.enabled:
             info = self.parent_device.publish_discovery(mqtt_client, clean=False)
-            if info is not None and info.is_published:
+            if info is not None and info.is_published():
                 self.parent_device.rediscover = False  # pyright: ignore[reportAttributeAccessIssue]
 
     async def _read_cloud_state(self, port: CloudControlPort) -> float | str:
