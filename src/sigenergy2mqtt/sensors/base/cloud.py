@@ -218,7 +218,6 @@ class CloudGridLimitSensor(NumericSensorMixin, CloudReadWriteSensor):
                 the cloud API response payload.
             **kwargs: Forwarded to parent initialisers.
         """
-        self._attributes: dict[str, float | int | str] = {}
         self._read_method = read_method
         self._write_method = write_method
         self._current_key = current_key
@@ -250,9 +249,6 @@ class CloudGridLimitSensor(NumericSensorMixin, CloudReadWriteSensor):
     def _parse_number(self, payload: dict[str, Any], key: str) -> tuple[float | None, bool]:
         """Extract and validate a numeric value from a cloud API response payload.
 
-        Updates the cached ``_attributes`` dict with the full *payload*, then attempts
-        to parse *payload[key]* as a finite ``float``.
-
         Args:
             payload: The raw dictionary returned by the cloud API call.
             key: The key whose value should be parsed as a number.
@@ -263,7 +259,6 @@ class CloudGridLimitSensor(NumericSensorMixin, CloudReadWriteSensor):
             *valid* is ``True`` unless the key was present with an unparseable or
             non-finite value.
         """
-        self._attributes.update(payload)
         value = payload.get(key)
         if value in (None, ""):
             return None, True
@@ -349,18 +344,3 @@ class CloudGridLimitSensor(NumericSensorMixin, CloudReadWriteSensor):
             return False
         await getattr(port, self._write_method)(float(value), enabled=True)
         return True
-
-    def get_attributes(self) -> dict[str, float | int | str]:
-        """Return the entity's extra state attributes.
-
-        Merges the cached cloud API response fields (stored by :meth:`_parse_number`)
-        into the base-class attributes, so they are exposed as additional attributes
-        on the Home Assistant entity.
-
-        Returns:
-            A dictionary mapping attribute names to their current values.
-        """
-        attributes = super().get_attributes()
-        if self._attributes:
-            attributes.update(self._attributes)
-        return attributes
