@@ -294,7 +294,7 @@ async def test_cloud_sensor_handles_failed_and_unknown_reads(caplog) -> None:
 def test_cloud_sensor_validates_availability_gate() -> None:
     mode, _, switch = _controls()
 
-    with pytest.raises(ValueError, match="AvailabilityMixin"):
+    with pytest.raises(TypeError, match="AvailabilityMixin"):
         mode.set_availability_control_sensor(object())  # type: ignore[arg-type]
 
     config = Config()
@@ -307,7 +307,7 @@ def test_cloud_sensor_validates_availability_gate() -> None:
 
 def test_cloud_sensor_constructor_rejects_invalid_availability_gate() -> None:
     uninitialized_mode = InstantControlMode.__new__(InstantControlMode)
-    with pytest.raises(ValueError, match="AvailabilityMixin"):
+    with pytest.raises(TypeError, match="AvailabilityMixin"):
         CloudReadWriteSensor.__init__(
             uninitialized_mode,
             availability_control_sensor=object(),  # type: ignore[arg-type]

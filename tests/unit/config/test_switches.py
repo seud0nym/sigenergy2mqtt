@@ -113,7 +113,7 @@ class TestConfigSwitches:
         active_config.ems_mode_check = True
 
         mock_remote_ems = MagicMock(spec=AvailabilityMixin)
-        mock_remote_ems.state_topic = "some/topic"
+        mock_remote_ems.get.return_value = "some/topic"
         mock_remote_ems.latest_raw_state = 1
 
         sensor = RemoteEMSControlMode(0, mock_remote_ems)
@@ -151,7 +151,7 @@ class TestConfigSwitches:
         active_config.ems_mode_check = False
 
         mock_remote_ems = MagicMock(spec=AvailabilityMixin)
-        mock_remote_ems.state_topic = "some/topic"
+        mock_remote_ems.get.return_value = "some/topic"
         mock_remote_ems.latest_raw_state = 0
 
         sensor = RemoteEMSControlMode(0, mock_remote_ems)
@@ -226,7 +226,7 @@ class TestConfigSwitches:
         """Test comment attribute changes based on ems_mode_check."""
         active_config.ems_mode_check = True
         mock_remote_ems = MagicMock(spec=AvailabilityMixin)
-        mock_remote_ems.state_topic = "availability/topic"
+        mock_remote_ems.get.return_value = "availability/topic"
 
         mock_mode = MagicMock(spec=RemoteEMSControlMode)
         mock_mode.is_charging_mode_topic = "is_charging_mode_topic"

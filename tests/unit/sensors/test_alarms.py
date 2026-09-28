@@ -51,7 +51,7 @@ async def test_alarm_sensor_coverage():
     
     # Test state2raw
     assert sensor.state2raw(AlarmSensor.NO_ALARM) == 0
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         sensor.state2raw("Alarm One")
     
     # Mock super get_state
