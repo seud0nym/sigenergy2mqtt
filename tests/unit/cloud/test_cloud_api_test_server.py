@@ -47,6 +47,66 @@ async def test_cloud_api_test_server_rejects_requests_during_internet_outage() -
         }
 
 
+async def test_cloud_api_test_server_dashboard_edits_live_response_values() -> None:
+    api = CloudApiTestServer(None, None)
+    api.internet_available = False
+
+    async with TestClient(TestServer(api.app())) as client:
+        dashboard = await client.get("/cloud-api-test")
+        assert dashboard.status == 200
+        assert "Cloud API Test Server" in await dashboard.text()
+
+        state = await client.get("/cloud-api-test/state")
+        assert state.status == 200
+        assert (await state.json())["grid_export_limit"]["maxLimitation"] == "10.000"
+
+        update = await client.put(
+            "/cloud-api-test/state/grid_export_limit",
+            json={
+                "value": {
+                    "enable": False,
+                    "maxLimitation": "2.500",
+                    "maxLimitationOwner": "2.500",
+                    "maxLimitationInstaller": "20.000",
+                    "isUltra": False,
+                }
+            },
+        )
+        assert update.status == 200
+        assert api.grid_export_limit["maxLimitation"] == "2.500"
+
+        restore = await client.put(
+            "/cloud-api-test/state/internet_available", json={"value": True}
+        )
+        assert restore.status == 200
+        api.access_token = "test-token"
+        response = await client.get(
+            "/device/energy-profile/grid/limitation/export/1",
+            headers={"Authorization": "Bearer test-token"},
+        )
+        assert (await response.json())["data"]["maxLimitation"] == "2.500"
+
+
+@pytest.mark.parametrize(
+    ("name", "value", "status"),
+    [
+        ("not_a_setting", True, 404),
+        ("internet_available", 1, 400),
+        ("internet_outage_status", 404, 400),
+        ("gateway_info", [], 400),
+    ],
+)
+async def test_cloud_api_test_server_dashboard_rejects_invalid_updates(
+    name: str, value: object, status: int
+) -> None:
+    api = CloudApiTestServer(None, None)
+    async with TestClient(TestServer(api.app())) as client:
+        response = await client.put(
+            f"/cloud-api-test/state/{name}", json={"value": value}
+        )
+        assert response.status == status
+
+
 async def test_simulate_internet_outage_cycles_and_restores_service(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
