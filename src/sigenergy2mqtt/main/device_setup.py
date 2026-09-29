@@ -58,32 +58,35 @@ _GATEWAY_DISCOVERY_ATTEMPTS = 3
 _GATEWAY_DISCOVERY_RETRY_DELAY = 1.0
 
 
-def _cloud_control_plant_index(device_list: list[dict[str, Any]]) -> int | None:
+def _cloud_control_plant_index(device_list: list[dict[str, Any]] | None) -> int | None:
     """Find the local plant containing an inverter reported by the cloud."""
     cloud_logger = logging.getLogger("sigenergy2mqtt.cloud")
-    cloud_serial_numbers = {
-        str(device.get("serialNumber") or device.get("serial_number") or device.get("sn"))
-        for device in device_list
-        if device.get("deviceType") in ("Aio", "Inverter") and (device.get("serialNumber") or device.get("serial_number") or device.get("sn"))
-    }
-    plants_with_unreadable_serials: set[int] = set()
-    for devices in DeviceRegistry._devices.values():
-        for device in devices:
-            if not isinstance(device, Inverter):
-                continue
-            serial_number = device.get("sn") or device.get("serial_number")
-            if serial_number is None:
-                plants_with_unreadable_serials.add(device.plant_index)
-                continue
-            if str(serial_number) in cloud_serial_numbers:
-                cloud_logger.info(f"Cloud inverter serial number {serial_number} matched local inverter at plant index {device.plant_index}; Cloud API enabled")
-                return device.plant_index
+    if device_list is None:
+        cloud_logger.warning("No devices returned by Cloud API")
+    else:
+        cloud_serial_numbers = {
+            str(device.get("serialNumber") or device.get("serial_number") or device.get("sn"))
+            for device in device_list
+            if device.get("deviceType") in ("Aio", "Inverter") and (device.get("serialNumber") or device.get("serial_number") or device.get("sn"))
+        }
+        plants_with_unreadable_serials: set[int] = set()
+        for devices in DeviceRegistry._devices.values():
+            for device in devices:
+                if not isinstance(device, Inverter):
+                    continue
+                serial_number = device.get("sn") or device.get("serial_number")
+                if serial_number is None:
+                    plants_with_unreadable_serials.add(device.plant_index)
+                    continue
+                if str(serial_number) in cloud_serial_numbers:
+                    cloud_logger.info(f"Cloud inverter serial number {serial_number} matched local inverter at plant index {device.plant_index}; Cloud API enabled")
+                    return device.plant_index
 
-    if plants_with_unreadable_serials:
-        cloud_logger.warning(f"Local inverter serial numbers are unavailable for plant indexes {sorted(plants_with_unreadable_serials)}; Cloud API cannot be matched safely and will be disabled")
-        return None
+        if plants_with_unreadable_serials:
+            cloud_logger.warning(f"Local inverter serial numbers are unavailable for plant indexes {sorted(plants_with_unreadable_serials)}; Cloud API cannot be matched safely and will be disabled")
+            return None
 
-    cloud_logger.warning("No cloud inverter matched a local inverter; Cloud API disabled")
+        cloud_logger.warning("No cloud inverter matched a local inverter; Cloud API disabled")
     return None
 
 
@@ -294,13 +297,12 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
     if (cloud_port := cloud_control_registry.active) is not None:
         gateway_info = await _discover_cloud_gateway_info(cloud_port)
         device_list = await _discover_cloud_device_list(cloud_port)
-        if device_list is not None:
-            plant_index = _cloud_control_plant_index(device_list)
+        plant_index = _cloud_control_plant_index(device_list)
+        if plant_index is not None and device_list is not None:
             has_battery = any(d for d in device_list if d.get("deviceType") == "Battery")
-            if plant_index is not None:
-                cloud_config = ThreadConfig.create(host=None, port=None, name="Sigenergy Cloud")
-                cloud_config.transport_factory = cloud_control_registry.transport_factory
-                cloud_config.add_device(SigenergyCloudControl(plant_index, cloud_port, gateway_info, has_battery))
+            cloud_config = ThreadConfig.create(host=None, port=None, name="Sigenergy Cloud")
+            cloud_config.transport_factory = cloud_control_registry.transport_factory
+            cloud_config.add_device(SigenergyCloudControl(plant_index, cloud_port, gateway_info, has_battery))
 
     return thread_config_registry.get_all(), protocol_version
 
