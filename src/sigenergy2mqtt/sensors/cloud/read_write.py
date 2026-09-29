@@ -494,21 +494,28 @@ class BatteryExportLimitation(SwitchSensorMixin, CloudReadWriteSensor):
             precision=0,
             protocol_version=ProtocolVersion.N_A,
         )
-        self.state_topic_dict_key = "ownerSetEnable"
+        self.state_topic_dict_key = "currentEnable"
 
     def configure_mqtt_topics(self, device_id: str) -> str:
         base = super().configure_mqtt_topics(device_id)
         if active_config.home_assistant.enabled:
-            availability = cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY])
+            availability = cast(list[dict[str, Any]], self[DiscoveryKeys.AVAILABILITY])
             availability.append({
-                "topic": f"{base}/state/currentEnable",
-                "payload_available": 1,
-                "payload_not_available": 0,
+                "topic": f"{base}/state/installerSetEnable",
+                "payload_not_available": -1,
             })
         return base
 
     async def _read_cloud_state(self, port: CloudControlPort) -> Any:
-        return await port.battery_export_limitation()
+        state = await port.battery_export_limitation()
+        installerSetEnable = state.get("installerSetEnable", None)
+        if installerSetEnable is None or installerSetEnable == False:
+            state["installerSetEnable"] = -1
+            if self.debug_logging:
+                logger.debug(f"{self.log_identity} Changed cloud state 'installerSetEnable' from None to -1")
+        if self.debug_logging:
+            logger.debug(f"{self.log_identity} Read cloud state {state}")
+        return state
 
     async def _write_cloud_value(self, port: CloudControlPort, value: float | str) -> bool:
         logger.info(f"{self.log_identity} Updated '{self.state_topic_dict_key}' to '{value}'")
