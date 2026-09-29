@@ -451,6 +451,10 @@ class CloudApiTestServer:
         """Serve the browser UI used to inspect and edit simulated cloud state."""
         return web.FileResponse(CLOUD_TEST_STATIC_DIR / "cloud_api.html")
 
+    async def control_dashboard_script(self, request: web.Request) -> web.FileResponse:
+        """Serve testable dashboard behaviour as an ECMAScript module."""
+        return web.FileResponse(CLOUD_TEST_STATIC_DIR / "cloud_api.mjs")
+
     async def get_control_state(self, request: web.Request) -> web.Response:
         """Return every response value that can be changed through the UI."""
         return web.json_response({name: getattr(self, name) for name in self._EDITABLE_STATE})
@@ -633,6 +637,7 @@ class CloudApiTestServer:
         app.add_routes([
             web.get("/cloud-api-test", self.control_dashboard),
             web.get("/cloud-api-test/", self.control_dashboard),
+            web.get("/cloud-api-test/cloud_api.mjs", self.control_dashboard_script),
             web.get("/cloud-api-test/state", self.get_control_state),
             web.put("/cloud-api-test/state/{name}", self.set_control_state),
             web.post("/auth/oauth/token", self.authenticate),

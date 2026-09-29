@@ -1,6 +1,9 @@
 """Tests for the stateful cloud API facsimile used by integration tests."""
 
 import asyncio
+import shutil
+import subprocess
+from pathlib import Path
 from unittest.mock import AsyncMock
 
 import pytest
@@ -57,7 +60,10 @@ async def test_cloud_api_test_server_dashboard_edits_live_response_values() -> N
         dashboard_html = await dashboard.text()
         assert "Cloud API Test Server" in dashboard_html
         assert "Preserved ${preserved} unapplied edit" in dashboard_html
-        assert "textarea.dataset.dirty === 'true'" in dashboard_html
+
+        script = await client.get("/cloud-api-test/cloud_api.mjs")
+        assert script.status == 200
+        assert "reconcileEditors" in await script.text()
 
         state = await client.get("/cloud-api-test/state")
         assert state.status == 200
@@ -108,6 +114,61 @@ async def test_cloud_api_test_server_dashboard_rejects_invalid_updates(
             f"/cloud-api-test/state/{name}", json={"value": value}
         )
         assert response.status == status
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="Node.js is required")
+def test_cloud_api_dashboard_reload_preserves_unapplied_edits() -> None:
+    """Execute the same reconciliation module used by the Reload button."""
+    module_uri = (Path(server_module.__file__).parent / "static/cloud_api.mjs").as_uri()
+    javascript = f"""
+        import assert from 'node:assert/strict';
+        import {{bindReload, reconcileEditors}} from {module_uri!r};
+
+        const dirty = {{value: 'unapplied operator edit', dataset: {{dirty: 'true'}}}};
+        const clean = {{value: 'old value', dataset: {{dirty: 'false'}}}};
+        const article = (name, textarea) => ({{
+          dataset: {{name}}, querySelector: () => textarea
+        }});
+        const values = {{
+          children: [article('dirty_setting', dirty), article('clean_setting', clean)],
+          append: () => assert.fail('Reload unexpectedly created an editor')
+        }};
+        const setEditorValue = (textarea, value) => {{
+          textarea.value = value;
+          textarea.dataset.dirty = 'false';
+        }};
+        let preserved;
+        const reload = {{
+          listener: null,
+          addEventListener: (event, listener) => {{
+            assert.equal(event, 'click');
+            reload.listener = listener;
+          }},
+          click: () => reload.listener()
+        }};
+        bindReload(reload, () => {{
+          preserved = reconcileEditors(
+            values,
+            {{dirty_setting: 'server replacement', clean_setting: 'fresh server value'}},
+            () => assert.fail('Reload unexpectedly created a card'),
+            setEditorValue
+          );
+        }});
+
+        // Match an operator editing one textarea and then clicking Reload.
+        reload.click();
+
+        assert.equal(preserved, 1);
+        assert.equal(dirty.value, 'unapplied operator edit');
+        assert.equal(dirty.dataset.dirty, 'true');
+        assert.equal(clean.value, 'fresh server value');
+    """
+    subprocess.run(
+        ["node", "--input-type=module", "--eval", javascript],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
 
 
 async def test_simulate_internet_outage_cycles_and_restores_service(

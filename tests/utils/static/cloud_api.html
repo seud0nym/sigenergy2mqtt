@@ -33,7 +33,9 @@
     <div id="status" role="status" aria-live="polite"></div>
     <section class="grid" id="values"></section>
   </main>
-  <script>
+  <script type="module">
+    import {bindReload, reconcileEditors} from '/cloud-api-test/cloud_api.mjs';
+
     const values = document.querySelector('#values');
     const status = document.querySelector('#status');
     const labels = {internet_available:'Internet available',internet_outage_status:'Outage HTTP status'};
@@ -48,15 +50,7 @@
         const response = await fetch('/cloud-api-test/state');
         if (!response.ok) throw new Error(await response.text());
         const state = await response.json();
-        const existing = new Map([...values.children].map(element => [element.dataset.name, element]));
-        let preserved = 0;
-        for (const [name, value] of Object.entries(state)) {
-          const article = existing.get(name);
-          if (!article) { values.append(card(name, value)); continue; }
-          const textarea = article.querySelector('textarea');
-          if (textarea.dataset.dirty === 'true') preserved += 1;
-          else setEditorValue(textarea, value);
-        }
+        const preserved = reconcileEditors(values, state, card, setEditorValue);
         const preservedMessage = preserved ? ` Preserved ${preserved} unapplied edit${preserved === 1 ? '' : 's'}.` : '';
         message(`Loaded ${Object.keys(state).length} editable values.${preservedMessage}`);
       } catch (error) { message(`Could not load values: ${error.message}`, true); }
@@ -99,7 +93,7 @@
       article.append(heading, textarea, save);
       return article;
     }
-    document.querySelector('#reload').addEventListener('click', load);
+    bindReload(document.querySelector('#reload'), load);
     load();
   </script>
 </body>
