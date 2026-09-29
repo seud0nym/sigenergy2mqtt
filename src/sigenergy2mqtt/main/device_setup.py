@@ -64,7 +64,7 @@ def _cloud_control_plant_index(device_list: list[dict[str, Any]]) -> int | None:
     cloud_serial_numbers = {
         str(device.get("serialNumber") or device.get("serial_number") or device.get("sn"))
         for device in device_list
-        if device.get("deviceType") == "Inverter" and (device.get("serialNumber") or device.get("serial_number") or device.get("sn"))
+        if device.get("deviceType") in ("Aio", "Inverter") and (device.get("serialNumber") or device.get("serial_number") or device.get("sn"))
     }
     plants_with_unreadable_serials: set[int] = set()
     for devices in DeviceRegistry._devices.values():

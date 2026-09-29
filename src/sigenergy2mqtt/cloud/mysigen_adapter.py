@@ -49,6 +49,7 @@ _CAPABILITIES = Capabilities(
 _T = TypeVar("_T")
 
 _TOPOLOGY_DEVICE_TYPES = {
+    2: "Aio",  # All-in-One
     3: "Inverter",
     4: "Battery",
     5: "DcCharger",
@@ -165,10 +166,6 @@ class MySigenCloudAdapter:
             if not isinstance(raw_device_type, int):
                 continue
             device_type = _TOPOLOGY_DEVICE_TYPES.get(raw_device_type)
-            if device_type is None:
-                # AIO nodes are topology containers, not an official API device type.
-                continue
-
             offline = self._client.topology_node_is_offline(node)
             status = "Offline" if offline else "Normal" if offline is False else "Fault"
             attributes: dict[str, Any] = {}
