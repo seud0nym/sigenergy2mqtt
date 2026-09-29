@@ -16,6 +16,7 @@
     .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(360px,1fr)); gap:1rem; }
     article { display:flex; flex-direction:column; gap:.75rem; padding:1rem; background:var(--panel); border:1px solid var(--line); border-radius:12px; box-shadow:0 12px 30px #0003; }
     textarea { width:100%; min-height:170px; resize:vertical; border:1px solid var(--line); border-radius:8px; padding:.75rem; background:#07111f; color:#cde3fa; font:12px/1.45 ui-monospace,monospace; tab-size:2; }
+    textarea[data-dirty="true"] { border-color:#fbbf24; box-shadow:0 0 0 1px #fbbf24; }
     article.scalar textarea { min-height:72px; }
     button { border:0; border-radius:7px; padding:.6rem 1rem; background:var(--accent); color:#032016; font-weight:700; cursor:pointer; align-self:flex-end; }
     button:hover { filter:brightness(1.12); } button:disabled { opacity:.5; cursor:wait; }
@@ -47,19 +48,37 @@
         const response = await fetch('/cloud-api-test/state');
         if (!response.ok) throw new Error(await response.text());
         const state = await response.json();
-        values.replaceChildren(...Object.entries(state).map(([name, value]) => card(name, value)));
-        message(`Loaded ${Object.keys(state).length} editable values.`);
+        const existing = new Map([...values.children].map(element => [element.dataset.name, element]));
+        let preserved = 0;
+        for (const [name, value] of Object.entries(state)) {
+          const article = existing.get(name);
+          if (!article) { values.append(card(name, value)); continue; }
+          const textarea = article.querySelector('textarea');
+          if (textarea.dataset.dirty === 'true') preserved += 1;
+          else setEditorValue(textarea, value);
+        }
+        const preservedMessage = preserved ? ` Preserved ${preserved} unapplied edit${preserved === 1 ? '' : 's'}.` : '';
+        message(`Loaded ${Object.keys(state).length} editable values.${preservedMessage}`);
       } catch (error) { message(`Could not load values: ${error.message}`, true); }
+    }
+    function setEditorValue(textarea, value) {
+      textarea.value = JSON.stringify(value, null, 2);
+      textarea.dataset.savedValue = textarea.value;
+      textarea.dataset.dirty = 'false';
     }
     function card(name, value) {
       const article = document.createElement('article');
+      article.dataset.name = name;
       if (typeof value !== 'object') article.className = 'scalar';
       const heading = document.createElement('h2');
       heading.textContent = labels[name] || name.replaceAll('_', ' ');
       const textarea = document.createElement('textarea');
       textarea.spellcheck = false;
-      textarea.value = JSON.stringify(value, null, 2);
+      setEditorValue(textarea, value);
       textarea.setAttribute('aria-label', `${heading.textContent} JSON value`);
+      textarea.addEventListener('input', () => {
+        textarea.dataset.dirty = String(textarea.value !== textarea.dataset.savedValue);
+      });
       const save = document.createElement('button');
       save.type = 'button'; save.textContent = 'Apply';
       save.addEventListener('click', async () => {
@@ -72,7 +91,7 @@
             method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({value:parsed})
           });
           if (!response.ok) throw new Error(await response.text());
-          textarea.value = JSON.stringify((await response.json()).value, null, 2);
+          setEditorValue(textarea, (await response.json()).value);
           message(`${heading.textContent} updated. New Cloud API requests use this value immediately.`);
         } catch (error) { message(`Could not update ${heading.textContent}: ${error.message}`, true); }
         finally { save.disabled = false; }

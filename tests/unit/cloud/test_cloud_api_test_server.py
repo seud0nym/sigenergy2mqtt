@@ -54,7 +54,10 @@ async def test_cloud_api_test_server_dashboard_edits_live_response_values() -> N
     async with TestClient(TestServer(api.app())) as client:
         dashboard = await client.get("/cloud-api-test")
         assert dashboard.status == 200
-        assert "Cloud API Test Server" in await dashboard.text()
+        dashboard_html = await dashboard.text()
+        assert "Cloud API Test Server" in dashboard_html
+        assert "Preserved ${preserved} unapplied edit" in dashboard_html
+        assert "textarea.dataset.dirty === 'true'" in dashboard_html
 
         state = await client.get("/cloud-api-test/state")
         assert state.status == 200
