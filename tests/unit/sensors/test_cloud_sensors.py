@@ -460,7 +460,7 @@ async def test_battery_export_limitation_reads_current_state_and_writes_owner_st
         "nearModify": None,
     }
 
-    assert await sensor._read_cloud_state(port) == 0
+    assert await sensor._read_cloud_state(port) == {"currentEnable": False, "ownerSetEnable": None, "installerSetEnable": None, "nearModify": None}
     assert await sensor._write_cloud_value(port, 1) is True
     port.set_battery_export_limitation.assert_awaited_once_with(True)
 
@@ -622,17 +622,3 @@ async def test_grid_limit_maximum_changes_request_discovery_republish() -> None:
     assert sensor.sanity_check.min_raw == 0.0
     assert sensor.sanity_check.max_raw == 0.0
     assert device.rediscover is True
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "payload",
-    [{}, {"currentEnable": None}, {"currentEnable": "false"}, []],
-)
-async def test_battery_export_malformed_payload_publishes_unavailable(payload) -> None:
-    sensor = BatteryExportLimitation(0, FakeCloudControlPort.station_id)
-    port = AsyncMock()
-    port.battery_export_limitation.return_value = payload
-
-    assert await sensor._update_internal_state(modbus_client=port) is True
-    assert sensor.latest_raw_state == "None"

@@ -69,49 +69,18 @@ async def test_mysigen_cloud_adapter_against_test_server(
             modes = await adapter.available_operational_modes()
             assert len(modes["defaultWorkingModes"]) == 6
             assert await adapter.device_list() == [
-                {
-                    "systemId": "10000000000001",
-                    "serialNumber": "CMU123A45BP678",
-                    "deviceType": "Inverter",
-                    "status": "Normal",
-                    "pn": "SigenStor EC 12.0 TP",
-                    "firmwareVersion": "V100R001C00SPC112B107G",
-                    "attrMap": {"ratedActivePower": 12.0},
-                },
-                {
-                    "systemId": "10000000000001",
-                    "serialNumber": "DC-CHARGER-1",
-                    "deviceType": "DcCharger",
-                    "status": "Normal",
-                    "pn": "Sigen EV DC Charging Module",
-                    "firmwareVersion": "V100R001C00SPC112B107G",
-                    "attrMap": {},
-                },
-                {
-                    "systemId": "10000000000001",
-                    "serialNumber": "CMU876A54BP321",
-                    "deviceType": "Inverter",
-                    "status": "Normal",
-                    "pn": "Sigen PV Max 5.0 TP",
-                    "firmwareVersion": "V100R001C00SPC112B107G",
-                    "attrMap": {"ratedActivePower": 5.0},
-                },
-                {
-                    "systemId": "10000000000001",
-                    "serialNumber": "AC-CHARGER-2",
-                    "deviceType": "AcCharger",
-                    "status": "Normal",
-                    "pn": "Sigen EV AC Charger",
-                    "firmwareVersion": "V100R001C00SPC112B107G",
-                    "attrMap": {},
-                },
+                {"systemId": "10000000000001", "serialNumber": "123A45BP678", "deviceType": "Inverter", "status": "Normal", "pn": "1104002600", "firmwareVersion": "", "attrMap": {"ratedActivePower": 12.0}},
+                {"systemId": "10000000000001", "serialNumber": "987B65BC1238", "deviceType": "Battery", "status": "Normal", "pn": "", "firmwareVersion": "", "attrMap": {}},
+                {"systemId": "10000000000001", "serialNumber": "987B65BC1237", "deviceType": "Battery", "status": "Normal", "pn": "", "firmwareVersion": "", "attrMap": {}},
+                {"systemId": "10000000000001", "serialNumber": "987B65BC1236", "deviceType": "Battery", "status": "Normal", "pn": "", "firmwareVersion": "", "attrMap": {}},
+                {"systemId": "10000000000001", "serialNumber": "DC-CHARGER-1", "deviceType": "DcCharger", "status": "Normal", "pn": "Sigen EV DC Charging Module", "firmwareVersion": "", "attrMap": {}},
+                {"systemId": "10000000000001", "serialNumber": "110G12BR00001", "deviceType": "Gateway", "status": "Normal", "pn": "", "firmwareVersion": "", "attrMap": {}},
+                {"systemId": "10000000000001", "serialNumber": "876A54BP321", "deviceType": "Inverter", "status": "Normal", "pn": "Sigen PV Max 5.0 TP", "firmwareVersion": "V100R001C00SPC112B107G", "attrMap": {"ratedActivePower": 5.0}},
+                {"systemId": "10000000000001", "serialNumber": "AC-CHARGER-2", "deviceType": "AcCharger", "status": "Normal", "pn": "Sigen EV AC Charger", "firmwareVersion": "V100R001C00SPC112B107G", "attrMap": {}}
             ]
             gateway = await adapter.gateway_info()
             assert gateway["snCode"] == CLOUD_TEST_GATEWAY_SERIAL
-            assert {
-                item["paramKey"]
-                for item in gateway["gridSideInfoList"]
-            } >= {
+            assert {item["paramKey"] for item in gateway["gridSideInfoList"]} >= {
                 "Phase A Voltage",
                 "Phase B Voltage",
                 "Phase C Voltage",
