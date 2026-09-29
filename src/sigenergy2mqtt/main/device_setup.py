@@ -87,7 +87,7 @@ def _cloud_control_plant_index(device_list: list[dict[str, Any]]) -> int | None:
     return None
 
 
-async def _discover_cloud_control_plant_index(cloud_port: CloudControlPort) -> int | None:
+async def _discover_cloud_device_list(cloud_port: CloudControlPort) -> list[dict[str, Any]] | None:
     """Discover the cloud plant and release resources owned by the startup loop.
 
     Device polling runs in a dedicated thread with its own asyncio event loop.
@@ -110,9 +110,7 @@ async def _discover_cloud_control_plant_index(cloud_port: CloudControlPort) -> i
             logger.exception(
                 "Failed to close cloud adapter after discovery; Cloud API will be disabled for this run: %s",
             )
-    if device_list is None:
-        return None
-    return _cloud_control_plant_index(device_list)
+    return device_list
 
 
 async def _discover_cloud_gateway_info(
@@ -295,11 +293,14 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
     cloud_control_registry.configure(active_config.cloud)
     if (cloud_port := cloud_control_registry.active) is not None:
         gateway_info = await _discover_cloud_gateway_info(cloud_port)
-        plant_index = await _discover_cloud_control_plant_index(cloud_port)
-        if plant_index is not None:
-            cloud_config = ThreadConfig.create(host=None, port=None, name="Sigenergy Cloud")
-            cloud_config.transport_factory = cloud_control_registry.transport_factory
-            cloud_config.add_device(SigenergyCloudControl(plant_index, cloud_port, gateway_info))
+        device_list = await _discover_cloud_device_list(cloud_port)
+        if device_list is not None:
+            plant_index = _cloud_control_plant_index(device_list)
+            has_battery = any(d for d in device_list if d.get("deviceType") == "Battery")
+            if plant_index is not None:
+                cloud_config = ThreadConfig.create(host=None, port=None, name="Sigenergy Cloud")
+                cloud_config.transport_factory = cloud_control_registry.transport_factory
+                cloud_config.add_device(SigenergyCloudControl(plant_index, cloud_port, gateway_info, has_battery))
 
     return thread_config_registry.get_all(), protocol_version
 
