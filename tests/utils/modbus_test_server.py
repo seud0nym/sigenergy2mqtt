@@ -94,6 +94,7 @@ import sys
 import threading
 import time
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Any, ClassVar
 
 # Need to set a Modbus host otherwise configuration initialisation will launch auto-discovery
@@ -168,6 +169,7 @@ UNSIGNED_DATA_TYPES = (ModbusClientMixin.DATATYPE.UINT16, ModbusClientMixin.DATA
 CLOUD_TEST_SERVER_DEFAULT_PORT = 8080
 CLOUD_TEST_STATION_ID = 10000000000001
 CLOUD_TEST_GATEWAY_SERIAL = "110G12BR00001"
+CLOUD_TEST_STATIC_DIR = Path(__file__).parent / "static"
 SYNTHESIZED_INVERTER_VALUES = {
     1: {
         InverterModel.ADDRESS: HYBRID_INVERTER_MODEL,
@@ -204,6 +206,25 @@ class CloudApiTestServer:
             "enable": False,
             "mode": "1",
             "endTime": None,
+        }
+        self.station_home_data = {
+            "stationId": CLOUD_TEST_STATION_ID,
+            "acSnList": [AC_CHARGER_SERIAL],
+            "dcSnList": [DC_CHARGER_SERIAL],
+        }
+        self.available_modes_data = {
+            "defaultWorkingModes": [
+                {"label": label, "sortOrder": 0, "remarks": "", "value": value}
+                for label, value in (
+                    ("Maximum Self-Powered", "0"),
+                    ("Sigen AI Mode", "1"),
+                    ("TOU", "2"),
+                    ("Fully Fed to Grid", "5"),
+                    ("Remote EMS Mode", "7"),
+                    ("Custom Operation Mode", "9"),
+                )
+            ],
+            "energyProfileItems": [],
         }
         self.device_topology = {
             "stationId": CLOUD_TEST_STATION_ID,
@@ -391,6 +412,24 @@ class CloudApiTestServer:
             "nearModify": None,
         }
 
+    _EDITABLE_STATE: ClassVar[dict[str, type | tuple[type, ...]]] = {
+        "internet_available": bool,
+        "internet_outage_status": int,
+        "operational_mode": int,
+        "profile_id": int,
+        "instant_control": dict,
+        "station_home_data": dict,
+        "available_modes_data": dict,
+        "device_topology": dict,
+        "gateway_info": dict,
+        "grid_export_limit": dict,
+        "grid_import_limit": dict,
+        "grid_connection_limit": dict,
+        "battery_power_limit": dict,
+        "solar_power_limit": dict,
+        "battery_export_limitation": dict,
+    }
+
     @staticmethod
     def _success(data: Any = None) -> web.Response:
         return web.json_response({"code": 0, "msg": "Success", "data": data})
@@ -398,7 +437,7 @@ class CloudApiTestServer:
     @web.middleware
     async def internet_outage_middleware(self, request: web.Request, handler: Any) -> web.StreamResponse:
         """Reject cloud API requests while an internet outage is active."""
-        if not self.internet_available:
+        if not self.internet_available and not request.path.startswith("/cloud-api-test"):
             return web.json_response(
                 {
                     "code": self.internet_outage_status,
@@ -407,6 +446,38 @@ class CloudApiTestServer:
                 status=self.internet_outage_status,
             )
         return await handler(request)
+
+    async def control_dashboard(self, request: web.Request) -> web.FileResponse:
+        """Serve the browser UI used to inspect and edit simulated cloud state."""
+        return web.FileResponse(CLOUD_TEST_STATIC_DIR / "cloud_api.html")
+
+    async def control_dashboard_script(self, request: web.Request) -> web.FileResponse:
+        """Serve testable dashboard behaviour as an ECMAScript module."""
+        return web.FileResponse(CLOUD_TEST_STATIC_DIR / "cloud_api.mjs")
+
+    async def get_control_state(self, request: web.Request) -> web.Response:
+        """Return every response value that can be changed through the UI."""
+        return web.json_response({name: getattr(self, name) for name in self._EDITABLE_STATE})
+
+    async def set_control_state(self, request: web.Request) -> web.Response:
+        """Replace one editable response value, rejecting unknown or invalid values."""
+        name = request.match_info["name"]
+        expected_type = self._EDITABLE_STATE.get(name)
+        if expected_type is None:
+            raise web.HTTPNotFound(text=f"Unknown cloud test value: {name}")
+        try:
+            value = (await request.json())["value"]
+        except (json.JSONDecodeError, KeyError, TypeError):
+            raise web.HTTPBadRequest(text='Expected JSON in the form {"value": ...}') from None
+        # bool is an int subclass, but accepting it for integer settings makes
+        # accidental checkbox updates particularly confusing.
+        valid = isinstance(value, expected_type) and not (expected_type is int and isinstance(value, bool))
+        if not valid:
+            raise web.HTTPBadRequest(text=f"{name} must be a {expected_type.__name__}")
+        if name == "internet_outage_status" and not 500 <= value <= 599:
+            raise web.HTTPBadRequest(text="internet_outage_status must be between 500 and 599")
+        setattr(self, name, value)
+        return web.json_response({"name": name, "value": value})
 
     async def authenticate(self, request: web.Request) -> web.Response:
         form = await request.post()
@@ -442,7 +513,7 @@ class CloudApiTestServer:
     async def station_home(self, request: web.Request) -> web.Response:
         if (response := await self.authorized(request)) is not None:
             return response
-        return self._success({"stationId": CLOUD_TEST_STATION_ID, "acSnList": [AC_CHARGER_SERIAL], "dcSnList": [DC_CHARGER_SERIAL]})
+        return self._success(self.station_home_data)
 
     async def get_device_topology(self, request: web.Request) -> web.Response:
         if (response := await self.authorized(request)) is not None:
@@ -457,20 +528,7 @@ class CloudApiTestServer:
     async def available_modes(self, request: web.Request) -> web.Response:
         if (response := await self.authorized(request)) is not None:
             return response
-        return self._success({
-            "defaultWorkingModes": [
-                {"label": label, "sortOrder": 0, "remarks": "", "value": value}
-                for label, value in (
-                    ("Maximum Self-Powered", "0"),
-                    ("Sigen AI Mode", "1"),
-                    ("TOU", "2"),
-                    ("Fully Fed to Grid", "5"),
-                    ("Remote EMS Mode", "7"),
-                    ("Custom Operation Mode", "9"),
-                )
-            ],
-            "energyProfileItems": [],
-        })
+        return self._success(self.available_modes_data)
 
     async def get_operational_mode(self, request: web.Request) -> web.Response:
         if (response := await self.authorized(request)) is not None:
@@ -577,6 +635,11 @@ class CloudApiTestServer:
     def app(self) -> web.Application:
         app = web.Application(middlewares=[self.internet_outage_middleware])
         app.add_routes([
+            web.get("/cloud-api-test", self.control_dashboard),
+            web.get("/cloud-api-test/", self.control_dashboard),
+            web.get("/cloud-api-test/cloud_api.mjs", self.control_dashboard_script),
+            web.get("/cloud-api-test/state", self.get_control_state),
+            web.put("/cloud-api-test/state/{name}", self.set_control_state),
             web.post("/auth/oauth/token", self.authenticate),
             web.get("/device/owner/station/home", self.station_home),
             web.get("/device/devicetreepanel/topology", self.get_device_topology),
@@ -656,7 +719,11 @@ async def run_cloud_api_test_server(host: str, port: int):
     runner = web.AppRunner(server.app())
     await runner.setup()
     await web.TCPSite(runner, host, port).start()
-    _logger.info("Cloud API Testing Server listening on http://%s:%s/", host, port)
+    _logger.info(
+        "Cloud API Testing Server listening on http://%s:%s/ (editor at /cloud-api-test)",
+        host,
+        port,
+    )
     try:
         yield server
     finally:
