@@ -138,6 +138,7 @@
         "unparseable",
         "Unpublishing",
         "UNSUBACK",
+        "vendored",
         "veth",
         "wordorder",
         "writeonly"
