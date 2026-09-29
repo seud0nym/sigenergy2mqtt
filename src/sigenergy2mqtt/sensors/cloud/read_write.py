@@ -6,6 +6,7 @@ import logging
 import math
 import time
 from datetime import timedelta
+from typing import Any, cast
 
 from sigenergy2mqtt.cloud.models import InstantControlMode as Mode
 from sigenergy2mqtt.cloud.models import InstantControlStatus, InstantOverrideCommand
@@ -25,6 +26,7 @@ from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.sensors.base import (
     CloudGridLimitSensor,
     CloudReadWriteSensor,
+    DiscoveryKeys,
     NumericSensorMixin,
     SelectSensorMixin,
     SwitchSensorMixin,
@@ -180,14 +182,6 @@ class InstantControlDuration(NumericSensorMixin, CloudReadWriteSensor):
 class InstantControlSwitch(SwitchSensorMixin, CloudReadWriteSensor):
     """Authoritative enabled state and command switch for an instant override."""
 
-    @property
-    def payload_available(self) -> bool | int | float | str | None:
-        return 0
-
-    @property
-    def payload_not_available(self) -> bool | int | float | str | None:
-        return 1
-
     def __init__(
         self,
         plant_index: int,
@@ -218,6 +212,14 @@ class InstantControlSwitch(SwitchSensorMixin, CloudReadWriteSensor):
             precision=0,
             protocol_version=ProtocolVersion.N_A,
         )
+
+    @property
+    def payload_available(self) -> bool | int | float | str | None:
+        return 0
+
+    @property
+    def payload_not_available(self) -> bool | int | float | str | None:
+        return 1
 
     async def _read_cloud_state(self, port: CloudControlPort) -> int:
         status = await self._status_snapshot.read(port)
@@ -335,7 +337,7 @@ def _parse_power_limit(sensor: CloudReadWriteSensor, value: object, key: str) ->
 
 
 class _BatteryPowerLimit(NumericSensorMixin, CloudReadWriteSensor):
-    """Common behavior for one half of the battery power-limit setting."""
+    """Common behaviour for one half of the battery power-limit setting."""
 
     _CHARGE_KEY = "batteryMaxChargingPower"
     _DISCHARGE_KEY = "batteryMaxDischargingPower"
@@ -492,14 +494,23 @@ class BatteryExportLimitation(SwitchSensorMixin, CloudReadWriteSensor):
             precision=0,
             protocol_version=ProtocolVersion.N_A,
         )
+        self.state_topic_dict_key = "ownerSetEnable"
 
-    async def _read_cloud_state(self, port: CloudControlPort) -> int | str:
-        payload = await port.battery_export_limitation()
-        if not isinstance(payload, dict) or not isinstance(payload.get("currentEnable"), bool):
-            logger.warning(f"{self.log_identity} cloud response contains invalid currentEnable: {payload!r}")
-            return "None"
-        return int(payload["currentEnable"])
+    def configure_mqtt_topics(self, device_id: str) -> str:
+        base = super().configure_mqtt_topics(device_id)
+        if active_config.home_assistant.enabled:
+            availability = cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY])
+            availability.append({
+                "topic": f"{base}/state/currentEnable",
+                "payload_available": 1,
+                "payload_not_available": 0,
+            })
+        return base
+
+    async def _read_cloud_state(self, port: CloudControlPort) -> Any:
+        return await port.battery_export_limitation()
 
     async def _write_cloud_value(self, port: CloudControlPort, value: float | str) -> bool:
-        await port.set_battery_export_limitation(bool(int(value)))
+        logger.info(f"{self.log_identity} Updated '{self.state_topic_dict_key}' to '{value}'")
+        await port.set_battery_export_limitation(bool(value))
         return True
