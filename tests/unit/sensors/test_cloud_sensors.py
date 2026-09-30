@@ -29,6 +29,7 @@ from sigenergy2mqtt.sensors.cloud.read_write import (
     InstantControlDuration,
     InstantControlMode,
     InstantControlSwitch,
+    OperationalMode,
     SolarPowerLimit,
 )
 
@@ -79,6 +80,15 @@ class FakeCloudControlPort:
         return InstantControlStatus(self.enabled, None, None)
 
 
+OPERATIONAL_MODES = {
+    "defaultWorkingModes": [
+        {"label": "Maximum Self-Powered", "value": "0"},
+        {"label": "Sigen AI Mode", "value": "1"},
+    ],
+    "energyProfileItems": [{"name": "Weekend profile", "profileId": 42}],
+}
+
+
 def _controls() -> tuple[InstantControlMode, InstantControlDuration, InstantControlSwitch]:
     mode = InstantControlMode(0, FakeCloudControlPort.station_id)
     duration = InstantControlDuration(0, FakeCloudControlPort.station_id)
@@ -99,13 +109,18 @@ def test_cloud_identity_uses_cloud_object_id_and_station_unique_id() -> None:
 
 
 def test_cloud_control_device_registers_normal_mqtt_entities() -> None:
-    device = SigenergyCloudControl(0, FakeCloudControlPort())
+    device = SigenergyCloudControl(
+        0,
+        FakeCloudControlPort(),
+        operational_modes=OPERATIONAL_MODES,
+    )
     sensors = list(device.sensors.values())
 
     assert [type(sensor) for sensor in sensors] == [
         InstantControlSwitch,
         InstantControlMode,
         InstantControlDuration,
+        OperationalMode,
         GridExportLimit,
         GridImportLimit,
         GridConnectionLimit,
@@ -117,12 +132,58 @@ def test_cloud_control_device_registers_normal_mqtt_entities() -> None:
     assert sensors[0][DiscoveryKeys.PLATFORM] == "switch"
     assert sensors[1][DiscoveryKeys.PLATFORM] == "select"
     assert sensors[2][DiscoveryKeys.PLATFORM] == "number"
-    assert all(sensor[DiscoveryKeys.PLATFORM] == "number" for sensor in sensors[3:9])
-    assert sensors[9][DiscoveryKeys.PLATFORM] == "switch"
+    assert sensors[3][DiscoveryKeys.PLATFORM] == "select"
+    assert all(sensor[DiscoveryKeys.PLATFORM] == "number" for sensor in sensors[4:10])
+    assert sensors[10][DiscoveryKeys.PLATFORM] == "switch"
     assert device.protocol_version is ProtocolVersion.N_A
     assert device.name == "Sigenergy Cloud"
     assert device["model"] == "Test Cloud"
     assert all(sensor.protocol_version is ProtocolVersion.N_A for sensor in sensors)
+
+
+@pytest.mark.asyncio
+async def test_operational_mode_discovers_reads_and_writes_station_modes() -> None:
+    device = SigenergyCloudControl(
+        0,
+        FakeCloudControlPort(),
+        operational_modes=OPERATIONAL_MODES,
+    )
+    sensor = next(item for item in device.sensors.values() if isinstance(item, OperationalMode))
+    port = FakeCloudControlPort()
+    port.get_operational_mode.return_value = (9, 42)
+
+    assert sensor[DiscoveryKeys.OPTIONS] == [
+        "Maximum Self-Powered",
+        "Sigen AI Mode",
+        "Weekend profile",
+    ]
+    assert await sensor._read_cloud_state(port) == 2
+    assert sensor.sanity_check.max_raw == 2
+    port.available_operational_modes.assert_not_awaited()
+    assert await sensor._write_cloud_value(port, 1) is True
+    assert await sensor._write_cloud_value(port, 2) is True
+    assert [item.args for item in port.set_operational_mode.await_args_list] == [
+        (1, -1),
+        (9, 42),
+    ]
+
+
+@pytest.mark.asyncio
+async def test_operational_mode_rejects_unknown_cloud_and_command_modes() -> None:
+    sensor = OperationalMode(
+        0,
+        FakeCloudControlPort.station_id,
+        {
+            "defaultWorkingModes": [{"label": "Self Consumption", "value": "2"}],
+            "energyProfileItems": [],
+        },
+    )
+    port = FakeCloudControlPort()
+    port.get_operational_mode.return_value = (99, -1)
+
+    assert await sensor._read_cloud_state(port) == "None"
+    assert await sensor._write_cloud_value(port, 4) is False
+    port.set_operational_mode.assert_not_awaited()
 
 
 def test_cloud_power_limit_sensors_expose_vendor_maximum() -> None:

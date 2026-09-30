@@ -39,6 +39,82 @@ INSTANT_CONTROL_OPTIONS = [
     "Hold Battery",
     "Self-Consumption",
 ]
+
+
+class OperationalMode(SelectSensorMixin, CloudReadWriteSensor):
+    """Select the station's persistent cloud operating mode or energy profile."""
+
+    def __init__(self, plant_index: int, station_id: str, available_modes: dict[str, object]) -> None:
+        object_id, unique_id = _identity(plant_index, station_id, "operational_mode")
+        options, self._mode_values = self._parse_modes(available_modes)
+        super().__init__(
+            availability_control_sensor=None,
+            name="Operational Mode",
+            object_id=object_id,
+            unique_id=unique_id,
+            scan_interval=active_config.cloud.scan_interval,
+            options=options,
+            unit=None,
+            device_class=None,
+            state_class=None,
+            icon="mdi:home-lightning-bolt-outline",
+            gain=None,
+            precision=None,
+            protocol_version=ProtocolVersion.N_A,
+        )
+
+    @staticmethod
+    def _parse_modes(payload: dict[str, object]) -> tuple[list[str], list[tuple[int, int]]]:
+        options: list[str] = []
+        mode_values: list[tuple[int, int]] = []
+        default_modes = payload.get("defaultWorkingModes")
+        for item in default_modes if isinstance(default_modes, list) else ():
+            if not isinstance(item, dict):
+                continue
+            try:
+                label = str(item["label"])
+                mode = int(item["value"])
+            except (KeyError, TypeError, ValueError):
+                continue
+            if label:
+                options.append(label)
+                mode_values.append((mode, -1))
+
+        energy_profiles = payload.get("energyProfileItems")
+        for item in energy_profiles if isinstance(energy_profiles, list) else ():
+            if not isinstance(item, dict):
+                continue
+            try:
+                label = str(item["name"])
+                profile_id = int(item["profileId"])
+            except (KeyError, TypeError, ValueError):
+                continue
+            if label:
+                options.append(label)
+                mode_values.append((9, profile_id))
+
+        if not options:
+            raise ValueError("OperationalMode: available_modes contains no valid modes")
+        return options, mode_values
+
+    async def _read_cloud_state(self, port: CloudControlPort) -> int | str:
+        current = await port.get_operational_mode()
+        try:
+            return self._mode_values.index((int(current[0]), int(current[1])))
+        except (IndexError, TypeError, ValueError):
+            logger.warning(f"{self.log_identity} cloud response contains unknown operational mode: {current!r}")
+            return "None"
+
+    async def _write_cloud_value(self, port: CloudControlPort, value: float | str) -> bool:
+        index = int(value)
+        if not 0 <= index < len(self._mode_values):
+            logger.warning(f"{self.log_identity} cannot write unknown operational mode index {index}")
+            return False
+        mode, profile_id = self._mode_values[index]
+        await port.set_operational_mode(mode, profile_id)
+        return True
+
+
 _OPTION_TO_MODE = {
     0: Mode.CHARGE,
     1: Mode.DISCHARGE,
