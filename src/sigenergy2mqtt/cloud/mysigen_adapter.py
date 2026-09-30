@@ -141,8 +141,7 @@ class MySigenCloudAdapter:
         """Replace an invalid cloud login unless another task already did so."""
         async with self._connect_lock:
             logger.debug(
-                f"Reconnecting to {self._client.base_url} Cloud API ",
-                f"(_connection_generation={self._connection_generation}, failed_generation={failed_generation})",
+                f"Reconnecting to {self._client.base_url} Cloud API (_connection_generation={self._connection_generation}, failed_generation={failed_generation})",
             )
             if self._connection_generation != failed_generation:
                 return
@@ -157,8 +156,7 @@ class MySigenCloudAdapter:
                 self._connected = False
                 await Metrics.cloud_connection(connected=False)
                 logger.debug(
-                    f"Connection to {self._client.base_url} Cloud API invalidated ",
-                    f"(_connection_generation={self._connection_generation}, failed_generation={failed_generation})",
+                    f"Connection to {self._client.base_url} Cloud API invalidated (_connection_generation={self._connection_generation}, failed_generation={failed_generation})",
                 )
 
     async def close(self) -> None:
