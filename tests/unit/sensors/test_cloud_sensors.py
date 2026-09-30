@@ -150,6 +150,7 @@ async def test_operational_mode_discovers_reads_and_writes_station_modes() -> No
     )
     sensor = next(item for item in device.sensors.values() if isinstance(item, OperationalMode))
     port = FakeCloudControlPort()
+    port.available_operational_modes.return_value = OPERATIONAL_MODES
     port.get_operational_mode.return_value = (9, 42)
 
     assert sensor[DiscoveryKeys.OPTIONS] == [
@@ -159,7 +160,7 @@ async def test_operational_mode_discovers_reads_and_writes_station_modes() -> No
     ]
     assert await sensor._read_cloud_state(port) == 2
     assert sensor.sanity_check.max_raw == 2
-    port.available_operational_modes.assert_not_awaited()
+    port.available_operational_modes.assert_awaited_once_with()
     assert await sensor._write_cloud_value(port, 1) is True
     assert await sensor._write_cloud_value(port, 2) is True
     assert [item.args for item in port.set_operational_mode.await_args_list] == [
@@ -179,11 +180,38 @@ async def test_operational_mode_rejects_unknown_cloud_and_command_modes() -> Non
         },
     )
     port = FakeCloudControlPort()
+    port.available_operational_modes.return_value = {
+        "defaultWorkingModes": [{"label": "Self Consumption", "value": "2"}],
+        "energyProfileItems": [],
+    }
     port.get_operational_mode.return_value = (99, -1)
 
-    assert await sensor._read_cloud_state(port) == "None"
+    assert await sensor._read_cloud_state(port) is None
     assert await sensor._write_cloud_value(port, 4) is False
     port.set_operational_mode.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_operational_mode_refreshes_options_and_disambiguates_duplicate_labels() -> None:
+    device = SigenergyCloudControl(
+        0,
+        FakeCloudControlPort(),
+        operational_modes=OPERATIONAL_MODES,
+    )
+    sensor = next(item for item in device.sensors.values() if isinstance(item, OperationalMode))
+    port = FakeCloudControlPort()
+    port.available_operational_modes.return_value = {
+        "defaultWorkingModes": [{"label": "Shared", "value": "2"}],
+        "energyProfileItems": [{"name": "Shared", "profileId": 7}],
+    }
+    port.get_operational_mode.return_value = (9, 7)
+    device.rediscover = False
+
+    assert await sensor._read_cloud_state(port) == 1
+    assert sensor[DiscoveryKeys.OPTIONS] == ["Shared", "Shared (Profile 7)"]
+    assert device.rediscover is True
+    assert await sensor._write_cloud_value(port, 1) is True
+    port.set_operational_mode.assert_awaited_once_with(9, 7)
 
 
 def test_cloud_power_limit_sensors_expose_vendor_maximum() -> None:

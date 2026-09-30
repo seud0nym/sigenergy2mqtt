@@ -1,5 +1,6 @@
 """Cloud-backed Instant Manual Control device."""
 
+import logging
 from typing import Any
 
 from sigenergy2mqtt.cloud.port import CloudControlPort
@@ -28,6 +29,8 @@ from sigenergy2mqtt.sensors.cloud.read_write import (
     OperationalMode,
     SolarPowerLimit,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class SigenergyGateway(Device):
@@ -119,7 +122,10 @@ class SigenergyCloudControl(Device):
         self._add_sensor(mode)
         self._add_sensor(duration)
         if operational_modes:
-            self._add_sensor(OperationalMode(plant_index, station_id, operational_modes))
+            try:
+                self._add_sensor(OperationalMode(plant_index, station_id, operational_modes))
+            except ValueError as exc:
+                logger.warning("Cloud operational-mode sensor disabled: %s", exc)
 
         self._add_sensor(GridExportLimit(plant_index, station_id))
         self._add_sensor(GridImportLimit(plant_index, station_id))

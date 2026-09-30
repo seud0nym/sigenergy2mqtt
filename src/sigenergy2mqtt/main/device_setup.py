@@ -23,6 +23,7 @@ from sigenergy2mqtt.devices import (
     bind_cross_device_sensors,
 )
 from sigenergy2mqtt.modbus import ModbusClient
+from sigenergy2mqtt.sensors.cloud.read_write import OperationalMode
 from sigenergy2mqtt.sensors.inverter.read_only import RatedActivePower
 from sigenergy2mqtt.sensors.plant.read_only import (
     GridStatus,
@@ -154,7 +155,12 @@ async def _discover_cloud_operational_modes(
     try:
         payload = await cloud_port.available_operational_modes()
         if isinstance(payload, dict):
-            operational_modes = payload
+            try:
+                OperationalMode._parse_modes(payload)
+            except ValueError:
+                logger.warning("Cloud operational-mode discovery returned no usable modes; sensor will be disabled")
+            else:
+                operational_modes = payload
         else:
             logger.warning("Cloud operational-mode discovery returned an invalid response")
     except (ClientError, CloudControlError) as exc:

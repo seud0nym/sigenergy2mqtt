@@ -41,6 +41,7 @@ from sigenergy2mqtt.main.device_setup import (
     _cloud_control_plant_index,
     _discover_cloud_control_plant_index,
     _discover_cloud_gateway_info,
+    _discover_cloud_operational_modes,
     _is_grid_outage,
     _setup_ac_chargers,
     _setup_dc_chargers,
@@ -233,6 +234,32 @@ async def test_gateway_discovery_does_not_retry_auth_or_rate_limits(
 
     cloud_port.gateway_info.assert_awaited_once_with()
     sleep.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_operational_mode_discovery_returns_options_and_closes_adapter() -> None:
+    cloud_port = MagicMock()
+    modes = {
+        "defaultWorkingModes": [{"label": "Self Consumption", "value": "2"}],
+        "energyProfileItems": [],
+    }
+    cloud_port.available_operational_modes = AsyncMock(return_value=modes)
+    cloud_port.close = AsyncMock()
+
+    assert await _discover_cloud_operational_modes(cloud_port) == modes
+    cloud_port.close.assert_awaited_once_with()
+
+
+@pytest.mark.asyncio
+async def test_operational_mode_discovery_rejects_empty_options_and_closes_adapter() -> None:
+    cloud_port = MagicMock()
+    cloud_port.available_operational_modes = AsyncMock(
+        return_value={"defaultWorkingModes": [], "energyProfileItems": []}
+    )
+    cloud_port.close = AsyncMock()
+
+    assert await _discover_cloud_operational_modes(cloud_port) is None
+    cloud_port.close.assert_awaited_once_with()
 
 
 def test_cloud_control_discovery_replaces_session_across_event_loops():
