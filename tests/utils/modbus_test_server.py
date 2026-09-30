@@ -205,7 +205,7 @@ class CloudApiTestServer:
         self.instant_control: dict[str, Any] = {
             "enable": False,
             "mode": "1",
-            "endTime": None,
+            "endTime": 1790727664,
         }
         self.station_home_data = {
             "stationId": CLOUD_TEST_STATION_ID,
@@ -647,18 +647,22 @@ class CloudApiTestServer:
     async def get_instant_control(self, request: web.Request) -> web.Response:
         if (response := await self.authorized(request)) is not None:
             return response
+        if self.instant_control["enable"] == True and self.instant_control["endTime"] is not None and self.instant_control["endTime"] < time.time():
+            self.instant_control["enable"] = False
+        _logger.info(f"get_instant_control: {self.instant_control}")
         return self._success(self.instant_control)
 
     async def set_instant_control(self, request: web.Request) -> web.Response:
         if (response := await self.authorized(request)) is not None:
             return response
         payload = await request.json()
+        _logger.info(f"set_instant_control: {payload}")
         enabled = bool(payload.get("enable"))
-        duration = payload.get("duration")
+        duration = int(payload.get("duration"))
         self.instant_control = {
             "enable": enabled,
             "mode": payload.get("mode") or "1",
-            "endTime": int(time.time()) + int(duration) * 60 if enabled and duration else None,
+            "endTime": int(time.time() + (duration * 60)) if enabled and duration else None,
         }
         return self._success()
 
@@ -728,7 +732,6 @@ class CloudApiTestServer:
         payload = await request.json()
         self.battery_export_limitation.update(
             currentEnable=payload["ownerSetEnable"],
-            installerSetEnable=payload["installerSetEnable"],
             ownerSetEnable=payload["ownerSetEnable"],
         )
         return self._success()
