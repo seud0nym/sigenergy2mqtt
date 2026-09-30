@@ -18,7 +18,6 @@ from sigenergy2mqtt.sensors.cloud.read_only import (
 from sigenergy2mqtt.sensors.cloud.read_write import (
     BatteryChargePowerLimit,
     BatteryDischargePowerLimit,
-    BatteryExportLimitation,
     GridConnectionLimit,
     GridExportLimit,
     GridImportLimit,
@@ -123,7 +122,6 @@ class SigenergyCloudControl(Device):
             battery_discharge_limit = BatteryDischargePowerLimit(plant_index, station_id, battery_charge_limit._snapshot)
             self._add_sensor(battery_charge_limit)
             self._add_sensor(battery_discharge_limit)
-            self._add_sensor(BatteryExportLimitation(plant_index, station_id))
 
         if gateway_info:
             raw_grid_side_info = gateway_info.get("gridSideInfoList")
