@@ -316,7 +316,7 @@ class InstantControlSwitch(SwitchSensorMixin, CloudReadWriteSensor, Availability
         return base
 
     async def _pre_publish(self, state: Any, mqtt_client: Client, transport: Any, republish: bool) -> None:
-        if self._availability_topic is not None and not republish:
+        if self._availability_topic is not None:
             mqtt_client.publish(
                 self._availability_topic,
                 "0" if self._mode.pending_value is None or self._duration.pending_value == 0 else "1",
