@@ -103,6 +103,10 @@ class MySigenCloudAdapter:
     def capabilities(self) -> Capabilities:
         return _CAPABILITIES
 
+    @property
+    def connected(self) -> bool:
+        return self._connected
+
     async def connect(self) -> None:
         async with self._connect_lock:
             await self._connect_locked()
@@ -136,7 +140,10 @@ class MySigenCloudAdapter:
     async def _reconnect(self, failed_generation: int) -> None:
         """Replace an invalid cloud login unless another task already did so."""
         async with self._connect_lock:
-            logger.debug(f"Reconnecting to {self._client.base_url} Cloud API (_connection_generation={self._connection_generation}, failed_generation={failed_generation})")
+            logger.debug(
+                f"Reconnecting to {self._client.base_url} Cloud API ",
+                f"(_connection_generation={self._connection_generation}, failed_generation={failed_generation})",
+            )
             if self._connection_generation != failed_generation:
                 return
             self._connected = False
@@ -149,7 +156,10 @@ class MySigenCloudAdapter:
             if self._connection_generation == failed_generation:
                 self._connected = False
                 await Metrics.cloud_connection(connected=False)
-                logger.debug(f"Connection to {self._client.base_url} Cloud API invalidated (_connection_generation={self._connection_generation}, failed_generation={failed_generation})")
+                logger.debug(
+                    f"Connection to {self._client.base_url} Cloud API invalidated ",
+                    f"(_connection_generation={self._connection_generation}, failed_generation={failed_generation})",
+                )
 
     async def close(self) -> None:
         await self._client.close()
