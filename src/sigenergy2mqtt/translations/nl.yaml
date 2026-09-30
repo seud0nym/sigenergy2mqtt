@@ -993,6 +993,12 @@ class:
     name: Instant Manual Control Duration
   InstantControlMode:
     name: Instant Manual Control Mode
+    options:
+      '0': Not Set
+      '1': Charging
+      '2': Discharging
+      '3': Hold Battery
+      '4': Self-Consumption
   InstantControlSwitch:
     name: Instant Manual Control
   InsulationResistance:
