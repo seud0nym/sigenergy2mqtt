@@ -1,6 +1,7 @@
 """Cloud sensor behavior and Instant Manual Control device wiring."""
 
 from datetime import timedelta
+from typing import cast
 from unittest.mock import AsyncMock
 
 import pytest
@@ -19,7 +20,6 @@ from sigenergy2mqtt.devices.cloud import SigenergyCloudControl
 from sigenergy2mqtt.sensors.base import CloudReadWriteSensor, DiscoveryKeys
 from sigenergy2mqtt.sensors.cloud.functions import _identity
 from sigenergy2mqtt.sensors.cloud.read_write import (
-    INSTANT_CONTROL_OPTIONS,
     BatteryChargePowerLimit,
     BatteryDischargePowerLimit,
     BatteryExportLimitation,
@@ -99,26 +99,26 @@ def test_cloud_identity_uses_cloud_object_id_and_station_unique_id() -> None:
 
 
 def test_cloud_control_device_registers_normal_mqtt_entities() -> None:
-    device = SigenergyCloudControl(0, FakeCloudControlPort())
+    device = SigenergyCloudControl(0, FakeCloudControlPort(), has_battery=True)
     sensors = list(device.sensors.values())
 
-    assert [type(sensor) for sensor in sensors] == [
-        InstantControlSwitch,
-        InstantControlMode,
-        InstantControlDuration,
+    assert [type(sensor) for sensor in sensors] == [  # Must be in the same order as added in SigenergyCloudControl __init__
         GridExportLimit,
         GridImportLimit,
         GridConnectionLimit,
+        SolarPowerLimit,
+        InstantControlSwitch,
+        InstantControlMode,
+        InstantControlDuration,
         BatteryChargePowerLimit,
         BatteryDischargePowerLimit,
-        SolarPowerLimit,
         BatteryExportLimitation,
     ]
-    assert sensors[0][DiscoveryKeys.PLATFORM] == "switch"
-    assert sensors[1][DiscoveryKeys.PLATFORM] == "select"
-    assert sensors[2][DiscoveryKeys.PLATFORM] == "number"
-    assert all(sensor[DiscoveryKeys.PLATFORM] == "number" for sensor in sensors[3:9])
-    assert sensors[9][DiscoveryKeys.PLATFORM] == "switch"
+    assert all(sensor[DiscoveryKeys.PLATFORM] == "number" for sensor in sensors[0:3])  # GridExportLimit GridImportLimit GridConnectionLimit GridConnectionLimit
+    assert sensors[4][DiscoveryKeys.PLATFORM] == "switch"  # InstantControlSwitch
+    assert sensors[5][DiscoveryKeys.PLATFORM] == "select"  # InstantControlMode
+    assert all(sensor[DiscoveryKeys.PLATFORM] == "number" for sensor in sensors[6:8])  # InstantControlDuration BatteryChargePowerLimit BatteryDischargePowerLimit
+    assert sensors[9][DiscoveryKeys.PLATFORM] == "switch"  # BatteryExportLimitation
     assert device.protocol_version is ProtocolVersion.N_A
     assert device.name == "Sigenergy Cloud"
     assert device["model"] == "Test Cloud"
@@ -126,7 +126,7 @@ def test_cloud_control_device_registers_normal_mqtt_entities() -> None:
 
 
 def test_cloud_power_limit_sensors_expose_vendor_maximum() -> None:
-    device = SigenergyCloudControl(0, FakeCloudControlPort())
+    device = SigenergyCloudControl(0, FakeCloudControlPort(), has_battery=True)
     power_limits = [
         sensor
         for sensor in device.sensors.values()
@@ -144,16 +144,23 @@ def test_mode_and_duration_are_available_only_while_switch_is_off() -> None:
     config = Config()
     config.home_assistant.enabled = True
     with _swap_active_config(config):
-        device = SigenergyCloudControl(0, FakeCloudControlPort())
-        switch, mode, duration = list(device.sensors.values())[:3]
+        device = SigenergyCloudControl(0, FakeCloudControlPort(), has_battery=True)
+        sensors = list(device.sensors.values())
+        switch = next(s for s in sensors if isinstance(s, InstantControlSwitch))
+        mode = next(s for s in sensors if isinstance(s, InstantControlMode))
+        duration = next(s for s in sensors if isinstance(s, InstantControlDuration))
 
-        for selector in (mode, duration):
-            availability = selector[DiscoveryKeys.AVAILABILITY]
-            assert isinstance(availability, list)
-            gate = next(item for item in availability if isinstance(item, dict) and item.get("topic") == switch.state_topic)
-            assert isinstance(gate, dict)
-            assert gate["payload_available"] == "0"
-            assert gate["payload_not_available"] == "1"
+        # Mode and duration no longer gate on the switch state - they're always visible
+        assert DiscoveryKeys.AVAILABILITY not in mode or all(item.get("topic") != switch._availability_topic for item in cast(list, mode.get(DiscoveryKeys.AVAILABILITY, [])) if isinstance(item, dict))
+        assert DiscoveryKeys.AVAILABILITY not in duration or all(item.get("topic") != switch._availability_topic for item in cast(list, duration.get(DiscoveryKeys.AVAILABILITY, [])) if isinstance(item, dict))
+        # The switch itself has its own availability topic (to indicate mode/duration are ready)
+        assert switch._availability_topic is not None
+        availability = switch[DiscoveryKeys.AVAILABILITY]
+        assert isinstance(availability, list)
+        gate = next((item for item in availability if isinstance(item, dict) and item.get("topic") == switch._availability_topic), None)
+        assert gate is not None
+        assert gate[DiscoveryKeys.PAYLOAD_AVAILABLE] == 1
+        assert gate[DiscoveryKeys.PAYLOAD_NOT_AVAILABLE] == 0
 
 
 @pytest.mark.asyncio
@@ -171,7 +178,7 @@ async def test_switch_reads_authoritative_cloud_state() -> None:
 async def test_switch_submits_current_mode_and_duration() -> None:
     mode, duration, switch = _controls()
     port = FakeCloudControlPort()
-    await mode._write_cloud_value(port, INSTANT_CONTROL_OPTIONS.index("Self-Consumption"))
+    await mode._write_cloud_value(port, 4)  # Self-Consumption"
     await duration._write_cloud_value(port, 90)
 
     assert await switch._write_cloud_value(port, 1) is True
@@ -202,8 +209,8 @@ async def test_selection_sensors_read_authoritative_cloud_values(monkeypatch) ->
 
     SensorGroupPoller._begin_coordinated_refresh([switch, mode, duration])
     assert await switch._read_cloud_state(port) == 1
-    assert await mode._read_cloud_state(port) == 2
-    assert await duration._read_cloud_state(port) == 10
+    assert await mode._read_cloud_state(port) == 3
+    assert await duration._read_cloud_state(port) == 9
     port.instant_control_status.assert_awaited_once()
 
     SensorGroupPoller._begin_coordinated_refresh([switch, mode, duration])
@@ -224,12 +231,12 @@ async def test_forced_selector_refresh_cannot_leak_into_next_group_poll() -> Non
 
     # A forced selector-only polling batch gets its own snapshot.
     SensorGroupPoller._begin_coordinated_refresh([mode])
-    assert await mode._read_cloud_state(port) == 0
+    assert await mode._read_cloud_state(port) == 1
 
     # The next regular batch is explicitly invalidated before any sensor reads.
     SensorGroupPoller._begin_coordinated_refresh([switch, mode, duration])
     assert await switch._read_cloud_state(port) == 1
-    assert await mode._read_cloud_state(port) == 1
+    assert await mode._read_cloud_state(port) == 2
     assert port.instant_control_status.await_count == 2
 
 
@@ -242,11 +249,11 @@ async def test_selection_sensors_keep_pending_values_separate_from_cloud_state()
     await duration._write_cloud_value(port, 45)
     port.instant_control_status = AsyncMock(return_value=InstantControlStatus(True, DomainMode.HOLD, None))
 
-    assert await mode._read_cloud_state(port) == 2
-    assert await duration._read_cloud_state(port) is None
+    assert await mode._read_cloud_state(port) == 1
+    assert await duration._read_cloud_state(port) == 45
     assert await switch._write_cloud_value(port, 1) is True
     assert port.command is not None
-    assert port.command.mode is DomainMode.DISCHARGE
+    assert port.command.mode is DomainMode.CHARGE
     assert port.command.duration == timedelta(minutes=45)
 
 
@@ -257,8 +264,8 @@ async def test_selection_sensors_have_no_arbitrary_initial_values() -> None:
 
     assert mode.latest_raw_state is None
     assert duration.latest_raw_state is None
-    assert await mode._read_cloud_state(port) is None
-    assert await duration._read_cloud_state(port) is None
+    assert await mode._read_cloud_state(port) == 0
+    assert await duration._read_cloud_state(port) == 0
     assert await switch._write_cloud_value(port, 1) is False
 
 
@@ -388,7 +395,7 @@ async def test_grid_limit_reads_installer_maximum_and_writes_owner_value(sensor_
     port = AsyncMock()
     getattr(port, read_method).return_value = payload
 
-    assert await sensor._read_cloud_state(port) == float(payload.get("maxLimitation", payload.get("currentLimitation")))
+    assert await sensor._read_cloud_state(port) == payload
     assert sensor[DiscoveryKeys.MIN] == 0.0
     assert sensor[DiscoveryKeys.MAX] == maximum
     assert await sensor._write_cloud_value(port, maximum / 2) is True
@@ -423,11 +430,12 @@ async def test_grid_limit_empty_states_and_disallowed_updates(payload) -> None:
 
     state = await sensor._read_cloud_state(port)
     if payload["enable"] and payload["maxLimitation"]:
-        assert state == 5.0
+        assert state == payload
     else:
-        assert state == "None"
-    assert await sensor._write_cloud_value(port, 4.0) is bool(payload["maxLimitationInstaller"])
-    if payload["maxLimitationInstaller"]:
+        assert state == payload
+    is_writable = bool(payload.get("enable")) and bool(payload.get("maxLimitationInstaller"))
+    assert await sensor._write_cloud_value(port, 4.0) is is_writable
+    if is_writable:
         port.set_grid_export_limit.assert_awaited_once_with(4.0, enabled=True)
     else:
         port.set_grid_export_limit.assert_not_awaited()
@@ -444,7 +452,7 @@ async def test_grid_limit_invalid_enable_status_disallows_updates(enable) -> Non
         "maxLimitationInstaller": "10.000",
     }
 
-    assert await sensor._read_cloud_state(port) == "None"
+    assert await sensor._read_cloud_state(port) == port.grid_export_limit.return_value
     assert await sensor._write_cloud_value(port, 4.0) is False
     port.set_grid_export_limit.assert_not_awaited()
 
@@ -460,14 +468,14 @@ async def test_battery_export_limitation_reads_current_state_and_writes_owner_st
         "nearModify": None,
     }
 
-    assert await sensor._read_cloud_state(port) == {"currentEnable": False, "ownerSetEnable": None, "installerSetEnable": None, "nearModify": None}
+    assert await sensor._read_cloud_state(port) == {"currentEnable": False, "ownerSetEnable": None, "installerSetEnable": -1, "nearModify": None}
     assert await sensor._write_cloud_value(port, 1) is True
     port.set_battery_export_limitation.assert_awaited_once_with(True)
 
 
 @pytest.mark.asyncio
 async def test_battery_power_limits_share_read_and_preserve_other_limit_on_write() -> None:
-    device = SigenergyCloudControl(0, FakeCloudControlPort())
+    device = SigenergyCloudControl(0, FakeCloudControlPort(), has_battery=True)
     charge = next(sensor for sensor in device.sensors.values() if isinstance(sensor, BatteryChargePowerLimit))
     discharge = next(sensor for sensor in device.sensors.values() if isinstance(sensor, BatteryDischargePowerLimit))
     port = FakeCloudControlPort()
@@ -594,8 +602,12 @@ async def test_grid_limit_malformed_payload_publishes_unavailable_without_raisin
     port = AsyncMock()
     port.grid_export_limit.return_value = payload
 
-    assert await sensor._update_internal_state(modbus_client=port) is True
-    assert sensor.latest_raw_state == "None"
+    if isinstance(payload, dict):
+        assert await sensor._update_internal_state(modbus_client=port) is True
+        assert sensor.latest_raw_state == payload
+    else:
+        assert await sensor._update_internal_state(modbus_client=port) is False
+        assert sensor.latest_raw_state is None
     assert await sensor._write_cloud_value(port, 1) is False
 
 
@@ -610,14 +622,16 @@ async def test_grid_limit_maximum_changes_request_discovery_republish() -> None:
         "maxLimitationInstaller": "10",
     }
 
-    assert await sensor._read_cloud_state(port) == 5.0
+    state = await sensor._read_cloud_state(port)
+    assert state is not None and state.get("maxLimitation") == "5"
     assert sensor[DiscoveryKeys.MAX] == 10.0
     assert sensor.sanity_check.min_raw == 0.0
     assert device.rediscover is True
 
     device.rediscover = False
     port.grid_export_limit.return_value["maxLimitationInstaller"] = ""
-    assert await sensor._read_cloud_state(port) == 5.0
+    state = await sensor._read_cloud_state(port)
+    assert state is not None and state.get("maxLimitation") == "5"
     assert DiscoveryKeys.MAX not in sensor
     assert sensor.sanity_check.min_raw == 0.0
     assert sensor.sanity_check.max_raw == 0.0

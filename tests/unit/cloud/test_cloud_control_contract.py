@@ -188,6 +188,15 @@ async def test_device_list_uses_official_api_shape(
     assert await mysigen_adapter.device_list() == [
         {
             "systemId": "123",
+            "serialNumber": "AIO",
+            "deviceType": "Aio",
+            "status": "Normal",
+            "pn": "",
+            "firmwareVersion": "",
+            "attrMap": {},
+        },
+        {
+            "systemId": "123",
             "serialNumber": "INV",
             "deviceType": "Inverter",
             "status": "Normal",

@@ -658,7 +658,7 @@ class CloudApiTestServer:
         payload = await request.json()
         _logger.info(f"set_instant_control: {payload}")
         enabled = bool(payload.get("enable"))
-        duration = int(payload.get("duration"))
+        duration = int(payload.get("duration") or 0)
         self.instant_control = {
             "enable": enabled,
             "mode": payload.get("mode") or "1",
