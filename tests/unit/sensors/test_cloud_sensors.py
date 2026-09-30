@@ -214,6 +214,34 @@ async def test_operational_mode_refreshes_options_and_disambiguates_duplicate_la
     port.set_operational_mode.assert_awaited_once_with(9, 7)
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "options_response",
+    [
+        ["not", "an", "object"],
+        CloudControlUnavailableError("options endpoint unavailable"),
+    ],
+)
+async def test_operational_mode_reads_current_mode_when_option_refresh_fails(
+    options_response,
+) -> None:
+    sensor = OperationalMode(0, FakeCloudControlPort.station_id, OPERATIONAL_MODES)
+    port = FakeCloudControlPort()
+    if isinstance(options_response, Exception):
+        port.available_operational_modes.side_effect = options_response
+    else:
+        port.available_operational_modes.return_value = options_response
+    port.get_operational_mode.return_value = (1, -1)
+
+    assert await sensor._read_cloud_state(port) == 1
+    port.get_operational_mode.assert_awaited_once_with()
+    assert sensor[DiscoveryKeys.OPTIONS] == [
+        "Maximum Self-Powered",
+        "Sigen AI Mode",
+        "Weekend profile",
+    ]
+
+
 def test_cloud_power_limit_sensors_expose_vendor_maximum() -> None:
     device = SigenergyCloudControl(0, FakeCloudControlPort())
     power_limits = [

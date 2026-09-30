@@ -7,6 +7,9 @@ import math
 import time
 from datetime import timedelta
 
+from aiohttp import ClientError
+
+from sigenergy2mqtt.cloud.exceptions import CloudControlError
 from sigenergy2mqtt.cloud.models import InstantControlMode as Mode
 from sigenergy2mqtt.cloud.models import InstantControlStatus, InstantOverrideCommand
 from sigenergy2mqtt.cloud.port import CloudControlPort
@@ -108,7 +111,9 @@ class OperationalMode(SelectSensorMixin, CloudReadWriteSensor):
             raise ValueError("OperationalMode: available_modes contains no valid modes")
         return options, mode_values
 
-    def _update_modes(self, payload: dict[str, object]) -> None:
+    def _update_modes(self, payload: object) -> None:
+        if not isinstance(payload, dict):
+            raise ValueError("OperationalMode: available modes response is not an object")
         options, mode_values = self._parse_modes(payload)
         if options != self[DiscoveryKeys.OPTIONS]:
             self[DiscoveryKeys.OPTIONS] = options
@@ -118,12 +123,11 @@ class OperationalMode(SelectSensorMixin, CloudReadWriteSensor):
         self._mode_values = mode_values
 
     async def _read_cloud_state(self, port: CloudControlPort) -> int | None:
-        payload = await port.available_operational_modes()
         try:
+            payload = await port.available_operational_modes()
             self._update_modes(payload)
-        except ValueError:
-            logger.warning(f"{self.log_identity} cloud response contains no usable operational modes: {payload!r}")
-            return None
+        except (ClientError, CloudControlError, ValueError) as exc:
+            logger.warning(f"{self.log_identity} could not refresh operational modes; using existing options: {exc!r}")
         current = await port.get_operational_mode()
         try:
             return self._mode_values.index((int(current[0]), int(current[1])))
