@@ -23,6 +23,7 @@ from sigenergy2mqtt.devices import (
     bind_cross_device_sensors,
 )
 from sigenergy2mqtt.modbus import ModbusClient
+from sigenergy2mqtt.sensors.cloud.read_write import OperationalMode
 from sigenergy2mqtt.sensors.inverter.read_only import RatedActivePower
 from sigenergy2mqtt.sensors.plant.read_only import (
     GridStatus,
@@ -144,6 +145,33 @@ async def _discover_cloud_gateway_info(
             )
             return None
     raise AssertionError("gateway discovery retry loop exhausted")
+
+
+async def _discover_cloud_operational_modes(
+    cloud_port: CloudControlPort,
+) -> dict[str, object] | None:
+    """Load select options before discovery is published by the polling thread."""
+    operational_modes: dict[str, object] | None = None
+    try:
+        payload = await cloud_port.available_operational_modes()
+        if isinstance(payload, dict):
+            try:
+                OperationalMode._parse_modes(payload)
+            except ValueError:
+                logger.warning("Cloud operational-mode discovery returned no usable modes; sensor will be disabled")
+            else:
+                operational_modes = payload
+        else:
+            logger.warning("Cloud operational-mode discovery returned an invalid response")
+    except (ClientError, CloudControlError) as exc:
+        logger.warning("Cloud operational-mode discovery failed; sensor will be disabled: %s", exc)
+    finally:
+        try:
+            await cloud_port.close()
+        except Exception:
+            operational_modes = None
+            logger.exception("Failed to close cloud adapter after operational-mode discovery")
+    return operational_modes
 
 
 async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfig], ProtocolVersion | None]:
@@ -297,9 +325,17 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
         gateway_info = await _discover_cloud_gateway_info(cloud_port)
         plant_index = await _discover_cloud_control_plant_index(cloud_port)
         if plant_index is not None:
+            operational_modes = await _discover_cloud_operational_modes(cloud_port)
             cloud_config = ThreadConfig.create(host=None, port=None, name="Sigenergy Cloud")
             cloud_config.transport_factory = cloud_control_registry.transport_factory
-            cloud_config.add_device(SigenergyCloudControl(plant_index, cloud_port, gateway_info))
+            cloud_config.add_device(
+                SigenergyCloudControl(
+                    plant_index,
+                    cloud_port,
+                    gateway_info,
+                    operational_modes,
+                )
+            )
 
     return thread_config_registry.get_all(), protocol_version
 

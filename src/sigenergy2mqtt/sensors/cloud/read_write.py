@@ -7,6 +7,9 @@ import math
 import time
 from datetime import timedelta
 
+from aiohttp import ClientError
+
+from sigenergy2mqtt.cloud.exceptions import CloudControlError
 from sigenergy2mqtt.cloud.models import InstantControlMode as Mode
 from sigenergy2mqtt.cloud.models import InstantControlStatus, InstantOverrideCommand
 from sigenergy2mqtt.cloud.port import CloudControlPort
@@ -25,6 +28,7 @@ from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.sensors.base import (
     CloudGridLimitSensor,
     CloudReadWriteSensor,
+    DiscoveryKeys,
     NumericSensorMixin,
     SelectSensorMixin,
     SwitchSensorMixin,
@@ -39,6 +43,108 @@ INSTANT_CONTROL_OPTIONS = [
     "Hold Battery",
     "Self-Consumption",
 ]
+
+
+class OperationalMode(SelectSensorMixin, CloudReadWriteSensor):
+    """Select the station's persistent cloud operating mode or energy profile."""
+
+    def __init__(self, plant_index: int, station_id: str, available_modes: dict[str, object]) -> None:
+        object_id, unique_id = _identity(plant_index, station_id, "operational_mode")
+        options, self._mode_values = self._parse_modes(available_modes)
+        super().__init__(
+            availability_control_sensor=None,
+            name="Operational Mode",
+            object_id=object_id,
+            unique_id=unique_id,
+            scan_interval=active_config.cloud.scan_interval,
+            options=options,
+            unit=None,
+            device_class=None,
+            state_class=None,
+            icon="mdi:home-lightning-bolt-outline",
+            gain=None,
+            precision=None,
+            protocol_version=ProtocolVersion.N_A,
+        )
+
+    @staticmethod
+    def _parse_modes(payload: dict[str, object]) -> tuple[list[str], list[tuple[int, int]]]:
+        options: list[str] = []
+        mode_values: list[tuple[int, int]] = []
+
+        def add_option(label: str, value: tuple[int, int], qualifier: str) -> None:
+            option = label
+            if option in options:
+                option = f"{label} ({qualifier})"
+                suffix = 2
+                while option in options:
+                    option = f"{label} ({qualifier} {suffix})"
+                    suffix += 1
+            options.append(option)
+            mode_values.append(value)
+
+        default_modes = payload.get("defaultWorkingModes")
+        for item in default_modes if isinstance(default_modes, list) else ():
+            if not isinstance(item, dict):
+                continue
+            try:
+                label = str(item["label"])
+                mode = int(item["value"])
+            except (KeyError, TypeError, ValueError):
+                continue
+            if label:
+                add_option(label, (mode, -1), f"Mode {mode}")
+
+        energy_profiles = payload.get("energyProfileItems")
+        for item in energy_profiles if isinstance(energy_profiles, list) else ():
+            if not isinstance(item, dict):
+                continue
+            try:
+                label = str(item["name"])
+                profile_id = int(item["profileId"])
+            except (KeyError, TypeError, ValueError):
+                continue
+            if label:
+                add_option(label, (9, profile_id), f"Profile {profile_id}")
+
+        if not options:
+            raise ValueError("OperationalMode: available_modes contains no valid modes")
+        return options, mode_values
+
+    def _update_modes(self, payload: object) -> None:
+        if not isinstance(payload, dict):
+            raise ValueError("OperationalMode: available modes response is not an object")
+        options, mode_values = self._parse_modes(payload)
+        if options != self[DiscoveryKeys.OPTIONS]:
+            self[DiscoveryKeys.OPTIONS] = options
+            self.sanity_check.max_raw = len(options) - 1
+            if self.parent_device is not None:
+                self.parent_device.rediscover = True
+        self._mode_values = mode_values
+
+    async def _read_cloud_state(self, port: CloudControlPort) -> int | None:
+        try:
+            payload = await port.available_operational_modes()
+            self._update_modes(payload)
+        except (ClientError, CloudControlError, ValueError) as exc:
+            logger.warning(f"{self.log_identity} could not refresh operational modes; using existing options: {exc!r}")
+        current = await port.get_operational_mode()
+        try:
+            return self._mode_values.index((int(current[0]), int(current[1])))
+        except (IndexError, TypeError, ValueError):
+            logger.warning(f"{self.log_identity} cloud response contains unknown operational mode: {current!r}")
+            return None
+
+    async def _write_cloud_value(self, port: CloudControlPort, value: float | str) -> bool:
+        index = int(value)
+        if not 0 <= index < len(self._mode_values):
+            logger.warning(f"{self.log_identity} cannot write unknown operational mode index {index}")
+            return False
+        mode, profile_id = self._mode_values[index]
+        await port.set_operational_mode(mode, profile_id)
+        return True
+
+
 _OPTION_TO_MODE = {
     0: Mode.CHARGE,
     1: Mode.DISCHARGE,
