@@ -1,5 +1,6 @@
 """Cloud-backed Instant Manual Control device."""
 
+import logging
 from typing import Any
 
 from sigenergy2mqtt.cloud.port import CloudControlPort
@@ -24,8 +25,11 @@ from sigenergy2mqtt.sensors.cloud.read_write import (
     InstantControlDuration,
     InstantControlMode,
     InstantControlSwitch,
+    OperationalMode,
     SolarPowerLimit,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class SigenergyGateway(Device):
@@ -86,7 +90,13 @@ class SigenergyGateway(Device):
 class SigenergyCloudControl(Device):
     """Expose Cloud controls through normal MQTT sensors."""
 
-    def __init__(self, plant_index: int, port: CloudControlPort, gateway_info: dict | None = None, has_battery: bool = False) -> None:
+    def __init__(
+        self,
+        plant_index: int,
+        port: CloudControlPort,
+        gateway_info: dict | None = None,
+        operational_modes: dict[str, object] | None = None,
+    ) -> None:
         name = "Sigenergy Cloud"
         plant_suffix = "" if plant_index == 0 else str(plant_index + 1)
         super().__init__(
@@ -99,6 +109,22 @@ class SigenergyCloudControl(Device):
             plant_suffix=plant_suffix,
         )
         station_id = port.station_id
+        mode = InstantControlMode(plant_index, station_id)
+        duration = InstantControlDuration(plant_index, station_id)
+        switch = InstantControlSwitch(plant_index, station_id, mode, duration)
+        mode.set_availability_control_sensor(switch)
+        duration.set_availability_control_sensor(switch)
+
+        # The switch must be registered first so its state topic exists when
+        # the selectors add their availability gates.
+        self._add_sensor(switch)
+        self._add_sensor(mode)
+        self._add_sensor(duration)
+        if operational_modes:
+            try:
+                self._add_sensor(OperationalMode(plant_index, station_id, operational_modes))
+            except ValueError as exc:
+                logger.warning("Cloud operational-mode sensor disabled: %s", exc)
 
         self._add_sensor(GridExportLimit(plant_index, station_id))
         self._add_sensor(GridImportLimit(plant_index, station_id))
