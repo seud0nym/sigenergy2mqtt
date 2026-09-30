@@ -1097,12 +1097,24 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
             raise TypeError(f"Not serializable: {type(o)}")
 
         if isinstance(state, bool):
-            return "online" if state else "offline"
+            value = "online" if state else "offline"
+            if self.debug_logging:
+                logger.debug(f"{self.log_identity} Converted {state=} ({type(state)}) to MQTT payload {value=}")
+            return value
         if isinstance(state, (dict, list, tuple)):
-            return json.dumps(state, default=_json_default)
+            value = json.dumps(state, default=_json_default)
+            if self.debug_logging:
+                logger.debug(f"{self.log_identity} Converted  {state=} ({type(state)}) to MQTT payload {value=}")
+            return value
         if is_dataclass(state) and not isinstance(state, type):
-            return json.dumps(asdict(state), default=_json_default)
-        return f"{state}"  # str/int/float unchanged
+            value = json.dumps(asdict(state), default=_json_default)
+            if self.debug_logging:
+                logger.debug(f"{self.log_identity} Converted {state=} ({type(state)}) to MQTT payload {value=}")
+            return value
+        value = f"{state}"  # str/int/float unchanged
+        if self.debug_logging:
+            logger.debug(f"{self.log_identity} Converted {state=} ({type(state)}) to MQTT payload {value=}")
+        return value
 
     def _publish_message(
         self,
@@ -1418,31 +1430,31 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         Returns:
             Transformed state value
         """
-        if state is None:
+        if state is None or raw:
             if self.debug_logging:
-                logger.debug(f"{self.log_identity} Skipped applying gain={self.gain} and precision={self.precision} to state={state}")
-            return None
+                logger.debug(f"{self.log_identity} Skipped applying gain={self.gain} and precision={self.precision} to state={state} ({raw=} type={type(state)})")
+            return state if raw else None
 
         if isinstance(state, dict):
-            if raw:
-                return state
+            if self.debug_logging:
+                logger.debug(f"{self.log_identity} Applying gain={self.gain} and precision={self.precision} to state={state} (type={type(state)} state_topic_dict_key={self.state_topic_dict_key})")
             return {key: self._apply_gain_and_precision(value) if key == self.state_topic_dict_key and isinstance(value, (int, float, dict)) else value for key, value in state.items()}
 
-        if not isinstance(state, (float, int)) or raw:
+        if isinstance(state, bool) or not isinstance(state, (float, int)):
+            if self.debug_logging:
+                logger.debug(f"{self.log_identity} Skipped applying gain={self.gain} and precision={self.precision} to state={state} (type={type(state)})")
             return state
 
         if self.debug_logging:
-            logger.debug(f"{self.log_identity} Applying gain={self.gain} and precision={self.precision} to state={state}")
+            logger.debug(f"{self.log_identity} Applying gain={self.gain} and precision={self.precision} to state={state} (type={type(state)})")
 
         if self.gain is not None:
             state /= self.gain
 
         if isinstance(state, float) and self.precision is not None:
-            # Diagnostic: ensure we see the types during test runs
-            # (temporary - will be removed once root cause is found)
             state = round(state, self.precision)
             if self.precision == 0:
-                state = int(state)  # pyrefly: ignore (int and float are both valid)
+                state = int(state)
 
         return state
 
