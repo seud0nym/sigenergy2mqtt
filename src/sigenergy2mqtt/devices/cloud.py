@@ -133,18 +133,6 @@ class SigenergyCloudControl(Device):
         self._add_sensor(SolarPowerLimit(plant_index, station_id))
 
         if has_battery:
-            mode = InstantControlMode(plant_index, station_id)
-            duration = InstantControlDuration(plant_index, station_id)
-            switch = InstantControlSwitch(plant_index, station_id, mode, duration)
-            mode.set_availability_control_sensor(switch)
-            duration.set_availability_control_sensor(switch)
-
-            # The switch must be registered first so its state topic exists when
-            # the selectors add their availability gates.
-            self._add_sensor(switch)
-            self._add_sensor(mode)
-            self._add_sensor(duration)
-
             battery_charge_limit = BatteryChargePowerLimit(plant_index, station_id)
             battery_discharge_limit = BatteryDischargePowerLimit(plant_index, station_id, battery_charge_limit._snapshot)
             self._add_sensor(battery_charge_limit)

@@ -112,10 +112,11 @@ def test_cloud_control_device_registers_normal_mqtt_entities() -> None:
         0,
         FakeCloudControlPort(),
         operational_modes=OPERATIONAL_MODES,
+        has_battery=True,
     )
     sensors = list(device.sensors.values())
 
-    assert [type(sensor) for sensor in sensors] == [
+    assert [type(sensor) for sensor in sensors] == [  # must be in the same order as the device constructor adds them
         InstantControlSwitch,
         InstantControlMode,
         InstantControlDuration,
@@ -124,9 +125,6 @@ def test_cloud_control_device_registers_normal_mqtt_entities() -> None:
         GridImportLimit,
         GridConnectionLimit,
         SolarPowerLimit,
-        InstantControlSwitch,
-        InstantControlMode,
-        InstantControlDuration,
         BatteryChargePowerLimit,
         BatteryDischargePowerLimit,
     ]
@@ -135,7 +133,6 @@ def test_cloud_control_device_registers_normal_mqtt_entities() -> None:
     assert sensors[2][DiscoveryKeys.PLATFORM] == "number"
     assert sensors[3][DiscoveryKeys.PLATFORM] == "select"
     assert all(sensor[DiscoveryKeys.PLATFORM] == "number" for sensor in sensors[4:10])
-    assert sensors[10][DiscoveryKeys.PLATFORM] == "switch"
     assert device.protocol_version is ProtocolVersion.N_A
     assert device.name == "Sigenergy Cloud"
     assert device["model"] == "Test Cloud"
