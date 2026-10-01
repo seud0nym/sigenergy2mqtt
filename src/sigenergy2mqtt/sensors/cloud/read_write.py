@@ -148,15 +148,6 @@ class OperationalMode(SelectSensorMixin, CloudReadWriteSensor):
         return True
 
 
-_OPTION_TO_MODE = {
-    0: Mode.CHARGE,
-    1: Mode.DISCHARGE,
-    2: Mode.HOLD,
-    3: Mode.SELF_CONSUMPTION,
-}
-_MODE_TO_OPTION = {mode: option for option, mode in _OPTION_TO_MODE.items()}
-
-
 class _InstantControlStatusSnapshot:
     """Share one cloud status response across a complete control refresh."""
 
