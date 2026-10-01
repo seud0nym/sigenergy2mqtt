@@ -8,9 +8,8 @@ import time
 from datetime import timedelta
 from typing import Any, cast
 
-from paho.mqtt.client import Client
-
 from aiohttp import ClientError
+from paho.mqtt.client import Client
 
 from sigenergy2mqtt.cloud.exceptions import CloudControlError
 from sigenergy2mqtt.cloud.models import InstantControlMode as Mode
@@ -117,7 +116,7 @@ class OperationalMode(SelectSensorMixin, CloudReadWriteSensor):
 
     def _update_modes(self, payload: object) -> None:
         if not isinstance(payload, dict):
-            raise ValueError("OperationalMode: available modes response is not an object")
+            raise TypeError("OperationalMode: available modes response is not an object")
         options, mode_values = self._parse_modes(payload)
         if options != self[DiscoveryKeys.OPTIONS]:
             self[DiscoveryKeys.OPTIONS] = options
