@@ -22,7 +22,6 @@ from sigenergy2mqtt.sensors.cloud.functions import _identity
 from sigenergy2mqtt.sensors.cloud.read_write import (
     BatteryChargePowerLimit,
     BatteryDischargePowerLimit,
-    BatteryExportLimitation,
     GridConnectionLimit,
     GridExportLimit,
     GridImportLimit,
@@ -130,7 +129,6 @@ def test_cloud_control_device_registers_normal_mqtt_entities() -> None:
         InstantControlDuration,
         BatteryChargePowerLimit,
         BatteryDischargePowerLimit,
-        BatteryExportLimitation,
     ]
     assert sensors[0][DiscoveryKeys.PLATFORM] == "switch"
     assert sensors[1][DiscoveryKeys.PLATFORM] == "select"
@@ -575,22 +573,6 @@ async def test_grid_limit_invalid_enable_status_disallows_updates(enable) -> Non
     assert await sensor._read_cloud_state(port) == port.grid_export_limit.return_value
     assert await sensor._write_cloud_value(port, 4.0) is False
     port.set_grid_export_limit.assert_not_awaited()
-
-
-@pytest.mark.asyncio
-async def test_battery_export_limitation_reads_current_state_and_writes_owner_state() -> None:
-    sensor = BatteryExportLimitation(0, FakeCloudControlPort.station_id)
-    port = AsyncMock()
-    port.battery_export_limitation.return_value = {
-        "currentEnable": False,
-        "ownerSetEnable": None,
-        "installerSetEnable": None,
-        "nearModify": None,
-    }
-
-    assert await sensor._read_cloud_state(port) == {"currentEnable": False, "ownerSetEnable": None, "installerSetEnable": -1, "nearModify": None}
-    assert await sensor._write_cloud_value(port, 1) is True
-    port.set_battery_export_limitation.assert_awaited_once_with(True)
 
 
 @pytest.mark.asyncio
