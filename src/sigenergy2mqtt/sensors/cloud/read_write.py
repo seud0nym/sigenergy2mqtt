@@ -129,7 +129,7 @@ class OperationalMode(SelectSensorMixin, CloudReadWriteSensor):
         try:
             payload = await port.available_operational_modes()
             self._update_modes(payload)
-        except (ClientError, CloudControlError, ValueError) as exc:
+        except (ClientError, CloudControlError, TypeError, ValueError) as exc:
             logger.warning(f"{self.log_identity} could not refresh operational modes; using existing options: {exc!r}")
         current = await port.get_operational_mode()
         try:
