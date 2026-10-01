@@ -37,11 +37,14 @@ from sigenergy2mqtt.main.device_factories import (
     make_dc_charger,
     make_plant_and_inverter,
 )
-from sigenergy2mqtt.main.device_setup import (
-    _cloud_control_plant_index,
+from sigenergy2mqtt.devices.cloud.discovery import (
+    CloudDiscovery,
     _discover_cloud_device_list,
     _discover_cloud_gateway_info,
-    _discover_cloud_operational_modes,
+    discover_operational_modes,
+)
+from sigenergy2mqtt.main.device_setup import (
+    _cloud_control_plant_index,
     _is_grid_outage,
     _setup_ac_chargers,
     _setup_dc_chargers,
@@ -177,8 +180,7 @@ async def test_cloud_control_discovery_failure_disables_cloud_control(caplog):
     cloud_port.close = AsyncMock()
 
     with caplog.at_level(logging.WARNING):
-        device_list = cast(list[dict[str, Any]], await _discover_cloud_device_list(cloud_port))
-        assert _cloud_control_plant_index(device_list) is None
+        assert await _discover_cloud_device_list(cloud_port) is None
 
     assert "Cloud inverter discovery failed" in caplog.text
     assert "Cloud API will be disabled" in caplog.text
@@ -196,7 +198,7 @@ async def test_gateway_discovery_retries_transient_failures() -> None:
         ]
     )
 
-    with patch("sigenergy2mqtt.main.device_setup.asyncio.sleep", new_callable=AsyncMock) as sleep:
+    with patch("sigenergy2mqtt.devices.cloud.discovery.asyncio.sleep", new_callable=AsyncMock) as sleep:
         assert await _discover_cloud_gateway_info(cloud_port) == {"snCode": "GATEWAY"}
 
     assert cloud_port.gateway_info.await_count == 2
@@ -209,7 +211,7 @@ async def test_gateway_discovery_gives_up_after_bounded_retries(caplog) -> None:
     cloud_port.gateway_info = AsyncMock(side_effect=CloudControlUnavailableError("persistent failure"))
 
     with (
-        patch("sigenergy2mqtt.main.device_setup.asyncio.sleep", new_callable=AsyncMock) as sleep,
+        patch("sigenergy2mqtt.devices.cloud.discovery.asyncio.sleep", new_callable=AsyncMock) as sleep,
         caplog.at_level(logging.WARNING),
     ):
         assert await _discover_cloud_gateway_info(cloud_port) is None
@@ -233,7 +235,7 @@ async def test_gateway_discovery_does_not_retry_auth_or_rate_limits(
     cloud_port = MagicMock()
     cloud_port.gateway_info = AsyncMock(side_effect=error)
 
-    with patch("sigenergy2mqtt.main.device_setup.asyncio.sleep", new_callable=AsyncMock) as sleep:
+    with patch("sigenergy2mqtt.devices.cloud.discovery.asyncio.sleep", new_callable=AsyncMock) as sleep:
         assert await _discover_cloud_gateway_info(cloud_port) is None
 
     cloud_port.gateway_info.assert_awaited_once_with()
@@ -250,19 +252,22 @@ async def test_operational_mode_discovery_returns_options_and_closes_adapter() -
     cloud_port.available_operational_modes = AsyncMock(return_value=modes)
     cloud_port.close = AsyncMock()
 
-    assert await _discover_cloud_operational_modes(cloud_port) == modes
+    assert (await discover_operational_modes(cloud_port, CloudDiscovery(device_list=[]))).operational_modes == modes
     cloud_port.close.assert_awaited_once_with()
 
 
 @pytest.mark.asyncio
-async def test_operational_mode_discovery_rejects_empty_options_and_closes_adapter() -> None:
+async def test_operational_mode_discovery_leaves_payload_validation_to_device_and_closes_adapter() -> None:
     cloud_port = MagicMock()
     cloud_port.available_operational_modes = AsyncMock(
         return_value={"defaultWorkingModes": [], "energyProfileItems": []}
     )
     cloud_port.close = AsyncMock()
 
-    assert await _discover_cloud_operational_modes(cloud_port) is None
+    assert (await discover_operational_modes(cloud_port, CloudDiscovery(device_list=[]))).operational_modes == {
+        "defaultWorkingModes": [],
+        "energyProfileItems": [],
+    }
     cloud_port.close.assert_awaited_once_with()
 
 
@@ -300,8 +305,7 @@ async def test_cloud_control_transport_failure_disables_cloud_control() -> None:
     cloud_port.device_list = AsyncMock(side_effect=ServerDisconnectedError())
     cloud_port.close = AsyncMock()
 
-    device_list = cast(list[dict[str, Any]], await _discover_cloud_device_list(cloud_port))
-    assert _cloud_control_plant_index(device_list) is None
+    assert await _discover_cloud_device_list(cloud_port) is None
     cloud_port.close.assert_awaited_once_with()
 
 
@@ -312,8 +316,7 @@ async def test_cloud_control_close_failure_does_not_abort_startup(caplog):
     cloud_port.close = AsyncMock(side_effect=OSError("close failed"))
 
     with caplog.at_level(logging.ERROR):
-        device_list = cast(list[dict[str, Any]], await _discover_cloud_device_list(cloud_port))
-        assert _cloud_control_plant_index(device_list) is None
+        assert await _discover_cloud_device_list(cloud_port) is None
 
     assert "Failed to close cloud adapter after discovery" in caplog.text
     assert "Cloud API will be disabled" in caplog.text

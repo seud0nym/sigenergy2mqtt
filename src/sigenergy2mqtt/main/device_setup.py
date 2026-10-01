@@ -4,14 +4,8 @@ import sys
 from collections.abc import Mapping
 from typing import Any, cast
 
-from aiohttp import ClientError
 from pymodbus.exceptions import ModbusException
 
-from sigenergy2mqtt.cloud.exceptions import (
-    CloudControlError,
-    CloudControlUnavailableError,
-)
-from sigenergy2mqtt.cloud.port import CloudControlPort
 from sigenergy2mqtt.cloud.registry import cloud_control_registry
 from sigenergy2mqtt.common import Constants, ProtocolVersion
 from sigenergy2mqtt.config import active_config
@@ -22,8 +16,8 @@ from sigenergy2mqtt.devices import (
     SigenergyCloudControl,
     bind_cross_device_sensors,
 )
+from sigenergy2mqtt.devices.cloud import discover_cloud, discover_operational_modes
 from sigenergy2mqtt.modbus import ModbusClient
-from sigenergy2mqtt.sensors.cloud.read_write import OperationalMode
 from sigenergy2mqtt.sensors.inverter.read_only import RatedActivePower
 from sigenergy2mqtt.sensors.plant.read_only import (
     GridStatus,
@@ -55,124 +49,50 @@ from .validation import validate_publishable_sensors
 logger = logging.getLogger(__name__)
 
 _GRID_RESTORE_WATCH_TASKS: set[tuple[str, int, int]] = set()
-_GATEWAY_DISCOVERY_ATTEMPTS = 3
-_GATEWAY_DISCOVERY_RETRY_DELAY = 1.0
 
 
-def _cloud_control_plant_index(device_list: list[dict[str, Any]] | None) -> int | None:
+def _cloud_control_plant_index(device_list: list[dict[str, Any]]) -> int | None:
     """Find the local plant containing an inverter reported by the cloud."""
     cloud_logger = logging.getLogger("sigenergy2mqtt.cloud")
-    if device_list is None:
-        cloud_logger.warning("No devices returned by Cloud API")
-    else:
-        cloud_serial_numbers = {
-            str(device.get("serialNumber") or device.get("serial_number") or device.get("sn"))
-            for device in device_list
-            if device.get("deviceType") in ("Aio", "Inverter") and (device.get("serialNumber") or device.get("serial_number") or device.get("sn"))
-        }
-        plants_with_unreadable_serials: set[int] = set()
-        for devices in DeviceRegistry._devices.values():
-            for device in devices:
-                if not isinstance(device, Inverter):
-                    continue
-                serial_number = device.get("sn") or device.get("serial_number")
-                if serial_number is None:
-                    plants_with_unreadable_serials.add(device.plant_index)
-                    continue
-                if str(serial_number) in cloud_serial_numbers:
-                    cloud_logger.info(f"Cloud inverter serial number {serial_number} matched local inverter at plant index {device.plant_index}; Cloud API enabled")
-                    return device.plant_index
+    cloud_serial_numbers = {
+        str(device.get("serialNumber") or device.get("serial_number") or device.get("sn"))
+        for device in device_list
+        if device.get("deviceType") in ("Aio", "Inverter") and (device.get("serialNumber") or device.get("serial_number") or device.get("sn"))
+    }
+    plants_with_unreadable_serials: set[int] = set()
+    for device in DeviceRegistry.all():
+        if not isinstance(device, Inverter):
+            continue
+        serial_number = device.get("sn") or device.get("serial_number")
+        if serial_number is None:
+            plants_with_unreadable_serials.add(device.plant_index)
+            continue
+        if str(serial_number) in cloud_serial_numbers:
+            cloud_logger.info(f"Cloud inverter serial number {serial_number} matched local inverter at plant index {device.plant_index}; Cloud API enabled")
+            return device.plant_index
 
-        if plants_with_unreadable_serials:
-            cloud_logger.warning(f"Local inverter serial numbers are unavailable for plant indexes {sorted(plants_with_unreadable_serials)}; Cloud API cannot be matched safely and will be disabled")
-            return None
+    if plants_with_unreadable_serials:
+        cloud_logger.warning(f"Local inverter serial numbers are unavailable for plant indexes {sorted(plants_with_unreadable_serials)}; Cloud API cannot be matched safely and will be disabled")
+        return None
 
-        cloud_logger.warning("No cloud inverter matched a local inverter; Cloud API disabled")
+    cloud_logger.warning("No cloud inverter matched a local inverter; Cloud API disabled")
     return None
 
 
-async def _discover_cloud_device_list(cloud_port: CloudControlPort) -> list[dict[str, Any]] | None:
-    """Discover the cloud plant and release resources owned by the startup loop.
+async def _setup_cloud_control() -> None:
+    """Discover, match, and configure the optional cloud control device."""
+    cloud_control_registry.configure(active_config.cloud)
+    if (cloud_port := cloud_control_registry.active) is None:
+        return
+    if (discovery := await discover_cloud(cloud_port)) is None:
+        return
+    if (plant_index := _cloud_control_plant_index(discovery.device_list)) is None:
+        return
 
-    Device polling runs in a dedicated thread with its own asyncio event loop.
-    Closing the discovery connection here lets the transport factory reconnect
-    in that thread instead of reusing an aiohttp session bound to this loop.
-    """
-    device_list: list[dict[str, Any]] | None = None
-    try:
-        device_list = await cloud_port.device_list()
-    except (ClientError, CloudControlError) as exc:
-        logger.warning(
-            "Cloud inverter discovery failed; Cloud API will be disabled for this run: %s",
-            exc,
-        )
-    finally:
-        try:
-            await cloud_port.close()
-        except Exception:
-            device_list = None
-            logger.exception(
-                "Failed to close cloud adapter after discovery; Cloud API will be disabled for this run: %s",
-            )
-    return device_list
-
-
-async def _discover_cloud_gateway_info(
-    cloud_port: CloudControlPort,
-) -> dict[str, Any] | None:
-    """Read gateway metadata, retrying transient startup failures."""
-    for attempt in range(1, _GATEWAY_DISCOVERY_ATTEMPTS + 1):
-        try:
-            return await cloud_port.gateway_info()
-        except CloudControlUnavailableError as exc:
-            if attempt == _GATEWAY_DISCOVERY_ATTEMPTS:
-                logger.warning(
-                    "Cloud gateway discovery failed after %d attempts; gateway sensors will be disabled: %s",
-                    attempt,
-                    exc,
-                )
-                return None
-            logger.warning(
-                "Cloud gateway discovery failed (attempt %d/%d); retrying: %s",
-                attempt,
-                _GATEWAY_DISCOVERY_ATTEMPTS,
-                exc,
-            )
-            await asyncio.sleep(_GATEWAY_DISCOVERY_RETRY_DELAY)
-        except (ClientError, CloudControlError) as exc:
-            logger.warning(
-                "Cloud gateway discovery failed without retry; gateway sensors will be disabled: %s",
-                exc,
-            )
-            return None
-    raise AssertionError("gateway discovery retry loop exhausted")
-
-
-async def _discover_cloud_operational_modes(
-    cloud_port: CloudControlPort,
-) -> dict[str, object] | None:
-    """Load select options before discovery is published by the polling thread."""
-    operational_modes: dict[str, object] | None = None
-    try:
-        payload = await cloud_port.available_operational_modes()
-        if isinstance(payload, dict):
-            try:
-                OperationalMode._parse_modes(payload)
-            except ValueError:
-                logger.warning("Cloud operational-mode discovery returned no usable modes; sensor will be disabled")
-            else:
-                operational_modes = payload
-        else:
-            logger.warning("Cloud operational-mode discovery returned an invalid response")
-    except (ClientError, CloudControlError) as exc:
-        logger.warning("Cloud operational-mode discovery failed; sensor will be disabled: %s", exc)
-    finally:
-        try:
-            await cloud_port.close()
-        except Exception:
-            operational_modes = None
-            logger.exception("Failed to close cloud adapter after operational-mode discovery")
-    return operational_modes
+    discovery = await discover_operational_modes(cloud_port, discovery)
+    cloud_config = ThreadConfig.create(host=None, port=None, name="Sigenergy Cloud")
+    cloud_config.transport_factory = cloud_control_registry.transport_factory
+    cloud_config.add_device(SigenergyCloudControl(plant_index, cloud_port, discovery))
 
 
 async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfig], ProtocolVersion | None]:
@@ -321,25 +241,7 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
 
             logger.debug(f"Disconnecting from modbus://{device.host}:{device.port} - register probing complete")
 
-    cloud_control_registry.configure(active_config.cloud)
-    if (cloud_port := cloud_control_registry.active) is not None:
-        gateway_info = await _discover_cloud_gateway_info(cloud_port)
-        device_list = await _discover_cloud_device_list(cloud_port)
-        plant_index = _cloud_control_plant_index(device_list)
-        if plant_index is not None and device_list is not None:
-            operational_modes = await _discover_cloud_operational_modes(cloud_port)
-            has_battery = any(d for d in device_list if d.get("deviceType") == "Battery")
-            cloud_config = ThreadConfig.create(host=None, port=None, name="Sigenergy Cloud")
-            cloud_config.transport_factory = cloud_control_registry.transport_factory
-            cloud_config.add_device(
-                SigenergyCloudControl(
-                    plant_index,
-                    cloud_port,
-                    gateway_info,
-                    operational_modes,
-                    has_battery,
-                )
-            )
+    await _setup_cloud_control()
 
     return thread_config_registry.get_all(), protocol_version
 
