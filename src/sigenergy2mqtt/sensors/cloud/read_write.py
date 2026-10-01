@@ -6,8 +6,10 @@ import logging
 import math
 import time
 from datetime import timedelta
+from typing import Any, cast
 
 from aiohttp import ClientError
+from paho.mqtt.client import Client
 
 from sigenergy2mqtt.cloud.exceptions import CloudControlError
 from sigenergy2mqtt.cloud.models import InstantControlMode as Mode
@@ -26,6 +28,7 @@ from sigenergy2mqtt.common import (
 )
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.sensors.base import (
+    AvailabilityMixin,
     CloudGridLimitSensor,
     CloudReadWriteSensor,
     DiscoveryKeys,
@@ -113,7 +116,7 @@ class OperationalMode(SelectSensorMixin, CloudReadWriteSensor):
 
     def _update_modes(self, payload: object) -> None:
         if not isinstance(payload, dict):
-            raise ValueError("OperationalMode: available modes response is not an object")
+            raise TypeError("OperationalMode: available modes response is not an object")
         options, mode_values = self._parse_modes(payload)
         if options != self[DiscoveryKeys.OPTIONS]:
             self[DiscoveryKeys.OPTIONS] = options
@@ -126,7 +129,7 @@ class OperationalMode(SelectSensorMixin, CloudReadWriteSensor):
         try:
             payload = await port.available_operational_modes()
             self._update_modes(payload)
-        except (ClientError, CloudControlError, ValueError) as exc:
+        except (ClientError, CloudControlError, TypeError, ValueError) as exc:
             logger.warning(f"{self.log_identity} could not refresh operational modes; using existing options: {exc!r}")
         current = await port.get_operational_mode()
         try:
@@ -217,7 +220,13 @@ class InstantControlMode(SelectSensorMixin, CloudReadWriteSensor):
             object_id=object_id,
             unique_id=unique_id,
             scan_interval=active_config.cloud.scan_interval,
-            options=INSTANT_CONTROL_OPTIONS,
+            options=[
+                "Not Set",  # 0
+                "Charging",  # 1
+                "Discharging",  # 2
+                "Hold Battery",  # 3
+                "Self-Consumption",  # 4
+            ],
             unit=None,
             device_class=None,
             state_class=None,
@@ -227,19 +236,64 @@ class InstantControlMode(SelectSensorMixin, CloudReadWriteSensor):
             protocol_version=ProtocolVersion.N_A,
         )
         self.monitorable = False  # only need to monitor InstantControlSwitch
-        self._pending_value: int | None = None
+        self._pending_value: Mode | None = None
         self._status_snapshot = _InstantControlStatusSnapshot()
         self._polling_coordinator = self._status_snapshot
 
-    async def _read_cloud_state(self, port: CloudControlPort) -> int | None:
+    @property
+    def pending_value(self) -> Mode | None:
+        if self._pending_value is not None:
+            return self._pending_value
+        match self.latest_raw_state:
+            case 1:
+                return Mode.CHARGE
+            case 2:
+                return Mode.DISCHARGE
+            case 3:
+                return Mode.HOLD
+            case 4:
+                return Mode.SELF_CONSUMPTION
+            case _:
+                return None
+
+    async def _read_cloud_state(self, port: CloudControlPort) -> int:
         status = await self._status_snapshot.read(port)
-        if not status.enabled or status.mode is None:
-            return None
-        return _MODE_TO_OPTION.get(status.mode)
+        if status.mode is None and self._pending_value is None:
+            return 0
+        if self._pending_value is not None:
+            mode = self._pending_value
+        else:
+            mode = status.mode
+        match mode:
+            case Mode.CHARGE:
+                return 1
+            case Mode.DISCHARGE:
+                return 2
+            case Mode.HOLD:
+                return 3
+            case Mode.SELF_CONSUMPTION:
+                return 4
+            case _:
+                self._pending_value = None
+                raise ValueError(f"Unknown Instant Control Mode '{status.mode}'")
 
     async def _write_cloud_value(self, port: CloudControlPort, value: float | str) -> bool:
-        changed = self.set_latest_state(value)
-        self._pending_value = int(value)
+        state = int(value)
+        match state:
+            case 0:
+                self._pending_value = None
+            case 1:
+                self._pending_value = Mode.CHARGE
+            case 2:
+                self._pending_value = Mode.DISCHARGE
+            case 3:
+                self._pending_value = Mode.HOLD
+            case 4:
+                self._pending_value = Mode.SELF_CONSUMPTION
+            case _:
+                self._pending_value = None
+                raise ValueError(f"Invalid Instant Control Mode '{state}'")
+        changed = self.set_latest_state(state)
         return changed
 
 
@@ -261,38 +315,41 @@ class InstantControlDuration(NumericSensorMixin, CloudReadWriteSensor):
             icon="mdi:timer-outline",
             gain=None,
             precision=0,
-            minimum=1.0,
-            maximum=1440.0,
+            minimum=0,
+            maximum=1440,
             protocol_version=ProtocolVersion.N_A,
         )
         self.monitorable = False  # only need to monitor InstantControlSwitch
-        self._pending_value: float | None = None
+        self._pending_value: int | None = None
         self._status_snapshot = _InstantControlStatusSnapshot()
         self._polling_coordinator = self._status_snapshot
 
-    async def _read_cloud_state(self, port: CloudControlPort) -> float | None:
+    @property
+    def pending_value(self) -> int:
+        if self._pending_value is not None:
+            return self._pending_value
+        elif self.latest_raw_state is None or self.latest_raw_state == 0:
+            return 0
+        else:
+            return self.latest_raw_state
+
+    async def _read_cloud_state(self, port: CloudControlPort) -> int | None:
+        if self._pending_value is not None:
+            return self._pending_value
         status = await self._status_snapshot.read(port)
-        if not status.enabled or status.ends_at is None:
-            return None
-        remaining = max(0.0, (status.ends_at - time.time()) / 60)
-        return round(remaining, self.precision or 0)
+        if status.ends_at is None:
+            return 0
+        remaining = int(max(0.0, (status.ends_at - time.time()) / 60))
+        return remaining
 
     async def _write_cloud_value(self, port: CloudControlPort, value: float | str) -> bool:
-        changed = self.set_latest_state(value)
-        self._pending_value = float(value)
+        self._pending_value = int(value)
+        changed = self.set_latest_state(self._pending_value)
         return changed
 
 
-class InstantControlSwitch(SwitchSensorMixin, CloudReadWriteSensor):
+class InstantControlSwitch(SwitchSensorMixin, CloudReadWriteSensor, AvailabilityMixin):
     """Authoritative enabled state and command switch for an instant override."""
-
-    @property
-    def payload_available(self) -> bool | int | float | str | None:
-        return 0
-
-    @property
-    def payload_not_available(self) -> bool | int | float | str | None:
-        return 1
 
     def __init__(
         self,
@@ -324,6 +381,15 @@ class InstantControlSwitch(SwitchSensorMixin, CloudReadWriteSensor):
             precision=0,
             protocol_version=ProtocolVersion.N_A,
         )
+        self._availability_topic: str | None = None
+
+    @property
+    def payload_available(self) -> bool | int | float | str | None:
+        return 0
+
+    @property
+    def payload_not_available(self) -> bool | int | float | str | None:
+        return 1
 
     async def _read_cloud_state(self, port: CloudControlPort) -> int:
         status = await self._status_snapshot.read(port)
@@ -332,23 +398,53 @@ class InstantControlSwitch(SwitchSensorMixin, CloudReadWriteSensor):
     async def _write_cloud_value(self, port: CloudControlPort, value: float | str) -> bool:
         if int(value) == 0:
             await port.clear_instant_override()
+            self._mode._pending_value = None
+            self._duration._pending_value = None
             return True
 
-        option = self._mode._pending_value
-        if option is None or int(option) not in _OPTION_TO_MODE:
+        option = self._mode.pending_value
+        if option is None:
             logger.error(f"{self.log_identity} no valid mode selected")
             return False
-        duration = self._duration._pending_value
-        if duration is None:
+        duration = self._duration.pending_value
+        if duration == 0:
             logger.error(f"{self.log_identity} no valid duration selected")
             return False
+
         await port.set_instant_override(
             InstantOverrideCommand(
-                mode=_OPTION_TO_MODE[int(option)],
+                mode=option,
                 duration=timedelta(minutes=float(duration)),
             )
         )
+        self._mode._pending_value = None
+        self._duration._pending_value = None
         return True
+
+    def configure_mqtt_topics(self, device_id: str) -> str:
+        base = super().configure_mqtt_topics(device_id)
+        if active_config.home_assistant.enabled:
+            self._availability_topic = f"{base}/enabled"
+            availability = cast(list[dict[str, Any]], self[DiscoveryKeys.AVAILABILITY])
+            availability.append({
+                DiscoveryKeys.TOPIC: self._availability_topic,
+                DiscoveryKeys.PAYLOAD_AVAILABLE: 1,
+                DiscoveryKeys.PAYLOAD_NOT_AVAILABLE: 0,
+            })
+        return base
+
+    async def _pre_publish(self, state: Any, mqtt_client: Client, transport: Any, republish: bool) -> None:
+        if self._availability_topic is not None:
+            mqtt_client.publish(
+                self._availability_topic,
+                "0" if self._mode.pending_value is None or self._duration.pending_value == 0 else "1",
+                qos=self._qos,
+                retain=False,
+            )
+        return await super()._pre_publish(state, mqtt_client, transport, republish)
+
+    async def publish(self, mqtt_client: Client, transport: Any, republish: bool = False) -> bool:
+        return await super().publish(mqtt_client, transport, republish)
 
 
 class GridExportLimit(CloudGridLimitSensor):
@@ -441,7 +537,7 @@ def _parse_power_limit(sensor: CloudReadWriteSensor, value: object, key: str) ->
 
 
 class _BatteryPowerLimit(NumericSensorMixin, CloudReadWriteSensor):
-    """Common behavior for one half of the battery power-limit setting."""
+    """Common behaviour for one half of the battery power-limit setting."""
 
     _CHARGE_KEY = "batteryMaxChargingPower"
     _DISCHARGE_KEY = "batteryMaxDischargingPower"
@@ -576,36 +672,4 @@ class SolarPowerLimit(NumericSensorMixin, CloudReadWriteSensor):
 
     async def _write_cloud_value(self, port: CloudControlPort, value: float | str) -> bool:
         await port.set_solar_power_limit(float(value))
-        return True
-
-
-class BatteryExportLimitation(SwitchSensorMixin, CloudReadWriteSensor):
-    """Control whether the battery is permitted to export to the grid."""
-
-    def __init__(self, plant_index: int, station_id: str) -> None:
-        object_id, unique_id = _identity(plant_index, station_id, "battery_export_limitation")
-        super().__init__(
-            availability_control_sensor=None,
-            name="Battery Export Limitation",
-            object_id=object_id,
-            unique_id=unique_id,
-            scan_interval=active_config.cloud.scan_interval,
-            unit=None,
-            device_class=None,
-            state_class=None,
-            icon="mdi:battery-arrow-up-outline",
-            gain=None,
-            precision=0,
-            protocol_version=ProtocolVersion.N_A,
-        )
-
-    async def _read_cloud_state(self, port: CloudControlPort) -> int | str:
-        payload = await port.battery_export_limitation()
-        if not isinstance(payload, dict) or not isinstance(payload.get("currentEnable"), bool):
-            logger.warning(f"{self.log_identity} cloud response contains invalid currentEnable: {payload!r}")
-            return "None"
-        return int(payload["currentEnable"])
-
-    async def _write_cloud_value(self, port: CloudControlPort, value: float | str) -> bool:
-        await port.set_battery_export_limitation(bool(int(value)))
         return True

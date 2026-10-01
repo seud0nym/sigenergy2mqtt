@@ -193,6 +193,14 @@ class CloudGridLimitSensor(NumericSensorMixin, CloudReadWriteSensor):
         self._installer_key = installer_key
         self._updates_allowed = False
         super().__init__(minimum=0.0, maximum=0.0, **kwargs)
+        self.state_topic_dict_key = current_key
+
+    def configure_mqtt_topics(self, device_id: str) -> str:
+        base = super().configure_mqtt_topics(device_id)
+        if active_config.home_assistant.enabled:
+            availability = cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY])
+            availability.append({"topic": f"{base}/state/enable"})
+        return base
 
     def _update_installer_maximum(self, maximum: float | None) -> None:
         """Update the entity's maximum to reflect the installer-configured grid limit.
@@ -210,9 +218,15 @@ class CloudGridLimitSensor(NumericSensorMixin, CloudReadWriteSensor):
         if maximum is None:
             self.pop(DiscoveryKeys.MAX, None)
             self.sanity_check.max_raw = 0.0  # If no installer maximum is set, the user cannot apply an override
+            if self.debug_logging:
+                logger.debug(f"{self.log_identity} Installer maximum is None - {self.sanity_check}")
         else:
             self.apply_min_max(0.0, maximum)
+            if self.debug_logging:
+                logger.debug(f"{self.log_identity} Installer maximum is {maximum} - {self.sanity_check}")
         if previous != self.get(DiscoveryKeys.MAX) and self.parent_device is not None:
+            if self.debug_logging:
+                logger.debug(f"{self.log_identity} Requesting rediscover on {self.parent_device.name}")
             self.parent_device.rediscover = True
 
     def _parse_number(self, payload: dict[str, Any], key: str) -> tuple[float | None, bool]:
@@ -246,49 +260,52 @@ class CloudGridLimitSensor(NumericSensorMixin, CloudReadWriteSensor):
         from sigenergy2mqtt.devices.base.ha_publisher import HaPublisherMixin
 
         if self.parent_device.rediscover and isinstance(self.parent_device, HaPublisherMixin) and active_config.home_assistant.enabled:
+            if self.debug_logging:
+                logger.debug(f"{self.log_identity} Publishing discovery on {self.parent_device.name} to reset max/min values")
             info = self.parent_device.publish_discovery(mqtt_client, clean=False)
             if info is not None and info.is_published():
                 self.parent_device.rediscover = False  # pyright: ignore[reportAttributeAccessIssue]
 
-    async def _read_cloud_state(self, port: CloudControlPort) -> float | str:
+    async def _read_cloud_state(self, port: CloudControlPort) -> dict[str, Any] | None:
         """Read the current grid-limit state from the cloud backend.
 
         Calls the configured *read_method* on *port* and interprets the response
         payload to derive the current owner-set limit.  Updates the entity's
         installer-configured maximum and ``_updates_allowed`` flag as a side effect.
 
-        Returns the numeric current limit when the limit is enabled and all response
-        fields are valid, or the string ``"None"`` when the limit is disabled,
-        missing, or the response is malformed.
+        Returns the current limit configuration or ``None`` if the cloud response is
+        malformed.
 
         Args:
             port: The :class:`CloudControlPort` used to communicate with the cloud
                 backend.
 
         Returns:
-            The current grid-limit as a ``float``, or ``"None"`` when the value is
-            unavailable or the limit is disabled.
+            The current grid-limit configuration as a ``dict``, or ``"None"`` when
+            the API returned an invalid configuration.
         """
-        payload = await getattr(port, self._read_method)()
-        if not isinstance(payload, dict):
-            logger.warning(f"{self.log_identity} cloud response is not an object: {payload!r}")
+        state = await getattr(port, self._read_method)()
+        if not isinstance(state, dict):
+            logger.warning(f"{self.log_identity} cloud response is not an object: {state!r}")
             self._updates_allowed = False
             self._update_installer_maximum(None)
-            return "None"
-        enabled_value = payload.get("enable")
+            return None
+        if self.debug_logging:
+            logger.debug(f"{self.log_identity} Read cloud state {state}")
+        enabled_value = state.get("enable")
         enabled_valid = isinstance(enabled_value, bool)
         if not enabled_valid:
             logger.warning(f"{self.log_identity} cloud response contains invalid enable={enabled_value!r}")
-        enabled = enabled_value is True
-        current, current_valid = self._parse_number(payload, self._current_key)
-        installer_maximum, installer_valid = self._parse_number(payload, self._installer_key)
+        enabled = bool(enabled_value)
+        _, current_valid = self._parse_number(state, self._current_key)
+        installer_maximum, installer_valid = self._parse_number(state, self._installer_key)
         # A write enables the limit in the same request, so a currently disabled
         # limit remains writable whenever its installer maximum is usable.
-        self._updates_allowed = enabled_valid and current_valid and installer_valid and installer_maximum is not None
+        self._updates_allowed = enabled_valid and enabled and current_valid and installer_valid and installer_maximum is not None
+        if self.debug_logging:
+            logger.debug(f"{self.log_identity} {self._updates_allowed=}")
         self._update_installer_maximum(installer_maximum)
-        if not enabled_valid or not current_valid or not installer_valid or not enabled or current is None:
-            return "None"
-        return current
+        return state
 
     async def _write_cloud_value(self, port: CloudControlPort, value: float | str) -> bool:
         """Write a new grid-limit value to the cloud backend.

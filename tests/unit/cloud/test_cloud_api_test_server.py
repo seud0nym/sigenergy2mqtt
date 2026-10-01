@@ -271,6 +271,7 @@ async def test_run_async_server_schedules_configured_internet_outage(
     )
 
     simulated_outage.assert_awaited_once()
+    assert simulated_outage.await_args is not None
     _, kwargs = simulated_outage.await_args
     assert kwargs == {
         "wait_for_seconds": 11,
@@ -314,24 +315,30 @@ async def test_cloud_api_test_server_exposes_all_limit_endpoints() -> None:
         assert inverter_nodes == [
             {
                 "stationId": api.device_topology["stationId"],
-                "snCode": HYBRID_INVERTER_SERIAL,
+                "snCode": HYBRID_INVERTER_SERIAL[3:],
+                "deviceName": "",
                 "deviceType": 3,
+                "deviceModel": "",
+                "deviceCode": "1104002600",
+                "deviceTypeDesc": "Inverter",
                 "deviceStatus": 1,
                 "communicateStatus": 2,
-                "deviceCode": HYBRID_INVERTER_MODEL,
-                "modelVersionStr": FIRMWARE_VERSION,
-                "ratedActivePower": 12.0,
+                "batPosition": 0,
                 "nodeList": [],
+                "deviceOrder": 1,
+                "ratedActivePower": HYBRID_INVERTER_RATED_ACTIVE_POWER,
+                "hasDcCharger": None,
+                "dcRunStatus": None,
             },
             {
                 "stationId": api.device_topology["stationId"],
-                "snCode": PV_INVERTER_SERIAL,
+                "snCode": PV_INVERTER_SERIAL[3:],
                 "deviceType": 3,
                 "deviceStatus": 1,
                 "communicateStatus": 2,
                 "deviceCode": PV_INVERTER_MODEL,
                 "modelVersionStr": FIRMWARE_VERSION,
-                "ratedActivePower": 5.0,
+                "ratedActivePower": PV_INVERTER_RATED_ACTIVE_POWER,
                 "nodeList": [],
             },
         ]
@@ -430,13 +437,13 @@ def test_cloud_topology_matches_synthesized_modbus_identity_registers() -> None:
         (
             1,
             HYBRID_INVERTER_MODEL,
-            HYBRID_INVERTER_SERIAL,
+            HYBRID_INVERTER_SERIAL[3:],
             HYBRID_INVERTER_RATED_ACTIVE_POWER,
         ),
         (
             3,
             PV_INVERTER_MODEL,
-            PV_INVERTER_SERIAL,
+            PV_INVERTER_SERIAL[3:],
             PV_INVERTER_RATED_ACTIVE_POWER,
         ),
     ):
@@ -461,7 +468,10 @@ def test_cloud_topology_matches_synthesized_modbus_identity_registers() -> None:
                 else raw_value
             )
         cloud_node = topology_inverters[serial]
-        assert {
-            key: cloud_node[key]
-            for key in ("deviceCode", "snCode", "ratedActivePower")
-        } == modbus_values
+        assert modbus_values["snCode"] == f"CMU{cloud_node['snCode']}"
+        if address == 1:
+            assert cloud_node["deviceCode"] == "1104002600"
+            assert modbus_values["deviceCode"] == HYBRID_INVERTER_MODEL
+        else:
+            assert cloud_node["deviceCode"] == modbus_values["deviceCode"]
+        assert cloud_node["ratedActivePower"] == modbus_values["ratedActivePower"]

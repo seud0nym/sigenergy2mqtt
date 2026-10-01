@@ -5,7 +5,7 @@ import os
 import signal
 import sys
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
 
 import pytest
@@ -39,7 +39,7 @@ from sigenergy2mqtt.main.device_factories import (
 )
 from sigenergy2mqtt.main.device_setup import (
     _cloud_control_plant_index,
-    _discover_cloud_control_plant_index,
+    _discover_cloud_device_list,
     _discover_cloud_gateway_info,
     _discover_cloud_operational_modes,
     _is_grid_outage,
@@ -141,7 +141,8 @@ async def test_unmatched_cloud_control_is_closed() -> None:
     cloud_port.device_list = AsyncMock(return_value=[{"deviceType": "Inverter", "serialNumber": "CLOUD-SN"}])
     cloud_port.close = AsyncMock()
 
-    assert await _discover_cloud_control_plant_index(cloud_port) is None
+    device_list = cast(list[dict[str, Any]], await _discover_cloud_device_list(cloud_port))
+    assert _cloud_control_plant_index(device_list) is None
     cloud_port.close.assert_awaited_once_with()
 
 
@@ -152,7 +153,8 @@ async def test_matched_cloud_control_discovery_connection_is_closed() -> None:
     cloud_port.device_list = AsyncMock(return_value=[{"deviceType": "Inverter", "serialNumber": "CLOUD-SN"}])
     cloud_port.close = AsyncMock()
 
-    assert await _discover_cloud_control_plant_index(cloud_port) == 2
+    device_list = cast(list[dict[str, Any]], await _discover_cloud_device_list(cloud_port))
+    assert _cloud_control_plant_index(device_list) == 2
     cloud_port.close.assert_awaited_once_with()
 
 
@@ -163,7 +165,8 @@ async def test_unreadable_local_serial_does_not_bind_cloud_control() -> None:
     cloud_port.device_list = AsyncMock(return_value=[{"deviceType": "Inverter", "serialNumber": "CLOUD-SN"}])
     cloud_port.close = AsyncMock()
 
-    assert await _discover_cloud_control_plant_index(cloud_port) is None
+    device_list = cast(list[dict[str, Any]], await _discover_cloud_device_list(cloud_port))
+    assert _cloud_control_plant_index(device_list) is None
     cloud_port.close.assert_awaited_once_with()
 
 
@@ -174,7 +177,8 @@ async def test_cloud_control_discovery_failure_disables_cloud_control(caplog):
     cloud_port.close = AsyncMock()
 
     with caplog.at_level(logging.WARNING):
-        assert await _discover_cloud_control_plant_index(cloud_port) is None
+        device_list = cast(list[dict[str, Any]], await _discover_cloud_device_list(cloud_port))
+        assert _cloud_control_plant_index(device_list) is None
 
     assert "Cloud inverter discovery failed" in caplog.text
     assert "Cloud API will be disabled" in caplog.text
@@ -272,7 +276,8 @@ def test_cloud_control_discovery_replaces_session_across_event_loops():
     async def discover():
         startup_session = await cloud_port._client._http_session()
         cloud_port._connected = True
-        assert await _discover_cloud_control_plant_index(cloud_port) == 0
+        device_list = cast(list[dict[str, Any]], await _discover_cloud_device_list(cloud_port))
+        assert _cloud_control_plant_index(device_list) == 0
         assert startup_session.closed
         return startup_session
 
@@ -295,7 +300,8 @@ async def test_cloud_control_transport_failure_disables_cloud_control() -> None:
     cloud_port.device_list = AsyncMock(side_effect=ServerDisconnectedError())
     cloud_port.close = AsyncMock()
 
-    assert await _discover_cloud_control_plant_index(cloud_port) is None
+    device_list = cast(list[dict[str, Any]], await _discover_cloud_device_list(cloud_port))
+    assert _cloud_control_plant_index(device_list) is None
     cloud_port.close.assert_awaited_once_with()
 
 
@@ -306,7 +312,8 @@ async def test_cloud_control_close_failure_does_not_abort_startup(caplog):
     cloud_port.close = AsyncMock(side_effect=OSError("close failed"))
 
     with caplog.at_level(logging.ERROR):
-        assert await _discover_cloud_control_plant_index(cloud_port) is None
+        device_list = cast(list[dict[str, Any]], await _discover_cloud_device_list(cloud_port))
+        assert _cloud_control_plant_index(device_list) is None
 
     assert "Failed to close cloud adapter after discovery" in caplog.text
     assert "Cloud API will be disabled" in caplog.text

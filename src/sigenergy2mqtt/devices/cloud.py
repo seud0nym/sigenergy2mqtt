@@ -19,7 +19,6 @@ from sigenergy2mqtt.sensors.cloud.read_only import (
 from sigenergy2mqtt.sensors.cloud.read_write import (
     BatteryChargePowerLimit,
     BatteryDischargePowerLimit,
-    BatteryExportLimitation,
     GridConnectionLimit,
     GridExportLimit,
     GridImportLimit,
@@ -50,7 +49,7 @@ class SigenergyGateway(Device):
         super().__init__(
             name=model,
             plant_index=plant_index,
-            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_{station_id}_gateway",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_cloud_{station_id}_gateway",
             manufacturer="Sigenergy",
             model="Gateway",
             model_id=model,
@@ -89,7 +88,7 @@ class SigenergyGateway(Device):
 
 
 class SigenergyCloudControl(Device):
-    """Expose cloud Instant Manual Control through normal MQTT sensors."""
+    """Expose Cloud controls through normal MQTT sensors."""
 
     def __init__(
         self,
@@ -97,13 +96,14 @@ class SigenergyCloudControl(Device):
         port: CloudControlPort,
         gateway_info: dict | None = None,
         operational_modes: dict[str, object] | None = None,
+        has_battery: bool = False,
     ) -> None:
         name = "Sigenergy Cloud"
         plant_suffix = "" if plant_index == 0 else str(plant_index + 1)
         super().__init__(
             name=name,
             plant_index=plant_index,
-            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_{port.station_id}_cloud_control",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_cloud_{port.station_id}",
             manufacturer="Sigenergy",
             model=port.model,
             protocol_version=ProtocolVersion.N_A,
@@ -130,12 +130,25 @@ class SigenergyCloudControl(Device):
         self._add_sensor(GridExportLimit(plant_index, station_id))
         self._add_sensor(GridImportLimit(plant_index, station_id))
         self._add_sensor(GridConnectionLimit(plant_index, station_id))
-        battery_charge_limit = BatteryChargePowerLimit(plant_index, station_id)
-        battery_discharge_limit = BatteryDischargePowerLimit(plant_index, station_id, battery_charge_limit._snapshot)
-        self._add_sensor(battery_charge_limit)
-        self._add_sensor(battery_discharge_limit)
         self._add_sensor(SolarPowerLimit(plant_index, station_id))
-        self._add_sensor(BatteryExportLimitation(plant_index, station_id))
+
+        if has_battery:
+            mode = InstantControlMode(plant_index, station_id)
+            duration = InstantControlDuration(plant_index, station_id)
+            switch = InstantControlSwitch(plant_index, station_id, mode, duration)
+            mode.set_availability_control_sensor(switch)
+            duration.set_availability_control_sensor(switch)
+
+            # The switch must be registered first so its state topic exists when
+            # the selectors add their availability gates.
+            self._add_sensor(switch)
+            self._add_sensor(mode)
+            self._add_sensor(duration)
+
+            battery_charge_limit = BatteryChargePowerLimit(plant_index, station_id)
+            battery_discharge_limit = BatteryDischargePowerLimit(plant_index, station_id, battery_charge_limit._snapshot)
+            self._add_sensor(battery_charge_limit)
+            self._add_sensor(battery_discharge_limit)
 
         if gateway_info:
             raw_grid_side_info = gateway_info.get("gridSideInfoList")

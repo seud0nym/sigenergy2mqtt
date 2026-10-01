@@ -132,7 +132,7 @@ class TestPublishMethod:
         assert published is True
         assert mqtt.publish.call_count == 3
         state_calls = {call.args[0]: call.args[1] for call in mqtt.publish.call_args_list[:2]}
-        assert state_calls == {"test/state/power": "100.13", "test/state/status": "online"}
+        assert state_calls == {"test/state/power": "100.126", "test/state/status": "online"}
         raw_call = mqtt.publish.call_args_list[2]
         assert raw_call.args[0] == "test/raw"
         assert json.loads(raw_call.args[1]) == raw_state

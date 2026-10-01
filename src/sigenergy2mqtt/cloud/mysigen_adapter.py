@@ -49,6 +49,7 @@ _CAPABILITIES = Capabilities(
 _T = TypeVar("_T")
 
 _TOPOLOGY_DEVICE_TYPES = {
+    2: "Aio",  # All-in-One
     3: "Inverter",
     4: "Battery",
     5: "DcCharger",
@@ -102,6 +103,10 @@ class MySigenCloudAdapter:
     def capabilities(self) -> Capabilities:
         return _CAPABILITIES
 
+    @property
+    def connected(self) -> bool:
+        return self._connected
+
     async def connect(self) -> None:
         async with self._connect_lock:
             await self._connect_locked()
@@ -135,7 +140,9 @@ class MySigenCloudAdapter:
     async def _reconnect(self, failed_generation: int) -> None:
         """Replace an invalid cloud login unless another task already did so."""
         async with self._connect_lock:
-            logger.debug(f"Reconnecting to {self._client.base_url} Cloud API (_connection_generation={self._connection_generation}, failed_generation={failed_generation})")
+            logger.debug(
+                f"Reconnecting to {self._client.base_url} Cloud API (_connection_generation={self._connection_generation}, failed_generation={failed_generation})",
+            )
             if self._connection_generation != failed_generation:
                 return
             self._connected = False
@@ -148,7 +155,9 @@ class MySigenCloudAdapter:
             if self._connection_generation == failed_generation:
                 self._connected = False
                 await Metrics.cloud_connection(connected=False)
-                logger.debug(f"Connection to {self._client.base_url} Cloud API invalidated (_connection_generation={self._connection_generation}, failed_generation={failed_generation})")
+                logger.debug(
+                    f"Connection to {self._client.base_url} Cloud API invalidated (_connection_generation={self._connection_generation}, failed_generation={failed_generation})",
+                )
 
     async def close(self) -> None:
         await self._client.close()
@@ -165,10 +174,6 @@ class MySigenCloudAdapter:
             if not isinstance(raw_device_type, int):
                 continue
             device_type = _TOPOLOGY_DEVICE_TYPES.get(raw_device_type)
-            if device_type is None:
-                # AIO nodes are topology containers, not an official API device type.
-                continue
-
             offline = self._client.topology_node_is_offline(node)
             status = "Offline" if offline else "Normal" if offline is False else "Fault"
             attributes: dict[str, Any] = {}

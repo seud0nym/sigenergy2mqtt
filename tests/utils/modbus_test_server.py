@@ -205,7 +205,7 @@ class CloudApiTestServer:
         self.instant_control: dict[str, Any] = {
             "enable": False,
             "mode": "1",
-            "endTime": None,
+            "endTime": 1790727664,
         }
         self.station_home_data = {
             "stationId": CLOUD_TEST_STATION_ID,
@@ -233,53 +233,151 @@ class CloudApiTestServer:
                 {
                     "stationId": CLOUD_TEST_STATION_ID,
                     "snCode": HYBRID_INVERTER_SERIAL,
+                    "deviceName": "",
                     "deviceType": 2,
+                    "deviceModel": "",
+                    "deviceCode": "",
+                    "deviceTypeDesc": "Aio",
                     "deviceStatus": 1,
                     "communicateStatus": 2,
+                    "batPosition": None,
                     "nodeList": [
                         {
                             "stationId": CLOUD_TEST_STATION_ID,
-                            "snCode": HYBRID_INVERTER_SERIAL,
+                            "snCode": HYBRID_INVERTER_SERIAL[3:],
+                            "deviceName": "",
                             "deviceType": 3,
+                            "deviceModel": "",
+                            "deviceCode": "1104002600",
+                            "deviceTypeDesc": "Inverter",
                             "deviceStatus": 1,
                             "communicateStatus": 2,
-                            "deviceCode": HYBRID_INVERTER_MODEL,
-                            "modelVersionStr": FIRMWARE_VERSION,
-                            "ratedActivePower": HYBRID_INVERTER_RATED_ACTIVE_POWER,
+                            "batPosition": 0,
                             "nodeList": [],
+                            "deviceOrder": 1,
+                            "ratedActivePower": HYBRID_INVERTER_RATED_ACTIVE_POWER,
+                            "hasDcCharger": None,
+                            "dcRunStatus": None,
+                        },
+                        {
+                            "stationId": CLOUD_TEST_STATION_ID,
+                            "snCode": "987B65BC1238",
+                            "deviceName": "",
+                            "deviceType": 4,
+                            "deviceModel": "",
+                            "deviceCode": "",
+                            "deviceTypeDesc": "Battery",
+                            "deviceStatus": 1,
+                            "communicateStatus": 2,
+                            "batPosition": 1,
+                            "nodeList": [],
+                            "deviceOrder": 4,
+                            "ratedActivePower": None,
+                            "hasDcCharger": None,
+                        },
+                        {
+                            "stationId": CLOUD_TEST_STATION_ID,
+                            "snCode": "987B65BC1237",
+                            "deviceType": 4,
+                            "deviceModel": "",
+                            "deviceCode": "",
+                            "deviceTypeDesc": "Battery",
+                            "deviceStatus": 1,
+                            "communicateStatus": 2,
+                            "batPosition": 2,
+                            "nodeList": [],
+                            "deviceOrder": 4,
+                            "ratedActivePower": None,
+                            "hasDcCharger": None,
+                            "dcRunStatus": None,
+                        },
+                        {
+                            "stationId": CLOUD_TEST_STATION_ID,
+                            "snCode": "987B65BC1236",
+                            "deviceType": 4,
+                            "deviceModel": "",
+                            "deviceCode": "",
+                            "deviceTypeDesc": "Battery",
+                            "deviceStatus": 1,
+                            "communicateStatus": 2,
+                            "batPosition": 3,
+                            "nodeList": [],
+                            "deviceOrder": 4,
+                            "ratedActivePower": None,
+                            "hasDcCharger": None,
+                            "dcRunStatus": None,
                         },
                         {
                             "stationId": CLOUD_TEST_STATION_ID,
                             "snCode": DC_CHARGER_SERIAL,
                             "deviceType": 5,
+                            "deviceModel": "",
+                            "deviceCode": "Sigen EV DC Charging Module",
+                            "deviceTypeDesc": "DC Charger",
                             "deviceStatus": 1,
                             "communicateStatus": 2,
-                            "deviceCode": "Sigen EV DC Charging Module",
-                            "modelVersionStr": FIRMWARE_VERSION,
                             "nodeList": [],
+                            "deviceOrder": None,
+                            "ratedActivePower": None,
+                            "hasDcCharger": None,
+                            "dcRunStatus": None,
+                        },
+                        {
+                            "stationId": CLOUD_TEST_STATION_ID,
+                            "snCode": CLOUD_TEST_GATEWAY_SERIAL,
+                            "deviceType": 8,
+                            "deviceModel": "",
+                            "deviceCode": "",
+                            "deviceTypeDesc": "Gateway",
+                            "deviceStatus": 1,
+                            "communicateStatus": 2,
+                            "batPosition": 0,
+                            "nodeList": [],
+                            "deviceOrder": 5,
+                            "ratedActivePower": None,
+                            "hasDcCharger": None,
+                            "dcRunStatus": None,
                         },
                     ],
+                    "deviceOrder": None,
+                    "ratedActivePower": HYBRID_INVERTER_RATED_ACTIVE_POWER,
+                    "hasDcCharger": True,
+                    "dcRunStatus": None,
                 },
                 {
                     "stationId": CLOUD_TEST_STATION_ID,
                     "snCode": PV_INVERTER_SERIAL,
-                    "deviceType": 3,
+                    "deviceName": "",
+                    "deviceType": 2,
+                    "deviceModel": "",
+                    "deviceCode": "",
+                    "deviceTypeDesc": "Aio",
                     "deviceStatus": 1,
                     "communicateStatus": 2,
-                    "deviceCode": PV_INVERTER_MODEL,
-                    "modelVersionStr": FIRMWARE_VERSION,
-                    "ratedActivePower": PV_INVERTER_RATED_ACTIVE_POWER,
-                    "nodeList": [],
-                },
-                {
-                    "stationId": CLOUD_TEST_STATION_ID,
-                    "snCode": AC_CHARGER_SERIAL,
-                    "deviceType": 6,
-                    "deviceStatus": 1,
-                    "communicateStatus": 2,
-                    "deviceCode": "Sigen EV AC Charger",
-                    "modelVersionStr": FIRMWARE_VERSION,
-                    "nodeList": [],
+                    "batPosition": None,
+                    "nodeList": [
+                        {
+                            "stationId": CLOUD_TEST_STATION_ID,
+                            "snCode": PV_INVERTER_SERIAL[3:],
+                            "deviceType": 3,
+                            "deviceStatus": 1,
+                            "communicateStatus": 2,
+                            "deviceCode": PV_INVERTER_MODEL,
+                            "modelVersionStr": FIRMWARE_VERSION,
+                            "ratedActivePower": PV_INVERTER_RATED_ACTIVE_POWER,
+                            "nodeList": [],
+                        },
+                        {
+                            "stationId": CLOUD_TEST_STATION_ID,
+                            "snCode": AC_CHARGER_SERIAL,
+                            "deviceType": 6,
+                            "deviceStatus": 1,
+                            "communicateStatus": 2,
+                            "deviceCode": "Sigen EV AC Charger",
+                            "modelVersionStr": FIRMWARE_VERSION,
+                            "nodeList": [],
+                        },
+                    ],
                 },
             ],
         }
@@ -473,6 +571,9 @@ class CloudApiTestServer:
         # accidental checkbox updates particularly confusing.
         valid = isinstance(value, expected_type) and not (expected_type is int and isinstance(value, bool))
         if not valid:
+            if isinstance(expected_type, tuple):
+                expected_names = " or ".join(t.__name__ for t in expected_type)
+                raise web.HTTPBadRequest(text=f"{name} must be a {expected_names}")
             raise web.HTTPBadRequest(text=f"{name} must be a {expected_type.__name__}")
         if name == "internet_outage_status" and not 500 <= value <= 599:
             raise web.HTTPBadRequest(text="internet_outage_status must be between 500 and 599")
@@ -546,18 +647,22 @@ class CloudApiTestServer:
     async def get_instant_control(self, request: web.Request) -> web.Response:
         if (response := await self.authorized(request)) is not None:
             return response
+        if self.instant_control["enable"] == True and self.instant_control["endTime"] is not None and self.instant_control["endTime"] < time.time():
+            self.instant_control["enable"] = False
+        _logger.info(f"get_instant_control: {self.instant_control}")
         return self._success(self.instant_control)
 
     async def set_instant_control(self, request: web.Request) -> web.Response:
         if (response := await self.authorized(request)) is not None:
             return response
         payload = await request.json()
+        _logger.info(f"set_instant_control: {payload}")
         enabled = bool(payload.get("enable"))
-        duration = payload.get("duration")
+        duration = int(payload.get("duration") or 0)
         self.instant_control = {
             "enable": enabled,
             "mode": payload.get("mode") or "1",
-            "endTime": int(time.time()) + int(duration) * 60 if enabled and duration else None,
+            "endTime": int(time.time() + (duration * 60)) if enabled and duration else None,
         }
         return self._success()
 
@@ -627,7 +732,6 @@ class CloudApiTestServer:
         payload = await request.json()
         self.battery_export_limitation.update(
             currentEnable=payload["ownerSetEnable"],
-            installerSetEnable=payload["installerSetEnable"],
             ownerSetEnable=payload["ownerSetEnable"],
         )
         return self._success()

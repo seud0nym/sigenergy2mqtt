@@ -725,7 +725,9 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         """
         object_id = (
             getattr(  # Use original object_id for topic generation when active_config.home_assistant.enabled and active_config.home_assistant.sigenergy_local_modbus_naming, otherwise dashboard will be broken
-                self, "_original_object_id", self.get(DiscoveryKeys.OBJECT_ID, getattr(self, "unique_id", ""))
+                self,
+                "_original_object_id",
+                self.get(DiscoveryKeys.OBJECT_ID, getattr(self, "unique_id", "")),
             )
         )
         if active_config.home_assistant.enabled and not active_config.home_assistant.use_simplified_topics:
@@ -738,7 +740,12 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         """Log the configured MQTT topics for debugging."""
         if self.debug_logging:
             logger.debug(f"{self.log_identity} Configured MQTT topics (HA={active_config.home_assistant.enabled} simplified={active_config.home_assistant.use_simplified_topics})")
-            for key in (DiscoveryKeys.STATE_TOPIC, DiscoveryKeys.RAW_STATE_TOPIC, DiscoveryKeys.JSON_ATTRIBUTES_TOPIC, DiscoveryKeys.AVAILABILITY):
+            for key in (
+                DiscoveryKeys.STATE_TOPIC,
+                DiscoveryKeys.RAW_STATE_TOPIC,
+                DiscoveryKeys.JSON_ATTRIBUTES_TOPIC,
+                DiscoveryKeys.AVAILABILITY,
+            ):
                 if key in self:
                     logger.debug(f"{self.log_identity} >>> {key}={self[key]})")
 
@@ -832,7 +839,13 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         """
         # Clear retained attributes
         if DiscoveryKeys.JSON_ATTRIBUTES_TOPIC in self:
-            self._publish_message(mqtt_client, cast(str, self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC]), b"", qos=1, retain=True)
+            self._publish_message(
+                mqtt_client,
+                cast(str, self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC]),
+                b"",
+                qos=1,
+                retain=True,
+            )
             if self.debug_logging:
                 logger.debug(f"{self.log_identity} unpublished - removed any retained messages in topic {self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC]}")
 
@@ -1018,13 +1031,27 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
                 topic = f"{state_topic}/{key}"
                 if self.debug_logging:
                     logger.debug(f"{self.log_identity} Publishing state={value} to topic {topic}")
-                publish_results.append(self._publish_message(mqtt_client, topic, self._to_mqtt_payload(value), self._qos, self._retain))
+                publish_results.append(
+                    self._publish_message(
+                        mqtt_client,
+                        topic,
+                        self._to_mqtt_payload(value),
+                        self._qos,
+                        self._retain,
+                    )
+                )
             published = bool(publish_results) and all(publish_results)
         else:
             if self.debug_logging:
                 logger.debug(f"{self.log_identity} Publishing state={state} to topic {state_topic}")
             # Don't catch exceptions here - they will be handled by the caller
-            published = self._publish_message(mqtt_client, state_topic, self._to_mqtt_payload(state), self._qos, self._retain)
+            published = self._publish_message(
+                mqtt_client,
+                state_topic,
+                self._to_mqtt_payload(state),
+                self._qos,
+                self._retain,
+            )
 
         await Metrics.mqtt_publish_attempt(physical_publish=published)
         if not published:
@@ -1035,7 +1062,14 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
             if self.debug_logging:
                 logger.debug(f"{self.log_identity} Publishing raw state={self.latest_raw_state} to topic {self[DiscoveryKeys.RAW_STATE_TOPIC]}")
             try:
-                self._publish_message(mqtt_client, cast(str, self[DiscoveryKeys.RAW_STATE_TOPIC]), self._to_mqtt_payload(self.latest_raw_state), self._qos, self._retain, timeout=0.1)
+                self._publish_message(
+                    mqtt_client,
+                    cast(str, self[DiscoveryKeys.RAW_STATE_TOPIC]),
+                    self._to_mqtt_payload(self.latest_raw_state),
+                    self._qos,
+                    self._retain,
+                    timeout=0.1,
+                )
             except ValueError as e:
                 logger.warning(f"{self.log_identity} Failed to publish raw state={self.latest_raw_state} to topic {self[DiscoveryKeys.RAW_STATE_TOPIC]} - Queue full ({e})")
             except RuntimeError as e:
@@ -1063,14 +1097,34 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
             raise TypeError(f"Not serializable: {type(o)}")
 
         if isinstance(state, bool):
-            return "online" if state else "offline"
+            value = "online" if state else "offline"
+            if self.debug_logging:
+                logger.debug(f"{self.log_identity} Converted {state=} ({type(state)}) to MQTT payload {value=}")
+            return value
         if isinstance(state, (dict, list, tuple)):
-            return json.dumps(state, default=_json_default)
+            value = json.dumps(state, default=_json_default)
+            if self.debug_logging:
+                logger.debug(f"{self.log_identity} Converted  {state=} ({type(state)}) to MQTT payload {value=}")
+            return value
         if is_dataclass(state) and not isinstance(state, type):
-            return json.dumps(asdict(state), default=_json_default)
-        return f"{state}"  # str/int/float unchanged
+            value = json.dumps(asdict(state), default=_json_default)
+            if self.debug_logging:
+                logger.debug(f"{self.log_identity} Converted {state=} ({type(state)}) to MQTT payload {value=}")
+            return value
+        value = f"{state}"  # str/int/float unchanged
+        if self.debug_logging:
+            logger.debug(f"{self.log_identity} Converted {state=} ({type(state)}) to MQTT payload {value=}")
+        return value
 
-    def _publish_message(self, mqtt_client: mqtt.Client, topic: str, payload: bytes | str, qos: int = 0, retain: bool = False, timeout: float | None = 0.5) -> bool:
+    def _publish_message(
+        self,
+        mqtt_client: mqtt.Client,
+        topic: str,
+        payload: bytes | str,
+        qos: int = 0,
+        retain: bool = False,
+        timeout: float | None = 0.5,
+    ) -> bool:
         """Publish a message to MQTT.
 
         Args:
@@ -1133,7 +1187,12 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
             raise error
 
         if active_config.home_assistant.enabled:
-            self.publish_attributes(mqtt_client, clean=False, failures=self._failures, exception=f"{error!r}")
+            self.publish_attributes(
+                mqtt_client,
+                clean=False,
+                failures=self._failures,
+                exception=f"{error!r}",
+            )
 
         if self._failures >= self._max_failures:
             self._log_publish_disabled()
@@ -1191,7 +1250,13 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         if self.debug_logging:
             logger.debug(f"{self.log_identity} cleaning attributes")
 
-        self._publish_message(mqtt_client, cast(str, self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC]), b"", qos=1, retain=True)
+        self._publish_message(
+            mqtt_client,
+            cast(str, self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC]),
+            b"",
+            qos=1,
+            retain=True,
+        )
 
     def _publish_current_attributes(self, mqtt_client: mqtt.Client, **kwargs) -> None:
         """Publish current sensor attributes.
@@ -1209,7 +1274,13 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         attributes_json = json.dumps(attributes)
         if self.debug_logging:
             logger.debug(f"{self.log_identity} Publishing attributes={attributes_json}")
-        self._publish_message(mqtt_client, cast(str, self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC]), attributes_json, qos=1, retain=True)
+        self._publish_message(
+            mqtt_client,
+            cast(str, self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC]),
+            attributes_json,
+            qos=1,
+            retain=True,
+        )
 
         self._attributes_published = True
         self.force_publish = False
@@ -1288,7 +1359,14 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
             return active_config.sensor_overrides[identifier]
         return None
 
-    async def set_debug_logging(self, transport: Any, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
+    async def set_debug_logging(
+        self,
+        transport: Any,
+        mqtt_client: mqtt.Client,
+        value: float | str,
+        source: str,
+        handler: MqttHandler,
+    ) -> bool:
         """Set debug logging value via MQTT.
 
         Args:
@@ -1352,31 +1430,31 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         Returns:
             Transformed state value
         """
-        if state is None:
+        if state is None or raw:
             if self.debug_logging:
-                logger.debug(f"{self.log_identity} Skipped applying gain={self.gain} and precision={self.precision} to state={state}")
-            return None
+                logger.debug(f"{self.log_identity} Skipped applying gain={self.gain} and precision={self.precision} to state={state} ({raw=} type={type(state)})")
+            return state if raw else None
 
         if isinstance(state, dict):
-            if raw:
-                return state
-            return {key: self._apply_gain_and_precision(value) if isinstance(value, (int, float, dict)) else value for key, value in state.items()}
+            if self.debug_logging:
+                logger.debug(f"{self.log_identity} Applying gain={self.gain} and precision={self.precision} to state={state} (type={type(state)} state_topic_dict_key={self.state_topic_dict_key})")
+            return {key: self._apply_gain_and_precision(value) if key == self.state_topic_dict_key and isinstance(value, (int, float, dict)) else value for key, value in state.items()}
 
-        if not isinstance(state, (float, int)) or raw:
+        if isinstance(state, bool) or not isinstance(state, (float, int)):
+            if self.debug_logging:
+                logger.debug(f"{self.log_identity} Skipped applying gain={self.gain} and precision={self.precision} to state={state} (type={type(state)})")
             return state
 
         if self.debug_logging:
-            logger.debug(f"{self.log_identity} Applying gain={self.gain} and precision={self.precision} to state={state}")
+            logger.debug(f"{self.log_identity} Applying gain={self.gain} and precision={self.precision} to state={state} (type={type(state)})")
 
         if self.gain is not None:
             state /= self.gain
 
         if isinstance(state, float) and self.precision is not None:
-            # Diagnostic: ensure we see the types during test runs
-            # (temporary - will be removed once root cause is found)
             state = round(state, self.precision)
             if self.precision == 0:
-                state = int(state)  # pyrefly: ignore (int and float are both valid)
+                state = int(state)
 
         return state
 
@@ -1430,7 +1508,16 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
 
             # Try translated strings
             for i, option in enumerate(options):
-                if option != "" and option is not None and _t(f"{self.__class__.__name__}.options.{i}", option, self.debug_logging) == str(value):
+                if (
+                    option != ""
+                    and option is not None
+                    and _t(
+                        f"{self.__class__.__name__}.options.{i}",
+                        option,
+                        self.debug_logging,
+                    )
+                    == str(value)
+                ):
                     return i
 
             # Try raw English strings
