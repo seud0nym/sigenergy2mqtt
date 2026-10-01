@@ -4,7 +4,8 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from sigenergy2mqtt.devices.cloud import SigenergyCloudControl, SigenergyGateway
+from sigenergy2mqtt.devices.cloud import CloudDiscovery, SigenergyCloudControl
+from sigenergy2mqtt.devices.gateway import SigenergyGateway
 from sigenergy2mqtt.sensors.base import DiscoveryKeys
 from sigenergy2mqtt.sensors.cloud.read_only import (
     GatewayCommunicationStatus,
@@ -39,7 +40,7 @@ GATEWAY_INFO = {
 
 
 def test_cloud_control_adds_gateway_child_with_dynamic_sensors() -> None:
-    device = SigenergyCloudControl(0, FakeCloudControlPort(), GATEWAY_INFO)
+    device = SigenergyCloudControl(0, FakeCloudControlPort(), CloudDiscovery(device_list=[], gateway_info=GATEWAY_INFO))
 
     assert len(device.children) == 1
     gateway = device.children[0]
