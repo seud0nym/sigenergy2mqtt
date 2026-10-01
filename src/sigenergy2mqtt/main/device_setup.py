@@ -324,9 +324,11 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
     cloud_control_registry.configure(active_config.cloud)
     if (cloud_port := cloud_control_registry.active) is not None:
         gateway_info = await _discover_cloud_gateway_info(cloud_port)
-        plant_index = await _discover_cloud_control_plant_index(cloud_port)
-        if plant_index is not None:
+        device_list = await _discover_cloud_device_list(cloud_port)
+        plant_index = _cloud_control_plant_index(device_list)
+        if plant_index is not None and device_list is not None:
             operational_modes = await _discover_cloud_operational_modes(cloud_port)
+            has_battery = any(d for d in device_list if d.get("deviceType") == "Battery")
             cloud_config = ThreadConfig.create(host=None, port=None, name="Sigenergy Cloud")
             cloud_config.transport_factory = cloud_control_registry.transport_factory
             cloud_config.add_device(
@@ -335,6 +337,7 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
                     cloud_port,
                     gateway_info,
                     operational_modes,
+                    has_battery,
                 )
             )
 

@@ -96,6 +96,7 @@ class SigenergyCloudControl(Device):
         port: CloudControlPort,
         gateway_info: dict | None = None,
         operational_modes: dict[str, object] | None = None,
+        has_battery: bool = False,
     ) -> None:
         name = "Sigenergy Cloud"
         plant_suffix = "" if plant_index == 0 else str(plant_index + 1)
