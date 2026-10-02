@@ -4,8 +4,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from sigenergy2mqtt.devices.cloud import CloudDiscovery, SigenergyCloudControl
-from sigenergy2mqtt.devices.gateway import SigenergyGateway
+from sigenergy2mqtt.devices.cloud import CloudControl, CloudDiscovery, Gateway
 from sigenergy2mqtt.sensors.base import DiscoveryKeys
 from sigenergy2mqtt.sensors.cloud.read_only import (
     GatewayCommunicationStatus,
@@ -40,11 +39,11 @@ GATEWAY_INFO = {
 
 
 def test_cloud_control_adds_gateway_child_with_dynamic_sensors() -> None:
-    device = SigenergyCloudControl(0, FakeCloudControlPort(), CloudDiscovery(device_list=[], gateway_info=GATEWAY_INFO))
+    device = CloudControl(0, FakeCloudControlPort(), CloudDiscovery(device_list=[], gateway_info=GATEWAY_INFO))
 
     assert len(device.children) == 1
     gateway = device.children[0]
-    assert isinstance(gateway, SigenergyGateway)
+    assert isinstance(gateway, Gateway)
     assert gateway["model_id"] == "Sigen Gateway SP AU"
     assert gateway["sn"] == "GW-SN"
     assert gateway["sw"] == "V100R001C00"
@@ -69,7 +68,7 @@ def test_cloud_control_adds_gateway_child_with_dynamic_sensors() -> None:
 async def test_gateway_sensors_share_one_endpoint_read_per_refresh() -> None:
     port = FakeCloudControlPort()
     port.gateway_info = AsyncMock(return_value=GATEWAY_INFO)
-    gateway = SigenergyGateway(
+    gateway = Gateway(
         plant_index=0,
         station_id=port.station_id,
         model="model",
@@ -98,7 +97,7 @@ async def test_gateway_numeric_sensor_rejects_changed_units_and_non_finite_value
         "gridSideInfoList": [{"paramKey": "Phase A Voltage", "paramValue": param_value}],
     }
     port.gateway_info = AsyncMock(return_value=payload)
-    gateway = SigenergyGateway(
+    gateway = Gateway(
         plant_index=0,
         station_id=port.station_id,
         model="model",

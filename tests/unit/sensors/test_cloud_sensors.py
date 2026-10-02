@@ -16,7 +16,7 @@ from sigenergy2mqtt.cloud.models import InstantControlMode as DomainMode
 from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.devices.base.poller import SensorGroupPoller
-from sigenergy2mqtt.devices.cloud import CloudDiscovery, SigenergyCloudControl
+from sigenergy2mqtt.devices.cloud import CloudControl, CloudDiscovery
 from sigenergy2mqtt.sensors.base import CloudReadWriteSensor, DiscoveryKeys
 from sigenergy2mqtt.sensors.cloud.functions import _identity
 from sigenergy2mqtt.sensors.cloud.read_write import (
@@ -108,7 +108,7 @@ def test_cloud_identity_uses_cloud_object_id_and_station_unique_id() -> None:
 
 
 def test_cloud_control_device_registers_normal_mqtt_entities() -> None:
-    device = SigenergyCloudControl(
+    device = CloudControl(
         0,
         FakeCloudControlPort(),
         CloudDiscovery(
@@ -143,7 +143,7 @@ def test_cloud_control_device_registers_normal_mqtt_entities() -> None:
 
 @pytest.mark.asyncio
 async def test_operational_mode_discovers_reads_and_writes_station_modes() -> None:
-    device = SigenergyCloudControl(
+    device = CloudControl(
         0,
         FakeCloudControlPort(),
         CloudDiscovery(device_list=[], operational_modes=OPERATIONAL_MODES),
@@ -193,7 +193,7 @@ async def test_operational_mode_rejects_unknown_cloud_and_command_modes() -> Non
 
 @pytest.mark.asyncio
 async def test_operational_mode_refreshes_options_and_disambiguates_duplicate_labels() -> None:
-    device = SigenergyCloudControl(
+    device = CloudControl(
         0,
         FakeCloudControlPort(),
         CloudDiscovery(device_list=[], operational_modes=OPERATIONAL_MODES),
@@ -243,7 +243,7 @@ async def test_operational_mode_reads_current_mode_when_option_refresh_fails(
 
 
 def test_cloud_power_limit_sensors_expose_vendor_maximum() -> None:
-    device = SigenergyCloudControl(0, FakeCloudControlPort(), CloudDiscovery(device_list=[{"deviceType": "Battery"}]))
+    device = CloudControl(0, FakeCloudControlPort(), CloudDiscovery(device_list=[{"deviceType": "Battery"}]))
     power_limits = [
         sensor
         for sensor in device.sensors.values()
@@ -261,7 +261,7 @@ def test_mode_and_duration_are_available_only_while_switch_is_off() -> None:
     config = Config()
     config.home_assistant.enabled = True
     with _swap_active_config(config):
-        device = SigenergyCloudControl(0, FakeCloudControlPort(), CloudDiscovery(device_list=[{"deviceType": "Battery"}]))
+        device = CloudControl(0, FakeCloudControlPort(), CloudDiscovery(device_list=[{"deviceType": "Battery"}]))
         sensors = list(device.sensors.values())
         switch = next(s for s in sensors if isinstance(s, InstantControlSwitch))
         mode = next(s for s in sensors if isinstance(s, InstantControlMode))
@@ -576,7 +576,7 @@ async def test_grid_limit_invalid_enable_status_disallows_updates(enable) -> Non
 
 @pytest.mark.asyncio
 async def test_battery_power_limits_share_read_and_preserve_other_limit_on_write() -> None:
-    device = SigenergyCloudControl(0, FakeCloudControlPort(), CloudDiscovery(device_list=[{"deviceType": "Battery"}]))
+    device = CloudControl(0, FakeCloudControlPort(), CloudDiscovery(device_list=[{"deviceType": "Battery"}]))
     charge = next(sensor for sensor in device.sensors.values() if isinstance(sensor, BatteryChargePowerLimit))
     discharge = next(sensor for sensor in device.sensors.values() if isinstance(sensor, BatteryDischargePowerLimit))
     port = FakeCloudControlPort()
@@ -714,7 +714,7 @@ async def test_grid_limit_malformed_payload_publishes_unavailable_without_raisin
 
 @pytest.mark.asyncio
 async def test_grid_limit_maximum_changes_request_discovery_republish() -> None:
-    device = SigenergyCloudControl(0, FakeCloudControlPort(), CloudDiscovery(device_list=[]))
+    device = CloudControl(0, FakeCloudControlPort(), CloudDiscovery(device_list=[]))
     sensor = next(item for item in device.sensors.values() if isinstance(item, GridExportLimit))
     port = AsyncMock()
     port.grid_export_limit.return_value = {

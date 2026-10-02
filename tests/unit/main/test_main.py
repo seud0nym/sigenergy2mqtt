@@ -30,18 +30,18 @@ from sigenergy2mqtt.common import (
 )
 from sigenergy2mqtt.config import _swap_active_config, active_config
 from sigenergy2mqtt.devices import DeviceRegistry, Inverter
+from sigenergy2mqtt.devices.cloud.discovery import (
+    CloudDiscovery,
+    _discover_cloud_device_list,
+    _discover_cloud_gateway_info,
+    discover_operational_modes,
+)
 from sigenergy2mqtt.main import main as main_mod
 from sigenergy2mqtt.main.device_factories import (
     get_state,
     make_ac_charger,
     make_dc_charger,
     make_plant_and_inverter,
-)
-from sigenergy2mqtt.devices.cloud.discovery import (
-    CloudDiscovery,
-    _discover_cloud_device_list,
-    _discover_cloud_gateway_info,
-    discover_operational_modes,
 )
 from sigenergy2mqtt.main.device_setup import (
     _cloud_control_plant_index,
@@ -259,9 +259,7 @@ async def test_operational_mode_discovery_returns_options_and_closes_adapter() -
 @pytest.mark.asyncio
 async def test_operational_mode_discovery_leaves_payload_validation_to_device_and_closes_adapter() -> None:
     cloud_port = MagicMock()
-    cloud_port.available_operational_modes = AsyncMock(
-        return_value={"defaultWorkingModes": [], "energyProfileItems": []}
-    )
+    cloud_port.available_operational_modes = AsyncMock(return_value={"defaultWorkingModes": [], "energyProfileItems": []})
     cloud_port.close = AsyncMock()
 
     assert (await discover_operational_modes(cloud_port, CloudDiscovery(device_list=[]))).operational_modes == {

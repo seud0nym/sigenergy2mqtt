@@ -10,10 +10,10 @@ from sigenergy2mqtt.cloud.registry import cloud_control_registry
 from sigenergy2mqtt.common import Constants, ProtocolVersion
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import (
+    CloudControl,
     DeviceRegistry,
     Inverter,
     PowerPlant,
-    SigenergyCloudControl,
     bind_cross_device_sensors,
 )
 from sigenergy2mqtt.devices.cloud import discover_cloud, discover_operational_modes
@@ -92,7 +92,7 @@ async def _setup_cloud_control() -> None:
     discovery = await discover_operational_modes(cloud_port, discovery)
     cloud_config = ThreadConfig.create(host=None, port=None, name="Sigenergy Cloud")
     cloud_config.transport_factory = cloud_control_registry.transport_factory
-    cloud_config.add_device(SigenergyCloudControl(plant_index, cloud_port, discovery))
+    cloud_config.add_device(CloudControl(plant_index, cloud_port, discovery))
 
 
 async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfig], ProtocolVersion | None]:

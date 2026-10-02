@@ -7,7 +7,6 @@ from sigenergy2mqtt.cloud.port import CloudControlPort
 from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices.base.device import Device
-from sigenergy2mqtt.devices.gateway import SigenergyGateway
 from sigenergy2mqtt.sensors.cloud.read_write import (
     BatteryChargePowerLimit,
     BatteryDischargePowerLimit,
@@ -22,21 +21,22 @@ from sigenergy2mqtt.sensors.cloud.read_write import (
 )
 
 from .discovery import CloudDiscovery
+from .gateway import Gateway
 
 logger = logging.getLogger(__name__)
 
 ChildBuilder = Callable[[int, str, CloudDiscovery], Device | None]
-_CHILD_BUILDERS: tuple[ChildBuilder, ...] = (SigenergyGateway.from_discovery,)
+_CHILD_BUILDERS: tuple[ChildBuilder, ...] = (Gateway.from_discovery,)
 
 
-class SigenergyCloudControl(Device):
+class CloudControl(Device):
     """Expose cloud controls through normal MQTT sensors."""
 
     def __init__(self, plant_index: int, port: CloudControlPort, discovery: CloudDiscovery) -> None:
         plant_suffix = "" if plant_index == 0 else str(plant_index + 1)
         super().__init__(
-            name="Sigenergy Cloud",
-            plant_index=plant_index,
+            "Sigenergy Cloud",
+            plant_index,
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_cloud_{port.station_id}",
             manufacturer="Sigenergy",
             model=port.model,

@@ -5,7 +5,6 @@ from typing import Any
 from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices.base.device import Device
-from sigenergy2mqtt.devices.cloud.discovery import CloudDiscovery
 from sigenergy2mqtt.sensors.cloud.read_only import (
     GatewayCommunicationStatus,
     GatewayFirmwareVersion,
@@ -16,20 +15,22 @@ from sigenergy2mqtt.sensors.cloud.read_only import (
     grid_sensor_details,
 )
 
+from .discovery import CloudDiscovery
 
-class SigenergyGateway(Device):
+
+class Gateway(Device):
     """Gateway child device populated from its discovery response."""
 
     @classmethod
-    def from_discovery(cls, plant_index: int, station_id: str, discovery: CloudDiscovery) -> "SigenergyGateway | None":
+    def from_discovery(cls, plant_index: int, station_id: str, discovery: CloudDiscovery) -> "Gateway | None":
         if not discovery.gateway_info:
             return None
         info = discovery.gateway_info
         raw_grid_side_info = info.get("gridSideInfoList")
         grid_side_info = [entry for entry in raw_grid_side_info if isinstance(entry, dict)] if isinstance(raw_grid_side_info, list) else []
         return cls(
-            plant_index=plant_index,
-            station_id=station_id,
+            plant_index,
+            station_id,
             model=str(info.get("deviceModel") or "Sigenergy Gateway"),
             sn=str(info.get("snCode") or info.get("showSnCode") or ""),
             sw=str(info.get("softVersion") or ""),

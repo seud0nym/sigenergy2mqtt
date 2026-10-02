@@ -7,7 +7,10 @@ from typing import Any
 
 from aiohttp import ClientError
 
-from sigenergy2mqtt.cloud.exceptions import CloudControlError, CloudControlUnavailableError
+from sigenergy2mqtt.cloud.exceptions import (
+    CloudControlError,
+    CloudControlUnavailableError,
+)
 from sigenergy2mqtt.cloud.port import CloudControlPort
 
 logger = logging.getLogger(__name__)
