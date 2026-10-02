@@ -90,6 +90,8 @@ def mysigen_adapter() -> MySigenCloudAdapter:
             }
         ),
         gateway_info=AsyncMock(return_value={"snCode": "GATEWAY"}),
+        device_dynamic_info=AsyncMock(return_value={"realTimeInfo": []}),
+        device_static_info=AsyncMock(return_value={"paramInfoVOList": []}),
         iter_topology_nodes=SigenergyCloudClient.iter_topology_nodes,
         topology_node_is_offline=SigenergyCloudClient.topology_node_is_offline,
         available_operational_modes=AsyncMock(return_value={"defaultWorkingModes": [], "energyProfileItems": []}),
@@ -233,6 +235,16 @@ async def test_gateway_info_delegates_to_cloud_client(
 ) -> None:
     assert await mysigen_adapter.gateway_info() == {"snCode": "GATEWAY"}
     mysigen_adapter._client.gateway_info.assert_awaited_once_with()  # type: ignore[reportPrivateUsage]
+
+
+@pytest.mark.asyncio
+async def test_device_info_delegates_device_identity_to_cloud_client(
+    mysigen_adapter: MySigenCloudAdapter,
+) -> None:
+    assert await mysigen_adapter.device_dynamic_info(3, "INV") == {"realTimeInfo": []}
+    assert await mysigen_adapter.device_static_info(4, "BAT") == {"paramInfoVOList": []}
+    mysigen_adapter._client.device_dynamic_info.assert_awaited_once_with(3, "INV")  # type: ignore[reportPrivateUsage]
+    mysigen_adapter._client.device_static_info.assert_awaited_once_with(4, "BAT")  # type: ignore[reportPrivateUsage]
 
 
 @pytest.mark.asyncio

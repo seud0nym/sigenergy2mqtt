@@ -85,6 +85,7 @@ MODBUS_TEST_SERVER_USE_SIMPLIFIED_TOPICS
 """
 
 import asyncio
+import copy
 import json
 import logging
 import os
@@ -186,6 +187,16 @@ SYNTHESIZED_INVERTER_VALUES = {
 
 class CloudApiTestServer:
     """Stateful facsimile of the cloud endpoints used by MySigenCloudAdapter."""
+
+    @staticmethod
+    def _device_parameters(sn: str, model: str, rating: str, unit: str) -> list[dict[str, str]]:
+        rating_name = "Rated Power" if unit == "kW" else "Rated Battery Capacity"
+        return [
+            {"paramKey": "Device SN", "paramValue": sn, "paramValueText": sn, "paramValueUnit": ""},
+            {"paramKey": "Software Version", "paramValue": FIRMWARE_VERSION, "paramValueText": FIRMWARE_VERSION, "paramValueUnit": ""},
+            {"paramKey": "Device Model", "paramValue": model, "paramValueText": model, "paramValueUnit": ""},
+            {"paramKey": rating_name, "paramValue": f"{rating} {unit}", "paramValueText": rating, "paramValueUnit": unit},
+        ]
 
     def __init__(self, username: str | None, password: str | None) -> None:
         self.internet_available = True
@@ -477,6 +488,22 @@ class CloudApiTestServer:
             "extraInverterInfoList": [],
             "inverterRealTimeInfoVOList": [],
         }
+        inverter_dynamic = [
+            ("Active Power", "-6.6", "kW"), ("Reactive Power", "0.003", "kVar"),
+            ("Phase A Voltage", "225.63", "V"), ("Phase B Voltage", "226.14", "V"),
+            ("Phase C Voltage", "224.97", "V"), ("Phase A Current", "29.58", "A"),
+            ("Phase B Current", "29.31", "A"), ("Phase C Current", "29.76", "A"),
+            ("Grid Frequency", "50.0", "Hz"), ("PV Power", "0.53", "kW"),
+            ("Internal Temperature", "55.8", "℃"),
+        ]
+        self.device_dynamic_info = {
+            3: {"realTimeInfo": [{"paramKey": key, "paramValue": f"{value} {unit}", "paramValueText": value, "paramValueUnit": unit} for key, value, unit in inverter_dynamic], "dataCurrTimeStamp": ""},
+            4: {"realTimeInfo": [{"paramKey": key, "paramValue": f"{value}{unit}" if unit == "%" else f"{value} {unit}", "paramValueText": value, "paramValueUnit": unit} for key, value, unit in (("Battery SOC", "72.3", "%"), ("Charging & Discharging Power", "2.236", "kW"), ("Battery Pack Voltage", "30.6", "V"), ("Heating status", "Off", ""))], "dataCurrTimeStamp": ""},
+        }
+        self.device_static_info = {
+            3: {"stationStatus": 1, "softwareVersion": FIRMWARE_VERSION, "runStatus": 1, "findCheck": None, "paramInfoVOList": self._device_parameters(HYBRID_INVERTER_SERIAL[3:], "SigenStor EC 6.0 TP", "6.0", "kW")},
+            4: {"stationStatus": 1, "softwareVersion": FIRMWARE_VERSION, "runStatus": 1, "findCheck": None, "paramInfoVOList": self._device_parameters("987B65BC1238", "SigenStor BAT 8.0", "8.06", "kWh")},
+        }
 
         self.grid_export_limit = {
             "enable": True,
@@ -626,6 +653,23 @@ class CloudApiTestServer:
             return response
         return self._success(self.gateway_info)
 
+    async def get_device_info(self, request: web.Request) -> web.Response:
+        if (response := await self.authorized(request)) is not None:
+            return response
+        try:
+            device_type = int(request.query["deviceType"])
+            data = self.device_static_info if request.match_info["kind"] == "static" else self.device_dynamic_info
+            payload = dict(data[device_type])
+            if device_type == 4:
+                # Each battery response identifies the serial requested by the client.
+                payload = copy.deepcopy(payload)
+                for entry in payload.get("paramInfoVOList", []):
+                    if entry["paramKey"] == "Device SN":
+                        entry["paramValue"] = entry["paramValueText"] = request.query.get("snCode", "")
+            return self._success(payload)
+        except (KeyError, ValueError):
+            return web.json_response({"code": 400, "msg": "Invalid device"}, status=400)
+
     async def available_modes(self, request: web.Request) -> web.Response:
         if (response := await self.authorized(request)) is not None:
             return response
@@ -748,6 +792,7 @@ class CloudApiTestServer:
             web.get("/device/owner/station/home", self.station_home),
             web.get("/device/devicetreepanel/topology", self.get_device_topology),
             web.get("/device/gateway/{station_id}", self.get_gateway_info),
+            web.get("/device/sigen/device/{kind}/info", self.get_device_info),
             web.get(
                 "/device/energy-profile/mode/all/{station_id}",
                 self.available_modes,

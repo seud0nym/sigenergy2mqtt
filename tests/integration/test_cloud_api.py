@@ -72,9 +72,9 @@ async def test_mysigen_cloud_adapter_against_test_server(
             assert await adapter.device_list() == [
                 {"systemId": "10000000000001", "serialNumber": "CMU123A45BP678", "deviceType": "Aio", "status": "Normal", "pn": "", "firmwareVersion": "", "attrMap": {}},
                 {"systemId": "10000000000001", "serialNumber": "123A45BP678", "deviceType": "Inverter", "status": "Normal", "pn": "1104002600", "firmwareVersion": "", "attrMap": {"ratedActivePower": 12.0}},
-                {"systemId": "10000000000001", "serialNumber": "987B65BC1238", "deviceType": "Battery", "status": "Normal", "pn": "", "firmwareVersion": "", "attrMap": {}},
-                {"systemId": "10000000000001", "serialNumber": "987B65BC1237", "deviceType": "Battery", "status": "Normal", "pn": "", "firmwareVersion": "", "attrMap": {}},
-                {"systemId": "10000000000001", "serialNumber": "987B65BC1236", "deviceType": "Battery", "status": "Normal", "pn": "", "firmwareVersion": "", "attrMap": {}},
+                {"systemId": "10000000000001", "serialNumber": "987B65BC1238", "deviceType": "Battery", "status": "Normal", "pn": "", "firmwareVersion": "", "attrMap": {"batPosition": 1}},
+                {"systemId": "10000000000001", "serialNumber": "987B65BC1237", "deviceType": "Battery", "status": "Normal", "pn": "", "firmwareVersion": "", "attrMap": {"batPosition": 2}},
+                {"systemId": "10000000000001", "serialNumber": "987B65BC1236", "deviceType": "Battery", "status": "Normal", "pn": "", "firmwareVersion": "", "attrMap": {"batPosition": 3}},
                 {"systemId": "10000000000001", "serialNumber": "DC-CHARGER-1", "deviceType": "DcCharger", "status": "Normal", "pn": "Sigen EV DC Charging Module", "firmwareVersion": "", "attrMap": {}},
                 {"systemId": "10000000000001", "serialNumber": "110G12BR00001", "deviceType": "Gateway", "status": "Normal", "pn": "", "firmwareVersion": "", "attrMap": {}},
                 {"systemId": "10000000000001", "serialNumber": "CMU876A54BP321", "deviceType": "Aio", "status": "Normal", "pn": "", "firmwareVersion": "", "attrMap": {}},
@@ -98,6 +98,10 @@ async def test_mysigen_cloud_adapter_against_test_server(
                 },
             ]
             gateway = await adapter.gateway_info()
+            inverter_dynamic = await adapter.device_dynamic_info(3, "123A45BP678")
+            assert any(item["paramKey"] == "Phase C Voltage" for item in inverter_dynamic["realTimeInfo"])
+            battery_static = await adapter.device_static_info(4, "987B65BC1237")
+            assert battery_static["paramInfoVOList"][0]["paramValueText"] == "987B65BC1237"
             assert gateway["snCode"] == CLOUD_TEST_GATEWAY_SERIAL
             assert {item["paramKey"] for item in gateway["gridSideInfoList"]} >= {
                 "Phase A Voltage",
