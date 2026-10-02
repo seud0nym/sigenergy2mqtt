@@ -109,6 +109,7 @@ def test_cloud_control_adds_each_inverter_and_battery_as_child() -> None:
     assert control.children[0]["name"] == "Inverter INV-1"
     assert control.children[0]["sn"] == "INV-1"
     assert control.children[1]["name"] == "Battery 2"
+    assert control.children[1].unique_id == "sigen_0_cloud_station-123_battery_BAT-1"
     static_sensor = list(control.children[0].sensors.values())[1]
     assert static_sensor[DiscoveryKeys.ENTITY_CATEGORY] == "diagnostic"
     assert static_sensor.scan_interval == ScanIntervalDefault.LOW

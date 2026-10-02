@@ -28,15 +28,14 @@ class SigenCloudDevice(Device):
         sn = str(device["serialNumber"])
         position = device.get("attrMap", {}).get("batPosition")
         kind = "inverter" if self.device_type == 3 else "battery"
-        battery_identity = position if position is not None else sn
+        battery_name = position if position is not None else sn
         name = (
-            "Inverter {sn}" if self.device_type == 3 else f"Battery {battery_identity}"
+            "Inverter {sn}" if self.device_type == 3 else f"Battery {battery_name}"
         )
-        identity = sn if self.device_type == 3 else battery_identity
         super().__init__(
             name,
             plant_index,
-            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_cloud_{station_id}_{kind}_{identity}",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_cloud_{station_id}_{kind}_{sn}",
             manufacturer="Sigenergy",
             model=kind.title(),
             protocol_version=ProtocolVersion.N_A,
