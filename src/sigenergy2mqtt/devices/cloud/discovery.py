@@ -78,14 +78,20 @@ async def discover_cloud(cloud_port: CloudControlPort) -> CloudDiscovery | None:
         sn_code = device.get("serialNumber")
         if device_type is None or not isinstance(sn_code, str) or not sn_code:
             continue
-        try:
-            dynamic, static = await asyncio.gather(
-                cloud_port.device_dynamic_info(device_type, sn_code),
-                cloud_port.device_static_info(device_type, sn_code),
-            )
-            device_info[sn_code] = (dynamic, static)
-        except (ClientError, CloudControlError) as exc:
-            logger.warning("Cloud device discovery failed for %s: %s", sn_code, exc)
+        valid_device_type: int = device_type
+        valid_sn_code: str = sn_code
+
+        async def read_info(static: bool) -> dict[str, Any]:
+            try:
+                method = cloud_port.device_static_info if static else cloud_port.device_dynamic_info
+                return await method(valid_device_type, valid_sn_code)
+            except (ClientError, CloudControlError) as exc:
+                kind = "static" if static else "dynamic"
+                logger.warning("Cloud %s device discovery failed for %s: %s", kind, valid_sn_code, exc)
+                return {}
+
+        dynamic, static = await asyncio.gather(read_info(False), read_info(True))
+        device_info[valid_sn_code] = (dynamic, static)
     return CloudDiscovery(device_list=device_list, gateway_info=gateway_info, device_info=device_info)
 
 

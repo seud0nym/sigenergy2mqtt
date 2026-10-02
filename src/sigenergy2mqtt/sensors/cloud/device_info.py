@@ -1,9 +1,15 @@
 """Sensors backed by the per-device cloud information endpoints."""
 
+import math
 from typing import Any
 
 from sigenergy2mqtt.cloud.port import CloudControlPort
-from sigenergy2mqtt.common import DeviceClass, ProtocolVersion, StateClass
+from sigenergy2mqtt.common import (
+    DeviceClass,
+    ProtocolVersion,
+    ScanIntervalDefault,
+    StateClass,
+)
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.sensors.base import CloudSensor, DiscoveryKeys
 from sigenergy2mqtt.sensors.cloud.functions import _identity
@@ -32,16 +38,24 @@ class DeviceInfoSnapshot:
     def __init__(self, device_type: int, sn_code: str, static: bool) -> None:
         self.device_type, self.sn_code, self.static = device_type, sn_code, static
         self._payload: dict[str, Any] | None = None
+        self._error: Exception | None = None
 
     def begin_refresh(self) -> None:
         self._payload = None
+        self._error = None
 
     async def read(self, port: CloudControlPort) -> dict[str, Any]:
+        if self._error is not None:
+            raise self._error
         if self._payload is None:
             method = (
                 port.device_static_info if self.static else port.device_dynamic_info
             )
-            self._payload = await method(self.device_type, self.sn_code)
+            try:
+                self._payload = await method(self.device_type, self.sn_code)
+            except Exception as exc:
+                self._error = exc
+                raise
         return self._payload
 
 
@@ -65,7 +79,9 @@ class DeviceInfoSensor(CloudSensor):
             name=param_key,
             object_id=object_id,
             unique_id=unique_id,
-            scan_interval=active_config.cloud.scan_interval,
+            scan_interval=ScanIntervalDefault.LOW
+            if static
+            else active_config.cloud.scan_interval,
             unit=normalized_unit,
             device_class=device_class,
             state_class=StateClass.MEASUREMENT if unit else None,
@@ -93,8 +109,9 @@ class DeviceInfoSensor(CloudSensor):
                     if not isinstance(value, (int, float, str)):
                         return None
                     try:
-                        return float(value)
+                        number = float(value)
                     except (TypeError, ValueError):
                         return None
+                    return number if math.isfinite(number) else None
                 return str(value) if value is not None else None
         return None

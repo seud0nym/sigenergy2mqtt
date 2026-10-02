@@ -9,6 +9,7 @@ from sigenergy2mqtt.sensors.cloud.device_info import (
     DeviceInfoSensor,
     DeviceInfoSnapshot,
 )
+from sigenergy2mqtt.sensors.cloud.read_only import gateway_sensor_suffix
 
 from .discovery import CloudDiscovery
 
@@ -27,8 +28,11 @@ class SigenCloudDevice(Device):
         sn = str(device["serialNumber"])
         position = device.get("attrMap", {}).get("batPosition")
         kind = "inverter" if self.device_type == 3 else "battery"
-        name = "Inverter {sn}" if self.device_type == 3 else f"Battery {position}"
-        identity = sn if self.device_type == 3 else position
+        battery_identity = position if position is not None else sn
+        name = (
+            "Inverter {sn}" if self.device_type == 3 else f"Battery {battery_identity}"
+        )
+        identity = sn if self.device_type == 3 else battery_identity
         super().__init__(
             name,
             plant_index,
@@ -44,12 +48,17 @@ class SigenCloudDevice(Device):
             (True, static, "paramInfoVOList"),
         ):
             snapshot = DeviceInfoSnapshot(self.device_type, sn, is_static)
-            seen: set[str] = set()
+            seen_suffixes: set[str] = set()
             entries = payload.get(key, [])
             for entry in entries if isinstance(entries, list) else []:
                 param_key = entry.get("paramKey") if isinstance(entry, dict) else None
-                if isinstance(param_key, str) and param_key and param_key not in seen:
-                    seen.add(param_key)
+                suffix = (
+                    gateway_sensor_suffix(param_key)
+                    if isinstance(param_key, str)
+                    else ""
+                )
+                if param_key and suffix and suffix not in seen_suffixes:
+                    seen_suffixes.add(suffix)
                     self._add_sensor(
                         DeviceInfoSensor(
                             plant_index,
