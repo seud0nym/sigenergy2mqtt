@@ -22,6 +22,7 @@ from sigenergy2mqtt.sensors.cloud.read_write import (
 
 from .discovery import CloudDiscovery
 from .gateway import Gateway
+from .sigen_device import build_sigen_devices
 
 logger = logging.getLogger(__name__)
 
@@ -73,3 +74,5 @@ class CloudControl(Device):
         for build_child in _CHILD_BUILDERS:
             if (child := build_child(plant_index, station_id, discovery)) is not None:
                 self._add_child_device(child)
+        for child in build_sigen_devices(plant_index, station_id, discovery):
+            self._add_child_device(child)

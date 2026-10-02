@@ -355,6 +355,21 @@ class SigenergyCloudClient:
         """
         return await self._station_data("GET", "device/gateway/{station_id}")
 
+    async def device_dynamic_info(self, device_type: int, sn_code: str) -> dict[str, Any]:
+        """Return live information for one topology device."""
+        data = await self._data("GET", "device/sigen/device/dynamic/info", params={
+            "stationId": self._station_id(), "deviceType": device_type,
+            "snCode": sn_code, "refreshFlag": "",
+        })
+        return data if isinstance(data, dict) else {"raw": data}
+
+    async def device_static_info(self, device_type: int, sn_code: str) -> dict[str, Any]:
+        """Return identification and rated information for one topology device."""
+        data = await self._data("GET", "device/sigen/device/static/info", params={
+            "stationId": self._station_id(), "deviceType": device_type, "snCode": sn_code,
+        })
+        return data if isinstance(data, dict) else {"raw": data}
+
     async def grid_connection_point_devices(self) -> list[dict[str, Any]]:
         """Return devices attached to the grid connection point (gateway)."""
         data = await self._station_data(

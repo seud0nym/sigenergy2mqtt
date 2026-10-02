@@ -177,6 +177,8 @@ class MySigenCloudAdapter:
             offline = self._client.topology_node_is_offline(node)
             status = "Offline" if offline else "Normal" if offline is False else "Fault"
             attributes: dict[str, Any] = {}
+            if device_type == "Battery" and node.get("batPosition") is not None:
+                attributes["batPosition"] = node["batPosition"]
             if device_type == "Inverter" and node.get("ratedActivePower") is not None:
                 attributes["ratedActivePower"] = node["ratedActivePower"]
 
@@ -194,6 +196,12 @@ class MySigenCloudAdapter:
     async def gateway_info(self) -> dict[str, Any]:
         """Return details and live grid-side values for the station gateway."""
         return await self._cloud_operation(self._client.gateway_info)
+
+    async def device_dynamic_info(self, device_type: int, sn_code: str) -> dict[str, Any]:
+        return await self._cloud_operation(lambda: self._client.device_dynamic_info(device_type, sn_code))
+
+    async def device_static_info(self, device_type: int, sn_code: str) -> dict[str, Any]:
+        return await self._cloud_operation(lambda: self._client.device_static_info(device_type, sn_code))
 
     async def set_instant_override(self, command: InstantOverrideCommand) -> None:
         unsupported = []

@@ -26,6 +26,7 @@ class CloudDiscovery:
     device_list: list[dict[str, Any]]
     gateway_info: dict[str, Any] | None = None
     operational_modes: dict[str, object] | None = None
+    device_info: dict[str, tuple[dict[str, Any], dict[str, Any]]] | None = None
 
     @property
     def has_battery(self) -> bool:
@@ -70,7 +71,28 @@ async def discover_cloud(cloud_port: CloudControlPort) -> CloudDiscovery | None:
     gateway_info = await _discover_cloud_gateway_info(cloud_port)
     if (device_list := await _discover_cloud_device_list(cloud_port)) is None:
         return None
-    return CloudDiscovery(device_list=device_list, gateway_info=gateway_info)
+    device_info: dict[str, tuple[dict[str, Any], dict[str, Any]]] = {}
+    for device in device_list:
+        device_name = device.get("deviceType")
+        device_type = {"Inverter": 3, "Battery": 4}.get(device_name) if isinstance(device_name, str) else None
+        sn_code = device.get("serialNumber")
+        if device_type is None or not isinstance(sn_code, str) or not sn_code:
+            continue
+        valid_device_type: int = device_type
+        valid_sn_code: str = sn_code
+
+        async def read_info(static: bool) -> dict[str, Any]:
+            try:
+                method = cloud_port.device_static_info if static else cloud_port.device_dynamic_info
+                return await method(valid_device_type, valid_sn_code)
+            except (ClientError, CloudControlError) as exc:
+                kind = "static" if static else "dynamic"
+                logger.warning("Cloud %s device discovery failed for %s: %s", kind, valid_sn_code, exc)
+                return {}
+
+        dynamic, static = await asyncio.gather(read_info(False), read_info(True))
+        device_info[valid_sn_code] = (dynamic, static)
+    return CloudDiscovery(device_list=device_list, gateway_info=gateway_info, device_info=device_info)
 
 
 async def discover_operational_modes(cloud_port: CloudControlPort, discovery: CloudDiscovery) -> CloudDiscovery:
