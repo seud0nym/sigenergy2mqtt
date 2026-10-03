@@ -16,7 +16,6 @@ from sigenergy2mqtt.sensors.cloud.functions import _identity
 
 from .read_only import gateway_sensor_suffix
 
-
 _UNIT_CLASSES = {
     "A": DeviceClass.CURRENT,
     "V": DeviceClass.VOLTAGE,
