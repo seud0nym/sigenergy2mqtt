@@ -29,9 +29,24 @@ class SigenCloudDevice(Device):
         position = device.get("attrMap", {}).get("batPosition")
         kind = "inverter" if self.device_type == 3 else "battery"
         battery_name = position if position is not None else sn
-        name = (
-            "Inverter {sn}" if self.device_type == 3 else f"Battery {battery_name}"
+        default_model = (
+            "SigenStor Inverter"
+            if self.device_type == 3
+            else "SigenStor Battery"
         )
+        static_entries = static.get("paramInfoVOList", [])
+        if not isinstance(static_entries, list):
+            static_entries = []
+        device_model = next(
+            (
+                entry.get("paramValue")
+                for entry in static_entries
+                if isinstance(entry, dict) and entry.get("paramKey") == "Device Model"
+            ),
+            None,
+        )
+        model_name = str(device_model) if device_model else default_model
+        name = f"{model_name} {sn if self.device_type == 3 else battery_name}"
         super().__init__(
             name,
             plant_index,

@@ -93,6 +93,7 @@ def test_cloud_control_adds_each_inverter_and_battery_as_child() -> None:
         "paramInfoVOList": [
             {
                 "paramKey": "Device Model",
+                "paramValue": "SigenStor EC 10.0 TP",
                 "paramValueText": "model",
                 "paramValueUnit": "",
             }
@@ -106,13 +107,40 @@ def test_cloud_control_adds_each_inverter_and_battery_as_child() -> None:
     control = CloudControl(0, FakeCloudControlPort(), discovery)
 
     assert [type(child) for child in control.children] == [CloudInverter, CloudBattery]
-    assert control.children[0]["name"] == "Inverter INV-1"
+    assert control.children[0]["name"] == "SigenStor EC 10.0 TP INV-1"
     assert control.children[0]["sn"] == "INV-1"
-    assert control.children[1]["name"] == "Battery 2"
+    assert control.children[1]["name"] == "SigenStor EC 10.0 TP 2"
     assert control.children[1].unique_id == "sigen_0_cloud_station-123_battery_BAT-1"
     static_sensor = list(control.children[0].sensors.values())[1]
     assert static_sensor[DiscoveryKeys.ENTITY_CATEGORY] == "diagnostic"
     assert static_sensor.scan_interval == ScanIntervalDefault.LOW
+
+
+def test_cloud_device_names_fall_back_when_device_model_is_missing() -> None:
+    devices = [
+        {"deviceType": "Inverter", "serialNumber": "INV-1", "attrMap": {}},
+        {
+            "deviceType": "Battery",
+            "serialNumber": "BAT-1",
+            "attrMap": {"batPosition": 2},
+        },
+    ]
+    dynamic = {
+        "realTimeInfo": [
+            {"paramKey": "Battery SOC", "paramValueText": "50", "paramValueUnit": "%"}
+        ]
+    }
+    discovery = CloudDiscovery(
+        device_list=devices,
+        device_info={"INV-1": (dynamic, {}), "BAT-1": (dynamic, {})},
+    )
+
+    control = CloudControl(0, FakeCloudControlPort(), discovery)
+
+    assert [child["name"] for child in control.children] == [
+        "SigenStor Inverter INV-1",
+        "SigenStor Battery 2",
+    ]
 
 
 def test_batteries_without_positions_use_serials_for_distinct_identities() -> None:
@@ -142,8 +170,8 @@ def test_batteries_without_positions_use_serials_for_distinct_identities() -> No
     control = CloudControl(0, FakeCloudControlPort(), discovery)
 
     assert [child["name"] for child in control.children] == [
-        "Battery BAT-1",
-        "Battery BAT-2",
+        "SigenStor Battery BAT-1",
+        "SigenStor Battery BAT-2",
     ]
     assert [child.unique_id for child in control.children] == [
         "sigen_0_cloud_station-123_battery_BAT-1",
