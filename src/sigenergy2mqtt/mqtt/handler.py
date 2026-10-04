@@ -240,7 +240,7 @@ class MqttHandler:
         """
         value = str(payload).strip()
         if not value:
-            logger.info(f"IGNORED empty payload from topic {topic} (client_id={self.client_id})")
+            logger.debug(f"IGNORED empty payload from topic {topic} (client_id={self.client_id})")
             return
 
         with self._state_lock:
