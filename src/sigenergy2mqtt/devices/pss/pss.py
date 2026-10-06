@@ -47,6 +47,7 @@ class PSS(ModbusDevice):
         model_id, serial = await asyncio.gather(
             model.get_state(modbus_client=modbus_client),
             serial_number.get_state(modbus_client=modbus_client),
+            return_exceptions=False,
         )
 
         pss = cls(plant_index, device_address, protocol_version, cast(str, model_id), cast(str, serial))

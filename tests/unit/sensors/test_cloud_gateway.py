@@ -117,10 +117,10 @@ def test_cloud_control_adds_each_inverter_and_battery_as_child() -> None:
     assert control.children[0]["name"] == "SigenStor EC 10.0 TP INV-1"
     assert control.children[0]["sn"] == "INV-1"
     assert control.children[1]["name"] == "SigenStor EC 10.0 TP 2"
-    assert control.children[1].unique_id == "sigen_0_cloud_station-123_battery_BAT-1"
+    assert control.children[1].unique_id == "sigen_0_station-123_battery_BAT-1"
     static_sensor = list(control.children[0].sensors.values())[1]
     assert static_sensor[DiscoveryKeys.ENTITY_CATEGORY] == "diagnostic"
-    assert static_sensor.scan_interval == ScanIntervalDefault.LOW
+    assert static_sensor.scan_interval == ScanIntervalDefault.LOW  # type: ignore[attr-defined]
 
 
 def test_cloud_device_names_fall_back_when_device_model_is_missing() -> None:
@@ -174,8 +174,8 @@ def test_batteries_without_positions_use_serials_for_distinct_identities() -> No
         "SigenStor Battery BAT-2",
     ]
     assert [child.unique_id for child in control.children] == [
-        "sigen_0_cloud_station-123_battery_BAT-1",
-        "sigen_0_cloud_station-123_battery_BAT-2",
+        "sigen_0_station-123_battery_BAT-1",
+        "sigen_0_station-123_battery_BAT-2",
     ]
 
 

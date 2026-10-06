@@ -99,7 +99,7 @@ async def discover_cloud(cloud_port: CloudControlPort) -> CloudDiscovery | None:
                 logger.warning("Cloud %s device discovery failed for %s: %s", kind, sn, exc)
                 return {}
 
-        dynamic, static = await asyncio.gather(read_info(False), read_info(True))
+        dynamic, static = await asyncio.gather(read_info(False), read_info(True), return_exceptions=False)
         device_info[valid_sn_code] = (dynamic, static)
     return CloudDiscovery(device_list=device_list, gateway_info=gateway_info, device_info=device_info)
 

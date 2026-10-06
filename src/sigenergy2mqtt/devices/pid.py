@@ -46,6 +46,7 @@ class PID(ModbusDevice):
             firmware_version.get_state(modbus_client=modbus_client),
             model.get_state(modbus_client=modbus_client),
             serial_number.get_state(modbus_client=modbus_client),
+            return_exceptions=False,
         )
 
         pid = cls(plant_index, device_address, protocol_version, cast(str, model_id), cast(str, serial), cast(str, firmware))

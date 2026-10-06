@@ -48,6 +48,8 @@ class FakeCloudControlPort:
         self.command = None
         self.clear_instant_override = AsyncMock(side_effect=self._clear)
         self.device_list = AsyncMock()
+        self.device_dynamic_info = AsyncMock()
+        self.device_static_info = AsyncMock()
         self.available_operational_modes = AsyncMock()
         self.get_operational_mode = AsyncMock()
         self.set_operational_mode = AsyncMock()

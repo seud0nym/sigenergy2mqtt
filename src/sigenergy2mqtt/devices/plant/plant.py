@@ -64,6 +64,7 @@ class PowerPlant(ModbusDevice):
         rcp_value, rdp_value = await asyncio.gather(
             rated_charging_power.get_state(modbus_client=modbus_client),
             rated_discharging_power.get_state(modbus_client=modbus_client),
+            return_exceptions=False,
         )
 
         # Child devices MUST be registered before sensors because there is a dependency when ConsumptionMethod == CALCULATED

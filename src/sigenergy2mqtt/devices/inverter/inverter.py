@@ -66,6 +66,7 @@ class Inverter(ModbusDevice):
             model.get_state(modbus_client=modbus_client),
             pv_string_count.get_state(modbus_client=modbus_client),
             serial_number.get_state(modbus_client=modbus_client),
+            return_exceptions=False,
         )
 
         if isinstance(device_type, HybridInverter):
