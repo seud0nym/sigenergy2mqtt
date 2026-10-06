@@ -38,7 +38,7 @@ class CloudControl(Device):
         super().__init__(
             "Sigenergy Cloud",
             plant_index,
-            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_cloud_{port.station_id}",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_{port.station_id}",
             manufacturer="Sigenergy",
             model=port.model,
             protocol_version=ProtocolVersion.N_A,

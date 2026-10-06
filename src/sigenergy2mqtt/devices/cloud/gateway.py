@@ -42,7 +42,7 @@ class Gateway(Device):
         super().__init__(
             name=model,
             plant_index=plant_index,
-            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_cloud_{station_id}_gateway",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_{station_id}_gateway",
             manufacturer="Sigenergy",
             model="Gateway",
             model_id=model,

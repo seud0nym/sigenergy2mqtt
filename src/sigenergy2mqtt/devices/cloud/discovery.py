@@ -73,7 +73,7 @@ async def discover_cloud(cloud_port: CloudControlPort) -> CloudDiscovery | None:
     if (device_list := await _discover_cloud_device_list(cloud_port)) is None:
         return None
     if not active_config.cloud.discover_inverters:
-        logger.info("Cloud inverter discovery disabled; inverter child devices will be excluded from setup, but the full device list is retained for plant matching.")
+        logger.info("Cloud inverter discovery disabled by configuration; discovered inverters will be ignored")
     device_info: dict[str, tuple[dict[str, Any], dict[str, Any]]] = {}
     for device in device_list:
         device_name = device.get("deviceType")

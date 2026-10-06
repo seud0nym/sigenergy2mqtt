@@ -47,9 +47,7 @@ class DeviceInfoSnapshot:
         if self._error is not None:
             raise self._error
         if self._payload is None:
-            method = (
-                port.device_static_info if self.static else port.device_dynamic_info
-            )
+            method = port.device_static_info if self.static else port.device_dynamic_info
             try:
                 self._payload = await method(self.device_type, self.sn_code)
             except Exception as exc:
@@ -70,7 +68,7 @@ class DeviceInfoSensor(CloudSensor):
         *,
         static: bool,
     ) -> None:
-        suffix = f"{snapshot.device_type}_{sn_code}_{'static' if static else 'dynamic'}_{gateway_sensor_suffix(param_key)}"
+        suffix = f"{snapshot.device_type}_{sn_code}_{gateway_sensor_suffix(param_key)}"
         object_id, unique_id = _identity(plant_index, station_id, suffix)
         normalized_unit = _NORMALIZED_UNITS.get(unit, unit) or None
         device_class = _UNIT_CLASSES.get(unit)
@@ -78,9 +76,7 @@ class DeviceInfoSensor(CloudSensor):
             name=param_key,
             object_id=object_id,
             unique_id=unique_id,
-            scan_interval=ScanIntervalDefault.LOW
-            if static
-            else active_config.cloud.scan_interval,
+            scan_interval=ScanIntervalDefault.LOW if static else active_config.cloud.scan_interval,
             unit=normalized_unit,
             device_class=device_class,
             state_class=StateClass.MEASUREMENT if unit else None,

@@ -42,7 +42,7 @@ class SigenCloudDevice(Device):
         super().__init__(
             name,
             plant_index,
-            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_cloud_{station_id}_{kind}_{sn}",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_{station_id}_{kind}_{sn}",
             manufacturer="Sigenergy",
             model=kind.title(),
             protocol_version=ProtocolVersion.N_A,
