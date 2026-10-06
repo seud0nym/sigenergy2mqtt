@@ -124,7 +124,7 @@ class MqttHandler:
             list[Callable[[Any, mqtt.Client, str, str, MqttHandler], Coroutine[Any, Any, bool]]],
         ] = {}
 
-        self._pending_tasks: set[concurrent.futures.Future] = set()
+        self._pending_tasks: set[concurrent.futures.Future[Any]] = set()
         # Set when close() is called; signals background threads to stop
         # scheduling new coroutines.
         self._closing = threading.Event()
@@ -250,17 +250,20 @@ class MqttHandler:
         with self._state_lock:
             handlers = list(self._topics.get(topic, []))
 
-        if not handlers:
-            logger.warning(f"No registered handler found for topic {topic} (client_id={self.client_id})")
-            return
-
         if not value:
+            if not handlers:
+                logger.debug(f"IGNORED empty payload from unregistered topic {topic} (client_id={self.client_id})")
+                return
             monitor_handlers = [method for method in handlers if _is_monitor_topic_update_handler(method)]
             if not monitor_handlers:
                 logger.debug(f"IGNORED empty payload from topic {topic} (client_id={self.client_id})")
                 return
             handlers = monitor_handlers
             logger.debug(f"Dispatching empty payload from topic {topic} to monitor handler(s) (client_id={self.client_id})")
+
+        if not handlers:
+            logger.warning(f"No registered handler found for topic {topic} (client_id={self.client_id})")
+            return
 
         for method in handlers:
             method_name = _get_method_name(method)
