@@ -77,6 +77,8 @@ async def discover_cloud(cloud_port: CloudControlPort) -> CloudDiscovery | None:
     device_info: dict[str, tuple[dict[str, Any], dict[str, Any]]] = {}
     for device in device_list:
         device_name = device.get("deviceType")
+        if not active_config.cloud.discover_inverters and device_name == "Inverter":
+            continue
         device_type = {"Inverter": 3, "Battery": 4}.get(device_name) if isinstance(device_name, str) else None
         sn_code = device.get("serialNumber")
         if device_type is None or not isinstance(sn_code, str) or not sn_code:
