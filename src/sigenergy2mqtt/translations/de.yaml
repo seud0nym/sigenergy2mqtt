@@ -322,8 +322,6 @@ class:
     attributes:
       source: BatteryPower < 0 × -1 #verify:ignore
     name: Batterieentladeleistung
-  BatteryExportLimitation:
-    name: Battery Export Limitation
   BatteryPower:
     attributes:
       comment: "ESS-Leistung: <0 = Entladen, >0 = Laden"
@@ -358,6 +356,12 @@ class:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
     name: Batterieleistung
+  CloudBattery:
+    name: '{model_name} {sn}'
+  CloudControl:
+    name: Sigenergy Cloud {plant_suffix}
+  CloudInverter:
+    name: '{model_name} {sn}'
   CloudLogLevel:
     attributes:
       comment: Die Protokollierungsstufe des sigenergy2mqtt-Cloud-Moduls
@@ -1365,6 +1369,8 @@ class:
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
+  OperationalMode:
+    name: Operational Mode
   OutputType:
     attributes:
       source: Modbus-Register {address}
@@ -2786,6 +2792,8 @@ class:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
     name: Abschaltzeit
+  SigenCloudDevice:
+    name: '{model_name} {sn}'
   SmartLoadPower:
     attributes:
       source: Modbus-Register {address}
@@ -2899,6 +2907,8 @@ class:
 cli:
   SIGENERGY2MQTT_CLOUD_ACCEPT_UNOFFICIAL_API_RISK:
     help: Explicitly allow the unpublished mySigen API (a delegated account is recommended).
+  SIGENERGY2MQTT_CLOUD_DISCOVER_INVERTERS:
+    help: Discover cloud inverter devices and expose their sensors. Disabled by default.
   SIGENERGY2MQTT_CLOUD_LOG_LEVEL:
     help: 'Cloud subsystem log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is INFO.'
   SIGENERGY2MQTT_CLOUD_PASSWORD:

@@ -322,8 +322,6 @@ class:
     attributes:
       source: BatteryPower < 0 × -1 #verify:ignore
     name: 배터리 방전 전력
-  BatteryExportLimitation:
-    name: Battery Export Limitation
   BatteryPower:
     attributes:
       comment: "ESS 전력: <0 = 방전, >0 = 충전"
@@ -358,6 +356,12 @@ class:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: 배터리 전력
+  CloudBattery:
+    name: '{model_name} {sn}'
+  CloudControl:
+    name: Sigenergy Cloud {plant_suffix}
+  CloudInverter:
+    name: '{model_name} {sn}'
   CloudLogLevel:
     attributes:
       comment: sigenergy2mqtt 클라우드 모듈의 로깅 수준
@@ -1365,6 +1369,8 @@ class:
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+  OperationalMode:
+    name: Operational Mode
   OutputType:
     attributes:
       source: Modbus 레지스터 {address}
@@ -2786,6 +2792,8 @@ class:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: 종료 시간
+  SigenCloudDevice:
+    name: '{model_name} {sn}'
   SmartLoadPower:
     attributes:
       source: Modbus 레지스터 {address}
@@ -2899,6 +2907,8 @@ class:
 cli:
   SIGENERGY2MQTT_CLOUD_ACCEPT_UNOFFICIAL_API_RISK:
     help: Explicitly allow the unpublished mySigen API (a delegated account is recommended).
+  SIGENERGY2MQTT_CLOUD_DISCOVER_INVERTERS:
+    help: Discover cloud inverter devices and expose their sensors. Disabled by default.
   SIGENERGY2MQTT_CLOUD_LOG_LEVEL:
     help: 'Cloud subsystem log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is INFO.'
   SIGENERGY2MQTT_CLOUD_PASSWORD:
