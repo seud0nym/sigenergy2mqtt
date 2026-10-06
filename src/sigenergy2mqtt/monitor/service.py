@@ -413,11 +413,14 @@ class MonitorService(Device):
             sensor = self._topics[source]
             if sensor.notified:
                 logger.info(f"{self.log_identity} '{sensor.name}' seen after {sensor.overdue}s (scan_interval={sensor.scan_interval}s {source=})")
-            state: float | str
-            try:
-                state = float(value)
-            except ValueError:
-                state = value
+            state: float | str | None
+            if value == "":
+                state = sensor.last_state
+            else:
+                try:
+                    state = float(value)
+                except ValueError:
+                    state = value
             async with self._lock:
                 sensor.last_seen = time.time()
                 sensor.last_state = state

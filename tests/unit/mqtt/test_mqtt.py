@@ -2,6 +2,8 @@ import asyncio
 import logging
 import ssl
 import time
+from collections.abc import Callable, Coroutine
+from typing import Any, cast
 from unittest.mock import AsyncMock, MagicMock, call, patch
 
 import paho.mqtt.client as mqtt
@@ -9,6 +11,7 @@ import pytest
 
 from sigenergy2mqtt.config import Config, _swap_active_config, active_config
 from sigenergy2mqtt.modbus import ModbusClient
+from sigenergy2mqtt.monitor.service import MonitorService
 from sigenergy2mqtt.mqtt import mqtt_setup
 from sigenergy2mqtt.mqtt.client import (
     MqttClient,
@@ -20,6 +23,7 @@ from sigenergy2mqtt.mqtt.client import (
     on_unsubscribe,
 )
 from sigenergy2mqtt.mqtt.handler import MqttHandler
+from sigenergy2mqtt.sensors.monitor import MonitoredSensor
 
 
 class TestMqttHandler:
@@ -118,20 +122,25 @@ class TestMqttHandler:
 
         loop.close()
 
-    def test_on_message_empty_payload(self):
-        """Test on_message with empty payload is ignored."""
+    def test_on_message_empty_payload_only_for_monitor_handler(self):
+        """Blank payloads update monitor health without erasing the last valid reading."""
         loop = asyncio.new_event_loop()
         modbus_client = MagicMock()
         handler = MqttHandler("test_client", modbus_client, loop)
-
         mock_client = MagicMock()
-        mock_handler_func = MagicMock()
-        handler._topics["test/topic"] = [mock_handler_func]
 
+        service = MonitorService([])
+        sensor = MonitoredSensor("dev", "sensor", "desc", 60, "C", last_seen=time.time() - 100, last_state=42.5)
+        service._topics["test/topic"] = sensor
+        handler._topics["test/topic"] = [service.on_topic_update]
+
+        old_seen = sensor.last_seen
         handler.on_message(mock_client, "test/topic", "")
+        loop.run_until_complete(asyncio.sleep(0))
 
-        # Handler should not be called for empty payload
-        mock_handler_func.assert_not_called()
+        assert sensor.last_seen > old_seen
+        assert sensor.last_state == 42.5
+        assert sensor.notified is False
 
         loop.close()
 
@@ -145,6 +154,21 @@ class TestMqttHandler:
 
         # Should not raise, just log warning
         handler.on_message(mock_client, "unknown/topic", "test_payload")
+
+        loop.close()
+
+    def test_on_message_empty_payload_unregistered_topic_is_ignored(self):
+        """Empty payloads on unregistered topics are silently ignored at debug level."""
+        loop = asyncio.new_event_loop()
+        modbus_client = MagicMock()
+        handler = MqttHandler("test_client", modbus_client, loop)
+
+        mock_client = MagicMock()
+        with patch("sigenergy2mqtt.mqtt.handler.logger.debug") as mock_debug, patch("sigenergy2mqtt.mqtt.handler.logger.warning") as mock_warning:
+            handler.on_message(mock_client, "unknown/topic", "")
+
+        mock_warning.assert_not_called()
+        mock_debug.assert_called_once()
 
         loop.close()
 
@@ -311,7 +335,7 @@ class TestMqttHandler:
         handler = MqttHandler("test_client", None, loop)
 
         # Create a future and add it to pending tasks
-        future = loop.create_future()
+        future = cast(Any, loop.create_future())
         handler._pending_tasks.add(future)
 
         # Call close in a separate task so we can resolve the future
@@ -372,10 +396,10 @@ class TestMqttHandler:
                 yield
                 return True
 
-        def mock_handler(*args):
+        def mock_handler(*args: Any) -> CustomAwaitable:
             return CustomAwaitable()
 
-        handler._topics["test/topic"] = [mock_handler]
+        handler._topics["test/topic"] = [cast(Callable[[Any, mqtt.Client, str, str, MqttHandler], Coroutine[Any, Any, bool]], mock_handler)]
 
         with patch("sigenergy2mqtt.mqtt.handler.asyncio.run_coroutine_threadsafe") as mock_run:
             handler.on_message(mock_client, "test/topic", "payload")
@@ -400,7 +424,7 @@ class TestMqttHandler:
                 yield
                 return True
 
-        def mock_handler(*args):
+        def mock_handler(*args: Any) -> CustomAwaitable:
             return CustomAwaitable()
 
         handler._pending_mids[123] = MagicMock(now=time.time(), handler=mock_handler)
@@ -816,8 +840,8 @@ class TestMqttSetup:
             loop.close()
 
         assert getattr(client, "loop_started", False) is True
-        assert client._user == "user"
-        assert client._pw == "pass"
+        assert getattr(client, "_user", None) == "user"
+        assert getattr(client, "_pw", None) == "pass"
 
     @pytest.mark.asyncio
     async def test_mqtt_setup_fails_after_retries(self, monkeypatch):
