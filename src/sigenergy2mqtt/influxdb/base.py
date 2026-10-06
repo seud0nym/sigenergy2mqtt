@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import time
-from datetime import datetime
 from typing import Any, TypedDict
 
 import requests
@@ -20,10 +19,6 @@ logger = logging.getLogger(__name__)
 # Suppress verbose urllib3 connection logs at module level rather than per-instance,
 # since the logger is a global singleton and mutating it in __init__ has side-effects.
 logging.getLogger("urllib3").setLevel(logging.INFO)
-
-
-class InfluxQueryException(Exception):
-    """Custom exception for InfluxDB query errors."""
 
 
 class InfluxConfigValues(TypedDict):
@@ -74,14 +69,13 @@ class _ShutdownAwareRetry(Retry):
 class InfluxBase(Device):
     """Base class for InfluxDB integration.
 
-    Provides HTTP connection management, line-protocol serialisation, batched
-    writes, and rate-limited querying for both InfluxDB v1 (InfluxQL) and v2
-    (Flux) APIs.  Subclasses are expected to call :meth:`async_init` before
-    issuing any write or query calls.
+    Provides HTTP connection management, line-protocol serialisation, and
+    batched writes. Subclasses are expected to call :meth:`async_init` before
+    issuing writes.
     """
 
     def __init__(self, name: str, plant_index: int, unique: str, manufacturer: str, model: str) -> None:
-        """Initialise shared state, HTTP session, and write/query buffers.
+        """Initialise shared state, HTTP session, and write buffers.
 
         No network I/O is performed here; call :meth:`async_init` to establish
         the InfluxDB connection asynchronously.
@@ -127,12 +121,6 @@ class InfluxBase(Device):
         self._batch_lock = asyncio.Lock()
         self._last_flush: float = time.time()
         self._flush_interval: float = active_config.influxdb.flush_interval
-
-        # Rate limiting for queries
-        self._rate_limit_semaphore = asyncio.Semaphore(10)  # Max 10 concurrent queries
-        self._query_interval: float = active_config.influxdb.query_interval
-        self._last_query_time: float = 0.0
-        self._query_lock = asyncio.Lock()
 
         # Writer selection is populated by _init_connection. Each writer owns
         # its endpoint-specific connection state.
@@ -418,199 +406,3 @@ class InfluxBase(Device):
             success = False
         service_health_registry.set_health(self.service_health_key, success)
         return success
-
-    # ------------------------------------------------------------------
-    # Queries
-    # ------------------------------------------------------------------
-
-    async def _rate_limited_query(self, query_func, operation_name: str, max_retries: int = 3, base_delay: float = 0.5) -> tuple[bool, Any]:
-        """Execute a query coroutine with rate limiting and exponential-backoff retries.
-
-        A semaphore caps concurrency at 10 simultaneous queries.  Within that
-        limit a per-query lock enforces the minimum interval between successive
-        requests defined by :attr:`_query_interval`.
-
-        Args:
-            query_func: Zero-argument async callable that performs the query and
-                returns ``(True, result)`` on success, or raises on failure.
-            operation_name: Short description used in log and metric labels.
-            max_retries: Maximum number of additional attempts after the first
-                failure.  A value of 3 means up to 4 total attempts.
-            base_delay: Initial retry delay in seconds; doubles on each attempt.
-
-        Returns:
-            ``(True, result)`` on success, or ``(False, None)`` after exhausting
-            retries or if the service goes offline.
-        """
-        async with self._rate_limit_semaphore:
-            # Apply rate limiting delay
-            async with self._query_lock:
-                now = time.time()
-                wait_time = max(0.0, self._query_interval - (now - self._last_query_time))
-                if wait_time > 0:
-                    await Metrics.influxdb_rate_limit_wait()
-                    await asyncio.sleep(wait_time)
-                self._last_query_time = time.time()
-
-            # Execute with retry logic
-            for attempt in range(max_retries + 1):
-                if not self.online:
-                    return False, None
-                try:
-                    return await query_func()
-                except (ValueError, TypeError, RuntimeError, InfluxQueryException, requests.RequestException) as e:
-                    if attempt == max_retries:
-                        logger.debug(f"{self.log_identity} {operation_name} failed after {max_retries + 1} attempts: {e}")
-                        await Metrics.influxdb_query_error()
-                        return False, None
-                    delay = base_delay * (2**attempt)
-                    logger.debug(f"{self.log_identity} {operation_name} attempt {attempt + 1} failed, retrying in {delay}s: {e}")
-                    await Metrics.influxdb_retry()
-                    await asyncio.sleep(delay)
-
-        # All paths inside the loop return explicitly; this is unreachable but
-        # satisfies type checkers that require a return on all code paths.
-        return False, None  # pragma: no cover
-
-    async def query_v2(self, base: str, org: str | None, token: str, flux_query: str, timeout: float | None = None, max_retries: int | None = None) -> tuple[bool, Any]:
-        """Execute a Flux query against the v2 API with rate limiting and retries.
-
-        Args:
-            base: Base URL of the InfluxDB server.
-            org: Organisation name or ID (optional for single-org setups).
-            token: API token with read access.
-            flux_query: Full Flux query string.
-            timeout: Request timeout in seconds; defaults to ``influxdb.read_timeout``.
-            max_retries: Override for the number of retries; defaults to
-                ``influxdb.max_retries``.
-
-        Returns:
-            ``(True, response_text)`` on success, ``(False, None)`` on failure.
-        """
-        return await self._rate_limited_query(
-            lambda: self.query_v2_internal(
-                base,
-                org,
-                token,
-                flux_query,
-                timeout if timeout is not None else active_config.influxdb.read_timeout,
-            ),
-            "v2 query",
-            max_retries if max_retries is not None else active_config.influxdb.max_retries,
-        )
-
-    async def query_v2_internal(self, base: str, org: str | None, token: str, flux_query: str, timeout: float) -> tuple[bool, Any]:
-        """Perform a single Flux query HTTP request without retry logic.
-
-        Intended to be wrapped by :meth:`query_v2` rather than called directly.
-
-        Args:
-            base: Base URL of the InfluxDB server.
-            org: Organisation name or ID.
-            token: API token with read access.
-            flux_query: Full Flux query string.
-            timeout: Request timeout in seconds.
-
-        Returns:
-            ``(True, response_text)`` on HTTP 200.
-
-        Raises:
-            InfluxQueryException: On any non-200 HTTP status or network error.
-        """
-        headers = {"Authorization": f"Token {token}", "Content-Type": "application/vnd.flux"}
-        url = f"{base}/api/v2/query"
-        params = {"org": org} if org else {}
-        r = await asyncio.to_thread(self._session.post, url, headers=headers, params=params, data=flux_query, timeout=timeout)
-        if r.status_code == 200:
-            await Metrics.influxdb_query()
-            return True, r.text
-        raise InfluxQueryException(f"HTTP {r.status_code}: {r.text}")
-
-    async def query_v1(self, base: str, db: str, auth: tuple | None, query: str, epoch: str | None = None, timeout: float | None = None, max_retries: int | None = None) -> tuple[bool, Any]:
-        """Execute an InfluxQL query against the v1 API with rate limiting and retries.
-
-        Args:
-            base: Base URL of the InfluxDB server.
-            db: Target database name.
-            auth: Optional ``(username, password)`` tuple.
-            query: InfluxQL query string.
-            epoch: Timestamp precision for results (e.g. ``"s"`` for seconds).
-            timeout: Request timeout in seconds; defaults to ``influxdb.read_timeout``.
-            max_retries: Override for the number of retries; defaults to
-                ``influxdb.max_retries``.
-
-        Returns:
-            ``(True, json_result)`` on success, ``(False, None)`` on failure.
-        """
-        return await self._rate_limited_query(
-            lambda: self.query_v1_internal(
-                base,
-                db,
-                auth,
-                query,
-                epoch,
-                timeout if timeout is not None else active_config.influxdb.read_timeout,
-            ),
-            "v1 query",
-            max_retries if max_retries is not None else active_config.influxdb.max_retries,
-        )
-
-    async def query_v1_internal(self, base: str, db: str, auth: tuple | None, query: str, epoch: str | None, timeout: float) -> tuple[bool, Any]:
-        """Perform a single InfluxQL query HTTP request without retry logic.
-
-        Intended to be wrapped by :meth:`query_v1` rather than called directly.
-
-        Args:
-            base: Base URL of the InfluxDB server.
-            db: Target database name.
-            auth: Optional ``(username, password)`` tuple.
-            query: InfluxQL query string.
-            epoch: Timestamp precision for results, or ``None`` for the default.
-            timeout: Request timeout in seconds.
-
-        Returns:
-            ``(True, json_result)`` on HTTP 200.
-
-        Raises:
-            InfluxQueryException: On any non-200 HTTP status or network error.
-        """
-        url = f"{base}/query"
-        params: dict[str, str] = {"db": db, "q": query}
-        if epoch:
-            params["epoch"] = epoch
-        r = await asyncio.to_thread(self._session.get, url, params=params, auth=auth, timeout=timeout)
-        if r.status_code == 200:
-            await Metrics.influxdb_query()
-            return True, r.json()
-        raise InfluxQueryException(f"HTTP {r.status_code}: {r.text}")
-
-    # ------------------------------------------------------------------
-    # Utilities
-    # ------------------------------------------------------------------
-
-    def parse_timestamp(self, time_str: str) -> int:
-        """Parse an ISO 8601 timestamp string to a Unix timestamp in seconds.
-
-        Handles both ``Z`` and ``+00:00`` UTC suffixes.
-
-        Args:
-            time_str: ISO 8601 timestamp string (e.g. ``"2024-01-01T12:00:00Z"``).
-
-        Returns:
-            Unix timestamp as an integer number of seconds since the epoch.
-        """
-        dt = datetime.fromisoformat(time_str)
-        return int(dt.timestamp())
-
-    def build_v1_tag_filter(self, tags: dict[str, str]) -> str:
-        """Build an InfluxQL WHERE-clause fragment from a tag dictionary.
-
-        Args:
-            tags: Mapping of tag key to value to filter on.
-
-        Returns:
-            An InfluxQL AND-joined filter string such as
-            ``'"entity_id"=\'sensor.power\''``, or an empty string if *tags*
-            is empty.
-        """
-        return " AND ".join(f"\"{k}\"='{v}'" for k, v in tags.items()) if tags else ""

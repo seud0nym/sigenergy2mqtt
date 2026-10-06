@@ -8,6 +8,7 @@ from sigenergy2mqtt.sensors.base import DiscoveryKeys
 from sigenergy2mqtt.sensors.metrics import (
     InfluxDBQueries,
     InfluxDBQueryErrors,
+    InfluxDBRateLimitWaits,
     InfluxDBRetries,
     InfluxDBThroughput,
     InfluxDBWriteErrors,
@@ -104,6 +105,62 @@ class TestMetricsSensorsExtended:
         Metrics.sigenergy2mqtt_influxdb_retries = 3
         await sensor._update_internal_state()
         assert sensor.latest_raw_state == 3
+
+    @pytest.mark.asyncio
+    async def test_influxdb_rate_limit_waits(self):
+        sensor = InfluxDBRateLimitWaits()
+        Metrics.sigenergy2mqtt_influxdb_rate_limit_waits = 4
+        await sensor._update_internal_state()
+        assert sensor.latest_raw_state == 4
+
+    @pytest.mark.parametrize(
+        ("sensor_cls", "enabled", "load_history", "expected_publishable"),
+        [
+            (InfluxDBQueries, True, True, True),
+            (InfluxDBQueries, True, False, False),
+            (InfluxDBQueries, False, True, False),
+            (InfluxDBQueries, False, False, False),
+            (InfluxDBQueryErrors, True, True, True),
+            (InfluxDBQueryErrors, True, False, False),
+            (InfluxDBQueryErrors, False, True, False),
+            (InfluxDBQueryErrors, False, False, False),
+            (InfluxDBRetries, True, True, True),
+            (InfluxDBRetries, True, False, False),
+            (InfluxDBRetries, False, True, False),
+            (InfluxDBRetries, False, False, False),
+            (InfluxDBRateLimitWaits, True, True, True),
+            (InfluxDBRateLimitWaits, True, False, False),
+            (InfluxDBRateLimitWaits, False, True, False),
+            (InfluxDBRateLimitWaits, False, False, False),
+        ],
+    )
+    def test_influxdb_history_sync_sensors_publishable(self, sensor_cls, enabled, load_history, expected_publishable):
+        with (
+            patch("sigenergy2mqtt.config.active_config.influxdb.enabled", enabled),
+            patch("sigenergy2mqtt.config.active_config.influxdb.load_hass_history", load_history),
+        ):
+            sensor = sensor_cls()
+            assert sensor.publishable is expected_publishable
+
+    @pytest.mark.parametrize(
+        ("sensor_cls", "enabled", "load_history", "expected_publishable"),
+        [
+            (InfluxDBWrites, True, False, True),
+            (InfluxDBWrites, True, True, True),
+            (InfluxDBWrites, False, False, False),
+            (InfluxDBWriteErrors, True, False, True),
+            (InfluxDBWriteErrors, False, True, False),
+            (InfluxDBThroughput, True, False, True),
+            (InfluxDBThroughput, False, True, False),
+        ],
+    )
+    def test_influxdb_write_sensors_publishable(self, sensor_cls, enabled, load_history, expected_publishable):
+        with (
+            patch("sigenergy2mqtt.config.active_config.influxdb.enabled", enabled),
+            patch("sigenergy2mqtt.config.active_config.influxdb.load_hass_history", load_history),
+        ):
+            sensor = sensor_cls()
+            assert sensor.publishable is expected_publishable
 
     @pytest.mark.asyncio
     async def test_influxdb_throughput(self):
