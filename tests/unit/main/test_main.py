@@ -190,8 +190,9 @@ async def test_cloud_control_discovery_failure_disables_cloud_control(caplog):
 
 
 @pytest.mark.asyncio
-async def test_cloud_discovery_filters_inverters_when_disabled(monkeypatch):
+async def test_cloud_discovery_keeps_inverter_for_matching_when_disabled(monkeypatch):
     monkeypatch.setattr(active_config.cloud, "discover_inverters", False, raising=False)
+    _registered_inverter(2, sn="INV-1")
     cloud_port = MagicMock()
     cloud_port.gateway_info = AsyncMock(return_value={"snCode": "GATEWAY"})
     cloud_port.device_list = AsyncMock(
@@ -207,7 +208,8 @@ async def test_cloud_discovery_filters_inverters_when_disabled(monkeypatch):
     discovery = await discover_cloud(cloud_port)
 
     assert discovery is not None
-    assert [device["deviceType"] for device in discovery.device_list] == ["Battery"]
+    assert [device["deviceType"] for device in discovery.device_list] == ["Inverter", "Battery"]
+    assert _cloud_control_plant_index(discovery.device_list) == 2
     cloud_port.close.assert_awaited_once()
 
 
