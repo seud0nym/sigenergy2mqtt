@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import json
+import logging
 from typing import Any
 
 import aiohttp
+
+logger = logging.getLogger(__name__)
 
 from .auth import OAuthSession
 from .errors import (
@@ -47,6 +50,7 @@ class CloudTransport:
         """Execute a request and return Sigenergy's full JSON envelope."""
         await self._auth.ensure_token(session, self._base_url)
         url = f"{self._base_url}{path.lstrip('/')}"
+        logger.debug("Cloud API request: %s %s", method, url)
         async with session.request(
             method, url, headers=self._auth.headers, **kwargs
         ) as response:
@@ -64,6 +68,11 @@ class CloudTransport:
 
     async def _parse_response(self, response: aiohttp.ClientResponse) -> dict[str, Any]:
         body = await response.text()
+        logger.debug(
+            "Cloud API response: HTTP %s, body=%s",
+            response.status,
+            body[:500] if body else "<empty>",
+        )
         try:
             payload: Any = json.loads(body) if body else {}
         except json.JSONDecodeError as exc:

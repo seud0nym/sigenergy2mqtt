@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import logging
 from datetime import date
 from typing import Any
 
 import aiohttp
+
+logger = logging.getLogger(__name__)
 
 from .auth import OAuthSession, encrypt_password
 from .errors import SigenergyCloudAPIError, SigenergyCloudRateLimitError
@@ -1195,10 +1198,16 @@ class SigenergyCloudClient:
         return await self._data(method, path, params=query or None)
 
     async def _data(self, method: str, path: str, **kwargs: Any) -> Any:
-        return await self._transport.data(await self._http_session(), method, path, **kwargs)
+        logger.debug("SigenergyCloudClient._data: %s %s", method, path)
+        result = await self._transport.data(await self._http_session(), method, path, **kwargs)
+        logger.debug("SigenergyCloudClient._data response: %s %s -> %r", method, path, result)
+        return result
 
     async def _envelope(self, method: str, path: str, **kwargs: Any) -> dict[str, Any]:
-        return await self._transport.envelope(await self._http_session(), method, path, **kwargs)
+        logger.debug("SigenergyCloudClient._envelope: %s %s", method, path)
+        result = await self._transport.envelope(await self._http_session(), method, path, **kwargs)
+        logger.debug("SigenergyCloudClient._envelope response: %s %s -> %r", method, path, result)
+        return result
 
     async def _http_session(self) -> aiohttp.ClientSession:
         if self._session is not None:

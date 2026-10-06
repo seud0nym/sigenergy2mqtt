@@ -1,5 +1,7 @@
 """Transport response handling tests."""
 
+import logging
+
 import aiohttp
 import pytest
 from aioresponses import aioresponses
@@ -93,5 +95,29 @@ async def test_maps_http_status_to_typed_error(
             )
             with pytest.raises(error_type, match="nope"):
                 await transport.data(session, "GET", "device/example")
+    finally:
+        await session.close()
+
+
+@pytest.mark.asyncio
+async def test_debug_logs_request_and_response(caplog: pytest.LogCaptureFixture) -> None:
+    """Transport logs the outgoing method+URL and the HTTP response status at DEBUG."""
+    session, transport = await _authed_transport()
+    try:
+        with aioresponses() as mocked:
+            mocked.get(
+                "https://api-eu.sigencloud.com/device/example",
+                payload={"code": 0, "data": {"ok": True}},
+            )
+            with caplog.at_level(logging.DEBUG, logger="sigenergy2mqtt.cloud.vendor.solidfox.sigenergy_cloud.transport"):
+                await transport.data(session, "GET", "device/example")
+
+        request_records = [r for r in caplog.records if "Cloud API request" in r.message]
+        response_records = [r for r in caplog.records if "Cloud API response" in r.message]
+        assert len(request_records) >= 1, "Expected at least one Cloud API request log"
+        assert "GET" in request_records[0].message
+        assert "device/example" in request_records[0].message
+        assert len(response_records) >= 1, "Expected at least one Cloud API response log"
+        assert "200" in response_records[0].message
     finally:
         await session.close()
