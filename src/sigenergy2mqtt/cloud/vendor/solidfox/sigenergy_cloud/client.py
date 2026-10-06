@@ -1198,13 +1198,13 @@ class SigenergyCloudClient:
         return await self._data(method, path, params=query or None)
 
     async def _data(self, method: str, path: str, **kwargs: Any) -> Any:
-        logger.debug("SigenergyCloudClient._data: %s %s", method, path)
+        logger.debug("SigenergyCloudClient._data: %s %s, kwargs=%r", method, path, kwargs)
         result = await self._transport.data(await self._http_session(), method, path, **kwargs)
         logger.debug("SigenergyCloudClient._data response: %s %s -> %r", method, path, result)
         return result
 
     async def _envelope(self, method: str, path: str, **kwargs: Any) -> dict[str, Any]:
-        logger.debug("SigenergyCloudClient._envelope: %s %s", method, path)
+        logger.debug("SigenergyCloudClient._envelope: %s %s, kwargs=%r", method, path, kwargs)
         result = await self._transport.envelope(await self._http_session(), method, path, **kwargs)
         logger.debug("SigenergyCloudClient._envelope response: %s %s -> %r", method, path, result)
         return result

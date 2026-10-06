@@ -50,7 +50,7 @@ class CloudTransport:
         """Execute a request and return Sigenergy's full JSON envelope."""
         await self._auth.ensure_token(session, self._base_url)
         url = f"{self._base_url}{path.lstrip('/')}"
-        logger.debug("Cloud API request: %s %s", method, url)
+        logger.debug("Cloud API request: %s %s, kwargs=%r", method, url, kwargs)
         async with session.request(
             method, url, headers=self._auth.headers, **kwargs
         ) as response:
@@ -69,7 +69,9 @@ class CloudTransport:
     async def _parse_response(self, response: aiohttp.ClientResponse) -> dict[str, Any]:
         body = await response.text()
         logger.debug(
-            "Cloud API response: HTTP %s, body=%s",
+            "Cloud API response: %s %s HTTP %s, body=%s",
+            response.method,
+            response.url,
             response.status,
             body[:500] if body else "<empty>",
         )
