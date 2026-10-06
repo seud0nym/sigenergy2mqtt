@@ -258,6 +258,18 @@ The internal `testing` region is available for integration tests when the
 environment-only `SIGENERGY2MQTT_CLOUD_TESTING_URL` variable points to an
 `http` or `https` base URL ending in `/`. It has no command-line or YAML option.
 
+<a id="opt_cloud_discover_inverters"></a>
+### Discover Inverters
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--cloud-discover-inverters</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_CLOUD_DISCOVER_INVERTERS</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>cloud.discover-inverters</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
+Set to `true` to discover inverter devices from the Sigenergy cloud. The default is `false`.
+When disabled, cloud inverter devices are excluded from startup discovery, while batteries and other cloud-backed devices remain available.
+
 <a id="opt_cloud_accept_unofficial_api_risk"></a>
 ### Accept Unofficial API Risk
 <table>

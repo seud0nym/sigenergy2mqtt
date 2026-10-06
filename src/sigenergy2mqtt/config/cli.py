@@ -925,6 +925,12 @@ def get_parser() -> argparse.ArgumentParser:
         help="The user's region for the cloud service. Must be one of the following: 'aus', 'eu', 'cn', 'apac', 'us'.",
     )
     parser.add_argument(
+        "--cloud-discover-inverters",
+        action="store_true",
+        dest=const.SIGENERGY2MQTT_CLOUD_DISCOVER_INVERTERS,
+        help="Discover cloud inverter devices and expose their sensors. Disabled by default.",
+    )
+    parser.add_argument(
         "--cloud-log-level",
         nargs="?",
         action="store",

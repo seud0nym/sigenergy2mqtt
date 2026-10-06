@@ -43,7 +43,8 @@ def test_cli_parsing_discovery_only(clean_argv, monkeypatch):
     active_config.home_assistant.discovery_only = False
 
     with (
-        patch("sys.exit"), patch("pathlib.Path.mkdir"),
+        patch("sys.exit"),
+        patch("pathlib.Path.mkdir"),
         patch("pathlib.Path.is_dir", return_value=True),
         patch("pathlib.Path.iterdir", return_value=[]),
         patch("os.access", return_value=True),
@@ -93,3 +94,12 @@ def test_cli_parsing_negated_monitoring_flags(clean_argv):
     assert getattr(args, const.SIGENERGY2MQTT_TOPIC_UPDATE_MONITORING) is False
     assert getattr(args, const.SIGENERGY2MQTT_PVOUTPUT_HEALTH_MONITORING) is False
     assert getattr(args, const.SIGENERGY2MQTT_INFLUX_HEALTH_MONITORING) is False
+
+
+def test_cli_parsing_cloud_discover_inverters(clean_argv):
+    import sigenergy2mqtt.config.cli as cli_mod
+    from sigenergy2mqtt.config import const
+
+    args = cli_mod.parse_args(["--cloud-discover-inverters"])
+
+    assert getattr(args, const.SIGENERGY2MQTT_CLOUD_DISCOVER_INVERTERS) is True

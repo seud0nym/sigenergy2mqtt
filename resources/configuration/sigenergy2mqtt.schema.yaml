@@ -67,6 +67,10 @@ properties:
         type: string
       region: 
         type: string
+      discover-inverters:
+        description: "Discover inverter devices exposed by the Sigenergy cloud."
+        type: boolean
+        default: false
       log-level:
         oneOf:
           - type: string
