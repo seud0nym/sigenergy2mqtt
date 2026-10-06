@@ -65,6 +65,14 @@ def _get_method_name(method) -> str:
     return getattr(method, "__name__", "[Unknown method]")
 
 
+def _is_monitor_topic_update_handler(method: Any) -> bool:
+    """Return ``True`` only for the monitor service's topic update callback."""
+    bound_self = getattr(method, "__self__", None)
+    if bound_self is None:
+        return False
+    return bound_self.__class__.__name__ == "MonitorService" and getattr(method, "__name__", "") == "on_topic_update"
+
+
 class MqttHandler:
     """Dispatch incoming MQTT messages and track publish acknowledgements.
 
@@ -222,11 +230,10 @@ class MqttHandler:
     def on_message(self, client: mqtt.Client, topic: str, payload: str) -> None:
         """Dispatch an incoming MQTT message to all registered handlers.
 
-        Called by the application's paho ``on_message`` callback.  Empty
-        payloads are silently ignored.  For each handler registered for
-        *topic*, the handler is invoked synchronously; if it returns an
-        awaitable, that awaitable is scheduled on the asyncio loop via
-        :meth:`_schedule_coroutine`.
+        Called by the application's paho ``on_message`` callback. For each
+        handler registered for *topic*, the handler is invoked synchronously;
+        if it returns an awaitable, that awaitable is scheduled on the
+        asyncio loop via :meth:`_schedule_coroutine`.
 
         Parameters
         ----------
@@ -239,9 +246,6 @@ class MqttHandler:
             before being passed to handlers).
         """
         value = str(payload).strip()
-        if not value:
-            logger.debug(f"IGNORED empty payload from topic {topic} (client_id={self.client_id})")
-            return
 
         with self._state_lock:
             handlers = list(self._topics.get(topic, []))
@@ -249,6 +253,14 @@ class MqttHandler:
         if not handlers:
             logger.warning(f"No registered handler found for topic {topic} (client_id={self.client_id})")
             return
+
+        if not value:
+            monitor_handlers = [method for method in handlers if _is_monitor_topic_update_handler(method)]
+            if not monitor_handlers:
+                logger.debug(f"IGNORED empty payload from topic {topic} (client_id={self.client_id})")
+                return
+            handlers = monitor_handlers
+            logger.debug(f"Dispatching empty payload from topic {topic} to monitor handler(s) (client_id={self.client_id})")
 
         for method in handlers:
             method_name = _get_method_name(method)

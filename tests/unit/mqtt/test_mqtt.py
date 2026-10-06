@@ -118,20 +118,27 @@ class TestMqttHandler:
 
         loop.close()
 
-    def test_on_message_empty_payload(self):
-        """Test on_message with empty payload is ignored."""
+    def test_on_message_empty_payload_only_for_monitor_handler(self):
+        """Blank payloads are only forwarded to the monitor callback."""
         loop = asyncio.new_event_loop()
         modbus_client = MagicMock()
         handler = MqttHandler("test_client", modbus_client, loop)
 
+        class MonitorService:
+            async def on_topic_update(self, transport, mqtt_client, value, source, mqtt_handler):
+                return True
+
         mock_client = MagicMock()
-        mock_handler_func = MagicMock()
-        handler._topics["test/topic"] = [mock_handler_func]
+        non_monitor_handler = MagicMock()
+        monitor_handler = MagicMock()
+        monitor_handler.__self__ = MonitorService()
+        monitor_handler.__name__ = "on_topic_update"
+        handler._topics["test/topic"] = [non_monitor_handler, monitor_handler]
 
         handler.on_message(mock_client, "test/topic", "")
 
-        # Handler should not be called for empty payload
-        mock_handler_func.assert_not_called()
+        non_monitor_handler.assert_not_called()
+        monitor_handler.assert_called_once_with(modbus_client, mock_client, "", "test/topic", handler)
 
         loop.close()
 
