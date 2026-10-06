@@ -34,6 +34,7 @@ from sigenergy2mqtt.devices.cloud.discovery import (
     CloudDiscovery,
     _discover_cloud_device_list,
     _discover_cloud_gateway_info,
+    discover_cloud,
     discover_operational_modes,
 )
 from sigenergy2mqtt.main import main as main_mod
@@ -186,6 +187,30 @@ async def test_cloud_control_discovery_failure_disables_cloud_control(caplog):
     assert "Cloud API will be disabled" in caplog.text
     assert "bad credentials" in caplog.text
     cloud_port.close.assert_awaited_once_with()
+
+
+@pytest.mark.asyncio
+async def test_cloud_discovery_keeps_inverter_for_matching_when_disabled(monkeypatch):
+    monkeypatch.setattr(active_config.cloud, "discover_inverters", False, raising=False)
+    _registered_inverter(2, sn="INV-1")
+    cloud_port = MagicMock()
+    cloud_port.gateway_info = AsyncMock(return_value={"snCode": "GATEWAY"})
+    cloud_port.device_list = AsyncMock(
+        return_value=[
+            {"deviceType": "Inverter", "serialNumber": "INV-1"},
+            {"deviceType": "Battery", "serialNumber": "BAT-1"},
+        ]
+    )
+    cloud_port.device_dynamic_info = AsyncMock(return_value={})
+    cloud_port.device_static_info = AsyncMock(return_value={})
+    cloud_port.close = AsyncMock()
+
+    discovery = await discover_cloud(cloud_port)
+
+    assert discovery is not None
+    assert [device["deviceType"] for device in discovery.device_list] == ["Inverter", "Battery"]
+    assert _cloud_control_plant_index(discovery.device_list) == 2
+    cloud_port.close.assert_awaited_once()
 
 
 @pytest.mark.asyncio

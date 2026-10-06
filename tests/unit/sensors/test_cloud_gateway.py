@@ -6,6 +6,7 @@ import pytest
 
 from sigenergy2mqtt.cloud.exceptions import CloudControlUnavailableError
 from sigenergy2mqtt.common import DeviceClass, ScanIntervalDefault
+from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices.cloud import (
     CloudControl,
     CloudDiscovery,
@@ -50,13 +51,19 @@ GATEWAY_INFO = {
 }
 
 
+@pytest.fixture(autouse=True)
+def enable_cloud_inverter_discovery():
+    previous = active_config.cloud.discover_inverters
+    active_config.cloud.discover_inverters = True
+    yield
+    active_config.cloud.discover_inverters = previous
+
+
 @pytest.mark.parametrize(
     ("api_unit", "ha_unit"),
     [("℃", "°C"), ("°C", "°C"), ("℉", "°F"), ("°F", "°F")],
 )
-def test_device_temperature_sensor_supports_celsius_and_fahrenheit_units(
-    api_unit: str, ha_unit: str
-) -> None:
+def test_device_temperature_sensor_supports_celsius_and_fahrenheit_units(api_unit: str, ha_unit: str) -> None:
     sensor = DeviceInfoSensor(
         0,
         FakeCloudControlPort.station_id,
@@ -125,11 +132,7 @@ def test_cloud_device_names_fall_back_when_device_model_is_missing() -> None:
             "attrMap": {"batPosition": 2},
         },
     ]
-    dynamic = {
-        "realTimeInfo": [
-            {"paramKey": "Battery SOC", "paramValueText": "50", "paramValueUnit": "%"}
-        ]
-    }
+    dynamic = {"realTimeInfo": [{"paramKey": "Battery SOC", "paramValueText": "50", "paramValueUnit": "%"}]}
     discovery = CloudDiscovery(
         device_list=devices,
         device_info={"INV-1": (dynamic, {}), "BAT-1": (dynamic, {})},
@@ -144,10 +147,7 @@ def test_cloud_device_names_fall_back_when_device_model_is_missing() -> None:
 
 
 def test_batteries_without_positions_use_serials_for_distinct_identities() -> None:
-    devices = [
-        {"deviceType": "Battery", "serialNumber": sn, "attrMap": {}}
-        for sn in ("BAT-1", "BAT-2")
-    ]
+    devices = [{"deviceType": "Battery", "serialNumber": sn, "attrMap": {}} for sn in ("BAT-1", "BAT-2")]
     discovery = CloudDiscovery(
         device_list=devices,
         device_info={
@@ -187,9 +187,7 @@ def test_device_parameters_are_deduplicated_by_normalized_suffix() -> None:
         ]
     }
     discovery = CloudDiscovery(
-        device_list=[
-            {"deviceType": "Inverter", "serialNumber": "INV-1", "attrMap": {}}
-        ],
+        device_list=[{"deviceType": "Inverter", "serialNumber": "INV-1", "attrMap": {}}],
         device_info={"INV-1": (dynamic, {})},
     )
 
@@ -201,9 +199,7 @@ def test_device_parameters_are_deduplicated_by_normalized_suffix() -> None:
 @pytest.mark.asyncio
 async def test_device_snapshot_retains_failure_until_next_refresh() -> None:
     port = FakeCloudControlPort()
-    port.device_dynamic_info = AsyncMock(
-        side_effect=CloudControlUnavailableError("offline")
-    )
+    port.device_dynamic_info = AsyncMock(side_effect=CloudControlUnavailableError("offline"))
     snapshot = DeviceInfoSnapshot(3, "INV-1", False)
 
     with pytest.raises(CloudControlUnavailableError):
@@ -218,11 +214,7 @@ async def test_device_snapshot_retains_failure_until_next_refresh() -> None:
 @pytest.mark.asyncio
 async def test_device_numeric_sensor_rejects_non_finite_values(value: str) -> None:
     port = FakeCloudControlPort()
-    port.device_dynamic_info = AsyncMock(
-        return_value={
-            "realTimeInfo": [{"paramKey": "Active Power", "paramValueText": value}]
-        }
-    )
+    port.device_dynamic_info = AsyncMock(return_value={"realTimeInfo": [{"paramKey": "Active Power", "paramValueText": value}]})
     sensor = DeviceInfoSensor(
         0,
         port.station_id,
@@ -240,16 +232,10 @@ async def test_device_numeric_sensor_rejects_non_finite_values(value: str) -> No
 async def test_discovery_keeps_dynamic_info_when_static_info_fails() -> None:
     port = FakeCloudControlPort()
     port.gateway_info = AsyncMock(return_value={})
-    port.device_list = AsyncMock(
-        return_value=[
-            {"deviceType": "Inverter", "serialNumber": "INV-1", "attrMap": {}}
-        ]
-    )
+    port.device_list = AsyncMock(return_value=[{"deviceType": "Inverter", "serialNumber": "INV-1", "attrMap": {}}])
     dynamic = {"realTimeInfo": [{"paramKey": "PV Power"}]}
     port.device_dynamic_info = AsyncMock(return_value=dynamic)
-    port.device_static_info = AsyncMock(
-        side_effect=CloudControlUnavailableError("offline")
-    )
+    port.device_static_info = AsyncMock(side_effect=CloudControlUnavailableError("offline"))
 
     discovery = await discover_cloud(port)
 
@@ -283,11 +269,7 @@ def test_cloud_control_adds_gateway_child_with_dynamic_sensors() -> None:
         GatewayGridReactivePower,
         GatewayGridText,
     ]
-    reactive = next(
-        sensor
-        for sensor in gateway.sensors.values()
-        if isinstance(sensor, GatewayGridReactivePower)
-    )
+    reactive = next(sensor for sensor in gateway.sensors.values() if isinstance(sensor, GatewayGridReactivePower))
     assert reactive[DiscoveryKeys.UNIT_OF_MEASUREMENT] == "kvar"
 
 
@@ -332,9 +314,7 @@ async def test_gateway_numeric_sensor_rejects_changed_units_and_non_finite_value
     port = FakeCloudControlPort()
     payload = {
         **GATEWAY_INFO,
-        "gridSideInfoList": [
-            {"paramKey": "Phase A Voltage", "paramValue": param_value}
-        ],
+        "gridSideInfoList": [{"paramKey": "Phase A Voltage", "paramValue": param_value}],
     }
     port.gateway_info = AsyncMock(return_value=payload)
     gateway = Gateway(
@@ -345,11 +325,7 @@ async def test_gateway_numeric_sensor_rejects_changed_units_and_non_finite_value
         sw="firmware",
         grid_side_info=[{"paramKey": "Phase A Voltage", "paramValue": "233.29 V"}],
     )
-    sensor = next(
-        sensor
-        for sensor in gateway.sensors.values()
-        if isinstance(sensor, GatewayGridVoltage)
-    )
+    sensor = next(sensor for sensor in gateway.sensors.values() if isinstance(sensor, GatewayGridVoltage))
 
     sensor._polling_coordinator.begin_refresh()  # type: ignore[attr-defined]
     assert await sensor._read_cloud_state(port) is None  # type: ignore[attr-defined]

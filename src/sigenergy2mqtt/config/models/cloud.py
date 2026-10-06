@@ -53,6 +53,9 @@ class CloudConfig(BaseModel):
     region: str = Field("", alias="region")
     """The region to which the Sigenergy Cloud service belongs."""
 
+    discover_inverters: bool = Field(False, alias="discover-inverters")
+    """Whether cloud inverter devices are discovered and exposed."""
+
     testing_url: str = Field("", alias="testing-url", exclude=True)
     """Base URL for the integration-test cloud service."""
 

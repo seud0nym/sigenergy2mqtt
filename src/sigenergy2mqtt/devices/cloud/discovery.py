@@ -12,6 +12,7 @@ from sigenergy2mqtt.cloud.exceptions import (
     CloudControlUnavailableError,
 )
 from sigenergy2mqtt.cloud.port import CloudControlPort
+from sigenergy2mqtt.config import active_config
 
 logger = logging.getLogger(__name__)
 
@@ -71,9 +72,13 @@ async def discover_cloud(cloud_port: CloudControlPort) -> CloudDiscovery | None:
     gateway_info = await _discover_cloud_gateway_info(cloud_port)
     if (device_list := await _discover_cloud_device_list(cloud_port)) is None:
         return None
+    if not active_config.cloud.discover_inverters:
+        logger.info("Cloud inverter discovery disabled; inverter child devices will be excluded from setup, but the full device list is retained for plant matching.")
     device_info: dict[str, tuple[dict[str, Any], dict[str, Any]]] = {}
     for device in device_list:
         device_name = device.get("deviceType")
+        if not active_config.cloud.discover_inverters and device_name == "Inverter":
+            continue
         device_type = {"Inverter": 3, "Battery": 4}.get(device_name) if isinstance(device_name, str) else None
         sn_code = device.get("serialNumber")
         if device_type is None or not isinstance(sn_code, str) or not sn_code:

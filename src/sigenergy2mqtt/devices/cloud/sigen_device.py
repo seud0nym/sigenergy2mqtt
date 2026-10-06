@@ -29,20 +29,12 @@ class SigenCloudDevice(Device):
         position = device.get("attrMap", {}).get("batPosition")
         kind = "inverter" if self.device_type == 3 else "battery"
         battery_name = position if position is not None else sn
-        default_model = (
-            "SigenStor Inverter"
-            if self.device_type == 3
-            else "SigenStor Battery"
-        )
+        default_model = "SigenStor Inverter" if self.device_type == 3 else "SigenStor Battery"
         static_entries = static.get("paramInfoVOList", [])
         if not isinstance(static_entries, list):
             static_entries = []
         device_model = next(
-            (
-                entry.get("paramValue")
-                for entry in static_entries
-                if isinstance(entry, dict) and entry.get("paramKey") == "Device Model"
-            ),
+            (entry.get("paramValue") for entry in static_entries if isinstance(entry, dict) and entry.get("paramKey") == "Device Model"),
             None,
         )
         model_name = str(device_model) if device_model else default_model
@@ -56,6 +48,7 @@ class SigenCloudDevice(Device):
             protocol_version=ProtocolVersion.N_A,
             sn=sn,
             plant_suffix="" if plant_index == 0 else str(plant_index + 1),
+            translate=False,
         )
         for is_static, payload, key in (
             (False, dynamic, "realTimeInfo"),
@@ -66,11 +59,7 @@ class SigenCloudDevice(Device):
             entries = payload.get(key, [])
             for entry in entries if isinstance(entries, list) else []:
                 param_key = entry.get("paramKey") if isinstance(entry, dict) else None
-                suffix = (
-                    gateway_sensor_suffix(param_key)
-                    if isinstance(param_key, str)
-                    else ""
-                )
+                suffix = gateway_sensor_suffix(param_key) if isinstance(param_key, str) else ""
                 if param_key and suffix and suffix not in seen_suffixes:
                     seen_suffixes.add(suffix)
                     self._add_sensor(
@@ -94,17 +83,13 @@ class CloudBattery(SigenCloudDevice):
     device_type = 4
 
 
-def build_sigen_devices(
-    plant_index: int, station_id: str, discovery: CloudDiscovery
-) -> list[Device]:
+def build_sigen_devices(plant_index: int, station_id: str, discovery: CloudDiscovery) -> list[Device]:
     result: list[Device] = []
     for device in discovery.device_list:
         device_name = device.get("deviceType")
-        cls = (
-            {"Inverter": CloudInverter, "Battery": CloudBattery}.get(device_name)
-            if isinstance(device_name, str)
-            else None
-        )
+        if not active_config.cloud.discover_inverters and device_name == "Inverter":
+            continue
+        cls = {"Inverter": CloudInverter, "Battery": CloudBattery}.get(device_name) if isinstance(device_name, str) else None
         sn = device.get("serialNumber")
         info = (discovery.device_info or {}).get(sn) if isinstance(sn, str) else None
         if cls is not None and info is not None:

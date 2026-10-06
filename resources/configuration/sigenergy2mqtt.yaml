@@ -101,6 +101,10 @@ cloud:
     #   description:  The user's region for the cloud service. Must be one of the following: 
     #                 'aus', 'eu', 'cn', 'apac', 'us'.
     region: ""
+    # discover-inverters
+    #   default: false
+    #   description:  If true, inverter devices are discovered from the Sigenergy cloud.
+    discover-inverters: false
     # log-level
     #   default: "INFO"
     #   description:  The log level for the cloud service. Must be one of:
