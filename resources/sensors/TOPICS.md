@@ -6457,46 +6457,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 
 
 #### Published Topics
-<h5><a id='sigen_influxdb_queries'>InfluxDB Queries</a></h5>
-<table>
-<tr><td>Sensor&nbsp;Class</td><td>InfluxDBQueries</td></tr>
-<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_influxdb_queries</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/influxdb_queries</td></tr>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/influxdb_queries</td></tr>
-</td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
-</table>
-<h5><a id='sigen_influxdb_query_errors'>InfluxDB Query Errors</a></h5>
-<table>
-<tr><td>Sensor&nbsp;Class</td><td>InfluxDBQueryErrors</td></tr>
-<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_influxdb_query_errors</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/influxdb_query_errors</td></tr>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/influxdb_query_errors</td></tr>
-</td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
-</table>
-<h5><a id='sigen_influxdb_rate_limit_waits'>InfluxDB Rate Limit Waits</a></h5>
-<table>
-<tr><td>Sensor&nbsp;Class</td><td>InfluxDBRateLimitWaits</td></tr>
-<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_influxdb_rate_limit_waits</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/influxdb_rate_limit_waits</td></tr>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/influxdb_rate_limit_waits</td></tr>
-</td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
-</table>
-<h5><a id='sigen_influxdb_retries'>InfluxDB Retries</a></h5>
-<table>
-<tr><td>Sensor&nbsp;Class</td><td>InfluxDBRetries</td></tr>
-<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_influxdb_retries</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/influxdb_retries</td></tr>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/influxdb_retries</td></tr>
-</td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
-</table>
 <h5><a id='sigen_influxdb_throughput'>InfluxDB Throughput</a></h5>
 <table>
 <tr><td>Sensor&nbsp;Class</td><td>InfluxDBThroughput</td></tr>
@@ -7714,10 +7674,6 @@ The attributes payload currently includes:
 <a href='#sigen_0_001_31504'>Vehicle SoC</a><br>
 
 <h6>Metrics</h6>
-<a href='#sigen_influxdb_queries'>InfluxDB Queries</a><br>
-<a href='#sigen_influxdb_query_errors'>InfluxDB Query Errors</a><br>
-<a href='#sigen_influxdb_rate_limit_waits'>InfluxDB Rate Limit Waits</a><br>
-<a href='#sigen_influxdb_retries'>InfluxDB Retries</a><br>
 <a href='#sigen_influxdb_throughput'>InfluxDB Throughput</a><br>
 <a href='#sigen_influxdb_write_errors'>InfluxDB Write Errors</a><br>
 <a href='#sigen_influxdb_write_max'>InfluxDB Write Max</a><br>
@@ -7842,5 +7798,5 @@ The attributes payload currently includes:
 <a href='#sigenergy2mqtt_config_persistence_debug_set'>Persistence Debugging</a><br>
 <a href='#sigenergy2mqtt_config_repeated_state_publish_interval_set'>Repeated State Publish Interval</a><br>
 <a href='#sigenergy2mqtt_config_sanity_check_failures_increment_set'>Sanity Check Failures Increment</a><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></td></tr>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></td></tr>
 </table>
