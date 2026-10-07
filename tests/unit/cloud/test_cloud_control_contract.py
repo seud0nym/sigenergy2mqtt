@@ -184,6 +184,20 @@ async def test_unexpected_operation_error_is_counted(
     error_metric.assert_awaited_once_with()
 
 
+@pytest.mark.asyncio
+async def test_operation_logs_underlying_method_name(
+    mysigen_adapter: MySigenCloudAdapter,
+) -> None:
+    mysigen_adapter._connected = True  # type: ignore[reportPrivateUsage]
+
+    with patch("sigenergy2mqtt.cloud.mysigen_adapter.logger.debug") as debug_log:
+        await mysigen_adapter.device_dynamic_info(3, "INV")
+
+    logged_messages = [str(call.args[0]) for call in debug_log.call_args_list]
+    assert any("device_dynamic_info" in message for message in logged_messages)
+    assert not any("<lambda>" in message for message in logged_messages)
+
+
 async def test_device_list_uses_official_api_shape(
     mysigen_adapter: MySigenCloudAdapter,
 ) -> None:

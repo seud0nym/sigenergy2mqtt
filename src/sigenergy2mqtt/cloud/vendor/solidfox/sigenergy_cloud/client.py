@@ -198,9 +198,7 @@ class SigenergyCloudClient:
 
     async def get_operational_mode(self) -> tuple[int, int]:
         """Return the current mode and energy-profile identifiers."""
-        data = await self._station_data(
-            "GET", "device/energy-profile/mode/current/{station_id}"
-        )
+        data = await self._station_data("GET", "device/energy-profile/mode/current/{station_id}")
         return data["currentMode"], data["currentProfileId"]
 
     async def set_operational_mode(self, mode: int, profile_id: int = -1) -> dict[str, Any]:
@@ -360,17 +358,29 @@ class SigenergyCloudClient:
 
     async def device_dynamic_info(self, device_type: int, sn_code: str) -> dict[str, Any]:
         """Return live information for one topology device."""
-        data = await self._data("GET", "device/sigen/device/dynamic/info", params={
-            "stationId": self._station_id(), "deviceType": device_type,
-            "snCode": sn_code, "refreshFlag": "",
-        })
+        data = await self._data(
+            "GET",
+            "device/sigen/device/dynamic/info",
+            params={
+                "stationId": self._station_id(),
+                "deviceType": device_type,
+                "snCode": sn_code,
+                "refreshFlag": "",
+            },
+        )
         return data if isinstance(data, dict) else {"raw": data}
 
     async def device_static_info(self, device_type: int, sn_code: str) -> dict[str, Any]:
         """Return identification and rated information for one topology device."""
-        data = await self._data("GET", "device/sigen/device/static/info", params={
-            "stationId": self._station_id(), "deviceType": device_type, "snCode": sn_code,
-        })
+        data = await self._data(
+            "GET",
+            "device/sigen/device/static/info",
+            params={
+                "stationId": self._station_id(),
+                "deviceType": device_type,
+                "snCode": sn_code,
+            },
+        )
         return data if isinstance(data, dict) else {"raw": data}
 
     async def grid_connection_point_devices(self) -> list[dict[str, Any]]:
@@ -1200,13 +1210,11 @@ class SigenergyCloudClient:
     async def _data(self, method: str, path: str, **kwargs: Any) -> Any:
         logger.debug("SigenergyCloudClient._data: %s %s, kwargs=%r", method, path, kwargs)
         result = await self._transport.data(await self._http_session(), method, path, **kwargs)
-        logger.debug("SigenergyCloudClient._data response: %s %s -> %r", method, path, result)
         return result
 
     async def _envelope(self, method: str, path: str, **kwargs: Any) -> dict[str, Any]:
         logger.debug("SigenergyCloudClient._envelope: %s %s, kwargs=%r", method, path, kwargs)
         result = await self._transport.envelope(await self._http_session(), method, path, **kwargs)
-        logger.debug("SigenergyCloudClient._envelope response: %s %s -> %r", method, path, result)
         return result
 
     async def _http_session(self) -> aiohttp.ClientSession:

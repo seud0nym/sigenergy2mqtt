@@ -24,13 +24,7 @@ _AUTH_CODES = {401, 403, "401", "403"}
 def _error_message(payload: Any, fallback: str) -> str:
     if not isinstance(payload, dict):
         return fallback
-    return (
-        payload.get("msg")
-        or payload.get("message")
-        or payload.get("error_description")
-        or payload.get("error")
-        or fallback
-    )
+    return payload.get("msg") or payload.get("message") or payload.get("error_description") or payload.get("error") or fallback
 
 
 class CloudTransport:
@@ -50,10 +44,7 @@ class CloudTransport:
         """Execute a request and return Sigenergy's full JSON envelope."""
         await self._auth.ensure_token(session, self._base_url)
         url = f"{self._base_url}{path.lstrip('/')}"
-        logger.debug("Cloud API request: %s %s, kwargs=%r", method, url, kwargs)
-        async with session.request(
-            method, url, headers=self._auth.headers, **kwargs
-        ) as response:
+        async with session.request(method, url, headers=self._auth.headers, **kwargs) as response:
             return await self._parse_response(response)
 
     async def data(
@@ -85,9 +76,7 @@ class CloudTransport:
             ) from exc
 
         if response.status == 401:
-            raise SigenergyCloudAuthError(
-                _error_message(payload, "Sigenergy Cloud authentication failed")
-            )
+            raise SigenergyCloudAuthError(_error_message(payload, "Sigenergy Cloud authentication failed"))
         if response.status == 429:
             raise SigenergyCloudRateLimitError(
                 _error_message(payload, "Sigenergy Cloud rate limit exceeded"),
@@ -96,9 +85,7 @@ class CloudTransport:
             )
         if response.status >= 400:
             raise SigenergyCloudAPIError(
-                _error_message(
-                    payload, f"Sigenergy Cloud HTTP error {response.status}"
-                ),
+                _error_message(payload, f"Sigenergy Cloud HTTP error {response.status}"),
                 status_code=response.status,
                 response_body=body,
             )
@@ -111,9 +98,7 @@ class CloudTransport:
 
         code = payload.get("code")
         if code in _AUTH_CODES:
-            raise SigenergyCloudAuthError(
-                _error_message(payload, "Sigenergy Cloud authentication failed")
-            )
+            raise SigenergyCloudAuthError(_error_message(payload, "Sigenergy Cloud authentication failed"))
         if code == 429 or code == "429":
             raise SigenergyCloudRateLimitError(
                 _error_message(payload, "Sigenergy Cloud rate limit exceeded"),

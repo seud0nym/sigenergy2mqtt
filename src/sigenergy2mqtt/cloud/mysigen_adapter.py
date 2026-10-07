@@ -198,10 +198,16 @@ class MySigenCloudAdapter:
         return await self._cloud_operation(self._client.gateway_info)
 
     async def device_dynamic_info(self, device_type: int, sn_code: str) -> dict[str, Any]:
-        return await self._cloud_operation(lambda: self._client.device_dynamic_info(device_type, sn_code))
+        return await self._cloud_operation(
+            lambda: self._client.device_dynamic_info(device_type, sn_code),
+            operation_name="device_dynamic_info",
+        )
 
     async def device_static_info(self, device_type: int, sn_code: str) -> dict[str, Any]:
-        return await self._cloud_operation(lambda: self._client.device_static_info(device_type, sn_code))
+        return await self._cloud_operation(
+            lambda: self._client.device_static_info(device_type, sn_code),
+            operation_name="device_static_info",
+        )
 
     async def set_instant_override(self, command: InstantOverrideCommand) -> None:
         unsupported = []
@@ -219,6 +225,7 @@ class MySigenCloudAdapter:
         await self._cloud_operation(
             lambda: self._client.set_instant_manual_control(_MODE_TO_APP_CODE[command.mode], duration_minutes=duration_minutes),
             reject_api_errors=True,
+            operation_name="set_instant_manual_control",
         )
 
     async def clear_instant_override(self) -> None:
@@ -232,11 +239,29 @@ class MySigenCloudAdapter:
             ends_at=float(status.end_time) if status.end_time is not None else None,
         )
 
+    @staticmethod
+    def _operation_name(
+        operation: Callable[[], Awaitable[_T]],
+        *,
+        operation_name: str | None = None,
+    ) -> str:
+        """Return a human-readable name for a cloud operation."""
+        if operation_name:
+            return operation_name
+        for candidate in (
+            getattr(operation, "__name__", None),
+            getattr(getattr(operation, "__func__", None), "__name__", None),
+        ):
+            if candidate and candidate != "<lambda>":
+                return candidate
+        return "cloud operation"
+
     async def _cloud_operation(
         self,
         operation: Callable[[], Awaitable[_T]],
         *,
         reject_api_errors: bool = False,
+        operation_name: str | None = None,
     ) -> _T:
         """Run an operation, renewing a cloud login invalidated by the server.
 
@@ -246,17 +271,17 @@ class MySigenCloudAdapter:
         """
         await self.connect()
         generation = self._connection_generation
+        operation_label = self._operation_name(operation, operation_name=operation_name)
         for attempt in range(2):
             started = time.monotonic()
             try:
                 try:
-                    logger.debug(f"mySigen {operation.__name__} executing (attempt {attempt + 1}/2, generation={generation})")
+                    logger.debug(f"mySigen {operation_label} executing (attempt {attempt + 1}/2, generation={generation})")
                     result = await operation()
                 finally:
                     # Stop timing before error handling can reconnect. Login and
                     # station-discovery latency is tracked independently.
                     await Metrics.cloud_query(time.monotonic() - started)
-                logger.debug(f"mySigen {operation.__name__} returned: {result}")
                 await Metrics.cloud_availability(True)
                 return result
             except SigenergyCloudRateLimitError as exc:
@@ -310,25 +335,37 @@ class MySigenCloudAdapter:
         return await self._cloud_operation(self._client.get_operational_mode)
 
     async def set_operational_mode(self, mode: int, profile_id: int = -1) -> dict[str, Any]:
-        return await self._cloud_operation(lambda: self._client.set_operational_mode(mode, profile_id))
+        return await self._cloud_operation(
+            lambda: self._client.set_operational_mode(mode, profile_id),
+            operation_name="set_operational_mode",
+        )
 
     async def grid_export_limit(self) -> dict[str, Any]:
         return await self._cloud_operation(self._client.grid_export_limit)
 
     async def set_grid_export_limit(self, limit_kw: float, *, enabled: bool = True) -> dict[str, Any]:
-        return await self._cloud_operation(lambda: self._client.set_grid_export_limit(limit_kw, enabled=enabled))
+        return await self._cloud_operation(
+            lambda: self._client.set_grid_export_limit(limit_kw, enabled=enabled),
+            operation_name="set_grid_export_limit",
+        )
 
     async def grid_import_limit(self) -> dict[str, Any]:
         return await self._cloud_operation(self._client.grid_import_limit)
 
     async def set_grid_import_limit(self, limit_kw: float, *, enabled: bool = True) -> dict[str, Any]:
-        return await self._cloud_operation(lambda: self._client.set_grid_import_limit(limit_kw, enabled=enabled))
+        return await self._cloud_operation(
+            lambda: self._client.set_grid_import_limit(limit_kw, enabled=enabled),
+            operation_name="set_grid_import_limit",
+        )
 
     async def grid_connection_limit(self) -> dict[str, Any]:
         return await self._cloud_operation(self._client.grid_connection_limit)
 
     async def set_grid_connection_limit(self, limit_a: float, *, enabled: bool = True) -> dict[str, Any]:
-        return await self._cloud_operation(lambda: self._client.set_grid_connection_limit(limit_a, enabled=enabled))
+        return await self._cloud_operation(
+            lambda: self._client.set_grid_connection_limit(limit_a, enabled=enabled),
+            operation_name="set_grid_connection_limit",
+        )
 
     async def battery_power_limit(self) -> dict[str, Any]:
         return await self._cloud_operation(self._client.battery_power_limit)
@@ -338,17 +375,24 @@ class MySigenCloudAdapter:
             lambda: self._client.set_battery_power_limit(
                 max_charge_kw=max_charge_kw,
                 max_discharge_kw=max_discharge_kw,
-            )
+            ),
+            operation_name="set_battery_power_limit",
         )
 
     async def solar_power_limit(self) -> dict[str, Any]:
         return await self._cloud_operation(self._client.solar_power_limit)
 
     async def set_solar_power_limit(self, limit_kw: float | None) -> dict[str, Any]:
-        return await self._cloud_operation(lambda: self._client.set_solar_power_limit(limit_kw))
+        return await self._cloud_operation(
+            lambda: self._client.set_solar_power_limit(limit_kw),
+            operation_name="set_solar_power_limit",
+        )
 
     async def battery_export_limitation(self) -> dict[str, Any]:
         return await self._cloud_operation(self._client.battery_export_limitation)
 
     async def set_battery_export_limitation(self, enabled: bool) -> dict[str, Any]:
-        return await self._cloud_operation(lambda: self._client.set_battery_export_limitation(enabled))
+        return await self._cloud_operation(
+            lambda: self._client.set_battery_export_limitation(enabled),
+            operation_name="set_battery_export_limitation",
+        )
