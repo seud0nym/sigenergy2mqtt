@@ -69,6 +69,7 @@ class OperationalMode(SelectSensorMixin, CloudReadWriteSensor):
             precision=None,
             protocol_version=ProtocolVersion.N_A,
         )
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
     @staticmethod
     def _parse_modes(payload: dict[str, object]) -> tuple[list[str], list[tuple[int, int]]]:
@@ -230,6 +231,7 @@ class InstantControlMode(SelectSensorMixin, CloudReadWriteSensor):
         self._pending_value: Mode | None = None
         self._status_snapshot = _InstantControlStatusSnapshot()
         self._polling_coordinator = self._status_snapshot
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
     @property
     def pending_value(self) -> Mode | None:
@@ -314,6 +316,7 @@ class InstantControlDuration(NumericSensorMixin, CloudReadWriteSensor):
         self._pending_value: int | None = None
         self._status_snapshot = _InstantControlStatusSnapshot()
         self._polling_coordinator = self._status_snapshot
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
     @property
     def pending_value(self) -> int:
@@ -373,6 +376,7 @@ class InstantControlSwitch(SwitchSensorMixin, CloudReadWriteSensor, Availability
             protocol_version=ProtocolVersion.N_A,
         )
         self._availability_topic: str | None = None
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
     @property
     def payload_available(self) -> bool | int | float | str | None:
@@ -461,6 +465,7 @@ class GridExportLimit(CloudGridLimitSensor):
             precision=3,
             protocol_version=ProtocolVersion.N_A,
         )
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
 
 class GridImportLimit(CloudGridLimitSensor):
@@ -486,6 +491,7 @@ class GridImportLimit(CloudGridLimitSensor):
             precision=3,
             protocol_version=ProtocolVersion.N_A,
         )
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
 
 class GridConnectionLimit(CloudGridLimitSensor):
@@ -511,6 +517,7 @@ class GridConnectionLimit(CloudGridLimitSensor):
             precision=1,
             protocol_version=ProtocolVersion.N_A,
         )
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
 
 def _parse_power_limit(sensor: CloudReadWriteSensor, value: object, key: str) -> float | str:
@@ -564,6 +571,7 @@ class _BatteryPowerLimit(NumericSensorMixin, CloudReadWriteSensor):
             maximum=UNLIMITED_POWER_KW,
             protocol_version=ProtocolVersion.N_A,
         )
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
     def _parse_limits(self, payload: object) -> dict[str, float | None] | None:
         if not isinstance(payload, dict):

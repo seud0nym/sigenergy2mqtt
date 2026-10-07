@@ -93,6 +93,8 @@ class DeviceInfoSensor(CloudSensor):
         self._static = static
         if static:
             self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
+        else:
+            self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
     async def _read_cloud_state(self, port: CloudControlPort) -> float | str | None:
         payload = await self._snapshot.read(port)

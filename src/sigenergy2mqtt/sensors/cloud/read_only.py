@@ -88,6 +88,7 @@ class GatewayCommunicationStatus(GatewaySensor):
             state_class=None,
             icon="mdi:signal-variant",
         )
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
     async def _read_cloud_state(self, port: CloudControlPort) -> float | str | None:
         status = (await self._snapshot.read(port)).get("communicationStatus")
@@ -201,6 +202,7 @@ class GatewayGridSideInfoSensor(GatewaySensor):
             state_class=StateClass.MEASUREMENT if unit else None,
             icon=icon,
         )
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
     async def _read_cloud_state(self, port: CloudControlPort) -> float | str | None:
         entries = (await self._snapshot.read(port)).get("gridSideInfoList")
