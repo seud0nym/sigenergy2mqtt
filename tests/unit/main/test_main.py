@@ -331,6 +331,7 @@ async def test_cloud_control_close_failure_does_not_abort_startup(caplog):
 
     with (
         patch("sigenergy2mqtt.main.device_setup.cloud_control_registry") as registry,
+        patch("sigenergy2mqtt.main.device_setup.ThreadConfig.create") as mock_create_thread,
         caplog.at_level(logging.ERROR),
     ):
         registry.configure = MagicMock()
@@ -340,6 +341,30 @@ async def test_cloud_control_close_failure_does_not_abort_startup(caplog):
 
     assert "Failed to close cloud adapter after discovery" in caplog.text
     assert "Cloud API will be disabled" in caplog.text
+    mock_create_thread.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_cloud_control_successful_setup_closes_once():
+    cloud_port = MagicMock()
+    cloud_port.gateway_info = AsyncMock(return_value=None)
+    cloud_port.device_list = AsyncMock(return_value=[{"deviceType": "Inverter", "serialNumber": "SN-1"}])
+    cloud_port.device_dynamic_info = AsyncMock(return_value={})
+    cloud_port.device_static_info = AsyncMock(return_value={})
+    cloud_port.available_operational_modes = AsyncMock(return_value={})
+    cloud_port.close = AsyncMock()
+
+    with (
+        patch("sigenergy2mqtt.main.device_setup.cloud_control_registry") as registry,
+        patch("sigenergy2mqtt.main.device_setup.ThreadConfig.create") as mock_create_thread,
+    ):
+        registry.configure = MagicMock()
+        registry.active = cloud_port
+        _registered_inverter(0, sn="SN-1")
+        await _setup_cloud_control()
+
+    cloud_port.close.assert_awaited_once()
+    mock_create_thread.assert_called_once()
 
 
 def make_validation_sensor(suffix: str, address: int = 30001):
