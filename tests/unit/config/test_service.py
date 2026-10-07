@@ -24,6 +24,7 @@ def test_optional_settings_follow_integration_configuration(config):
     config.cloud.username = "cloud-user"
     config.cloud.password = "cloud-password"
     config.cloud.region = "eu"
+    config.cloud.accept_unofficial_api_risk = True
     config.diagnostics.enabled = True
     config.influxdb.enabled = True
     config.pvoutput.enabled = True

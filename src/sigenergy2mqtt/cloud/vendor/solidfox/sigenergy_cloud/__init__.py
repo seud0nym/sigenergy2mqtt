@@ -1,5 +1,6 @@
 """Owned async client for the Sigenergy Cloud app API."""
 
+from .app_version import MYSIGEN_APP_VERSION
 from .client import UNLIMITED_POWER_KW, SigenergyCloudClient, is_unlimited_power
 from .errors import (
     SigenergyCloudAPIError,
@@ -17,6 +18,7 @@ from .models import (
 )
 
 __all__ = [
+    "MYSIGEN_APP_VERSION",
     "UNLIMITED_POWER_KW",
     "BatteryLevelSettings",
     "InstantManualControl",

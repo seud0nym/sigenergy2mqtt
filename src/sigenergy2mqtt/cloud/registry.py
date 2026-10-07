@@ -19,12 +19,12 @@ class CloudControlRegistry:
 
     def configure(self, config: CloudConfig) -> None:
         if not config.enabled:
+            if config.configured and not config.accept_unofficial_api_risk:
+                logger.info("Cloud service is configured but disabled because accept-unofficial-api-risk is false")
             self._adapter = None
             self._provider = None
             return
-        if not config.accept_unofficial_api_risk:
-            raise ValueError("cloud.accept-unofficial-api-risk must be true to use the unofficial mySigen cloud API")
-        logger.warning("Using the unofficial mySigen cloud API.")
+        logger.info(f"Using the unofficial mySigen Cloud API (v{MySigenCloudAdapter.APP_VERSION})")
         self._adapter = MySigenCloudAdapter(config.username, config.password, config.region)
         self._provider = "mysigen"
 

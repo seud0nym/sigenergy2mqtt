@@ -13,11 +13,10 @@ import aiohttp
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad
 
+from .app_version import MYSIGEN_APP_VERSION
 from .errors import SigenergyCloudAuthError, SigenergyCloudTokenExpiredError
 
 logger = logging.getLogger(__name__)
-
-_MYSIGEN_APP_VERSION = "4.1.0"
 
 _PASSWORD_AES_KEY = "sigensigensigenp"
 _PASSWORD_AES_IV = "sigensigensigenp"
@@ -89,7 +88,7 @@ class OAuthSession:
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-site",
             "Sec-Gpc": "1",
-            "Sg-App-Version": _MYSIGEN_APP_VERSION,
+            "Sg-App-Version": MYSIGEN_APP_VERSION,
             "Sg-Bui": "1",
             "Sg-Env": "1",
             "Sg-Log-Id": str(uuid.uuid4()),
@@ -98,7 +97,7 @@ class OAuthSession:
             # "Sg-Session": "UUID", # Can't see how to obtain it from the app, so leaving it out for now. The server doesn't seem to care?
             "Sg-Source": "flutterweb",
             "Sg-Ts": str(int(time.time() * 1000) * 1000),
-            "Sg-V": _MYSIGEN_APP_VERSION,
+            "Sg-V": MYSIGEN_APP_VERSION,
             "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36 Edg/154.0.0.0",
             "version": "RELEASE",
         }

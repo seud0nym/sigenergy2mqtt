@@ -394,8 +394,8 @@ def test_registry_requires_explicit_unofficial_api_opt_in() -> None:
     registry = CloudControlRegistry()
     config = CloudConfig(username="user", password="password", region="eu")  # pyright: ignore[reportCallIssue]
 
-    with pytest.raises(ValueError, match="accept-unofficial-api-risk"):
-        registry.configure(config)
+    registry.configure(config)
+    assert registry.active is None
 
 
 @pytest.mark.asyncio

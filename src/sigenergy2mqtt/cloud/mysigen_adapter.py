@@ -6,7 +6,7 @@ import logging
 import time
 from collections.abc import Awaitable, Callable
 from datetime import timedelta
-from typing import Any, TypeVar
+from typing import Any, Final, TypeVar
 
 from aiohttp import ClientError
 
@@ -26,6 +26,7 @@ from .models import (
     InstantOverrideCommand,
 )
 from .vendor.solidfox.sigenergy_cloud import (
+    MYSIGEN_APP_VERSION,
     InstantManualMode,
     SigenergyCloudAPIError,
     SigenergyCloudAuthError,
@@ -81,6 +82,8 @@ def _api_error_indicates_availability(exc: SigenergyCloudAPIError) -> bool:
 
 class MySigenCloudAdapter:
     """Translate domain commands to the unofficial, vendored cloud client."""
+
+    APP_VERSION: Final[str] = MYSIGEN_APP_VERSION
 
     def __init__(self, username: str, password: str, region: str) -> None:
         self._client = SigenergyCloudClient(username, password, region=region)
