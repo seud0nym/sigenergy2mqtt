@@ -2,6 +2,7 @@ FROM python:3.14-alpine3.24
 
 # Update all available packages to mitigate vulnerabilities
 RUN apk upgrade --update --no-cache --available
+RUN apk upgrade zlib --update --no-cache
 
 ENV PYTHONUNBUFFERED=1
 
