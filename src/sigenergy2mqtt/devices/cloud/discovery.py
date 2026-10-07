@@ -52,19 +52,12 @@ async def _discover_cloud_gateway_info(cloud_port: CloudControlPort) -> dict[str
 
 
 async def _discover_cloud_device_list(cloud_port: CloudControlPort) -> list[dict[str, Any]] | None:
-    """Discover plant devices and release resources owned by the startup loop."""
-    device_list: list[dict[str, Any]] | None = None
+    """Discover the plant device list from the cloud."""
     try:
-        device_list = await cloud_port.device_list()
+        return await cloud_port.device_list()
     except (ClientError, CloudControlError) as exc:
         logger.warning("Cloud inverter discovery failed; Cloud API will be disabled for this run: %s", exc)
-    finally:
-        try:
-            await cloud_port.close()
-        except Exception:
-            device_list = None
-            logger.exception("Failed to close cloud adapter after discovery; Cloud API will be disabled for this run")
-    return device_list
+        return None
 
 
 async def discover_cloud(cloud_port: CloudControlPort) -> CloudDiscovery | None:
@@ -115,10 +108,4 @@ async def discover_operational_modes(cloud_port: CloudControlPort, discovery: Cl
             logger.warning("Cloud operational-mode discovery returned an invalid response")
     except (ClientError, CloudControlError) as exc:
         logger.warning("Cloud operational-mode discovery failed; sensor will be disabled: %s", exc)
-    finally:
-        try:
-            await cloud_port.close()
-        except Exception:
-            operational_modes = None
-            logger.exception("Failed to close cloud adapter after operational-mode discovery")
     return replace(discovery, operational_modes=operational_modes)

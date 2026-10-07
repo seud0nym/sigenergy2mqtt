@@ -16,7 +16,7 @@ from sigenergy2mqtt.devices import (
     PowerPlant,
     bind_cross_device_sensors,
 )
-from sigenergy2mqtt.devices.cloud import discover_cloud, discover_operational_modes
+from sigenergy2mqtt.devices.cloud import CloudDiscovery, discover_cloud, discover_operational_modes
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.sensors.inverter.read_only import RatedActivePower
 from sigenergy2mqtt.sensors.plant.read_only import (
@@ -80,16 +80,35 @@ def _cloud_control_plant_index(device_list: list[dict[str, Any]]) -> int | None:
 
 
 async def _setup_cloud_control() -> None:
-    """Discover, match, and configure the optional cloud control device."""
+    """Discover, match, and configure the optional cloud control device.
+
+    A single cloud connection is established for the full discovery sequence
+    (device list, gateway info, operational modes) and closed once at the end.
+    The transport_factory used by the polling thread will re-authenticate in
+    its own event loop, creating a fresh HTTP session bound to that loop.
+    """
     cloud_control_registry.configure(active_config.cloud)
     if (cloud_port := cloud_control_registry.active) is None:
         return
-    if (discovery := await discover_cloud(cloud_port)) is None:
-        return
-    if (plant_index := _cloud_control_plant_index(discovery.device_list)) is None:
+
+    discovery: CloudDiscovery | None = None
+    plant_index: int | None = None
+    close_failed = False
+    try:
+        if (discovery := await discover_cloud(cloud_port)) is not None:
+            plant_index = _cloud_control_plant_index(discovery.device_list)
+            if plant_index is not None:
+                discovery = await discover_operational_modes(cloud_port, discovery)
+    finally:
+        try:
+            await cloud_port.close()
+        except Exception:
+            close_failed = True
+            logger.exception("Failed to close cloud adapter after discovery; Cloud API will be disabled for this run")
+
+    if discovery is None or plant_index is None or close_failed:
         return
 
-    discovery = await discover_operational_modes(cloud_port, discovery)
     cloud_config = ThreadConfig.create(host=None, port=None, name="Sigenergy Cloud")
     cloud_config.transport_factory = cloud_control_registry.transport_factory
     cloud_config.add_device(CloudControl(plant_index, cloud_port, discovery))
