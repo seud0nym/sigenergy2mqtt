@@ -24,7 +24,6 @@ class CloudControlRegistry:
             self._adapter = None
             self._provider = None
             return
-        logger.info(f"Using the unofficial mySigen Cloud API (v{MySigenCloudAdapter.APP_VERSION})")
         self._adapter = MySigenCloudAdapter(config.username, config.password, config.region)
         self._provider = "mysigen"
 

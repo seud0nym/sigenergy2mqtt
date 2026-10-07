@@ -121,7 +121,7 @@ class MySigenCloudAdapter:
         started = time.monotonic()
         try:
             await self._client.connect()
-            logger.info(f"Connected to {self._client.base_url} Cloud API (region={self._client.region})")
+            logger.info(f"Connected to {self._client.base_url} unofficial mySigen Cloud API v{MySigenCloudAdapter.APP_VERSION} (region={self._client.region})")
         except SigenergyCloudAuthError as exc:
             await Metrics.cloud_connection(connected=False, error=True)
             raise CloudControlAuthError(str(exc)) from exc
@@ -144,7 +144,7 @@ class MySigenCloudAdapter:
         """Replace an invalid cloud login unless another task already did so."""
         async with self._connect_lock:
             logger.debug(
-                f"Reconnecting to {self._client.base_url} Cloud API (_connection_generation={self._connection_generation}, failed_generation={failed_generation})",
+                f"Reconnecting to {self._client.base_url} unofficial mySigen Cloud API v{MySigenCloudAdapter.APP_VERSION} (_connection_generation={self._connection_generation}, failed_generation={failed_generation})",
             )
             if self._connection_generation != failed_generation:
                 return
@@ -159,14 +159,14 @@ class MySigenCloudAdapter:
                 self._connected = False
                 await Metrics.cloud_connection(connected=False)
                 logger.debug(
-                    f"Connection to {self._client.base_url} Cloud API invalidated (_connection_generation={self._connection_generation}, failed_generation={failed_generation})",
+                    f"Connection to {self._client.base_url} unofficial mySigen Cloud API v{MySigenCloudAdapter.APP_VERSION} invalidated (_connection_generation={self._connection_generation}, failed_generation={failed_generation})",
                 )
 
     async def close(self) -> None:
         await self._client.close()
         self._connected = False
         await Metrics.cloud_connection(connected=False)
-        logger.info(f"Disconnected from {self._client.base_url} Cloud API")
+        logger.info(f"Disconnected from {self._client.base_url} unofficial mySigen Cloud API v{MySigenCloudAdapter.APP_VERSION} (region={self._client.region})")
 
     async def device_list(self) -> list[dict[str, Any]]:
         """Return app topology devices in the official cloud API shape."""
