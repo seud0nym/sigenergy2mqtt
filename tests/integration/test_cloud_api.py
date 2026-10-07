@@ -67,7 +67,7 @@ async def test_mysigen_cloud_adapter_against_test_server(
             assert status.enabled is False
 
             modes = await adapter.available_operational_modes()
-            assert len(modes["defaultWorkingModes"]) == 6
+            assert len(modes["defaultWorkingModes"]) == 5  # "Custom Operation Mode" (value == "9") should be filtered out
             print(await adapter.device_list())
             assert await adapter.device_list() == [
                 {"systemId": "10000000000001", "serialNumber": "CMU123A45BP678", "deviceType": "Aio", "status": "Normal", "pn": "", "firmwareVersion": "", "attrMap": {}},
