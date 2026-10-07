@@ -70,7 +70,7 @@ class SigenergyCloudClient:
         self._encrypted_password = encrypt_password(password)
         self._owned_session: aiohttp.ClientSession | None = None
         self._session = session
-        self._auth = OAuthSession()
+        self._auth = OAuthSession(region)
         self._transport = CloudTransport(self.base_url, self._auth)
 
         self.station_id: str | None = None

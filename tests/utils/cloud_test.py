@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 import sys
 
@@ -9,9 +10,17 @@ if __name__ == "__main__":
 
 from sigenergy2mqtt.cloud.vendor.solidfox.sigenergy_cloud import SigenergyCloudClient
 
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s [%(levelname)s] %(name)s#L%(lineno)d: %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)],
+)
+logger = logging.getLogger("sigenergy2mqtt.cloud")
+logger.setLevel(logging.DEBUG)
+
 
 async def async_main():
-    load_dotenv(dotenv_path="tests/utils/.debug.env")
+    load_dotenv(dotenv_path="tests/utils/.debug_cloud_test.env")
 
     username = os.getenv("SIGENERGY2MQTT_CLOUD_USERNAME")
     password = os.getenv("SIGENERGY2MQTT_CLOUD_PASSWORD")
@@ -32,11 +41,7 @@ async def async_main():
             "device/aio/by/station",
             station_query=True,
         )
-        print(data)
-
-        # print(await client.aio_serials())
-
-        # print(await client.device_topology())
+        logger.info(data)
 
     finally:
         await client.close()

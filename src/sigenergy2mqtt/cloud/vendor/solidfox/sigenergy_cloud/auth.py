@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import base64
+import logging
 import time
+import uuid
 from dataclasses import dataclass
 from typing import Any
 
@@ -12,6 +14,10 @@ from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad
 
 from .errors import SigenergyCloudAuthError, SigenergyCloudTokenExpiredError
+
+logger = logging.getLogger(__name__)
+
+_MYSIGEN_APP_VERSION = "4.1.0"
 
 _PASSWORD_AES_KEY = "sigensigensigenp"
 _PASSWORD_AES_IV = "sigensigensigenp"
@@ -58,8 +64,9 @@ class TokenBundle:
 class OAuthSession:
     """Small state holder for Sigenergy's password-grant OAuth flow."""
 
-    def __init__(self) -> None:
+    def __init__(self, region: str) -> None:
         self._tokens: TokenBundle | None = None
+        self._region = region
 
     @property
     def headers(self) -> dict[str, str]:
@@ -67,8 +74,33 @@ class OAuthSession:
         if self._tokens is None:
             raise SigenergyCloudAuthError("Sigenergy Cloud is not authenticated")
         return {
+            "Accept-Language": "en-US",
+            "Auth-Client-Id": "sigen",
             "Authorization": f"Bearer {self._tokens.access_token}",
-            "Content-Type": "application/json",
+            "Client-Server": self._region,
+            "Content-Type": "application/json; charset=utf-8",
+            "Dnt": "1",
+            "Lang": "en_US",
+            "Priority": "u=1, i",
+            "Sec-Ch-Ua": '"Chromium";v="154", "Microsoft Edge";v="154", "Not A(Brand";v="99"',
+            "Sec-Ch-Ua-mobile": "?0",
+            "Sec-Ch-Ua-Platform": '"Windows"',
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-site",
+            "Sec-Gpc": "1",
+            "Sg-App-Version": _MYSIGEN_APP_VERSION,
+            "Sg-Bui": "1",
+            "Sg-Env": "1",
+            "Sg-Log-Id": str(uuid.uuid4()),
+            "Sg-Pkg": "sigen_app",
+            "Sg-Platform": "web",
+            # "Sg-Session": "UUID", # Can't see how to obtain it from the app, so leaving it out for now. The server doesn't seem to care?
+            "Sg-Source": "flutterweb",
+            "Sg-Ts": str(int(time.time() * 1000) * 1000),
+            "Sg-V": _MYSIGEN_APP_VERSION,
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36 Edg/154.0.0.0",
+            "version": "RELEASE",
         }
 
     async def authenticate(
@@ -117,17 +149,11 @@ class OAuthSession:
         async with session.post(
             url,
             data=form,
-            headers={
-                "Authorization": aiohttp.encode_basic_auth(
-                    _OAUTH_CLIENT_ID, _OAUTH_CLIENT_SECRET
-                )
-            },
+            headers={"Authorization": aiohttp.encode_basic_auth(_OAUTH_CLIENT_ID, _OAUTH_CLIENT_SECRET)},
         ) as response:
             body = await response.text()
             if response.status != 200:
-                raise error_type(
-                    f"Sigenergy Cloud authentication failed: HTTP {response.status}; {body}"
-                )
+                raise error_type(f"Sigenergy Cloud authentication failed: HTTP {response.status}; {body}")
             payload = await response.json()
 
         token_payload = payload.get("data", payload)
@@ -136,6 +162,4 @@ class OAuthSession:
         try:
             return TokenBundle.from_api(token_payload)
         except KeyError as exc:
-            raise error_type(
-                f"Incomplete Sigenergy Cloud token response: {payload!r}"
-            ) from exc
+            raise error_type(f"Incomplete Sigenergy Cloud token response: {payload!r}") from exc
