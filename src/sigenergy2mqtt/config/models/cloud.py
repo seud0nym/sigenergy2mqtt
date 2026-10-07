@@ -93,6 +93,12 @@ class CloudConfig(BaseModel):
 
     @computed_field(exclude_if=lambda _: True)
     @property
-    def enabled(self) -> bool:
-        """Return True if the cloud service is enabled (all required fields are provided)."""
+    def configured(self) -> bool:
+        """Return True if the cloud service is configured (all required fields are provided)."""
         return bool(self.username.strip() and self.password.strip() and self.region.strip())
+
+    @computed_field(exclude_if=lambda _: True)
+    @property
+    def enabled(self) -> bool:
+        """Return True if the cloud service is enabled (all required fields are provided and unofficial API risk is accepted)."""
+        return self.configured and self.accept_unofficial_api_risk
