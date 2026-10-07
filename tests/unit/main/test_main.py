@@ -346,6 +346,8 @@ async def test_cloud_control_close_failure_does_not_abort_startup(caplog):
 
 @pytest.mark.asyncio
 async def test_cloud_control_successful_setup_closes_once():
+    from unittest.mock import call
+    
     cloud_port = MagicMock()
     cloud_port.gateway_info = AsyncMock(return_value=None)
     cloud_port.device_list = AsyncMock(return_value=[{"deviceType": "Inverter", "serialNumber": "SN-1"}])
@@ -353,6 +355,11 @@ async def test_cloud_control_successful_setup_closes_once():
     cloud_port.device_static_info = AsyncMock(return_value={})
     cloud_port.available_operational_modes = AsyncMock(return_value={})
     cloud_port.close = AsyncMock()
+
+    manager = MagicMock()
+    manager.attach_mock(cloud_port.device_list, "device_list")
+    manager.attach_mock(cloud_port.available_operational_modes, "modes")
+    manager.attach_mock(cloud_port.close, "close")
 
     with (
         patch("sigenergy2mqtt.main.device_setup.cloud_control_registry") as registry,
@@ -363,6 +370,14 @@ async def test_cloud_control_successful_setup_closes_once():
         _registered_inverter(0, sn="SN-1")
         await _setup_cloud_control()
 
+    # Verify close count and that it happened exactly once after discovery
+    manager.assert_has_calls(
+        [
+            call.device_list(),
+            call.modes(),
+            call.close(),
+        ]
+    )
     cloud_port.close.assert_awaited_once()
     mock_create_thread.assert_called_once()
 
