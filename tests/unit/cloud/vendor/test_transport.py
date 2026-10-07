@@ -20,7 +20,7 @@ from sigenergy2mqtt.cloud.vendor.solidfox.sigenergy_cloud.transport import (
 
 async def _authed_transport() -> tuple[aiohttp.ClientSession, CloudTransport]:
     session = aiohttp.ClientSession()
-    auth = OAuthSession()
+    auth = OAuthSession("eu")
     with aioresponses() as mocked:
         mocked.post(
             "https://api-eu.sigencloud.com/auth/oauth/token",
@@ -36,12 +36,8 @@ async def _authed_transport() -> tuple[aiohttp.ClientSession, CloudTransport]:
             "user",
             "encrypted",
         )
-        (request,) = mocked.requests[
-            ("POST", URL("https://api-eu.sigencloud.com/auth/oauth/token"))
-        ]
-        assert request.kwargs["headers"] == {
-            "Authorization": aiohttp.encode_basic_auth("sigen", "sigen")
-        }
+        (request,) = mocked.requests[("POST", URL("https://api-eu.sigencloud.com/auth/oauth/token"))]
+        assert request.kwargs["headers"] == {"Authorization": aiohttp.encode_basic_auth("sigen", "sigen")}
         assert "auth" not in request.kwargs
     return session, CloudTransport("https://api-eu.sigencloud.com/", auth)
 
@@ -55,9 +51,7 @@ async def test_returns_data_from_successful_envelope() -> None:
                 "https://api-eu.sigencloud.com/device/example",
                 payload={"code": 0, "data": {"ok": True}},
             )
-            assert await transport.data(session, "GET", "device/example") == {
-                "ok": True
-            }
+            assert await transport.data(session, "GET", "device/example") == {"ok": True}
     finally:
         await session.close()
 
@@ -82,9 +76,7 @@ async def test_maps_api_error_code_to_exception() -> None:
     ("status", "error_type"),
     [(401, SigenergyCloudAuthError), (429, SigenergyCloudRateLimitError)],
 )
-async def test_maps_http_status_to_typed_error(
-    status: int, error_type: type[Exception]
-) -> None:
+async def test_maps_http_status_to_typed_error(status: int, error_type: type[Exception]) -> None:
     session, transport = await _authed_transport()
     try:
         with aioresponses() as mocked:
@@ -101,7 +93,7 @@ async def test_maps_http_status_to_typed_error(
 
 @pytest.mark.asyncio
 async def test_debug_logs_request_and_response(caplog: pytest.LogCaptureFixture) -> None:
-    """Transport logs the outgoing method+URL and the HTTP response status at DEBUG."""
+    """Transport logs the HTTP response status, method, and URL at DEBUG."""
     session, transport = await _authed_transport()
     try:
         with aioresponses() as mocked:
@@ -112,12 +104,10 @@ async def test_debug_logs_request_and_response(caplog: pytest.LogCaptureFixture)
             with caplog.at_level(logging.DEBUG, logger="sigenergy2mqtt.cloud.vendor.solidfox.sigenergy_cloud.transport"):
                 await transport.data(session, "GET", "device/example")
 
-        request_records = [r for r in caplog.records if "Cloud API request" in r.message]
         response_records = [r for r in caplog.records if "Cloud API response" in r.message]
-        assert len(request_records) >= 1, "Expected at least one Cloud API request log"
-        assert "GET" in request_records[0].message
-        assert "device/example" in request_records[0].message
         assert len(response_records) >= 1, "Expected at least one Cloud API response log"
+        assert "get" in response_records[0].message
+        assert "device/example" in response_records[0].message
         assert "200" in response_records[0].message
     finally:
         await session.close()

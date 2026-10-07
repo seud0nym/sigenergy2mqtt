@@ -487,7 +487,7 @@ async def test_power_limit_and_backup_reserve_endpoints() -> None:
 
 @pytest.mark.asyncio
 async def test_client_debug_logs_data_and_envelope_calls(caplog: pytest.LogCaptureFixture) -> None:
-    """SigenergyCloudClient logs _data and _envelope calls and their responses at DEBUG."""
+    """SigenergyCloudClient logs _data and _envelope calls at DEBUG."""
     session = aiohttp.ClientSession()
     client = SigenergyCloudClient("user", "password", session=session)
     client_logger = "sigenergy2mqtt.cloud.vendor.solidfox.sigenergy_cloud.client"
@@ -505,19 +505,16 @@ async def test_client_debug_logs_data_and_envelope_calls(caplog: pytest.LogCaptu
                 await client.gateway_info()
 
         data_call = [r for r in caplog.records if "_data:" in r.message]
-        data_resp = [r for r in caplog.records if "_data response:" in r.message]
         assert data_call, "Expected a _data call log"
         assert "GET" in data_call[0].message
         assert "device/gateway" in data_call[0].message
-        assert data_resp, "Expected a _data response log"
-        assert "device/gateway" in data_resp[0].message
     finally:
         await session.close()
 
 
 @pytest.mark.asyncio
 async def test_client_debug_logs_envelope_calls(caplog: pytest.LogCaptureFixture) -> None:
-    """SigenergyCloudClient logs _envelope calls and responses at DEBUG."""
+    """SigenergyCloudClient logs _envelope calls at DEBUG."""
     session = aiohttp.ClientSession()
     client = SigenergyCloudClient("user", "password", session=session)
     client_logger = "sigenergy2mqtt.cloud.vendor.solidfox.sigenergy_cloud.client"
@@ -535,11 +532,8 @@ async def test_client_debug_logs_envelope_calls(caplog: pytest.LogCaptureFixture
                 await client.disable_instant_manual_control()
 
         env_call = [r for r in caplog.records if "_envelope:" in r.message]
-        env_resp = [r for r in caplog.records if "_envelope response:" in r.message]
         assert env_call, "Expected an _envelope call log"
         assert "PUT" in env_call[0].message
         assert "instant/manunal" in env_call[0].message
-        assert env_resp, "Expected an _envelope response log"
-        assert "instant/manunal" in env_resp[0].message
     finally:
         await session.close()
