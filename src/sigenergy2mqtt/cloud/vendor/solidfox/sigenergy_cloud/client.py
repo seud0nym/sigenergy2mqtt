@@ -177,6 +177,9 @@ class SigenergyCloudClient:
     async def available_operational_modes(self) -> dict[str, Any]:
         """Return available energy-profile modes."""
         data = await self._station_data("GET", "device/energy-profile/mode/all/{station_id}")
+        # Filter out "Custom Operation Mode" (value == "9")
+        modes = data["defaultWorkingModes"]
+        data["defaultWorkingModes"] = [item for item in modes if item.get("value") != "9"]
         self._operational_modes = data
         return data
 
