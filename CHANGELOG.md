@@ -3,6 +3,15 @@
 
 ## [Unreleased]
 
+### Added
+
+- Optional Sigenergy Cloud access using the unofficial mySigen API to expose controls and sensors not available via local Modbus
+
+### Fixed
+
+- Fixed "DiagnosticsRegistry Provider 'pvoutput' failed: 'NoneType' object has no attribute 'value'" error message (#323)
+- Improved pymodbus 'Skipping' logging filter to catch subsequent 'Repeating'  messages
+
 ### Changed
 
 - Refactored former monolithic main module into separate concerns modules
