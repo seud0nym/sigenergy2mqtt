@@ -21,9 +21,24 @@ os.environ["SIGENERGY2MQTT_MODBUS_HOST"] = "127.0.0.1"
 import requests
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 
-from sigenergy2mqtt.common import ConsumptionMethod, HybridInverter, ProtocolVersion, PVInverter
+from sigenergy2mqtt.common import (
+    ConsumptionMethod,
+    HybridInverter,
+    ProtocolVersion,
+    PVInverter,
+)
 from sigenergy2mqtt.config import Config, _swap_active_config
-from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, ModbusSensorMixin, ReadableSensorMixin, ReservedSensor, Sensor, TypedSensorMixin, WriteableSensorMixin, WriteOnlySensor
+from sigenergy2mqtt.sensors.base import (
+    AlarmCombinedSensor,
+    CloudSensor,
+    ModbusSensorMixin,
+    ReadableSensorMixin,
+    ReservedSensor,
+    Sensor,
+    TypedSensorMixin,
+    WriteableSensorMixin,
+    WriteOnlySensor,
+)
 from sigenergy2mqtt.sensors.metrics import MetricsSensor, ResetMetrics
 from sigenergy2mqtt.sensors.plant.derived import PlantConsumedPower
 from sigenergy2mqtt.sensors.plant.read_write import RemoteEMSLimit
@@ -50,12 +65,16 @@ def write_header(f) -> None:
   - [Inverter](#inverter)
     - [Energy Storage System](#energy-storage-system)
     - [PV String](#pv-string)
-  - [AC Charger](#ac-charger)
-  - [DC Charger](#dc-charger)
-  - [Metrics](#metrics)
-  - [Settings](#settings)
-  - [Service Health](#service-health)
-- [Index](#index)
+    - [AC Charger](#ac-charger)
+    - [DC Charger](#dc-charger)
+    - [Cloud Control](#cloud-control)
+      - [Gateway](#gateway)
+      - [Cloud Inverter](#cloud-inverter)
+      - [Cloud Battery](#cloud-battery)
+    - [Metrics](#metrics)
+    - [Settings](#settings)
+    - [Service Health](#service-health)
+  - [Index](#index)
 
 # MQTT Topics
 
@@ -259,7 +278,7 @@ async def sensor_index() -> None:
                     f.write(f"<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>{sensor.state_topic}</td></tr>\n")
                     if sensor.publish_raw:
                         f.write(f"<tr><td>Raw&nbsp;State&nbsp;Topic</td><td>{sensor['raw_state_topic']}</td></tr>\n")
-                    if not isinstance(sensor, (MetricsSensor, ResetMetrics, SettingsSensor)):
+                    if not isinstance(sensor, (CloudSensor, MetricsSensor, ResetMetrics, SettingsSensor)):
                         f.write("<tr><td>Source</td><td>")
                         if "source" in attributes:
                             if isinstance(sensor, PlantConsumedPower):
@@ -396,6 +415,17 @@ async def sensor_index() -> None:
         f.write("\n## DC Charger\n")
         published_topics(f, "DCCharger")
         subscribed_topics(f, "DCCharger")
+        f.write("\n## Cloud Control\n")
+        f.write("\nIn the following topics, the identifier `10000000000001` is a placeholder that will vary with each installation.\n")
+        f.write("\nCloud Control and child device topics are only published when the Cloud API access is enabled.\n\n")
+        published_topics(f, "CloudControl")
+        subscribed_topics(f, "CloudControl")
+        f.write("\n### Gateway\n")
+        published_topics(f, "Gateway")
+        f.write("\n### Cloud Inverter\n")
+        published_topics(f, "CloudInverter")
+        f.write("\n### Cloud Battery\n")
+        published_topics(f, "CloudBattery")
         f.write("\n## Metrics\n")
         f.write("\nMetrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Home Assistant discovery is enabled. The scan interval cannot be altered.\n")
         f.write("\nInfluxDB Metrics are only published when the InfluxDB integration is enabled.\n\n")
@@ -432,6 +462,14 @@ async def sensor_index() -> None:
         published += published_topics(f, "ACCharger", index_only=True)
         f.write("\n<h6>DC Charger</h6>\n")
         published += published_topics(f, "DCCharger", index_only=True)
+        f.write("\n<h6>Cloud Control</h6>\n")
+        published += published_topics(f, "CloudControl", index_only=True)
+        f.write("\n<h6>Gateway</h6>\n")
+        published += published_topics(f, "Gateway", index_only=True)
+        f.write("\n<h6>Cloud Inverter</h6>\n")
+        published += published_topics(f, "CloudInverter", index_only=True)
+        f.write("\n<h6>Cloud Battery</h6>\n")
+        published += published_topics(f, "CloudBattery", index_only=True)
         f.write("\n<h6>Metrics</h6>\n")
         published += published_topics(f, "MetricsService", index_only=True)
         f.write("\n<h6>Settings</h6>\n")
@@ -445,6 +483,8 @@ async def sensor_index() -> None:
         subscribed += subscribed_topics(f, "ACCharger", index_only=True)
         f.write("\n<h6>DC Charger</h6>\n")
         subscribed += subscribed_topics(f, "DCCharger", index_only=True)
+        f.write("\n<h6>Cloud Control</h6>\n")
+        subscribed += subscribed_topics(f, "CloudControl", index_only=True)
         f.write("\n<h6>Metrics</h6>\n")
         subscribed += subscribed_topics(f, "MetricsService", index_only=True)
         f.write("\n<h6>Settings</h6>\n")

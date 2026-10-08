@@ -330,3 +330,8 @@ class CloudGridLimitSensor(NumericSensorMixin, CloudReadWriteSensor):
             return False
         await getattr(port, self._write_method)(float(value), enabled=True)
         return True
+
+    def get_attributes(self) -> dict[str, float | int | str]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Only available when the installer has configured a maximum limit."
+        return attributes

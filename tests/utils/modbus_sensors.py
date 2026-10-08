@@ -19,7 +19,15 @@ import logging
 import os
 import sys
 from datetime import timedelta, timezone
-from typing import cast
+from typing import Any, cast
+
+from sigenergy2mqtt.cloud.models import (
+    Capabilities,
+    InstantControlStatus,
+    InstantOverrideCommand,
+)
+from sigenergy2mqtt.cloud.port import CloudControlPort
+from sigenergy2mqtt.devices.cloud import CloudControl, CloudDiscovery
 
 # Need to set a Modbus host otherwise configuration initialisation will launch auto-discovery
 os.environ["SIGENERGY2MQTT_MODBUS_HOST"] = "127.0.0.1"
@@ -256,6 +264,103 @@ class DummyPSSModbusClient(DummyModbusClient):
         })
 
 
+class DummyCloudControlPort(CloudControlPort):
+    """A simulated cloud control port backed by state from CloudApiTestServer."""
+
+    def __init__(self, server: Any) -> None:
+        self._server = server
+
+    @property
+    def station_id(self) -> str:
+        return str(self._server.station_home_data["stationId"])
+
+    @property
+    def model(self) -> str:
+        return "Sigenergy Cloud"
+
+    @property
+    def capabilities(self) -> Capabilities:
+        return Capabilities(
+            features=frozenset(),
+            min_duration=timedelta(minutes=1),
+            max_duration=timedelta(minutes=1440),
+        )
+
+    async def connect(self) -> None: ...
+
+    async def close(self) -> None: ...
+
+    async def device_list(self) -> list[dict[str, Any]]:
+        return []
+
+    async def gateway_info(self) -> dict[str, Any]:
+        return self._server.gateway_info
+
+    async def device_dynamic_info(self, device_type: int, sn_code: str) -> dict[str, Any]:
+        return self._server.device_dynamic_info.get(device_type, {})
+
+    async def device_static_info(self, device_type: int, sn_code: str) -> dict[str, Any]:
+        return self._server.device_static_info.get(device_type, {})
+
+    async def set_instant_override(self, command: InstantOverrideCommand) -> None: ...
+
+    async def clear_instant_override(self) -> None: ...
+
+    async def instant_control_status(self) -> InstantControlStatus:
+        return InstantControlStatus(
+            bool(self._server.instant_control.get("enable")),
+            None,
+            float(self._server.instant_control["endTime"]) if self._server.instant_control.get("endTime") else None,
+        )
+
+    async def available_operational_modes(self) -> dict[str, Any]:
+        return self._server.available_modes_data
+
+    async def get_operational_mode(self) -> tuple[int, int]:
+        return (self._server.operational_mode, self._server.profile_id)
+
+    async def set_operational_mode(self, mode: int, profile_id: int = -1) -> dict[str, Any]:
+        self._server.operational_mode = mode
+        self._server.profile_id = profile_id
+        return {"code": 0}
+
+    async def grid_export_limit(self) -> dict[str, Any]:
+        return self._server.grid_export_limit
+
+    async def set_grid_export_limit(self, limit_kw: float, *, enabled: bool = True) -> dict[str, Any]:
+        return {"code": 0}
+
+    async def grid_import_limit(self) -> dict[str, Any]:
+        return self._server.grid_import_limit
+
+    async def set_grid_import_limit(self, limit_kw: float, *, enabled: bool = True) -> dict[str, Any]:
+        return {"code": 0}
+
+    async def grid_connection_limit(self) -> dict[str, Any]:
+        return self._server.grid_connection_limit
+
+    async def set_grid_connection_limit(self, limit_a: float, *, enabled: bool = True) -> dict[str, Any]:
+        return {"code": 0}
+
+    async def battery_power_limit(self) -> dict[str, Any]:
+        return self._server.battery_power_limit
+
+    async def set_battery_power_limit(self, *, max_charge_kw: float | None, max_discharge_kw: float | None) -> dict[str, Any]:
+        return {"code": 0}
+
+    async def solar_power_limit(self) -> dict[str, Any]:
+        return self._server.solar_power_limit
+
+    async def set_solar_power_limit(self, limit_kw: float | None) -> dict[str, Any]:
+        return {"code": 0}
+
+    async def battery_export_limitation(self) -> dict[str, Any]:
+        return self._server.battery_export_limitation
+
+    async def set_battery_export_limitation(self, enabled: bool) -> dict[str, Any]:
+        return {"code": 0}
+
+
 async def get_sensor_instances(
     home_assistant_enabled: bool = False,
     plant_index: int = 0,
@@ -271,8 +376,8 @@ async def get_sensor_instances(
     """Instantiate the full sensor graph and return all sensors keyed by unique ID.
 
     Creates a :class:`PowerPlant`, two :class:`Inverter` instances (hybrid and PV),
-    a :class:`DCCharger`, and an :class:`ACCharger` against :class:`DummyModbusClient`
-    instances, then collects every sensor (including derived and alarm sensors) into a
+    a :class:`DCCharger`, an :class:`ACCharger`, and a :class:`CloudControl` device against
+    dummy clients, then collects every sensor (including derived and alarm sensors) into a
     flat dictionary.
 
     When ``concrete_sensor_check`` is ``True``, additional validation is performed:
@@ -328,6 +433,11 @@ async def get_sensor_instances(
     active_config.home_assistant.enabled = home_assistant_enabled
     active_config.influxdb.enabled = True
     active_config.pvoutput.enabled = True
+    active_config.cloud.username = "test"
+    active_config.cloud.password = "test"
+    active_config.cloud.region = "testing"
+    active_config.cloud.accept_unofficial_api_risk = True
+    active_config.cloud.discover_inverters = True
 
     hi_device_type = HybridInverter(has_grid_code_interface=True, has_independent_phase_power_control_interface=True)
     hi_modbus_client = DummyInverterModbusClient(HYBRID_INVERTER_MODEL, HYBRID_INVERTER_SERIAL)
@@ -351,6 +461,42 @@ async def get_sensor_instances(
         pid = None
         pss = None
 
+    from tests.utils.modbus_test_server import CloudApiTestServer
+
+    cloud_server = CloudApiTestServer(None, None)
+    cloud_port = DummyCloudControlPort(cloud_server)
+    cloud_discovery = CloudDiscovery(
+        device_list=[
+            {
+                "systemId": str(cloud_server.station_home_data["stationId"]),
+                "serialNumber": HYBRID_INVERTER_SERIAL[3:],
+                "deviceType": "Inverter",
+                "status": "Normal",
+                "attrMap": {"ratedActivePower": HYBRID_INVERTER_RATED_ACTIVE_POWER},
+            },
+            {
+                "systemId": str(cloud_server.station_home_data["stationId"]),
+                "serialNumber": "987B65BC1238",
+                "deviceType": "Battery",
+                "status": "Normal",
+                "attrMap": {"batPosition": 1},
+            },
+        ],
+        gateway_info=cloud_server.gateway_info,
+        operational_modes=cloud_server.available_modes_data,
+        device_info={
+            HYBRID_INVERTER_SERIAL[3:]: (
+                cloud_server.device_dynamic_info[3],
+                cloud_server.device_static_info[3],
+            ),
+            "987B65BC1238": (
+                cloud_server.device_dynamic_info[4],
+                cloud_server.device_static_info[4],
+            ),
+        },
+    )
+    cloud_control = CloudControl(plant_index, cloud_port, cloud_discovery)
+
     for sensor in [s for s in plant.sensors.values() if isinstance(s, (ActivePowerFixedAdjustmentTargetValue, PhaseActivePowerFixedAdjustmentTargetValue))]:
         sensor.apply_min_max(-total_rated_active_power, total_rated_active_power)
     for sensor in [s for s in plant.sensors.values() if isinstance(s, (ReactivePowerFixedAdjustmentTargetValue, PhaseReactivePowerFixedAdjustmentTargetValue))]:
@@ -362,6 +508,11 @@ async def get_sensor_instances(
 
     def find_concrete_classes(superclass):
         for c in superclass.__subclasses__():
+            # Exclude test-fixture sensor subclasses (e.g. ConcreteSensor defined
+            # in test modules) — they are never instantiated via add_sensor_instance
+            # and would otherwise produce spurious "has not been used?" warnings.
+            if c.__module__.startswith("tests.") or "test_" in c.__module__:
+                continue
             if len(c.__subclasses__()) == 0:
                 classes[c.__name__] = 0
             else:
@@ -418,7 +569,7 @@ async def get_sensor_instances(
                 add_sensor_instance(alarm)
 
     find_concrete_classes(Sensor)
-    for parent in [MetricsService(plant.protocol_version), SettingsService(), plant, hybrid_inverter, dc_charger, ac_charger, pv_inverter, pid, pss]:
+    for parent in [MetricsService(plant.protocol_version), SettingsService(), plant, hybrid_inverter, dc_charger, ac_charger, pv_inverter, pid, pss, cloud_control]:
         if parent is None:
             continue
         devices: list[Device] = [parent]
