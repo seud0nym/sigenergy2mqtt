@@ -2,7 +2,7 @@
 
 from datetime import timedelta
 from typing import cast
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from aiohttp import ClientPayloadError, ServerDisconnectedError
@@ -17,6 +17,8 @@ from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.devices.base.poller import SensorGroupPoller
 from sigenergy2mqtt.devices.cloud import CloudControl, CloudDiscovery
+from sigenergy2mqtt.mqtt.client import MqttClient
+from sigenergy2mqtt.mqtt.handler import MqttHandler
 from sigenergy2mqtt.sensors.base import CloudReadWriteSensor, DiscoveryKeys
 from sigenergy2mqtt.sensors.cloud.functions import _identity
 from sigenergy2mqtt.sensors.cloud.read_write import (
@@ -158,13 +160,20 @@ async def test_operational_mode_discovers_reads_and_writes_station_modes() -> No
     assert sensor[DiscoveryKeys.OPTIONS] == [
         "Maximum Self-Powered",
         "Sigen AI Mode",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
         "Weekend profile",
     ]
-    assert await sensor._read_cloud_state(port) == 2
-    assert sensor.sanity_check.max_raw == 2
+    assert await sensor._read_cloud_state(port) == 9
+    assert sensor.sanity_check.max_raw == 9
     port.available_operational_modes.assert_awaited_once_with()
     assert await sensor._write_cloud_value(port, 1) is True
-    assert await sensor._write_cloud_value(port, 2) is True
+    assert await sensor._write_cloud_value(port, 9) is True
     assert [item.args for item in port.set_operational_mode.await_args_list] == [
         (1, -1),
         (9, 42),
@@ -209,11 +218,11 @@ async def test_operational_mode_refreshes_options_and_disambiguates_duplicate_la
     port.get_operational_mode.return_value = (9, 7)
     device.rediscover = False
 
-    assert await sensor._read_cloud_state(port) == 1
-    assert sensor[DiscoveryKeys.OPTIONS] == ["Shared", "Shared (Profile 7)"]
+    assert await sensor._read_cloud_state(port) == 9
+    assert sensor[DiscoveryKeys.OPTIONS] == ["", "", "Shared", "", "", "", "", "", "", "Shared (Profile 7)"]
     assert device.rediscover is True
-    assert await sensor._write_cloud_value(port, 1) is True
-    port.set_operational_mode.assert_awaited_once_with(9, 7)
+    assert await sensor.set_value(port, MagicMock(spec=MqttClient), "Shared", sensor.command_topic, MagicMock(spec=MqttHandler)) is True
+    port.set_operational_mode.assert_awaited_once_with(2, -1)
 
 
 @pytest.mark.asyncio
@@ -240,6 +249,13 @@ async def test_operational_mode_reads_current_mode_when_option_refresh_fails(
     assert sensor[DiscoveryKeys.OPTIONS] == [
         "Maximum Self-Powered",
         "Sigen AI Mode",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
         "Weekend profile",
     ]
 

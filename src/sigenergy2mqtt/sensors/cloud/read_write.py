@@ -76,8 +76,15 @@ class OperationalMode(SelectSensorMixin, CloudReadWriteSensor):
         options: list[str] = []
         mode_values: list[tuple[int, int]] = []
         no_mode = (-1, -1)  # placeholder for empty slots
+        profile_min_index = 9
 
-        def place(index: int | None, label: str, value: tuple[int, int], qualifier: str) -> None:
+        def place(
+            index: int | None,
+            label: str,
+            value: tuple[int, int],
+            qualifier: str,
+            min_index: int = 0,
+        ) -> None:
             option = label
             if option in options:
                 option = f"{label} ({qualifier})"
@@ -86,8 +93,12 @@ class OperationalMode(SelectSensorMixin, CloudReadWriteSensor):
                     option = f"{label} ({qualifier} {suffix})"
                     suffix += 1
 
-            # No usable index, or the slot is already taken: append at the end
+            # No fixed index, or the requested slot is unusable/taken: append,
+            # padding first so the entry lands at or beyond min_index
             if index is None or index < 0 or (index < len(options) and options[index]):
+                while len(options) < min_index:
+                    options.append("")
+                    mode_values.append(no_mode)
                 options.append(option)
                 mode_values.append(value)
                 return
@@ -121,7 +132,7 @@ class OperationalMode(SelectSensorMixin, CloudReadWriteSensor):
             except (KeyError, TypeError, ValueError):
                 continue
             if label:
-                place(None, label, (9, profile_id), f"Profile {profile_id}")
+                place(None, label, (9, profile_id), f"Profile {profile_id}", profile_min_index)
 
         if not any(options):
             raise ValueError("OperationalMode: available_modes contains no valid modes")
