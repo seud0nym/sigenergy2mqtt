@@ -380,6 +380,9 @@ class:
     name: Cloud Successful Connections
   CloudControl:
     name: Sigenergy Cloud {plant_suffix}
+  CloudGridLimitSensor:
+    attributes:
+      comment: Only available when the installer has configured a maximum limit.
   CloudInverter:
     name: '{model_name} {sn}'
   CloudLogLevel:
@@ -904,8 +907,12 @@ class:
       source_range: Modbus Registers {start}-{end}
     name: Under-Frequency Power Boost Trigger Frequency
   GridConnectionLimit:
+    attributes:
+      comment: Only available when the installer has configured a maximum limit.
     name: Grid Connection Current Limit
   GridExportLimit:
+    attributes:
+      comment: Only available when the installer has configured a maximum limit.
     name: Grid Export Limit
   GridFrequency:
     attributes:
@@ -913,6 +920,8 @@ class:
       source_range: Modbus Registers {start}-{end}
     name: Grid Frequency
   GridImportLimit:
+    attributes:
+      comment: Only available when the installer has configured a maximum limit.
     name: Grid Import Limit
   GridMaxExportLimit:
     attributes:

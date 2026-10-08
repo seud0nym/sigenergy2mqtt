@@ -311,13 +311,13 @@ class:
       source_range: Registres Modbus {start}-{end}
     name: Tension Moyenne des Cellules
   BatteryChargePowerLimit:
-    name: Battery Charge Power Limit
+    name: Limite de puissance de charge de la batterie
   BatteryChargingPower:
     attributes:
       source: BatteryPower > 0 #verify:ignore
     name: Puissance de Charge Batterie
   BatteryDischargePowerLimit:
-    name: Battery Discharge Power Limit
+    name: Limite de puissance de décharge de la batterie
   BatteryDischargingPower:
     attributes:
       source: BatteryPower < 0 × -1 #verify:ignore
@@ -357,29 +357,32 @@ class:
       source_range: Registres Modbus {start}-{end}
     name: Puissance de la Batterie
   CloudAuthErrors:
-    name: Cloud Auth Errors
+    name: Erreurs d'authentification dans le cloud
   CloudAvailable:
-    name: Cloud Available
+    name: Disponible dans le cloud
   CloudBattery:
     name: '{model_name} {sn}'
   CloudConnected:
-    name: Cloud Connected
+    name: Connecté au cloud
   CloudConnectionAttempts:
-    name: Cloud Connection Attempts
+    name: Tentatives de connexion au cloud
   CloudConnectionErrors:
-    name: Cloud Connection Errors
+    name: Erreurs de connexion au cloud
   CloudConnectionMax:
-    name: Cloud Connection Max
+    name: Cloud Connection Max  # verify:ignore
   CloudConnectionMean:
-    name: Cloud Connection Mean
+    name: 'Connexion au cloud : signification'
   CloudConnectionMin:
-    name: Cloud Connection Min
+    name: Connexion au cloud Min
   CloudConnectionTotal:
-    name: Cloud Connection Total
+    name: 'Connexion au cloud : Total'
   CloudConnections:
-    name: Cloud Successful Connections
+    name: Connexions réussies au cloud
   CloudControl:
-    name: Sigenergy Cloud {plant_suffix}
+    name: '{plant_suffix} au cloud Sigenergy'
+  CloudGridLimitSensor:
+    attributes:
+      comment: Disponible uniquement lorsque l'installateur a défini une limite maximale.
   CloudInverter:
     name: '{model_name} {sn}'
   CloudLogLevel:
@@ -387,21 +390,21 @@ class:
       comment: Niveau de journalisation du module cloud sigenergy2mqtt
     name: Niveau de journalisation dans le cloud
   CloudQueries:
-    name: Cloud Queries
+    name: Requêtes Cloud
   CloudQueryErrors:
-    name: Cloud Query Errors
+    name: Erreurs de requête Cloud
   CloudQueryMax:
-    name: Cloud Query Max
+    name: Cloud Query Max  # verify:ignore
   CloudQueryMean:
-    name: Cloud Query Mean
+    name: Moyenne des requêtes Cloud
   CloudQueryMin:
-    name: Cloud Query Min
+    name: Cloud Query Min  # verify:ignore
   CloudQueryTotal:
-    name: Cloud Query Total
+    name: Total des requêtes Cloud
   CloudRateLimits:
-    name: Cloud Rate Limits
+    name: Limites de débit dans le cloud
   CloudReconnections:
-    name: Cloud Reconnections
+    name: Reconnections au cloud
   CurrentControlCommandValue:
     attributes:
       comment: Utilisation du Contrôle de Sortie à Distance au Japon
@@ -649,34 +652,34 @@ class:
       source_range: Registres Modbus {start}-{end}
     name: Énergie de Décharge CC VE Totale
   GatewayCommunicationStatus:
-    name: Communication Status
+    name: État de la communication
   GatewayFirmwareVersion:
-    name: Firmware Version
+    name: Version du micrologiciel
   GatewayGridCurrent:
     attributes:
-      comment: Grid-Side state read from the Gateway via the Cloud API
+      comment: État « Grid-Side » lu depuis la passerelle via l'API Cloud
   GatewayGridFrequency:
     attributes:
-      comment: Grid-Side state read from the Gateway via the Cloud API
+      comment: État « Grid-Side » lu depuis la passerelle via l'API Cloud
   GatewayGridPower:
     attributes:
-      comment: Grid-Side state read from the Gateway via the Cloud API
+      comment: État « Grid-Side » lu depuis la passerelle via l'API Cloud
   GatewayGridReactivePower:
     attributes:
-      comment: Grid-Side state read from the Gateway via the Cloud API
+      comment: État « Grid-Side » lu depuis la passerelle via l'API Cloud
   GatewayGridSideInfoSensor:
     attributes:
-      comment: Grid-Side state read from the Gateway via the Cloud API
+      comment: État « Grid-Side » lu depuis la passerelle via l'API Cloud
   GatewayGridText:
     attributes:
-      comment: Grid-Side state read from the Gateway via the Cloud API
+      comment: État « Grid-Side » lu depuis la passerelle via l'API Cloud
   GatewayGridVoltage:
     attributes:
-      comment: Grid-Side state read from the Gateway via the Cloud API
+      comment: État « Grid-Side » lu depuis la passerelle via l'API Cloud
   GatewayModel:
-    name: Model
+    name: Modèle
   GatewaySerialNumber:
-    name: Serial Number
+    name: Numéro de série
   GeneralAlarm1:
     alarm:
       '0': Incompatibilité de version logicielle
@@ -904,16 +907,22 @@ class:
       source_range: Registres Modbus {start}-{end}
     name: Fréquence de Déclenchement pour Sous-fréquence
   GridConnectionLimit:
-    name: Grid Connection Current Limit
+    attributes:
+      comment: Disponible uniquement lorsque l'installateur a défini une limite maximale.
+    name: Limite de courant de raccordement au réseau
   GridExportLimit:
-    name: Grid Export Limit
+    attributes:
+      comment: Disponible uniquement lorsque l'installateur a défini une limite maximale.
+    name: Limite d'exportation vers le réseau
   GridFrequency:
     attributes:
       source: Registre Modbus {address}
       source_range: Registres Modbus {start}-{end}
     name: Fréquence Réseau
   GridImportLimit:
-    name: Grid Import Limit
+    attributes:
+      comment: Disponible uniquement lorsque l'installateur a défini une limite maximale.
+    name: Limite d'importation vers le réseau
   GridMaxExportLimit:
     attributes:
       comment: La puissance active maximale injectée dans le réseau ne doit pas dépasser la valeur configurée dans ce capteur. Capteur de grille nécessaire. Prend effet globalement quel que soit le mode de fonctionnement EMS
@@ -1030,17 +1039,17 @@ class:
   InfluxService:
     name: Service de mise à jour Sigenergy InfluxDB (Installation {plant_index})
   InstantControlDuration:
-    name: Instant Manual Control Duration
+    name: Durée du contrôle manuel instantané
   InstantControlMode:
-    name: Instant Manual Control Mode
+    name: Mode de commande manuelle instantanée
     options:
-      '0': Not Set
-      '1': Charging
-      '2': Discharging
-      '3': Hold Battery
-      '4': Self-Consumption
+      '0': Non défini
+      '1': Charge
+      '2': Décharge
+      '3': Mise en attente de la batterie
+      '4': Autoconsommation
   InstantControlSwitch:
-    name: Instant Manual Control
+    name: Commande manuelle instantanée
   InsulationResistance:
     attributes:
       source: Registre Modbus {address}
@@ -1406,7 +1415,7 @@ class:
       source: Registre Modbus {address}
       source_range: Registres Modbus {start}-{end}
   OperationalMode:
-    name: Operational Mode
+    name: Mode de fonctionnement
   OutputType:
     attributes:
       source: Registre Modbus {address}
@@ -2841,7 +2850,7 @@ class:
       source_range: Registres Modbus {start}-{end}
     name: Consommation totale de la charge intelligente {smart_load_index}
   SolarPowerLimit:
-    name: Solar Power Limit
+    name: Limite de puissance solaire
   Started:
     name: Démarré
   StartupTime:
@@ -2942,11 +2951,11 @@ class:
     name_on: Allumer
 cli:
   SIGENERGY2MQTT_CLOUD_ACCEPT_UNOFFICIAL_API_RISK:
-    help: Explicitly allow the unpublished mySigen API (a delegated account is recommended).
+    help: Autorisez explicitement l'API mySigen non publiée (il est recommandé d'utiliser un compte délégué).
   SIGENERGY2MQTT_CLOUD_DISCOVER_INVERTERS:
-    help: Discover cloud inverter devices and expose their sensors. Disabled by default.
+    help: Détecter les onduleurs connectés au cloud et exposer leurs capteurs. Désactivé par défaut.
   SIGENERGY2MQTT_CLOUD_LOG_LEVEL:
-    help: 'Cloud subsystem log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is INFO.'
+    help: 'Niveau de journalisation du sous-système cloud. Les valeurs valides sont : DEBUG, INFO, WARNING, ERROR ou CRITICAL. La valeur par défaut est INFO.'
   SIGENERGY2MQTT_CLOUD_PASSWORD:
     help: Le mot de passe du service cloud.
   SIGENERGY2MQTT_CLOUD_REGION:
@@ -3160,7 +3169,7 @@ cli:
   SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW:
     help: La valeur par défaut en kW utilisée pour les vérifications de cohérence pour valider les valeurs maximales et minimales des capteurs de puissance et la valeur delta des capteurs d'énergie. La valeur par défaut est 500 kW par seconde, les lectures hors plage sont ignorées.
   SIGENERGY2MQTT_SCAN_INTERVAL_CLOUD:
-    help: The scan interval in seconds for retrieving cloud data. Default is 5 (seconds), and the minimum value is 1
+    help: Intervalle de consultation en secondes pour la récupération des données sur le cloud. La valeur par défaut est 5 (secondes) et la valeur minimale est 1.
   SIGENERGY2MQTT_SCAN_INTERVAL_HIGH:
     help: L'intervalle de scan en secondes pour les registres Modbus à scanner à haute fréquence. Par défaut 10 (secondes), valeur minimale 1.
   SIGENERGY2MQTT_SCAN_INTERVAL_LOW:

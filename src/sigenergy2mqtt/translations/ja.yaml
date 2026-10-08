@@ -311,13 +311,13 @@ class:
       source_range: Modbusレジスタ {start}-{end}
     name: 平均セル電圧
   BatteryChargePowerLimit:
-    name: Battery Charge Power Limit
+    name: バッテリー充電電力制限
   BatteryChargingPower:
     attributes:
       source: BatteryPower > 0 #verify:ignore
     name: バッテリー充電電力
   BatteryDischargePowerLimit:
-    name: Battery Discharge Power Limit
+    name: バッテリー放電電力制限
   BatteryDischargingPower:
     attributes:
       source: BatteryPower < 0 × -1 #verify:ignore
@@ -357,29 +357,32 @@ class:
       source_range: Modbusレジスタ {start}-{end}
     name: バッテリー電力
   CloudAuthErrors:
-    name: Cloud Auth Errors
+    name: クラウド認証エラー
   CloudAvailable:
-    name: Cloud Available
+    name: クラウド対応
   CloudBattery:
     name: '{model_name} {sn}'
   CloudConnected:
-    name: Cloud Connected
+    name: クラウド接続
   CloudConnectionAttempts:
-    name: Cloud Connection Attempts
+    name: クラウド接続の試行回数
   CloudConnectionErrors:
-    name: Cloud Connection Errors
+    name: クラウド接続エラー
   CloudConnectionMax:
-    name: Cloud Connection Max
+    name: Cloud Connection Max  # verify:ignore
   CloudConnectionMean:
-    name: Cloud Connection Mean
+    name: クラウド接続の意味
   CloudConnectionMin:
-    name: Cloud Connection Min
+    name: クラウド接続（最小）
   CloudConnectionTotal:
-    name: Cloud Connection Total
+    name: クラウド接続の合計
   CloudConnections:
-    name: Cloud Successful Connections
+    name: クラウドへの接続成功数
   CloudControl:
-    name: Sigenergy Cloud {plant_suffix}
+    name: Sigenergy Cloud {plant_suffix}  # verify:ignore
+  CloudGridLimitSensor:
+    attributes:
+      comment: これは、設置業者が上限値を設定している場合にのみ利用可能です。
   CloudInverter:
     name: '{model_name} {sn}'
   CloudLogLevel:
@@ -387,21 +390,21 @@ class:
       comment: sigenergy2mqtt クラウドモジュールのロギングレベル
     name: クラウドのログレベル
   CloudQueries:
-    name: Cloud Queries
+    name: クラウドクエリ
   CloudQueryErrors:
-    name: Cloud Query Errors
+    name: Cloud Query のエラー
   CloudQueryMax:
-    name: Cloud Query Max
+    name: Cloud Query Max  # verify:ignore
   CloudQueryMean:
-    name: Cloud Query Mean
+    name: Cloud Queryの平均値
   CloudQueryMin:
-    name: Cloud Query Min
+    name: Cloud Query Min  # verify:ignore
   CloudQueryTotal:
-    name: Cloud Query Total
+    name: Cloud Query 合計
   CloudRateLimits:
-    name: Cloud Rate Limits
+    name: クラウドのレート制限
   CloudReconnections:
-    name: Cloud Reconnections
+    name: クラウド再接続
   CurrentControlCommandValue:
     attributes:
       comment: 日本でのリモート出力制御の使用
@@ -649,34 +652,34 @@ class:
       source_range: Modbusレジスタ {start}-{end}
     name: DC EV累計放電電力量
   GatewayCommunicationStatus:
-    name: Communication Status
+    name: 通信状態
   GatewayFirmwareVersion:
-    name: Firmware Version
+    name: ファームウェアバージョン
   GatewayGridCurrent:
     attributes:
-      comment: Grid-Side state read from the Gateway via the Cloud API
+      comment: クラウドAPIを介してゲートウェイから読み取る系統連系側の状態
   GatewayGridFrequency:
     attributes:
-      comment: Grid-Side state read from the Gateway via the Cloud API
+      comment: クラウドAPIを介してゲートウェイから読み取る系統連系側の状態
   GatewayGridPower:
     attributes:
-      comment: Grid-Side state read from the Gateway via the Cloud API
+      comment: クラウドAPIを介してゲートウェイから読み取る系統連系側の状態
   GatewayGridReactivePower:
     attributes:
-      comment: Grid-Side state read from the Gateway via the Cloud API
+      comment: クラウドAPIを介してゲートウェイから読み取る系統連系側の状態
   GatewayGridSideInfoSensor:
     attributes:
-      comment: Grid-Side state read from the Gateway via the Cloud API
+      comment: クラウドAPIを介してゲートウェイから読み取る系統連系側の状態
   GatewayGridText:
     attributes:
-      comment: Grid-Side state read from the Gateway via the Cloud API
+      comment: クラウドAPIを介してゲートウェイから読み取る系統連系側の状態
   GatewayGridVoltage:
     attributes:
-      comment: Grid-Side state read from the Gateway via the Cloud API
+      comment: クラウドAPIを介してゲートウェイから読み取る系統連系側の状態
   GatewayModel:
-    name: Model
+    name: モデル
   GatewaySerialNumber:
-    name: Serial Number
+    name: シリアル番号
   GeneralAlarm1:
     alarm:
       '0': ソフトウェアバージョン不一致
@@ -904,16 +907,22 @@ class:
       source_range: Modbusレジスタ {start}-{end}
     name: 低周波数電力ブーストトリガー周波数
   GridConnectionLimit:
-    name: Grid Connection Current Limit
+    attributes:
+      comment: これは、設置業者が上限値を設定している場合にのみ利用可能です。
+    name: 系統連系電流制限
   GridExportLimit:
-    name: Grid Export Limit
+    attributes:
+      comment: これは、設置業者が上限値を設定している場合にのみ利用可能です。
+    name: 系統連系出力制限
   GridFrequency:
     attributes:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: 系統周波数
   GridImportLimit:
-    name: Grid Import Limit
+    attributes:
+      comment: これは、設置業者が上限値を設定している場合にのみ利用可能です。
+    name: 系統連系電力の取り込み制限
   GridMaxExportLimit:
     attributes:
       comment: グリッドに供給される最大有効電力は、このセンサーで設定された値を超えてはなりません。グリッドセンサーが必要です。 EMS 動作モードに関係なく、グローバルに有効になります。
@@ -1030,17 +1039,17 @@ class:
   InfluxService:
     name: Sigenergy InfluxDB アップデーターサービス (発電所 {plant_index})
   InstantControlDuration:
-    name: Instant Manual Control Duration
+    name: 即時手動制御の継続時間
   InstantControlMode:
-    name: Instant Manual Control Mode
+    name: 即時手動制御モード
     options:
-      '0': Not Set
-      '1': Charging
-      '2': Discharging
-      '3': Hold Battery
-      '4': Self-Consumption
+      '0': 未設定
+      '1': 充電
+      '2': 放電
+      '3': バッテリー保持
+      '4': 自家消費
   InstantControlSwitch:
-    name: Instant Manual Control
+    name: 即時手動制御
   InsulationResistance:
     attributes:
       source: Modbusレジスタ {address}
@@ -1406,7 +1415,7 @@ class:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
   OperationalMode:
-    name: Operational Mode
+    name: 動作モード
   OutputType:
     attributes:
       source: Modbusレジスタ {address}
@@ -2841,7 +2850,7 @@ class:
       source_range: Modbusレジスタ {start}-{end}
     name: スマートロード {smart_load_index} 合計消費量
   SolarPowerLimit:
-    name: Solar Power Limit
+    name: 太陽光発電出力制限
   Started:
     name: 起動済み
   StartupTime:
@@ -2942,11 +2951,11 @@ class:
     name_on: 電源オン
 cli:
   SIGENERGY2MQTT_CLOUD_ACCEPT_UNOFFICIAL_API_RISK:
-    help: Explicitly allow the unpublished mySigen API (a delegated account is recommended).
+    help: 非公開のmySigen APIを明示的に許可してください（委任アカウントの使用を推奨します）。
   SIGENERGY2MQTT_CLOUD_DISCOVER_INVERTERS:
-    help: Discover cloud inverter devices and expose their sensors. Disabled by default.
+    help: クラウドインバーターデバイスを検出し、そのセンサー情報を公開します。デフォルトでは無効になっています。
   SIGENERGY2MQTT_CLOUD_LOG_LEVEL:
-    help: 'Cloud subsystem log level. Valid values are: DEBUG, INFO, WARNING, ERROR or CRITICAL. Default is INFO.'
+    help: 'クラウドサブシステムのログレベル。有効な値は、DEBUG、INFO、WARNING、ERROR、またはCRITICALです。デフォルトはINFOです。'
   SIGENERGY2MQTT_CLOUD_PASSWORD:
     help: クラウドサービスのパスワード。
   SIGENERGY2MQTT_CLOUD_REGION:
@@ -3160,7 +3169,7 @@ cli:
   SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW:
     help: '電力センサーの実際の値とエネルギーセンサーのデルタ値の最大値と最小値を検証するためにサニティチェックに使用されるデフォルト値（kW）。デフォルト値は1秒あたり500kWで、範囲外の読み取り値は無視されます。'
   SIGENERGY2MQTT_SCAN_INTERVAL_CLOUD:
-    help: The scan interval in seconds for retrieving cloud data. Default is 5 (seconds), and the minimum value is 1
+    help: クラウドデータを取得するためのスキャン間隔（秒単位）。デフォルトは 5（秒）で、最小値は 1 です。
   SIGENERGY2MQTT_SCAN_INTERVAL_HIGH:
     help: '高頻度レジスタのスキャン間隔。デフォルト: 10。'
   SIGENERGY2MQTT_SCAN_INTERVAL_LOW:
