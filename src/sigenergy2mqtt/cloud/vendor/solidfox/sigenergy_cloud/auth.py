@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import base64
 import logging
 import time
@@ -64,6 +65,7 @@ class OAuthSession:
     """Small state holder for Sigenergy's password-grant OAuth flow."""
 
     def __init__(self, region: str) -> None:
+        self._token_lock = asyncio.Lock()
         self._tokens: TokenBundle | None = None
         self._region = region
 
@@ -123,19 +125,20 @@ class OAuthSession:
 
     async def ensure_token(self, session: aiohttp.ClientSession, base_url: str) -> None:
         """Refresh the token if needed."""
-        if self._tokens is None:
-            raise SigenergyCloudAuthError("Sigenergy Cloud is not authenticated")
-        if not self._tokens.expired:
-            return
-        self._tokens = await self._request_token(
-            session,
-            base_url,
-            {
-                "grant_type": "refresh_token",
-                "refresh_token": self._tokens.refresh_token,
-            },
-            SigenergyCloudTokenExpiredError,
-        )
+        async with self._token_lock:
+            if self._tokens is None:
+                raise SigenergyCloudAuthError("Sigenergy Cloud is not authenticated")
+            if not self._tokens.expired:
+                return
+            self._tokens = await self._request_token(
+                session,
+                base_url,
+                {
+                    "grant_type": "refresh_token",
+                    "refresh_token": self._tokens.refresh_token,
+                },
+                SigenergyCloudTokenExpiredError,
+            )
 
     async def _request_token(
         self,

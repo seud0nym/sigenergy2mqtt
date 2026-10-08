@@ -22,7 +22,7 @@ from sigenergy2mqtt.sensors.cloud.read_write import (
 
 from .discovery import CloudDiscovery
 from .gateway import Gateway
-from .sigen_device import build_sigen_devices
+from .sigen_device import SigenCloudDevice, build_sigen_devices
 
 logger = logging.getLogger(__name__)
 
@@ -76,3 +76,11 @@ class CloudControl(Device):
                 self._add_child_device(child)
         for child in build_sigen_devices(plant_index, station_id, discovery):
             self._add_child_device(child)
+            if isinstance(child, SigenCloudDevice) and child._pending_info and child not in self.children:
+                child.via_device = self.unique_id
+                self.children.append(child)
+
+    def schedule(self, transport, mqtt_client):
+        tasks = super().schedule(transport, mqtt_client)
+        tasks.extend(child.recover_info(transport, mqtt_client, self) for child in self.children if isinstance(child, SigenCloudDevice) and child._pending_info)
+        return tasks

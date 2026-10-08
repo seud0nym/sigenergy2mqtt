@@ -13,9 +13,11 @@ import threading
 from collections.abc import Awaitable
 from typing import Any
 
+from aiohttp import ClientError
 from paho.mqtt import MQTTException
 from pymodbus.exceptions import ModbusException
 
+from sigenergy2mqtt.cloud.exceptions import CloudControlError
 from sigenergy2mqtt.config import SettingsService, active_config
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.modbus import ModbusClientFactory
@@ -76,7 +78,31 @@ async def read_and_publish_device_sensors(
                 config.retries,
             )
         elif config.transport_factory is not None and not active_config.clean:
-            modbus_client = await config.transport_factory()
+            def stopping() -> bool:
+                return config.shutdown_requested or (stop_event is not None and stop_event.is_set())
+
+            while not stopping():
+                try:
+                    connection = asyncio.ensure_future(config.transport_factory())
+                    try:
+                        while not connection.done() and not stopping():
+                            await asyncio.wait({connection}, timeout=0.1)
+                        if not connection.done():
+                            return
+                        modbus_client = await connection
+                    finally:
+                        if not connection.done():
+                            connection.cancel()
+                            await asyncio.gather(connection, return_exceptions=True)
+                    break
+                except (ClientError, CloudControlError, OSError) as exc:
+                    logger.warning("%s cloud connection failed; retrying: %s", log_label, exc)
+                    for _ in range(50):
+                        if stopping():
+                            return
+                        await asyncio.sleep(0.1)
+            if stopping():
+                return
 
         mqtt_client_id = f"{active_config.mqtt.client_id_prefix}_{config.description}"
         mqtt_client, mqtt_handler = await mqtt_setup(mqtt_client_id, modbus_client, loop)
@@ -181,7 +207,7 @@ def run_modbus_event_loop(
     asyncio.set_event_loop(loop)
     try:
         loop.run_until_complete(read_and_publish_device_sensors(config, loop, stop_event))
-    except (OSError, RuntimeError, TypeError, ValueError):
+    except Exception:
         logger.exception(f"{config.description} thread crashed !!!")
         if stop_event is not None:
             stop_event.set()

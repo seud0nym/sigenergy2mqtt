@@ -271,3 +271,130 @@ async def test_read_and_publish_device_sensors_discovery_only(monkeypatch):
     mock_device.schedule.assert_not_called()
     # Should have closed MQTT
     assert mock_mqtt_client.loop_stopped is True
+
+
+@pytest.mark.asyncio
+async def test_cloud_factory_retries_before_mqtt_setup(monkeypatch):
+    from sigenergy2mqtt.cloud.exceptions import CloudControlUnavailableError
+
+    config = Config()
+    config.clean = False
+    config.home_assistant.enabled = False
+    transport = MagicMock()
+    transport.close = AsyncMock()
+    with _swap_active_config(config):
+        cfg = ThreadConfig.create(name="Cloud retry", host=None, port=None)
+        cfg.transport_factory = AsyncMock(side_effect=[CloudControlUnavailableError("outage"), transport])
+        setup = AsyncMock(return_value=(DummyMQTTClient(), DummyMQTTHandler()))
+        monkeypatch.setattr(threading_mod, "mqtt_setup", setup)
+        monkeypatch.setattr(threading_mod.asyncio, "sleep", AsyncMock())
+        await threading_mod.read_and_publish_device_sensors(cfg, asyncio.get_running_loop(), threading.Event())
+    assert cfg.transport_factory.await_count == 2
+    setup.assert_awaited_once()
+    transport.close.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_cloud_factory_retry_stops_on_shutdown(monkeypatch):
+    from sigenergy2mqtt.cloud.exceptions import CloudControlUnavailableError
+
+    stop = threading.Event()
+
+    async def failure():
+        stop.set()
+        raise CloudControlUnavailableError("outage")
+
+    config = Config()
+    config.clean = False
+    with _swap_active_config(config):
+        cfg = ThreadConfig.create(name="Cloud retry shutdown", host=None, port=None)
+        cfg.transport_factory = AsyncMock(side_effect=failure)
+        setup = AsyncMock()
+        monkeypatch.setattr(threading_mod, "mqtt_setup", setup)
+        await threading_mod.read_and_publish_device_sensors(cfg, asyncio.get_running_loop(), stop)
+    setup.assert_not_awaited()
+
+
+def test_unexpected_cloud_worker_error_signals_sibling_shutdown(monkeypatch):
+    from sigenergy2mqtt.cloud.exceptions import CloudControlUnavailableError
+
+    cfg = ThreadConfig.create(name="Cloud crashed", host=None, port=None)
+    stop = threading.Event()
+    loop = asyncio.new_event_loop()
+    monkeypatch.setattr(threading_mod, "read_and_publish_device_sensors", AsyncMock(side_effect=CloudControlUnavailableError("failure")))
+    threading_mod.run_modbus_event_loop(cfg, loop, stop)
+    assert stop.is_set()
+    assert loop.is_closed()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("crash_event", [None, threading.Event()])
+async def test_cloud_login_is_cancelled_by_normal_offline(monkeypatch, crash_event):
+    started = asyncio.Event()
+    cancelled = asyncio.Event()
+
+    async def connect():
+        started.set()
+        try:
+            await asyncio.Future()
+        finally:
+            cancelled.set()
+
+    config = Config()
+    config.clean = False
+    with _swap_active_config(config):
+        cfg = ThreadConfig.create(name=f"Cloud offline during login {crash_event is None}", host=None, port=None)
+        cfg.transport_factory = AsyncMock(side_effect=connect)
+        setup = AsyncMock()
+        monkeypatch.setattr(threading_mod, "mqtt_setup", setup)
+        worker = asyncio.create_task(threading_mod.read_and_publish_device_sensors(cfg, asyncio.get_running_loop(), crash_event))
+        await asyncio.wait_for(started.wait(), timeout=1)
+        cfg.offline()
+        await asyncio.wait_for(worker, timeout=1)
+    assert cancelled.is_set()
+    assert cfg.shutdown_requested
+    setup.assert_not_awaited()
+    if crash_event is not None:
+        assert not crash_event.is_set()
+
+
+@pytest.mark.asyncio
+async def test_cloud_retry_wait_stops_on_normal_offline(monkeypatch):
+    from sigenergy2mqtt.cloud.exceptions import CloudControlUnavailableError
+
+    config = Config()
+    config.clean = False
+    with _swap_active_config(config):
+        cfg = ThreadConfig.create(name="Cloud offline during retry", host=None, port=None)
+        cfg.transport_factory = AsyncMock(side_effect=CloudControlUnavailableError("outage"))
+        setup = AsyncMock()
+        monkeypatch.setattr(threading_mod, "mqtt_setup", setup)
+
+        async def shutdown_during_wait(delay):
+            cfg.offline()
+
+        monkeypatch.setattr(threading_mod.asyncio, "sleep", shutdown_during_wait)
+        await threading_mod.read_and_publish_device_sensors(cfg, asyncio.get_running_loop(), threading.Event())
+    cfg.transport_factory.assert_awaited_once()
+    setup.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_shutdown_after_login_closes_transport_without_mqtt(monkeypatch):
+    config = Config()
+    config.clean = False
+    transport = MagicMock()
+    transport.close = AsyncMock()
+    with _swap_active_config(config):
+        cfg = ThreadConfig.create(name="Cloud offline after login", host=None, port=None)
+
+        async def connect():
+            cfg.offline()
+            return transport
+
+        cfg.transport_factory = connect
+        setup = AsyncMock()
+        monkeypatch.setattr(threading_mod, "mqtt_setup", setup)
+        await threading_mod.read_and_publish_device_sensors(cfg, asyncio.get_running_loop())
+    transport.close.assert_awaited_once()
+    setup.assert_not_awaited()
