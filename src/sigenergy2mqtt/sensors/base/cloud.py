@@ -281,7 +281,7 @@ class CloudGridLimitSensor(NumericSensorMixin, CloudReadWriteSensor):
                 backend.
 
         Returns:
-            The current grid-limit configuration as a ``dict``, or ``"None"`` when
+            The current grid-limit configuration as a ``dict``, or ``None`` when
             the API returned an invalid configuration.
         """
         state = await getattr(port, self._read_method)()

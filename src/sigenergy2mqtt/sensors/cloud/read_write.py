@@ -520,17 +520,17 @@ class GridConnectionLimit(CloudGridLimitSensor):
         self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
 
-def _parse_power_limit(sensor: CloudReadWriteSensor, value: object, key: str) -> float | str:
+def _parse_power_limit(sensor: CloudReadWriteSensor, value: object, key: str) -> float | str | None:
     """Convert a cloud power-limit value into a number entity state."""
     if value in (None, "") or is_unlimited_power(value):
-        return "None"
+        return None
     try:
         parsed = float(value)  # type: ignore[arg-type]
     except (TypeError, ValueError):
         parsed = math.nan
     if not math.isfinite(parsed) or parsed < 0:
         logger.warning(f"{sensor.log_identity} cloud response contains invalid {key}={value!r}")
-        return "None"
+        return None
     return parsed
 
 
@@ -583,17 +583,17 @@ class _BatteryPowerLimit(NumericSensorMixin, CloudReadWriteSensor):
         limits: dict[str, float | None] = {}
         for key in (self._CHARGE_KEY, self._DISCHARGE_KEY):
             state = _parse_power_limit(self, payload.get(key), key)
-            if state == "None" and payload.get(key) not in (None, "") and not is_unlimited_power(payload.get(key)):
+            if state is None and payload.get(key) not in (None, "") and not is_unlimited_power(payload.get(key)):
                 return None
-            limits[key] = None if state == "None" else float(state)
+            limits[key] = None if state is None else float(state)
         return limits
 
-    async def _read_cloud_state(self, port: CloudControlPort) -> float | str:
+    async def _read_cloud_state(self, port: CloudControlPort) -> float | str | None:
         limits = self._parse_limits(await self._snapshot.read(port))
         if limits is None:
-            return "None"
+            return None
         state = limits[self._key]
-        return "None" if state is None else state
+        return state
 
     async def _write_cloud_value(self, port: CloudControlPort, value: float | str) -> bool:
         # The endpoint replaces both limits, so always refresh immediately
@@ -662,11 +662,11 @@ class SolarPowerLimit(NumericSensorMixin, CloudReadWriteSensor):
             protocol_version=ProtocolVersion.N_A,
         )
 
-    async def _read_cloud_state(self, port: CloudControlPort) -> float | str:
+    async def _read_cloud_state(self, port: CloudControlPort) -> float | str | None:
         payload = await port.solar_power_limit()
         if not isinstance(payload, dict):
             logger.warning(f"{self.log_identity} cloud response is not an object: {payload!r}")
-            return "None"
+            return None
         return _parse_power_limit(self, payload.get("powerLimit"), "powerLimit")
 
     async def _write_cloud_value(self, port: CloudControlPort, value: float | str) -> bool:
