@@ -451,7 +451,7 @@ def _set_by_path(node: object, path: str, value: str, comment: str | None = None
             write_key = resolved_last if resolved_last is not None else last
             current[write_key] = value
             if comment and hasattr(current, "yaml_add_eol_comment"):
-                current.yaml_add_eol_comment(comment, write_key)
+                getattr(current, "yaml_add_eol_comment")(comment, write_key)
         elif isinstance(current, list):
             current[int(last)] = value
         else:
@@ -645,7 +645,8 @@ def translate_language(
         else:
             cached = cache.get(job.lang_code, en_val)
             new_val = cached if cached is not None else translation_lookup.get(en_val, en_val)
-            is_identical = new_val == en_val
+            
+        is_identical = new_val == en_val
 
         if dry_run:
             print(f"  [DRY] {path}:")
