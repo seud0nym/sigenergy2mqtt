@@ -134,9 +134,9 @@ class TestConfigValidation:
         assert Settings.invert_no_ems_mode_check(True) is True
         assert Settings.invert_no_ems_mode_check(False) is False
 
-    def test_settings_invert_no_metrics_bool(self):
-        assert Settings.invert_no_metrics(True) is True
-        assert Settings.invert_no_metrics(False) is False
+    @pytest.mark.parametrize("value, expected", [(True, True), (False, False), ("true", True), ("false", False)])
+    def test_settings_publish_metrics_bool(self, value, expected):
+        assert Settings(**{"publish-metrics": value}).metrics_enabled is expected
 
     def test_settings_validate_networks_str_and_invalid(self):
         assert Settings.validate_networks("192.168.1.0/24, 10.0.0.0/8") == ["192.168.1.0/24", "10.0.0.0/8"]

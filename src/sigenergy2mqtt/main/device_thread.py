@@ -16,7 +16,7 @@ from typing import Any
 from paho.mqtt import MQTTException
 from pymodbus.exceptions import ModbusException
 
-from sigenergy2mqtt.config import active_config
+from sigenergy2mqtt.config import SettingsService, active_config
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.modbus import ModbusClientFactory
 from sigenergy2mqtt.mqtt import mqtt_setup, mqtt_teardown
@@ -83,13 +83,15 @@ async def read_and_publish_device_sensors(
 
         device: Device
         for device in config.devices:
-            method = device.publish_discovery if active_config.home_assistant.enabled else device.publish_attributes
+            # Cleanup must still reach HA discovery when HA integration has been
+            # disabled. SettingsService also removes stale discovery on startup
+            # whenever runtime configuration publishing is disabled.
+            discovery_required = active_config.home_assistant.enabled or active_config.clean or (isinstance(device, SettingsService) and not active_config.runtime_config_enabled)
+            method = device.publish_discovery if discovery_required else device.publish_attributes
 
             await mqtt_handler.wait_for(5, device.name, method, mqtt_client, clean=active_config.clean)
 
-            if active_config.home_assistant.enabled and (active_config.clean or active_config.home_assistant.discovery_only):
-                if active_config.clean:
-                    device.clean_state(mqtt_client)
+            if active_config.clean or (active_config.home_assistant.enabled and active_config.home_assistant.discovery_only):
                 logger.info(f"{device.log_identity} configured for {'clean' if active_config.clean else 'discovery'} only - shutting down...")
             else:
                 logger.debug(f"{device.log_identity} registering MQTT subscriptions")

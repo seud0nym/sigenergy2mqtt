@@ -29,6 +29,8 @@ from sigenergy2mqtt.config.coerce import (
 
 from . import const
 
+logger = logging.getLogger(__name__)
+
 # ---------------------------------------------------------------------------
 # YAML sources
 # ---------------------------------------------------------------------------
@@ -102,6 +104,10 @@ class EnvSettingsSource(PydanticBaseSettingsSource):
         _set(result, "sanity_check_failures_increment", _bool(g(const.SIGENERGY2MQTT_SANITY_CHECK_FAILURES_INCREMENT)))
         _set(result, "ems_mode_check", _invert_bool(g(const.SIGENERGY2MQTT_NO_EMS_MODE_CHECK)))
         _set(result, "metrics_enabled", _invert_bool(g(const.SIGENERGY2MQTT_NO_METRICS)))
+        if const.SIGENERGY2MQTT_NO_METRICS in os.environ:
+            logger.warning("%s is deprecated; metrics publishing is disabled by default. Use %s to enable it.", const.SIGENERGY2MQTT_NO_METRICS, const.SIGENERGY2MQTT_PUBLISH_METRICS)
+        _set(result, "metrics_enabled", _bool(g(const.SIGENERGY2MQTT_PUBLISH_METRICS)))
+        _set(result, "runtime_config_enabled", _bool(g(const.SIGENERGY2MQTT_PUBLISH_RUNTIME_CONFIG)))
         _set(result, "sensor_debug_logging", _bool(g(const.SIGENERGY2MQTT_DEBUG_SENSOR)))
 
         debug_sensor_name = g(const.SIGENERGY2MQTT_DEBUG_SENSOR)

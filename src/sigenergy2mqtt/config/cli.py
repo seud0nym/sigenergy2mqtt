@@ -1,9 +1,12 @@
 import argparse
+import logging
 import os
 
 from sigenergy2mqtt import i18n
 
 from . import const
+
+logger = logging.getLogger(__name__)
 
 
 def get_parser() -> argparse.ArgumentParser:
@@ -73,7 +76,19 @@ def get_parser() -> argparse.ArgumentParser:
         "--no-metrics",
         action="store_true",
         dest=const.SIGENERGY2MQTT_NO_METRICS,
-        help="Do not publish any sigenergy2mqtt metrics.",
+        help="Deprecated: metrics publishing is disabled by default. Use --publish-metrics to enable it.",
+    )
+    parser.add_argument(
+        "--publish-metrics",
+        action="store_true",
+        dest=const.SIGENERGY2MQTT_PUBLISH_METRICS,
+        help="Publish sigenergy2mqtt metrics to MQTT (disabled by default).",
+    )
+    parser.add_argument(
+        "--publish-runtime-config",
+        action="store_true",
+        dest=const.SIGENERGY2MQTT_PUBLISH_RUNTIME_CONFIG,
+        help="Publish Runtime Configuration to MQTT, allowing settings to be changed at runtime (disabled by default).",
     )
     parser.add_argument(
         "--consumption",
@@ -992,4 +1007,6 @@ def parse_args(args=None):
     args_parsed, unknown = parser.parse_known_args(args)
     if unknown:
         parser.error(f"unrecognized arguments: {' '.join(unknown)}")
+    if getattr(args_parsed, const.SIGENERGY2MQTT_NO_METRICS):
+        logger.warning("--no-metrics is deprecated; metrics publishing is disabled by default. Use --publish-metrics to enable it.")
     return args_parsed

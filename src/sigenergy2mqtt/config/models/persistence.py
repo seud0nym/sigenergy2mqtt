@@ -29,11 +29,11 @@ class PersistenceConfig(BaseModel):
     """MQTT topic prefix for all persisted state messages."""
 
     disk_primary: bool = Field(
-        True,
+        False,
         alias="disk-primary",
     )
-    """When True (default), disk is tried first on load; MQTT is used as fallback.
-    Set to False to prefer MQTT over disk."""
+    """When True, disk is tried first on load; MQTT is used as fallback.
+    Set to False (default) to prefer MQTT over disk."""
 
     cache_warmup_timeout: float = Field(
         10.0,

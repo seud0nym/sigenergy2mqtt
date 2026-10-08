@@ -171,7 +171,8 @@ class Settings(BaseSettings):
     sanity_check_default_kw: float = Field(500.0, alias="sanity-check-default-kw", ge=0)
     sanity_check_failures_increment: bool = Field(False, alias="sanity-check-failures-increment")
     ems_mode_check: bool = Field(True, alias="ems-mode-check")
-    metrics_enabled: bool = Field(True, alias="metrics-enabled")
+    metrics_enabled: bool = Field(False, alias="publish-metrics")
+    runtime_config_enabled: bool = Field(False, alias="publish-runtime-config")
     sensor_debug_logging: bool = Field(False, alias="sensor-debug-logging")
 
     # ── Sub-configs ──────────────────────────────────────────────────────────
@@ -200,6 +201,14 @@ class Settings(BaseSettings):
         if not isinstance(data, dict):
             return data
 
+        # Normalize positive metrics options first so they take precedence over
+        # legacy negated options, while preserving higher-priority source values.
+        for key in ("publish-metrics", "publish_metrics", "metrics-enabled"):
+            if key in data:
+                value = data.pop(key)
+                if "metrics_enabled" not in data:
+                    data["metrics_enabled"] = value
+
         # 1. Merge negated YAML/kebab keys to their positive snake_case field names
         negated_mapping = {
             "no-diagnostics": "diagnostics.enabled",
@@ -219,6 +228,8 @@ class Settings(BaseSettings):
         }
         for negated_key, positive_field in negated_mapping.items():
             if negated_key in data:
+                if positive_field == "metrics_enabled":
+                    logger.warning("%s is deprecated; metrics publishing is disabled by default. Use publish-metrics to enable it.", negated_key)
                 val = data.pop(negated_key)
                 if val is not None:
                     bool_val = _bool(str(val)) if isinstance(val, str) else bool(val)
@@ -264,13 +275,6 @@ class Settings(BaseSettings):
     @field_validator("ems_mode_check", mode="before")
     @classmethod
     def invert_no_ems_mode_check(cls, v: Any) -> bool:
-        if isinstance(v, bool):
-            return v
-        return not _bool(str(v))
-
-    @field_validator("metrics_enabled", mode="before")
-    @classmethod
-    def invert_no_metrics(cls, v: Any) -> bool:
         if isinstance(v, bool):
             return v
         return not _bool(str(v))

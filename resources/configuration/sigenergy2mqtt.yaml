@@ -78,49 +78,24 @@ sanity-check-failures-increment: false
 #                 globally available in those versions.
 no-ems-mode-check: false
 # no-metrics
+#   deprecated: Use publish-metrics instead. Metrics publishing is disabled
+#               by default. If specified, this option still works (true disables
+#               publishing, false enables it), but logs a deprecation warning.
+# no-metrics: true
+# publish-metrics
+#   added: 2026.10.8
 #   default: false
-#   description:  If true, sigenergy2mqtt will not publish any metrics to
-#                 MQTT.
-no-metrics: false
-# cloud
-#   added: 2026.9.10
-#   description:  The configuration for the Sigenergy Cloud integration. If enabled,
-#                 sigenergy2mqtt will be able to access the Sigenergy Cloud Service
-#                 for the specified user.
-cloud:
-    # username
-    #   default: ""
-    #   description:  The username for the cloud service.
-    username: ""
-    # password
-    #   default: ""
-    #   description:  The password for the cloud service.
-    password: ""
-    # region
-    #   default: ""
-    #   description:  The user's region for the cloud service. Must be one of the following: 
-    #                 'aus', 'eu', 'cn', 'apac', 'us'.
-    region: ""
-    # discover-inverters
-    #   default: false
-    #   description:  If true, inverter devices are discovered from the Sigenergy cloud.
-    discover-inverters: false
-    # log-level
-    #   default: "INFO"
-    #   description:  The log level for the cloud service. Must be one of:
-    #                 DEBUG, INFO, WARNING, ERROR, or CRITICAL
-    log-level: "INFO"
-    # scan-interval
-    #   default: 30
-    #   description:  The scan interval in seconds for retrieving cloud data. Default is 5
-    #                 (seconds), and the minimum value is 1.
-    scan-interval: 5
-    # accept-unofficial-api-risk
-    #   default: false
-    #   description:  Explicit opt-in required to use the unofficial mySigen cloud API.
-    #                 Use a delegated account with "View and Edit" access instead of
-    #                 the primary mySigen account.
-    accept-unofficial-api-risk: false
+#   description:  If true, publish sigenergy2mqtt metrics to MQTT. Metrics
+#                 are still recorded for the diagnostics web UI when false.
+publish-metrics: false
+# publish-runtime-config
+#   added: 2026.10.8
+#   default: false
+#   description:  If true, publish Runtime Configuration to MQTT, allowing
+#                 settings to be changed at runtime through MQTT or Home Assistant.
+#                 Diagnostics settings remain available when false. Previously
+#                 retained discovery is removed when false and by --clean.
+publish-runtime-config: false
 # modbus
 #   default: [ ]
 #   description:  The array of Modbus device configurations. Each device

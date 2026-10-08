@@ -103,8 +103,12 @@ class TestConfigDefaults:
         assert active_config.log_fmt is None
 
     def test_default_metrics_enabled(self):
-        """Test default metrics enabled flag."""
-        assert active_config.metrics_enabled is True
+        """Metrics publishing requires an explicit opt-in."""
+        assert active_config.metrics_enabled is False
+
+    def test_default_runtime_config_enabled(self):
+        """Runtime Configuration publishing requires an explicit opt-in."""
+        assert active_config.runtime_config_enabled is False
 
     def test_default_sensor_debug_logging(self):
         """Test default sensor debug logging flag."""
@@ -745,12 +749,10 @@ class TestSampleConfig:
         assert s.influxdb.enabled is True
         assert s.influxdb.username == "homeassistant"
 
-        # Verify the negated flags were handled
-        # The sample has 'no-ems-mode-check: false' and 'no-metrics: false'
-        # These should be removed from the dict and ems_mode_check / metrics_enabled
-        # should be set to True (since not val is True).
+        # The sample keeps EMS validation enabled and optional publishing disabled.
         assert s.ems_mode_check is True
-        assert s.metrics_enabled is True
+        assert s.metrics_enabled is False
+        assert s.runtime_config_enabled is False
 
 
 class TestConfigYamlString:

@@ -98,6 +98,11 @@ def _promote_cli_to_env(args) -> None:
         const.SIGENERGY2MQTT_DIAGNOSTICS_ENABLED,
     )
 
+    # The legacy CLI flag must also override the positive environment option.
+    # If both CLI flags are supplied, the new positive option takes precedence.
+    if getattr(args, const.SIGENERGY2MQTT_NO_METRICS, False) and not getattr(args, const.SIGENERGY2MQTT_PUBLISH_METRICS, False):
+        _apply_cli_to_env(const.SIGENERGY2MQTT_PUBLISH_METRICS, "false")
+
     for arg, value in vars(args).items():
         if arg in skip:
             continue

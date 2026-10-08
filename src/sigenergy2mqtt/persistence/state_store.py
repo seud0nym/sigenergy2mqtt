@@ -405,7 +405,7 @@ class StateStore:
         self._mqtt_enabled: bool = False
         self._loop: asyncio.AbstractEventLoop | None = None
         self._loop_thread_id: int | None = None
-        self._disk_primary: bool = True
+        self._disk_primary: bool = False
         self._version: str = ""
         self._sync_timeout: float = 5.0
 
@@ -535,9 +535,9 @@ class StateStore:
     async def load(self, category: Category | str, key: str, *, stale_after: timedelta | None = None, validator: Callable[[str], bool] | None = None) -> str | None:
         """Load a persisted value, applying staleness check and optional validator.
 
-        Tries disk first (if ``disk_primary`` is True, which is the default),
-        then falls back to the MQTT retained-message cache.  If MQTT is the
-        primary, the order is reversed.
+        Tries disk first (if ``disk_primary`` is True),then falls back to
+        the MQTT retained-message cache.  If MQTT is the primary, the order
+        is reversed.
 
         Args:
             category:    Logical grouping.

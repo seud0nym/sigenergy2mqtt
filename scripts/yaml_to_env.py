@@ -55,9 +55,13 @@ def yaml_to_env(yaml_data):
     if "ems-mode-check" in yaml_data:
         set_env(const.SIGENERGY2MQTT_NO_EMS_MODE_CHECK, not yaml_data["ems-mode-check"])
 
-    # no-metrics is inverted
+    # Retain legacy input support while emitting the positive metrics option.
+    if "no-metrics" in yaml_data:
+        set_env(const.SIGENERGY2MQTT_NO_METRICS, yaml_data["no-metrics"])
     if "metrics-enabled" in yaml_data:
-        set_env(const.SIGENERGY2MQTT_NO_METRICS, not yaml_data["metrics-enabled"])
+        set_env(const.SIGENERGY2MQTT_PUBLISH_METRICS, yaml_data["metrics-enabled"])
+    set_env(const.SIGENERGY2MQTT_PUBLISH_METRICS, yaml_data.get("publish-metrics"))
+    set_env(const.SIGENERGY2MQTT_PUBLISH_RUNTIME_CONFIG, yaml_data.get("publish-runtime-config"))
 
     debug_val = yaml_data.get("sensor-debug-logging")
     if debug_val is not None:
