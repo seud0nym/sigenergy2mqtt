@@ -1175,7 +1175,9 @@ The MQTT topic prefix used for storing persisted state. (default: `sigenergy2mqt
 <tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
 <tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
 </table>
-Set to `true` (default) to prefer local disk-based state over MQTT if both are available. If set to `false`, MQTT state will be preferred.
+Set to `true` to prefer local disk-based state over MQTT if both are available. If set to `false`, MQTT state will be preferred.
+
+The default is `false` (since 2026.10.8).
 
 <a id="opt_persistence_cache_warmup_timeout"></a>
 ### Persistence Cache Warmup Timeout
