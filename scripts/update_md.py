@@ -72,7 +72,7 @@ def write_header(f) -> None:
       - [Cloud Inverter](#cloud-inverter)
       - [Cloud Battery](#cloud-battery)
     - [Metrics](#metrics)
-    - [Settings](#settings)
+    - [Runtime Configuration](#runtime-configuration)
     - [Service Health](#service-health)
   - [Index](#index)
 
@@ -320,7 +320,8 @@ async def sensor_index() -> None:
                         elif isinstance(sensor, PVInverter):
                             f.write(" PV Inverter only")
                         f.write("</td></tr>\n")
-                    f.write(f"<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>{protocol}</td></tr>\n")
+                    if not isinstance(sensor, (CloudSensor, MetricsSensor, ResetMetrics, SettingsSensor)):
+                        f.write(f"<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>{protocol}</td></tr>\n")
                     if sensor.sanity_check.is_enabled:
                         f.write(f"<tr><td>Sanity&nbsp;Check</td><td>{sensor.sanity_check.description}</td></tr>\n")
                     f.write("</table>\n")
@@ -387,7 +388,8 @@ async def sensor_index() -> None:
                         elif isinstance(sensor, PVInverter):
                             f.write(" PV Inverter only")
                         f.write("</td></tr>\n")
-                    f.write(f"<tr><td>Since&nbsp;ProtocolVersion&nbsp;Version</td><td>{protocol}</td></tr>\n")
+                    if not isinstance(sensor, (CloudSensor, MetricsSensor, ResetMetrics, SettingsSensor)):
+                        f.write(f"<tr><td>Since&nbsp;ProtocolVersion&nbsp;Version</td><td>{protocol}</td></tr>\n")
                     f.write("</table>\n")
         return count
 
@@ -423,15 +425,21 @@ async def sensor_index() -> None:
         f.write("\n### Gateway\n")
         published_topics(f, "Gateway")
         f.write("\n### Cloud Inverter\n")
+        f.write("\nIn the following topics, the identifier `123A45BP678` is a placeholder for the inverter serial number as shown in the mySigen app.\n")
         published_topics(f, "CloudInverter")
         f.write("\n### Cloud Battery\n")
+        f.write("\nIn the following topics, the identifier `987B65BC1238` is a placeholder for the battery serial number as shown in the mySigen app.\n")
         published_topics(f, "CloudBattery")
         f.write("\n## Metrics\n")
+        f.write("\nPublishing of Metrics is disabled by default, and can be enabled in configuration. Metrics are available through the Diagnostics web UI (if that is not disabled as well).\n")
         f.write("\nMetrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Home Assistant discovery is enabled. The scan interval cannot be altered.\n")
         f.write("\nInfluxDB Metrics are only published when the InfluxDB integration is enabled.\n\n")
         published_topics(f, "MetricsService")
         subscribed_topics(f, "MetricsService")
-        f.write("\n## Settings\n")
+        f.write("\n## Runtime Configuration\n")
+        f.write(
+            "\nPublishing of Runtime Configuration is disabled by default, and can be enabled in configuration. Runtime Configuration is available through the Diagnostics web UI (if that is not disabled as well).\n"
+        )
         f.write("\nSettings are _only_ published to the sigenergy2mqtt/config topics, even when Home Assistant discovery is enabled. The scan interval cannot be altered.\n")
         f.write("\nInfluxDB and PVOutput settings are only published when those options are enabled.\n\n")
         f.write("\n> [!IMPORTANT]")
