@@ -70,28 +70,28 @@ class TestMetricsSensor:
 
 class TestModbusCacheHits:
     @pytest.mark.asyncio
-    async def test_update_internal_state(self):
+    async def test_update_internal_state(self, monkeypatch):
         sensor = ModbusCacheHits()
-        Metrics.sigenergy2mqtt_modbus_cache_hit_percentage = 45.5
+        monkeypatch.setattr(Metrics, "sigenergy2mqtt_modbus_cache_hit_percentage", 45.5)
         await sensor._update_internal_state()
         assert sensor.latest_raw_state == 45.5
 
 
 class TestModbusPhysicalReads:
     @pytest.mark.asyncio
-    async def test_update_internal_state(self):
+    async def test_update_internal_state(self, monkeypatch):
         sensor = ModbusPhysicalReads()
-        Metrics.sigenergy2mqtt_modbus_physical_read_percentage = 12.34
+        monkeypatch.setattr(Metrics, "sigenergy2mqtt_modbus_physical_read_percentage", 12.34)
         await sensor._update_internal_state()
         assert sensor.latest_raw_state == 12.34
 
 
 class TestModbusReadsPerSecond:
     @pytest.mark.asyncio
-    async def test_update_internal_state(self):
+    async def test_update_internal_state(self, monkeypatch):
         sensor = ModbusReadsPerSecond()
-        Metrics.sigenergy2mqtt_modbus_reads = 100
-        Metrics._started = time.monotonic() - 10
+        monkeypatch.setattr(Metrics, "sigenergy2mqtt_modbus_reads", 100)
+        monkeypatch.setattr(Metrics, "_started", time.monotonic() - 10)
         await sensor._update_internal_state()
         # Roughly 10 reads per second
         assert 9.0 <= sensor.latest_raw_state <= 11.0
@@ -99,100 +99,100 @@ class TestModbusReadsPerSecond:
 
 class TestModbusReadErrors:
     @pytest.mark.asyncio
-    async def test_update_internal_state(self):
+    async def test_update_internal_state(self, monkeypatch):
         sensor = ModbusReadErrors()
-        Metrics.sigenergy2mqtt_modbus_read_errors = 5
+        monkeypatch.setattr(Metrics, "sigenergy2mqtt_modbus_read_errors", 5)
         await sensor._update_internal_state()
         assert sensor.latest_raw_state == 5
 
 
 class TestModbusReadMax:
     @pytest.mark.asyncio
-    async def test_update_internal_state(self):
+    async def test_update_internal_state(self, monkeypatch):
         sensor = ModbusReadMax()
-        Metrics.sigenergy2mqtt_modbus_read_max = 123.456
+        monkeypatch.setattr(Metrics, "sigenergy2mqtt_modbus_read_max", 123.456)
         await sensor._update_internal_state()
         assert sensor.latest_raw_state == 123.456
 
     @pytest.mark.asyncio
-    async def test_update_internal_state_inf(self):
+    async def test_update_internal_state_inf(self, monkeypatch):
         sensor = ModbusReadMax()
-        Metrics.sigenergy2mqtt_modbus_read_max = float("inf")
+        monkeypatch.setattr(Metrics, "sigenergy2mqtt_modbus_read_max", float("inf"))
         assert await sensor._update_internal_state() is False
         assert sensor.latest_raw_state is None
 
 
 class TestModbusReadMean:
     @pytest.mark.asyncio
-    async def test_update_internal_state(self):
+    async def test_update_internal_state(self, monkeypatch):
         sensor = ModbusReadMean()
-        Metrics.sigenergy2mqtt_modbus_read_mean = 50.0
+        monkeypatch.setattr(Metrics, "sigenergy2mqtt_modbus_read_mean", 50.0)
         await sensor._update_internal_state()
         assert sensor.latest_raw_state == 50.0
 
 
 class TestModbusReadMin:
     @pytest.mark.asyncio
-    async def test_update_internal_state(self):
+    async def test_update_internal_state(self, monkeypatch):
         sensor = ModbusReadMin()
-        Metrics.sigenergy2mqtt_modbus_read_min = 10.0
+        monkeypatch.setattr(Metrics, "sigenergy2mqtt_modbus_read_min", 10.0)
         await sensor._update_internal_state()
         assert sensor.latest_raw_state == 10.0
 
     @pytest.mark.asyncio
-    async def test_update_internal_state_inf(self):
+    async def test_update_internal_state_inf(self, monkeypatch):
         sensor = ModbusReadMin()
-        Metrics.sigenergy2mqtt_modbus_read_min = float("inf")
+        monkeypatch.setattr(Metrics, "sigenergy2mqtt_modbus_read_min", float("inf"))
         assert await sensor._update_internal_state() is False
         assert sensor.latest_raw_state is None
 
 
 class TestModbusWriteErrors:
     @pytest.mark.asyncio
-    async def test_update_internal_state(self):
+    async def test_update_internal_state(self, monkeypatch):
         sensor = ModbusWriteErrors()
-        Metrics.sigenergy2mqtt_modbus_write_errors = 3
+        monkeypatch.setattr(Metrics, "sigenergy2mqtt_modbus_write_errors", 3)
         await sensor._update_internal_state()
         assert sensor.latest_raw_state == 3
 
 
 class TestModbusWriteMax:
     @pytest.mark.asyncio
-    async def test_update_internal_state(self):
+    async def test_update_internal_state(self, monkeypatch):
         sensor = ModbusWriteMax()
-        Metrics.sigenergy2mqtt_modbus_write_max = 200.0
+        monkeypatch.setattr(Metrics, "sigenergy2mqtt_modbus_write_max", 200.0)
         await sensor._update_internal_state()
         assert sensor.latest_raw_state == 200.0
 
     @pytest.mark.asyncio
-    async def test_update_internal_state_inf(self):
+    async def test_update_internal_state_inf(self, monkeypatch):
         sensor = ModbusWriteMax()
-        Metrics.sigenergy2mqtt_modbus_write_max = float("inf")
+        monkeypatch.setattr(Metrics, "sigenergy2mqtt_modbus_write_max", float("inf"))
         assert await sensor._update_internal_state() is False
         assert sensor.latest_raw_state is None
 
 
 class TestModbusWriteMean:
     @pytest.mark.asyncio
-    async def test_update_internal_state(self):
+    async def test_update_internal_state(self, monkeypatch):
         sensor = ModbusWriteMean()
-        Metrics.sigenergy2mqtt_modbus_write_mean = 100.0
+        monkeypatch.setattr(Metrics, "sigenergy2mqtt_modbus_write_mean", 100.0)
         await sensor._update_internal_state()
         assert sensor.latest_raw_state == 100.0
 
 
 class TestModbusWriteMin:
     @pytest.mark.asyncio
-    async def test_update_internal_state(self):
+    async def test_update_internal_state(self, monkeypatch):
         sensor = ModbusWriteMin()
-        Metrics.sigenergy2mqtt_modbus_write_min = 1.0
+        monkeypatch.setattr(Metrics, "sigenergy2mqtt_modbus_write_min", 1.0)
         await sensor._update_internal_state()
         assert sensor.latest_raw_state == 1.0
 
     @pytest.mark.asyncio
-    async def test_update_internal_state_inf(self):
+    async def test_update_internal_state_inf(self, monkeypatch):
         sensor = ModbusWriteMin()
-        Metrics.sigenergy2mqtt_modbus_write_min = float("inf")
+        monkeypatch.setattr(Metrics, "sigenergy2mqtt_modbus_write_min", float("inf"))
         assert await sensor._update_internal_state() is False
         assert sensor.latest_raw_state is None
 
@@ -208,9 +208,9 @@ class TestModbusActiveLocks:
 
 class TestStarted:
     @pytest.mark.asyncio
-    async def test_update_internal_state(self):
+    async def test_update_internal_state(self, monkeypatch):
         sensor = Started()
-        Metrics.sigenergy2mqtt_started = "2023-01-01T00:00:00"
+        monkeypatch.setattr(Metrics, "sigenergy2mqtt_started", "2023-01-01T00:00:00")
         await sensor._update_internal_state()
         assert sensor.latest_raw_state == "2023-01-01T00:00:00"
 
@@ -234,77 +234,77 @@ class TestProtocolPublished:
 
 class TestModbusSkippedErrors:
     @pytest.mark.asyncio
-    async def test_update_internal_state(self):
+    async def test_update_internal_state(self, monkeypatch):
         sensor = ModbusSkippedErrors()
-        Metrics.sigenergy2mqtt_modbus_skipped_errors = 7
+        monkeypatch.setattr(Metrics, "sigenergy2mqtt_modbus_skipped_errors", 7)
         await sensor._update_internal_state()
         assert sensor.latest_raw_state == 7
 
 
 class TestStateStoreSaves:
     @pytest.mark.asyncio
-    async def test_update_internal_state(self):
+    async def test_update_internal_state(self, monkeypatch):
         sensor = StateStoreSaves()
-        Metrics.sigenergy2mqtt_state_store_saves = 42
+        monkeypatch.setattr(Metrics, "sigenergy2mqtt_state_store_saves", 42)
         await sensor._update_internal_state()
         assert sensor.latest_raw_state == 42
 
 
 class TestStateStoreSaveErrors:
     @pytest.mark.asyncio
-    async def test_update_internal_state(self):
+    async def test_update_internal_state(self, monkeypatch):
         sensor = StateStoreSaveErrors()
-        Metrics.sigenergy2mqtt_state_store_save_errors = 3
+        monkeypatch.setattr(Metrics, "sigenergy2mqtt_state_store_save_errors", 3)
         await sensor._update_internal_state()
         assert sensor.latest_raw_state == 3
 
 
 class TestStateStoreSaveMax:
     @pytest.mark.asyncio
-    async def test_update_internal_state(self):
+    async def test_update_internal_state(self, monkeypatch):
         sensor = StateStoreSaveMax()
-        Metrics.sigenergy2mqtt_state_store_save_max = 150.5
+        monkeypatch.setattr(Metrics, "sigenergy2mqtt_state_store_save_max", 150.5)
         await sensor._update_internal_state()
         assert sensor.latest_raw_state == 150.5
 
     @pytest.mark.asyncio
-    async def test_update_internal_state_inf(self):
+    async def test_update_internal_state_inf(self, monkeypatch):
         sensor = StateStoreSaveMax()
-        Metrics.sigenergy2mqtt_state_store_save_max = float("inf")
+        monkeypatch.setattr(Metrics, "sigenergy2mqtt_state_store_save_max", float("inf"))
         assert await sensor._update_internal_state() is False
         assert sensor.latest_raw_state is None
 
 
 class TestStateStoreSaveMean:
     @pytest.mark.asyncio
-    async def test_update_internal_state(self):
+    async def test_update_internal_state(self, monkeypatch):
         sensor = StateStoreSaveMean()
-        Metrics.sigenergy2mqtt_state_store_save_mean = 45.0
+        monkeypatch.setattr(Metrics, "sigenergy2mqtt_state_store_save_mean", 45.0)
         await sensor._update_internal_state()
         assert sensor.latest_raw_state == 45.0
 
 
 class TestStateStoreSaveMin:
     @pytest.mark.asyncio
-    async def test_update_internal_state(self):
+    async def test_update_internal_state(self, monkeypatch):
         sensor = StateStoreSaveMin()
-        Metrics.sigenergy2mqtt_state_store_save_min = 12.5
+        monkeypatch.setattr(Metrics, "sigenergy2mqtt_state_store_save_min", 12.5)
         await sensor._update_internal_state()
         assert sensor.latest_raw_state == 12.5
 
     @pytest.mark.asyncio
-    async def test_update_internal_state_inf(self):
+    async def test_update_internal_state_inf(self, monkeypatch):
         sensor = StateStoreSaveMin()
-        Metrics.sigenergy2mqtt_state_store_save_min = float("inf")
+        monkeypatch.setattr(Metrics, "sigenergy2mqtt_state_store_save_min", float("inf"))
         assert await sensor._update_internal_state() is False
         assert sensor.latest_raw_state is None
 
 
 class TestStateStoreLoads:
     @pytest.mark.asyncio
-    async def test_update_internal_state(self):
+    async def test_update_internal_state(self, monkeypatch):
         sensor = StateStoreLoads()
-        Metrics.sigenergy2mqtt_state_store_loads = 100
+        monkeypatch.setattr(Metrics, "sigenergy2mqtt_state_store_loads", 100)
         await sensor._update_internal_state()
         assert sensor.latest_raw_state == 100
 
@@ -356,9 +356,9 @@ class TestCloudMetricsSensors:
         ],
     )
     @pytest.mark.asyncio
-    async def test_update_internal_state(self, sensor_cls, attribute, test_value):
+    async def test_update_internal_state(self, monkeypatch, sensor_cls, attribute, test_value):
         sensor = sensor_cls()
-        setattr(Metrics, attribute, test_value)
+        monkeypatch.setattr(Metrics, attribute, test_value)
         await sensor._update_internal_state()
         assert sensor.latest_raw_state == test_value
 
@@ -385,28 +385,17 @@ class TestCloudMetricsSensors:
             CloudAvailable,
         ],
     )
-    def test_cloud_sensors_publishable(self, sensor_cls):
+    def test_cloud_sensors_publishable(self, monkeypatch, sensor_cls):
         from sigenergy2mqtt.config import active_config
 
-        orig_user = active_config.cloud.username
-        orig_pass = active_config.cloud.password
-        orig_region = active_config.cloud.region
-        orig_risk = active_config.cloud.accept_unofficial_api_risk
+        monkeypatch.setattr(active_config.cloud, "username", "test", raising=False)
+        monkeypatch.setattr(active_config.cloud, "password", "test", raising=False)
+        monkeypatch.setattr(active_config.cloud, "region", "eu", raising=False)
+        monkeypatch.setattr(active_config.cloud, "accept_unofficial_api_risk", True, raising=False)
 
-        try:
-            active_config.cloud.username = "test"
-            active_config.cloud.password = "test"
-            active_config.cloud.region = "eu"
-            active_config.cloud.accept_unofficial_api_risk = True
+        sensor = sensor_cls()
+        assert sensor.publishable is True
 
-            sensor = sensor_cls()
-            assert sensor.publishable is True
-
-            active_config.cloud.accept_unofficial_api_risk = False
-            sensor = sensor_cls()
-            assert sensor.publishable is False
-        finally:
-            active_config.cloud.username = orig_user
-            active_config.cloud.password = orig_pass
-            active_config.cloud.region = orig_region
-            active_config.cloud.accept_unofficial_api_risk = orig_risk
+        monkeypatch.setattr(active_config.cloud, "accept_unofficial_api_risk", False, raising=False)
+        sensor = sensor_cls()
+        assert sensor.publishable is False
