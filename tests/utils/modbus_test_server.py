@@ -232,7 +232,6 @@ class CloudApiTestServer:
                     ("TOU", "2"),
                     ("Fully Fed to Grid", "5"),
                     ("Remote EMS Mode", "7"),
-                    ("Custom Operation Mode", "9"),
                 )
             ],
             "energyProfileItems": [],
@@ -489,19 +488,36 @@ class CloudApiTestServer:
             "inverterRealTimeInfoVOList": [],
         }
         inverter_dynamic = [
-            ("Active Power", "-6.6", "kW"), ("Reactive Power", "0.003", "kVar"),
-            ("Phase A Voltage", "225.63", "V"), ("Phase B Voltage", "226.14", "V"),
-            ("Phase C Voltage", "224.97", "V"), ("Phase A Current", "29.58", "A"),
-            ("Phase B Current", "29.31", "A"), ("Phase C Current", "29.76", "A"),
-            ("Grid Frequency", "50.0", "Hz"), ("PV Power", "0.53", "kW"),
+            ("Active Power", "-6.6", "kW"),
+            ("Reactive Power", "0.003", "kVar"),
+            ("Phase A Voltage", "225.63", "V"),
+            ("Phase B Voltage", "226.14", "V"),
+            ("Phase C Voltage", "224.97", "V"),
+            ("Phase A Current", "29.58", "A"),
+            ("Phase B Current", "29.31", "A"),
+            ("Phase C Current", "29.76", "A"),
+            ("Grid Frequency", "50.0", "Hz"),
+            ("PV Power", "0.53", "kW"),
             ("Internal Temperature", "55.8", "℃"),
         ]
         self.device_dynamic_info = {
             3: {"realTimeInfo": [{"paramKey": key, "paramValue": f"{value} {unit}", "paramValueText": value, "paramValueUnit": unit} for key, value, unit in inverter_dynamic], "dataCurrTimeStamp": ""},
-            4: {"realTimeInfo": [{"paramKey": key, "paramValue": f"{value}{unit}" if unit == "%" else f"{value} {unit}", "paramValueText": value, "paramValueUnit": unit} for key, value, unit in (("Battery SOC", "72.3", "%"), ("Charging & Discharging Power", "2.236", "kW"), ("Battery Pack Voltage", "30.6", "V"), ("Heating status", "Off", ""))], "dataCurrTimeStamp": ""},
+            4: {
+                "realTimeInfo": [
+                    {"paramKey": key, "paramValue": f"{value}{unit}" if unit == "%" else f"{value} {unit}", "paramValueText": value, "paramValueUnit": unit}
+                    for key, value, unit in (("Battery SOC", "72.3", "%"), ("Charging & Discharging Power", "2.236", "kW"), ("Battery Pack Voltage", "30.6", "V"), ("Heating status", "Off", ""))
+                ],
+                "dataCurrTimeStamp": "",
+            },
         }
         self.device_static_info = {
-            3: {"stationStatus": 1, "softwareVersion": FIRMWARE_VERSION, "runStatus": 1, "findCheck": None, "paramInfoVOList": self._device_parameters(HYBRID_INVERTER_SERIAL[3:], "SigenStor EC 6.0 TP", "6.0", "kW")},
+            3: {
+                "stationStatus": 1,
+                "softwareVersion": FIRMWARE_VERSION,
+                "runStatus": 1,
+                "findCheck": None,
+                "paramInfoVOList": self._device_parameters(HYBRID_INVERTER_SERIAL[3:], "SigenStor EC 6.0 TP", "6.0", "kW"),
+            },
             4: {"stationStatus": 1, "softwareVersion": FIRMWARE_VERSION, "runStatus": 1, "findCheck": None, "paramInfoVOList": self._device_parameters("987B65BC1238", "SigenStor BAT 8.0", "8.06", "kWh")},
         }
 
