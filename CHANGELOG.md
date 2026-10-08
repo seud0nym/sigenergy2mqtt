@@ -12,6 +12,7 @@
 - Refactored the InfluxDB query methods into the Home Assistant backfill workflow to keep core functionality focussed on writes
 - Removed InfluxDB query metrics when HA sync disabled
 - Updated docker/build-push-action from 7.3.0 to 7.4.0
+- Metrics and Runtime Configuration publishing to MQTT now require explicit opt-in (both are still available through the diagnostics web UI)
 
 ---
 
