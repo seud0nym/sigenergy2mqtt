@@ -97,7 +97,7 @@ Turn off the validation that disables ESS Max Charging Discharging Limits and PV
 Ignored for firmware SPC113 and later as these limits are globally available in those versions.
 
 <a id="opt_no_metrics"></a>
-### No Metrics
+### No Metrics (Deprecated)
 <table>
 <tr><td><small>CLI</small></td><td><small><code>--no-metrics</code></small></td></tr>
 <tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_NO_METRICS</code></small></td></tr>
@@ -105,7 +105,29 @@ Ignored for firmware SPC113 and later as these limits are globally available in 
 <tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
 <tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
 </table>
-If true, sigenergy2mqtt will not publish any metrics to MQTT. However, metrics will still be recorded for publishing to the the diagnostics web UI.
+Deprecated: metrics publishing is now disabled by default. These options still work, but log a deprecation warning whenever specified, including when the ENV or YAML value is `false`. A value of `true` disables publishing; `false` enables it. Remove this option and use [Publish Metrics](#opt_publish_metrics) to opt in. If both the new and deprecated options are specified in the same source, the new option takes precedence. CLI options override ENV variables, which override YAML.
+
+<a id="opt_publish_metrics"></a>
+### Publish Metrics
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--publish-metrics</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_PUBLISH_METRICS</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>publish-metrics</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
+Enable publishing sigenergy2mqtt metrics to MQTT. The default is `false`. Use the CLI flag or set the ENV or YAML value to `true` to enable publishing. Metrics are still recorded for the diagnostics web UI when MQTT publishing is disabled.
+
+<a id="opt_publish_runtime_config"></a>
+### Publish Runtime Configuration
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--publish-runtime-config</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_PUBLISH_RUNTIME_CONFIG</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>publish-runtime-config</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
+Enable publishing Runtime Configuration to MQTT, allowing settings to be changed at runtime through MQTT or Home Assistant. The default is `false`. Use the CLI flag or set the ENV or YAML value to `true` to enable it.
 
 <a id="opt_repeated_state_publish_interval"></a>
 ### Repeated State Publish Interval

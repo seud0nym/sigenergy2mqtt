@@ -78,10 +78,22 @@ sanity-check-failures-increment: false
 #                 globally available in those versions.
 no-ems-mode-check: false
 # no-metrics
+#   deprecated: Use publish-metrics instead. Metrics publishing is disabled
+#               by default. If specified, this option still works (true disables
+#               publishing, false enables it), but logs a deprecation warning.
+# no-metrics: true
+# publish-metrics
+#   added: 2026.10.8
 #   default: false
-#   description:  If true, sigenergy2mqtt will not publish any metrics to
-#                 MQTT.
-no-metrics: false
+#   description:  If true, publish sigenergy2mqtt metrics to MQTT. Metrics
+#                 are still recorded for the diagnostics web UI when false.
+publish-metrics: false
+# publish-runtime-config
+#   added: 2026.10.8
+#   default: false
+#   description:  If true, publish Runtime Configuration to MQTT, allowing
+#                 settings to be changed at runtime through MQTT or Home Assistant.
+publish-runtime-config: false
 # modbus
 #   default: [ ]
 #   description:  The array of Modbus device configurations. Each device
