@@ -143,7 +143,7 @@ class TestCheckRegisterResponse:
         rr = MagicMock()
         rr.isError.return_value = True
         rr.exception_code = 99
-        with pytest.raises(Exception):
+        with pytest.raises(ModbusException):
             s._check_register_response(rr, "read_input_registers")
 
     def test_check_register_response_success(self):
@@ -158,7 +158,7 @@ class TestCheckRegisterResponse:
         rr = MagicMock()
         rr.isError.return_value = True
         rr.exception_code = 2
-        with patch("sigenergy2mqtt.sensors.base.mixins.logger") as mock_log, pytest.raises(Exception):
+        with patch("sigenergy2mqtt.sensors.base.mixins.logger") as mock_log, pytest.raises(ModbusException):
             s._check_register_response(rr, "read_input_registers")
         mock_log.debug.assert_called()
 

@@ -421,14 +421,16 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
             logger.warning(f"{self.log_identity} Failed to parse midnight state for {self._midnight_persistence_key}: {e}")
             state_store.delete_sync(Category.SENSOR, self._midnight_persistence_key)
 
-    async def _update_state_at_midnight(self, midnight_state: float | None) -> None:
+    async def _update_state_at_midnight(self, midnight_state: Any) -> None:
         """Persist state at midnight.
 
         Args:
             midnight_state: State value at midnight
         """
-        if midnight_state is None:
+        if not isinstance(midnight_state, (float, int)):
             return
+
+        midnight_state = float(midnight_state)
 
         async with self._state_at_midnight_lock:
             try:

@@ -13,8 +13,22 @@ from sigenergy2mqtt.modbus import ModbusDataType
 if TYPE_CHECKING:
     from sigenergy2mqtt.mqtt import MqttHandler
 
-from sigenergy2mqtt.common import PERCENTAGE, DeviceClass, HybridInverter, InputType, UnitOfPower, UnitOfTime
-from sigenergy2mqtt.sensors.base import AvailabilityMixin, DiscoveryKeys, NumericSensor, ScanInterval, SelectSensor, SwitchSensor
+from sigenergy2mqtt.common import (
+    PERCENTAGE,
+    DeviceClass,
+    HybridInverter,
+    InputType,
+    UnitOfPower,
+    UnitOfTime,
+)
+from sigenergy2mqtt.sensors.base import (
+    AvailabilityMixin,
+    DiscoveryKeys,
+    NumericSensor,
+    ScanInterval,
+    SelectSensor,
+    SwitchSensor,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +56,14 @@ class ESSPreHeatingEnable(SwitchSensor, HybridInverter):
 
 class ESSPreHeatingMode(SelectSensor, AvailabilityMixin, HybridInverter):
     ADDRESS = 50001
+
+    @property
+    def payload_available(self) -> bool | int | float | str | None:
+        return 1
+
+    @property
+    def payload_not_available(self) -> bool | int | float | str | None:
+        return 0
 
     def __init__(self, plant_index: int):
         super().__init__(
@@ -129,7 +151,7 @@ class ESSPreHeatingTOUTime(NumericSensor, HybridInverter):
         )
         self[DiscoveryKeys.PLATFORM] = "time"
 
-    def _raw2state(self, raw_value: float | str) -> float | int | str:
+    def _raw2state(self, raw_value: Any) -> Any:
         if isinstance(raw_value, (float, int)):
             return datetime.strftime(datetime.fromtimestamp(raw_value, UTC), "%H:%M:%S")
         return super()._raw2state(raw_value)
@@ -139,7 +161,7 @@ class ESSPreHeatingTOUTime(NumericSensor, HybridInverter):
         attributes["comment"] = "Epoch seconds with timezone; local time interpretation depends on the device."
         return attributes
 
-    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
+    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> Any:
         """Get state as parseable time string.
 
         Args:
@@ -167,7 +189,7 @@ class ESSPreHeatingTOUTime(NumericSensor, HybridInverter):
         epoch = cast(int, self.state2raw(value))
         return await super().set_value(transport, mqtt_client, epoch, source, handler)
 
-    def state2raw(self, state: float | str) -> float | int | str | None:
+    def state2raw(self, state: Any) -> Any:
         """Convert time string back to Unix epoch value.
 
         Args:
@@ -181,6 +203,9 @@ class ESSPreHeatingTOUTime(NumericSensor, HybridInverter):
 
         if isinstance(state, (float, int)):
             return int(state)
+
+        if not isinstance(state, str):
+            return super().state2raw(state)
 
         dt = datetime.strptime("01-01-1970 " + state + " +0000", "%d-%m-%Y %H:%M:%S %z")  # Target data type is UINT32, so need to convert to UTC to prevent negative numbers caused by positive timezone offsets
         ts = dt.timestamp()

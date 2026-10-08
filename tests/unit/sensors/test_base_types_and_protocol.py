@@ -1,19 +1,18 @@
 from __future__ import annotations
 
-import asyncio
-import time
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.common import DeviceClass, ProtocolVersion, RegisterAccess, StateClass, UnitOfPower
+from sigenergy2mqtt.common import (
+    DeviceClass,
+    ProtocolVersion,
+    StateClass,
+    UnitOfPower,
+)
 from sigenergy2mqtt.config import Config, _swap_active_config
-from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.base import (
-    AlarmSensor,
-    ReadOnlySensor,
     Sensor,
-    WriteOnlySensor,
 )
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -36,22 +35,21 @@ def _make_sensor(name="Test", uid_suffix="x", debug=False, **kwargs):
     cfg.home_assistant.unique_id_prefix = "sigen"
     cfg.home_assistant.entity_id_prefix = "sigen"
 
-    with _swap_active_config(cfg):
-        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-            s = ConcreteSensor(
-                name=name,
-                unique_id=uid,
-                object_id=oid,
-                unit=UnitOfPower.WATT,
-                device_class=DeviceClass.POWER,
-                state_class=StateClass.MEASUREMENT,
-                icon="mdi:solar-power",
-                gain=1.0,
-                precision=2,
-                protocol_version=ProtocolVersion.V2_4,
-                debug_logging=debug,
-                **kwargs,
-            )
+    with _swap_active_config(cfg), patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+        s = ConcreteSensor(
+            name=name,
+            unique_id=uid,
+            object_id=oid,
+            unit=UnitOfPower.WATT,
+            device_class=DeviceClass.POWER,
+            state_class=StateClass.MEASUREMENT,
+            icon="mdi:solar-power",
+            gain=1.0,
+            precision=2,
+            protocol_version=ProtocolVersion.V2_4,
+            debug_logging=debug,
+            **kwargs,
+        )
     return s
 
 
@@ -64,7 +62,6 @@ def _mqtt_mock():
 # ─────────────────────────────────────────────────────────────────────────────
 # 1. Debug-logging branches in property setters
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 
 class TestState2Raw:
@@ -120,11 +117,36 @@ class TestState2Raw:
         s = self._sensor_with_options(["Alpha", "Beta"], "s2r_fallback")
         assert s.state2raw("Alpha") == 0
 
+    def test_state2raw_preserves_structured_state(self):
+        s = _make_sensor(uid_suffix="s2r_structured")
+        state = {"enabled": True, "limits": [1, 2, 3]}
+
+        assert s.state2raw(state) is state
+
+
+class TestArbitraryStateTypes:
+    @pytest.mark.asyncio
+    async def test_structured_state_round_trip(self):
+        s = _make_sensor(uid_suffix="structured_state")
+        first_state = {"status": "ready", "phases": [True, False, True]}
+        second_state = ("running", 42)
+
+        assert s.set_state(first_state) is True
+        assert s.set_state(second_state) is True
+        assert s.previous_raw_state is first_state
+        assert s.latest_raw_state is second_state
+        assert await s.get_state(raw=False, republish=True) is second_state
+
+    def test_gain_processing_preserves_structured_state(self):
+        s = _make_sensor(uid_suffix="structured_gain")
+        state = [1, "two", {"three": 3}]
+
+        assert s._apply_gain_and_precision(state) is state
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 10. _check_register_response() exception code branches
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 
 class TestProtocolVersionSetter:
@@ -148,7 +170,6 @@ class TestProtocolVersionSetter:
 # ─────────────────────────────────────────────────────────────────────────────
 # 15. set_latest_state propagates to derived sensors
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 
 class TestGainProperty:
@@ -176,5 +197,3 @@ class TestGainProperty:
 # ─────────────────────────────────────────────────────────────────────────────
 # 22. ReadableSensorMixin scan-interval override
 # ─────────────────────────────────────────────────────────────────────────────
-
-

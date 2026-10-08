@@ -1,7 +1,7 @@
 import os
 import re
 
-import sigenergy2mqtt.config.const as const
+from sigenergy2mqtt.config import const
 
 
 def test_constants_in_documentation():

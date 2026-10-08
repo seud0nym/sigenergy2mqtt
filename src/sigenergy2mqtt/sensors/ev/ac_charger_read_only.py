@@ -1,9 +1,20 @@
-from sigenergy2mqtt.common import DeviceClass, InputType, ProtocolVersion, StateClass, UnitOfElectricCurrent, UnitOfElectricPotential, UnitOfEnergy, UnitOfPower
+from typing import Any
+
+from sigenergy2mqtt.common import (
+    DeviceClass,
+    InputType,
+    ProtocolVersion,
+    StateClass,
+    UnitOfElectricCurrent,
+    UnitOfElectricPotential,
+    UnitOfEnergy,
+    UnitOfPower,
+)
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.base import DiscoveryKeys, ScanInterval
 
-from .base import AlarmCombinedSensor, AlarmSensor, ReadOnlySensor
+from ..base import AlarmCombinedSensor, AlarmSensor, ReadOnlySensor
 
 # 5.5 AC-Charger running information address definition (read-only register)
 
@@ -45,7 +56,7 @@ class ACChargerRunningState(ReadOnlySensor):
         self.sanity_check.min_raw = 0
         self.sanity_check.max_raw = len(options) - 1
 
-    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
+    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> Any:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
         if raw or value is None:
             return value
@@ -131,7 +142,7 @@ class ACChargerRatedPower(ReadOnlySensor):
             precision=2,
             protocol_version=ProtocolVersion.V2_0,
         )
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
 
 class ACChargerRatedCurrent(ReadOnlySensor):
@@ -156,7 +167,7 @@ class ACChargerRatedCurrent(ReadOnlySensor):
             precision=2,
             protocol_version=ProtocolVersion.V2_0,
         )
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
 
 class ACChargerRatedVoltage(ReadOnlySensor):
@@ -181,7 +192,7 @@ class ACChargerRatedVoltage(ReadOnlySensor):
             precision=1,
             protocol_version=ProtocolVersion.V2_0,
         )
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
 
 class ACChargerInputBreaker(ReadOnlySensor):
@@ -206,7 +217,7 @@ class ACChargerInputBreaker(ReadOnlySensor):
             precision=2,
             protocol_version=ProtocolVersion.V2_0,
         )
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
 
 class ACChargerAlarm1(AlarmSensor):

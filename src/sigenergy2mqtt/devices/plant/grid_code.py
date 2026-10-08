@@ -1,7 +1,7 @@
 from typing import cast
 
-import sigenergy2mqtt.sensors.plant_read_only as ro
-import sigenergy2mqtt.sensors.plant_read_write as rw
+import sigenergy2mqtt.sensors.plant.read_only as ro
+import sigenergy2mqtt.sensors.plant.read_write as rw
 from sigenergy2mqtt.common import DeviceType, ProtocolVersion
 from sigenergy2mqtt.devices import ModbusDevice
 from sigenergy2mqtt.modbus import ModbusClient

@@ -794,8 +794,13 @@ class TranslationExtractor(ast.NodeVisitor):
                 # not need automatic suffix appending.
                 existing_placeholders = re.findall(r"\{[^{}]+\}", name)
                 if not existing_placeholders:
+                    kw_args = {kw.arg for kw in node.keywords}
                     for kw in node.keywords:
                         if kw.arg == "plant_index" and self._current_class in SKIP_SUFFIX_CLASSES:
+                            continue
+                        # Skip plant_index when plant_suffix is also passed — plant_suffix
+                        # already encodes the plant number so plant_index would be redundant.
+                        if kw.arg == "plant_index" and "plant_suffix" in kw_args:
                             continue
                         if kw.arg in ("plant_index", "sequence_suffix", "plant_suffix"):
                             placeholder = f"{{{kw.arg}}}"

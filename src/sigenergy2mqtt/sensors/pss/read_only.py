@@ -18,7 +18,13 @@ from sigenergy2mqtt.common import (
 from sigenergy2mqtt.common.types import NonInverter
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus import ModbusDataType
-from sigenergy2mqtt.sensors.base import AlarmSensor, DiscoveryKeys, NumericSensor, ReadOnlySensor, ScanInterval
+from sigenergy2mqtt.sensors.base import (
+    AlarmSensor,
+    DiscoveryKeys,
+    NumericSensor,
+    ReadOnlySensor,
+    ScanInterval,
+)
 
 
 class PSSModelType(ReadOnlySensor, NonInverter):
@@ -43,7 +49,7 @@ class PSSModelType(ReadOnlySensor, NonInverter):
             precision=None,
             protocol_version=ProtocolVersion.V2_9,
         )
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
 
 class PSSSerialNumber(ReadOnlySensor, NonInverter):
@@ -68,7 +74,7 @@ class PSSSerialNumber(ReadOnlySensor, NonInverter):
             precision=None,
             protocol_version=ProtocolVersion.V2_9,
         )
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
 
 class PSSCommunicationStatus(ReadOnlySensor, NonInverter):

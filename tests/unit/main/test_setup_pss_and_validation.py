@@ -7,8 +7,19 @@ from pymodbus import ModbusException
 
 from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.config import Config, active_config
-from sigenergy2mqtt.main.device_setup import _GRID_RESTORE_WATCH_TASKS, _is_grid_outage, _schedule_restart_on_grid_restore, _setup_pss, _watch_grid_restore_and_request_restart
-from sigenergy2mqtt.main.validation import _is_valid_validation_cache_payload, _validate_modbus_connections, _validate_mqtt_connection, validate_publishable_sensors
+from sigenergy2mqtt.main.device_setup import (
+    _GRID_RESTORE_WATCH_TASKS,
+    _is_grid_outage,
+    _schedule_restart_on_grid_restore,
+    _setup_pss,
+    _watch_grid_restore_and_request_restart,
+)
+from sigenergy2mqtt.main.validation import (
+    _is_valid_validation_cache_payload,
+    _validate_modbus_connections,
+    _validate_mqtt_connection,
+    validate_publishable_sensors,
+)
 
 
 @pytest.fixture(autouse=True)

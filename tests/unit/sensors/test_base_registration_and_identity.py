@@ -82,17 +82,15 @@ class TestResettableAccumulationSensorCoverage:
         assert sensor._current_total == 123.45
 
     def test_load_persisted_state_errors(self, mock_config, caplog):
-        with patch.object(state_store, "load_sync", side_effect=OSError("denied")):
-            with caplog.at_level(logging.WARNING):
-                self._make_sensor()
-                assert "denied" in caplog.text
+        with patch.object(state_store, "load_sync", side_effect=OSError("denied")), caplog.at_level(logging.WARNING):
+            self._make_sensor()
+            assert "denied" in caplog.text
 
         Sensor._used_unique_ids.clear()
         Sensor._used_object_ids.clear()
-        with patch.object(state_store, "load_sync", side_effect=RuntimeError("generic")):
-            with caplog.at_level(logging.WARNING):
-                self._make_sensor()
-                assert "generic" in caplog.text
+        with patch.object(state_store, "load_sync", side_effect=RuntimeError("generic")), caplog.at_level(logging.WARNING):
+            self._make_sensor()
+            assert "generic" in caplog.text
 
     def test_discovery_and_attributes(self, mock_config):
         sensor = self._make_sensor()
@@ -165,20 +163,18 @@ class TestResettableAccumulationSensorCoverage:
         values = deque([(time.time() - 3600, 100.0), (time.time(), 200.0)])
         sensor._source._states = values
         # Hit 234-254 (asyncio branches)
-        with patch("asyncio.get_running_loop", side_effect=RuntimeError):
-            with patch("asyncio.get_event_loop") as mock_evt:
-                mock_loop = MagicMock()
-                mock_loop.is_running.return_value = True
-                mock_loop.create_task.side_effect = lambda coro: coro.close()
-                mock_evt.return_value = mock_loop
-                # Line 245
-                with patch("asyncio.get_running_loop", side_effect=RuntimeError):
-                    with patch("asyncio.run_coroutine_threadsafe") as mock_threadsafe:
-                        mock_threadsafe.side_effect = lambda coro, loop: (coro.close(), MagicMock())[1]
-                        sensor.update_from_source_sensor(sensor._source)
-                # Line 248-249 (run_coroutine_threadsafe exception)
-                with patch("asyncio.run_coroutine_threadsafe", side_effect=Exception):
-                    sensor.update_from_source_sensor(sensor._source)
+        with patch("asyncio.get_running_loop", side_effect=RuntimeError), patch("asyncio.get_event_loop") as mock_evt:
+            mock_loop = MagicMock()
+            mock_loop.is_running.return_value = True
+            mock_loop.create_task.side_effect = lambda coro: coro.close()
+            mock_evt.return_value = mock_loop
+            # Line 245
+            with patch("asyncio.get_running_loop", side_effect=RuntimeError), patch("asyncio.run_coroutine_threadsafe") as mock_threadsafe:
+                mock_threadsafe.side_effect = lambda coro, loop: (coro.close(), MagicMock())[1]
+                sensor.update_from_source_sensor(sensor._source)
+            # Line 248-249 (run_coroutine_threadsafe exception)
+            with patch("asyncio.run_coroutine_threadsafe", side_effect=Exception):
+                sensor.update_from_source_sensor(sensor._source)
 
 
 class TestEnergyLifetimeAccumulationSensorCoverage:
@@ -271,11 +267,10 @@ class TestEnergyDailyAccumulationSensorCoverageExtended:
         # Generic Exception
         Sensor._used_unique_ids.clear()
         Sensor._used_object_ids.clear()
-        with patch.object(state_store, "load_sync", side_effect=RuntimeError("generic")):
-            with caplog.at_level(logging.WARNING):
-                sensor = self._make_sensor()
-                sensor.on_added_to_device()
-                assert "Failed to read" in caplog.text
+        with patch.object(state_store, "load_sync", side_effect=RuntimeError("generic")), caplog.at_level(logging.WARNING):
+            sensor = self._make_sensor()
+            sensor.on_added_to_device()
+            assert "Failed to read" in caplog.text
 
     @pytest.mark.asyncio
     async def test_update_midnight_success(self, mock_config):
@@ -301,21 +296,19 @@ class TestEnergyDailyAccumulationSensorCoverageExtended:
         assert await sensor.notify(None, MagicMock(), "10.0", "wrong_topic", MagicMock()) is False
 
         # Successful notify with debug logging (Line 411-428)
-        with patch.object(sensor, "_update_state_at_midnight", new_callable=AsyncMock) as mock_u:
-            with caplog.at_level(logging.DEBUG):
-                assert await sensor.notify(None, MagicMock(), "10.0", sensor._reset_topic, MagicMock()) is True
-                assert "notified of updated state 10.0" in caplog.text
-                mock_u.assert_called()
+        with patch.object(sensor, "_update_state_at_midnight", new_callable=AsyncMock) as mock_u, caplog.at_level(logging.DEBUG):
+            assert await sensor.notify(None, MagicMock(), "10.0", sensor._reset_topic, MagicMock()) is True
+            assert "notified of updated state 10.0" in caplog.text
+            mock_u.assert_called()
 
     @pytest.mark.asyncio
     async def test_publish_init_midnight(self, mock_config):
         sensor = self._make_sensor()
         sensor.configure_mqtt_topics("device_123")
         # Line 441-443
-        with patch.object(Path, "is_file", return_value=False):
-            with patch.object(sensor, "_update_state_at_midnight", new_callable=AsyncMock) as mock_u:
-                await sensor.publish(MagicMock(), None)
-                mock_u.assert_called()
+        with patch.object(Path, "is_file", return_value=False), patch.object(sensor, "_update_state_at_midnight", new_callable=AsyncMock) as mock_u:
+            await sensor.publish(MagicMock(), None)
+            mock_u.assert_called()
 
     def test_set_source_values_logic(self, mock_config):
         sensor = self._make_sensor()
@@ -348,10 +341,12 @@ class TestEnergyDailyAccumulationSensorCoverageExtended:
         Sensor._used_unique_ids.clear()
         Sensor._used_object_ids.clear()
         sensor = self._make_sensor()
-        with patch("time.localtime", side_effect=[yesterday_tm, today_tm]):
-            with patch("asyncio.get_running_loop", side_effect=RuntimeError):  # Force bypass to next block
-                with patch("asyncio.get_event_loop", side_effect=Exception):  # Generic exception
-                    sensor.update_from_source_sensor(sensor._source)
+        with (
+            patch("time.localtime", side_effect=[yesterday_tm, today_tm]),
+            patch("asyncio.get_running_loop", side_effect=RuntimeError),
+            patch("asyncio.get_event_loop", side_effect=Exception),
+        ):  # Generic exception
+            sensor.update_from_source_sensor(sensor._source)
 
     def test_set_source_values_midnight_init(self, mock_config):
         # Line 489

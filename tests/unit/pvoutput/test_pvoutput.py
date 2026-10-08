@@ -6,7 +6,13 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 import requests
 
-from sigenergy2mqtt.common import ConsumptionSource, StatusField, UnitOfEnergy, UnitOfPower, VoltageSource
+from sigenergy2mqtt.common import (
+    ConsumptionSource,
+    StatusField,
+    UnitOfEnergy,
+    UnitOfPower,
+    VoltageSource,
+)
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.config.settings import PvOutputConfig
 from sigenergy2mqtt.pvoutput import PVOutputSettings, get_gain, get_pvoutput_services

@@ -257,7 +257,12 @@ class DiagnosticsServer:
         """
         from sigenergy2mqtt.devices.base.registry import DeviceRegistry
         from sigenergy2mqtt.sensors.base.constants import DiscoveryKeys
-        from sigenergy2mqtt.sensors.base.writeable import NumericSensorMixin, SelectSensorMixin, SwitchSensorMixin, WriteOnlySensorMixin
+        from sigenergy2mqtt.sensors.base.writeable import (
+            NumericSensorMixin,
+            SelectSensorMixin,
+            SwitchSensorMixin,
+            WriteOnlySensorMixin,
+        )
         from sigenergy2mqtt.sensors.settings import SettingsSensor
 
         endpoint = request.match_info["endpoint"]

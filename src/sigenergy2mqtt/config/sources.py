@@ -17,7 +17,15 @@ from typing import Any
 
 from pydantic_settings import BaseSettings, PydanticBaseSettingsSource
 
-from sigenergy2mqtt.config.coerce import _bool, _float, _int, _int_list, _invert_bool, _set, _str_list
+from sigenergy2mqtt.config.coerce import (
+    _bool,
+    _float,
+    _int,
+    _int_list,
+    _invert_bool,
+    _set,
+    _str_list,
+)
 
 from . import const
 
@@ -263,6 +271,19 @@ class EnvSettingsSource(PydanticBaseSettingsSource):
         _set(diagnostics, "log_level", g(const.SIGENERGY2MQTT_DIAGNOSTICS_LOG_LEVEL))
         if diagnostics:
             result["diagnostics"] = diagnostics
+
+        # ── Cloud ────────────────────────────────────────────────────────────
+        cloud: dict[str, Any] = {}
+        _set(cloud, "username", g(const.SIGENERGY2MQTT_CLOUD_USERNAME))
+        _set(cloud, "password", g(const.SIGENERGY2MQTT_CLOUD_PASSWORD))
+        _set(cloud, "region", g(const.SIGENERGY2MQTT_CLOUD_REGION))
+        _set(cloud, "discover_inverters", _bool(g(const.SIGENERGY2MQTT_CLOUD_DISCOVER_INVERTERS)))
+        _set(cloud, "log_level", g(const.SIGENERGY2MQTT_CLOUD_LOG_LEVEL))
+        _set(cloud, "scan_interval", _int(g(const.SIGENERGY2MQTT_SCAN_INTERVAL_CLOUD)))
+        _set(cloud, "accept_unofficial_api_risk", _bool(g(const.SIGENERGY2MQTT_CLOUD_ACCEPT_UNOFFICIAL_API_RISK)))
+        _set(cloud, "testing_url", g(const.SIGENERGY2MQTT_CLOUD_TESTING_URL))
+        if cloud:
+            result["cloud"] = cloud
 
         # ── Auto-discovery ───────────────────────────────────────────────────
         result.update(_auto_discovery_env_values(g, include_modbus_port=True))

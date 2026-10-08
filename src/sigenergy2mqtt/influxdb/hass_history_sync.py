@@ -766,7 +766,7 @@ class HassHistorySync(InfluxBase):
         if not sync_tasks:
             return results
 
-        sync_results = await asyncio.gather(*sync_tasks)
+        sync_results = await asyncio.gather(*sync_tasks, return_exceptions=False)
 
         for measurement, tags, count in sync_results:
             result_key = f"{measurement}[{','.join(f'{k}={v}' for k, v in tags.items())}]"

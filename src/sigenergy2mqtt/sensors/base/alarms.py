@@ -10,7 +10,13 @@ from typing import Any, Final, cast
 
 from pymodbus.pdu import ExceptionResponse
 
-from sigenergy2mqtt.common import DeviceClass, HybridInverter, InputType, ProtocolVersion, PVInverter
+from sigenergy2mqtt.common import (
+    DeviceClass,
+    HybridInverter,
+    InputType,
+    ProtocolVersion,
+    PVInverter,
+)
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.i18n import _t
 from sigenergy2mqtt.modbus import ModbusDataType
@@ -73,7 +79,7 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
             Alarm description or None if bit is not used
         """
 
-    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
+    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> Any:
         """Get alarm state as human-readable string.
 
         Args:
@@ -195,7 +201,7 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
 
         return compressed[: (max_len - 3)] + "..."
 
-    def state2raw(self, state: float | str) -> float | int | str | None:
+    def state2raw(self, state: Any) -> Any:
         """Convert alarm description back to code.
 
         Args:
@@ -206,6 +212,8 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
         """
         if state == AlarmSensor.NO_ALARM:
             return 0
+        if isinstance(state, str):
+            raise TypeError(f"Unknown alarm state: {state}")
         return super().state2raw(state)
 
 
@@ -431,7 +439,7 @@ class AlarmCombinedSensor(ReadOnlySensor, HybridInverter, PVInverter):
 
         return base
 
-    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
+    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> Any:
         """Get combined alarm state from all alarm sensors.
 
         Args:
@@ -479,7 +487,7 @@ class AlarmCombinedSensor(ReadOnlySensor, HybridInverter, PVInverter):
 
         return compressed
 
-    def state2raw(self, state: float | str) -> float | int | str | None:
+    def state2raw(self, state: Any) -> Any:
         """Convert alarm state back to code.
 
         Args:
@@ -546,7 +554,7 @@ class RunningStateSensor(ReadOnlySensor):
         self.sanity_check.min_raw = 0
         self.sanity_check.max_raw = len(cast(list[str], self[DiscoveryKeys.OPTIONS])) - 1
 
-    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
+    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> Any:
         """Get running state as string.
 
         Args:

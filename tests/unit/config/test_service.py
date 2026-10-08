@@ -7,6 +7,7 @@ from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.config.service import SettingsService
 from sigenergy2mqtt.sensors.settings import (
     ApplicationLogLevel,
+    CloudLogLevel,
     DiagnosticsLogLevel,
     InfluxDBLogLevel,
     PVOutputLogLevel,
@@ -20,6 +21,10 @@ def config():
 
 
 def test_optional_settings_follow_integration_configuration(config):
+    config.cloud.username = "cloud-user"
+    config.cloud.password = "cloud-password"
+    config.cloud.region = "eu"
+    config.cloud.accept_unofficial_api_risk = True
     config.diagnostics.enabled = True
     config.influxdb.enabled = True
     config.pvoutput.enabled = True
@@ -27,18 +32,23 @@ def test_optional_settings_follow_integration_configuration(config):
     service = SettingsService()
 
     assert isinstance(service.sensors["sigenergy2mqtt_config_log_level"], ApplicationLogLevel)
+    assert any(isinstance(sensor, CloudLogLevel) for sensor in service.sensors.values())
     assert any(isinstance(sensor, DiagnosticsLogLevel) for sensor in service.sensors.values())
     assert any(isinstance(sensor, InfluxDBLogLevel) for sensor in service.sensors.values())
     assert any(isinstance(sensor, PVOutputLogLevel) for sensor in service.sensors.values())
 
 
 def test_optional_settings_are_omitted_when_integrations_are_disabled(config):
+    config.cloud.username = ""
+    config.cloud.password = ""
+    config.cloud.region = ""
     config.diagnostics.enabled = False
     config.influxdb.enabled = False
     config.pvoutput.enabled = False
 
     service = SettingsService()
 
+    assert not any(isinstance(sensor, CloudLogLevel) for sensor in service.sensors.values())
     assert not any(isinstance(sensor, DiagnosticsLogLevel) for sensor in service.sensors.values())
     assert not any(isinstance(sensor, InfluxDBLogLevel) for sensor in service.sensors.values())
     assert not any(isinstance(sensor, PVOutputLogLevel) for sensor in service.sensors.values())
@@ -57,7 +67,11 @@ async def test_application_log_level_write_updates_config_and_logger(config):
 
 
 def test_settings_sensor_get_value(config):
-    from sigenergy2mqtt.sensors.settings import ModbusLogLevel, PersistenceDebugging, RepeatedStatePublishInterval
+    from sigenergy2mqtt.sensors.settings import (
+        ModbusLogLevel,
+        PersistenceDebugging,
+        RepeatedStatePublishInterval,
+    )
 
     config.log_level = logging.DEBUG
     app_log = ApplicationLogLevel()

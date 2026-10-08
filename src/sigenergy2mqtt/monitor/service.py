@@ -11,13 +11,21 @@ from typing import Any
 import paho.mqtt.client as mqtt
 from paho.mqtt import MQTTException
 
-from sigenergy2mqtt.common import PERCENTAGE, ProtocolVersion, UnitOfTemperature, service_health_registry
+from sigenergy2mqtt.common import (
+    ProtocolVersion,
+    service_health_registry,
+)
 from sigenergy2mqtt.config import active_config, is_docker
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.diagnostics import diagnostics_registry
 from sigenergy2mqtt.i18n import _t
 from sigenergy2mqtt.modbus import ModbusClientFactory
-from sigenergy2mqtt.mqtt import MqttHandler, mqtt_health_registry, mqtt_setup, mqtt_teardown
+from sigenergy2mqtt.mqtt import (
+    MqttHandler,
+    mqtt_health_registry,
+    mqtt_setup,
+    mqtt_teardown,
+)
 from sigenergy2mqtt.sensors.base import DerivedSensor, ReadableSensorMixin
 from sigenergy2mqtt.sensors.monitor import MonitoredSensor
 
@@ -106,7 +114,13 @@ class MonitorService(Device):
         return bool(mqtt_healthy_connections == len(mqtt_snapshot)), len(mqtt_snapshot)
 
     def _check_service_health(self) -> tuple[bool, dict[str, bool]]:
-        """Evaluate optional service health contributors."""
+        """Evaluate optional service health contributors.
+
+        Cloud control is deliberately excluded: it is an optional remote control
+        path, is not required for telemetry, and transient Internet/vendor API
+        failures should not restart an otherwise healthy local service. Cloud
+        connectivity remains visible through the diagnostics metrics card.
+        """
         contributors: dict[str, bool] = {}
         healthy = True
 
@@ -182,57 +196,6 @@ class MonitorService(Device):
             "sigenergy2mqtt_version": active_config.version,
         }
         return payload
-
-    async def _collect_plant_states(self) -> dict[str, Any]:
-        """Diagnostics provider callback: exposes the latest selected plant states."""
-        if self._topics_snapshot["snapshot"] is None or self._topics_snapshot["timestamp"] + active_config.diagnostics.refresh_interval < time.monotonic():
-            async with self._lock:
-                snapshot = {topic: replace(sensor) for topic, sensor in self._topics.items()}
-            self._topics_snapshot = {"timestamp": time.monotonic(), "snapshot": snapshot}
-        else:
-            snapshot = self._topics_snapshot["snapshot"]
-
-        states: dict[str, Any] = {}
-
-        def _format_value(sensor: MonitoredSensor) -> str:
-            if sensor.unit == "kWh" and isinstance(sensor.last_state, (int, float)) and sensor.last_state > 1000:
-                return f"{sensor.last_state / 1000:.2f} MWh"
-            if sensor.last_state is None:
-                return "unknown"
-            if sensor.unit is None:
-                return str(sensor.last_state)
-            if sensor.unit is PERCENTAGE or sensor.unit == UnitOfTemperature.CELSIUS or sensor.unit == UnitOfTemperature.FAHRENHEIT:
-                return f"{sensor.last_state}{sensor.unit}"
-            return f"{sensor.last_state} {sensor.unit}"
-
-        def _updates_states(classname: str, description: str | None = None) -> None:
-            values = {s.name: (s.description if description is None else description, _format_value(s)) for s in snapshot.values() if classname in s.sensor_name}
-            if len(values) == 1:
-                key, state = next(iter(values.values()))
-                states[key] = state
-            elif len(values) > 1:
-                for name, value in values.items():
-                    plant = name.split("plant=")[-1].rstrip("]")
-                    states[f"{value[0]}_{plant}"] = value[1]
-
-        _updates_states("PlantRunningState")
-        states[_t("InverterAlarm5.name")] = "-" if len(snapshot) == 0 else "No" if all(s.last_state == self._no_alarm_i18n for s in snapshot.values() if "Alarm" in s.sensor_name) else "** YES **"
-        _updates_states("GridStatus")
-        _updates_states("GridActivity")
-        _updates_states("PlantPVPower")
-        _updates_states("ThirdPartyPVPower")
-        _updates_states("TotalLifetimePVEnergy")
-        _updates_states("TotalLoadConsumption")
-        _updates_states("BatteryStatus")
-        _updates_states("PlantBatterySoC")
-        _updates_states("PlantBatterySoH")
-        _updates_states("ESSTotalChargedEnergy")
-        _updates_states("ESSTotalDischargedEnergy")
-        _updates_states("ESSAverageCellTemperature")
-        _updates_states("InverterTemperature", "Inverter Temperature")
-        _updates_states("InverterFirmwareVersion", "Firmware")
-
-        return states
 
     async def _monitor(self, mqtt_client: mqtt.Client) -> None:
         """Check for overdue topics and log warning/recovery events.
@@ -332,7 +295,9 @@ class MonitorService(Device):
                     self._health_check_failures += 1
                     logger.warning(f"{self.log_identity} Health check failure count: {self._health_check_failures}/{active_config.health_check.retries}")
                     if self._health_check_failures >= active_config.health_check.retries:
-                        from sigenergy2mqtt.main.restart import restart_controller  # lazy import to avoid circular dependency
+                        from sigenergy2mqtt.main.restart import (
+                            restart_controller,  # lazy import to avoid circular dependency
+                        )
 
                         restart_controller.request("Health check failed repeatedly")
                         self._health_check_failures = 0  # reset to suppress repeat calls until restart completes
@@ -347,7 +312,7 @@ class MonitorService(Device):
             try:
                 for topic in (service._health_state_topic, service._health_attributes_topic):
                     logger.debug(f"MonitorService: Removing topic {topic}")
-                    info = client.publish(topic, b"", qos=2, retain=True)
+                    info = client.publish(topic, b"", qos=1, retain=True)
                     if info.rc == mqtt.MQTT_ERR_SUCCESS:
                         info.wait_for_publish(timeout=5.0)
                         logger.info(f"MonitorService: Topic {topic} removed successfully")
@@ -395,11 +360,14 @@ class MonitorService(Device):
             sensor = self._topics[source]
             if sensor.notified:
                 logger.info(f"{self.log_identity} '{sensor.name}' seen after {sensor.overdue}s (scan_interval={sensor.scan_interval}s {source=})")
-            state: float | str
-            try:
-                state = float(value)
-            except ValueError:
-                state = value
+            state: float | str | None
+            if value == "":
+                state = sensor.last_state
+            else:
+                try:
+                    state = float(value)
+                except ValueError:
+                    state = value
             async with self._lock:
                 sensor.last_seen = time.time()
                 sensor.last_state = state
@@ -416,7 +384,6 @@ class MonitorService(Device):
             transport: Optional Modbus client instance.
             mqtt_client: MQTT client instance.
         """
-        diagnostics_registry.register("plant", self._collect_plant_states)
         diagnostics_registry.register("solar", self._collect_dashboard_states)
 
     def on_completion(self, transport: Any, mqtt_client: mqtt.Client) -> None:

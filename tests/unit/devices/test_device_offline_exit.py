@@ -88,7 +88,7 @@ async def test_device_offline_exits_loop(mock_config):
     # Task should exit
     try:
         await asyncio.wait_for(loop_task, timeout=2.0)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         pytest.fail("publish_updates loop did not exit after device set to offline")
 
 
@@ -132,7 +132,7 @@ async def test_device_offline_cancels_child_sensors(mock_config):
     # Verify loop exits promptly because child sensor's sleeper task was cancelled
     try:
         await asyncio.wait_for(loop_task, timeout=2.0)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         pytest.fail("publish_updates loop stuck waiting for child sensor sleeper_task")
 
 
@@ -171,7 +171,7 @@ async def test_device_offline_exits_reconnect_loop(mock_config):
         # Reconnect loop should check self.online and exit
         try:
             await asyncio.wait_for(loop_task, timeout=2.0)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             pytest.fail("publish_updates loop stuck in Modbus reconnection loop")
 
 
@@ -206,5 +206,5 @@ async def test_device_offline_cancels_device_sleeper_task(mock_config):
     # Loop should exit promptly
     try:
         await asyncio.wait_for(loop_task, timeout=2.0)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         pytest.fail("Service loop using device.sleeper_task did not exit promptly")

@@ -310,10 +310,14 @@ class:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: 평균 셀 전압
+  BatteryChargePowerLimit:
+    name: 배터리 충전 전력 제한
   BatteryChargingPower:
     attributes:
       source: BatteryPower > 0 #verify:ignore
     name: 배터리 충전 전력
+  BatteryDischargePowerLimit:
+    name: 배터리 방전 전력 제한
   BatteryDischargingPower:
     attributes:
       source: BatteryPower < 0 × -1 #verify:ignore
@@ -352,6 +356,55 @@ class:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: 배터리 전력
+  CloudAuthErrors:
+    name: 클라우드 인증 오류
+  CloudAvailable:
+    name: 클라우드 지원
+  CloudBattery:
+    name: '{model_name} {sn}'
+  CloudConnected:
+    name: 클라우드 연결
+  CloudConnectionAttempts:
+    name: 클라우드 연결 시도 횟수
+  CloudConnectionErrors:
+    name: 클라우드 연결 오류
+  CloudConnectionMax:
+    name: Cloud Connection Max  # verify:ignore
+  CloudConnectionMean:
+    name: 클라우드 연결 의미
+  CloudConnectionMin:
+    name: 클라우드 연결 최소값
+  CloudConnectionTotal:
+    name: 클라우드 연결 총계
+  CloudConnections:
+    name: 클라우드 연결 성공
+  CloudControl:
+    name: Sigenergy Cloud {plant_suffix}  # verify:ignore
+  CloudGridLimitSensor:
+    attributes:
+      comment: 설치자가 최대 한도를 설정한 경우에만 사용할 수 있습니다.
+  CloudInverter:
+    name: '{model_name} {sn}'
+  CloudLogLevel:
+    attributes:
+      comment: sigenergy2mqtt 클라우드 모듈의 로깅 수준
+    name: 클라우드 로그 수준
+  CloudQueries:
+    name: 클라우드 쿼리
+  CloudQueryErrors:
+    name: 클라우드 쿼리 오류
+  CloudQueryMax:
+    name: Cloud Query Max  # verify:ignore
+  CloudQueryMean:
+    name: 클라우드 쿼리 평균
+  CloudQueryMin:
+    name: Cloud Query Min  # verify:ignore
+  CloudQueryTotal:
+    name: Cloud Query 총계
+  CloudRateLimits:
+    name: 클라우드 속도 제한
+  CloudReconnections:
+    name: 클라우드 재연결
   CurrentControlCommandValue:
     attributes:
       comment: 일본에서 원격 출력 제어 사용
@@ -598,6 +651,35 @@ class:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: DC EV 누적 방전 에너지
+  GatewayCommunicationStatus:
+    name: 통신 상태
+  GatewayFirmwareVersion:
+    name: 펌웨어 버전
+  GatewayGridCurrent:
+    attributes:
+      comment: 클라우드 API를 통해 게이트웨이에서 읽은 계통 연계 상태
+  GatewayGridFrequency:
+    attributes:
+      comment: 클라우드 API를 통해 게이트웨이에서 읽은 계통 연계 상태
+  GatewayGridPower:
+    attributes:
+      comment: 클라우드 API를 통해 게이트웨이에서 읽은 계통 연계 상태
+  GatewayGridReactivePower:
+    attributes:
+      comment: 클라우드 API를 통해 게이트웨이에서 읽은 계통 연계 상태
+  GatewayGridSideInfoSensor:
+    attributes:
+      comment: 클라우드 API를 통해 게이트웨이에서 읽은 계통 연계 상태
+  GatewayGridText:
+    attributes:
+      comment: 클라우드 API를 통해 게이트웨이에서 읽은 계통 연계 상태
+  GatewayGridVoltage:
+    attributes:
+      comment: 클라우드 API를 통해 게이트웨이에서 읽은 계통 연계 상태
+  GatewayModel:
+    name: 모델
+  GatewaySerialNumber:
+    name: 일련번호
   GeneralAlarm1:
     alarm:
       '0': 소프트웨어 버전 불일치
@@ -824,11 +906,23 @@ class:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: 저주파수 전력 부스트 트리거 주파수
+  GridConnectionLimit:
+    attributes:
+      comment: 설치자가 최대 한도를 설정한 경우에만 사용할 수 있습니다.
+    name: 계통 연계 전류 제한
+  GridExportLimit:
+    attributes:
+      comment: 설치자가 최대 한도를 설정한 경우에만 사용할 수 있습니다.
+    name: 계통 송출 제한
   GridFrequency:
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: 계통 주파수
+  GridImportLimit:
+    attributes:
+      comment: 설치자가 최대 한도를 설정한 경우에만 사용할 수 있습니다.
+    name: 계통 연계 전력 수입 제한
   GridMaxExportLimit:
     attributes:
       comment: 그리드에 공급되는 최대 유효 전력은 이 센서에 구성된 값을 초과해서는 안 됩니다. 그리드 센서가 필요합니다. EMS 작동 모드에 관계없이 전체적으로 적용됩니다.
@@ -944,6 +1038,18 @@ class:
     name: InfluxDB 쓰기
   InfluxService:
     name: Sigenergy InfluxDB 업데이트 서비스 (발전소 {plant_index})
+  InstantControlDuration:
+    name: 즉시 수동 제어 지속 시간
+  InstantControlMode:
+    name: 즉시 수동 제어 모드
+    options:
+      '0': 미설정
+      '1': 충전
+      '2': 방전
+      '3': 배터리 유지
+      '4': 자가 소비
+  InstantControlSwitch:
+    name: 즉시 수동 제어
   InsulationResistance:
     attributes:
       source: Modbus 레지스터 {address}
@@ -1308,6 +1414,8 @@ class:
     attributes:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
+  OperationalMode:
+    name: 작동 모드
   OutputType:
     attributes:
       source: Modbus 레지스터 {address}
@@ -2729,6 +2837,8 @@ class:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: 종료 시간
+  SigenCloudDevice:
+    name: '{model_name} {sn}'
   SmartLoadPower:
     attributes:
       source: Modbus 레지스터 {address}
@@ -2739,6 +2849,8 @@ class:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: 스마트 부하 {smart_load_index} 총 소비량
+  SolarPowerLimit:
+    name: 태양광 전력 제한
   Started:
     name: 시작됨
   StartupTime:
@@ -2838,6 +2950,18 @@ class:
     name_off: 전원 끄기
     name_on: 전원 켜기
 cli:
+  SIGENERGY2MQTT_CLOUD_ACCEPT_UNOFFICIAL_API_RISK:
+    help: 비공개 mySigen API를 명시적으로 허용해야 합니다(위임 계정 사용을 권장합니다).
+  SIGENERGY2MQTT_CLOUD_DISCOVER_INVERTERS:
+    help: 클라우드 인버터 장치를 감지하고 해당 센서를 노출합니다. 기본적으로 비활성화되어 있습니다.
+  SIGENERGY2MQTT_CLOUD_LOG_LEVEL:
+    help: '클라우드 하위 시스템 로그 수준. 유효한 값은 DEBUG, INFO, WARNING, ERROR 또는 CRITICAL입니다. 기본값은 INFO입니다.'
+  SIGENERGY2MQTT_CLOUD_PASSWORD:
+    help: 클라우드 서비스의 비밀번호.
+  SIGENERGY2MQTT_CLOUD_REGION:
+    help: "클라우드 서비스에 대한 사용자의 지역. 다음 중 하나여야 합니다: 'aus', 'eu', 'cn', 'apac', 'us'."
+  SIGENERGY2MQTT_CLOUD_USERNAME:
+    help: 클라우드 서비스의 사용자 이름.
   SIGENERGY2MQTT_CONFIG:
     help: 'YAML 설정 파일의 경로 (기본값: SIGENERGY2MQTT_CONFIG 환경 변수, 그렇지 않으면 /etc/sigenergy2mqtt.yaml)'
   SIGENERGY2MQTT_CONSUMPTION:
@@ -2993,7 +3117,7 @@ cli:
   SIGENERGY2MQTT_NO_EMS_MODE_CHECK:
     help: '원격 EMS 제어 모드가 명령 충전/방전이 아닐 때 ESS 최대 충전/방전 및 PV 최대 전력 제한을 비활성화하는 유효성 검사를 끕니다.'
   SIGENERGY2MQTT_NO_METRICS:
-    help: 'sigenergy2mqtt 메트릭 게시 안 함.'
+    help: '사용 중단: 메트릭스 게시 기능은 기본적으로 비활성화되어 있습니다. --publish-metrics 옵션을 사용하여 활성화하십시오.'
   SIGENERGY2MQTT_PERSISTENCE_CACHE_WARMUP_TIMEOUT:
     help: '시작 캐시 워밍업 중 MQTT 보관 상태를 기다리는 최대 초 (기본값: 10.0, 범위: 1-60)'
   SIGENERGY2MQTT_PERSISTENCE_DEBUG:
@@ -3004,6 +3128,10 @@ cli:
     help: '지속된 상태 메시지의 MQTT 토픽 접두사 (기본값: sigenergy2mqtt/_state)'
   SIGENERGY2MQTT_PERSISTENCE_SYNC_TIMEOUT:
     help: '비 asyncio 스레드에서 호출될 때 동기 지속성 작업의 시간 초과(초) (기본값: 5.0, 범위: 0.1-30.0)'
+  SIGENERGY2MQTT_PUBLISH_METRICS:
+    help: sigenergy2mqtt 메트릭을 MQTT로 전송합니다(기본적으로 비활성화됨).
+  SIGENERGY2MQTT_PUBLISH_RUNTIME_CONFIG:
+    help: MQTT에 런타임 구성을 게시하여 실행 중에 설정을 변경할 수 있도록 합니다(기본적으로 비활성화됨).
   SIGENERGY2MQTT_PVOUTPUT_API_KEY:
     help: PVOutput API 키
   SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION:
@@ -3044,6 +3172,8 @@ cli:
     help: "반복 상태가 게시되는 간격(초 단위)입니다. 0보다 작으면 반복 상태가 게시되지 않습니다. 0이면 반복 상태가 항상 게시됩니다. 0보다 크면 반복 상태가 지정된 간격으로 게시됩니다. 기본값은 0(항상 게시)입니다."
   SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW:
     help: '전력 센서의 실제 값과 에너지 센서의 델타 값에 대한 최대값 및 최소값을 검증하기 위해 무결성 검사에 사용되는 기본값(kW). 기본값은 초당 500kW이며, 범위를 벗어난 측정값은 무시됩니다.'
+  SIGENERGY2MQTT_SCAN_INTERVAL_CLOUD:
+    help: 클라우드 데이터를 가져오기 위한 스캔 간격(초). 기본값은 5(초)이며, 최소값은 1입니다.
   SIGENERGY2MQTT_SCAN_INTERVAL_HIGH:
     help: '고빈도 레지스터 스캔 간격. 기본값: 10.'
   SIGENERGY2MQTT_SCAN_INTERVAL_LOW:

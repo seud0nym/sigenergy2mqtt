@@ -9,7 +9,16 @@ import pytest
 
 from sigenergy2mqtt.common import HybridInverter, ProtocolVersion
 from sigenergy2mqtt.config import Config, _swap_active_config
-from sigenergy2mqtt.devices import ESS, ACCharger, DCCharger, Device, DeviceRegistry, Inverter, PowerPlant, PVString
+from sigenergy2mqtt.devices import (
+    ESS,
+    ACCharger,
+    DCCharger,
+    Device,
+    DeviceRegistry,
+    Inverter,
+    PowerPlant,
+    PVString,
+)
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.sensors.base import DerivedSensor, ReadableSensorMixin, Sensor
 
@@ -126,7 +135,7 @@ def test_add_read_sensor_rejects_non_readable_and_add_to_all_sets_parent():
     assert dev._add_sensor(cast(Sensor, s)) is True
     # _add_to_all_sensors called as part of add; verify parent set
     assert s.unique_id in dev.all_sensors
-    assert getattr(s, "parent_device") is dev
+    assert s.parent_device is dev
 
 
 def test_add_derived_sensor_handles_none_and_unregistered():

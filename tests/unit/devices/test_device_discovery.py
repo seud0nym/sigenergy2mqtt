@@ -13,7 +13,6 @@ class DummyMQTT:
 
     def publish(self, topic, payload, qos=0, retain=False):
         self.published.append((topic, payload, qos, retain))
-        return None
 
 
 class FakeSensor:
@@ -74,7 +73,7 @@ def test_publish_discovery_populated_writes_file(tmp_path, monkeypatch):
         disc_topic = f"{active_config.home_assistant.discovery_prefix}/device/{dev.unique_id}/config"
         found = [p for p in mqtt.published if p[0] == disc_topic]
         assert found, "Discovery publish not called"
-        topic, payload, qos, retain = found[0]
+        _topic, _payload, qos, retain = found[0]
         assert qos == 2
         assert retain is True
 

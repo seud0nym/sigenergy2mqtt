@@ -78,7 +78,6 @@ def reset_discovery_state():
 def test_scan_skip_loopback():
     """Verify that loopback is skipped (as per code)."""
     # This logic is internal to scan(), tested partly by workflow below
-    pass
 
 
 @pytest.mark.asyncio(loop_scope="module")

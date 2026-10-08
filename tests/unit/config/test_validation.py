@@ -166,10 +166,10 @@ class TestConfigValidation:
         pv_config1 = PvOutputConfig(
             log_level=logging.DEBUG, calc_debug_logging=True, tariffs=[{"plan": "test_plan", "periods": [{"days": ["All"], "start": "10:00", "end": "14:00", "type": "peak"}], "default": "shoulder"}]
         )
-        export1, import1 = pv_config1.current_time_period
+        _export1, _import1 = pv_config1.current_time_period
 
         # Test branch where time doesn't match
         pv_config2 = PvOutputConfig(
             log_level=logging.DEBUG, calc_debug_logging=True, tariffs=[{"plan": "test_plan", "periods": [{"days": ["All"], "start": "14:00", "end": "16:00", "type": "peak"}], "default": "shoulder"}]
         )
-        export2, import2 = pv_config2.current_time_period
+        _export2, _import2 = pv_config2.current_time_period

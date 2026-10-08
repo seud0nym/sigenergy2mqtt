@@ -9,7 +9,7 @@
 ![Maintenance](https://img.shields.io/maintenance/yes/2026)
 
 
-`sigenergy2mqtt` is a bridge between the Modbus interface of the Sigenergy energy system and the MQTT lightweight publish/subscribe messaging protocol.
+`sigenergy2mqtt` is a bridge between the Sigenergy energy system and the MQTT lightweight publish/subscribe messaging protocol.
 
 In addition, `sigenergy2mqtt` has several optional features: 
 
@@ -17,6 +17,7 @@ In addition, `sigenergy2mqtt` has several optional features:
 1. It can publish the appropriate messages to allow Home Assistant to automatically discover the Sigenergy devices, simplifying Home Assistant configuration. 
 1. Production and consumption data can automatically be uploaded to PVOutput. 
 1. It can directly publish the Modbus data to an InfluxDB (v1/2) time series database for long-term storage and analysis.
+1. It can use the Sigenergy Cloud API for cloud-only operations like Instant Manual Control and operational mode selection.
 
 ## Pre-requisites
 
@@ -45,6 +46,14 @@ This means, for example, that the options specified in the configuration file ca
 The combined reference for CLI flags, environment variables, and YAML configuration keys can be found [here](resources/configuration/README.md).
 
 <sup>1</sup> <sub>Not applicable to the Home Assistant App</sub>
+
+### Cloud Access
+
+The official Sigenergy Cloud API is designed for applications that work as a backend service, and which are not deployed to local customer infrastructure as `sigenergy2mqtt` is. Whilst they are currently working on making the changes that would support local deployment, it is not yet available.
+
+However, there is an unofficial Cloud API that provides access to the Cloud features, which is what has now been incorporated into `sigenergy2mqtt` until the official API is available.
+
+To use the Cloud API in `sigenergy2mqtt`, it is _strongly_ recommended that you use delegated access created through the `mySigen` app. Navigate to `Settings` → `System Settings` → `System Share`, and add another email address (not your primary mySigen login email address) with "View and Edit" permission. When you receive the invitation email, log in and set your password. Use this new email address and password when configuring Cloud access in `sigenergy2mqtt`. _Only_ use this delegated email for the `sigenergy2mqtt` Cloud connection, and for no other purpose, because too many sessions cause connections to be dropped.
 
 ## Screenshots
 

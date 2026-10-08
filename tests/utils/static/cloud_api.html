@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cloud API Test Server</title>
+  <style>
+    :root { color-scheme: dark; --bg:#07111f; --panel:#101d2f; --line:#263952; --text:#e8f0fa; --muted:#91a4ba; --accent:#34d399; --danger:#fb7185; }
+    * { box-sizing: border-box; }
+    body { margin:0; background:linear-gradient(135deg,#07111f,#101b31); color:var(--text); font:14px/1.5 system-ui,sans-serif; min-height:100vh; }
+    header { position:sticky; top:0; z-index:2; display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:1rem 2rem; border-bottom:1px solid var(--line); background:rgba(7,17,31,.92); backdrop-filter:blur(12px); }
+    h1 { margin:0; font-size:1.35rem; } h2 { margin:0; font-size:1rem; }
+    .sub { color:var(--muted); font-size:.85rem; }
+    main { max-width:1400px; margin:auto; padding:1.5rem 2rem 4rem; }
+    #status { min-height:1.5rem; margin-bottom:1rem; color:var(--accent); }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(360px,1fr)); gap:1rem; }
+    article { display:flex; flex-direction:column; gap:.75rem; padding:1rem; background:var(--panel); border:1px solid var(--line); border-radius:12px; box-shadow:0 12px 30px #0003; }
+    textarea { width:100%; min-height:170px; resize:vertical; border:1px solid var(--line); border-radius:8px; padding:.75rem; background:#07111f; color:#cde3fa; font:12px/1.45 ui-monospace,monospace; tab-size:2; }
+    textarea[data-dirty="true"] { border-color:#fbbf24; box-shadow:0 0 0 1px #fbbf24; }
+    article.scalar textarea { min-height:72px; }
+    button { border:0; border-radius:7px; padding:.6rem 1rem; background:var(--accent); color:#032016; font-weight:700; cursor:pointer; align-self:flex-end; }
+    button:hover { filter:brightness(1.12); } button:disabled { opacity:.5; cursor:wait; }
+    .error { color:var(--danger)!important; }
+    @media(max-width:600px) { header,main { padding-left:1rem; padding-right:1rem; } .grid { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div><h1>Cloud API Test Server</h1><div class="sub">Live response value editor</div></div>
+    <button id="reload" type="button">Reload values</button>
+  </header>
+  <main>
+    <div id="status" role="status" aria-live="polite"></div>
+    <section class="grid" id="values"></section>
+  </main>
+  <script type="module">
+    import {bindReload, reconcileEditors} from '/cloud-api-test/cloud_api.mjs';
+
+    const values = document.querySelector('#values');
+    const status = document.querySelector('#status');
+    const labels = {internet_available:'Internet available',internet_outage_status:'Outage HTTP status'};
+
+    function message(text, error=false) {
+      status.textContent = text;
+      status.classList.toggle('error', error);
+    }
+    async function load() {
+      message('Loading…');
+      try {
+        const response = await fetch('/cloud-api-test/state');
+        if (!response.ok) throw new Error(await response.text());
+        const state = await response.json();
+        const preserved = reconcileEditors(values, state, card, setEditorValue);
+        const preservedMessage = preserved ? ` Preserved ${preserved} unapplied edit${preserved === 1 ? '' : 's'}.` : '';
+        message(`Loaded ${Object.keys(state).length} editable values.${preservedMessage}`);
+      } catch (error) { message(`Could not load values: ${error.message}`, true); }
+    }
+    function setEditorValue(textarea, value) {
+      textarea.value = JSON.stringify(value, null, 2);
+      textarea.dataset.savedValue = textarea.value;
+      textarea.dataset.dirty = 'false';
+    }
+    function card(name, value) {
+      const article = document.createElement('article');
+      article.dataset.name = name;
+      if (typeof value !== 'object') article.className = 'scalar';
+      const heading = document.createElement('h2');
+      heading.textContent = labels[name] || name.replaceAll('_', ' ');
+      const textarea = document.createElement('textarea');
+      textarea.spellcheck = false;
+      setEditorValue(textarea, value);
+      textarea.setAttribute('aria-label', `${heading.textContent} JSON value`);
+      textarea.addEventListener('input', () => {
+        textarea.dataset.dirty = String(textarea.value !== textarea.dataset.savedValue);
+      });
+      const save = document.createElement('button');
+      save.type = 'button'; save.textContent = 'Apply';
+      save.addEventListener('click', async () => {
+        let parsed;
+        try { parsed = JSON.parse(textarea.value); }
+        catch (error) { message(`${heading.textContent}: ${error.message}`, true); return; }
+        save.disabled = true;
+        try {
+          const response = await fetch(`/cloud-api-test/state/${encodeURIComponent(name)}`, {
+            method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({value:parsed})
+          });
+          if (!response.ok) throw new Error(await response.text());
+          setEditorValue(textarea, (await response.json()).value);
+          message(`${heading.textContent} updated. New Cloud API requests use this value immediately.`);
+        } catch (error) { message(`Could not update ${heading.textContent}: ${error.message}`, true); }
+        finally { save.disabled = false; }
+      });
+      article.append(heading, textarea, save);
+      return article;
+    }
+    bindReload(document.querySelector('#reload'), load);
+    load();
+  </script>
+</body>
+</html>

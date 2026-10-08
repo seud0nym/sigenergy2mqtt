@@ -58,5 +58,5 @@ def reset_state_store():
     yield
     try:
         state_store.shutdown()
-    except Exception:
+    except Exception:  # noqa: BLE001, S110
         pass

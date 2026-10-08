@@ -9,7 +9,13 @@ import pytest
 from sigenergy2mqtt.common import InputType, ProtocolVersion
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.modbus import ModbusClient
-from sigenergy2mqtt.sensors.base import NumericSensor, SelectSensor, Sensor, SwitchSensor, WriteOnlySensor
+from sigenergy2mqtt.sensors.base import (
+    NumericSensor,
+    SelectSensor,
+    Sensor,
+    SwitchSensor,
+    WriteOnlySensor,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -130,7 +136,7 @@ class TestWriteableSensorMixin:
 
                 @asynccontextmanager
                 async def mock_lock_cm(timeout=None):
-                    raise asyncio.TimeoutError()
+                    raise TimeoutError()
                     yield
 
                 mock_lock.lock.side_effect = mock_lock_cm

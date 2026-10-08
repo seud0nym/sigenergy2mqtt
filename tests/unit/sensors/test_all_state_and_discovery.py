@@ -3,12 +3,12 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-import sigenergy2mqtt.sensors.ac_charger_read_only as acro
-import sigenergy2mqtt.sensors.ac_charger_read_write as acrw
-import sigenergy2mqtt.sensors.inverter_derived as idrv
-import sigenergy2mqtt.sensors.inverter_read_only as iro
-import sigenergy2mqtt.sensors.inverter_read_write as irw
-import sigenergy2mqtt.sensors.plant_derived as pdrv
+import sigenergy2mqtt.sensors.ev.ac_charger_read_only as acro
+import sigenergy2mqtt.sensors.ev.ac_charger_read_write as acrw
+import sigenergy2mqtt.sensors.inverter.derived as idrv
+import sigenergy2mqtt.sensors.inverter.read_only as iro
+import sigenergy2mqtt.sensors.inverter.read_write as irw
+import sigenergy2mqtt.sensors.plant.derived as pdrv
 from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.sensors.base import AvailabilityMixin, Sensor
 
@@ -31,6 +31,9 @@ def mock_config():
 
 
 class MockAvailabilitySensor(AvailabilityMixin):
+    payload_available = property(lambda self: 1)
+    payload_not_available = property(lambda self: 0)
+
     def __init__(self, *args, **kwargs):
         self._states = [(0.0, 0)]
         self.name = "mock_avail"
@@ -42,7 +45,7 @@ class MockAvailabilitySensor(AvailabilityMixin):
         self.publishable = True
 
     def items(self):
-        return [].items()
+        return {}.items()
 
     def __getitem__(self, key):
         return None
@@ -84,9 +87,7 @@ async def run_coverage_on_module(module):
                     kwargs[name] = "A"
                 elif name == "output_type":
                     kwargs[name] = 2
-                elif name == "rated_charging_power":
-                    kwargs[name] = 5000
-                elif name == "rated_discharging_power":
+                elif name == "rated_charging_power" or name == "rated_discharging_power":
                     kwargs[name] = 5000
                 elif name == "address":
                     kwargs[name] = 30000
@@ -107,9 +108,7 @@ async def run_coverage_on_module(module):
                     m.count = 1
                     m.protocol_version = ProtocolVersion.V1_8
                     kwargs[name] = [m]
-                elif issubclass(param.annotation, AvailabilityMixin) if hasattr(param.annotation, "__mro__") else False:
-                    kwargs[name] = MockAvailabilitySensor()
-                elif "control" in name or "sensor" in name or "mode" in name:
+                elif (issubclass(param.annotation, AvailabilityMixin) if hasattr(param.annotation, "__mro__") else False) or "control" in name or "sensor" in name or "mode" in name:
                     kwargs[name] = MockAvailabilitySensor()
                 else:
                     kwargs[name] = MagicMock()
@@ -123,10 +122,10 @@ async def run_coverage_on_module(module):
             if hasattr(sensor, "update_from_source_sensor"):
                 try:
                     sensor.update_from_source_sensor(1)
-                except:
+                except Exception:  # noqa: BLE001, S110
                     pass
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print(f"Failed to test {cls.__name__} in {module.__name__}: {e}")
 
 

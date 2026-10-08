@@ -111,7 +111,7 @@ def test_state2raw_and_gain():
 def test_writeonly_get_discovery_components():
     w = base.WriteOnlySensor(name="w", object_id="sigen_btn", plant_index=0, device_address=1, address=30030, protocol_version=base.ProtocolVersion.N_A)
     comps = w.get_discovery_components()
-    assert any(k.endswith("_on") for k in comps.keys())
+    assert any(k.endswith("_on") for k in comps)
 
 
 def test_numeric_min_max_behavior():
@@ -212,8 +212,9 @@ def test_switch_value_is_valid_and_set_value(monkeypatch):
     monkeypatch.setattr(base.ModbusWriteableSensorMixin, "_write_registers", fake_write)
     sw.configure_mqtt_topics("dev")
     loop = asyncio.new_event_loop()
-    from sigenergy2mqtt.modbus import ModbusClient
     from unittest.mock import MagicMock
+
+    from sigenergy2mqtt.modbus import ModbusClient
     res = loop.run_until_complete(sw.set_value(MagicMock(spec=ModbusClient), Mock(), 1, sw[base.DiscoveryKeys.COMMAND_TOPIC], Mock()))
     loop.close()
     assert res is True

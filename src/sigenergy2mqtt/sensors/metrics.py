@@ -11,10 +11,19 @@ import logging
 import time
 from typing import Any, cast
 
-from sigenergy2mqtt.common import PERCENTAGE, DeviceClass, ProtocolApplies, ProtocolVersion
+from sigenergy2mqtt.common import (
+    PERCENTAGE,
+    DeviceClass,
+    ProtocolApplies,
+    ProtocolVersion,
+)
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.metrics import Metrics
-from sigenergy2mqtt.sensors.base import DiscoveryKeys, ReadableSensorMixin, WriteOnlySensorMixin
+from sigenergy2mqtt.sensors.base import (
+    DiscoveryKeys,
+    ReadableSensorMixin,
+    WriteOnlySensorMixin,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -368,7 +377,7 @@ class Started(MetricsSensor):
             device_class=DeviceClass.TIMESTAMP,
             icon="mdi:calendar-clock",
         )
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
 
 class ProtocolVersionSensor(MetricsSensor):
@@ -382,7 +391,7 @@ class ProtocolVersionSensor(MetricsSensor):
             object_id="sigenergy2mqtt_modbus_protocol",
             icon="mdi:book-information-variant",
         )
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
         self.protocol_version = protocol_version
 
     async def _update_internal_state(self, **kwargs) -> bool:
@@ -402,7 +411,7 @@ class ProtocolPublished(MetricsSensor):
             object_id="sigenergy2mqtt_modbus_protocol_published",
             icon="mdi:book-clock",
         )
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
         self.protocol_version = protocol_version
 
     async def _update_internal_state(self, **kwargs) -> bool:
@@ -823,6 +832,289 @@ class PVOutputUploadMin(MetricsSensor):
             precision=2,
         )
         self.publishable = active_config.pvoutput.enabled
+
+
+# =============================================================================
+# mySigen Cloud Metrics Sensors
+# =============================================================================
+
+
+class CloudQueries(MetricsSensor):
+    """Total number of unofficial cloud API request attempts."""
+
+    def __init__(self):
+        super().__init__(
+            attribute="sigenergy2mqtt_cloud_queries",
+            name="Cloud Queries",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_cloud_queries",
+            object_id="sigenergy2mqtt_cloud_queries",
+            icon="mdi:cloud-sync",
+            precision=0,
+        )
+        self.publishable = active_config.cloud.enabled
+
+
+class CloudQueryTotal(MetricsSensor):
+    """Cumulative elapsed time of cloud API requests, in milliseconds."""
+
+    def __init__(self):
+        super().__init__(
+            attribute="sigenergy2mqtt_cloud_query_total",
+            name="Cloud Query Total",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_cloud_query_total",
+            object_id="sigenergy2mqtt_cloud_query_total",
+            unit="ms",
+            icon="mdi:timer-sand",
+            precision=2,
+        )
+        self.publishable = active_config.cloud.enabled
+
+
+class CloudQueryMax(MetricsSensor):
+    """Maximum cloud API request duration in milliseconds."""
+
+    def __init__(self):
+        super().__init__(
+            attribute="sigenergy2mqtt_cloud_query_max",
+            name="Cloud Query Max",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_cloud_query_max",
+            object_id="sigenergy2mqtt_cloud_query_max",
+            unit="ms",
+            icon="mdi:timer-plus-outline",
+            precision=2,
+        )
+        self.publishable = active_config.cloud.enabled
+
+
+class CloudQueryMean(MetricsSensor):
+    """Mean cloud API request duration in milliseconds."""
+
+    def __init__(self):
+        super().__init__(
+            attribute="sigenergy2mqtt_cloud_query_mean",
+            name="Cloud Query Mean",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_cloud_query_mean",
+            object_id="sigenergy2mqtt_cloud_query_mean",
+            unit="ms",
+            icon="mdi:timer-outline",
+            precision=2,
+        )
+        self.publishable = active_config.cloud.enabled
+
+
+class CloudQueryMin(MetricsSensor):
+    """Minimum cloud API request duration in milliseconds."""
+
+    def __init__(self):
+        super().__init__(
+            attribute="sigenergy2mqtt_cloud_query_min",
+            name="Cloud Query Min",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_cloud_query_min",
+            object_id="sigenergy2mqtt_cloud_query_min",
+            unit="ms",
+            icon="mdi:timer-minus-outline",
+            precision=2,
+        )
+        self.publishable = active_config.cloud.enabled
+
+
+class CloudQueryErrors(MetricsSensor):
+    """Number of failed cloud API request attempts."""
+
+    def __init__(self):
+        super().__init__(
+            attribute="sigenergy2mqtt_cloud_query_errors",
+            name="Cloud Query Errors",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_cloud_query_errors",
+            object_id="sigenergy2mqtt_cloud_query_errors",
+            icon="mdi:cloud-alert",
+            precision=0,
+        )
+        self.publishable = active_config.cloud.enabled
+
+
+class CloudConnections(MetricsSensor):
+    """Number of successful cloud connections."""
+
+    def __init__(self):
+        super().__init__(
+            attribute="sigenergy2mqtt_cloud_connections",
+            name="Cloud Successful Connections",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_cloud_connections",
+            object_id="sigenergy2mqtt_cloud_connections",
+            icon="mdi:cloud-check",
+            precision=0,
+        )
+        self.publishable = active_config.cloud.enabled
+
+
+class CloudConnectionErrors(MetricsSensor):
+    """Number of failed cloud connection attempts."""
+
+    def __init__(self):
+        super().__init__(
+            attribute="sigenergy2mqtt_cloud_connection_errors",
+            name="Cloud Connection Errors",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_cloud_connection_errors",
+            object_id="sigenergy2mqtt_cloud_connection_errors",
+            icon="mdi:cloud-alert",
+            precision=0,
+        )
+        self.publishable = active_config.cloud.enabled
+
+
+class CloudConnectionAttempts(MetricsSensor):
+    """Total number of cloud login and station-discovery attempts."""
+
+    def __init__(self):
+        super().__init__(
+            attribute="sigenergy2mqtt_cloud_connection_attempts",
+            name="Cloud Connection Attempts",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_cloud_connection_attempts",
+            object_id="sigenergy2mqtt_cloud_connection_attempts",
+            icon="mdi:cloud-sync",
+            precision=0,
+        )
+        self.publishable = active_config.cloud.enabled
+
+
+class CloudConnectionTotal(MetricsSensor):
+    """Cumulative cloud login and station-discovery time, in milliseconds."""
+
+    def __init__(self):
+        super().__init__(
+            attribute="sigenergy2mqtt_cloud_connection_total",
+            name="Cloud Connection Total",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_cloud_connection_total",
+            object_id="sigenergy2mqtt_cloud_connection_total",
+            unit="ms",
+            icon="mdi:timer-sand",
+            precision=2,
+        )
+        self.publishable = active_config.cloud.enabled
+
+
+class CloudConnectionMax(MetricsSensor):
+    """Maximum cloud login and station-discovery duration, in milliseconds."""
+
+    def __init__(self):
+        super().__init__(
+            attribute="sigenergy2mqtt_cloud_connection_max",
+            name="Cloud Connection Max",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_cloud_connection_max",
+            object_id="sigenergy2mqtt_cloud_connection_max",
+            unit="ms",
+            icon="mdi:timer-plus-outline",
+            precision=2,
+        )
+        self.publishable = active_config.cloud.enabled
+
+
+class CloudConnectionMean(MetricsSensor):
+    """Mean cloud login and station-discovery duration, in milliseconds."""
+
+    def __init__(self):
+        super().__init__(
+            attribute="sigenergy2mqtt_cloud_connection_mean",
+            name="Cloud Connection Mean",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_cloud_connection_mean",
+            object_id="sigenergy2mqtt_cloud_connection_mean",
+            unit="ms",
+            icon="mdi:timer-outline",
+            precision=2,
+        )
+        self.publishable = active_config.cloud.enabled
+
+
+class CloudConnectionMin(MetricsSensor):
+    """Minimum cloud login and station-discovery duration, in milliseconds."""
+
+    def __init__(self):
+        super().__init__(
+            attribute="sigenergy2mqtt_cloud_connection_min",
+            name="Cloud Connection Min",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_cloud_connection_min",
+            object_id="sigenergy2mqtt_cloud_connection_min",
+            unit="ms",
+            icon="mdi:timer-minus-outline",
+            precision=2,
+        )
+        self.publishable = active_config.cloud.enabled
+
+
+class CloudReconnections(MetricsSensor):
+    """Number of cloud reconnection attempts after an expired login."""
+
+    def __init__(self):
+        super().__init__(
+            attribute="sigenergy2mqtt_cloud_reconnections",
+            name="Cloud Reconnections",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_cloud_reconnections",
+            object_id="sigenergy2mqtt_cloud_reconnections",
+            icon="mdi:cloud-refresh",
+            precision=0,
+        )
+        self.publishable = active_config.cloud.enabled
+
+
+class CloudRateLimits(MetricsSensor):
+    """Number of cloud API requests rejected by rate limiting."""
+
+    def __init__(self):
+        super().__init__(
+            attribute="sigenergy2mqtt_cloud_rate_limits",
+            name="Cloud Rate Limits",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_cloud_rate_limits",
+            object_id="sigenergy2mqtt_cloud_rate_limits",
+            icon="mdi:cloud-cancel",
+            precision=0,
+        )
+        self.publishable = active_config.cloud.enabled
+
+
+class CloudAuthErrors(MetricsSensor):
+    """Number of cloud API requests rejected due to authentication."""
+
+    def __init__(self):
+        super().__init__(
+            attribute="sigenergy2mqtt_cloud_auth_errors",
+            name="Cloud Auth Errors",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_cloud_auth_errors",
+            object_id="sigenergy2mqtt_cloud_auth_errors",
+            icon="mdi:cloud-lock",
+            precision=0,
+        )
+        self.publishable = active_config.cloud.enabled
+
+
+class CloudConnected(MetricsSensor):
+    """Whether the unofficial cloud adapter currently has a valid login."""
+
+    def __init__(self):
+        super().__init__(
+            attribute="sigenergy2mqtt_cloud_connected",
+            name="Cloud Connected",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_cloud_connected",
+            object_id="sigenergy2mqtt_cloud_connected",
+            icon="mdi:cloud-check",
+        )
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
+        self.publishable = active_config.cloud.enabled
+
+
+class CloudAvailable(MetricsSensor):
+    """Whether the most recent cloud connectivity attempt succeeded."""
+
+    def __init__(self):
+        super().__init__(
+            attribute="sigenergy2mqtt_cloud_available",
+            name="Cloud Available",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_cloud_available",
+            object_id="sigenergy2mqtt_cloud_available",
+            icon="mdi:cloud-check",
+        )
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
+        self.publishable = active_config.cloud.enabled
 
 
 # =============================================================================

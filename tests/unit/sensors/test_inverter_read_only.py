@@ -10,7 +10,7 @@ import pytest
 
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.sensors.base import SanityCheckException
-from sigenergy2mqtt.sensors.inverter_read_only import (
+from sigenergy2mqtt.sensors.inverter.read_only import (
     DCChargerRunningState,
     InverterFirmwareVersion,
     OutputType,

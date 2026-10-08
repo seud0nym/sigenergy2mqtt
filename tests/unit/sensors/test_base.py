@@ -1,3 +1,5 @@
+from collections import deque
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -21,21 +23,20 @@ class TestSensorBase:
         cfg.home_assistant.unique_id_prefix = "sigen"
         cfg.home_assistant.entity_id_prefix = "sigen"
 
-        with _swap_active_config(cfg):
-            with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-                s = ConcreteSensor(
-                    name="Test Sensor",
-                    unique_id="sigen_test_unique_id",
-                    object_id="sigen_test_object_id",
-                    unit=UnitOfPower.WATT,
-                    device_class=DeviceClass.POWER,
-                    state_class=StateClass.MEASUREMENT,
-                    icon="mdi:solar-power",
-                    gain=1.0,
-                    precision=2,
-                    protocol_version=ProtocolVersion.V2_4,
-                )
-                yield s
+        with _swap_active_config(cfg), patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            s = ConcreteSensor(
+                name="Test Sensor",
+                unique_id="sigen_test_unique_id",
+                object_id="sigen_test_object_id",
+                unit=UnitOfPower.WATT,
+                device_class=DeviceClass.POWER,
+                state_class=StateClass.MEASUREMENT,
+                icon="mdi:solar-power",
+                gain=1.0,
+                precision=2,
+                protocol_version=ProtocolVersion.V2_4,
+            )
+            yield s
 
     def test_init(self, sensor):
         assert sensor["name"] == "Test Sensor"
@@ -60,6 +61,24 @@ class TestSensorBase:
 
         # Raw value (no gain/precision applied)
         assert sensor._apply_gain_and_precision(10.1234, raw=True) == 10.1234
+
+        # Numeric dictionary values are processed while other values are preserved
+        sensor._gain = 10.0
+        sensor.precision = 2
+        sensor._state_topic_dict_key = "power"
+        state = {
+            "power": 100.126,
+            "status": "online",
+            "nested": {"current": 25.555},
+            "enabled": True,
+        }
+        assert sensor._apply_gain_and_precision(state) == {
+            "power": 10.01,
+            "status": "online",
+            "nested": {"current": 25.555},
+            "enabled": True,
+        }
+        assert sensor._apply_gain_and_precision(state, raw=True) is state
 
     def test_configure_mqtt_topics(self, sensor):
         # Use _swap_active_config to ensure consistent behaviour
@@ -130,7 +149,11 @@ class TestSensorLogic:
     def test_resettable_accumulation_negative_increase(self, tmp_path):
 
         from sigenergy2mqtt.modbus import ModbusDataType
-        from sigenergy2mqtt.sensors.base import EnergyLifetimeAccumulationSensor, ReadOnlySensor, Sensor
+        from sigenergy2mqtt.sensors.base import (
+            EnergyLifetimeAccumulationSensor,
+            ReadOnlySensor,
+            Sensor,
+        )
 
         source = MagicMock(spec=ReadOnlySensor)
         source.unique_id = "src"
@@ -140,16 +163,15 @@ class TestSensorLogic:
         cfg.home_assistant.unique_id_prefix = "sigen"
         cfg.home_assistant.entity_id_prefix = "sigen"
 
-        with _swap_active_config(cfg):
-            with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-                sensor = EnergyLifetimeAccumulationSensor("Accumulated", "sigen_acc", "sigen_acc", source, ModbusDataType.UINT32, "kWh", DeviceClass.ENERGY, StateClass.TOTAL, "mdi:energy", 1.0, 2)
-                sensor._current_total = 100.0
-                source.state_count = 2
-                source.previous_raw_state = -10.0
-                source.latest_raw_state = -20.0
-                with patch("asyncio.run_coroutine_threadsafe"), patch("asyncio.get_running_loop"):
-                    sensor.update_from_source_sensor(source)
-                    assert sensor._current_total == 100.0
+        with _swap_active_config(cfg), patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            sensor = EnergyLifetimeAccumulationSensor("Accumulated", "sigen_acc", "sigen_acc", source, ModbusDataType.UINT32, "kWh", DeviceClass.ENERGY, StateClass.TOTAL, "mdi:energy", 1.0, 2)
+            sensor._current_total = 100.0
+            source.state_count = 2
+            source.previous_raw_state = -10.0
+            source.latest_raw_state = -20.0
+            with patch("asyncio.run_coroutine_threadsafe"), patch("asyncio.get_running_loop"):
+                sensor.update_from_source_sensor(source)
+                assert sensor._current_total == 100.0
 
     def test_alarm_sensor_binary(self):
         from sigenergy2mqtt.sensors.base import AlarmSensor, Sensor
@@ -158,16 +180,15 @@ class TestSensorLogic:
         cfg.home_assistant.unique_id_prefix = "sigen"
         cfg.home_assistant.entity_id_prefix = "sigen"
 
-        with _swap_active_config(cfg):
-            with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+        with _swap_active_config(cfg), patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
 
-                class ConcreteAlarm(AlarmSensor):
-                    def decode_alarm_bit(self, bit_position: int) -> str | None:
-                        return "Error"
+            class ConcreteAlarm(AlarmSensor):
+                def decode_alarm_bit(self, bit_position: int) -> str | None:
+                    return "Error"
 
-                sensor = ConcreteAlarm("Alarm", "sigen_alarm", 0, 1, 30001, ProtocolVersion.V2_4, "Equipment")
-                assert sensor.state2raw("No Alarm") == 0
-                assert sensor.state2raw(1) == 1
+            sensor = ConcreteAlarm("Alarm", "sigen_alarm", 0, 1, 30001, ProtocolVersion.V2_4, "Equipment")
+            assert sensor.state2raw("No Alarm") == 0
+            assert sensor.state2raw(1) == 1
 
     @pytest.mark.asyncio
     async def test_alarm_combined_sensor(self):
@@ -185,7 +206,7 @@ class TestSensorLogic:
                     self.scan_interval = 10
                     self.plant_index = 0
                     self._publishable = True
-                    self._states = []
+                    self._states: deque[tuple[float, Any]] = deque()
 
                 def decode_alarm_bit(self, bit_position):
                     return "Error"
@@ -247,12 +268,11 @@ class TestSensorLogic:
         cfg.home_assistant.unique_id_prefix = "sigen"
         cfg.home_assistant.entity_id_prefix = "sigen"
 
-        with _swap_active_config(cfg):
-            with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
-                # name, object_id, plant_index, device_address, address, protocol_version
-                s = WriteOnlySensor("WO", "sigen_wo", 0, 1, 30001, ProtocolVersion.V2_4)
-                assert s.publishable is True
-                assert s.publish_raw is False
+        with _swap_active_config(cfg), patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            # name, object_id, plant_index, device_address, address, protocol_version
+            s = WriteOnlySensor("WO", "sigen_wo", 0, 1, 30001, ProtocolVersion.V2_4)
+            assert s.publishable is True
+            assert s.publish_raw is False
 
 
 class TestScanInterval:
@@ -279,7 +299,7 @@ class TestScanInterval:
         from sigenergy2mqtt.sensors.base.scan_interval import ScanInterval
 
         cfg = Config()
-        m1 = ModbusConfig(host="1.1.1.1", port=502)
+        m1 = ModbusConfig(host="1.1.1.1", port=502)  # pyright: ignore[reportCallIssue]
         m1.scan_interval.realtime = 1
         m1.scan_interval.high = 2
         m1.scan_interval.medium = 3

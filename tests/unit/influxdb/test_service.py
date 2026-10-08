@@ -18,7 +18,7 @@ class DummyMqtt:
 
 @pytest.mark.asyncio
 async def test_influx_handle_mqtt_writes_line():
-    logger = MagicMock()
+    MagicMock()
     svc = InfluxService(plant_index=0)
 
     # Create a fake sensor
@@ -55,7 +55,7 @@ async def test_influx_handle_mqtt_writes_line():
 @pytest.mark.asyncio
 async def test_influx_org_propagation():
     """Test that org parameter is correctly propagated to v2 HTTP endpoint."""
-    logger = MagicMock()
+    MagicMock()
     active_config.influxdb.enabled = True
     active_config.influxdb.host = "localhost"
     active_config.influxdb.port = 8086
@@ -73,7 +73,7 @@ async def test_influx_org_propagation():
         await svc.async_init()
 
         # Verify URL contains org parameter
-        args, kwargs = mock_post.call_args
+        args, _kwargs = mock_post.call_args
         assert "org=myorg" in args[0]
         assert svc._writer_type == "v2_http"
         assert "mybucket" in svc._writers["v2_http"].url

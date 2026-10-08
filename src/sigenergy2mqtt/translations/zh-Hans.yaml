@@ -310,10 +310,14 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 平均电芯电压
+  BatteryChargePowerLimit:
+    name: 电池充电功率限制
   BatteryChargingPower:
     attributes:
       source: BatteryPower > 0 #verify:ignore
     name: 电池充电功率
+  BatteryDischargePowerLimit:
+    name: 电池放电功率限制
   BatteryDischargingPower:
     attributes:
       source: BatteryPower < 0 × -1 #verify:ignore
@@ -352,6 +356,55 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 电池功率
+  CloudAuthErrors:
+    name: 云端认证错误
+  CloudAvailable:
+    name: 支持云端连接
+  CloudBattery:
+    name: '{model_name} {sn}'
+  CloudConnected:
+    name: 云连接
+  CloudConnectionAttempts:
+    name: 云连接尝试次数
+  CloudConnectionErrors:
+    name: 云连接错误
+  CloudConnectionMax:
+    name: Cloud Connection Max  # verify:ignore
+  CloudConnectionMean:
+    name: 云连接含义
+  CloudConnectionMin:
+    name: 云连接（最低）
+  CloudConnectionTotal:
+    name: 云连接总数
+  CloudConnections:
+    name: 云端成功连接
+  CloudControl:
+    name: Sigenergy 云平台 {plant_suffix}
+  CloudGridLimitSensor:
+    attributes:
+      comment: 仅在安装人员已配置最大限制时可用。
+  CloudInverter:
+    name: '{model_name} {sn}'
+  CloudLogLevel:
+    attributes:
+      comment: sigenergy2mqtt 云模块的日志级别
+    name: 云日志级别
+  CloudQueries:
+    name: 云查询
+  CloudQueryErrors:
+    name: 云查询错误
+  CloudQueryMax:
+    name: Cloud Query Max  # verify:ignore
+  CloudQueryMean:
+    name: 云查询均值
+  CloudQueryMin:
+    name: Cloud Query Min  # verify:ignore
+  CloudQueryTotal:
+    name: 云查询总数
+  CloudRateLimits:
+    name: 云端速率限制
+  CloudReconnections:
+    name: 云端重新连接
   CurrentControlCommandValue:
     attributes:
       comment: 日本远程输出控制使用
@@ -598,6 +651,35 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 直流电动汽车累计放电电量
+  GatewayCommunicationStatus:
+    name: 通信状态
+  GatewayFirmwareVersion:
+    name: 固件版本
+  GatewayGridCurrent:
+    attributes:
+      comment: 通过云 API 从网关读取电网侧状态
+  GatewayGridFrequency:
+    attributes:
+      comment: 通过云 API 从网关读取电网侧状态
+  GatewayGridPower:
+    attributes:
+      comment: 通过云 API 从网关读取电网侧状态
+  GatewayGridReactivePower:
+    attributes:
+      comment: 通过云 API 从网关读取电网侧状态
+  GatewayGridSideInfoSensor:
+    attributes:
+      comment: 通过云 API 从网关读取电网侧状态
+  GatewayGridText:
+    attributes:
+      comment: 通过云 API 从网关读取电网侧状态
+  GatewayGridVoltage:
+    attributes:
+      comment: 通过云 API 从网关读取电网侧状态
+  GatewayModel:
+    name: 型号
+  GatewaySerialNumber:
+    name: 序列号
   GeneralAlarm1:
     alarm:
       '0': 软件版本不匹配
@@ -824,11 +906,23 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 欠频功率提升触发频率
+  GridConnectionLimit:
+    attributes:
+      comment: 仅在安装人员已配置最大限制时可用。
+    name: 并网电流限制
+  GridExportLimit:
+    attributes:
+      comment: 仅在安装人员已配置最大限制时可用。
+    name: 并网输出限制
   GridFrequency:
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 电网频率
+  GridImportLimit:
+    attributes:
+      comment: 仅在安装人员已配置最大限制时可用。
+    name: 并网输入限制
   GridMaxExportLimit:
     attributes:
       comment: 馈入电网的最大有功功率不得超过该传感器中配置的值。需要网格传感器。无论EMS运行模式如何，在全球范围内生效
@@ -944,6 +1038,18 @@ class:
     name: InfluxDB 写入
   InfluxService:
     name: Sigenergy InfluxDB 更新服务 (电站 {plant_index})
+  InstantControlDuration:
+    name: 即时手动控制时长
+  InstantControlMode:
+    name: 即时手动控制模式
+    options:
+      '0': 未设置
+      '1': 充电
+      '2': 放电
+      '3': 保持电池
+      '4': 自用
+  InstantControlSwitch:
+    name: 即时手动控制
   InsulationResistance:
     attributes:
       source: Modbus 寄存器 {address}
@@ -1308,6 +1414,8 @@ class:
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
+  OperationalMode:
+    name: 运行模式
   OutputType:
     attributes:
       source: Modbus 寄存器 {address}
@@ -2729,6 +2837,8 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 关机时间
+  SigenCloudDevice:
+    name: '{model_name} {sn}'
   SmartLoadPower:
     attributes:
       source: Modbus 寄存器 {address}
@@ -2739,6 +2849,8 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 智能负载 {smart_load_index} 总消耗
+  SolarPowerLimit:
+    name: 太阳能功率限制
   Started:
     name: 已启动
   StartupTime:
@@ -2838,6 +2950,18 @@ class:
     name_off: 关机
     name_on: 开机
 cli:
+  SIGENERGY2MQTT_CLOUD_ACCEPT_UNOFFICIAL_API_RISK:
+    help: 请明确允许使用未发布的 mySigen API（建议使用委托账户）。
+  SIGENERGY2MQTT_CLOUD_DISCOVER_INVERTERS:
+    help: 发现云逆变器设备并公开其传感器。默认处于禁用状态。
+  SIGENERGY2MQTT_CLOUD_LOG_LEVEL:
+    help: '云子系统的日志级别。有效值为：DEBUG、INFO、WARNING、ERROR 或 CRITICAL。默认值为 INFO。'
+  SIGENERGY2MQTT_CLOUD_PASSWORD:
+    help: 云服务的密码。
+  SIGENERGY2MQTT_CLOUD_REGION:
+    help: "云服务的用户所在区域。必须为以下选项之一：'aus'、'eu'、'cn'、'apac'、'us'。"
+  SIGENERGY2MQTT_CLOUD_USERNAME:
+    help: 云服务的用户名。
   SIGENERGY2MQTT_CONFIG:
     help: 'YAML配置文件的路径（默认：SIGENERGY2MQTT_CONFIG环境变量，否则为/etc/sigenergy2mqtt.yaml）'
   SIGENERGY2MQTT_CONSUMPTION:
@@ -2993,7 +3117,7 @@ cli:
   SIGENERGY2MQTT_NO_EMS_MODE_CHECK:
     help: '当远程 EMS 控制模式不是“命令充电/放电”时，关闭禁用 ESS 最大充电/放电和 PV 最大功率限制的验证。'
   SIGENERGY2MQTT_NO_METRICS:
-    help: '不发布sigenergy2mqtt指标。'
+    help: '已弃用：指标发布功能默认处于禁用状态。请使用 --publish-metrics 启用该功能。'
   SIGENERGY2MQTT_PERSISTENCE_CACHE_WARMUP_TIMEOUT:
     help: '启动缓存预热期间等待 MQTT 保留状态的最大秒数（默认：10.0，范围：1-60）'
   SIGENERGY2MQTT_PERSISTENCE_DEBUG:
@@ -3004,6 +3128,10 @@ cli:
     help: '持久化状态消息的 MQTT 主题前缀（默认：sigenergy2mqtt/_state）'
   SIGENERGY2MQTT_PERSISTENCE_SYNC_TIMEOUT:
     help: '从非 asyncio 线程调用时同步持久化操作的超时秒数（默认：5.0，范围：0.1-30.0）'
+  SIGENERGY2MQTT_PUBLISH_METRICS:
+    help: 将 sigenergy2mqtt 指标发布到 MQTT（默认禁用）。
+  SIGENERGY2MQTT_PUBLISH_RUNTIME_CONFIG:
+    help: 将运行时配置发布到 MQTT，允许在运行时更改设置（默认禁用）。
   SIGENERGY2MQTT_PVOUTPUT_API_KEY:
     help: PVOutput API密钥
   SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION:
@@ -3044,6 +3172,8 @@ cli:
     help: "重复状态发布的时间间隔（以秒为单位）。如果 < 0，则永远不发布重复状态。如果为 0，则始终发布重复状态。如果 > 0，则以指定的间隔发布重复状态。默认值为 0（始终发布）。"
   SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW:
     help: '用于合理性检查的默认值（kW），用于验证功率传感器的当前值和能量传感器的增量值的最大和最小。默认值为每秒 500 kW，超出范围的读数将被忽略。'
+  SIGENERGY2MQTT_SCAN_INTERVAL_CLOUD:
+    help: 用于检索云端数据的扫描间隔（单位：秒）。默认值为 5（秒），最小值为 1
   SIGENERGY2MQTT_SCAN_INTERVAL_HIGH:
     help: 高频寄存器扫描间隔。默认：10。
   SIGENERGY2MQTT_SCAN_INTERVAL_LOW:

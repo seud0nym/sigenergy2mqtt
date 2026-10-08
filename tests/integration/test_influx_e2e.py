@@ -8,7 +8,12 @@ import pytest
 
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.influxdb.writers import V1HttpWriter, V2HttpWriter
-from tests.unit.influxdb.conftest import FakeResponse, _bring_online, disabled_hass_history_sync, disabled_influx_config
+from tests.unit.influxdb.conftest import (
+    FakeResponse,
+    _bring_online,
+    disabled_hass_history_sync,  # noqa: F401
+    disabled_influx_config,  # noqa: F401
+)
 
 
 @pytest.fixture
@@ -17,7 +22,7 @@ def logger():
 
 
 @pytest.fixture
-def service(disabled_hass_history_sync):
+def service(disabled_hass_history_sync):  # noqa: F811
     """Mark the shared disabled history-sync fixture online for E2E tests."""
     _bring_online(disabled_hass_history_sync)
     return disabled_hass_history_sync
@@ -222,7 +227,6 @@ async def test_sync_from_homeassistant_returns_result_key_format(service, logger
 # =============================================================================
 # detect_homeassistant_db() integration tests
 # =============================================================================
-
 
 
 @pytest.mark.integration

@@ -9,8 +9,19 @@ from unittest.mock import MagicMock, patch
 import pytest
 from ruamel.yaml import YAML
 
-from sigenergy2mqtt.config import ConfigurationError, Settings, _promote_cli_to_env, active_config, cli, const, initialize
-from sigenergy2mqtt.config.config import _create_persistent_state_path, _system_initialize
+from sigenergy2mqtt.config import (
+    ConfigurationError,
+    Settings,
+    _promote_cli_to_env,
+    active_config,
+    cli,
+    const,
+    initialize,
+)
+from sigenergy2mqtt.config.config import (
+    _create_persistent_state_path,
+    _system_initialize,
+)
 
 VersionInfo = collections.namedtuple("VersionInfo", ["major", "minor", "micro", "releaselevel", "serial"])
 
@@ -19,18 +30,22 @@ VersionInfo = collections.namedtuple("VersionInfo", ["major", "minor", "micro", 
 def test_system_initialize_python_version_error(tmp_path, monkeypatch):
     monkeypatch.delenv("SIGENERGY2MQTT_STATE_DIR", raising=False)
 
-    with patch("sigenergy2mqtt.config.config.sys.version_info", VersionInfo(3, 11, 0, "f", 0)):
-        with pytest.raises(ConfigurationError):
-            _system_initialize()
+    with (
+        patch("sigenergy2mqtt.config.config.sys.version_info", VersionInfo(3, 11, 0, "f", 0)),
+        pytest.raises(ConfigurationError),
+    ):
+        _system_initialize()
 
 
 @pytest.mark.no_persistent_state_mock
 def test_create_persistent_state_path_no_writable_dir(tmp_path, monkeypatch):
     monkeypatch.delenv("SIGENERGY2MQTT_STATE_DIR", raising=False)
 
-    with patch("sigenergy2mqtt.config.config.os.path.isdir", return_value=False):
-        with pytest.raises(ConfigurationError):
-            _create_persistent_state_path()
+    with (
+        patch("sigenergy2mqtt.config.config.os.path.isdir", return_value=False),
+        pytest.raises(ConfigurationError),
+    ):
+        _create_persistent_state_path()
 
 
 @pytest.mark.no_persistent_state_mock
@@ -81,7 +96,7 @@ def test_logging_branches_exhaustive_v3():
     with patch("sigenergy2mqtt.config.config.os.isatty", return_value=True), patch("sigenergy2mqtt.config.config.sys.version_info", VersionInfo(3, 13, 0, "f", 0)):
         try:
             active_config.system_initialize()
-        except:  # noqa: E722
+        except Exception:  # noqa: BLE001, S110
             pass
 
     mock_p = MagicMock()
@@ -94,7 +109,7 @@ def test_logging_branches_exhaustive_v3():
     ):
         try:
             active_config.system_initialize()
-        except:  # noqa: E722
+        except Exception:  # noqa: BLE001, S110
             pass
 
     mock_p2 = MagicMock()
@@ -106,7 +121,7 @@ def test_logging_branches_exhaustive_v3():
     ):
         try:
             active_config.system_initialize()
-        except:  # noqa: E722
+        except Exception:  # noqa: BLE001, S110
             pass
 
 
@@ -123,9 +138,11 @@ def test_reload_exhaustive_v7(tmp_path):
     with patch.object(active_config, "persistent_state_path", tmp_path):
         with patch.dict(os.environ, {const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY: "once"}):
             asyncio.run(active_config.reload())
-        with patch.dict(os.environ, {const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY: "force"}):
-            with patch("sigenergy2mqtt.config.config.auto_discovery_scan", return_value=[{"host": "h"}]):
-                asyncio.run(active_config.reload())
+        with (
+            patch.dict(os.environ, {const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY: "force"}),
+            patch("sigenergy2mqtt.config.config.auto_discovery_scan", return_value=[{"host": "h"}]),
+        ):
+            asyncio.run(active_config.reload())
 
 
 def test_promote_cli_to_env_read_only_branch():
@@ -229,8 +246,9 @@ def test_initialize_log_level_invalid_raises():
         patch("sigenergy2mqtt.config.config.Config._perform_auto_discovery", return_value=None),
     ):
         initialize()
-        from sigenergy2mqtt.config import initialize_async
         import asyncio
+
+        from sigenergy2mqtt.config import initialize_async
         with pytest.raises(ConfigurationError, match="invalid log level"):
             asyncio.run(initialize_async())
 
@@ -246,13 +264,14 @@ def test_initialize_validate_only_returns_false():
         patch("sigenergy2mqtt.config.cli.parse_args", return_value=fake_args),
         patch.dict(os.environ, {}, clear=True),
         patch("sigenergy2mqtt.config.config.Config._perform_auto_discovery", return_value=None),
+        patch.object(active_config, "persistent_state_path", Path("/tmp/nonexistent_test_path")),
     ):
-        with patch.object(active_config, "persistent_state_path", Path("/tmp/nonexistent_test_path")):
-            initialize()
-            from sigenergy2mqtt.config import initialize_async
-            import asyncio
-            with pytest.raises(ConfigurationError, match="At least one Modbus device must be configured"):
-                asyncio.run(initialize_async())
+        initialize()
+        import asyncio
+
+        from sigenergy2mqtt.config import initialize_async
+        with pytest.raises(ConfigurationError, match="At least one Modbus device must be configured"):
+            asyncio.run(initialize_async())
 
 
 def test_coerce_bool_none():

@@ -337,7 +337,7 @@ class _MqttBackend:
         self._drain_retries(client)
         topic = self._key_to_topic(category, key)
         try:
-            info = client.publish(topic, b"", qos=2, retain=True)
+            info = client.publish(topic, b"", qos=1, retain=True)
             if info.rc != mqtt.MQTT_ERR_SUCCESS:
                 raise RuntimeError(info.rc)
             info.wait_for_publish(timeout=5.0)

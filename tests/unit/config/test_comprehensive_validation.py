@@ -78,8 +78,10 @@ class TestConfigComprehensiveValidation:
         import os
         from unittest.mock import patch
 
-        with patch.dict(os.environ, {}, clear=True):
-            with pytest.raises(ConfigurationError, match="At least one Modbus device must be configured"):
-                from sigenergy2mqtt.config.config import Config
+        with (
+            patch.dict(os.environ, {}, clear=True),
+            pytest.raises(ConfigurationError, match="At least one Modbus device must be configured"),
+        ):
+            from sigenergy2mqtt.config.config import Config
 
-                Config()._finalize_reload(None)
+            Config()._finalize_reload(None)
