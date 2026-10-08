@@ -16,11 +16,22 @@ async def test_collect_modbus_metrics(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_collect_mqtt_metrics(monkeypatch):
-    monkeypatch.setattr(active_config.home_assistant, "enabled", True, raising=False)
+@pytest.mark.parametrize(
+    "ha_enabled, use_simplified_topics, expected_simplified_topics",
+    [
+        (True, False, "no"),
+        (True, True, "yes"),
+        (False, False, "yes"),
+        (False, True, "yes"),
+    ],
+)
+async def test_collect_mqtt_metrics(monkeypatch, ha_enabled, use_simplified_topics, expected_simplified_topics):
+    monkeypatch.setattr(active_config.home_assistant, "enabled", ha_enabled, raising=False)
+    monkeypatch.setattr(active_config.home_assistant, "use_simplified_topics", use_simplified_topics, raising=False)
     metrics = await DiagnosticsCollectors._diagnostics_collect_mqtt_metrics()
     assert "Physical Publishes_pct" in metrics
     assert "config" in metrics
+    assert metrics["config"]["simplified_topics"] == expected_simplified_topics
 
 
 @pytest.mark.asyncio
