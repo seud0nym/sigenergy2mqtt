@@ -310,10 +310,14 @@ class:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
     name: Voltaje Promedio de Celdas
+  BatteryChargePowerLimit:
+    name: Límite de potencia de carga de la batería
   BatteryChargingPower:
     attributes:
       source: BatteryPower > 0 #verify:ignore
     name: Potencia de Carga de Batería
+  BatteryDischargePowerLimit:
+    name: Límite de potencia de descarga de la batería
   BatteryDischargingPower:
     attributes:
       source: BatteryPower < 0 × -1 #verify:ignore
@@ -352,6 +356,55 @@ class:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
     name: Potencia de Batería
+  CloudAuthErrors:
+    name: Errores de autenticación en la nube
+  CloudAvailable:
+    name: Disponible en la nube
+  CloudBattery:
+    name: '{model_name} {sn}'
+  CloudConnected:
+    name: Conectado a la nube
+  CloudConnectionAttempts:
+    name: Intentos de conexión a la nube
+  CloudConnectionErrors:
+    name: Errores de conexión a la nube
+  CloudConnectionMax:
+    name: Cloud Connection Max  # verify:ignore
+  CloudConnectionMean:
+    name: Significado de «Conexión a la nube»
+  CloudConnectionMin:
+    name: Conexión a la nube mínima
+  CloudConnectionTotal:
+    name: Conexión a la nube Total
+  CloudConnections:
+    name: Conexiones exitosas en la nube
+  CloudControl:
+    name: Sigenergy Cloud {plant_suffix}  # verify:ignore
+  CloudGridLimitSensor:
+    attributes:
+      comment: Solo disponible cuando el instalador ha configurado un límite máximo.
+  CloudInverter:
+    name: '{model_name} {sn}'
+  CloudLogLevel:
+    attributes:
+      comment: El nivel de registro del módulo en la nube «sigenergy2mqtt»
+    name: Nivel de registro en la nube
+  CloudQueries:
+    name: Consultas en la nube
+  CloudQueryErrors:
+    name: Errores de consulta en la nube
+  CloudQueryMax:
+    name: Cloud Query Max  # verify:ignore
+  CloudQueryMean:
+    name: Media de consultas en la nube
+  CloudQueryMin:
+    name: Cloud Query Min  # verify:ignore
+  CloudQueryTotal:
+    name: Total de consultas en la nube
+  CloudRateLimits:
+    name: Límites de tráfico en la nube
+  CloudReconnections:
+    name: Reconexiones en la nube
   CurrentControlCommandValue:
     attributes:
       comment: Uso del Control de Salida Remota en Japón
@@ -598,6 +651,35 @@ class:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
     name: Energía de Descarga CC VE Total
+  GatewayCommunicationStatus:
+    name: Estado de la comunicación
+  GatewayFirmwareVersion:
+    name: Versión del firmware
+  GatewayGridCurrent:
+    attributes:
+      comment: Lectura del estado de la red eléctrica desde la pasarela a través de la API en la nube
+  GatewayGridFrequency:
+    attributes:
+      comment: Lectura del estado de la red eléctrica desde la pasarela a través de la API en la nube
+  GatewayGridPower:
+    attributes:
+      comment: Lectura del estado de la red eléctrica desde la pasarela a través de la API en la nube
+  GatewayGridReactivePower:
+    attributes:
+      comment: Lectura del estado de la red eléctrica desde la pasarela a través de la API en la nube
+  GatewayGridSideInfoSensor:
+    attributes:
+      comment: Lectura del estado de la red eléctrica desde la pasarela a través de la API en la nube
+  GatewayGridText:
+    attributes:
+      comment: Lectura del estado de la red eléctrica desde la pasarela a través de la API en la nube
+  GatewayGridVoltage:
+    attributes:
+      comment: Lectura del estado de la red eléctrica desde la pasarela a través de la API en la nube
+  GatewayModel:
+    name: Modelo
+  GatewaySerialNumber:
+    name: Número de serie
   GeneralAlarm1:
     alarm:
       '0': Discrepancia de versión de software
@@ -824,11 +906,23 @@ class:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
     name: Frecuencia de Activación por Subfrecuencia
+  GridConnectionLimit:
+    attributes:
+      comment: Solo disponible cuando el instalador ha configurado un límite máximo.
+    name: Límite de corriente de conexión a la red
+  GridExportLimit:
+    attributes:
+      comment: Solo disponible cuando el instalador ha configurado un límite máximo.
+    name: Límite de exportación a la red
   GridFrequency:
     attributes:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
     name: Frecuencia de Red
+  GridImportLimit:
+    attributes:
+      comment: Solo disponible cuando el instalador ha configurado un límite máximo.
+    name: Límite de importación de la red eléctrica
   GridMaxExportLimit:
     attributes:
       comment: La potencia activa máxima inyectada a la red no debe superar el valor configurado en este sensor. Se necesita sensor de red. Tiene efecto globalmente independientemente del modo de funcionamiento del EMS.
@@ -944,6 +1038,18 @@ class:
     name: Escrituras InfluxDB
   InfluxService:
     name: 'Servicio de Actualización Sigenergy InfluxDB (Planta {plant_index})'
+  InstantControlDuration:
+    name: Duración del control manual instantáneo
+  InstantControlMode:
+    name: Modo de control manual instantáneo
+    options:
+      '0': Sin definir
+      '1': Carga
+      '2': Descarga
+      '3': Batería en espera
+      '4': Autoconsumo
+  InstantControlSwitch:
+    name: Control manual instantáneo
   InsulationResistance:
     attributes:
       source: Registro Modbus {address}
@@ -1308,6 +1414,8 @@ class:
     attributes:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
+  OperationalMode:
+    name: Modo de funcionamiento
   OutputType:
     attributes:
       source: Registro Modbus {address}
@@ -2729,6 +2837,8 @@ class:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
     name: Hora de Apagado
+  SigenCloudDevice:
+    name: '{model_name} {sn}'
   SmartLoadPower:
     attributes:
       source: Registro Modbus {address}
@@ -2739,6 +2849,8 @@ class:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
     name: Consumo total de carga inteligente {smart_load_index}
+  SolarPowerLimit:
+    name: Límite de potencia solar
   Started:
     name: Iniciado
   StartupTime:
@@ -2838,6 +2950,18 @@ class:
     name_off: Apagar
     name_on: Encender
 cli:
+  SIGENERGY2MQTT_CLOUD_ACCEPT_UNOFFICIAL_API_RISK:
+    help: Permitir explícitamente el uso de la API mySigen no publicada (se recomienda utilizar una cuenta delegada).
+  SIGENERGY2MQTT_CLOUD_DISCOVER_INVERTERS:
+    help: Detecta los dispositivos de los inversores en la nube y muestra sus sensores. Desactivado por defecto.
+  SIGENERGY2MQTT_CLOUD_LOG_LEVEL:
+    help: 'Nivel de registro del subsistema en la nube. Los valores válidos son: DEBUG, INFO, WARNING, ERROR o CRITICAL. El valor por defecto es INFO.'
+  SIGENERGY2MQTT_CLOUD_PASSWORD:
+    help: La contraseña del servicio en la nube.
+  SIGENERGY2MQTT_CLOUD_REGION:
+    help: "Región del usuario para el servicio en la nube. Debe ser una de las siguientes: «aus», «eu», «cn», «apac», «us»."
+  SIGENERGY2MQTT_CLOUD_USERNAME:
+    help: El nombre de usuario para el servicio en la nube.
   SIGENERGY2MQTT_CONFIG:
     help: 'La ruta al archivo de configuración YAML (predeterminado: variable de entorno SIGENERGY2MQTT_CONFIG, de lo contrario /etc/sigenergy2mqtt.yaml)'
   SIGENERGY2MQTT_CONSUMPTION:
@@ -2993,7 +3117,7 @@ cli:
   SIGENERGY2MQTT_NO_EMS_MODE_CHECK:
     help: Desactivar la validación que deshabilita los límites de Carga/Descarga Máx ESS y Potencia Máx PV cuando el Modo de Control EMS Remoto no es Carga/Descarga por Comando.
   SIGENERGY2MQTT_NO_METRICS:
-    help: No publicar métricas de sigenergy2mqtt.
+    help: 'Obsoleto: la publicación de métricas está desactivada por defecto. Utiliza --publish-metrics para activarla.'
   SIGENERGY2MQTT_PERSISTENCE_CACHE_WARMUP_TIMEOUT:
     help: 'Segundos máximos para esperar el estado retenido de MQTT durante el precalentamiento del caché de inicio (predeterminado: 10.0, rango: 1-60)'
   SIGENERGY2MQTT_PERSISTENCE_DEBUG:
@@ -3004,6 +3128,10 @@ cli:
     help: 'Prefijo de tema MQTT para mensajes de estado persistidos (predeterminado: sigenergy2mqtt/_state)'
   SIGENERGY2MQTT_PERSISTENCE_SYNC_TIMEOUT:
     help: 'Tiempo de espera en segundos para operaciones de persistencia síncronas cuando se llaman desde un hilo no asyncio (predeterminado: 5.0, rango: 0.1-30.0)'
+  SIGENERGY2MQTT_PUBLISH_METRICS:
+    help: Publicar métricas de sigenergy2mqtt en MQTT (desactivado por defecto).
+  SIGENERGY2MQTT_PUBLISH_RUNTIME_CONFIG:
+    help: Publicar la configuración en tiempo de ejecución en MQTT, lo que permite modificar los ajustes durante el funcionamiento (desactivado por defecto).
   SIGENERGY2MQTT_PVOUTPUT_API_KEY:
     help: La clave API para PVOutput
   SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION:
@@ -3044,6 +3172,8 @@ cli:
     help: "El intervalo en segundos en el que se publican los estados repetidos. Si < 0, los estados repetidos nunca se publican. Si 0, los estados repetidos siempre se publican. Si > 0, los estados repetidos se publican en el intervalo especificado. El valor predeterminado es 0 (publicar siempre)."
   SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW:
     help: El valor predeterminado en kW usado para comprobaciones de cordura para validar los valores máximo y mínimo de sensores de potencia y el valor delta de sensores de energía. El valor predeterminado es 500 kW por segundo, y las lecturas fuera del rango se ignoran.
+  SIGENERGY2MQTT_SCAN_INTERVAL_CLOUD:
+    help: El intervalo de exploración, en segundos, para recuperar datos de la nube. El valor por defecto es 5 (segundos) y el valor mínimo es 1.
   SIGENERGY2MQTT_SCAN_INTERVAL_HIGH:
     help: El intervalo de escaneo en segundos para registros Modbus que se escanean a alta frecuencia. El predeterminado es 10 (segundos), y el valor mínimo es 1.
   SIGENERGY2MQTT_SCAN_INTERVAL_LOW:

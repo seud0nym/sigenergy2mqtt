@@ -7,12 +7,26 @@ from typing import Any, Literal, cast
 
 import paho.mqtt.client as mqtt
 
-from sigenergy2mqtt.common import DeviceType, HybridInverter, ProtocolVersion, PVInverter
+from sigenergy2mqtt.common import (
+    DeviceType,
+    HybridInverter,
+    ProtocolVersion,
+    PVInverter,
+)
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.config.models import RegisterAccess
 from sigenergy2mqtt.i18n import _t
 from sigenergy2mqtt.mqtt import MqttHandler
-from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, CrossDeviceDerivedSensor, DerivedSensor, ObservableMixin, ReadableSensorMixin, Sensor, WriteableSensorMixin, WriteOnlySensorMixin
+from sigenergy2mqtt.sensors.base import (
+    AlarmCombinedSensor,
+    CrossDeviceDerivedSensor,
+    DerivedSensor,
+    ObservableMixin,
+    ReadableSensorMixin,
+    Sensor,
+    WriteableSensorMixin,
+    WriteOnlySensorMixin,
+)
 
 from .ha_publisher import HaPublisherMixin
 from .poller import SensorGroupPoller
@@ -76,7 +90,11 @@ class Device(HaPublisherMixin, dict[str, str | list[str]]):
         self._sleeper_task: asyncio.Task | None = None
         self._shutdown_event: asyncio.Event = asyncio.Event()
 
-        name = _t(f"{self.__class__.__name__}.name", name, plant_index=plant_index, **kwargs).rstrip()
+        translate = kwargs.pop("translate", True)
+        if translate:
+            name = _t(f"{self.__class__.__name__}.name", name, plant_index=plant_index, **kwargs).rstrip()
+        else:
+            name = name.rstrip()
         self["name"] = self.name = name if active_config.home_assistant.device_name_prefix == "" else f"{active_config.home_assistant.device_name_prefix} {name}"
         self._log_identity: str = ""
         self.refresh_log_identity()
@@ -259,8 +277,7 @@ class Device(HaPublisherMixin, dict[str, str | list[str]]):
         """Set the rediscover flag.
 
         When set to True, the next completed poll cycle in SensorGroupPoller.run()
-        will call :meth:`publish_discovery()`. Logged at INFO when enabled, DEBUG
-        when cleared.
+        will call :meth:`publish_discovery()`.
 
         Args:
             value: Boolean flag value.
@@ -273,7 +290,7 @@ class Device(HaPublisherMixin, dict[str, str | list[str]]):
         self._rediscover = value
         if active_config.home_assistant.enabled:
             if value:
-                logger.info(f"{self.log_identity} set to rediscover")
+                logger.debug(f"{self.log_identity} set to rediscover")
             else:
                 logger.debug(f"{self.log_identity} no longer set to rediscover")
 
@@ -412,6 +429,13 @@ class Device(HaPublisherMixin, dict[str, str | list[str]]):
             self.group_sensors[group].append(sensor)
         self._add_to_all_sensors(sensor)
         return True
+
+    def clean_state(self, mqtt_client: mqtt.Client) -> None:
+        """Cleans all sensor current MQTT topic values"""
+        for sensor in self.get_all_sensors(search_children=False).values():
+            sensor.clean_state(mqtt_client)
+        for child in self.children:
+            child.clean_state(mqtt_client)
 
     def get_all_sensors(self, search_children: bool = True) -> dict[str, Sensor]:
         """Return all sensors owned by this device, optionally including child devices.

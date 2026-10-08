@@ -21,20 +21,18 @@ def test_cli_parsing_clean(clean_argv, monkeypatch):
     # Reset active_config.clean before reload to ensure we are testing the reload effect
     active_config.clean = False
 
-    # Mock sys.exit to prevent the script from exiting
-    with patch("sys.exit"):
-        # Mock Path.mkdir and other side effects in __init__.py
-        with (
-            patch("pathlib.Path.mkdir"),
-            patch("pathlib.Path.is_dir", return_value=True),
-            patch("pathlib.Path.iterdir", return_value=[]),
-            patch("os.access", return_value=True),
-            patch("os.path.isdir", return_value=True),
-            patch.object(config_mod.active_config, "reload"),
-        ):
-            config_mod.initialize(args)
+    with (
+        patch("sys.exit"),
+        patch("pathlib.Path.mkdir"),
+        patch("pathlib.Path.is_dir", return_value=True),
+        patch("pathlib.Path.iterdir", return_value=[]),
+        patch("os.access", return_value=True),
+        patch("os.path.isdir", return_value=True),
+        patch.object(config_mod.active_config, "reload"),
+    ):
+        config_mod.initialize(args)
 
-            assert active_config.clean is True
+        assert active_config.clean is True
 
 
 def test_cli_parsing_discovery_only(clean_argv, monkeypatch):
@@ -44,18 +42,18 @@ def test_cli_parsing_discovery_only(clean_argv, monkeypatch):
     # Reset discovery_only before reload
     active_config.home_assistant.discovery_only = False
 
-    with patch("sys.exit"):
-        with (
-            patch("pathlib.Path.mkdir"),
-            patch("pathlib.Path.is_dir", return_value=True),
-            patch("pathlib.Path.iterdir", return_value=[]),
-            patch("os.access", return_value=True),
-            patch("os.path.isdir", return_value=True),
-            patch.object(config_mod.active_config, "reload"),
-        ):
-            config_mod.initialize(args)
+    with (
+        patch("sys.exit"),
+        patch("pathlib.Path.mkdir"),
+        patch("pathlib.Path.is_dir", return_value=True),
+        patch("pathlib.Path.iterdir", return_value=[]),
+        patch("os.access", return_value=True),
+        patch("os.path.isdir", return_value=True),
+        patch.object(config_mod.active_config, "reload"),
+    ):
+        config_mod.initialize(args)
 
-            assert active_config.home_assistant.discovery_only is True
+        assert active_config.home_assistant.discovery_only is True
 
 
 def test_cli_parsing_validate_modes(clean_argv):
@@ -96,3 +94,12 @@ def test_cli_parsing_negated_monitoring_flags(clean_argv):
     assert getattr(args, const.SIGENERGY2MQTT_TOPIC_UPDATE_MONITORING) is False
     assert getattr(args, const.SIGENERGY2MQTT_PVOUTPUT_HEALTH_MONITORING) is False
     assert getattr(args, const.SIGENERGY2MQTT_INFLUX_HEALTH_MONITORING) is False
+
+
+def test_cli_parsing_cloud_discover_inverters(clean_argv):
+    import sigenergy2mqtt.config.cli as cli_mod
+    from sigenergy2mqtt.config import const
+
+    args = cli_mod.parse_args(["--cloud-discover-inverters"])
+
+    assert getattr(args, const.SIGENERGY2MQTT_CLOUD_DISCOVER_INVERTERS) is True

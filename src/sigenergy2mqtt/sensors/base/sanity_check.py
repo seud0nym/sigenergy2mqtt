@@ -1,9 +1,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import cast
+from typing import Any, cast
 
-from sigenergy2mqtt.common import PERCENTAGE, DeviceClass, StateClass, UnitOfEnergy, UnitOfPower
+from sigenergy2mqtt.common import (
+    PERCENTAGE,
+    DeviceClass,
+    StateClass,
+    UnitOfEnergy,
+    UnitOfPower,
+)
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus import ModbusDataType
 
@@ -142,7 +148,7 @@ class SanityCheck:
     def is_enabled(self) -> bool:
         return self.min_raw is not None or self.max_raw is not None
 
-    def is_sane(self, state: float, previous_states: list[tuple[float, float | int | str]]) -> bool:
+    def is_sane(self, state: Any, previous_states: list[tuple[float, Any]]) -> bool:
         if state is None or not isinstance(state, (float, int)) or (self.min_raw is None and self.max_raw is None) or (self.delta and len(previous_states) == 0):
             return True
         if self.delta:

@@ -290,7 +290,7 @@ def _translate_batch(
     translator: "deepl.Translator | None",
     formality: str,
     dry_run: bool = False,
-) -> list[str]:
+) -> list[str] | None:
     """Translate a batch of strings in a single DeepL API call.
 
     Returns a list of translations in the same order as *texts*. Falls back
@@ -341,9 +341,9 @@ def _translate_batch(
             delay *= 2
         else:
             print(f"    [ERR] Giving up on this batch of {len(texts)} string(s) after {_API_MAX_RETRIES} attempts; leaving as English.", file=sys.stderr)
-            return list(texts)  # fall back to English for the whole batch
+            return None
 
-    return list(texts)  # unreachable, keeps type-checkers happy
+    return None  # unreachable, keeps type-checkers happy
 
 
 # ---------------------------------------------------------------------------
@@ -419,7 +419,7 @@ def _resolve_key(d: dict, k: object) -> object:
     return alt if alt in d else None
 
 
-def _set_by_path(node: object, path: str, value: str) -> bool:
+def _set_by_path(node: object, path: str, value: str, comment: str | None = None) -> bool:
     """Set a leaf value in the ruamel.yaml tree by its dotted/indexed path.
 
     Intermediate traversal uses _resolve_key to tolerate int/string key-type
@@ -450,6 +450,8 @@ def _set_by_path(node: object, path: str, value: str) -> bool:
             resolved_last = _resolve_key(current, last)
             write_key = resolved_last if resolved_last is not None else last
             current[write_key] = value
+            if comment and hasattr(current, "yaml_add_eol_comment"):
+                getattr(current, "yaml_add_eol_comment")(comment, write_key)
         elif isinstance(current, list):
             current[int(last)] = value
         else:
@@ -620,10 +622,15 @@ def translate_language(
         if not dry_run:
             print(f"  Translating batch {batch_num}/{total_batches} ({len(batch)} string(s)) ...")
         results = _translate_batch(batch, job.lang_code, translator, formality, dry_run)
-        for en_val, translated in zip(batch, results):
-            translation_lookup[en_val] = translated
-            if not dry_run and translated != en_val:
-                cache.set(job.lang_code, en_val, translated)
+        if results is None:
+            results = batch
+            for en_val, translated in zip(batch, results):
+                translation_lookup[en_val] = translated
+        else:
+            for en_val, translated in zip(batch, results):
+                translation_lookup[en_val] = translated
+                if not dry_run:
+                    cache.set(job.lang_code, en_val, translated)
 
     translated = 0
     skipped = 0
@@ -638,18 +645,17 @@ def translate_language(
         else:
             cached = cache.get(job.lang_code, en_val)
             new_val = cached if cached is not None else translation_lookup.get(en_val, en_val)
-            if new_val == en_val:
-                skipped += 1
-                print(f"  [SKIP] {path}: '{en_val[:60]}'")
-                continue
+            
+        is_identical = new_val == en_val
 
         if dry_run:
             print(f"  [DRY] {path}:")
             print(f"        EN:  {en_val[:80]!r}")
-            print(f"        {job.lang_code.upper()}: {new_val[:80]!r}")
+            print(f"        {job.lang_code.upper()}: {new_val[:80]!r}{' (identical)' if is_identical else ''}")
         else:
-            if _set_by_path(job.other_data, path, new_val):
-                print(f"  [OK]  {path}: {new_val[:60]!r}")
+            comment_to_add = "verify:ignore" if is_identical and last_key not in ("source", "source_range") else None
+            if _set_by_path(job.other_data, path, new_val, comment=comment_to_add):
+                print(f"  [{'IDENT' if is_identical else 'OK'}]  {path}: {new_val[:60]!r}")
                 translated += 1
             else:
                 print(f"  [ERR] Could not set path: {path}", file=sys.stderr)

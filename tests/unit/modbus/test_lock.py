@@ -93,10 +93,10 @@ class TestModbusLock:
 
         async def waiter():
             # We'll capture the waiters count before and during acquire
-            lock_with_none.waiters  # Just to ensure we can access it
+            _ = lock_with_none.waiters  # Just to ensure we can access it
             try:
                 await lock_with_none.acquire(timeout=0.05)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 pass
 
         # Start the waiter task

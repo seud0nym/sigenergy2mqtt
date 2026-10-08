@@ -297,6 +297,21 @@ class WriteableSensorMixin(Sensor):
     the existing Modbus register implementation.
     """
 
+    def __init__(self, availability_control_sensor=None, **kwargs):
+        self.set_availability_control_sensor(availability_control_sensor)
+        self._use_raw_for_availability = False
+        super().__init__(**kwargs)
+
+    def set_availability_control_sensor(self, sensor) -> None:
+        """Set the sensor which gates writes and Home Assistant availability."""
+        # Imported lazily because AvailabilityMixin is defined in sensor.py,
+        # which also supplies the base class for this mixin.
+        from .sensor import AvailabilityMixin
+
+        if sensor is not None and not isinstance(sensor, AvailabilityMixin):
+            raise TypeError(f"{self.__class__.__name__}: availability_control_sensor must be an instance of AvailabilityMixin")
+        self._availability_control_sensor = sensor
+
     @property
     def command_topic(self) -> str:
         """Get the MQTT topic used to receive commands."""
@@ -305,7 +320,7 @@ class WriteableSensorMixin(Sensor):
             raise RuntimeError(f"{self.log_identity} command topic is not defined")
         return topic
 
-    def _raw2state(self, raw_value: float | str) -> float | int | str:
+    def _raw2state(self, raw_value: Any) -> Any:
         """Convert raw value to display state.
 
         Args:
@@ -317,7 +332,11 @@ class WriteableSensorMixin(Sensor):
         # Early return removed to allow string processing below
 
         # Lazy import to avoid circular dependencies
-        from .writeable import SelectSensorMixin, SwitchSensorMixin, WriteOnlySensorMixin
+        from .writeable import (
+            SelectSensorMixin,
+            SwitchSensorMixin,
+            WriteOnlySensorMixin,
+        )
 
         # Handle Option-based sensors
         if DiscoveryKeys.OPTIONS in self and isinstance(raw_value, (int, float)):
@@ -365,12 +384,29 @@ class WriteableSensorMixin(Sensor):
         """Configure the command topic in addition to normal sensor topics."""
         base = super().configure_mqtt_topics(device_id)
         self[DiscoveryKeys.COMMAND_TOPIC] = f"{base}/set"
+        gate = self._availability_control_sensor
+        if gate is not None and active_config.home_assistant.enabled:
+            use_raw_topic = self._use_raw_for_availability and gate.publish_raw
+            control_topic = cast(str | None, gate.get(DiscoveryKeys.RAW_STATE_TOPIC if use_raw_topic else DiscoveryKeys.STATE_TOPIC))
+            if not control_topic or control_topic.isspace():
+                topic_name = "raw_state_topic" if use_raw_topic else "state_topic"
+                raise RuntimeError(f"{self.log_identity} - {gate.__class__.__name__} topic is not configured; {topic_name} has not been configured")
+            availability = cast(list[dict[str, Any]], self[DiscoveryKeys.AVAILABILITY])
+            availability.append({
+                "topic": control_topic,
+                "payload_available": gate._to_mqtt_payload(gate.payload_available),
+                "payload_not_available": gate._to_mqtt_payload(gate.payload_not_available),
+            })
         if self.debug_logging:
             logger.debug(f"{self.log_identity} >>> {DiscoveryKeys.COMMAND_TOPIC}={self[DiscoveryKeys.COMMAND_TOPIC]})")
         return base
 
     async def set_value(self, transport: Any, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
         """Validate and dispatch an MQTT command through ``_write_value``."""
+        gate = self._availability_control_sensor
+        if gate is not None and gate.latest_raw_state != gate.payload_available:
+            logger.error(f"{self.log_identity} Failed to write value '{value}': {gate.log_identity} state {gate.latest_raw_state!r} does not match available payload {gate.payload_available!r}")
+            return False
         self.force_publish = True
         try:
             if not await self.value_is_valid(transport, value):
@@ -492,10 +528,7 @@ class ModbusWriteableSensorMixin(TypedSensorMixin, ModbusSensorMixin, WriteableS
     async def _write_value(self, transport: Any, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
         """Write a validated command value to this sensor's Modbus register."""
         if not isinstance(transport, ModbusClient):
-            raise TypeError(
-                f"{self.log_identity}: _write_value requires a ModbusClient transport, "
-                f"got {type(transport)!r}"
-            )
+            raise TypeError(f"{self.log_identity}: _write_value requires a ModbusClient transport, got {type(transport)!r}")
         return await self._write_registers(transport, value, mqtt_client)
 
     async def value_is_valid(self, transport: Any, raw_value: float | str) -> bool:

@@ -1,6 +1,8 @@
 import asyncio
 import ipaddress
 import logging
+import threading
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
@@ -28,6 +30,8 @@ class ThreadConfig:
             Defaults to ``1.0``.
         retries: Number of retry attempts on failure passed to the Modbus
             client. Defaults to ``3``.
+        transport_factory: Optional async factory for a non-Modbus transport.
+            It is used only when ``host`` is ``None``.
 
     Raises:
         ValueError: If both ``name`` and ``host`` are absent or blank.
@@ -39,9 +43,11 @@ class ThreadConfig:
     port: int | None
     timeout: float = 1.0
     retries: int = 3
+    transport_factory: Callable[[], Awaitable[Any]] | None = None
 
     _devices: list[Device] = field(default_factory=list)
     _token: Any = None
+    _shutdown_requested: threading.Event = field(default_factory=threading.Event, init=False, repr=False)
 
     # A private object only accessible within this module
     __INTERNAL_TOKEN = object()
@@ -112,6 +118,11 @@ class ThreadConfig:
         """
         self._devices.append(device)
 
+    @property
+    def shutdown_requested(self) -> bool:
+        """Whether normal shutdown or restart has taken this worker offline."""
+        return self._shutdown_requested.is_set()
+
     def online(self, value: Literal[False] | asyncio.Future) -> None:
         """Set the online status of all devices registered to this thread.
 
@@ -135,8 +146,10 @@ class ThreadConfig:
         if value is True:
             raise ValueError("Use a Future to bring devices online, not True")
         elif value is False:
+            self._shutdown_requested.set()
             logger.debug(f"{self.url if self.host is not None else self.description} going offline")
         else:
+            self._shutdown_requested.clear()
             logger.debug(f"{self.url if self.host is not None else self.description} coming online")
         for device in self._devices:
             device.online = value

@@ -23,7 +23,7 @@ def get_modbus_url(modbus_client: ModbusClient) -> str:
     return "modbus://unknown"
 
 
-async def get_state(sensor: Any, modbus_client: ModbusClient, device: str, default_value: float | str | None = None, raw: bool = False) -> int | float | str | None:
+async def get_state(sensor: Any, modbus_client: ModbusClient, device: str, default_value: Any = None, raw: bool = False) -> Any:
     """Read a sensor state for bootstrap/probing while tolerating read failures.
 
     Returns the sensor value when successful, otherwise ``default_value``.

@@ -186,9 +186,9 @@ class HaPublisherMixin(abc.ABC):
         """
         topic = f"{active_config.home_assistant.discovery_prefix}/device/{self.unique_id}/config"
         if clean:
-            self.publish_availability(mqtt_client, b"", qos=0)  # Availability is always retained
+            self.publish_availability(mqtt_client, b"", qos=1)  # Availability is always retained
             logger.debug(f"{self.log_identity} cleaning discovery ({topic=})")
-            info = mqtt_client.publish(topic, b"", qos=0, retain=True)  # Clear retained messages
+            info = mqtt_client.publish(topic, b"", qos=1, retain=True)  # Clear retained messages
         else:
             components: dict[str, Any] = {}
             for sensor in self.sensors.values():
@@ -208,9 +208,9 @@ class HaPublisherMixin(abc.ABC):
                 info = mqtt_client.publish(topic, discovery_json, qos=2, retain=True)
             else:
                 logger.debug(f"{self.log_identity} publishing empty availability because no components found ({topic=})")
-                self.publish_availability(mqtt_client, b"", qos=0)
+                self.publish_availability(mqtt_client, b"", qos=1)
                 logger.debug(f"{self.log_identity} publishing empty discovery because no components found ({topic=})")
-                info = mqtt_client.publish(topic, b"", qos=0, retain=True)  # Clear retained messages
+                info = mqtt_client.publish(topic, b"", qos=1, retain=True)  # Clear retained messages
         self.publish_attributes(mqtt_client, clean, propagate=False)  # Don't propagate to children because it will happen automatically when child discovery is published
         for device in self.children:
             device.publish_discovery(mqtt_client, clean=clean)

@@ -10,6 +10,7 @@ properties:
       - type: string
         enum: [DEBUG, INFO, WARNING, ERROR, CRITICAL]
       - type: integer
+        enum: [10, 20, 30, 40, 50]
     default: INFO
   log-fmt:
     description: "Set the log format."
@@ -64,6 +65,36 @@ properties:
     description: "Compatibility alias for publish-metrics"
     type: boolean
 
+  cloud:
+    type: object
+    additionalProperties: false
+    properties:
+      username: 
+        type: string
+      password: 
+        type: string
+      region: 
+        type: string
+      discover-inverters:
+        description: "Discover inverter devices exposed by the Sigenergy cloud."
+        type: boolean
+        default: false
+      log-level:
+        oneOf:
+          - type: string
+            enum: [DEBUG, INFO, WARNING, ERROR, CRITICAL]
+          - type: integer
+            enum: [10, 20, 30, 40, 50]
+        default: INFO
+      scan-interval:
+        type: integer
+        minimum: 1
+        default: 5
+      accept-unofficial-api-risk:
+        description: "Explicitly allow the unofficial mySigen cloud API. A delegated account with View and Edit access is recommended."
+        type: boolean
+        default: false
+
   modbus:
     type: array
     items:
@@ -116,6 +147,7 @@ properties:
             - type: string
               enum: [DEBUG, INFO, WARNING, ERROR, CRITICAL]
             - type: integer
+              enum: [10, 20, 30, 40, 50]
           default: WARNING
         log-skipped:
           type: boolean
@@ -201,6 +233,7 @@ properties:
           - type: string
             enum: [DEBUG, INFO, WARNING, ERROR, CRITICAL]
           - type: integer
+            enum: [10, 20, 30, 40, 50]
         default: WARNING
       retry_delay:
         type: integer
@@ -384,12 +417,14 @@ properties:
           - type: string
             enum: [DEBUG, INFO, WARNING, ERROR, CRITICAL]
           - type: integer
+            enum: [10, 20, 30, 40, 50]
         default: CRITICAL
       upload-log-level:
         oneOf:
           - type: string
             enum: [DEBUG, INFO, WARNING, ERROR, CRITICAL]
           - type: integer
+            enum: [10, 20, 30, 40, 50]
         default: INFO
       calc-debug-logging:
         type: boolean
@@ -492,6 +527,7 @@ properties:
           - type: string
             enum: [DEBUG, INFO, WARNING, ERROR, CRITICAL]
           - type: integer
+            enum: [10, 20, 30, 40, 50]
         default: WARNING
       write-timeout:
         type: number
@@ -579,6 +615,7 @@ properties:
           - type: string
             enum: [DEBUG, INFO, WARNING, ERROR, CRITICAL]
           - type: integer
+            enum: [10, 20, 30, 40, 50]
         default: WARNING
 
   # Pydantic internal

@@ -7,13 +7,13 @@ import pytest
 from sigenergy2mqtt.common import DeviceClass, ProtocolVersion, StateClass, UnitOfTime
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.sensors.base import DiscoveryKeys, Sensor
-from sigenergy2mqtt.sensors.plant_derived import BatteryTimeRemaining
-from sigenergy2mqtt.sensors.plant_read_only import (
+from sigenergy2mqtt.sensors.plant.derived import BatteryTimeRemaining
+from sigenergy2mqtt.sensors.plant.read_only import (
     BatteryPower,
     PlantBatterySoC,
     PlantRatedEnergyCapacity,
 )
-from sigenergy2mqtt.sensors.plant_read_write import (
+from sigenergy2mqtt.sensors.plant.read_write import (
     ESSChargeCutOffSOC,
     ESSDischargeCutOffSOC,
 )

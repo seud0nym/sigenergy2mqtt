@@ -16,6 +16,7 @@ from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.sensors.settings import (
     ApplicationLogLevel,
+    CloudLogLevel,
     DiagnosticsLogLevel,
     InfluxDBLogLevel,
     ModbusLogLevel,
@@ -50,6 +51,8 @@ class SettingsService(Device):
         self._add_sensor(RepeatedStatePublishInterval())
         self._add_sensor(SanityCheckFailuresIncrement())
 
+        if active_config.cloud.enabled:
+            self._add_sensor(CloudLogLevel())
         if active_config.diagnostics.enabled:
             self._add_sensor(DiagnosticsLogLevel())
         if active_config.influxdb.enabled:

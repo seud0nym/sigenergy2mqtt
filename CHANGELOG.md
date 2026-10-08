@@ -3,6 +3,11 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed "DiagnosticsRegistry Provider 'pvoutput' failed: 'NoneType' object has no attribute 'value'" error message (#323)
+- Improved pymodbus 'Skipping' logging filter to catch subsequent 'Repeating'  messages
+
 ### Changed
 
 - Refactored former monolithic main module into separate concerns modules

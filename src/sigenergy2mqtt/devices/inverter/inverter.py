@@ -3,13 +3,22 @@ import logging
 from datetime import timezone
 from typing import cast
 
-import sigenergy2mqtt.sensors.inverter_read_only as ro
-import sigenergy2mqtt.sensors.inverter_read_write as rw
-from sigenergy2mqtt.common import DeviceType, FirmwareVersion, HybridInverter, ProtocolVersion, PVInverter
+import sigenergy2mqtt.sensors.inverter.read_only as ro
+import sigenergy2mqtt.sensors.inverter.read_write as rw
+from sigenergy2mqtt.common import (
+    DeviceType,
+    FirmwareVersion,
+    HybridInverter,
+    ProtocolVersion,
+    PVInverter,
+)
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import ModbusDevice
 from sigenergy2mqtt.modbus import ModbusClient
-from sigenergy2mqtt.sensors.inverter_derived import InverterSelfConsumedPower, PVStringPower
+from sigenergy2mqtt.sensors.inverter.derived import (
+    InverterSelfConsumedPower,
+    PVStringPower,
+)
 
 from .ess import ESS
 from .pv_string import PVString
@@ -37,7 +46,8 @@ class Inverter(ModbusDevice):
             protocol_version=protocol_version,
             # HA device registry attributes
             sn=serial,
-            hw=firmware,  # MUST use hw abbreviation - see InverterFirmwareVersion
+            sw=firmware,  # MUST use sw abbreviation - see InverterFirmwareVersion
+            hw=model_id,  # Setting to None or "" does not remove, so use model_id for now
             model_id=model_id,
             serial=serial,
         )
@@ -56,6 +66,7 @@ class Inverter(ModbusDevice):
             model.get_state(modbus_client=modbus_client),
             pv_string_count.get_state(modbus_client=modbus_client),
             serial_number.get_state(modbus_client=modbus_client),
+            return_exceptions=False,
         )
 
         if isinstance(device_type, HybridInverter):

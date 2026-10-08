@@ -5,7 +5,13 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.common import DeviceClass, ProtocolVersion, RegisterAccess, StateClass, UnitOfPower
+from sigenergy2mqtt.common import (
+    DeviceClass,
+    ProtocolVersion,
+    RegisterAccess,
+    StateClass,
+    UnitOfPower,
+)
 from sigenergy2mqtt.config import Config, _swap_active_config, active_config
 from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.base import (

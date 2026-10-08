@@ -1,11 +1,10 @@
-import builtins
-import os
 import signal
-import sys
 from types import SimpleNamespace
+
 import pytest
 
 import sigenergy2mqtt.__main__ as main_mod
+
 
 # Test early signal handler behavior without exiting the process
 def test_make_early_signal_handler_first_and_second_signal(monkeypatch):

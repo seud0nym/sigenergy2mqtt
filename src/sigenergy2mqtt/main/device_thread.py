@@ -13,9 +13,11 @@ import threading
 from collections.abc import Awaitable
 from typing import Any
 
+from aiohttp import ClientError
 from paho.mqtt import MQTTException
 from pymodbus.exceptions import ModbusException
 
+from sigenergy2mqtt.cloud.exceptions import CloudControlError
 from sigenergy2mqtt.config import SettingsService, active_config
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.modbus import ModbusClientFactory
@@ -41,8 +43,10 @@ async def read_and_publish_device_sensors(
 
     Once all tasks are gathered they run until cancelled or an error occurs.
     Commencement and completion hooks are called on each device around the
-    task lifetime.  Modbus and MQTT connections are always closed in a
-    ``finally`` block, regardless of how the coroutine exits.
+    task lifetime. MQTT and the transport returned by ``transport_factory``
+    are always closed in this coroutine's ``finally`` block, while their
+    owning event loop is still running. Modbus connections are returned to
+    :class:`ModbusClientFactory` there as well.
 
     Args:
         config:     Thread-level configuration describing the host, port,
@@ -61,20 +65,48 @@ async def read_and_publish_device_sensors(
     log_label = config.url if config.host is not None else config.description
 
     modbus_client: Any = None
+    mqtt_client: Any = None
+    mqtt_handler: Any = None
     tasks: list[Awaitable[Any]] = []
 
-    if config.host is not None and not active_config.clean:
-        modbus_client = await ModbusClientFactory.get_client(
-            config.host,
-            config.port if config.port else 502,
-            config.timeout,
-            config.retries,
-        )
-
-    mqtt_client_id = f"{active_config.mqtt.client_id_prefix}_{config.description}"
-    mqtt_client, mqtt_handler = await mqtt_setup(mqtt_client_id, modbus_client, loop)
-
     try:
+        if config.host is not None and not active_config.clean:
+            modbus_client = await ModbusClientFactory.get_client(
+                config.host,
+                config.port if config.port else 502,
+                config.timeout,
+                config.retries,
+            )
+        elif config.transport_factory is not None and not active_config.clean:
+            def stopping() -> bool:
+                return config.shutdown_requested or (stop_event is not None and stop_event.is_set())
+
+            while not stopping():
+                try:
+                    connection = asyncio.ensure_future(config.transport_factory())
+                    try:
+                        while not connection.done() and not stopping():
+                            await asyncio.wait({connection}, timeout=0.1)
+                        if not connection.done():
+                            return
+                        modbus_client = await connection
+                    finally:
+                        if not connection.done():
+                            connection.cancel()
+                            await asyncio.gather(connection, return_exceptions=True)
+                    break
+                except (ClientError, CloudControlError, OSError) as exc:
+                    logger.warning("%s cloud connection failed; retrying: %s", log_label, exc)
+                    for _ in range(50):
+                        if stopping():
+                            return
+                        await asyncio.sleep(0.1)
+            if stopping():
+                return
+
+        mqtt_client_id = f"{active_config.mqtt.client_id_prefix}_{config.description}"
+        mqtt_client, mqtt_handler = await mqtt_setup(mqtt_client_id, modbus_client, loop)
+
         device: Device
         for device in config.devices:
             # Cleanup must still reach HA discovery when HA integration has been
@@ -135,10 +167,19 @@ async def read_and_publish_device_sensors(
                     device.publish_availability(mqtt_client, "offline")
 
     finally:
-        if modbus_client is not None:
-            ModbusClientFactory.remove(modbus_client)
-
-        await mqtt_teardown(mqtt_client, mqtt_handler)
+        try:
+            if mqtt_client is not None and mqtt_handler is not None:
+                await mqtt_teardown(mqtt_client, mqtt_handler)
+        finally:
+            if modbus_client is not None and config.host is not None:
+                ModbusClientFactory.remove(modbus_client)
+            elif modbus_client is not None:
+                # Non-Modbus transports (currently CloudControlPort) are
+                # created and connected in this thread's event loop. Close
+                # them here, before run_modbus_event_loop closes that loop.
+                close = getattr(modbus_client, "close", None)
+                if close is not None:
+                    await close()
 
 
 def run_modbus_event_loop(
@@ -166,7 +207,7 @@ def run_modbus_event_loop(
     asyncio.set_event_loop(loop)
     try:
         loop.run_until_complete(read_and_publish_device_sensors(config, loop, stop_event))
-    except (OSError, RuntimeError, TypeError, ValueError):
+    except Exception:
         logger.exception(f"{config.description} thread crashed !!!")
         if stop_event is not None:
             stop_event.set()

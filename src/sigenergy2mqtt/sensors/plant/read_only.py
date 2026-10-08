@@ -1,5 +1,5 @@
 from datetime import timedelta, timezone
-from typing import cast
+from typing import Any, cast
 
 from sigenergy2mqtt.common import (
     PERCENTAGE,
@@ -22,7 +22,7 @@ from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.base import DiscoveryKeys, ScanInterval
 
-from .base import (
+from ..base import (
     Alarm1Sensor,
     Alarm2Sensor,
     Alarm3Sensor,
@@ -58,7 +58,7 @@ class SystemTime(TimestampSensor, HybridInverter, PVInverter):
         )
         self.sanity_check.min_raw = 1640995200  # 1 January 2022 at 00:00:00 UTC
 
-    def set_state(self, state: float | str | list[bool] | list[int] | list[float]) -> bool:
+    def set_state(self, state: Any) -> bool:
         min_raw: float | int | None = None
         if isinstance(state, (int, float)) and state == 0 and self.sanity_check.min_raw is not None and self.sanity_check.min_raw > 0:
             min_raw = self.sanity_check.min_raw
@@ -91,11 +91,11 @@ class SystemTimeZone(ReadOnlySensor, HybridInverter, PVInverter):
             precision=None,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
         self.sanity_check.min_raw = -1440  # -24 hours
         self.sanity_check.max_raw = 1440  # +24 hours
 
-    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
+    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> Any:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
         if value is None:
             return None
@@ -109,7 +109,9 @@ class SystemTimeZone(ReadOnlySensor, HybridInverter, PVInverter):
         else:
             return None
 
-    def state2raw(self, state) -> float | int | str:
+    def state2raw(self, state: Any) -> Any:
+        if state is None:
+            return None
         if isinstance(state, str):
             offset = state.replace("UTC", "")
             if not offset:
@@ -117,7 +119,7 @@ class SystemTimeZone(ReadOnlySensor, HybridInverter, PVInverter):
             sign = 1 if offset[0] == "+" else -1
             hours, minutes = map(int, offset[1:].split(":"))
             return sign * (hours * 60 + minutes)
-        return int(state)
+        return super().state2raw(state)
 
 
 class EMSWorkMode(ReadOnlySensor, HybridInverter, PVInverter):
@@ -157,7 +159,7 @@ class EMSWorkMode(ReadOnlySensor, HybridInverter, PVInverter):
         self.sanity_check.min_raw = 0
         self.sanity_check.max_raw = len(cast(list[str], self[DiscoveryKeys.OPTIONS])) - 1  # pyrefly: ignore
 
-    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
+    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> Any:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
         if raw or value is None:
             return value
@@ -201,7 +203,7 @@ class GridSensorStatus(ReadOnlySensor, HybridInverter, PVInverter):
         self.sanity_check.min_raw = 0
         self.sanity_check.max_raw = len(cast(list[str], self[DiscoveryKeys.OPTIONS])) - 1  # pyrefly: ignore
 
-    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
+    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> Any:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
         if raw or value is None:
             return value
@@ -308,7 +310,7 @@ class GridStatus(ReadOnlySensor, HybridInverter):
         self.sanity_check.min_raw = 0
         self.sanity_check.max_raw = len(cast(list[str], self[DiscoveryKeys.OPTIONS])) - 1  # pyrefly: ignore
 
-    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
+    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> Any:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
         if raw or value is None:
             return value
@@ -340,7 +342,7 @@ class MaxActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             precision=2,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -370,7 +372,7 @@ class MaxApparentPower(ReadOnlySensor, HybridInverter, PVInverter):
             precision=2,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -681,7 +683,7 @@ class AvailableMaxActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             protocol_version=ProtocolVersion.V1_8,
         )
         self.sanity_check.delta = False
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -712,7 +714,7 @@ class AvailableMinActivePower(ReadOnlySensor, HybridInverter):
             protocol_version=ProtocolVersion.V1_8,
         )
         self.sanity_check.delta = False
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -743,7 +745,7 @@ class AvailableMaxReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             protocol_version=ProtocolVersion.V1_8,
         )
         self.sanity_check.delta = False
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -774,7 +776,7 @@ class AvailableMinReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
             protocol_version=ProtocolVersion.V1_8,
         )
         self.sanity_check.delta = False
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
@@ -1011,7 +1013,7 @@ class PlantRatedChargingPower(ReadOnlySensor, HybridInverter):
             protocol_version=ProtocolVersion.V1_8,
         )
         self.sanity_check.delta = False
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
 
 class PlantRatedDischargingPower(ReadOnlySensor, HybridInverter):
@@ -1037,7 +1039,7 @@ class PlantRatedDischargingPower(ReadOnlySensor, HybridInverter):
             protocol_version=ProtocolVersion.V1_8,
         )
         self.sanity_check.delta = False
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
 
 class GeneralAlarm5(Alarm5Sensor, HybridInverter):
@@ -1104,7 +1106,7 @@ class PlantRatedEnergyCapacity(ReadOnlySensor, HybridInverter):
             protocol_version=ProtocolVersion.V2_5,
         )
         self.sanity_check.delta = False
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
 
 class ChargeCutOffSoC(ReadOnlySensor, HybridInverter):
@@ -1803,7 +1805,7 @@ class GridCodeRatedFrequency(ReadOnlySensor, HybridInverter, PVInverter):
             protocol_version=ProtocolVersion.V2_8,
         )
         self.sanity_check.delta = False
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
 
 class GridCodeRatedVoltage(ReadOnlySensor, HybridInverter, PVInverter):
@@ -1829,7 +1831,7 @@ class GridCodeRatedVoltage(ReadOnlySensor, HybridInverter, PVInverter):
             protocol_version=ProtocolVersion.V2_8,
         )
         self.sanity_check.delta = False
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
 
 class CurrentControlCommandValue(ReadOnlySensor, HybridInverter, PVInverter):

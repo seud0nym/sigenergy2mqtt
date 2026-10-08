@@ -36,7 +36,6 @@ class ReadWriteSensor(ModbusWriteableSensorMixin, ReadOnlySensor):
 
     def __init__(
         self,
-        availability_control_sensor: AvailabilityMixin | None,
         name: str,
         object_id: str,
         input_type: InputType,
@@ -55,10 +54,6 @@ class ReadWriteSensor(ModbusWriteableSensorMixin, ReadOnlySensor):
         protocol_version: ProtocolVersion,
         **kwargs,
     ):
-        # Validate availability control sensor
-        if availability_control_sensor is not None and not isinstance(availability_control_sensor, AvailabilityMixin):
-            raise ValueError(f"{self.__class__.__name__}: availability_control_sensor must be an instance of AvailabilityMixin")
-
         super().__init__(
             name,
             object_id,
@@ -79,37 +74,6 @@ class ReadWriteSensor(ModbusWriteableSensorMixin, ReadOnlySensor):
             **kwargs,
         )
         self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
-        self._availability_control_sensor = availability_control_sensor
-        self._payload_available = 1
-        self._payload_not_available = 0
-        self._use_raw_for_availability = False
-
-    def configure_mqtt_topics(self, device_id: str) -> str:
-        """Configure MQTT topics including availability from control sensor.
-
-        Args:
-            device_id: The device identifier
-
-        Returns:
-            Base topic path
-        """
-        base = super().configure_mqtt_topics(device_id)
-
-        # Add availability from control sensor if configured
-        if self._availability_control_sensor is not None and active_config.home_assistant.enabled:
-            control_topic = (
-                self._availability_control_sensor.raw_state_topic if self._use_raw_for_availability and self._availability_control_sensor.publish_raw else self._availability_control_sensor.state_topic
-            )
-
-            if not control_topic or control_topic.isspace():
-                raise RuntimeError(
-                    f"{self.log_identity} - {self._availability_control_sensor.__class__.__name__} {'raw_state_topic' if self._use_raw_for_availability and self._availability_control_sensor.publish_raw else 'state_topic'} has not been configured"
-                )
-
-            availability_list = cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY])
-            availability_list.append({"topic": control_topic, "payload_available": self._payload_available, "payload_not_available": self._payload_not_available})
-
-        return base
 
 
 # =============================================================================
@@ -143,7 +107,7 @@ class NumericSensorMixin(WriteableSensorMixin):
         if minimum is None or maximum is None:
             return
         if isinstance(minimum, (int, float)) and isinstance(maximum, (int, float)):
-            if minimum >= maximum:
+            if minimum > maximum:
                 raise AssertionError(f"{self.__class__.__name__}: Invalid min/max values: {minimum}/{maximum} (min must be < max)")
             return
         if isinstance(minimum, tuple) and isinstance(maximum, tuple):
@@ -152,7 +116,7 @@ class NumericSensorMixin(WriteableSensorMixin):
             for mn, mx in zip(minimum, maximum):
                 if not (isinstance(mn, (int, float)) and isinstance(mx, (int, float))):
                     raise TypeError(f"{self.__class__.__name__}: Invalid tuple values: {mn}/{mx} (must be numeric)")
-                if mn >= mx:
+                if mn > mx:
                     raise ValueError(f"{self.__class__.__name__}: Invalid tuple values: {mn}/{mx} (min must be < max)")
             return
         raise ValueError(f"{self.__class__.__name__}: Invalid min/max types: {type(minimum)}/{type(maximum)}")
@@ -189,7 +153,7 @@ class NumericSensorMixin(WriteableSensorMixin):
             components[self.unique_id][DiscoveryKeys.MAX] = max(cast(Iterable[float], self[DiscoveryKeys.MAX]))
         return components
 
-    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
+    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> Any:
         state = await super().get_state(raw=raw, republish=republish, **kwargs)
         if not isinstance(state, (float, int)):
             return state
@@ -265,7 +229,7 @@ class SelectSensorMixin(WriteableSensorMixin):
         self.sanity_check.min_raw = 0
         self.sanity_check.max_raw = len(options) - 1
 
-    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
+    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> Any:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
         if raw or value is None:
             return value

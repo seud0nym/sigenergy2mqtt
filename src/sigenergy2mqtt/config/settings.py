@@ -18,10 +18,21 @@ from datetime import time as time_obj
 from typing import Any
 
 from pydantic import Field, field_validator, model_validator
-from pydantic_settings import BaseSettings, InitSettingsSource, PydanticBaseSettingsSource, SettingsConfigDict
+from pydantic_settings import (
+    BaseSettings,
+    InitSettingsSource,
+    PydanticBaseSettingsSource,
+    SettingsConfigDict,
+)
 
 from sigenergy2mqtt import i18n
-from sigenergy2mqtt.common import WEEKDAYS, WEEKENDS, ConsumptionMethod, OutputField, TariffType
+from sigenergy2mqtt.common import (
+    WEEKDAYS,
+    WEEKENDS,
+    ConsumptionMethod,
+    OutputField,
+    TariffType,
+)
 from sigenergy2mqtt.config.coerce import _bool
 from sigenergy2mqtt.config.merge import (
     apply_modbus_env_override,
@@ -29,6 +40,7 @@ from sigenergy2mqtt.config.merge import (
     propagate_to_all_devices,
 )
 from sigenergy2mqtt.config.models import (
+    CloudConfig,
     DiagnosticsConfig,
     HealthCheckConfig,
     HomeAssistantConfig,
@@ -42,7 +54,10 @@ from sigenergy2mqtt.config.sources import (
     EnvSettingsSource,
     RuamelYamlSettingsSource,
 )
-from sigenergy2mqtt.config.validators import validate_log_level, validate_sensor_overrides
+from sigenergy2mqtt.config.validators import (
+    validate_log_level,
+    validate_sensor_overrides,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -161,14 +176,15 @@ class Settings(BaseSettings):
     sensor_debug_logging: bool = Field(False, alias="sensor-debug-logging")
 
     # ── Sub-configs ──────────────────────────────────────────────────────────
+    cloud: CloudConfig = Field(default_factory=CloudConfig, alias="cloud")  # type: ignore[reportCallIssue]
+    diagnostics: DiagnosticsConfig = Field(default_factory=DiagnosticsConfig, alias="diagnostics")  # type: ignore[reportCallIssue]
     health_check: HealthCheckConfig = Field(default_factory=HealthCheckConfig, alias="health-check")  # type: ignore[reportCallIssue]
     home_assistant: HomeAssistantConfig = Field(default_factory=HomeAssistantConfig, alias="home-assistant")  # type: ignore[reportCallIssue]
+    influxdb: InfluxDbConfig = Field(default_factory=InfluxDbConfig)  # type: ignore[reportCallIssue]
+    modbus: list[ModbusConfig] = Field(default_factory=list)
     mqtt: MqttConfig = Field(default_factory=MqttConfig)  # type: ignore[reportCallIssue]
     persistence: PersistenceConfig = Field(default_factory=PersistenceConfig, alias="persistence")  # type: ignore[reportCallIssue]
     pvoutput: PvOutputConfig = Field(default_factory=PvOutputConfig)  # type: ignore[reportCallIssue]
-    influxdb: InfluxDbConfig = Field(default_factory=InfluxDbConfig)  # type: ignore[reportCallIssue]
-    diagnostics: DiagnosticsConfig = Field(default_factory=DiagnosticsConfig, alias="diagnostics")  # type: ignore[reportCallIssue]
-    modbus: list[ModbusConfig] = Field(default_factory=list)
 
     sensor_overrides: dict[str, Any] = Field(default_factory=dict, alias="sensor-overrides")
 

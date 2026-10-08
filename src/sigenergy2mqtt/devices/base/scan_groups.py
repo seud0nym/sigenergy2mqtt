@@ -3,7 +3,11 @@ from typing import TYPE_CHECKING
 
 from sigenergy2mqtt.common import Constants, InputType
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.sensors.base import ModbusSensorMixin, ReadableSensorMixin, ReservedSensor
+from sigenergy2mqtt.sensors.base import (
+    ModbusSensorMixin,
+    ReadableSensorMixin,
+    ReservedSensor,
+)
 
 if TYPE_CHECKING:
     from .device import Device

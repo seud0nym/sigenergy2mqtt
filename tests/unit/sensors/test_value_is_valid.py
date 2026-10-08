@@ -14,7 +14,7 @@ from sigenergy2mqtt.sensors.base import (
     WriteableSensorMixin,
     WriteOnlySensor,
 )
-from sigenergy2mqtt.sensors.plant_read_write import (
+from sigenergy2mqtt.sensors.plant.read_write import (
     MaxChargingLimit,
     MaxDischargingLimit,
     PVMaxPowerLimit,

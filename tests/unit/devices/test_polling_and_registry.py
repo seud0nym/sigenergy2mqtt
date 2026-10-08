@@ -13,7 +13,15 @@ from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.devices import Device, DeviceRegistry, ModbusDevice
 from sigenergy2mqtt.devices.base.poller import SensorGroupPoller
 from sigenergy2mqtt.devices.base.scan_groups import create_sensor_scan_groups
-from sigenergy2mqtt.sensors.base import DerivedSensor, ModbusSensorMixin, ObservableMixin, ReadableSensorMixin, Sensor, WriteableSensorMixin, WriteOnlySensor
+from sigenergy2mqtt.sensors.base import (
+    DerivedSensor,
+    ModbusSensorMixin,
+    ObservableMixin,
+    ReadableSensorMixin,
+    Sensor,
+    WriteableSensorMixin,
+    WriteOnlySensor,
+)
 from sigenergy2mqtt.sensors.base.sanity_check import SanityCheck
 
 # ---------------------------------------------------------------------------

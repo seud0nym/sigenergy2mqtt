@@ -8,12 +8,16 @@
   - [Inverter](#inverter)
     - [Energy Storage System](#energy-storage-system)
     - [PV String](#pv-string)
-  - [AC Charger](#ac-charger)
-  - [DC Charger](#dc-charger)
-  - [Metrics](#metrics)
-  - [Settings](#settings)
-  - [Service Health](#service-health)
-- [Index](#index)
+    - [AC Charger](#ac-charger)
+    - [DC Charger](#dc-charger)
+    - [Cloud Control](#cloud-control)
+      - [Gateway](#gateway)
+      - [Cloud Inverter](#cloud-inverter)
+      - [Cloud Battery](#cloud-battery)
+    - [Metrics](#metrics)
+    - [Runtime Configuration](#runtime-configuration)
+    - [Service Health](#service-health)
+  - [Index](#index)
 
 # MQTT Topics
 
@@ -6449,7 +6453,671 @@ The actual number of PV Strings is determined from `PV String Count` in the Inve
 <tr><td>Since&nbsp;ProtocolVersion&nbsp;Version</td><td>2.9</td></tr>
 </table>
 
+## Cloud Control
+
+In the following topics, the identifier `10000000000001` is a placeholder that will vary with each installation.
+
+Cloud Control and child device topics are only published when the Cloud API access is enabled.
+
+
+#### Published Topics
+<h5><a id='sigen_0_10000000000001_battery_charge_power_limit'>Battery Charge Power Limit</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>BatteryChargePowerLimit</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_battery_charge_power_limit</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_10000000000001/sigen_0_cloud_battery_charge_power_limit/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_battery_charge_power_limit/state</td></tr>
+</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0.0 kW and 4294967.295 kW (0 ≦ raw value ≦ 4294967)</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_battery_discharge_power_limit'>Battery Discharge Power Limit</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>BatteryDischargePowerLimit</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_battery_discharge_power_limit</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_10000000000001/sigen_0_cloud_battery_discharge_power_limit/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_battery_discharge_power_limit/state</td></tr>
+</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0.0 kW and 4294967.295 kW (0 ≦ raw value ≦ 4294967)</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_grid_connection_limit'>Grid Connection Current Limit</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>GridConnectionLimit</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>A</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_grid_connection_limit</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_10000000000001/sigen_0_cloud_grid_connection_limit/state/currentLimitation</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_grid_connection_limit/state/currentLimitation</td></tr>
+</td></tr>
+<tr><td>Comment</td><td>Only available when the installer has configured a maximum limit.</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0 A and 0 A (0 ≦ raw value ≦ 0)</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_grid_export_limit'>Grid Export Limit</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>GridExportLimit</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kW</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_grid_export_limit</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_10000000000001/sigen_0_cloud_grid_export_limit/state/maxLimitation</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_grid_export_limit/state/maxLimitation</td></tr>
+</td></tr>
+<tr><td>Comment</td><td>Only available when the installer has configured a maximum limit.</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0 kW and 0 kW (0 ≦ raw value ≦ 0)</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_grid_import_limit'>Grid Import Limit</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>GridImportLimit</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kW</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_grid_import_limit</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_10000000000001/sigen_0_cloud_grid_import_limit/state/maxLimitation</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_grid_import_limit/state/maxLimitation</td></tr>
+</td></tr>
+<tr><td>Comment</td><td>Only available when the installer has configured a maximum limit.</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0 kW and 0 kW (0 ≦ raw value ≦ 0)</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_instant_control'>Instant Manual Control</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>InstantControlSwitch</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_instant_control</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/switch/sigen_0_10000000000001/sigen_0_cloud_instant_control/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_instant_control/state</td></tr>
+</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0  and 1  (0 ≦ raw value ≦ 1)</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_instant_control_duration'>Instant Manual Control Duration</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>InstantControlDuration</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>min</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_instant_control_duration</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_10000000000001/sigen_0_cloud_instant_control_duration/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_instant_control_duration/state</td></tr>
+</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0 min and 1440 min (0 ≦ raw value ≦ 1440)</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_instant_control_mode'>Instant Manual Control Mode</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>InstantControlMode</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_instant_control_mode</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/select/sigen_0_10000000000001/sigen_0_cloud_instant_control_mode/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_instant_control_mode/state</td></tr>
+</td></tr>
+<tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='0'>Not Set</li><li value='1'>Charging</li><li value='2'>Discharging</li><li value='3'>Hold Battery</li><li value='4'>Self-Consumption</li></ol></td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0  and 4  (0 ≦ raw value ≦ 4)</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_operational_mode'>Operational Mode</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>OperationalMode</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_operational_mode</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/select/sigen_0_10000000000001/sigen_0_cloud_operational_mode/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_operational_mode/state</td></tr>
+</td></tr>
+<tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='0'>Maximum Self-Powered</li><li value='1'>Sigen AI Mode</li><li value='2'>TOU</li><li value='5'>Fully Fed to Grid</li><li value='7'>Remote EMS Mode</li></ol></td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0  and 7  (0 ≦ raw value ≦ 7)</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_solar_power_limit'>Solar Power Limit</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>SolarPowerLimit</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kW</td></tr>
+<tr><td>Gain</td><td>1</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_solar_power_limit</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_10000000000001/sigen_0_cloud_solar_power_limit/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_solar_power_limit/state</td></tr>
+</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0.0 kW and 4294967.295 kW (0 ≦ raw value ≦ 4294967)</td></tr>
+</table>
+
+#### Subscribed Topics
+<h5><a id='sigen_0_10000000000001_battery_charge_power_limit_set'>Battery Charge Power Limit
+</a></h5>
+<table>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_10000000000001/sigen_0_cloud_battery_charge_power_limit/set</td></tr>
+<tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_battery_charge_power_limit/set</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>4294967.295</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_battery_discharge_power_limit_set'>Battery Discharge Power Limit
+</a></h5>
+<table>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_10000000000001/sigen_0_cloud_battery_discharge_power_limit/set</td></tr>
+<tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_battery_discharge_power_limit/set</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>4294967.295</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_grid_connection_limit_set'>Grid Connection Current Limit
+</a></h5>
+<table>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_10000000000001/sigen_0_cloud_grid_connection_limit/set</td></tr>
+<tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_grid_connection_limit/set</td></tr>
+<tr><td>Comment</td><td>Only available when the installer has configured a maximum limit.</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>0.0</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_grid_export_limit_set'>Grid Export Limit
+</a></h5>
+<table>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_10000000000001/sigen_0_cloud_grid_export_limit/set</td></tr>
+<tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_grid_export_limit/set</td></tr>
+<tr><td>Comment</td><td>Only available when the installer has configured a maximum limit.</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>0.0</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_grid_import_limit_set'>Grid Import Limit
+</a></h5>
+<table>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_10000000000001/sigen_0_cloud_grid_import_limit/set</td></tr>
+<tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_grid_import_limit/set</td></tr>
+<tr><td>Comment</td><td>Only available when the installer has configured a maximum limit.</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>0.0</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_instant_control_set'>Instant Manual Control
+</a></h5>
+<table>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/switch/sigen_0_10000000000001/sigen_0_cloud_instant_control/set</td></tr>
+<tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_instant_control/set</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_instant_control_duration_set'>Instant Manual Control Duration
+</a></h5>
+<table>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_10000000000001/sigen_0_cloud_instant_control_duration/set</td></tr>
+<tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_instant_control_duration/set</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>1440.0</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_instant_control_mode_set'>Instant Manual Control Mode
+</a></h5>
+<table>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/select/sigen_0_10000000000001/sigen_0_cloud_instant_control_mode/set</td></tr>
+<tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_instant_control_mode/set</td></tr>
+<tr><td>Valid&nbsp;Values</td><td><ul><li value='0'>"Not Set"</li><li value='1'>"Charging"</li><li value='2'>"Discharging"</li><li value='3'>"Hold Battery"</li><li value='4'>"Self-Consumption"</li></ol></td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_operational_mode_set'>Operational Mode
+</a></h5>
+<table>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/select/sigen_0_10000000000001/sigen_0_cloud_operational_mode/set</td></tr>
+<tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_operational_mode/set</td></tr>
+<tr><td>Valid&nbsp;Values</td><td><ul><li value='0'>"Maximum Self-Powered"</li><li value='1'>"Sigen AI Mode"</li><li value='2'>"TOU"</li><li value='5'>"Fully Fed to Grid"</li><li value='7'>"Remote EMS Mode"</li></ol></td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_solar_power_limit_set'>Solar Power Limit
+</a></h5>
+<table>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_10000000000001/sigen_0_cloud_solar_power_limit/set</td></tr>
+<tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_solar_power_limit/set</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>4294967.295</td></tr>
+</table>
+
+### Gateway
+
+#### Published Topics
+<h5><a id='sigen_0_10000000000001_gateway_communication_status'>Communication Status</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>GatewayCommunicationStatus</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_gateway_communication_status</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_gateway/sigen_0_cloud_gateway_communication_status/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_gateway_communication_status/state</td></tr>
+</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_gateway_firmware_version'>Firmware Version</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>GatewayFirmwareVersion</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_gateway_firmware_version</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_gateway/sigen_0_cloud_gateway_firmware_version/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_gateway_firmware_version/state</td></tr>
+</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_gateway_grid_side_contactor_status'>Grid Side Contactor Status</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>GatewayGridText</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_gateway_grid_side_contactor_status</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_gateway/sigen_0_cloud_gateway_grid_side_contactor_status/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_gateway_grid_side_contactor_status/state</td></tr>
+</td></tr>
+<tr><td>Comment</td><td>Grid-Side state read from the Gateway via the Cloud API</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_gateway_maximum_phase_a_voltage_in_the_past_minute'>Maximum Phase A voltage in the past minute</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>GatewayGridVoltage</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>V</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_gateway_maximum_phase_a_voltage_in_the_past_minute</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_gateway/sigen_0_cloud_gateway_maximum_phase_a_voltage_in_the_past_minute/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_gateway_maximum_phase_a_voltage_in_the_past_minute/state</td></tr>
+</td></tr>
+<tr><td>Comment</td><td>Grid-Side state read from the Gateway via the Cloud API</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_gateway_maximum_phase_b_voltage_in_the_past_minute'>Maximum Phase B voltage in the past minute</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>GatewayGridVoltage</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>V</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_gateway_maximum_phase_b_voltage_in_the_past_minute</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_gateway/sigen_0_cloud_gateway_maximum_phase_b_voltage_in_the_past_minute/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_gateway_maximum_phase_b_voltage_in_the_past_minute/state</td></tr>
+</td></tr>
+<tr><td>Comment</td><td>Grid-Side state read from the Gateway via the Cloud API</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_gateway_maximum_phase_c_voltage_in_the_past_minute'>Maximum Phase C voltage in the past minute</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>GatewayGridVoltage</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>V</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_gateway_maximum_phase_c_voltage_in_the_past_minute</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_gateway/sigen_0_cloud_gateway_maximum_phase_c_voltage_in_the_past_minute/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_gateway_maximum_phase_c_voltage_in_the_past_minute/state</td></tr>
+</td></tr>
+<tr><td>Comment</td><td>Grid-Side state read from the Gateway via the Cloud API</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_gateway_minimum_phase_a_voltage_in_the_past_minute'>Minimum Phase A voltage in the past minute</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>GatewayGridVoltage</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>V</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_gateway_minimum_phase_a_voltage_in_the_past_minute</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_gateway/sigen_0_cloud_gateway_minimum_phase_a_voltage_in_the_past_minute/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_gateway_minimum_phase_a_voltage_in_the_past_minute/state</td></tr>
+</td></tr>
+<tr><td>Comment</td><td>Grid-Side state read from the Gateway via the Cloud API</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_gateway_minimum_phase_b_voltage_in_the_past_minute'>Minimum Phase B voltage in the past minute</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>GatewayGridVoltage</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>V</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_gateway_minimum_phase_b_voltage_in_the_past_minute</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_gateway/sigen_0_cloud_gateway_minimum_phase_b_voltage_in_the_past_minute/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_gateway_minimum_phase_b_voltage_in_the_past_minute/state</td></tr>
+</td></tr>
+<tr><td>Comment</td><td>Grid-Side state read from the Gateway via the Cloud API</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_gateway_minimum_phase_c_voltage_in_the_past_minute'>Minimum Phase C voltage in the past minute</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>GatewayGridVoltage</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>V</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_gateway_minimum_phase_c_voltage_in_the_past_minute</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_gateway/sigen_0_cloud_gateway_minimum_phase_c_voltage_in_the_past_minute/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_gateway_minimum_phase_c_voltage_in_the_past_minute/state</td></tr>
+</td></tr>
+<tr><td>Comment</td><td>Grid-Side state read from the Gateway via the Cloud API</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_gateway_model'>Model</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>GatewayModel</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_gateway_model</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_gateway/sigen_0_cloud_gateway_model/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_gateway_model/state</td></tr>
+</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_gateway_phase_a_current'>Phase A Current</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>GatewayGridCurrent</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>A</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_gateway_phase_a_current</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_gateway/sigen_0_cloud_gateway_phase_a_current/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_gateway_phase_a_current/state</td></tr>
+</td></tr>
+<tr><td>Comment</td><td>Grid-Side state read from the Gateway via the Cloud API</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_gateway_phase_a_voltage'>Phase A Voltage</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>GatewayGridVoltage</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>V</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_gateway_phase_a_voltage</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_gateway/sigen_0_cloud_gateway_phase_a_voltage/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_gateway_phase_a_voltage/state</td></tr>
+</td></tr>
+<tr><td>Comment</td><td>Grid-Side state read from the Gateway via the Cloud API</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_gateway_phase_b_current'>Phase B Current</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>GatewayGridCurrent</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>A</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_gateway_phase_b_current</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_gateway/sigen_0_cloud_gateway_phase_b_current/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_gateway_phase_b_current/state</td></tr>
+</td></tr>
+<tr><td>Comment</td><td>Grid-Side state read from the Gateway via the Cloud API</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_gateway_phase_b_voltage'>Phase B Voltage</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>GatewayGridVoltage</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>V</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_gateway_phase_b_voltage</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_gateway/sigen_0_cloud_gateway_phase_b_voltage/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_gateway_phase_b_voltage/state</td></tr>
+</td></tr>
+<tr><td>Comment</td><td>Grid-Side state read from the Gateway via the Cloud API</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_gateway_phase_c_current'>Phase C Current</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>GatewayGridCurrent</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>A</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_gateway_phase_c_current</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_gateway/sigen_0_cloud_gateway_phase_c_current/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_gateway_phase_c_current/state</td></tr>
+</td></tr>
+<tr><td>Comment</td><td>Grid-Side state read from the Gateway via the Cloud API</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_gateway_phase_c_voltage'>Phase C Voltage</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>GatewayGridVoltage</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>V</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_gateway_phase_c_voltage</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_gateway/sigen_0_cloud_gateway_phase_c_voltage/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_gateway_phase_c_voltage/state</td></tr>
+</td></tr>
+<tr><td>Comment</td><td>Grid-Side state read from the Gateway via the Cloud API</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_gateway_serial_number'>Serial Number</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>GatewaySerialNumber</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_gateway_serial_number</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_gateway/sigen_0_cloud_gateway_serial_number/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_gateway_serial_number/state</td></tr>
+</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_gateway_total_active_power'>Total Active Power</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>GatewayGridPower</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kW</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_gateway_total_active_power</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_gateway/sigen_0_cloud_gateway_total_active_power/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_gateway_total_active_power/state</td></tr>
+</td></tr>
+<tr><td>Comment</td><td>Grid-Side state read from the Gateway via the Cloud API</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be a maximum of 500000.0 kW (raw value ≦ 500000)</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_gateway_total_reactive_power'>Total Reactive Power</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>GatewayGridReactivePower</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kvar</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_gateway_total_reactive_power</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_gateway/sigen_0_cloud_gateway_total_reactive_power/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_gateway_total_reactive_power/state</td></tr>
+</td></tr>
+<tr><td>Comment</td><td>Grid-Side state read from the Gateway via the Cloud API</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_gateway_voltage_frequency'>Voltage Frequency</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>GatewayGridFrequency</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>Hz</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_gateway_voltage_frequency</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_gateway/sigen_0_cloud_gateway_voltage_frequency/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_gateway_voltage_frequency/state</td></tr>
+</td></tr>
+<tr><td>Comment</td><td>Grid-Side state read from the Gateway via the Cloud API</td></tr>
+</table>
+
+### Cloud Inverter
+
+In the following topics, the identifier `123A45BP678` is a placeholder for the inverter serial number as shown in the mySigen app.
+
+#### Published Topics
+<h5><a id='sigen_0_10000000000001_3_123A45BP678_active_power'>Active Power</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>DeviceInfoSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kW</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_3_123A45BP678_active_power</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_inverter_123A45BP678/sigen_0_cloud_3_123A45BP678_active_power/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_3_123A45BP678_active_power/state</td></tr>
+</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be a maximum of 500000.0 kW (raw value ≦ 500000)</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_3_123A45BP678_device_model'>Device Model</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>DeviceInfoSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>600s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_3_123A45BP678_device_model</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_inverter_123A45BP678/sigen_0_cloud_3_123A45BP678_device_model/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_3_123A45BP678_device_model/state</td></tr>
+</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_3_123A45BP678_device_sn'>Device SN</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>DeviceInfoSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>600s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_3_123A45BP678_device_sn</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_inverter_123A45BP678/sigen_0_cloud_3_123A45BP678_device_sn/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_3_123A45BP678_device_sn/state</td></tr>
+</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_3_123A45BP678_grid_frequency'>Grid Frequency</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>DeviceInfoSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>Hz</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_3_123A45BP678_grid_frequency</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_inverter_123A45BP678/sigen_0_cloud_3_123A45BP678_grid_frequency/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_3_123A45BP678_grid_frequency/state</td></tr>
+</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_3_123A45BP678_internal_temperature'>Internal Temperature</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>DeviceInfoSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>°C</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_3_123A45BP678_internal_temperature</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_inverter_123A45BP678/sigen_0_cloud_3_123A45BP678_internal_temperature/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_3_123A45BP678_internal_temperature/state</td></tr>
+</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_3_123A45BP678_pv_power'>PV Power</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>DeviceInfoSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kW</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_3_123A45BP678_pv_power</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_inverter_123A45BP678/sigen_0_cloud_3_123A45BP678_pv_power/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_3_123A45BP678_pv_power/state</td></tr>
+</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be a maximum of 500000.0 kW (raw value ≦ 500000)</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_3_123A45BP678_phase_a_current'>Phase A Current</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>DeviceInfoSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>A</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_3_123A45BP678_phase_a_current</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_inverter_123A45BP678/sigen_0_cloud_3_123A45BP678_phase_a_current/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_3_123A45BP678_phase_a_current/state</td></tr>
+</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_3_123A45BP678_phase_a_voltage'>Phase A Voltage</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>DeviceInfoSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>V</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_3_123A45BP678_phase_a_voltage</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_inverter_123A45BP678/sigen_0_cloud_3_123A45BP678_phase_a_voltage/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_3_123A45BP678_phase_a_voltage/state</td></tr>
+</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_3_123A45BP678_phase_b_current'>Phase B Current</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>DeviceInfoSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>A</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_3_123A45BP678_phase_b_current</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_inverter_123A45BP678/sigen_0_cloud_3_123A45BP678_phase_b_current/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_3_123A45BP678_phase_b_current/state</td></tr>
+</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_3_123A45BP678_phase_b_voltage'>Phase B Voltage</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>DeviceInfoSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>V</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_3_123A45BP678_phase_b_voltage</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_inverter_123A45BP678/sigen_0_cloud_3_123A45BP678_phase_b_voltage/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_3_123A45BP678_phase_b_voltage/state</td></tr>
+</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_3_123A45BP678_phase_c_current'>Phase C Current</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>DeviceInfoSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>A</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_3_123A45BP678_phase_c_current</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_inverter_123A45BP678/sigen_0_cloud_3_123A45BP678_phase_c_current/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_3_123A45BP678_phase_c_current/state</td></tr>
+</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_3_123A45BP678_phase_c_voltage'>Phase C Voltage</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>DeviceInfoSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>V</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_3_123A45BP678_phase_c_voltage</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_inverter_123A45BP678/sigen_0_cloud_3_123A45BP678_phase_c_voltage/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_3_123A45BP678_phase_c_voltage/state</td></tr>
+</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_3_123A45BP678_rated_power'>Rated Power</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>DeviceInfoSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>600s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kW</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_3_123A45BP678_rated_power</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_inverter_123A45BP678/sigen_0_cloud_3_123A45BP678_rated_power/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_3_123A45BP678_rated_power/state</td></tr>
+</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be a maximum of 500000.0 kW (raw value ≦ 500000)</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_3_123A45BP678_reactive_power'>Reactive Power</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>DeviceInfoSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kvar</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_3_123A45BP678_reactive_power</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_inverter_123A45BP678/sigen_0_cloud_3_123A45BP678_reactive_power/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_3_123A45BP678_reactive_power/state</td></tr>
+</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_3_123A45BP678_software_version'>Software Version</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>DeviceInfoSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>600s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_3_123A45BP678_software_version</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_inverter_123A45BP678/sigen_0_cloud_3_123A45BP678_software_version/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_3_123A45BP678_software_version/state</td></tr>
+</td></tr>
+</table>
+
+### Cloud Battery
+
+In the following topics, the identifier `987B65BC1238` is a placeholder for the battery serial number as shown in the mySigen app.
+
+#### Published Topics
+<h5><a id='sigen_0_10000000000001_4_987B65BC1238_battery_pack_voltage'>Battery Pack Voltage</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>DeviceInfoSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>V</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_4_987B65BC1238_battery_pack_voltage</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_battery_987B65BC1238/sigen_0_cloud_4_987B65BC1238_battery_pack_voltage/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_4_987B65BC1238_battery_pack_voltage/state</td></tr>
+</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_4_987B65BC1238_battery_soc'>Battery SOC</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>DeviceInfoSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>%</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_4_987B65BC1238_battery_soc</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_battery_987B65BC1238/sigen_0_cloud_4_987B65BC1238_battery_soc/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_4_987B65BC1238_battery_soc/state</td></tr>
+</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be a maximum of 100 % (raw value ≦ 100)</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_4_987B65BC1238_charging_discharging_power'>Charging & Discharging Power</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>DeviceInfoSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kW</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_4_987B65BC1238_charging_discharging_power</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_battery_987B65BC1238/sigen_0_cloud_4_987B65BC1238_charging_discharging_power/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_4_987B65BC1238_charging_discharging_power/state</td></tr>
+</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be a maximum of 500000.0 kW (raw value ≦ 500000)</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_4_987B65BC1238_device_model'>Device Model</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>DeviceInfoSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>600s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_4_987B65BC1238_device_model</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_battery_987B65BC1238/sigen_0_cloud_4_987B65BC1238_device_model/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_4_987B65BC1238_device_model/state</td></tr>
+</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_4_987B65BC1238_device_sn'>Device SN</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>DeviceInfoSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>600s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_4_987B65BC1238_device_sn</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_battery_987B65BC1238/sigen_0_cloud_4_987B65BC1238_device_sn/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_4_987B65BC1238_device_sn/state</td></tr>
+</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_4_987B65BC1238_heating_status'>Heating status</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>DeviceInfoSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_4_987B65BC1238_heating_status</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_battery_987B65BC1238/sigen_0_cloud_4_987B65BC1238_heating_status/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_4_987B65BC1238_heating_status/state</td></tr>
+</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_4_987B65BC1238_rated_battery_capacity'>Rated Battery Capacity</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>DeviceInfoSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>600s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>kWh</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_4_987B65BC1238_rated_battery_capacity</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_battery_987B65BC1238/sigen_0_cloud_4_987B65BC1238_rated_battery_capacity/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_4_987B65BC1238_rated_battery_capacity/state</td></tr>
+</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be a maximum of 500000.0 kWh (raw value ≦ 500000)</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_4_987B65BC1238_software_version'>Software Version</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>DeviceInfoSensor</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>600s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_4_987B65BC1238_software_version</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_battery_987B65BC1238/sigen_0_cloud_4_987B65BC1238_software_version/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_4_987B65BC1238_software_version/state</td></tr>
+</td></tr>
+</table>
+
 ## Metrics
+
+Publishing of Metrics is disabled by default, and can be enabled in configuration. Metrics are available through the Diagnostics web UI (if that is not disabled as well).
 
 Metrics are _only_ published to the sigenergy2mqtt/metrics topics, even when Home Assistant discovery is enabled. The scan interval cannot be altered.
 
@@ -6457,45 +7125,175 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 
 
 #### Published Topics
-<h5><a id='sigen_influxdb_queries'>InfluxDB Queries</a></h5>
+<h5><a id='sigen_cloud_auth_errors'>Cloud Auth Errors</a></h5>
 <table>
-<tr><td>Sensor&nbsp;Class</td><td>InfluxDBQueries</td></tr>
+<tr><td>Sensor&nbsp;Class</td><td>CloudAuthErrors</td></tr>
 <tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_influxdb_queries</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/influxdb_queries</td></tr>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/influxdb_queries</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_cloud_auth_errors</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_auth_errors</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_auth_errors</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
-<h5><a id='sigen_influxdb_query_errors'>InfluxDB Query Errors</a></h5>
+<h5><a id='sigen_cloud_available'>Cloud Available</a></h5>
 <table>
-<tr><td>Sensor&nbsp;Class</td><td>InfluxDBQueryErrors</td></tr>
+<tr><td>Sensor&nbsp;Class</td><td>CloudAvailable</td></tr>
 <tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_influxdb_query_errors</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/influxdb_query_errors</td></tr>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/influxdb_query_errors</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_cloud_available</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_available</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_available</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
-<h5><a id='sigen_influxdb_rate_limit_waits'>InfluxDB Rate Limit Waits</a></h5>
+<h5><a id='sigen_cloud_connected'>Cloud Connected</a></h5>
 <table>
-<tr><td>Sensor&nbsp;Class</td><td>InfluxDBRateLimitWaits</td></tr>
+<tr><td>Sensor&nbsp;Class</td><td>CloudConnected</td></tr>
 <tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_influxdb_rate_limit_waits</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/influxdb_rate_limit_waits</td></tr>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/influxdb_rate_limit_waits</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_cloud_connected</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_connected</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_connected</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
-<h5><a id='sigen_influxdb_retries'>InfluxDB Retries</a></h5>
+<h5><a id='sigen_cloud_connection_attempts'>Cloud Connection Attempts</a></h5>
 <table>
-<tr><td>Sensor&nbsp;Class</td><td>InfluxDBRetries</td></tr>
+<tr><td>Sensor&nbsp;Class</td><td>CloudConnectionAttempts</td></tr>
 <tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_influxdb_retries</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/influxdb_retries</td></tr>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/influxdb_retries</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_cloud_connection_attempts</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_connection_attempts</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_connection_attempts</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
+</table>
+<h5><a id='sigen_cloud_connection_errors'>Cloud Connection Errors</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>CloudConnectionErrors</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_cloud_connection_errors</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_connection_errors</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_connection_errors</td></tr>
+</td></tr>
+</table>
+<h5><a id='sigen_cloud_connection_max'>Cloud Connection Max</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>CloudConnectionMax</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>ms</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_cloud_connection_max</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_connection_max</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_connection_max</td></tr>
+</td></tr>
+</table>
+<h5><a id='sigen_cloud_connection_mean'>Cloud Connection Mean</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>CloudConnectionMean</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>ms</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_cloud_connection_mean</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_connection_mean</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_connection_mean</td></tr>
+</td></tr>
+</table>
+<h5><a id='sigen_cloud_connection_min'>Cloud Connection Min</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>CloudConnectionMin</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>ms</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_cloud_connection_min</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_connection_min</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_connection_min</td></tr>
+</td></tr>
+</table>
+<h5><a id='sigen_cloud_connection_total'>Cloud Connection Total</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>CloudConnectionTotal</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>ms</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_cloud_connection_total</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_connection_total</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_connection_total</td></tr>
+</td></tr>
+</table>
+<h5><a id='sigen_cloud_queries'>Cloud Queries</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>CloudQueries</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_cloud_queries</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_queries</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_queries</td></tr>
+</td></tr>
+</table>
+<h5><a id='sigen_cloud_query_errors'>Cloud Query Errors</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>CloudQueryErrors</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_cloud_query_errors</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_query_errors</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_query_errors</td></tr>
+</td></tr>
+</table>
+<h5><a id='sigen_cloud_query_max'>Cloud Query Max</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>CloudQueryMax</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>ms</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_cloud_query_max</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_query_max</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_query_max</td></tr>
+</td></tr>
+</table>
+<h5><a id='sigen_cloud_query_mean'>Cloud Query Mean</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>CloudQueryMean</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>ms</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_cloud_query_mean</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_query_mean</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_query_mean</td></tr>
+</td></tr>
+</table>
+<h5><a id='sigen_cloud_query_min'>Cloud Query Min</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>CloudQueryMin</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>ms</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_cloud_query_min</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_query_min</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_query_min</td></tr>
+</td></tr>
+</table>
+<h5><a id='sigen_cloud_query_total'>Cloud Query Total</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>CloudQueryTotal</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>ms</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_cloud_query_total</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_query_total</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_query_total</td></tr>
+</td></tr>
+</table>
+<h5><a id='sigen_cloud_rate_limits'>Cloud Rate Limits</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>CloudRateLimits</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_cloud_rate_limits</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_rate_limits</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_rate_limits</td></tr>
+</td></tr>
+</table>
+<h5><a id='sigen_cloud_reconnections'>Cloud Reconnections</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>CloudReconnections</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_cloud_reconnections</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_reconnections</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_reconnections</td></tr>
+</td></tr>
+</table>
+<h5><a id='sigen_cloud_connections'>Cloud Successful Connections</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>CloudConnections</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_cloud_connections</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_connections</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_connections</td></tr>
+</td></tr>
 </table>
 <h5><a id='sigen_influxdb_throughput'>InfluxDB Throughput</a></h5>
 <table>
@@ -6505,7 +7303,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/influxdb_throughput</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/influxdb_throughput</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_influxdb_write_errors'>InfluxDB Write Errors</a></h5>
 <table>
@@ -6515,7 +7312,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/influxdb_write_errors</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/influxdb_write_errors</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_influxdb_write_max'>InfluxDB Write Max</a></h5>
 <table>
@@ -6526,7 +7322,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/influxdb_write_max</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/influxdb_write_max</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_influxdb_write_mean'>InfluxDB Write Mean</a></h5>
 <table>
@@ -6537,7 +7332,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/influxdb_write_mean</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/influxdb_write_mean</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_influxdb_write_min'>InfluxDB Write Min</a></h5>
 <table>
@@ -6548,7 +7342,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/influxdb_write_min</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/influxdb_write_min</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_influxdb_writes'>InfluxDB Writes</a></h5>
 <table>
@@ -6558,7 +7351,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/influxdb_writes</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/influxdb_writes</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_mqtt_physical_publish_percentage'>MQTT Physical Publishes</a></h5>
 <table>
@@ -6569,7 +7361,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/mqtt_physical_publish_percentage</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/mqtt_physical_publish_percentage</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 <tr><td>Sanity&nbsp;Check</td><td>The value must be a maximum of 100 % (raw value ≦ 100)</td></tr>
 </table>
 <h5><a id='sigen_mqtt_publish_failures'>MQTT Publish Failures</a></h5>
@@ -6580,7 +7371,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/mqtt_publish_failures</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/mqtt_publish_failures</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_modbus_locks'>Modbus Active Locks</a></h5>
 <table>
@@ -6590,7 +7380,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_locks</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_locks</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_modbus_cache_hit_percentage'>Modbus Cache Hits</a></h5>
 <table>
@@ -6601,7 +7390,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_cache_hit_percentage</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_cache_hit_percentage</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 <tr><td>Sanity&nbsp;Check</td><td>The value must be a maximum of 100 % (raw value ≦ 100)</td></tr>
 </table>
 <h5><a id='sigen_modbus_physical_reads'>Modbus Physical Reads</a></h5>
@@ -6613,7 +7401,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_physical_reads</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_physical_reads</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 <tr><td>Sanity&nbsp;Check</td><td>The value must be a maximum of 100 % (raw value ≦ 100)</td></tr>
 </table>
 <h5><a id='sigen_modbus_read_errors'>Modbus Read Errors</a></h5>
@@ -6624,7 +7411,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_read_errors</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_read_errors</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_modbus_read_max'>Modbus Read Max</a></h5>
 <table>
@@ -6635,7 +7421,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_read_max</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_read_max</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_modbus_read_mean'>Modbus Read Mean</a></h5>
 <table>
@@ -6646,7 +7431,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_read_mean</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_read_mean</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_modbus_read_min'>Modbus Read Min</a></h5>
 <table>
@@ -6657,7 +7441,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_read_min</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_read_min</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_modbus_reads_sec'>Modbus Reads/second</a></h5>
 <table>
@@ -6667,7 +7450,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_reads_sec</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_reads_sec</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_modbus_skipped_errors'>Modbus Skipped Errors</a></h5>
 <table>
@@ -6677,7 +7459,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_skipped_reads</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_skipped_reads</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_modbus_write_errors'>Modbus Write Errors</a></h5>
 <table>
@@ -6687,7 +7468,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_write_errors</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_write_errors</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_modbus_write_max'>Modbus Write Max</a></h5>
 <table>
@@ -6698,7 +7478,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_write_max</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_write_max</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_modbus_write_mean'>Modbus Write Mean</a></h5>
 <table>
@@ -6709,7 +7488,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_write_mean</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_write_mean</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_modbus_write_min'>Modbus Write Min</a></h5>
 <table>
@@ -6720,7 +7498,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_write_min</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_write_min</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_pvoutput_upload_errors'>PVOutput Upload Errors</a></h5>
 <table>
@@ -6730,7 +7507,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/pvoutput_upload_errors</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/pvoutput_upload_errors</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_pvoutput_upload_max'>PVOutput Upload Max</a></h5>
 <table>
@@ -6741,7 +7517,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/pvoutput_upload_max</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/pvoutput_upload_max</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_pvoutput_upload_mean'>PVOutput Upload Mean</a></h5>
 <table>
@@ -6752,7 +7527,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/pvoutput_upload_mean</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/pvoutput_upload_mean</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_pvoutput_upload_min'>PVOutput Upload Min</a></h5>
 <table>
@@ -6763,7 +7537,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/pvoutput_upload_min</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/pvoutput_upload_min</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_pvoutput_upload_skipped'>PVOutput Upload Skipped</a></h5>
 <table>
@@ -6773,7 +7546,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/pvoutput_upload_skipped</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/pvoutput_upload_skipped</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_pvoutput_uploads'>PVOutput Uploads</a></h5>
 <table>
@@ -6783,7 +7555,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/pvoutput_uploads</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/pvoutput_uploads</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_modbus_protocol_published'>Protocol Published</a></h5>
 <table>
@@ -6793,7 +7564,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_protocol_published</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_protocol_published</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.9</td></tr>
 </table>
 <h5><a id='sigen_modbus_protocol'>Protocol Version</a></h5>
 <table>
@@ -6803,7 +7573,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_protocol</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_protocol</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.9</td></tr>
 </table>
 <h5><a id='sigen_metrics_reset'>Reset Metrics</a></h5>
 <table>
@@ -6812,7 +7581,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/metrics_reset</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/metrics_reset</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
 </table>
 <h5><a id='sigen_started'>Started</a></h5>
 <table>
@@ -6822,7 +7590,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/started</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/started</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_state_store_delete_errors'>State Store Delete Errors</a></h5>
 <table>
@@ -6832,7 +7599,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/state_store_delete_errors</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/state_store_delete_errors</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_state_store_deletes'>State Store Deletes</a></h5>
 <table>
@@ -6842,7 +7608,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/state_store_deletes</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/state_store_deletes</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_state_store_load_errors'>State Store Load Errors</a></h5>
 <table>
@@ -6852,7 +7617,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/state_store_load_errors</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/state_store_load_errors</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_state_store_load_hit_percentage'>State Store Load Hits %</a></h5>
 <table>
@@ -6863,7 +7627,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/state_store_load_hit_percentage</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/state_store_load_hit_percentage</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 <tr><td>Sanity&nbsp;Check</td><td>The value must be a maximum of 100 % (raw value ≦ 100)</td></tr>
 </table>
 <h5><a id='sigen_state_store_loads'>State Store Loads</a></h5>
@@ -6874,7 +7637,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/state_store_loads</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/state_store_loads</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_state_store_save_errors'>State Store Save Errors</a></h5>
 <table>
@@ -6884,7 +7646,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/state_store_save_errors</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/state_store_save_errors</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_state_store_save_max'>State Store Save Max</a></h5>
 <table>
@@ -6895,7 +7656,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/state_store_save_max</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/state_store_save_max</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_state_store_save_mean'>State Store Save Mean</a></h5>
 <table>
@@ -6906,7 +7666,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/state_store_save_mean</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/state_store_save_mean</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_state_store_save_min'>State Store Save Min</a></h5>
 <table>
@@ -6917,7 +7676,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/state_store_save_min</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/state_store_save_min</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 <h5><a id='sigen_state_store_saves'>State Store Saves</a></h5>
 <table>
@@ -6927,7 +7685,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/state_store_saves</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/state_store_saves</td></tr>
 </td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.4</td></tr>
 </table>
 
 #### Subscribed Topics
@@ -6936,10 +7693,11 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <table>
 <tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/metrics/metrics_reset/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/metrics/metrics_reset/set</td></tr>
-<tr><td>Since&nbsp;ProtocolVersion&nbsp;Version</td><td>N/A</td></tr>
 </table>
 
-## Settings
+## Runtime Configuration
+
+Publishing of Runtime Configuration is disabled by default, and can be enabled in configuration. Runtime Configuration is available through the Diagnostics web UI (if that is not disabled as well).
 
 Settings are _only_ published to the sigenergy2mqtt/config topics, even when Home Assistant discovery is enabled. The scan interval cannot be altered.
 
@@ -6962,7 +7720,19 @@ InfluxDB and PVOutput settings are only published when those options are enabled
 </td></tr>
 <tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='10'>DEBUG</li><li value='20'>INFO</li><li value='30'>WARNING</li><li value='40'>ERROR</li><li value='50'>CRITICAL</li></ol></td></tr>
 <tr><td>Comment</td><td>The sigenergy2mqtt application logging level</td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0  and 50  (0 ≦ raw value ≦ 50)</td></tr>
+</table>
+<h5><a id='sigenergy2mqtt_config_cloud_log_level'>Cloud Log Level</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>CloudLogLevel</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>60s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_config_cloud_log_level</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/cloud/log_level/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/cloud/log_level/state</td></tr>
+<tr><td>Raw&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/cloud/log_level/raw</td></tr>
+</td></tr>
+<tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='10'>DEBUG</li><li value='20'>INFO</li><li value='30'>WARNING</li><li value='40'>ERROR</li><li value='50'>CRITICAL</li></ol></td></tr>
+<tr><td>Comment</td><td>The sigenergy2mqtt cloud module logging level</td></tr>
 <tr><td>Sanity&nbsp;Check</td><td>The value must be between 0  and 50  (0 ≦ raw value ≦ 50)</td></tr>
 </table>
 <h5><a id='sigenergy2mqtt_config_diagnostics_log_level'>Diagnostics Log Level</a></h5>
@@ -6976,7 +7746,6 @@ InfluxDB and PVOutput settings are only published when those options are enabled
 </td></tr>
 <tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='10'>DEBUG</li><li value='20'>INFO</li><li value='30'>WARNING</li><li value='40'>ERROR</li><li value='50'>CRITICAL</li></ol></td></tr>
 <tr><td>Comment</td><td>The sigenergy2mqtt diagnostics module logging level</td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
 <tr><td>Sanity&nbsp;Check</td><td>The value must be between 0  and 50  (0 ≦ raw value ≦ 50)</td></tr>
 </table>
 <h5><a id='sigenergy2mqtt_config_influxdb_log_level'>InfluxDB Log Level</a></h5>
@@ -6990,7 +7759,6 @@ InfluxDB and PVOutput settings are only published when those options are enabled
 </td></tr>
 <tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='10'>DEBUG</li><li value='20'>INFO</li><li value='30'>WARNING</li><li value='40'>ERROR</li><li value='50'>CRITICAL</li></ol></td></tr>
 <tr><td>Comment</td><td>The InfluxDB interface logging level</td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
 <tr><td>Sanity&nbsp;Check</td><td>The value must be between 0  and 50  (0 ≦ raw value ≦ 50)</td></tr>
 </table>
 <h5><a id='sigenergy2mqtt_config_mqtt_log_level'>MQTT Log Level</a></h5>
@@ -7004,7 +7772,6 @@ InfluxDB and PVOutput settings are only published when those options are enabled
 </td></tr>
 <tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='10'>DEBUG</li><li value='20'>INFO</li><li value='30'>WARNING</li><li value='40'>ERROR</li><li value='50'>CRITICAL</li></ol></td></tr>
 <tr><td>Comment</td><td>The MQTT interface logging level</td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
 <tr><td>Sanity&nbsp;Check</td><td>The value must be between 0  and 50  (0 ≦ raw value ≦ 50)</td></tr>
 </table>
 <h5><a id='sigenergy2mqtt_config_modbus_log_level'>Modbus Log Level</a></h5>
@@ -7018,7 +7785,6 @@ InfluxDB and PVOutput settings are only published when those options are enabled
 </td></tr>
 <tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='10'>DEBUG</li><li value='20'>INFO</li><li value='30'>WARNING</li><li value='40'>ERROR</li><li value='50'>CRITICAL</li></ol></td></tr>
 <tr><td>Comment</td><td>The Modbus interface logging level</td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
 <tr><td>Sanity&nbsp;Check</td><td>The value must be between 0  and 50  (0 ≦ raw value ≦ 50)</td></tr>
 </table>
 <h5><a id='sigenergy2mqtt_config_pvoutput_log_level'>PVOutput Log Level</a></h5>
@@ -7032,7 +7798,6 @@ InfluxDB and PVOutput settings are only published when those options are enabled
 </td></tr>
 <tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='10'>DEBUG</li><li value='20'>INFO</li><li value='30'>WARNING</li><li value='40'>ERROR</li><li value='50'>CRITICAL</li></ol></td></tr>
 <tr><td>Comment</td><td>The PVOutput interface logging level</td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
 <tr><td>Sanity&nbsp;Check</td><td>The value must be between 0  and 50  (0 ≦ raw value ≦ 50)</td></tr>
 </table>
 <h5><a id='sigenergy2mqtt_config_pvoutput_upload_log_level'>PVOutput Upload Log Level</a></h5>
@@ -7046,7 +7811,6 @@ InfluxDB and PVOutput settings are only published when those options are enabled
 </td></tr>
 <tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='10'>DEBUG</li><li value='20'>INFO</li><li value='30'>WARNING</li><li value='40'>ERROR</li><li value='50'>CRITICAL</li></ol></td></tr>
 <tr><td>Comment</td><td>The PVOutput upload payload logging level. If the overall PVOutput Log Level is set to a level higher than the level specified for this option (e.g. this option is set to INFO and PVOutput Log Level is set to WARNING), then the upload log messages will be suppressed.</td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
 <tr><td>Sanity&nbsp;Check</td><td>The value must be between 0  and 50  (0 ≦ raw value ≦ 50)</td></tr>
 </table>
 <h5><a id='sigenergy2mqtt_config_pvoutput_calc_debug_logging'>PVOutput Value Calculation Debugging</a></h5>
@@ -7058,7 +7822,6 @@ InfluxDB and PVOutput settings are only published when those options are enabled
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/pvoutput/calc_debug_logging/state</td></tr>
 </td></tr>
 <tr><td>Comment</td><td>If enabled the aggregation of values for uploading to PVOutput will be logged at the `DEBUG` level.  Only applicable if the PVOutput Log Level is set to DEBUG.</td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
 <tr><td>Sanity&nbsp;Check</td><td>The value must be between 0  and 1  (0 ≦ raw value ≦ 1)</td></tr>
 </table>
 <h5><a id='sigenergy2mqtt_config_pvoutput_update_debug_logging'>PVOutput Value Update Debugging</a></h5>
@@ -7070,7 +7833,6 @@ InfluxDB and PVOutput settings are only published when those options are enabled
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/pvoutput/update_debug_logging/state</td></tr>
 </td></tr>
 <tr><td>Comment</td><td>If enabled the updating of values for uploading to PVOutput will be logged at the DEBUG level. Only applicable if PVOutput Log Level is set to DEBUG.</td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
 <tr><td>Sanity&nbsp;Check</td><td>The value must be between 0  and 1  (0 ≦ raw value ≦ 1)</td></tr>
 </table>
 <h5><a id='sigenergy2mqtt_config_persistence_debug'>Persistence Debugging</a></h5>
@@ -7082,7 +7844,6 @@ InfluxDB and PVOutput settings are only published when those options are enabled
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/persistence/debug/state</td></tr>
 </td></tr>
 <tr><td>Comment</td><td>Enable debugging of all state store (persistence) operations</td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
 <tr><td>Sanity&nbsp;Check</td><td>The value must be between 0  and 1  (0 ≦ raw value ≦ 1)</td></tr>
 </table>
 <h5><a id='sigenergy2mqtt_config_repeated_state_publish_interval'>Repeated State Publish Interval</a></h5>
@@ -7095,7 +7856,6 @@ InfluxDB and PVOutput settings are only published when those options are enabled
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/repeated_state_publish_interval/state</td></tr>
 </td></tr>
 <tr><td>Comment</td><td>The interval in seconds at which repeated states are published. (Repeated states occur when the state that is acquired is identical to the previous read.) <0=Never 0=Always >0=Interval</td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
 <tr><td>Sanity&nbsp;Check</td><td>The value must be between -1 s and 600 s (-1 ≦ raw value ≦ 600)</td></tr>
 </table>
 <h5><a id='sigenergy2mqtt_config_sanity_check_failures_increment'>Sanity Check Failures Increment</a></h5>
@@ -7107,7 +7867,6 @@ InfluxDB and PVOutput settings are only published when those options are enabled
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/sanity_check_failures_increment/state</td></tr>
 </td></tr>
 <tr><td>Comment</td><td>If enabled, the number of sensor read failures will be incremented when a sanity check fails. If sensor read failures pass the allowed threshold for errors, the sensor will be disabled until the next restart.</td></tr>
-<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>N/A</td></tr>
 <tr><td>Sanity&nbsp;Check</td><td>The value must be between 0  and 1  (0 ≦ raw value ≦ 1)</td></tr>
 </table>
 
@@ -7119,7 +7878,14 @@ InfluxDB and PVOutput settings are only published when those options are enabled
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/log_level/set</td></tr>
 <tr><td>Comment</td><td>The sigenergy2mqtt application logging level</td></tr>
 <tr><td>Valid&nbsp;Values</td><td><ul><li value='10'>"DEBUG"</li><li value='20'>"INFO"</li><li value='30'>"WARNING"</li><li value='40'>"ERROR"</li><li value='50'>"CRITICAL"</li></ol></td></tr>
-<tr><td>Since&nbsp;ProtocolVersion&nbsp;Version</td><td>N/A</td></tr>
+</table>
+<h5><a id='sigenergy2mqtt_config_cloud_log_level_set'>Cloud Log Level
+</a></h5>
+<table>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/cloud/log_level/set</td></tr>
+<tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/cloud/log_level/set</td></tr>
+<tr><td>Comment</td><td>The sigenergy2mqtt cloud module logging level</td></tr>
+<tr><td>Valid&nbsp;Values</td><td><ul><li value='10'>"DEBUG"</li><li value='20'>"INFO"</li><li value='30'>"WARNING"</li><li value='40'>"ERROR"</li><li value='50'>"CRITICAL"</li></ol></td></tr>
 </table>
 <h5><a id='sigenergy2mqtt_config_diagnostics_log_level_set'>Diagnostics Log Level
 </a></h5>
@@ -7128,7 +7894,6 @@ InfluxDB and PVOutput settings are only published when those options are enabled
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/diagnostics/log_level/set</td></tr>
 <tr><td>Comment</td><td>The sigenergy2mqtt diagnostics module logging level</td></tr>
 <tr><td>Valid&nbsp;Values</td><td><ul><li value='10'>"DEBUG"</li><li value='20'>"INFO"</li><li value='30'>"WARNING"</li><li value='40'>"ERROR"</li><li value='50'>"CRITICAL"</li></ol></td></tr>
-<tr><td>Since&nbsp;ProtocolVersion&nbsp;Version</td><td>N/A</td></tr>
 </table>
 <h5><a id='sigenergy2mqtt_config_influxdb_log_level_set'>InfluxDB Log Level
 </a></h5>
@@ -7137,7 +7902,6 @@ InfluxDB and PVOutput settings are only published when those options are enabled
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/influxdb/log_level/set</td></tr>
 <tr><td>Comment</td><td>The InfluxDB interface logging level</td></tr>
 <tr><td>Valid&nbsp;Values</td><td><ul><li value='10'>"DEBUG"</li><li value='20'>"INFO"</li><li value='30'>"WARNING"</li><li value='40'>"ERROR"</li><li value='50'>"CRITICAL"</li></ol></td></tr>
-<tr><td>Since&nbsp;ProtocolVersion&nbsp;Version</td><td>N/A</td></tr>
 </table>
 <h5><a id='sigenergy2mqtt_config_mqtt_log_level_set'>MQTT Log Level
 </a></h5>
@@ -7146,7 +7910,6 @@ InfluxDB and PVOutput settings are only published when those options are enabled
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/mqtt/log_level/set</td></tr>
 <tr><td>Comment</td><td>The MQTT interface logging level</td></tr>
 <tr><td>Valid&nbsp;Values</td><td><ul><li value='10'>"DEBUG"</li><li value='20'>"INFO"</li><li value='30'>"WARNING"</li><li value='40'>"ERROR"</li><li value='50'>"CRITICAL"</li></ol></td></tr>
-<tr><td>Since&nbsp;ProtocolVersion&nbsp;Version</td><td>N/A</td></tr>
 </table>
 <h5><a id='sigenergy2mqtt_config_modbus_log_level_set'>Modbus Log Level
 </a></h5>
@@ -7155,7 +7918,6 @@ InfluxDB and PVOutput settings are only published when those options are enabled
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/modbus/log_level/set</td></tr>
 <tr><td>Comment</td><td>The Modbus interface logging level</td></tr>
 <tr><td>Valid&nbsp;Values</td><td><ul><li value='10'>"DEBUG"</li><li value='20'>"INFO"</li><li value='30'>"WARNING"</li><li value='40'>"ERROR"</li><li value='50'>"CRITICAL"</li></ol></td></tr>
-<tr><td>Since&nbsp;ProtocolVersion&nbsp;Version</td><td>N/A</td></tr>
 </table>
 <h5><a id='sigenergy2mqtt_config_pvoutput_log_level_set'>PVOutput Log Level
 </a></h5>
@@ -7164,7 +7926,6 @@ InfluxDB and PVOutput settings are only published when those options are enabled
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/pvoutput/log_level/set</td></tr>
 <tr><td>Comment</td><td>The PVOutput interface logging level</td></tr>
 <tr><td>Valid&nbsp;Values</td><td><ul><li value='10'>"DEBUG"</li><li value='20'>"INFO"</li><li value='30'>"WARNING"</li><li value='40'>"ERROR"</li><li value='50'>"CRITICAL"</li></ol></td></tr>
-<tr><td>Since&nbsp;ProtocolVersion&nbsp;Version</td><td>N/A</td></tr>
 </table>
 <h5><a id='sigenergy2mqtt_config_pvoutput_upload_log_level_set'>PVOutput Upload Log Level
 </a></h5>
@@ -7173,7 +7934,6 @@ InfluxDB and PVOutput settings are only published when those options are enabled
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/pvoutput/upload_log_level/set</td></tr>
 <tr><td>Comment</td><td>The PVOutput upload payload logging level. If the overall PVOutput Log Level is set to a level higher than the level specified for this option (e.g. this option is set to INFO and PVOutput Log Level is set to WARNING), then the upload log messages will be suppressed.</td></tr>
 <tr><td>Valid&nbsp;Values</td><td><ul><li value='10'>"DEBUG"</li><li value='20'>"INFO"</li><li value='30'>"WARNING"</li><li value='40'>"ERROR"</li><li value='50'>"CRITICAL"</li></ol></td></tr>
-<tr><td>Since&nbsp;ProtocolVersion&nbsp;Version</td><td>N/A</td></tr>
 </table>
 <h5><a id='sigenergy2mqtt_config_pvoutput_calc_debug_logging_set'>PVOutput Value Calculation Debugging
 </a></h5>
@@ -7181,7 +7941,6 @@ InfluxDB and PVOutput settings are only published when those options are enabled
 <tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/pvoutput/calc_debug_logging/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/pvoutput/calc_debug_logging/set</td></tr>
 <tr><td>Comment</td><td>If enabled the aggregation of values for uploading to PVOutput will be logged at the `DEBUG` level.  Only applicable if the PVOutput Log Level is set to DEBUG.</td></tr>
-<tr><td>Since&nbsp;ProtocolVersion&nbsp;Version</td><td>N/A</td></tr>
 </table>
 <h5><a id='sigenergy2mqtt_config_pvoutput_update_debug_logging_set'>PVOutput Value Update Debugging
 </a></h5>
@@ -7189,7 +7948,6 @@ InfluxDB and PVOutput settings are only published when those options are enabled
 <tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/pvoutput/update_debug_logging/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/pvoutput/update_debug_logging/set</td></tr>
 <tr><td>Comment</td><td>If enabled the updating of values for uploading to PVOutput will be logged at the DEBUG level. Only applicable if PVOutput Log Level is set to DEBUG.</td></tr>
-<tr><td>Since&nbsp;ProtocolVersion&nbsp;Version</td><td>N/A</td></tr>
 </table>
 <h5><a id='sigenergy2mqtt_config_persistence_debug_set'>Persistence Debugging
 </a></h5>
@@ -7197,7 +7955,6 @@ InfluxDB and PVOutput settings are only published when those options are enabled
 <tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/persistence/debug/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/persistence/debug/set</td></tr>
 <tr><td>Comment</td><td>Enable debugging of all state store (persistence) operations</td></tr>
-<tr><td>Since&nbsp;ProtocolVersion&nbsp;Version</td><td>N/A</td></tr>
 </table>
 <h5><a id='sigenergy2mqtt_config_repeated_state_publish_interval_set'>Repeated State Publish Interval
 </a></h5>
@@ -7207,7 +7964,6 @@ InfluxDB and PVOutput settings are only published when those options are enabled
 <tr><td>Comment</td><td>The interval in seconds at which repeated states are published. (Repeated states occur when the state that is acquired is identical to the previous read.) <0=Never 0=Always >0=Interval</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>-1.0</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>600.0</td></tr>
-<tr><td>Since&nbsp;ProtocolVersion&nbsp;Version</td><td>N/A</td></tr>
 </table>
 <h5><a id='sigenergy2mqtt_config_sanity_check_failures_increment_set'>Sanity Check Failures Increment
 </a></h5>
@@ -7215,7 +7971,6 @@ InfluxDB and PVOutput settings are only published when those options are enabled
 <tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/sanity_check_failures_increment/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/sanity_check_failures_increment/set</td></tr>
 <tr><td>Comment</td><td>If enabled, the number of sensor read failures will be incremented when a sanity check fails. If sensor read failures pass the allowed threshold for errors, the sensor will be disabled until the next restart.</td></tr>
-<tr><td>Since&nbsp;ProtocolVersion&nbsp;Version</td><td>N/A</td></tr>
 </table>
 
 ## Service Health
@@ -7713,11 +8468,86 @@ The attributes payload currently includes:
 <a href='#sigen_0_001_31501'>Vehicle Charging Current</a><br>
 <a href='#sigen_0_001_31504'>Vehicle SoC</a><br>
 
+<h6>Cloud Control</h6>
+<a href='#sigen_0_10000000000001_battery_charge_power_limit'>Battery Charge Power Limit</a><br>
+<a href='#sigen_0_10000000000001_battery_discharge_power_limit'>Battery Discharge Power Limit</a><br>
+<a href='#sigen_0_10000000000001_grid_connection_limit'>Grid Connection Current Limit</a><br>
+<a href='#sigen_0_10000000000001_grid_export_limit'>Grid Export Limit</a><br>
+<a href='#sigen_0_10000000000001_grid_import_limit'>Grid Import Limit</a><br>
+<a href='#sigen_0_10000000000001_instant_control'>Instant Manual Control</a><br>
+<a href='#sigen_0_10000000000001_instant_control_duration'>Instant Manual Control Duration</a><br>
+<a href='#sigen_0_10000000000001_instant_control_mode'>Instant Manual Control Mode</a><br>
+<a href='#sigen_0_10000000000001_operational_mode'>Operational Mode</a><br>
+<a href='#sigen_0_10000000000001_solar_power_limit'>Solar Power Limit</a><br>
+
+<h6>Gateway</h6>
+<a href='#sigen_0_10000000000001_gateway_communication_status'>Communication Status</a><br>
+<a href='#sigen_0_10000000000001_gateway_firmware_version'>Firmware Version</a><br>
+<a href='#sigen_0_10000000000001_gateway_grid_side_contactor_status'>Grid Side Contactor Status</a><br>
+<a href='#sigen_0_10000000000001_gateway_maximum_phase_a_voltage_in_the_past_minute'>Maximum Phase A voltage in the past minute</a><br>
+<a href='#sigen_0_10000000000001_gateway_maximum_phase_b_voltage_in_the_past_minute'>Maximum Phase B voltage in the past minute</a><br>
+<a href='#sigen_0_10000000000001_gateway_maximum_phase_c_voltage_in_the_past_minute'>Maximum Phase C voltage in the past minute</a><br>
+<a href='#sigen_0_10000000000001_gateway_minimum_phase_a_voltage_in_the_past_minute'>Minimum Phase A voltage in the past minute</a><br>
+<a href='#sigen_0_10000000000001_gateway_minimum_phase_b_voltage_in_the_past_minute'>Minimum Phase B voltage in the past minute</a><br>
+<a href='#sigen_0_10000000000001_gateway_minimum_phase_c_voltage_in_the_past_minute'>Minimum Phase C voltage in the past minute</a><br>
+<a href='#sigen_0_10000000000001_gateway_model'>Model</a><br>
+<a href='#sigen_0_10000000000001_gateway_phase_a_current'>Phase A Current</a><br>
+<a href='#sigen_0_10000000000001_gateway_phase_a_voltage'>Phase A Voltage</a><br>
+<a href='#sigen_0_10000000000001_gateway_phase_b_current'>Phase B Current</a><br>
+<a href='#sigen_0_10000000000001_gateway_phase_b_voltage'>Phase B Voltage</a><br>
+<a href='#sigen_0_10000000000001_gateway_phase_c_current'>Phase C Current</a><br>
+<a href='#sigen_0_10000000000001_gateway_phase_c_voltage'>Phase C Voltage</a><br>
+<a href='#sigen_0_10000000000001_gateway_serial_number'>Serial Number</a><br>
+<a href='#sigen_0_10000000000001_gateway_total_active_power'>Total Active Power</a><br>
+<a href='#sigen_0_10000000000001_gateway_total_reactive_power'>Total Reactive Power</a><br>
+<a href='#sigen_0_10000000000001_gateway_voltage_frequency'>Voltage Frequency</a><br>
+
+<h6>Cloud Inverter</h6>
+<a href='#sigen_0_10000000000001_3_123A45BP678_active_power'>Active Power</a><br>
+<a href='#sigen_0_10000000000001_3_123A45BP678_device_model'>Device Model</a><br>
+<a href='#sigen_0_10000000000001_3_123A45BP678_device_sn'>Device SN</a><br>
+<a href='#sigen_0_10000000000001_3_123A45BP678_grid_frequency'>Grid Frequency</a><br>
+<a href='#sigen_0_10000000000001_3_123A45BP678_internal_temperature'>Internal Temperature</a><br>
+<a href='#sigen_0_10000000000001_3_123A45BP678_pv_power'>PV Power</a><br>
+<a href='#sigen_0_10000000000001_3_123A45BP678_phase_a_current'>Phase A Current</a><br>
+<a href='#sigen_0_10000000000001_3_123A45BP678_phase_a_voltage'>Phase A Voltage</a><br>
+<a href='#sigen_0_10000000000001_3_123A45BP678_phase_b_current'>Phase B Current</a><br>
+<a href='#sigen_0_10000000000001_3_123A45BP678_phase_b_voltage'>Phase B Voltage</a><br>
+<a href='#sigen_0_10000000000001_3_123A45BP678_phase_c_current'>Phase C Current</a><br>
+<a href='#sigen_0_10000000000001_3_123A45BP678_phase_c_voltage'>Phase C Voltage</a><br>
+<a href='#sigen_0_10000000000001_3_123A45BP678_rated_power'>Rated Power</a><br>
+<a href='#sigen_0_10000000000001_3_123A45BP678_reactive_power'>Reactive Power</a><br>
+<a href='#sigen_0_10000000000001_3_123A45BP678_software_version'>Software Version</a><br>
+
+<h6>Cloud Battery</h6>
+<a href='#sigen_0_10000000000001_4_987B65BC1238_battery_pack_voltage'>Battery Pack Voltage</a><br>
+<a href='#sigen_0_10000000000001_4_987B65BC1238_battery_soc'>Battery SOC</a><br>
+<a href='#sigen_0_10000000000001_4_987B65BC1238_charging_discharging_power'>Charging & Discharging Power</a><br>
+<a href='#sigen_0_10000000000001_4_987B65BC1238_device_model'>Device Model</a><br>
+<a href='#sigen_0_10000000000001_4_987B65BC1238_device_sn'>Device SN</a><br>
+<a href='#sigen_0_10000000000001_4_987B65BC1238_heating_status'>Heating status</a><br>
+<a href='#sigen_0_10000000000001_4_987B65BC1238_rated_battery_capacity'>Rated Battery Capacity</a><br>
+<a href='#sigen_0_10000000000001_4_987B65BC1238_software_version'>Software Version</a><br>
+
 <h6>Metrics</h6>
-<a href='#sigen_influxdb_queries'>InfluxDB Queries</a><br>
-<a href='#sigen_influxdb_query_errors'>InfluxDB Query Errors</a><br>
-<a href='#sigen_influxdb_rate_limit_waits'>InfluxDB Rate Limit Waits</a><br>
-<a href='#sigen_influxdb_retries'>InfluxDB Retries</a><br>
+<a href='#sigen_cloud_auth_errors'>Cloud Auth Errors</a><br>
+<a href='#sigen_cloud_available'>Cloud Available</a><br>
+<a href='#sigen_cloud_connected'>Cloud Connected</a><br>
+<a href='#sigen_cloud_connection_attempts'>Cloud Connection Attempts</a><br>
+<a href='#sigen_cloud_connection_errors'>Cloud Connection Errors</a><br>
+<a href='#sigen_cloud_connection_max'>Cloud Connection Max</a><br>
+<a href='#sigen_cloud_connection_mean'>Cloud Connection Mean</a><br>
+<a href='#sigen_cloud_connection_min'>Cloud Connection Min</a><br>
+<a href='#sigen_cloud_connection_total'>Cloud Connection Total</a><br>
+<a href='#sigen_cloud_queries'>Cloud Queries</a><br>
+<a href='#sigen_cloud_query_errors'>Cloud Query Errors</a><br>
+<a href='#sigen_cloud_query_max'>Cloud Query Max</a><br>
+<a href='#sigen_cloud_query_mean'>Cloud Query Mean</a><br>
+<a href='#sigen_cloud_query_min'>Cloud Query Min</a><br>
+<a href='#sigen_cloud_query_total'>Cloud Query Total</a><br>
+<a href='#sigen_cloud_rate_limits'>Cloud Rate Limits</a><br>
+<a href='#sigen_cloud_reconnections'>Cloud Reconnections</a><br>
+<a href='#sigen_cloud_connections'>Cloud Successful Connections</a><br>
 <a href='#sigen_influxdb_throughput'>InfluxDB Throughput</a><br>
 <a href='#sigen_influxdb_write_errors'>InfluxDB Write Errors</a><br>
 <a href='#sigen_influxdb_write_max'>InfluxDB Write Max</a><br>
@@ -7762,6 +8592,7 @@ The attributes payload currently includes:
 
 <h6>Settings</h6>
 <a href='#sigenergy2mqtt_config_log_level'>Application Log Level</a><br>
+<a href='#sigenergy2mqtt_config_cloud_log_level'>Cloud Log Level</a><br>
 <a href='#sigenergy2mqtt_config_diagnostics_log_level'>Diagnostics Log Level</a><br>
 <a href='#sigenergy2mqtt_config_influxdb_log_level'>InfluxDB Log Level</a><br>
 <a href='#sigenergy2mqtt_config_mqtt_log_level'>MQTT Log Level</a><br>
@@ -7826,11 +8657,24 @@ The attributes payload currently includes:
 <a href='#sigen_0_001_41002_set'>Max Charging Power Limit</a><br>
 <a href='#sigen_0_001_41004_set'>Max Discharging Power Limit</a><br>
 
+<h6>Cloud Control</h6>
+<a href='#sigen_0_10000000000001_battery_charge_power_limit_set'>Battery Charge Power Limit</a><br>
+<a href='#sigen_0_10000000000001_battery_discharge_power_limit_set'>Battery Discharge Power Limit</a><br>
+<a href='#sigen_0_10000000000001_grid_connection_limit_set'>Grid Connection Current Limit</a><br>
+<a href='#sigen_0_10000000000001_grid_export_limit_set'>Grid Export Limit</a><br>
+<a href='#sigen_0_10000000000001_grid_import_limit_set'>Grid Import Limit</a><br>
+<a href='#sigen_0_10000000000001_instant_control_set'>Instant Manual Control</a><br>
+<a href='#sigen_0_10000000000001_instant_control_duration_set'>Instant Manual Control Duration</a><br>
+<a href='#sigen_0_10000000000001_instant_control_mode_set'>Instant Manual Control Mode</a><br>
+<a href='#sigen_0_10000000000001_operational_mode_set'>Operational Mode</a><br>
+<a href='#sigen_0_10000000000001_solar_power_limit_set'>Solar Power Limit</a><br>
+
 <h6>Metrics</h6>
 <a href='#sigen_metrics_reset_set'>Reset Metrics</a><br>
 
 <h6>Settings</h6>
 <a href='#sigenergy2mqtt_config_log_level_set'>Application Log Level</a><br>
+<a href='#sigenergy2mqtt_config_cloud_log_level_set'>Cloud Log Level</a><br>
 <a href='#sigenergy2mqtt_config_diagnostics_log_level_set'>Diagnostics Log Level</a><br>
 <a href='#sigenergy2mqtt_config_influxdb_log_level_set'>InfluxDB Log Level</a><br>
 <a href='#sigenergy2mqtt_config_mqtt_log_level_set'>MQTT Log Level</a><br>
@@ -7842,5 +8686,5 @@ The attributes payload currently includes:
 <a href='#sigenergy2mqtt_config_persistence_debug_set'>Persistence Debugging</a><br>
 <a href='#sigenergy2mqtt_config_repeated_state_publish_interval_set'>Repeated State Publish Interval</a><br>
 <a href='#sigenergy2mqtt_config_sanity_check_failures_increment_set'>Sanity Check Failures Increment</a><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></td></tr>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></td></tr>
 </table>

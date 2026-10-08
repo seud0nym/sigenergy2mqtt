@@ -19,7 +19,15 @@ import logging
 import os
 import sys
 from datetime import timedelta, timezone
-from typing import cast
+from typing import Any, cast
+
+from sigenergy2mqtt.cloud.models import (
+    Capabilities,
+    InstantControlStatus,
+    InstantOverrideCommand,
+)
+from sigenergy2mqtt.cloud.port import CloudControlPort
+from sigenergy2mqtt.devices.cloud import CloudControl, CloudDiscovery
 
 # Need to set a Modbus host otherwise configuration initialisation will launch auto-discovery
 os.environ["SIGENERGY2MQTT_MODBUS_HOST"] = "127.0.0.1"
@@ -28,18 +36,53 @@ os.environ["SIGENERGY2MQTT_MODBUS_HOST"] = "127.0.0.1"
 if __name__ == "__main__":
     sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
-from pymodbus.client.mixin import ModbusClientMixin
 from pymodbus.pdu import ExceptionResponse, ModbusPDU
 
-from sigenergy2mqtt.common import DeviceClass, FirmwareVersion, HybridInverter, ProtocolApplies, ProtocolVersion, PVInverter
-from sigenergy2mqtt.config import Config, SettingsService, _swap_active_config, active_config, initialize
-from sigenergy2mqtt.devices import PID, PSS, ACCharger, DCCharger, Device, Inverter, PowerPlant
+from sigenergy2mqtt.common import (
+    DeviceClass,
+    FirmwareVersion,
+    HybridInverter,
+    ProtocolApplies,
+    ProtocolVersion,
+    PVInverter,
+)
+from sigenergy2mqtt.config import (
+    Config,
+    SettingsService,
+    _swap_active_config,
+    active_config,
+    initialize,
+)
+from sigenergy2mqtt.config.models import ModbusConfig
+from sigenergy2mqtt.devices import (
+    PID,
+    PSS,
+    ACCharger,
+    DCCharger,
+    Device,
+    Inverter,
+    PowerPlant,
+)
 from sigenergy2mqtt.metrics import MetricsService
-from sigenergy2mqtt.modbus import ModbusDataType
-from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerInputBreaker, ACChargerRatedCurrent, ACChargerRunningState
-from sigenergy2mqtt.sensors.ac_charger_read_write import ACChargerStatus
-from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, AlarmSensor, ModbusSensorMixin, NumericSensor, ReservedSensor, Sensor, SwitchSensor, TimestampSensor, WriteOnlySensorMixin
-from sigenergy2mqtt.sensors.inverter_read_only import (
+from sigenergy2mqtt.modbus import ModbusClient, ModbusDataType
+from sigenergy2mqtt.sensors.base import (
+    AlarmCombinedSensor,
+    AlarmSensor,
+    ModbusSensorMixin,
+    NumericSensor,
+    ReservedSensor,
+    Sensor,
+    SwitchSensor,
+    TimestampSensor,
+    WriteOnlySensorMixin,
+)
+from sigenergy2mqtt.sensors.ev.ac_charger_read_only import (
+    ACChargerInputBreaker,
+    ACChargerRatedCurrent,
+    ACChargerRunningState,
+)
+from sigenergy2mqtt.sensors.ev.ac_charger_read_write import ACChargerStatus
+from sigenergy2mqtt.sensors.inverter.read_only import (
     DCChargerRatedChargingPower,
     DCChargerRatedDischargingPower,
     DCChargerVehicleBatteryVoltage,
@@ -52,21 +95,40 @@ from sigenergy2mqtt.sensors.inverter_read_only import (
     PVStringCount,
     RatedGridVoltage,
 )
-from sigenergy2mqtt.sensors.inverter_read_write import DCChargerStatus, InverterStatus, ReservedInverterRemoteEMSDispatch
+from sigenergy2mqtt.sensors.inverter.read_write import (
+    DCChargerStatus,
+    InverterStatus,
+    ReservedInverterRemoteEMSDispatch,
+)
 from sigenergy2mqtt.sensors.metrics import Started
-from sigenergy2mqtt.sensors.pid_read_only import PIDMachineFirmwareVersion, PIDModelType, PIDSerialNumber
-from sigenergy2mqtt.sensors.pid_read_write import PIDStartStop
-from sigenergy2mqtt.sensors.plant_ess_preheating_read_write import ESSPreHeatingEnable, ESSPreHeatingTOUTime
-from sigenergy2mqtt.sensors.plant_read_only import ChargeCutOffSoC, CurrentControlCommandValue, DischargeCutOffSoC, GridCodeRatedFrequency, PlantRatedChargingPower, PlantRatedDischargingPower, SystemTimeZone
-from sigenergy2mqtt.sensors.plant_read_write import (
+from sigenergy2mqtt.sensors.pid.read_only import (
+    PIDMachineFirmwareVersion,
+    PIDModelType,
+    PIDSerialNumber,
+)
+from sigenergy2mqtt.sensors.pid.read_write import PIDStartStop
+from sigenergy2mqtt.sensors.plant.ess_preheating_read_write import (
+    ESSPreHeatingEnable,
+    ESSPreHeatingTOUTime,
+)
+from sigenergy2mqtt.sensors.plant.read_only import (
+    ChargeCutOffSoC,
+    CurrentControlCommandValue,
+    DischargeCutOffSoC,
+    GridCodeRatedFrequency,
+    PlantRatedChargingPower,
+    PlantRatedDischargingPower,
+    SystemTimeZone,
+)
+from sigenergy2mqtt.sensors.plant.read_write import (
     ActivePowerFixedAdjustmentTargetValue,
     PhaseActivePowerFixedAdjustmentTargetValue,
     PhaseReactivePowerFixedAdjustmentTargetValue,
     PlantStatus,
     ReactivePowerFixedAdjustmentTargetValue,
 )
-from sigenergy2mqtt.sensors.pss_read_only import PSSModelType, PSSSerialNumber
-from sigenergy2mqtt.sensors.pss_read_write import PSSMVCabinetG3CircuitBreakerSwitchOn
+from sigenergy2mqtt.sensors.pss.read_only import PSSModelType, PSSSerialNumber
+from sigenergy2mqtt.sensors.pss.read_write import PSSMVCabinetG3CircuitBreakerSwitchOn
 
 logger = logging.getLogger(__name__)
 
@@ -75,6 +137,14 @@ initialize()
 DC_RATED_CHARGING_POWER: float = 25.0
 DC_RATED_DISCHARGING_POWER: float = 25.0
 FIRMWARE_VERSION: str = "V100R001C00SPC112B107G"
+AC_CHARGER_SERIAL: str = "AC-CHARGER-2"
+DC_CHARGER_SERIAL: str = "DC-CHARGER-1"
+HYBRID_INVERTER_MODEL: str = "SigenStor EC 12.0 TP"
+HYBRID_INVERTER_SERIAL: str = "CMU123A45BP678"
+HYBRID_INVERTER_RATED_ACTIVE_POWER: float = 12.0
+PV_INVERTER_MODEL: str = "Sigen PV Max 5.0 TP"
+PV_INVERTER_SERIAL: str = "CMU876A54BP321"
+PV_INVERTER_RATED_ACTIVE_POWER: float = 5.0
 INPUT_BREAKER: float = 16.0
 OUTPUT_TYPE: int = 2
 PACK_BCU_COUNT: int = 3
@@ -86,7 +156,7 @@ RATED_FREQUENCY: float = 50.0
 TIME_ZONE: int = 600
 
 
-class DummyModbusClient(ModbusClientMixin):
+class DummyModbusClient(ModbusClient):
     """A simulated Modbus client that serves pre-populated register data from memory.
 
     Implements the same async read interface as the real Modbus client, returning
@@ -100,7 +170,7 @@ class DummyModbusClient(ModbusClientMixin):
     """
 
     def __init__(self, data: dict[int, list[int]]):
-        super().__init__()
+        super().__init__(host="127.0.0.1")
 
         self.data = data
 
@@ -125,11 +195,11 @@ class DummyModbusClient(ModbusClientMixin):
             return ExceptionResponse(function_code=0x03, exception_code=0x02, device_id=device_id)  # Modbus exception response for "Illegal Data Address"
         return ModbusPDU(registers=result)
 
-    async def read_holding_registers(self, address: int, count: int, device_id: int, trace: bool = False) -> ModbusPDU:  # noqa: unused arguments required to match real implementation
+    async def read_holding_registers(self, address: int, *, count: int = 1, device_id: int = 1, no_response_expected: bool = False, trace: bool = False) -> ModbusPDU:
         """Simulate a holding register read by returning pre-populated data for ``address``."""
         return self.get_state(address, device_id)
 
-    async def read_input_registers(self, address: int, count: int, device_id: int, trace: bool = False) -> ModbusPDU:  # noqa: unused arguments required to match real implementation
+    async def read_input_registers(self, address: int, *, count: int = 1, device_id: int = 1, no_response_expected: bool = False, trace: bool = False) -> ModbusPDU:
         """Simulate an input register read by returning pre-populated data for ``address``."""
         return self.get_state(address, device_id)
 
@@ -195,6 +265,103 @@ class DummyPSSModbusClient(DummyModbusClient):
         })
 
 
+class DummyCloudControlPort(CloudControlPort):
+    """A simulated cloud control port backed by state from CloudApiTestServer."""
+
+    def __init__(self, server: Any) -> None:
+        self._server = server
+
+    @property
+    def station_id(self) -> str:
+        return str(self._server.station_home_data["stationId"])
+
+    @property
+    def model(self) -> str:
+        return "Sigenergy Cloud"
+
+    @property
+    def capabilities(self) -> Capabilities:
+        return Capabilities(
+            features=frozenset(),
+            min_duration=timedelta(minutes=1),
+            max_duration=timedelta(minutes=1440),
+        )
+
+    async def connect(self) -> None: ...
+
+    async def close(self) -> None: ...
+
+    async def device_list(self) -> list[dict[str, Any]]:
+        return []
+
+    async def gateway_info(self) -> dict[str, Any]:
+        return self._server.gateway_info
+
+    async def device_dynamic_info(self, device_type: int, sn_code: str) -> dict[str, Any]:
+        return self._server.device_dynamic_info.get(device_type, {})
+
+    async def device_static_info(self, device_type: int, sn_code: str) -> dict[str, Any]:
+        return self._server.device_static_info.get(device_type, {})
+
+    async def set_instant_override(self, command: InstantOverrideCommand) -> None: ...
+
+    async def clear_instant_override(self) -> None: ...
+
+    async def instant_control_status(self) -> InstantControlStatus:
+        return InstantControlStatus(
+            bool(self._server.instant_control.get("enable")),
+            None,
+            float(self._server.instant_control["endTime"]) if self._server.instant_control.get("endTime") else None,
+        )
+
+    async def available_operational_modes(self) -> dict[str, Any]:
+        return self._server.available_modes_data
+
+    async def get_operational_mode(self) -> tuple[int, int]:
+        return (self._server.operational_mode, self._server.profile_id)
+
+    async def set_operational_mode(self, mode: int, profile_id: int = -1) -> dict[str, Any]:
+        self._server.operational_mode = mode
+        self._server.profile_id = profile_id
+        return {"code": 0}
+
+    async def grid_export_limit(self) -> dict[str, Any]:
+        return self._server.grid_export_limit
+
+    async def set_grid_export_limit(self, limit_kw: float, *, enabled: bool = True) -> dict[str, Any]:
+        return {"code": 0}
+
+    async def grid_import_limit(self) -> dict[str, Any]:
+        return self._server.grid_import_limit
+
+    async def set_grid_import_limit(self, limit_kw: float, *, enabled: bool = True) -> dict[str, Any]:
+        return {"code": 0}
+
+    async def grid_connection_limit(self) -> dict[str, Any]:
+        return self._server.grid_connection_limit
+
+    async def set_grid_connection_limit(self, limit_a: float, *, enabled: bool = True) -> dict[str, Any]:
+        return {"code": 0}
+
+    async def battery_power_limit(self) -> dict[str, Any]:
+        return self._server.battery_power_limit
+
+    async def set_battery_power_limit(self, *, max_charge_kw: float | None, max_discharge_kw: float | None) -> dict[str, Any]:
+        return {"code": 0}
+
+    async def solar_power_limit(self) -> dict[str, Any]:
+        return self._server.solar_power_limit
+
+    async def set_solar_power_limit(self, limit_kw: float | None) -> dict[str, Any]:
+        return {"code": 0}
+
+    async def battery_export_limitation(self) -> dict[str, Any]:
+        return self._server.battery_export_limitation
+
+    async def set_battery_export_limitation(self, enabled: bool) -> dict[str, Any]:
+        return {"code": 0}
+
+
 async def get_sensor_instances(
     home_assistant_enabled: bool = False,
     plant_index: int = 0,
@@ -204,14 +371,14 @@ async def get_sensor_instances(
     ac_charger_device_address: int = 2,
     firmware_version: str = FIRMWARE_VERSION,
     protocol_version: ProtocolVersion | None = None,
-    output_type: OutputType = OUTPUT_TYPE,
+    output_type: int = OUTPUT_TYPE,
     concrete_sensor_check: bool = False,
 ) -> dict[str, Sensor]:
     """Instantiate the full sensor graph and return all sensors keyed by unique ID.
 
     Creates a :class:`PowerPlant`, two :class:`Inverter` instances (hybrid and PV),
-    a :class:`DCCharger`, and an :class:`ACCharger` against :class:`DummyModbusClient`
-    instances, then collects every sensor (including derived and alarm sensors) into a
+    a :class:`DCCharger`, an :class:`ACCharger`, and a :class:`CloudControl` device against
+    dummy clients, then collects every sensor (including derived and alarm sensors) into a
     flat dictionary.
 
     When ``concrete_sensor_check`` is ``True``, additional validation is performed:
@@ -261,19 +428,30 @@ async def get_sensor_instances(
         protocol_version = max(ProtocolVersion)
     logger.info(f"Sigenergy Modbus ProtocolVersion V{protocol_version.value} [{ProtocolApplies(protocol_version)}] ({home_assistant_enabled=})")
 
+    # Ensure the modbus list has enough entries for the requested plant_index.
+    # Config() may initialise with an empty list when no YAML file or host env
+    # var is present, so we pad with default ModbusConfig instances as needed.
+    while len(active_config.modbus) <= plant_index:
+        active_config.modbus.append(ModbusConfig())  # pyright: ignore[reportCallIssue]
+
     active_config.modbus[plant_index].dc_chargers.append(dc_charger_device_address)
     active_config.modbus[plant_index].ac_chargers.append(ac_charger_device_address)
 
     active_config.home_assistant.enabled = home_assistant_enabled
     active_config.influxdb.enabled = True
     active_config.pvoutput.enabled = True
+    active_config.cloud.username = "test"
+    active_config.cloud.password = "test"
+    active_config.cloud.region = "testing"
+    active_config.cloud.accept_unofficial_api_risk = True
+    active_config.cloud.discover_inverters = True
 
     hi_device_type = HybridInverter(has_grid_code_interface=True, has_independent_phase_power_control_interface=True)
-    hi_modbus_client = DummyInverterModbusClient("SigenStor EC 12.0 TP", "CMU123A45BP678")
+    hi_modbus_client = DummyInverterModbusClient(HYBRID_INVERTER_MODEL, HYBRID_INVERTER_SERIAL)
     pv_device_type = PVInverter(has_grid_code_interface=True, has_independent_phase_power_control_interface=True)
-    pv_modbus_client = DummyInverterModbusClient("Sigen PV Max 5.0 TP", "CMU876A54BP321")
+    pv_modbus_client = DummyInverterModbusClient(PV_INVERTER_MODEL, PV_INVERTER_SERIAL)
 
-    total_rated_active_power = 12 + 5  # Sum of RatedActivePower of both inverters
+    total_rated_active_power = HYBRID_INVERTER_RATED_ACTIVE_POWER + PV_INVERTER_RATED_ACTIVE_POWER
 
     tz = timezone(timedelta(minutes=600))
 
@@ -290,6 +468,42 @@ async def get_sensor_instances(
         pid = None
         pss = None
 
+    from tests.utils.modbus_test_server import CloudApiTestServer
+
+    cloud_server = CloudApiTestServer(None, None)
+    cloud_port = DummyCloudControlPort(cloud_server)
+    cloud_discovery = CloudDiscovery(
+        device_list=[
+            {
+                "systemId": str(cloud_server.station_home_data["stationId"]),
+                "serialNumber": HYBRID_INVERTER_SERIAL[3:],
+                "deviceType": "Inverter",
+                "status": "Normal",
+                "attrMap": {"ratedActivePower": HYBRID_INVERTER_RATED_ACTIVE_POWER},
+            },
+            {
+                "systemId": str(cloud_server.station_home_data["stationId"]),
+                "serialNumber": "987B65BC1238",
+                "deviceType": "Battery",
+                "status": "Normal",
+                "attrMap": {"batPosition": 1},
+            },
+        ],
+        gateway_info=cloud_server.gateway_info,
+        operational_modes=cloud_server.available_modes_data,
+        device_info={
+            HYBRID_INVERTER_SERIAL[3:]: (
+                cloud_server.device_dynamic_info[3],
+                cloud_server.device_static_info[3],
+            ),
+            "987B65BC1238": (
+                cloud_server.device_dynamic_info[4],
+                cloud_server.device_static_info[4],
+            ),
+        },
+    )
+    cloud_control = CloudControl(plant_index, cloud_port, cloud_discovery)
+
     for sensor in [s for s in plant.sensors.values() if isinstance(s, (ActivePowerFixedAdjustmentTargetValue, PhaseActivePowerFixedAdjustmentTargetValue))]:
         sensor.apply_min_max(-total_rated_active_power, total_rated_active_power)
     for sensor in [s for s in plant.sensors.values() if isinstance(s, (ReactivePowerFixedAdjustmentTargetValue, PhaseReactivePowerFixedAdjustmentTargetValue))]:
@@ -301,6 +515,13 @@ async def get_sensor_instances(
 
     def find_concrete_classes(superclass):
         for c in superclass.__subclasses__():
+            # Exclude test-fixture sensor subclasses (e.g. ConcreteSensor defined
+            # in test modules) — they are never instantiated via add_sensor_instance
+            # and would otherwise produce spurious "has not been used?" warnings.
+            if c.__module__.startswith("tests.") or "test_" in c.__module__:
+                continue
+            if "Mixin" in c.__name__:
+                continue
             if len(c.__subclasses__()) == 0:
                 classes[c.__name__] = 0
             else:
@@ -351,12 +572,13 @@ async def get_sensor_instances(
 
         for d in s.derived_sensors.values():
             add_sensor_instance(d)
-        if hasattr(s, "alarms") and isinstance(s.alarms, list):
-            for alarm in s.alarms:
+        alarms = getattr(s, "alarms", None)
+        if isinstance(alarms, list):
+            for alarm in alarms:
                 add_sensor_instance(alarm)
 
     find_concrete_classes(Sensor)
-    for parent in [MetricsService(plant.protocol_version), SettingsService(), plant, hybrid_inverter, dc_charger, ac_charger, pv_inverter, pid, pss]:
+    for parent in [MetricsService(plant.protocol_version), SettingsService(), plant, hybrid_inverter, dc_charger, ac_charger, pv_inverter, pid, pss, cloud_control]:
         if parent is None:
             continue
         devices: list[Device] = [parent]
@@ -409,4 +631,4 @@ async def get_sensor_instances(
 if __name__ == "__main__":
     logger.setLevel(logging.INFO)
     with _swap_active_config(Config()):
-        asyncio.run(get_sensor_instances())
+        asyncio.run(get_sensor_instances(home_assistant_enabled=False))

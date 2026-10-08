@@ -4,16 +4,54 @@ import logging
 import os
 import signal
 import sys
+from pathlib import Path
+from typing import Any, cast
 from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
 
 import pytest
+from aiohttp import ServerDisconnectedError
 from pymodbus import ModbusException
 
-from sigenergy2mqtt.common import ConsumptionMethod, DeviceClass, FirmwareVersion, InputType, ProtocolVersion, StateClass, UnitOfPower
+from sigenergy2mqtt.cloud.exceptions import (
+    CloudControlAuthError,
+    CloudControlError,
+    CloudControlRateLimitedError,
+    CloudControlUnavailableError,
+)
+from sigenergy2mqtt.cloud.mysigen_adapter import MySigenCloudAdapter
+from sigenergy2mqtt.common import (
+    ConsumptionMethod,
+    DeviceClass,
+    FirmwareVersion,
+    InputType,
+    ProtocolVersion,
+    StateClass,
+    UnitOfPower,
+)
 from sigenergy2mqtt.config import _swap_active_config, active_config
+from sigenergy2mqtt.devices import DeviceRegistry, Inverter
+from sigenergy2mqtt.devices.cloud.discovery import (
+    CloudDiscovery,
+    _discover_cloud_device_list,
+    _discover_cloud_gateway_info,
+    discover_cloud,
+    discover_operational_modes,
+)
 from sigenergy2mqtt.main import main as main_mod
-from sigenergy2mqtt.main.device_factories import get_state, make_ac_charger, make_dc_charger, make_plant_and_inverter
-from sigenergy2mqtt.main.device_setup import _is_grid_outage, _setup_ac_chargers, _setup_dc_chargers, setup_devices
+from sigenergy2mqtt.main.device_factories import (
+    get_state,
+    make_ac_charger,
+    make_dc_charger,
+    make_plant_and_inverter,
+)
+from sigenergy2mqtt.main.device_setup import (
+    _cloud_control_plant_index,
+    _is_grid_outage,
+    _setup_ac_chargers,
+    _setup_cloud_control,
+    _setup_dc_chargers,
+    setup_devices,
+)
 from sigenergy2mqtt.main.logging_setup import _configure_logger, configure_logging
 from sigenergy2mqtt.main.main import async_main, thread_config_registry
 from sigenergy2mqtt.main.modbus_helpers import get_modbus_url, read_registers
@@ -21,11 +59,16 @@ from sigenergy2mqtt.main.protocol_probe import probe_optional_interface, probe_p
 from sigenergy2mqtt.main.restart import restart_controller
 from sigenergy2mqtt.main.service_setup import setup_services, setup_signals
 from sigenergy2mqtt.main.thread_config import ThreadConfig
-from sigenergy2mqtt.main.validation import _PUBLISHABLE_SENSOR_VALIDATION_CACHE_VERSION, _inverter_firmware_payload, _validation_hash, validate_publishable_sensors
-from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerRunningState
+from sigenergy2mqtt.main.validation import (
+    _PUBLISHABLE_SENSOR_VALIDATION_CACHE_VERSION,
+    _inverter_firmware_payload,
+    _validation_hash,
+    validate_publishable_sensors,
+)
 from sigenergy2mqtt.sensors.base import Sensor
-from sigenergy2mqtt.sensors.inverter_read_only import InverterFirmwareVersion
-from sigenergy2mqtt.sensors.plant_read_only import SystemTimeZone
+from sigenergy2mqtt.sensors.ev.ac_charger_read_only import ACChargerRunningState
+from sigenergy2mqtt.sensors.inverter.read_only import InverterFirmwareVersion
+from sigenergy2mqtt.sensors.plant.read_only import SystemTimeZone
 
 
 class FmtMock(MagicMock):
@@ -43,6 +86,300 @@ class IllegalAddressResponse:
 
     def isError(self):
         return True
+
+
+def _registered_inverter(plant_index: int, **attributes: str) -> Inverter:
+    inverter = dict.__new__(Inverter)
+    dict.__init__(inverter, attributes)
+    inverter.plant_index = plant_index
+    DeviceRegistry.add(plant_index, inverter)
+    return inverter
+
+
+@pytest.mark.parametrize("serial_key", ["sn", "serial_number"])
+def test_cloud_control_plant_index_matches_local_inverter(serial_key):
+    _registered_inverter(3, **{serial_key: "LOCAL-SN"})
+
+    assert (
+        _cloud_control_plant_index([
+            {"deviceType": "Battery", "serialNumber": "LOCAL-SN"},
+            {"deviceType": "Inverter", "serialNumber": "LOCAL-SN"},
+        ])
+        == 3
+    )
+
+
+def test_cloud_control_plant_index_disables_unmatched_cloud(caplog):
+    _registered_inverter(2, sn="OTHER-SN")
+
+    with caplog.at_level(logging.WARNING):
+        assert _cloud_control_plant_index([{"deviceType": "Inverter", "serialNumber": "CLOUD-SN"}]) is None
+
+    assert "Cloud API disabled" in caplog.text
+
+
+def test_cloud_control_plant_index_disables_single_unreadable_serial(caplog):
+    _registered_inverter(2)
+
+    with caplog.at_level(logging.WARNING):
+        assert _cloud_control_plant_index([{"deviceType": "Inverter", "serialNumber": "CLOUD-SN"}]) is None
+
+    assert "serial numbers are unavailable for plant indexes [2]" in caplog.text
+    assert "cannot be matched safely" in caplog.text
+
+
+def test_cloud_control_plant_index_disables_ambiguous_unreadable_serials(caplog):
+    _registered_inverter(1)
+    _registered_inverter(2)
+
+    with caplog.at_level(logging.WARNING):
+        assert _cloud_control_plant_index([{"deviceType": "Inverter", "serialNumber": "CLOUD-SN"}]) is None
+
+    assert "cannot be matched safely" in caplog.text
+    assert "will be disabled" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_unmatched_cloud_control_is_not_configured() -> None:
+    _registered_inverter(2, sn="OTHER-SN")
+    cloud_port = MagicMock()
+    cloud_port.device_list = AsyncMock(return_value=[{"deviceType": "Inverter", "serialNumber": "CLOUD-SN"}])
+
+    device_list = cast(list[dict[str, Any]], await _discover_cloud_device_list(cloud_port))
+    assert _cloud_control_plant_index(device_list) is None
+
+
+@pytest.mark.asyncio
+async def test_matched_cloud_control_discovery_returns_device_list() -> None:
+    _registered_inverter(2, sn="CLOUD-SN")
+    cloud_port = MagicMock()
+    cloud_port.device_list = AsyncMock(return_value=[{"deviceType": "Inverter", "serialNumber": "CLOUD-SN"}])
+
+    device_list = cast(list[dict[str, Any]], await _discover_cloud_device_list(cloud_port))
+    assert _cloud_control_plant_index(device_list) == 2
+
+
+@pytest.mark.asyncio
+async def test_unreadable_local_serial_does_not_bind_cloud_control() -> None:
+    _registered_inverter(2)
+    cloud_port = MagicMock()
+    cloud_port.device_list = AsyncMock(return_value=[{"deviceType": "Inverter", "serialNumber": "CLOUD-SN"}])
+
+    device_list = cast(list[dict[str, Any]], await _discover_cloud_device_list(cloud_port))
+    assert _cloud_control_plant_index(device_list) is None
+
+
+@pytest.mark.asyncio
+async def test_cloud_control_discovery_failure_disables_cloud_control(caplog):
+    cloud_port = MagicMock()
+    cloud_port.device_list = AsyncMock(side_effect=CloudControlAuthError("bad credentials"))
+
+    with caplog.at_level(logging.WARNING):
+        assert await _discover_cloud_device_list(cloud_port) is None
+
+    assert "Cloud inverter discovery failed" in caplog.text
+    assert "Cloud API will be disabled" in caplog.text
+    assert "bad credentials" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_cloud_discovery_keeps_inverter_for_matching_when_disabled(monkeypatch):
+    monkeypatch.setattr(active_config.cloud, "discover_inverters", False, raising=False)
+    _registered_inverter(2, sn="INV-1")
+    cloud_port = MagicMock()
+    cloud_port.gateway_info = AsyncMock(return_value={"snCode": "GATEWAY"})
+    cloud_port.device_list = AsyncMock(
+        return_value=[
+            {"deviceType": "Inverter", "serialNumber": "INV-1"},
+            {"deviceType": "Battery", "serialNumber": "BAT-1"},
+        ]
+    )
+    cloud_port.device_dynamic_info = AsyncMock(return_value={})
+    cloud_port.device_static_info = AsyncMock(return_value={})
+
+    discovery = await discover_cloud(cloud_port)
+
+    assert discovery is not None
+    assert [device["deviceType"] for device in discovery.device_list] == ["Inverter", "Battery"]
+    assert _cloud_control_plant_index(discovery.device_list) == 2
+
+
+@pytest.mark.asyncio
+async def test_gateway_discovery_retries_transient_failures() -> None:
+    cloud_port = MagicMock()
+    cloud_port.gateway_info = AsyncMock(
+        side_effect=[
+            CloudControlUnavailableError("temporary failure"),
+            {"snCode": "GATEWAY"},
+        ]
+    )
+
+    with patch("sigenergy2mqtt.devices.cloud.discovery.asyncio.sleep", new_callable=AsyncMock) as sleep:
+        assert await _discover_cloud_gateway_info(cloud_port) == {"snCode": "GATEWAY"}
+
+    assert cloud_port.gateway_info.await_count == 2
+    sleep.assert_awaited_once_with(1.0)
+
+
+@pytest.mark.asyncio
+async def test_gateway_discovery_gives_up_after_bounded_retries(caplog) -> None:
+    cloud_port = MagicMock()
+    cloud_port.gateway_info = AsyncMock(side_effect=CloudControlUnavailableError("persistent failure"))
+
+    with (
+        patch("sigenergy2mqtt.devices.cloud.discovery.asyncio.sleep", new_callable=AsyncMock) as sleep,
+        caplog.at_level(logging.WARNING),
+    ):
+        assert await _discover_cloud_gateway_info(cloud_port) is None
+
+    assert cloud_port.gateway_info.await_count == 3
+    assert sleep.await_count == 2
+    assert "failed after 3 attempts" in caplog.text
+
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        CloudControlAuthError("authentication failed"),
+        CloudControlRateLimitedError("rate limited", retry_after=60),
+    ],
+)
+@pytest.mark.asyncio
+async def test_gateway_discovery_does_not_retry_auth_or_rate_limits(
+    error: CloudControlError,
+) -> None:
+    cloud_port = MagicMock()
+    cloud_port.gateway_info = AsyncMock(side_effect=error)
+
+    with patch("sigenergy2mqtt.devices.cloud.discovery.asyncio.sleep", new_callable=AsyncMock) as sleep:
+        assert await _discover_cloud_gateway_info(cloud_port) is None
+
+    cloud_port.gateway_info.assert_awaited_once_with()
+    sleep.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_operational_mode_discovery_returns_options() -> None:
+    cloud_port = MagicMock()
+    modes = {
+        "defaultWorkingModes": [{"label": "Self Consumption", "value": "2"}],
+        "energyProfileItems": [],
+    }
+    cloud_port.available_operational_modes = AsyncMock(return_value=modes)
+
+    assert (await discover_operational_modes(cloud_port, CloudDiscovery(device_list=[]))).operational_modes == modes
+
+
+@pytest.mark.asyncio
+async def test_operational_mode_discovery_leaves_payload_validation_to_device() -> None:
+    cloud_port = MagicMock()
+    cloud_port.available_operational_modes = AsyncMock(return_value={"defaultWorkingModes": [], "energyProfileItems": []})
+
+    assert (await discover_operational_modes(cloud_port, CloudDiscovery(device_list=[]))).operational_modes == {
+        "defaultWorkingModes": [],
+        "energyProfileItems": [],
+    }
+
+
+def test_cloud_control_discovery_replaces_session_across_event_loops():
+    _registered_inverter(0, sn="CLOUD-SN")
+    cloud_port = MySigenCloudAdapter("user", "password", "eu")
+    cloud_port.device_list = AsyncMock(  # type: ignore[method-assign]
+        return_value=[{"deviceType": "Inverter", "serialNumber": "CLOUD-SN"}]
+    )
+
+    async def discover():
+        startup_session = await cloud_port._client._http_session()
+        cloud_port._connected = True
+        device_list = cast(list[dict[str, Any]], await _discover_cloud_device_list(cloud_port))
+        assert _cloud_control_plant_index(device_list) == 0
+        # Caller is now responsible for closing; do it here so the session is replaced.
+        await cloud_port.close()
+        assert startup_session.closed
+        return startup_session
+
+    startup_session = asyncio.run(discover())
+
+    async def open_polling_session():
+        polling_session = await cloud_port._client._http_session()
+        try:
+            assert polling_session is not startup_session
+            assert polling_session._loop is asyncio.get_running_loop()
+        finally:
+            await cloud_port.close()
+
+    asyncio.run(open_polling_session())
+
+
+@pytest.mark.asyncio
+async def test_cloud_control_transport_failure_disables_cloud_control() -> None:
+    cloud_port = MagicMock()
+    cloud_port.device_list = AsyncMock(side_effect=ServerDisconnectedError())
+
+    assert await _discover_cloud_device_list(cloud_port) is None
+
+
+@pytest.mark.asyncio
+async def test_cloud_control_close_failure_does_not_abort_startup(caplog):
+    cloud_port = MagicMock()
+    cloud_port.gateway_info = AsyncMock(return_value=None)
+    cloud_port.device_list = AsyncMock(return_value=[{"deviceType": "Inverter", "serialNumber": "SN-1"}])
+    cloud_port.device_dynamic_info = AsyncMock(return_value={})
+    cloud_port.device_static_info = AsyncMock(return_value={})
+    cloud_port.available_operational_modes = AsyncMock(return_value={})
+    cloud_port.close = AsyncMock(side_effect=OSError("close failed"))
+
+    with (
+        patch("sigenergy2mqtt.main.device_setup.cloud_control_registry") as registry,
+        patch("sigenergy2mqtt.main.device_setup.ThreadConfig.create") as mock_create_thread,
+        caplog.at_level(logging.ERROR),
+    ):
+        registry.configure = MagicMock()
+        registry.active = cloud_port
+        _registered_inverter(0, sn="SN-1")
+        await _setup_cloud_control()
+
+    assert "Failed to close cloud adapter after discovery" in caplog.text
+    assert "Cloud API will be disabled" in caplog.text
+    mock_create_thread.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_cloud_control_successful_setup_closes_once():
+    from unittest.mock import call
+    
+    cloud_port = MagicMock()
+    cloud_port.gateway_info = AsyncMock(return_value=None)
+    cloud_port.device_list = AsyncMock(return_value=[{"deviceType": "Inverter", "serialNumber": "SN-1"}])
+    cloud_port.device_dynamic_info = AsyncMock(return_value={})
+    cloud_port.device_static_info = AsyncMock(return_value={})
+    cloud_port.available_operational_modes = AsyncMock(return_value={})
+    cloud_port.close = AsyncMock()
+
+    manager = MagicMock()
+    manager.attach_mock(cloud_port.device_list, "device_list")
+    manager.attach_mock(cloud_port.available_operational_modes, "modes")
+    manager.attach_mock(cloud_port.close, "close")
+
+    with (
+        patch("sigenergy2mqtt.main.device_setup.cloud_control_registry") as registry,
+        patch("sigenergy2mqtt.main.device_setup.ThreadConfig.create") as mock_create_thread,
+    ):
+        registry.configure = MagicMock()
+        registry.active = cloud_port
+        _registered_inverter(0, sn="SN-1")
+        await _setup_cloud_control()
+
+    # Verify close count and that it happened exactly once after discovery
+    manager.assert_has_calls(
+        [
+            call.device_list(),
+            call.modes(),
+            call.close(),
+        ]
+    )
+    cloud_port.close.assert_awaited_once()
+    mock_create_thread.assert_called_once()
 
 
 def make_validation_sensor(suffix: str, address: int = 30001):
@@ -111,7 +448,7 @@ def clean_config(monkeypatch):
     cfg.metrics_enabled = False
     cfg.clean = False
     cfg.log_level = logging.INFO
-    cfg.persistent_state_path = "/tmp"
+    cfg.persistent_state_path = Path("/tmp")
     cfg.mqtt.anonymous = True
 
     with _swap_active_config(cfg):
@@ -235,6 +572,7 @@ class TestConfigureLogging:
             configure_logging()
             filter_obj = next((f for f in logger.filters if f.__class__.__name__ == "_FramerSkipFilter"), None)
             assert filter_obj is not None
+            assert isinstance(filter_obj, logging.Filter)
 
             record1 = logging.LogRecord("name", logging.ERROR, "pathname", 1, "ERROR: request ask for transaction_id=2560 but got id=2559, Skipping.", None, None)
 
@@ -332,16 +670,16 @@ class TestGetState:
         ):
             sensor = InverterFirmwareVersion(plant_index=0, device_address=1)
             mock_device = MagicMock()
-            hw = {"value": "V1R1C1SPC1"}
+            sw = {"value": "V1R1C1SPC1"}
 
             def _getitem(key):
-                if key == "hw":
-                    return hw["value"]
+                if key == "sw":
+                    return sw["value"]
                 return None
 
             def _setitem(key, value):
-                if key == "hw":
-                    hw["value"] = value
+                if key == "sw":
+                    sw["value"] = value
 
             mock_device.__getitem__.side_effect = _getitem
             mock_device.__setitem__.side_effect = _setitem
@@ -368,16 +706,16 @@ class TestGetState:
         ):
             sensor = InverterFirmwareVersion(plant_index=0, device_address=1)
             mock_device = MagicMock()
-            hw = {"value": "V1R1C1SPC1B1"}
+            sw = {"value": "V1R1C1SPC1B1"}
 
             def _getitem(key):
-                if key == "hw":
-                    return hw["value"]
+                if key == "sw":
+                    return sw["value"]
                 return None
 
             def _setitem(key, value):
-                if key == "hw":
-                    hw["value"] = value
+                if key == "sw":
+                    sw["value"] = value
 
             mock_device.__getitem__.side_effect = _getitem
             mock_device.__setitem__.side_effect = _setitem
@@ -399,16 +737,16 @@ class TestGetState:
         ):
             sensor = InverterFirmwareVersion(plant_index=0, device_address=1)
             mock_device = MagicMock()
-            hw = {"value": "V1R1C1SPC1"}
+            sw = {"value": "V1R1C1SPC1"}
 
             def _getitem(key):
-                if key == "hw":
-                    return hw["value"]
+                if key == "sw":
+                    return sw["value"]
                 return None
 
             def _setitem(key, value):
-                if key == "hw":
-                    hw["value"] = value
+                if key == "sw":
+                    sw["value"] = value
 
             mock_device.__getitem__.side_effect = _getitem
             mock_device.__setitem__.side_effect = _setitem
@@ -426,8 +764,8 @@ class TestModbusHelpers:
 
     def test_get_modbus_url_unknown(self):
         """Test get_modbus_url with unknown client."""
-        assert get_modbus_url(None) == "modbus://unknown"
-        assert get_modbus_url(object()) == "modbus://unknown"
+        assert get_modbus_url(None) == "modbus://unknown"  # type: ignore[arg-type]
+        assert get_modbus_url(object()) == "modbus://unknown"  # type: ignore[arg-type]
 
     @pytest.mark.asyncio
     async def test_read_registers_input(self):
@@ -440,14 +778,14 @@ class TestModbusHelpers:
     async def test_read_registers_none_client(self):
         """Test read_registers with None client."""
         with pytest.raises(ValueError, match="modbus_client cannot be None"):
-            await read_registers(None, 0, 1, 1, InputType.HOLDING)
+            await read_registers(None, 0, 1, 1, InputType.HOLDING)  # type: ignore[arg-type]
 
     @pytest.mark.asyncio
     async def test_read_registers_invalid_type(self):
         """Test read_registers with invalid type."""
         mock_client = AsyncMock()
         with pytest.raises(ValueError, match="Unknown input type"):
-            await read_registers(mock_client, 0, 1, 1, "INVALID")
+            await read_registers(mock_client, 0, 1, 1, "INVALID")  # type: ignore[arg-type]
 
 
 class TestDiscovery:
@@ -522,7 +860,7 @@ class TestFactories:
         mock_plant = MagicMock(unique_id="plant_id", protocol_version=ProtocolVersion.V2_8)
         with patch("sigenergy2mqtt.devices.ACCharger.create", new_callable=AsyncMock) as mock_create:
             mock_create.return_value = MagicMock()
-            charger = await make_ac_charger(0, mock_client, 1, mock_plant)
+            charger = await make_ac_charger(0, 1, mock_client, mock_plant)
             assert charger.via_device == "plant_id"
 
     @pytest.mark.asyncio
@@ -590,12 +928,12 @@ class TestFactories:
             patch("sigenergy2mqtt.main.device_factories.probe_protocol", AsyncMock(return_value=ProtocolVersion.V2_8)),
             patch("sigenergy2mqtt.main.device_factories.probe_optional_interface", AsyncMock(return_value=False)),
             patch("sigenergy2mqtt.devices.PowerPlant.create", AsyncMock(return_value=MagicMock(protocol_version=ProtocolVersion.V2_8, unique_id="p1"))),
-            patch("sigenergy2mqtt.sensors.inverter_read_only.InverterFirmwareVersion.get_state", AsyncMock(return_value="V122R001C00SPC113B717A")),
-            patch("sigenergy2mqtt.sensors.inverter_read_only.InverterModel.get_state", AsyncMock(return_value="MDL1")),
-            patch("sigenergy2mqtt.sensors.inverter_read_only.PACKBCUCount.get_state", AsyncMock(return_value=1)),
-            patch("sigenergy2mqtt.sensors.inverter_read_only.PVStringCount.get_state", AsyncMock(return_value=1)),
-            patch("sigenergy2mqtt.sensors.inverter_read_only.InverterSerialNumber.get_state", AsyncMock(return_value="SN1")),
-            patch("sigenergy2mqtt.sensors.inverter_read_only.OutputType.get_state", AsyncMock(return_value=1)),
+            patch("sigenergy2mqtt.sensors.inverter.read_only.InverterFirmwareVersion.get_state", AsyncMock(return_value="V122R001C00SPC113B717A")),
+            patch("sigenergy2mqtt.sensors.inverter.read_only.InverterModel.get_state", AsyncMock(return_value="MDL1")),
+            patch("sigenergy2mqtt.sensors.inverter.read_only.PACKBCUCount.get_state", AsyncMock(return_value=1)),
+            patch("sigenergy2mqtt.sensors.inverter.read_only.PVStringCount.get_state", AsyncMock(return_value=1)),
+            patch("sigenergy2mqtt.sensors.inverter.read_only.InverterSerialNumber.get_state", AsyncMock(return_value="SN1")),
+            patch("sigenergy2mqtt.sensors.inverter.read_only.OutputType.get_state", AsyncMock(return_value=1)),
             patch("sigenergy2mqtt.devices.inverter.inverter.logger.debug") as mock_debug,
         ):
             await make_plant_and_inverter(0, mock_client, 1, None, seen)
@@ -615,12 +953,12 @@ class TestFactories:
             patch("sigenergy2mqtt.main.device_factories.probe_protocol", AsyncMock(return_value=ProtocolVersion.V2_8)),
             patch("sigenergy2mqtt.main.device_factories.probe_optional_interface", AsyncMock(return_value=False)),
             patch("sigenergy2mqtt.devices.PowerPlant.create", AsyncMock(return_value=MagicMock(protocol_version=ProtocolVersion.V2_8, unique_id="p1"))),
-            patch("sigenergy2mqtt.sensors.inverter_read_only.InverterFirmwareVersion.get_state", AsyncMock(return_value="V122R001C00SPC112B701P")),
-            patch("sigenergy2mqtt.sensors.inverter_read_only.InverterModel.get_state", AsyncMock(return_value="MDL1")),
-            patch("sigenergy2mqtt.sensors.inverter_read_only.PACKBCUCount.get_state", AsyncMock(return_value=1)),
-            patch("sigenergy2mqtt.sensors.inverter_read_only.PVStringCount.get_state", AsyncMock(return_value=1)),
-            patch("sigenergy2mqtt.sensors.inverter_read_only.InverterSerialNumber.get_state", AsyncMock(return_value="SN1")),
-            patch("sigenergy2mqtt.sensors.inverter_read_only.OutputType.get_state", AsyncMock(return_value=1)),
+            patch("sigenergy2mqtt.sensors.inverter.read_only.InverterFirmwareVersion.get_state", AsyncMock(return_value="V122R001C00SPC112B701P")),
+            patch("sigenergy2mqtt.sensors.inverter.read_only.InverterModel.get_state", AsyncMock(return_value="MDL1")),
+            patch("sigenergy2mqtt.sensors.inverter.read_only.PACKBCUCount.get_state", AsyncMock(return_value=1)),
+            patch("sigenergy2mqtt.sensors.inverter.read_only.PVStringCount.get_state", AsyncMock(return_value=1)),
+            patch("sigenergy2mqtt.sensors.inverter.read_only.InverterSerialNumber.get_state", AsyncMock(return_value="SN1")),
+            patch("sigenergy2mqtt.sensors.inverter.read_only.OutputType.get_state", AsyncMock(return_value=1)),
         ):
             await make_plant_and_inverter(0, mock_client, 1, None, seen)
             assert clean_config.ems_mode_check is True
@@ -630,7 +968,7 @@ class TestFactories:
         mock_client = AsyncMock()
         mock_client.comm_params.host = "h"
         mock_client.comm_params.port = 502
-        mock_client.__format__ = lambda s, f: "h:502"
+        mock_client.__format__ = lambda f: "h:502"  # type: ignore[assignment]
         seen = set()
         clean_config.consumption = ConsumptionMethod.CALCULATED
         # SN, Model, PACKBCUCount, SystemTimeZone, InverterFirmwareVersion, OutputType, ESSPreHeatingEnable
@@ -660,6 +998,7 @@ class TestFactories:
             asyncio.run(make_plant_and_inverter(0, mock_client, 1, None, seen))
 
             assert mock_plant_create.await_count == 1
+            assert mock_plant_create.await_args is not None
             assert str(mock_plant_create.await_args.args[2]) == "V122R001C00SPC113B717A"
 
     def test_make_plant_and_inverter_existing_plant_skips_output_type_and_firmware_reads(self):
@@ -685,7 +1024,7 @@ class TestFactories:
         mock_client = AsyncMock()
         mock_client.comm_params.host = "h"
         mock_client.comm_params.port = 502
-        mock_client.__format__ = lambda s, f: "h:502"
+        mock_client.__format__ = lambda f: "h:502"  # type: ignore[assignment]
         seen = set()
         # SN, Model, PACKBCUCount, SystemTimeZone, InverterFirmwareVersion, OutputType (returns None)
         with (
@@ -767,8 +1106,27 @@ async def test_setup_devices_ignored_host(clean_config):
     clean_config.modbus[0].registers.write_only = False
     seen = set()
     thread_config_registry.clear()
-    configs, proto = await setup_devices(seen)
+    configs, _proto = await setup_devices(seen)
     assert len(configs) == 0
+
+
+@pytest.mark.asyncio
+async def test_setup_devices_omits_cloud_control_when_discovery_fails(clean_config):
+    clean_config.modbus[0].registers.read_only = False
+    clean_config.modbus[0].registers.read_write = False
+    clean_config.modbus[0].registers.write_only = False
+    cloud_port = MagicMock()
+    cloud_port.gateway_info = AsyncMock(return_value=None)
+    cloud_port.device_list = AsyncMock(side_effect=CloudControlAuthError("bad credentials"))
+    cloud_port.close = AsyncMock()
+    thread_config_registry.clear()
+
+    with patch("sigenergy2mqtt.main.device_setup.cloud_control_registry") as registry:
+        registry.active = cloud_port
+        configs, _ = await setup_devices(set())
+
+    assert configs == []
+    cloud_port.close.assert_awaited_once_with()
 
 
 @pytest.mark.asyncio
@@ -779,7 +1137,7 @@ async def test_setup_devices_connection_failure(clean_config, monkeypatch):
     mock_client.comm_params = FmtMock()
     mock_client.comm_params.host = "h"
     mock_client.comm_params.port = 502
-    mock_client.__str__ = lambda x: "h:502"
+    mock_client.__str__ = lambda: "h:502"  # type: ignore[assignment]
     mock_client.__aenter__.return_value = mock_client
     monkeypatch.setattr("sigenergy2mqtt.main.device_setup.ModbusClient", lambda *a, **k: mock_client)
 
@@ -821,7 +1179,7 @@ async def test_coverage_gap_closers(clean_config, monkeypatch):
         patch("sigenergy2mqtt.main.device_factories.probe_optional_interface", AsyncMock(return_value=False)),
         patch("sigenergy2mqtt.devices.Inverter.create", AsyncMock(return_value=MagicMock())),
     ):
-        inv, plant = await make_plant_and_inverter(0, mock_client, 1, mock_plant, seen)
+        _inv, plant = await make_plant_and_inverter(0, mock_client, 1, mock_plant, seen)
         assert plant is mock_plant
 
     from sigenergy2mqtt.modbus import ModbusDataType
@@ -878,9 +1236,10 @@ async def test_validate_publishable_sensors_saves_illegal_address_cache(clean_co
     await main_mod.validate_publishable_sensors(mock_client, device, firmware_versions)
 
     assert sensor.publishable is False
-    main_mod.read_registers.assert_awaited_once()
-    main_mod.state_store.save.assert_awaited_once()
-    saved_payload = json.loads(main_mod.state_store.save.await_args.args[2])
+    main_mod.read_registers.assert_awaited_once()  # type: ignore[union-attr]
+    main_mod.state_store.save.assert_awaited_once()  # type: ignore[union-attr]
+    assert main_mod.state_store.save.await_args is not None  # type: ignore[union-attr]
+    saved_payload = json.loads(main_mod.state_store.save.await_args.args[2])  # type: ignore[union-attr]
     assert saved_payload["inverter_firmware_versions"] == {"1": firmware_versions[1], "2": firmware_versions[2]}
     assert saved_payload["modbus_config_hash"] == "modbus-a"
     assert saved_payload["illegal_sensor_unique_ids"] == [sensor.unique_id]
@@ -1009,12 +1368,12 @@ def test_exit_on_signal(clean_config):
     """Test exit_on_signal logic."""
     mock_config = MagicMock()
     configs = [mock_config]
-    setup_signals(configs)
+    setup_signals(cast(list, configs))
 
     with patch("signal.signal") as mock_sig:
-        setup_signals(configs)
+        setup_signals(cast(list, configs))
         # Find SIGINT handler
-        handler = [call.args[1] for call in mock_sig.call_args_list if call.args[0] == signal.SIGINT][0]
+        handler = next(call.args[1] for call in mock_sig.call_args_list if call.args[0] == signal.SIGINT)
         handler(signal.SIGINT, None)
         assert mock_config.offline.called
 
@@ -1096,7 +1455,7 @@ class TestSignals:
         with patch("signal.signal") as mock_sig:
             mock_config = MagicMock()
             setup_signals([mock_config])
-            handler = [call.args[1] for call in mock_sig.call_args_list if call.args[0] == signal.SIGUSR1][0]
+            handler = next(call.args[1] for call in mock_sig.call_args_list if call.args[0] == signal.SIGUSR1)
             handler(signal.SIGUSR1, None)
             assert active_config.home_assistant.enabled is False
             mock_config.offline.assert_called_once()
@@ -1105,7 +1464,7 @@ class TestSignals:
         """Test reload_on_signal signal handler."""
         with patch("signal.signal") as mock_sig, patch.object(active_config, "reload") as mock_reload, patch.object(restart_controller, "request") as mock_request:
             setup_signals([MagicMock()])
-            handler = [call.args[1] for call in mock_sig.call_args_list if call.args[0] == signal.SIGHUP][0]
+            handler = next(call.args[1] for call in mock_sig.call_args_list if call.args[0] == signal.SIGHUP)
             with patch("asyncio.get_running_loop") as mock_get_loop:
                 mock_loop = MagicMock()
                 mock_get_loop.return_value = mock_loop

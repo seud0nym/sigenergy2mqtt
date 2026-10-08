@@ -1,3 +1,3 @@
-from .modbus_sensors import get_sensor_instances
+from .modbus_sensors import DummyCloudControlPort, get_sensor_instances
 
-__all__ = ["get_sensor_instances"]
+__all__ = ["DummyCloudControlPort", "get_sensor_instances"]

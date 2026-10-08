@@ -1,8 +1,13 @@
-from sigenergy2mqtt.common import DeviceClass, InputType, ProtocolVersion, UnitOfElectricCurrent
+from sigenergy2mqtt.common import (
+    DeviceClass,
+    InputType,
+    ProtocolVersion,
+    UnitOfElectricCurrent,
+)
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus import ModbusDataType
 
-from .base import NumericSensor, ScanInterval, WriteOnlySensor
+from ..base import NumericSensor, ScanInterval, WriteOnlySensor
 
 # 5.6 AC-Charger parameter setting address definition (holding register)
 

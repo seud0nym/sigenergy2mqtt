@@ -14,7 +14,11 @@ from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.persistence import Category, state_store
-from sigenergy2mqtt.sensors.base import AlarmCombinedSensor, ModbusSensorMixin, WriteOnlySensorMixin
+from sigenergy2mqtt.sensors.base import (
+    AlarmCombinedSensor,
+    ModbusSensorMixin,
+    WriteOnlySensorMixin,
+)
 
 from .modbus_helpers import read_registers
 

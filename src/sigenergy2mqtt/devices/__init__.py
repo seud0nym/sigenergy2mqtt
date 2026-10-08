@@ -1,5 +1,6 @@
 from .base.device import Device, ModbusDevice, bind_cross_device_sensors
 from .base.registry import DeviceRegistry
+from .cloud import CloudControl, Gateway
 from .ev.ac_charger import ACCharger
 from .ev.dc_charger import DCCharger
 from .inverter.ess import ESS
@@ -18,10 +19,12 @@ __all__ = [
     "PID",
     "PSS",
     "ACCharger",
+    "CloudControl",
     "DCCharger",
     "Device",
     "DeviceRegistry",
     "ESSPreHeating",
+    "Gateway",
     "GridCode",
     "GridSensor",
     "Inverter",

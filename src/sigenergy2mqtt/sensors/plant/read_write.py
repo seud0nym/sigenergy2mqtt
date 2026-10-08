@@ -5,7 +5,18 @@ from typing import Any, cast
 
 import paho.mqtt.client as mqtt
 
-from sigenergy2mqtt.common import PERCENTAGE, Constants, DeviceClass, HybridInverter, InputType, ProtocolVersion, PVInverter, UnitOfFrequency, UnitOfPower, UnitOfReactivePower
+from sigenergy2mqtt.common import (
+    PERCENTAGE,
+    Constants,
+    DeviceClass,
+    HybridInverter,
+    InputType,
+    ProtocolVersion,
+    PVInverter,
+    UnitOfFrequency,
+    UnitOfPower,
+    UnitOfReactivePower,
+)
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.base import (
@@ -551,6 +562,14 @@ class Reserved40026(ReservedSensor, HybridInverter, PVInverter):
 class RemoteEMS(SwitchSensor, HybridInverter, PVInverter, AvailabilityMixin):
     ADDRESS = 40029
 
+    @property
+    def payload_available(self) -> bool | int | float | str | None:
+        return 1
+
+    @property
+    def payload_not_available(self) -> bool | int | float | str | None:
+        return 0
+
     def __init__(self, plant_index: int):
         super().__init__(
             availability_control_sensor=None,
@@ -594,6 +613,14 @@ class RemoteEMSControlMode(SelectSensor, HybridInverter, PVInverter):
             ],
             protocol_version=ProtocolVersion.V1_8,
         )
+
+    def clean_state(self, mqtt_client: mqtt.Client) -> None:
+        """Clean up published sensor state."""
+        for key in ("is_charging_discharging_topic", "is_charging_mode_topic", "is_discharging_mode_topic", "is_pcs_remote_control_mode_topic"):
+            topic = getattr(self, key, None)
+            if topic:
+                self._publish_message(mqtt_client, topic, b"", qos=1)
+        return super().clean_state(mqtt_client)
 
     def configure_mqtt_topics(self, device_id: str) -> str:
         base = super().configure_mqtt_topics(device_id)
@@ -642,6 +669,14 @@ class RemoteEMSControlMode(SelectSensor, HybridInverter, PVInverter):
 
 class IndependentPhasePowerControl(SwitchSensor, AvailabilityMixin, HybridInverter):
     ADDRESS = 40030
+
+    @property
+    def payload_available(self) -> bool | int | float | str | None:
+        return 1
+
+    @property
+    def payload_not_available(self) -> bool | int | float | str | None:
+        return 0
 
     # Valid only when Output Type is L1/L2/L3/N. To enable independent phase control, this parameter must be enabled.
     def __init__(self, plant_index: int, output_type: int):

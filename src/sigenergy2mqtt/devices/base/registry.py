@@ -54,3 +54,8 @@ class DeviceRegistry:
             plant_index, or an empty list if the plant index is not known.
         """
         return list(cls._devices.get(plant_index, []))
+
+    @classmethod
+    def all(cls) -> list["Device"]:
+        """Return a snapshot of every registered device."""
+        return [device for devices in cls._devices.values() for device in devices]

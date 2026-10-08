@@ -7,7 +7,12 @@ from datetime import time
 from sigenergy2mqtt.common.consumption_source import ConsumptionSource
 from sigenergy2mqtt.common.tariff_type import TariffType
 from sigenergy2mqtt.common.voltage_source import VoltageSource
-from sigenergy2mqtt.config.models import HomeAssistantConfig, ModbusConfig, MqttConfig, PvOutputConfig
+from sigenergy2mqtt.config.models import (
+    HomeAssistantConfig,
+    ModbusConfig,
+    MqttConfig,
+    PvOutputConfig,
+)
 
 
 class TestHomeAssistantConfig:

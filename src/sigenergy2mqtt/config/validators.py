@@ -9,7 +9,13 @@ import logging
 from typing import Any
 
 from sigenergy2mqtt.common import TariffType, TimePeriod
-from sigenergy2mqtt.config.validation import check_bool, check_float, check_int, check_string, check_time
+from sigenergy2mqtt.config.validation import (
+    check_bool,
+    check_float,
+    check_int,
+    check_string,
+    check_time,
+)
 
 # ---------------------------------------------------------------------------
 # Log level

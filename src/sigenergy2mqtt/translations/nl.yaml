@@ -310,10 +310,14 @@ class:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Gemiddelde Celspanning
+  BatteryChargePowerLimit:
+    name: Laadvermogenlimiet van de accu
   BatteryChargingPower:
     attributes:
       source: BatteryPower > 0 #verify:ignore
     name: Batterij Laadvermogen
+  BatteryDischargePowerLimit:
+    name: Vermogenslimiet voor het ontladen van de accu
   BatteryDischargingPower:
     attributes:
       source: BatteryPower < 0 × -1 #verify:ignore
@@ -352,6 +356,55 @@ class:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Batterijvermogen
+  CloudAuthErrors:
+    name: Fouten bij cloud-authenticatie
+  CloudAvailable:
+    name: Beschikbaar in de cloud
+  CloudBattery:
+    name: '{model_name} {sn}'
+  CloudConnected:
+    name: Verbonden met de cloud
+  CloudConnectionAttempts:
+    name: Pogingen tot verbinding met de cloud
+  CloudConnectionErrors:
+    name: Fouten bij de cloudverbinding
+  CloudConnectionMax:
+    name: Cloud Connection Max  # verify:ignore
+  CloudConnectionMean:
+    name: Betekenis van ‘Cloud Connection’
+  CloudConnectionMin:
+    name: Cloudverbinding Min
+  CloudConnectionTotal:
+    name: Totaal aantal cloudverbindingen
+  CloudConnections:
+    name: Succesvolle cloudverbindingen
+  CloudControl:
+    name: Sigenergy Cloud-{plant_suffix}
+  CloudGridLimitSensor:
+    attributes:
+      comment: Alleen beschikbaar wanneer de installateur een maximumlimiet heeft ingesteld.
+  CloudInverter:
+    name: '{model_name} {sn}'
+  CloudLogLevel:
+    attributes:
+      comment: Het logniveau van de sigenergy2mqtt-cloudmodule
+    name: Logboekniveau in de cloud
+  CloudQueries:
+    name: Cloudquery's
+  CloudQueryErrors:
+    name: Fouten bij cloudquery's
+  CloudQueryMax:
+    name: Cloud Query Max  # verify:ignore
+  CloudQueryMean:
+    name: Gemiddelde van Cloud Query
+  CloudQueryMin:
+    name: Cloud Query Min  # verify:ignore
+  CloudQueryTotal:
+    name: Totaal aantal cloudquery's
+  CloudRateLimits:
+    name: Limieten voor cloudgebruik
+  CloudReconnections:
+    name: Herverbinding met de cloud
   CurrentControlCommandValue:
     attributes:
       comment: Gebruik van Externe Uitgangsregeling in Japan
@@ -598,6 +651,35 @@ class:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Totale DC EV Ontlaadenergie
+  GatewayCommunicationStatus:
+    name: Communicatiestatus
+  GatewayFirmwareVersion:
+    name: Firmwareversie
+  GatewayGridCurrent:
+    attributes:
+      comment: Status aan de netzijde, uitgelezen via de gateway via de cloud-API
+  GatewayGridFrequency:
+    attributes:
+      comment: Status aan de netzijde, uitgelezen via de gateway via de cloud-API
+  GatewayGridPower:
+    attributes:
+      comment: Status aan de netzijde, uitgelezen via de gateway via de cloud-API
+  GatewayGridReactivePower:
+    attributes:
+      comment: Status aan de netzijde, uitgelezen via de gateway via de cloud-API
+  GatewayGridSideInfoSensor:
+    attributes:
+      comment: Status aan de netzijde, uitgelezen via de gateway via de cloud-API
+  GatewayGridText:
+    attributes:
+      comment: Status aan de netzijde, uitgelezen via de gateway via de cloud-API
+  GatewayGridVoltage:
+    attributes:
+      comment: Status aan de netzijde, uitgelezen via de gateway via de cloud-API
+  GatewayModel:
+    name: Model  # verify:ignore
+  GatewaySerialNumber:
+    name: Serienummer
   GeneralAlarm1:
     alarm:
       '0': Softwareversie komt niet overeen
@@ -824,11 +906,23 @@ class:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Onderfrequentie Vermogensverhoging Triggerfrequentie
+  GridConnectionLimit:
+    attributes:
+      comment: Alleen beschikbaar wanneer de installateur een maximumlimiet heeft ingesteld.
+    name: Stroomlimiet voor netaansluiting
+  GridExportLimit:
+    attributes:
+      comment: Alleen beschikbaar wanneer de installateur een maximumlimiet heeft ingesteld.
+    name: Limiet voor teruglevering naar het net
   GridFrequency:
     attributes:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Netfrequentie
+  GridImportLimit:
+    attributes:
+      comment: Alleen beschikbaar wanneer de installateur een maximumlimiet heeft ingesteld.
+    name: Limiet voor import vanuit het net
   GridMaxExportLimit:
     attributes:
       comment: Het maximale actieve vermogen dat aan het elektriciteitsnet wordt geleverd, mag de in deze sensor geconfigureerde waarde niet overschrijden. Rastersensor nodig. Wordt wereldwijd van kracht, ongeacht de EMS-bedrijfsmodus
@@ -944,6 +1038,18 @@ class:
     name: InfluxDB-schrijfacties
   InfluxService:
     name: Sigenergy InfluxDB Updater Service (Installatie {plant_index})
+  InstantControlDuration:
+    name: Duur van onmiddellijke handmatige bediening
+  InstantControlMode:
+    name: Modus voor directe handmatige bediening
+    options:
+      '0': Niet ingesteld
+      '1': Opladen
+      '2': Ontladen
+      '3': Accu vasthouden
+      '4': Eigenverbruik
+  InstantControlSwitch:
+    name: Directe handmatige bediening
   InsulationResistance:
     attributes:
       source: Modbus-register {address}
@@ -1308,6 +1414,8 @@ class:
     attributes:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
+  OperationalMode:
+    name: Bedrijfsmodus
   OutputType:
     attributes:
       source: Modbus-register {address}
@@ -2729,6 +2837,8 @@ class:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Uitschakeltijd
+  SigenCloudDevice:
+    name: '{model_name} {sn}'
   SmartLoadPower:
     attributes:
       source: Modbus-register {address}
@@ -2739,6 +2849,8 @@ class:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Totaal verbruik slimme verbruiker {smart_load_index}
+  SolarPowerLimit:
+    name: Limiet voor zonne-energie
   Started:
     name: Gestart
   StartupTime:
@@ -2838,6 +2950,18 @@ class:
     name_off: Uitschakelen
     name_on: Inschakelen
 cli:
+  SIGENERGY2MQTT_CLOUD_ACCEPT_UNOFFICIAL_API_RISK:
+    help: Geef expliciet toestemming voor de niet-gepubliceerde mySigen-API (een gedelegeerd account wordt aanbevolen).
+  SIGENERGY2MQTT_CLOUD_DISCOVER_INVERTERS:
+    help: Cloud-omvormers detecteren en hun sensoren beschikbaar maken. Standaard uitgeschakeld.
+  SIGENERGY2MQTT_CLOUD_LOG_LEVEL:
+    help: 'Logboekniveau van het cloud-subsysteem. Geldige waarden zijn: DEBUG, INFO, WARNING, ERROR of CRITICAL. De standaardinstelling is INFO.'
+  SIGENERGY2MQTT_CLOUD_PASSWORD:
+    help: Het wachtwoord voor de clouddienst.
+  SIGENERGY2MQTT_CLOUD_REGION:
+    help: "De regio van de gebruiker voor de clouddienst. Moet een van de volgende zijn: 'aus', 'eu', 'cn', 'apac', 'us'."
+  SIGENERGY2MQTT_CLOUD_USERNAME:
+    help: De gebruikersnaam voor de clouddienst.
   SIGENERGY2MQTT_CONFIG:
     help: 'De pad naar het YAML-configuratiebestand (standaard: SIGENERGY2MQTT_CONFIG-omgevingsvariabele, anders /etc/sigenergy2mqtt.yaml)'
   SIGENERGY2MQTT_CONSUMPTION:
@@ -2993,7 +3117,7 @@ cli:
   SIGENERGY2MQTT_NO_EMS_MODE_CHECK:
     help: 'Schakel validatie uit die ESS Max Laden/Ontladen en PV Max Vermogen limieten uitschakelt wanneer de Externe EMS Regelmodus niet op Commando Laden/Ontladen staat.'
   SIGENERGY2MQTT_NO_METRICS:
-    help: 'Publiceer geen sigenergy2mqtt-statistieken.'
+    help: 'Verouderd: het publiceren van meetwaarden is standaard uitgeschakeld. Gebruik --publish-metrics om dit in te schakelen.'
   SIGENERGY2MQTT_PERSISTENCE_CACHE_WARMUP_TIMEOUT:
     help: 'Maximale seconden om te wachten op de bewaarde MQTT-toestand tijdens het opwarmen van de opstartcache (standaard: 10.0, bereik: 1-60)'
   SIGENERGY2MQTT_PERSISTENCE_DEBUG:
@@ -3004,6 +3128,10 @@ cli:
     help: 'MQTT-topic-prefix voor persistente toestandsberichten (standaard: sigenergy2mqtt/_state)'
   SIGENERGY2MQTT_PERSISTENCE_SYNC_TIMEOUT:
     help: 'Time-out in seconden voor synchrone persistentie-operaties wanneer aangeroepen vanuit een niet-asyncio thread (standaard: 5.0, bereik: 0.1-30.0)'
+  SIGENERGY2MQTT_PUBLISH_METRICS:
+    help: Sigenergy2mqtt-metrics publiceren naar MQTT (standaard uitgeschakeld).
+  SIGENERGY2MQTT_PUBLISH_RUNTIME_CONFIG:
+    help: Publiceer de runtime-configuratie naar MQTT, zodat instellingen tijdens de uitvoering kunnen worden gewijzigd (standaard uitgeschakeld).
   SIGENERGY2MQTT_PVOUTPUT_API_KEY:
     help: De API-sleutel voor PVOutput
   SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION:
@@ -3044,6 +3172,8 @@ cli:
     help: "Het interval in seconden waarmee herhaalde staten worden gepubliceerd. Als < 0, worden herhaalde staten nooit gepubliceerd. Als 0, worden herhaalde staten altijd gepubliceerd. Als > 0, worden herhaalde staten gepubliceerd op het opgegeven interval. De standaardwaarde is 0 (altijd publiceren)."
   SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW:
     help: 'De standaardwaarde in kW die gebruikt wordt voor plausibiliteitscontroles om de maximale en minimale waarden voor de werkelijke waarde van vermogenssensoren en de deltawaarde van energiesensoren te valideren. De standaardwaarde is 500 kW per seconde, en metingen buiten het bereik worden genegeerd.'
+  SIGENERGY2MQTT_SCAN_INTERVAL_CLOUD:
+    help: Het scaninterval in seconden voor het ophalen van cloudgegevens. De standaardwaarde is 5 (seconden) en de minimumwaarde is 1
   SIGENERGY2MQTT_SCAN_INTERVAL_HIGH:
     help: 'Scaninterval in seconden voor registers met hoge frequentie. Standaard: 10.'
   SIGENERGY2MQTT_SCAN_INTERVAL_LOW:

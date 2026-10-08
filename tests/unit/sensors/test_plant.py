@@ -6,9 +6,9 @@ import pytest
 from sigenergy2mqtt.common import ConsumptionMethod
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.sensors.base import AvailabilityMixin, DiscoveryKeys, Sensor
-from sigenergy2mqtt.sensors.plant_derived import PlantConsumedPower
-from sigenergy2mqtt.sensors.plant_read_only import EMSWorkMode, SystemTimeZone
-from sigenergy2mqtt.sensors.plant_read_write import (
+from sigenergy2mqtt.sensors.plant.derived import PlantConsumedPower
+from sigenergy2mqtt.sensors.plant.read_only import EMSWorkMode, SystemTimeZone
+from sigenergy2mqtt.sensors.plant.read_write import (
     ActivePowerFixedAdjustmentTargetValue,
     ActivePowerPercentageAdjustmentTargetValue,
     IndependentPhasePowerControl,
@@ -93,7 +93,7 @@ class TestPlantReadWrite:
     )
     async def test_adjustment_target_values_coverage(self, mock_config, sensor_cls, caplog):
         availability = MagicMock(spec=AvailabilityMixin)
-        availability.state_topic = "test_device/state"
+        availability.get.return_value = "test_device/state"
         availability.publish_raw = False
         remote_ems_mode = MagicMock(spec=RemoteEMSControlMode)
         remote_ems_mode.name = "Remote EMS Mode"
@@ -124,7 +124,7 @@ class TestPlantReadWrite:
     def test_max_charging_limit_configure_topics_without_remote_ems_mode(self, mock_config):
         mock_config.ems_mode_check = True
         remote_ems = MagicMock(spec=AvailabilityMixin)
-        remote_ems.state_topic = "sigenergy2mqtt/remote_ems/state"
+        remote_ems.get.return_value = "sigenergy2mqtt/remote_ems/state"
 
         sensor = MaxChargingLimit(plant_index=0, remote_ems=remote_ems, remote_ems_mode=None, rated_charging_power=12.0)
         sensor.configure_mqtt_topics("test_device")
@@ -132,13 +132,13 @@ class TestPlantReadWrite:
         availability = sensor[DiscoveryKeys.AVAILABILITY]
         assert isinstance(availability, list)
         topics = [item.get("topic") for item in availability]
-        assert remote_ems.state_topic in topics
+        assert remote_ems.get.return_value in topics
         assert all("is_charging" not in str(topic) for topic in topics if topic)
 
     def test_max_charging_limit_configure_topics_with_remote_ems_mode_adds_mode_topic(self, mock_config):
         mock_config.ems_mode_check = True
         remote_ems = MagicMock(spec=AvailabilityMixin)
-        remote_ems.state_topic = "sigenergy2mqtt/remote_ems/state"
+        remote_ems.get.return_value = "sigenergy2mqtt/remote_ems/state"
         remote_ems_mode = MagicMock()
         remote_ems_mode.is_charging_mode_topic = "sigenergy2mqtt/remote_ems/mode/is_charging"
 
@@ -148,13 +148,13 @@ class TestPlantReadWrite:
         availability = sensor[DiscoveryKeys.AVAILABILITY]
         assert isinstance(availability, list)
         topics = [item["topic"] for item in availability]
-        assert remote_ems.state_topic in topics
+        assert remote_ems.get.return_value in topics
         assert remote_ems_mode.is_charging_mode_topic in topics
 
     def test_max_charging_limit_no_mode_topic_when_ems_mode_check_disabled(self, mock_config):
         mock_config.ems_mode_check = False
         remote_ems = MagicMock(spec=AvailabilityMixin)
-        remote_ems.state_topic = "sigenergy2mqtt/remote_ems/state"
+        remote_ems.get.return_value = "sigenergy2mqtt/remote_ems/state"
         remote_ems_mode = MagicMock()
         remote_ems_mode.is_charging_mode_topic = "sigenergy2mqtt/remote_ems/mode/is_charging"
 
@@ -163,14 +163,14 @@ class TestPlantReadWrite:
 
         availability = sensor[DiscoveryKeys.AVAILABILITY]
         topics = [item["topic"] for item in availability]
-        assert remote_ems.state_topic in topics
+        assert remote_ems.get.return_value in topics
         assert remote_ems_mode.is_charging_mode_topic not in topics
 
     def test_max_charging_limit_no_mode_topic_when_home_assistant_disabled(self, mock_config):
         mock_config.ems_mode_check = True
         mock_config.home_assistant.enabled = False
         remote_ems = MagicMock(spec=AvailabilityMixin)
-        remote_ems.state_topic = "sigenergy2mqtt/remote_ems/state"
+        remote_ems.get.return_value = "sigenergy2mqtt/remote_ems/state"
         remote_ems_mode = MagicMock()
         remote_ems_mode.is_charging_mode_topic = "sigenergy2mqtt/remote_ems/mode/is_charging"
 
@@ -228,7 +228,7 @@ class TestPlantDerived:
     async def test_remote_ems_control_mode_publish(self, mock_config):
         mock_config.ems_mode_check = True
         remote_ems = MagicMock(spec=AvailabilityMixin)
-        remote_ems.state_topic = "some/topic"
+        remote_ems.get.return_value = "some/topic"
         remote_ems.latest_raw_state = 1
         sensor = RemoteEMSControlMode(plant_index=0, remote_ems=remote_ems)
         sensor.configure_mqtt_topics("test_device")

@@ -3,8 +3,8 @@ from __future__ import annotations
 import asyncio
 from typing import cast
 
-import sigenergy2mqtt.sensors.pid_read_only as ro
-import sigenergy2mqtt.sensors.pid_read_write as rw
+import sigenergy2mqtt.sensors.pid.read_only as ro
+import sigenergy2mqtt.sensors.pid.read_write as rw
 from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.common.types import NonInverter
 from sigenergy2mqtt.devices import ModbusDevice
@@ -46,6 +46,7 @@ class PID(ModbusDevice):
             firmware_version.get_state(modbus_client=modbus_client),
             model.get_state(modbus_client=modbus_client),
             serial_number.get_state(modbus_client=modbus_client),
+            return_exceptions=False,
         )
 
         pid = cls(plant_index, device_address, protocol_version, cast(str, model_id), cast(str, serial), cast(str, firmware))

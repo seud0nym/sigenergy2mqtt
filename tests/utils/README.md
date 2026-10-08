@@ -6,7 +6,7 @@ This directory contains various utility scripts, configuration files, and tools 
 
 ### Modbus Simulation & Validation
 - **`modbus_sensors.py`**: A testing utility that provides a `DummyModbusClient` which simulates Modbus register reads from in-memory data. It also contains `get_sensor_instances()`, which instantiates the entire sensor graph to aid in detecting overlapping registers or validation gaps across all sensor definitions.
-- **`modbus_test_server.py`**: An async Modbus TCP test server that runs a `pymodbus` server. It provides simulated Modbus registries populated either with synthesized random values within acceptable bounds or by subscribing to live MQTT updates, allowing integration tests against a mock Sigenergy device.
+- **`modbus_test_server.py`**: An async Modbus TCP test server that runs a `pymodbus` server. It provides simulated Modbus registries populated either with synthesized random values within acceptable bounds or by subscribing to live MQTT updates, allowing integration tests against a mock Sigenergy device. Its companion Cloud API test server exposes a live response editor at `/cloud-api-test` on the configured cloud port (8080 by default).
 
 ### Docker Testing
 - **`docker-compose.yaml`**: A Docker Compose configuration file that creates a test environment with an `emqx` MQTT broker and a `sigenergy2mqtt` instance.

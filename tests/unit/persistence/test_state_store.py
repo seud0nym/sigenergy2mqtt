@@ -6,7 +6,11 @@ from unittest.mock import MagicMock
 import paho.mqtt.client as mqtt
 import pytest
 
-from sigenergy2mqtt.persistence.state_store import StateStore, _make_envelope, _parse_envelope
+from sigenergy2mqtt.persistence.state_store import (
+    StateStore,
+    _make_envelope,
+    _parse_envelope,
+)
 
 
 @pytest.fixture
@@ -272,7 +276,7 @@ async def test_clean_all(temp_state_dir, mock_persistence_config):
         assert not (temp_state_dir / "cat2" / "key2").exists()
 
         # Check MQTT publishes for delete (may be 0 if no cache)
-        delete_calls = [call for call in mock_client.publish.call_args_list if len(call[0]) > 1 and call[0][1] == b""]
+        [call for call in mock_client.publish.call_args_list if len(call[0]) > 1 and call[0][1] == b""]
         # Not asserting count since cache may be empty
 
 

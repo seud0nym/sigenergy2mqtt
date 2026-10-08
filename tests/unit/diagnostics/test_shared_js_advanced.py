@@ -409,10 +409,8 @@ class TestAPIContract:
         """setConnState callback must be called with string state."""
         # Should call setConnState with state strings
         states = ["'live'", '"live"', "'down'", '"down"', "'connecting'", '"connecting"']
-        found = False
         for state in states:
             if f"setConnState({state})" in shared_js or f"setConnState( {state})" in shared_js:
-                found = True
                 break
         # More lenient check - just verify setConnState is called multiple times
         assert shared_js.count("setConnState(") >= 2, "setConnState should be called multiple times"

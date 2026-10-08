@@ -3,11 +3,14 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.common import ProtocolVersion  # noqa: E402
-from sigenergy2mqtt.config import active_config  # noqa: E402
-from sigenergy2mqtt.config.settings import HomeAssistantConfig  # noqa: E402
-from sigenergy2mqtt.sensors.base import AvailabilityMixin, Sensor  # noqa: E402
-from sigenergy2mqtt.sensors.plant_read_write import MaxChargingLimit, RemoteEMSControlMode  # noqa: E402
+from sigenergy2mqtt.common import ProtocolVersion
+from sigenergy2mqtt.config import active_config
+from sigenergy2mqtt.config.settings import HomeAssistantConfig
+from sigenergy2mqtt.sensors.base import AvailabilityMixin, Sensor
+from sigenergy2mqtt.sensors.plant.read_write import (
+    MaxChargingLimit,
+    RemoteEMSControlMode,
+)
 
 
 class MockSensor(Sensor):
@@ -110,7 +113,7 @@ class TestConfigSwitches:
         active_config.ems_mode_check = True
 
         mock_remote_ems = MagicMock(spec=AvailabilityMixin)
-        mock_remote_ems.state_topic = "some/topic"
+        mock_remote_ems.get.return_value = "some/topic"
         mock_remote_ems.latest_raw_state = 1
 
         sensor = RemoteEMSControlMode(0, mock_remote_ems)
@@ -148,7 +151,7 @@ class TestConfigSwitches:
         active_config.ems_mode_check = False
 
         mock_remote_ems = MagicMock(spec=AvailabilityMixin)
-        mock_remote_ems.state_topic = "some/topic"
+        mock_remote_ems.get.return_value = "some/topic"
         mock_remote_ems.latest_raw_state = 0
 
         sensor = RemoteEMSControlMode(0, mock_remote_ems)
@@ -223,7 +226,7 @@ class TestConfigSwitches:
         """Test comment attribute changes based on ems_mode_check."""
         active_config.ems_mode_check = True
         mock_remote_ems = MagicMock(spec=AvailabilityMixin)
-        mock_remote_ems.state_topic = "availability/topic"
+        mock_remote_ems.get.return_value = "availability/topic"
 
         mock_mode = MagicMock(spec=RemoteEMSControlMode)
         mock_mode.is_charging_mode_topic = "is_charging_mode_topic"
@@ -243,7 +246,7 @@ class TestConfigSwitches:
 
     def test_edit_percentage_with_box(self):
         """Test if 'mode' attribute is 'slider' or 'box' based on edit_percentage_with_box."""
-        from sigenergy2mqtt.sensors.plant_read_write import ESSBackupSOC
+        from sigenergy2mqtt.sensors.plant.read_write import ESSBackupSOC
 
         active_config.home_assistant.enabled = True
         active_config.home_assistant.edit_percentage_with_box = False

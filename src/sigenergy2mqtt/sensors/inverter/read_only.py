@@ -2,7 +2,7 @@ import logging
 import math
 import time
 from datetime import timezone
-from typing import cast
+from typing import Any, cast
 
 from sigenergy2mqtt.common import (
     PERCENTAGE,
@@ -25,9 +25,14 @@ from sigenergy2mqtt.common import (
 from sigenergy2mqtt.common.firmware_version import FirmwareVersion
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.modbus import ModbusDataType
-from sigenergy2mqtt.sensors.base import DiscoveryKeys, SanityCheckException, ScanInterval, UnpublishResetSensorMixin
+from sigenergy2mqtt.sensors.base import (
+    DiscoveryKeys,
+    SanityCheckException,
+    ScanInterval,
+    UnpublishResetSensorMixin,
+)
 
-from .base import (
+from ..base import (
     Alarm1Sensor,
     Alarm2Sensor,
     Alarm3Sensor,
@@ -66,7 +71,7 @@ class InverterModel(ReadOnlySensor, HybridInverter, PVInverter):
             precision=None,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
 
 class InverterSerialNumber(ReadOnlySensor, HybridInverter, PVInverter):
@@ -91,7 +96,7 @@ class InverterSerialNumber(ReadOnlySensor, HybridInverter, PVInverter):
             precision=None,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
 
 class InverterFirmwareVersion(ReadOnlySensor, HybridInverter, PVInverter):
@@ -116,16 +121,16 @@ class InverterFirmwareVersion(ReadOnlySensor, HybridInverter, PVInverter):
             precision=None,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
-    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
+    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> Any:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
         if value is not None:
             device = getattr(self, "parent_device", None)
-            if device and device["hw"] != value:
-                logger.info(f"{device.log_identity} firmware change detected: {device['hw']} -> {value}")
+            if device and device["sw"] != value:
+                logger.info(f"{device.log_identity} firmware change detected: {device['sw']} -> {value}")
                 try:
-                    previous_version = FirmwareVersion(device["hw"])
+                    previous_version = FirmwareVersion(device["sw"])
                     current_version = FirmwareVersion(cast(str, value))
                     previous_identity = (
                         previous_version.platform,
@@ -152,7 +157,7 @@ class InverterFirmwareVersion(ReadOnlySensor, HybridInverter, PVInverter):
 
                     logger.warning(f"Unable to parse firmware versions for restart decision: old={device['hw']} new={value}")
                     restart_controller.request(f"unparseable firmware version change on inverter {device.device_address}")
-                device["hw"] = value
+                device["sw"] = value
         return value
 
 
@@ -178,7 +183,7 @@ class RatedActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             precision=2,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
 
 class MaxRatedApparentPower(ReadOnlySensor, HybridInverter, PVInverter):
@@ -203,7 +208,7 @@ class MaxRatedApparentPower(ReadOnlySensor, HybridInverter, PVInverter):
             precision=2,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
 
 class InverterMaxActivePower(ReadOnlySensor, HybridInverter, PVInverter):
@@ -228,7 +233,7 @@ class InverterMaxActivePower(ReadOnlySensor, HybridInverter, PVInverter):
             precision=2,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
 
 class MaxAbsorptionPower(ReadOnlySensor, HybridInverter):
@@ -253,7 +258,7 @@ class MaxAbsorptionPower(ReadOnlySensor, HybridInverter):
             precision=2,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
 
 class RatedBatteryCapacity(ReadOnlySensor, HybridInverter):
@@ -279,7 +284,7 @@ class RatedBatteryCapacity(ReadOnlySensor, HybridInverter):
             protocol_version=ProtocolVersion.V1_8,
         )
         self.sanity_check.delta = False
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
 
 class RatedChargingPower(ReadOnlySensor, HybridInverter):
@@ -304,7 +309,7 @@ class RatedChargingPower(ReadOnlySensor, HybridInverter):
             precision=2,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
 
 class RatedDischargingPower(ReadOnlySensor, HybridInverter):
@@ -329,7 +334,7 @@ class RatedDischargingPower(ReadOnlySensor, HybridInverter):
             precision=2,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
 
 class ReservedDailyExportEnergy(ReservedSensor, HybridInverter):  # 30554-30565 Marked as Reserved in v2.4 2025-02-05
@@ -566,7 +571,7 @@ class MaxActivePowerAdjustment(ReadOnlySensor, HybridInverter, PVInverter):
             precision=2,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
 
 class MinActivePowerAdjustment(ReadOnlySensor, HybridInverter):
@@ -591,7 +596,7 @@ class MinActivePowerAdjustment(ReadOnlySensor, HybridInverter):
             precision=2,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
 
 class MaxReactivePowerAdjustment(ReadOnlySensor, HybridInverter, PVInverter):
@@ -616,7 +621,7 @@ class MaxReactivePowerAdjustment(ReadOnlySensor, HybridInverter, PVInverter):
             precision=2,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
 
 class MinReactivePowerAdjustment(ReadOnlySensor, HybridInverter, PVInverter):
@@ -641,7 +646,7 @@ class MinReactivePowerAdjustment(ReadOnlySensor, HybridInverter, PVInverter):
             precision=2,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
 
 class ActivePower(ReadOnlySensor, HybridInverter, PVInverter):
@@ -1269,7 +1274,7 @@ class RatedGridVoltage(ReadOnlySensor, HybridInverter, PVInverter):
             precision=2,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
 
 class RatedGridFrequency(ReadOnlySensor, HybridInverter, PVInverter):
@@ -1294,7 +1299,7 @@ class RatedGridFrequency(ReadOnlySensor, HybridInverter, PVInverter):
             precision=2,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
 
 class GridFrequency(ReadOnlySensor, HybridInverter, PVInverter):
@@ -1370,7 +1375,7 @@ class OutputType(ReadOnlySensor, HybridInverter, PVInverter):
             precision=None,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
         self[DiscoveryKeys.OPTIONS] = [
             "L/N",  # 0
             "L1/L2/L3",  # 1
@@ -1393,7 +1398,7 @@ class OutputType(ReadOnlySensor, HybridInverter, PVInverter):
             case _:
                 raise ValueError(f"Unknown Output Type: {output_type}")
 
-    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
+    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> Any:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
         if raw or value is None:
             return value
@@ -1544,7 +1549,7 @@ class PowerFactor(ReadOnlySensor, HybridInverter, PVInverter):
         self._active_power = active_power
         self._reactive_power = reactive_power
 
-    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
+    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> Any:
         try:
             return await super().get_state(raw, republish, **kwargs)
         except SanityCheckException as e:
@@ -1556,7 +1561,7 @@ class PowerFactor(ReadOnlySensor, HybridInverter, PVInverter):
                 return None
             raise
 
-    def set_state(self, state: float | str | list[bool] | list[int] | list[float]) -> bool:
+    def set_state(self, state: Any) -> bool:
         try:
             return super().set_state(state)
         except SanityCheckException as e:
@@ -1604,7 +1609,7 @@ class PACKBCUCount(ReadOnlySensor, HybridInverter):
             precision=None,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
         self.sanity_check.min_raw = 0
         self.sanity_check.max_raw = 16
 
@@ -1631,7 +1636,7 @@ class PVStringCount(ReadOnlySensor, HybridInverter, PVInverter):
             precision=None,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
         self.sanity_check.min_raw = 2
         self.sanity_check.max_raw = 36
 
@@ -1658,7 +1663,7 @@ class MPPTCount(ReadOnlySensor, HybridInverter, PVInverter):
             precision=None,
             protocol_version=ProtocolVersion.V1_8,
         )
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
 
 class PVCurrentSensor(ReadOnlySensor, HybridInverter, PVInverter):
@@ -2050,7 +2055,7 @@ class DCChargerRunningState(ReadOnlySensor, HybridInverter):  # Not applicable t
         self.sanity_check.min_raw = 0
         self.sanity_check.max_raw = len(cast(list[str], self[DiscoveryKeys.OPTIONS])) - 1
 
-    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> float | int | str | None:
+    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> Any:
         value = await super().get_state(raw=raw, republish=republish, **kwargs)
         if raw or value is None:
             return value
@@ -2216,7 +2221,7 @@ class DCChargerRatedChargingPower(ReadOnlySensor, HybridInverter):
             precision=2,
             protocol_version=ProtocolVersion.V2_9,
         )
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
 
 class DCChargerRatedDischargingPower(ReadOnlySensor, HybridInverter):
@@ -2241,4 +2246,4 @@ class DCChargerRatedDischargingPower(ReadOnlySensor, HybridInverter):
             precision=2,
             protocol_version=ProtocolVersion.V2_9,
         )
-        self["entity_category"] = "diagnostic"
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"

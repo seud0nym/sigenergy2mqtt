@@ -2,16 +2,24 @@ import asyncio
 import logging
 import sys
 from collections.abc import Mapping
-from typing import cast
+from typing import Any, cast
 
 from pymodbus.exceptions import ModbusException
 
+from sigenergy2mqtt.cloud.registry import cloud_control_registry
 from sigenergy2mqtt.common import Constants, ProtocolVersion
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.devices import Inverter, PowerPlant, bind_cross_device_sensors
+from sigenergy2mqtt.devices import (
+    CloudControl,
+    DeviceRegistry,
+    Inverter,
+    PowerPlant,
+    bind_cross_device_sensors,
+)
+from sigenergy2mqtt.devices.cloud import CloudDiscovery, discover_cloud, discover_operational_modes
 from sigenergy2mqtt.modbus import ModbusClient
-from sigenergy2mqtt.sensors.inverter_read_only import RatedActivePower
-from sigenergy2mqtt.sensors.plant_read_only import (
+from sigenergy2mqtt.sensors.inverter.read_only import RatedActivePower
+from sigenergy2mqtt.sensors.plant.read_only import (
     GridStatus,
     SITotalChargedEnergy,
     SITotalDischargedEnergy,
@@ -19,14 +27,20 @@ from sigenergy2mqtt.sensors.plant_read_only import (
     SITotalEVDCChargedEnergy,
     SITotalEVDCDischargedEnergy,
 )
-from sigenergy2mqtt.sensors.plant_read_write import (
+from sigenergy2mqtt.sensors.plant.read_write import (
     ActivePowerFixedAdjustmentTargetValue,
     PhaseActivePowerFixedAdjustmentTargetValue,
     PhaseReactivePowerFixedAdjustmentTargetValue,
     ReactivePowerFixedAdjustmentTargetValue,
 )
 
-from .device_factories import make_ac_charger, make_dc_charger, make_pid, make_plant_and_inverter, make_pss
+from .device_factories import (
+    make_ac_charger,
+    make_dc_charger,
+    make_pid,
+    make_plant_and_inverter,
+    make_pss,
+)
 from .modbus_helpers import get_state
 from .restart import restart_controller
 from .thread_config import ThreadConfig, thread_config_registry
@@ -35,6 +49,69 @@ from .validation import validate_publishable_sensors
 logger = logging.getLogger(__name__)
 
 _GRID_RESTORE_WATCH_TASKS: set[tuple[str, int, int]] = set()
+
+
+def _cloud_control_plant_index(device_list: list[dict[str, Any]]) -> int | None:
+    """Find the local plant containing an inverter reported by the cloud."""
+    cloud_logger = logging.getLogger("sigenergy2mqtt.cloud")
+    cloud_serial_numbers = {
+        str(device.get("serialNumber") or device.get("serial_number") or device.get("sn"))
+        for device in device_list
+        if device.get("deviceType") in ("Aio", "Inverter") and (device.get("serialNumber") or device.get("serial_number") or device.get("sn"))
+    }
+    plants_with_unreadable_serials: set[int] = set()
+    for device in DeviceRegistry.all():
+        if not isinstance(device, Inverter):
+            continue
+        serial_number = device.get("sn") or device.get("serial_number")
+        if serial_number is None:
+            plants_with_unreadable_serials.add(device.plant_index)
+            continue
+        if str(serial_number) in cloud_serial_numbers:
+            cloud_logger.info(f"Cloud inverter serial number {serial_number} matched local inverter at plant index {device.plant_index}; Cloud API enabled")
+            return device.plant_index
+
+    if plants_with_unreadable_serials:
+        cloud_logger.warning(f"Local inverter serial numbers are unavailable for plant indexes {sorted(plants_with_unreadable_serials)}; Cloud API cannot be matched safely and will be disabled")
+        return None
+
+    cloud_logger.warning("No cloud inverter matched a local inverter; Cloud API disabled")
+    return None
+
+
+async def _setup_cloud_control() -> None:
+    """Discover, match, and configure the optional cloud control device.
+
+    A single cloud connection is established for the full discovery sequence
+    (device list, gateway info, operational modes) and closed once at the end.
+    The transport_factory used by the polling thread will re-authenticate in
+    its own event loop, creating a fresh HTTP session bound to that loop.
+    """
+    cloud_control_registry.configure(active_config.cloud)
+    if (cloud_port := cloud_control_registry.active) is None:
+        return
+
+    discovery: CloudDiscovery | None = None
+    plant_index: int | None = None
+    close_failed = False
+    try:
+        if (discovery := await discover_cloud(cloud_port)) is not None:
+            plant_index = _cloud_control_plant_index(discovery.device_list)
+            if plant_index is not None:
+                discovery = await discover_operational_modes(cloud_port, discovery)
+    finally:
+        try:
+            await cloud_port.close()
+        except Exception:
+            close_failed = True
+            logger.exception("Failed to close cloud adapter after discovery; Cloud API will be disabled for this run")
+
+    if discovery is None or plant_index is None or close_failed:
+        return
+
+    cloud_config = ThreadConfig.create(host=None, port=None, name="Sigenergy Cloud")
+    cloud_config.transport_factory = cloud_control_registry.transport_factory
+    cloud_config.add_device(CloudControl(plant_index, cloud_port, discovery))
 
 
 async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfig], ProtocolVersion | None]:
@@ -104,7 +181,7 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
                 if inverter is not None:
                     inverters[device_address] = inverter.unique_id
                     inverter_devices.append(inverter)
-                    inverter_firmware_versions[device_address] = str(inverter["hw"])
+                    inverter_firmware_versions[device_address] = str(inverter["sw"])
                     config.add_device(inverter)
 
             if plant is not None:
@@ -182,6 +259,8 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
                         sensor.apply_min_max(-60 * total_rated_active_power, 60 * total_rated_active_power)
 
             logger.debug(f"Disconnecting from modbus://{device.host}:{device.port} - register probing complete")
+
+    await _setup_cloud_control()
 
     return thread_config_registry.get_all(), protocol_version
 

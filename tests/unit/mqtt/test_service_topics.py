@@ -4,10 +4,18 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from sigenergy2mqtt.config import Config, OutputField, _swap_active_config, active_config
+from sigenergy2mqtt.config import (
+    Config,
+    OutputField,
+    _swap_active_config,
+    active_config,
+)
 from sigenergy2mqtt.config.settings import PvOutputConfig
 from sigenergy2mqtt.pvoutput.service_topics import Calculation as Calc
-from sigenergy2mqtt.pvoutput.service_topics import ServiceTopics, TimePeriodServiceTopics
+from sigenergy2mqtt.pvoutput.service_topics import (
+    ServiceTopics,
+    TimePeriodServiceTopics,
+)
 from sigenergy2mqtt.pvoutput.topic import Topic
 
 

@@ -15,9 +15,77 @@ Run directly for manual testing::
 
 or import :func:`run_async_server` and :func:`wait_for_server_start` from
 automated test fixtures.
+
+The following environment variables control the operation of the test server:
+
+MODBUS_TEST_SERVER_CLOUD_PASSWORD
+    - The password for authenticating to the test Cloud API server
+MODBUS_TEST_SERVER_CLOUD_PORT
+    - The port on which the test Cloud API server will listen
+MODBUS_TEST_SERVER_CLOUD_USERNAME
+    - The username for authenticating to the test Cloud API server
+MODBUS_TEST_SERVER_FORCE_SENSOR_VALUES_JSON
+    - Force the Modbus test server to return the specified values
+      e.g. {"PVVoltageSensor": -3, "PVCurrentSensor": -3}
+MODBUS_TEST_SERVER_GRID_OUTAGE_DURATION
+    - The duration in seconds of a simulated grid outages for testing the Modbus Test server (default: 30 seconds)
+MODBUS_TEST_SERVER_GRID_OUTAGE_INITIAL_DELAY (default: 30 seconds)
+    - The initial delay in seconds after Modbus test server startup before the grid outage is simulated (default: 30 seconds)
+MODBUS_TEST_SERVER_GRID_OUTAGE_REPEATED
+    - True if grid outages are to be repeated; False if it is only to occur once (default: True)
+MODBUS_TEST_SERVER_GRID_STATUS_INITIAL_STATE
+    - The initial state of the grid: 0=On Grid, 1=Off Grid (auto), 2=Off Grid (manual), None=source/random (default: 0)
+MODBUS_TEST_SERVER_HOST
+    - The interface IP address on which the Modbus test server will listen (default: 0.0.0.0)
+MODBUS_TEST_SERVER_INITIAL_FIRMWARE
+    - The initial firmware version returned by the test servers
+MODBUS_TEST_SERVER_INTERNET_OUTAGE_DURATION
+    - The duration in seconds of a simulated internet outage for testing the Cloud API server (default: 30 seconds)
+MODBUS_TEST_SERVER_INTERNET_OUTAGE_INITIAL_DELAY
+    - The initial delay in seconds after test Cloud API server startup before the internet outage is simulated (default: 30 seconds)
+MODBUS_TEST_SERVER_INTERNET_OUTAGE_REPEATED
+    - True if internet outages are to be repeated; False if it is only to occur once (default: True)
+MODBUS_TEST_SERVER_INTERNET_OUTAGE_STATUS_CODE
+    - The status to be returned to clients during the Cloud API simulated internet outage (default: 503)
+MODBUS_TEST_SERVER_LOG_LEVEL
+    - The Modbus Test server logging level (default: INFO)
+MODBUS_TEST_SERVER_MODBUS_HOST
+    - The host address of the Modbus server that will be used to populate the test Modbus server, or None if MQTT/random values are to be used
+MODBUS_TEST_SERVER_MODBUS_PORT
+    - The listening port of the Modbus server that will be used to populate the test Modbus server
+MODBUS_TEST_SERVER_MQTT_BROKER
+    - The host address of the MQTT broker that will be used to populate the test Modbus server, or None if Modbus/random values are to be used
+MODBUS_TEST_SERVER_MQTT_LOG_LEVEL
+    - The logging level applied to MQTT messages handle by the CustomMqttHandler (default: INFO)
+MODBUS_TEST_SERVER_MQTT_PASSWORD
+    - The password for the MQTT broker that will be used to populate the test Modbus server
+MODBUS_TEST_SERVER_MQTT_PORT
+    - The listening port of the MQTT broker that will be used to populate the test Modbus server (default: 1883)
+MODBUS_TEST_SERVER_MQTT_USERNAME
+    - The username for the MQTT broker that will be used to populate the test Modbus server
+MODBUS_TEST_SERVER_PORT
+    - The port on which the Modbus test server will listen (default: 502)
+MODBUS_TEST_SERVER_PROTOCOL_VERSION
+    - The protocol version that will be applied to the Modbus test server (default: latest version)
+MODBUS_TEST_SERVER_REGISTERS_TO_DEBUG
+    - A comma separated list of register numbers that will be logged when accessed or updated
+MODBUS_TEST_SERVER_SIMULATE_FIRMWARE_UPGRADE
+    - True if a firmware upgrade is to be simulated; otherwise False (default: False)
+MODBUS_TEST_SERVER_SIMULATE_GRID_OUTAGES
+    - True if grid outages are to be simulated; otherwise False (default: False)
+MODBUS_TEST_SERVER_SIMULATE_INTERNET_OUTAGE
+    - True if an internet outage is to be simulated; otherwise False (default: False)
+MODBUS_TEST_SERVER_SIMULATE_POWER_FACTOR_ERRORS
+    - True if invalid power factor values are to be returned by the Modbus Test server; otherwise False (default: False)
+MODBUS_TEST_SERVER_UPGRADE_FIRMWARE
+    - The firmware version that will be returned returned by the test servers after a simulated firmware upgrade
+MODBUS_TEST_SERVER_USE_SIMPLIFIED_TOPICS
+    - True if simplified topics are used on the source MQTT broker
+
 """
 
 import asyncio
+import copy
 import json
 import logging
 import os
@@ -26,6 +94,8 @@ import string
 import sys
 import threading
 import time
+from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Any, ClassVar
 
 # Need to set a Modbus host otherwise configuration initialisation will launch auto-discovery
@@ -39,6 +109,7 @@ from datetime import datetime
 from random import randint, uniform
 
 import paho.mqtt.client as mqtt
+from aiohttp import web
 from paho.mqtt.enums import CallbackAPIVersion, MQTTErrorCode
 from pymodbus import FramerType, ModbusDeviceIdentification
 from pymodbus import __version__ as pymodbus_version
@@ -49,12 +120,37 @@ from pymodbus.simulator import DataType, SimData, SimDevice
 
 from sigenergy2mqtt.common import Constants, DeviceClass, ProtocolVersion
 from sigenergy2mqtt.modbus.client import ModbusClient
-from sigenergy2mqtt.sensors.ac_charger_read_only import ACChargerChargingPower, ACChargerInputBreaker, ACChargerRatedCurrent
 from sigenergy2mqtt.sensors.base import WriteOnlySensorMixin
-from sigenergy2mqtt.sensors.inverter_read_only import DCChargerOutputPower, InverterFirmwareVersion, OutputType, PhaseCurrent, PhaseVoltage, PowerFactor
-from sigenergy2mqtt.sensors.plant_read_only import GridStatus
-from sigenergy2mqtt.sensors.plant_read_write import RemoteEMS
+from sigenergy2mqtt.sensors.ev.ac_charger_read_only import (
+    ACChargerChargingPower,
+    ACChargerInputBreaker,
+    ACChargerRatedCurrent,
+)
+from sigenergy2mqtt.sensors.inverter.read_only import (
+    DCChargerOutputPower,
+    InverterFirmwareVersion,
+    InverterModel,
+    InverterSerialNumber,
+    OutputType,
+    PhaseCurrent,
+    PhaseVoltage,
+    PowerFactor,
+    RatedActivePower,
+)
+from sigenergy2mqtt.sensors.plant.read_only import GridStatus
+from sigenergy2mqtt.sensors.plant.read_write import RemoteEMS
 from tests.utils import get_sensor_instances
+from tests.utils.modbus_sensors import (
+    AC_CHARGER_SERIAL,
+    DC_CHARGER_SERIAL,
+    FIRMWARE_VERSION,
+    HYBRID_INVERTER_MODEL,
+    HYBRID_INVERTER_RATED_ACTIVE_POWER,
+    HYBRID_INVERTER_SERIAL,
+    PV_INVERTER_MODEL,
+    PV_INVERTER_RATED_ACTIVE_POWER,
+    PV_INVERTER_SERIAL,
+)
 
 logging.getLogger("asyncio").setLevel(logging.CRITICAL)
 logging.getLogger("pymodbus.logging").setLevel(logging.CRITICAL)
@@ -71,13 +167,740 @@ DELAY_MAX: int = 50
 
 UNSIGNED_DATA_TYPES = (ModbusClientMixin.DATATYPE.UINT16, ModbusClientMixin.DATATYPE.UINT32, ModbusClientMixin.DATATYPE.UINT64)
 
+CLOUD_TEST_SERVER_DEFAULT_PORT = 8080
+CLOUD_TEST_STATION_ID = 10000000000001
+CLOUD_TEST_GATEWAY_SERIAL = "110G12BR00001"
+CLOUD_TEST_STATIC_DIR = Path(__file__).parent / "static"
+SYNTHESIZED_INVERTER_VALUES = {
+    1: {
+        InverterModel.ADDRESS: HYBRID_INVERTER_MODEL,
+        InverterSerialNumber.ADDRESS: HYBRID_INVERTER_SERIAL,
+        RatedActivePower.ADDRESS: HYBRID_INVERTER_RATED_ACTIVE_POWER,
+    },
+    3: {
+        InverterModel.ADDRESS: PV_INVERTER_MODEL,
+        InverterSerialNumber.ADDRESS: PV_INVERTER_SERIAL,
+        RatedActivePower.ADDRESS: PV_INVERTER_RATED_ACTIVE_POWER,
+    },
+}
+
+
+class CloudApiTestServer:
+    """Stateful facsimile of the cloud endpoints used by MySigenCloudAdapter."""
+
+    @staticmethod
+    def _device_parameters(sn: str, model: str, rating: str, unit: str) -> list[dict[str, str]]:
+        rating_name = "Rated Power" if unit == "kW" else "Rated Battery Capacity"
+        return [
+            {"paramKey": "Device SN", "paramValue": sn, "paramValueText": sn, "paramValueUnit": ""},
+            {"paramKey": "Software Version", "paramValue": FIRMWARE_VERSION, "paramValueText": FIRMWARE_VERSION, "paramValueUnit": ""},
+            {"paramKey": "Device Model", "paramValue": model, "paramValueText": model, "paramValueUnit": ""},
+            {"paramKey": rating_name, "paramValue": f"{rating} {unit}", "paramValueText": rating, "paramValueUnit": unit},
+        ]
+
+    def __init__(self, username: str | None, password: str | None) -> None:
+        self.internet_available = True
+        self.internet_outage_status = web.HTTPServiceUnavailable.status_code
+        self.username = username
+        self.encrypted_password = None
+        if password is not None:
+            from sigenergy2mqtt.cloud.vendor.solidfox.sigenergy_cloud.auth import (
+                encrypt_password,
+            )
+
+            self.encrypted_password = encrypt_password(password)
+        self.access_token: str | None = None
+        self.refresh_token: str | None = None
+        self.operational_mode = 0
+        self.profile_id = -1
+        self.instant_control: dict[str, Any] = {
+            "enable": False,
+            "mode": "1",
+            "endTime": 1790727664,
+        }
+        self.station_home_data = {
+            "stationId": CLOUD_TEST_STATION_ID,
+            "acSnList": [AC_CHARGER_SERIAL],
+            "dcSnList": [DC_CHARGER_SERIAL],
+        }
+        self.available_modes_data = {
+            "defaultWorkingModes": [
+                {"label": label, "sortOrder": 0, "remarks": "", "value": value}
+                for label, value in (
+                    ("Maximum Self-Powered", "0"),
+                    ("Sigen AI Mode", "1"),
+                    ("TOU", "2"),
+                    ("Fully Fed to Grid", "5"),
+                    ("Remote EMS Mode", "7"),
+                )
+            ],
+            "energyProfileItems": [],
+        }
+        self.device_topology = {
+            "stationId": CLOUD_TEST_STATION_ID,
+            "stationStatus": 1,
+            "nodeList": [
+                {
+                    "stationId": CLOUD_TEST_STATION_ID,
+                    "snCode": HYBRID_INVERTER_SERIAL,
+                    "deviceName": "",
+                    "deviceType": 2,
+                    "deviceModel": "",
+                    "deviceCode": "",
+                    "deviceTypeDesc": "Aio",
+                    "deviceStatus": 1,
+                    "communicateStatus": 2,
+                    "batPosition": None,
+                    "nodeList": [
+                        {
+                            "stationId": CLOUD_TEST_STATION_ID,
+                            "snCode": HYBRID_INVERTER_SERIAL[3:],
+                            "deviceName": "",
+                            "deviceType": 3,
+                            "deviceModel": "",
+                            "deviceCode": "1104002600",
+                            "deviceTypeDesc": "Inverter",
+                            "deviceStatus": 1,
+                            "communicateStatus": 2,
+                            "batPosition": 0,
+                            "nodeList": [],
+                            "deviceOrder": 1,
+                            "ratedActivePower": HYBRID_INVERTER_RATED_ACTIVE_POWER,
+                            "hasDcCharger": None,
+                            "dcRunStatus": None,
+                        },
+                        {
+                            "stationId": CLOUD_TEST_STATION_ID,
+                            "snCode": "987B65BC1238",
+                            "deviceName": "",
+                            "deviceType": 4,
+                            "deviceModel": "",
+                            "deviceCode": "",
+                            "deviceTypeDesc": "Battery",
+                            "deviceStatus": 1,
+                            "communicateStatus": 2,
+                            "batPosition": 1,
+                            "nodeList": [],
+                            "deviceOrder": 4,
+                            "ratedActivePower": None,
+                            "hasDcCharger": None,
+                        },
+                        {
+                            "stationId": CLOUD_TEST_STATION_ID,
+                            "snCode": "987B65BC1237",
+                            "deviceType": 4,
+                            "deviceModel": "",
+                            "deviceCode": "",
+                            "deviceTypeDesc": "Battery",
+                            "deviceStatus": 1,
+                            "communicateStatus": 2,
+                            "batPosition": 2,
+                            "nodeList": [],
+                            "deviceOrder": 4,
+                            "ratedActivePower": None,
+                            "hasDcCharger": None,
+                            "dcRunStatus": None,
+                        },
+                        {
+                            "stationId": CLOUD_TEST_STATION_ID,
+                            "snCode": "987B65BC1236",
+                            "deviceType": 4,
+                            "deviceModel": "",
+                            "deviceCode": "",
+                            "deviceTypeDesc": "Battery",
+                            "deviceStatus": 1,
+                            "communicateStatus": 2,
+                            "batPosition": 3,
+                            "nodeList": [],
+                            "deviceOrder": 4,
+                            "ratedActivePower": None,
+                            "hasDcCharger": None,
+                            "dcRunStatus": None,
+                        },
+                        {
+                            "stationId": CLOUD_TEST_STATION_ID,
+                            "snCode": DC_CHARGER_SERIAL,
+                            "deviceType": 5,
+                            "deviceModel": "",
+                            "deviceCode": "Sigen EV DC Charging Module",
+                            "deviceTypeDesc": "DC Charger",
+                            "deviceStatus": 1,
+                            "communicateStatus": 2,
+                            "nodeList": [],
+                            "deviceOrder": None,
+                            "ratedActivePower": None,
+                            "hasDcCharger": None,
+                            "dcRunStatus": None,
+                        },
+                        {
+                            "stationId": CLOUD_TEST_STATION_ID,
+                            "snCode": CLOUD_TEST_GATEWAY_SERIAL,
+                            "deviceType": 8,
+                            "deviceModel": "",
+                            "deviceCode": "",
+                            "deviceTypeDesc": "Gateway",
+                            "deviceStatus": 1,
+                            "communicateStatus": 2,
+                            "batPosition": 0,
+                            "nodeList": [],
+                            "deviceOrder": 5,
+                            "ratedActivePower": None,
+                            "hasDcCharger": None,
+                            "dcRunStatus": None,
+                        },
+                    ],
+                    "deviceOrder": None,
+                    "ratedActivePower": HYBRID_INVERTER_RATED_ACTIVE_POWER,
+                    "hasDcCharger": True,
+                    "dcRunStatus": None,
+                },
+                {
+                    "stationId": CLOUD_TEST_STATION_ID,
+                    "snCode": PV_INVERTER_SERIAL,
+                    "deviceName": "",
+                    "deviceType": 2,
+                    "deviceModel": "",
+                    "deviceCode": "",
+                    "deviceTypeDesc": "Aio",
+                    "deviceStatus": 1,
+                    "communicateStatus": 2,
+                    "batPosition": None,
+                    "nodeList": [
+                        {
+                            "stationId": CLOUD_TEST_STATION_ID,
+                            "snCode": PV_INVERTER_SERIAL[3:],
+                            "deviceType": 3,
+                            "deviceStatus": 1,
+                            "communicateStatus": 2,
+                            "deviceCode": PV_INVERTER_MODEL,
+                            "modelVersionStr": FIRMWARE_VERSION,
+                            "ratedActivePower": PV_INVERTER_RATED_ACTIVE_POWER,
+                            "nodeList": [],
+                        },
+                        {
+                            "stationId": CLOUD_TEST_STATION_ID,
+                            "snCode": AC_CHARGER_SERIAL,
+                            "deviceType": 6,
+                            "deviceStatus": 1,
+                            "communicateStatus": 2,
+                            "deviceCode": "Sigen EV AC Charger",
+                            "modelVersionStr": FIRMWARE_VERSION,
+                            "nodeList": [],
+                        },
+                    ],
+                },
+            ],
+        }
+
+        self.gateway_info = {
+            "parallelNumType": 0,
+            "gatewayCabinetType": 0,
+            "gatewayDeviceCode": "1111001401",
+            "machineModel": None,
+            "snCode": CLOUD_TEST_GATEWAY_SERIAL,
+            "showSnCode": CLOUD_TEST_GATEWAY_SERIAL,
+            "deviceType": 8,
+            "communicationStatus": 2,
+            "deviceName": "",
+            "softVersion": FIRMWARE_VERSION,
+            "deviceModel": "Sigen Gateway TP",
+            "modelTypeCode": "0",
+            "gatewayMacAddress": "02-00-00-00-00-01",
+            "deviceCode": "1111001401",
+            "gridSideInfoList": [
+                {
+                    "paramKey": "Phase A Voltage",
+                    "paramValue": "233.29 V",
+                },
+                {
+                    "paramKey": "Phase B Voltage",
+                    "paramValue": "232.81 V",
+                },
+                {
+                    "paramKey": "Phase C Voltage",
+                    "paramValue": "233.04 V",
+                },
+                {
+                    "paramKey": "Phase A Current",
+                    "paramValue": "10.76 A",
+                },
+                {
+                    "paramKey": "Phase B Current",
+                    "paramValue": "10.31 A",
+                },
+                {
+                    "paramKey": "Phase C Current",
+                    "paramValue": "10.54 A",
+                },
+                {
+                    "paramKey": "Voltage Frequency",
+                    "paramValue": "49.99 Hz",
+                },
+                {
+                    "paramKey": "Total Active Power",
+                    "paramValue": "7.250 kW",
+                },
+                {
+                    "paramKey": "Total Reactive Power",
+                    "paramValue": "-1.180 kVar",
+                },
+                {
+                    "paramKey": "Grid Side Contactor Status",
+                    "paramValue": "Close",
+                },
+                {
+                    "paramKey": "Maximum Phase A voltage in the past minute",
+                    "paramValue": "233.93 V",
+                },
+                {
+                    "paramKey": "Minimum Phase A voltage in the past minute",
+                    "paramValue": "231.38 V",
+                },
+                {
+                    "paramKey": "Maximum Phase B voltage in the past minute",
+                    "paramValue": "233.47 V",
+                },
+                {
+                    "paramKey": "Minimum Phase B voltage in the past minute",
+                    "paramValue": "231.12 V",
+                },
+                {
+                    "paramKey": "Maximum Phase C voltage in the past minute",
+                    "paramValue": "233.65 V",
+                },
+                {
+                    "paramKey": "Minimum Phase C voltage in the past minute",
+                    "paramValue": "231.26 V",
+                },
+            ],
+            "realTimeInfoVOList": [],
+            "newGridSideInfoList": [
+                {
+                    "paramKey": "Voltage Frequency",
+                    "paramValue": "49.99 Hz",
+                }
+            ],
+            "inverterSideInfoList": [],
+            "generatorSideInfoList": [],
+            "generatorRealTimeInfoVOList": [],
+            "extraGeneratorInfoList": [],
+            "extraInverterInfoList": [],
+            "inverterRealTimeInfoVOList": [],
+        }
+        inverter_dynamic = [
+            ("Active Power", "-6.6", "kW"),
+            ("Reactive Power", "0.003", "kVar"),
+            ("Phase A Voltage", "225.63", "V"),
+            ("Phase B Voltage", "226.14", "V"),
+            ("Phase C Voltage", "224.97", "V"),
+            ("Phase A Current", "29.58", "A"),
+            ("Phase B Current", "29.31", "A"),
+            ("Phase C Current", "29.76", "A"),
+            ("Grid Frequency", "50.0", "Hz"),
+            ("PV Power", "0.53", "kW"),
+            ("Internal Temperature", "55.8", "℃"),
+        ]
+        self.device_dynamic_info = {
+            3: {"realTimeInfo": [{"paramKey": key, "paramValue": f"{value} {unit}", "paramValueText": value, "paramValueUnit": unit} for key, value, unit in inverter_dynamic], "dataCurrTimeStamp": ""},
+            4: {
+                "realTimeInfo": [
+                    {"paramKey": key, "paramValue": f"{value}{unit}" if unit == "%" else f"{value} {unit}", "paramValueText": value, "paramValueUnit": unit}
+                    for key, value, unit in (("Battery SOC", "72.3", "%"), ("Charging & Discharging Power", "2.236", "kW"), ("Battery Pack Voltage", "30.6", "V"), ("Heating status", "Off", ""))
+                ],
+                "dataCurrTimeStamp": "",
+            },
+        }
+        self.device_static_info = {
+            3: {
+                "stationStatus": 1,
+                "softwareVersion": FIRMWARE_VERSION,
+                "runStatus": 1,
+                "findCheck": None,
+                "paramInfoVOList": self._device_parameters(HYBRID_INVERTER_SERIAL[3:], "SigenStor EC 6.0 TP", "6.0", "kW"),
+            },
+            4: {"stationStatus": 1, "softwareVersion": FIRMWARE_VERSION, "runStatus": 1, "findCheck": None, "paramInfoVOList": self._device_parameters("987B65BC1238", "SigenStor BAT 8.0", "8.06", "kWh")},
+        }
+
+        self.grid_export_limit = {
+            "enable": True,
+            "maxLimitation": "10.000",
+            "maxLimitationOwner": "10.000",
+            "maxLimitationInstaller": "20.000",
+            "isUltra": False,
+        }
+        self.grid_import_limit = {
+            "enable": False,
+            "maxLimitation": "",
+            "maxLimitationOwner": "",
+            "maxLimitationInstaller": "",
+            "isUltra": False,
+        }
+        self.grid_connection_limit = {
+            "enable": True,
+            "currentLimitation": "32.0",
+            "ownerSetLimitation": "32.0",
+            "installerSetLimitation": "63.0",
+        }
+        self.battery_power_limit = {
+            "batteryMaxChargingPower": "5.000",
+            "batteryMaxDischargingPower": "5.000",
+        }
+        self.solar_power_limit = {"powerLimit": "6.000"}
+        self.battery_export_limitation = {
+            "currentEnable": False,
+            "ownerSetEnable": None,
+            "installerSetEnable": None,
+            "nearModify": None,
+        }
+
+    _EDITABLE_STATE: ClassVar[dict[str, type | tuple[type, ...]]] = {
+        "internet_available": bool,
+        "internet_outage_status": int,
+        "operational_mode": int,
+        "profile_id": int,
+        "instant_control": dict,
+        "station_home_data": dict,
+        "available_modes_data": dict,
+        "device_topology": dict,
+        "gateway_info": dict,
+        "grid_export_limit": dict,
+        "grid_import_limit": dict,
+        "grid_connection_limit": dict,
+        "battery_power_limit": dict,
+        "solar_power_limit": dict,
+        "battery_export_limitation": dict,
+    }
+
+    @staticmethod
+    def _success(data: Any = None) -> web.Response:
+        return web.json_response({"code": 0, "msg": "Success", "data": data})
+
+    @web.middleware
+    async def internet_outage_middleware(self, request: web.Request, handler: Any) -> web.StreamResponse:
+        """Reject cloud API requests while an internet outage is active."""
+        if not self.internet_available and not request.path.startswith("/cloud-api-test"):
+            return web.json_response(
+                {
+                    "code": self.internet_outage_status,
+                    "msg": "Cloud API unavailable due to simulated internet outage",
+                },
+                status=self.internet_outage_status,
+            )
+        return await handler(request)
+
+    async def control_dashboard(self, request: web.Request) -> web.FileResponse:
+        """Serve the browser UI used to inspect and edit simulated cloud state."""
+        return web.FileResponse(CLOUD_TEST_STATIC_DIR / "cloud_api.html")
+
+    async def control_dashboard_script(self, request: web.Request) -> web.FileResponse:
+        """Serve testable dashboard behaviour as an ECMAScript module."""
+        return web.FileResponse(CLOUD_TEST_STATIC_DIR / "cloud_api.mjs")
+
+    async def get_control_state(self, request: web.Request) -> web.Response:
+        """Return every response value that can be changed through the UI."""
+        return web.json_response({name: getattr(self, name) for name in self._EDITABLE_STATE})
+
+    async def set_control_state(self, request: web.Request) -> web.Response:
+        """Replace one editable response value, rejecting unknown or invalid values."""
+        name = request.match_info["name"]
+        expected_type = self._EDITABLE_STATE.get(name)
+        if expected_type is None:
+            raise web.HTTPNotFound(text=f"Unknown cloud test value: {name}")
+        try:
+            value = (await request.json())["value"]
+        except (json.JSONDecodeError, KeyError, TypeError):
+            raise web.HTTPBadRequest(text='Expected JSON in the form {"value": ...}') from None
+        # bool is an int subclass, but accepting it for integer settings makes
+        # accidental checkbox updates particularly confusing.
+        valid = isinstance(value, expected_type) and not (expected_type is int and isinstance(value, bool))
+        if not valid:
+            if isinstance(expected_type, tuple):
+                expected_names = " or ".join(t.__name__ for t in expected_type)
+                raise web.HTTPBadRequest(text=f"{name} must be a {expected_names}")
+            raise web.HTTPBadRequest(text=f"{name} must be a {expected_type.__name__}")
+        if name == "internet_outage_status" and not 500 <= value <= 599:
+            raise web.HTTPBadRequest(text="internet_outage_status must be between 500 and 599")
+        setattr(self, name, value)
+        return web.json_response({"name": name, "value": value})
+
+    async def authenticate(self, request: web.Request) -> web.Response:
+        form = await request.post()
+        grant_type = form.get("grant_type")
+        if grant_type == "password":
+            authenticated = self.username is not None and self.encrypted_password is not None and form.get("username") == self.username and form.get("password") == self.encrypted_password
+        elif grant_type == "refresh_token":
+            authenticated = self.refresh_token is not None and form.get("refresh_token") == self.refresh_token
+        else:
+            authenticated = False
+
+        if not authenticated:
+            return web.json_response(
+                {"code": 401, "msg": "Invalid credentials or refresh token"},
+                status=401,
+            )
+
+        # Rotate both tokens, matching the response shape consumed by OAuthSession
+        # for password and refresh-token grants.
+        self.access_token = secrets.token_urlsafe(24)
+        self.refresh_token = secrets.token_urlsafe(24)
+        return self._success({
+            "access_token": self.access_token,
+            "refresh_token": self.refresh_token,
+            "expires_in": 3600,
+        })
+
+    async def authorized(self, request: web.Request) -> web.Response | None:
+        if request.headers.get("Authorization") != f"Bearer {self.access_token}":
+            return web.json_response({"code": 401, "msg": "Unauthorized"}, status=401)
+        return None
+
+    async def station_home(self, request: web.Request) -> web.Response:
+        if (response := await self.authorized(request)) is not None:
+            return response
+        return self._success(self.station_home_data)
+
+    async def get_device_topology(self, request: web.Request) -> web.Response:
+        if (response := await self.authorized(request)) is not None:
+            return response
+        return self._success(self.device_topology)
+
+    async def get_gateway_info(self, request: web.Request) -> web.Response:
+        if (response := await self.authorized(request)) is not None:
+            return response
+        return self._success(self.gateway_info)
+
+    async def get_device_info(self, request: web.Request) -> web.Response:
+        if (response := await self.authorized(request)) is not None:
+            return response
+        try:
+            device_type = int(request.query["deviceType"])
+            data = self.device_static_info if request.match_info["kind"] == "static" else self.device_dynamic_info
+            payload = dict(data[device_type])
+            if device_type == 4:
+                # Each battery response identifies the serial requested by the client.
+                payload = copy.deepcopy(payload)
+                for entry in payload.get("paramInfoVOList", []):
+                    if entry["paramKey"] == "Device SN":
+                        entry["paramValue"] = entry["paramValueText"] = request.query.get("snCode", "")
+            return self._success(payload)
+        except (KeyError, ValueError):
+            return web.json_response({"code": 400, "msg": "Invalid device"}, status=400)
+
+    async def available_modes(self, request: web.Request) -> web.Response:
+        if (response := await self.authorized(request)) is not None:
+            return response
+        return self._success(self.available_modes_data)
+
+    async def get_operational_mode(self, request: web.Request) -> web.Response:
+        if (response := await self.authorized(request)) is not None:
+            return response
+        return self._success({"currentMode": self.operational_mode, "currentProfileId": self.profile_id})
+
+    async def set_operational_mode(self, request: web.Request) -> web.Response:
+        if (response := await self.authorized(request)) is not None:
+            return response
+        payload = await request.json()
+        self.operational_mode = int(payload["operationMode"])
+        self.profile_id = int(payload.get("profileId", -1))
+        return self._success()
+
+    async def get_instant_control(self, request: web.Request) -> web.Response:
+        if (response := await self.authorized(request)) is not None:
+            return response
+        if self.instant_control["enable"] == True and self.instant_control["endTime"] is not None and self.instant_control["endTime"] < time.time():
+            self.instant_control["enable"] = False
+        _logger.info(f"get_instant_control: {self.instant_control}")
+        return self._success(self.instant_control)
+
+    async def set_instant_control(self, request: web.Request) -> web.Response:
+        if (response := await self.authorized(request)) is not None:
+            return response
+        payload = await request.json()
+        _logger.info(f"set_instant_control: {payload}")
+        enabled = bool(payload.get("enable"))
+        duration = int(payload.get("duration") or 0)
+        self.instant_control = {
+            "enable": enabled,
+            "mode": payload.get("mode") or "1",
+            "endTime": int(time.time() + (duration * 60)) if enabled and duration else None,
+        }
+        return self._success()
+
+    async def get_limit(self, request: web.Request) -> web.Response:
+        if (response := await self.authorized(request)) is not None:
+            return response
+        path = request.path
+        setting = (
+            "grid_export_limit"
+            if "/grid/limitation/export/" in path
+            else "grid_import_limit"
+            if "/grid/limitation/import/" in path
+            else "grid_connection_limit"
+            if "/parallel/off/grid/" in path
+            else "battery_power_limit"
+            if "/battery/limit/" in path
+            else "solar_power_limit"
+            if "/solar/limit/" in path
+            else "battery_export_limitation"
+        )
+        return self._success(getattr(self, setting))
+
+    async def set_grid_limit(self, request: web.Request) -> web.Response:
+        if (response := await self.authorized(request)) is not None:
+            return response
+        payload = await request.json()
+        setting = f"grid_{request.match_info['direction']}_limit"
+        state = getattr(self, setting)
+        state.update(
+            enable=bool(payload["enable"]),
+            maxLimitation=payload["maxLimitationOwner"],
+            maxLimitationOwner=payload["maxLimitationOwner"],
+        )
+        return self._success()
+
+    async def set_grid_connection_limit(self, request: web.Request) -> web.Response:
+        if (response := await self.authorized(request)) is not None:
+            return response
+        payload = await request.json()
+        self.grid_connection_limit.update(
+            enable=bool(payload["enable"]),
+            currentLimitation=payload["ownerSetLimitation"],
+            ownerSetLimitation=payload["ownerSetLimitation"],
+        )
+        return self._success()
+
+    async def set_battery_power_limit(self, request: web.Request) -> web.Response:
+        if (response := await self.authorized(request)) is not None:
+            return response
+        payload = await request.json()
+        self.battery_power_limit.update(
+            batteryMaxChargingPower=payload["batteryMaxChargingPower"],
+            batteryMaxDischargingPower=payload["batteryMaxDischargingPower"],
+        )
+        return self._success()
+
+    async def set_solar_power_limit(self, request: web.Request) -> web.Response:
+        if (response := await self.authorized(request)) is not None:
+            return response
+        payload = await request.json()
+        self.solar_power_limit["powerLimit"] = payload["powerLimit"]
+        return self._success()
+
+    async def set_battery_export_limitation(self, request: web.Request) -> web.Response:
+        if (response := await self.authorized(request)) is not None:
+            return response
+        payload = await request.json()
+        self.battery_export_limitation.update(
+            currentEnable=payload["ownerSetEnable"],
+            ownerSetEnable=payload["ownerSetEnable"],
+        )
+        return self._success()
+
+    def app(self) -> web.Application:
+        app = web.Application(middlewares=[self.internet_outage_middleware])
+        app.add_routes([
+            web.get("/cloud-api-test", self.control_dashboard),
+            web.get("/cloud-api-test/", self.control_dashboard),
+            web.get("/cloud-api-test/cloud_api.mjs", self.control_dashboard_script),
+            web.get("/cloud-api-test/state", self.get_control_state),
+            web.put("/cloud-api-test/state/{name}", self.set_control_state),
+            web.post("/auth/oauth/token", self.authenticate),
+            web.get("/device/owner/station/home", self.station_home),
+            web.get("/device/devicetreepanel/topology", self.get_device_topology),
+            web.get("/device/gateway/{station_id}", self.get_gateway_info),
+            web.get("/device/sigen/device/{kind}/info", self.get_device_info),
+            web.get(
+                "/device/energy-profile/mode/all/{station_id}",
+                self.available_modes,
+            ),
+            web.get(
+                "/device/energy-profile/mode/current/{station_id}",
+                self.get_operational_mode,
+            ),
+            web.put("/device/energy-profile/mode", self.set_operational_mode),
+            web.get(
+                "/device/energy-profile/instant/manunal/{station_id}",
+                self.get_instant_control,
+            ),
+            web.put(
+                "/device/energy-profile/instant/manunal",
+                self.set_instant_control,
+            ),
+            web.get(
+                "/device/energy-profile/grid/limitation/export/{station_id}",
+                self.get_limit,
+            ),
+            web.get(
+                "/device/energy-profile/grid/limitation/import/{station_id}",
+                self.get_limit,
+            ),
+            web.put(
+                "/device/energy-profile/grid/limitation/{direction}",
+                self.set_grid_limit,
+            ),
+            web.get(
+                "/device/energy-profile/parallel/off/grid/{station_id}",
+                self.get_limit,
+            ),
+            web.put(
+                "/device/energy-profile/parallel/off/grid",
+                self.set_grid_connection_limit,
+            ),
+            web.get(
+                "/device/energy-profile/battery/limit/{station_id}",
+                self.get_limit,
+            ),
+            web.put(
+                "/device/energy-profile/battery/limit",
+                self.set_battery_power_limit,
+            ),
+            web.get(
+                "/device/energy-profile/solar/limit/{station_id}",
+                self.get_limit,
+            ),
+            web.put(
+                "/device/energy-profile/solar/limit",
+                self.set_solar_power_limit,
+            ),
+            web.get(
+                "/device/energy-profile/battery/export/limitation/{station_id}",
+                self.get_limit,
+            ),
+            web.put(
+                "/device/energy-profile/battery/export/limitation",
+                self.set_battery_export_limitation,
+            ),
+        ])
+        return app
+
+
+@asynccontextmanager
+async def run_cloud_api_test_server(host: str, port: int):
+    """Run the test cloud API for the lifetime of the context manager."""
+    server = CloudApiTestServer(
+        os.getenv("MODBUS_TEST_SERVER_CLOUD_USERNAME"),
+        os.getenv("MODBUS_TEST_SERVER_CLOUD_PASSWORD"),
+    )
+    runner = web.AppRunner(server.app())
+    await runner.setup()
+    await web.TCPSite(runner, host, port).start()
+    _logger.info(
+        "Cloud API Testing Server listening on http://%s:%s/ (editor at /cloud-api-test)",
+        host,
+        port,
+    )
+    try:
+        yield server
+    finally:
+        await runner.cleanup()
+
 
 class TestConfig:
     log_level: int = logging.INFO
 
     initial_firmware: str = "V100R001C00SPC112B107G"
     upgrade_firmware: str = "V100R001C00SPC113"
-    protocol_version: ProtocolVersion | None = None
+    protocol_version: ProtocolVersion = ProtocolVersion(list(ProtocolVersion)[-1])
 
     use_simplified_topics: bool = False
 
@@ -88,6 +911,11 @@ class TestConfig:
     grid_outage_initial_delay_seconds: int = 30
     grid_outage_duration_seconds: int = 30
     grid_outage_repeated: bool = True
+    simulate_internet_outage: bool = False
+    internet_outage_initial_delay_seconds: int = 30
+    internet_outage_duration_seconds: int = 30
+    internet_outage_repeated: bool = True
+    internet_outage_status_code: int = web.HTTPServiceUnavailable.status_code
     simulate_firmware_upgrade: bool = False
     simulate_power_factor_errors: bool = False
 
@@ -239,7 +1067,7 @@ class CustomDataBlock:
       to the register store — matching the behaviour of the real device exactly.
     """
 
-    def __init__(self, device_address: int, mqtt_client: mqtt.Client, latency_budget: LatencyBudget):
+    def __init__(self, device_address: int, mqtt_client: mqtt.Client | None, latency_budget: LatencyBudget):
         """Initialise an empty data block for *device_address*.
 
         Args:
@@ -375,7 +1203,7 @@ class CustomDataBlock:
             # matches that initial state.
             if set_values is None and TestConfig.grid_status_initial_state in (1, 2) and any(32000 <= addr <= 32014 for addr in range(address, address + count)) and block._server is not None:
                 grid_status = await block._server.context.async_getValues(Constants.PLANT_DEVICE_ADDRESS, 0x03, GridStatus.ADDRESS, 1)
-                if grid_status and grid_status[0] == TestConfig.grid_status_initial_state:
+                if isinstance(grid_status, list) and grid_status and grid_status[0] == TestConfig.grid_status_initial_state:
                     return ExcCodes.DEVICE_FAILURE
 
             # ── Simulated latency ──────────────────────────────────────────
@@ -401,7 +1229,7 @@ class CustomDataBlock:
             # and let pymodbus send ILLEGAL_ADDRESS to the client.
             if set_values is not None and address in gated_addrs and block._server is not None:
                 ems = await block._server.context.async_getValues(dev_addr, 0x03, RemoteEMS.ADDRESS, 1)
-                if ems and ems[0] == 0:
+                if isinstance(ems, list) and ems and ems[0] == 0:
                     return ExcCodes.ILLEGAL_ADDRESS
 
             # ── Phase / PV-string mirroring ────────────────────────────────
@@ -730,6 +1558,12 @@ class CustomDataBlock:
         if sensor.address == InverterFirmwareVersion.ADDRESS:
             return (TestConfig.initial_firmware, "inverter_firmware_version")
 
+        if sensor.address in SYNTHESIZED_INVERTER_VALUES.get(sensor.device_address, {}):
+            return (
+                SYNTHESIZED_INVERTER_VALUES[sensor.device_address][sensor.address],
+                "inverter_identity",
+            )
+
         if sensor.data_type == ModbusClientMixin.DATATYPE.STRING:
             return ("string value" if not sensor.latest_raw_state else sensor.latest_raw_state, "string")
 
@@ -895,6 +1729,56 @@ async def simulate_grid_outage(data_block: CustomDataBlock, wait_for_seconds: in
             break
 
 
+async def simulate_internet_outage(
+    server: CloudApiTestServer,
+    wait_for_seconds: int,
+    duration_seconds: int,
+    repeated: bool = True,
+    status_code: int = web.HTTPServiceUnavailable.status_code,
+) -> None:
+    """Periodically make the test cloud API return a server error.
+
+    The listener remains reachable so clients receive a realistic HTTP failure
+    rather than hanging indefinitely. ``status_code`` permits testing gateway
+    failures such as 502 as well as the default 503 service-unavailable case.
+    Normal request handling is restored when the outage ends or the task is
+    cancelled.
+
+    Args:
+        server: Cloud API test server whose requests should be rejected.
+        wait_for_seconds: Idle time between outage cycles, in seconds.
+        duration_seconds: Duration of each simulated outage, in seconds.
+        repeated: Whether to repeat the internet outage simulation.
+        status_code: HTTP error returned during an outage.
+    """
+    if not 500 <= status_code <= 599:
+        raise ValueError("internet outage status code must be between 500 and 599")
+
+    server.internet_outage_status = status_code
+    try:
+        while True:
+            _logger.info(
+                "Waiting for %s seconds before simulating internet outage...",
+                wait_for_seconds,
+            )
+            await asyncio.sleep(wait_for_seconds)
+            _logger.info(
+                "Simulating internet outage for %s seconds (HTTP %s)...",
+                duration_seconds,
+                status_code,
+            )
+            server.internet_available = False
+            await asyncio.sleep(duration_seconds)
+            server.internet_available = True
+            _logger.info("Internet outage simulation ended.")
+            if not repeated:
+                break
+    except asyncio.CancelledError:
+        pass
+    finally:
+        server.internet_available = True
+
+
 async def prepopulate(modbus_client: ModbusClient, groups: dict[int, list]) -> None:
     """Pre-populate register values from a live Modbus source.
 
@@ -945,6 +1829,7 @@ async def run_async_server(
     port: int = 502,
     protocol_version: ProtocolVersion = list(ProtocolVersion)[-1],
     log_level: int = logging.INFO,
+    cloud_port: int | None = None,
 ) -> None:
     """Build and run the async Modbus TCP test server.
 
@@ -963,7 +1848,9 @@ async def run_async_server(
        post-initialisation writes (MQTT, simulation helpers) can reach the
        server's :class:`SimDevice` context.
     8. Optionally co-schedules :func:`simulate_grid_outage` for the plant device.
-    9. Optionally co-schedules :func:`simulate_firmware_version_upgrade` for the
+    9. Optionally co-schedules :func:`simulate_internet_outage` for the cloud
+       API server.
+    10. Optionally co-schedules :func:`simulate_firmware_version_upgrade` for the
        inverter device.
 
     Args:
@@ -978,7 +1865,15 @@ async def run_async_server(
         port: TCP port for the server to listen on.
         protocol_version: Sigenergy protocol version to emulate.
         log_level: Logging verbosity for this module's logger.
+        cloud_port: Port for the companion cloud API server. When omitted in
+            imported tests, an ephemeral port is selected unless configured by
+            ``MODBUS_TEST_SERVER_CLOUD_PORT``.
     """
+    if cloud_port is None:
+        # Imported tests commonly run in parallel, so use an ephemeral port unless
+        # explicitly configured. The command-line entry point supplies port 8080.
+        cloud_port = int(os.getenv("MODBUS_TEST_SERVER_CLOUD_PORT", "0"))
+
     context: dict[int, CustomDataBlock] = {}
     groups: dict[int, list] = {}
     group_index: int = -1
@@ -1017,7 +1912,7 @@ async def run_async_server(
         count = sensor.count
         device_address = sensor.device_address
         input_type = sensor.input_type
-        if device_address not in devices:
+        if device_address is not None and device_address not in devices:
             devices[device_address] = sensor.parent_device.name
 
     if modbus_client is not None:
@@ -1127,7 +2022,18 @@ async def run_async_server(
         if TestConfig.simulate_firmware_upgrade:
             for idx in inverter_device_address:
                 tasks.append(simulate_firmware_version_upgrade(context[idx], wait_for_seconds=randint(30, 60)))
-        await asyncio.gather(*tasks)
+        async with run_cloud_api_test_server(host, cloud_port) as cloud_server:
+            if TestConfig.simulate_internet_outage:
+                tasks.append(
+                    simulate_internet_outage(
+                        cloud_server,
+                        wait_for_seconds=TestConfig.internet_outage_initial_delay_seconds,
+                        duration_seconds=TestConfig.internet_outage_duration_seconds,
+                        repeated=TestConfig.internet_outage_repeated,
+                        status_code=TestConfig.internet_outage_status_code,
+                    )
+                )
+            await asyncio.gather(*tasks)
     except asyncio.CancelledError as e:
         _logger.debug(f"Modbus TCP Testing Server cancelled: {e}")
         # Ensure we don't leave the port bound
@@ -1254,10 +2160,10 @@ async def async_helper() -> None:
             return default
         return logging.getLevelNamesMapping()[value.upper()]
 
-    def _env_protocol(name: str) -> ProtocolVersion | None:
+    def _env_protocol(name: str) -> ProtocolVersion:
         value = _env(name)
         if value is None:
-            return None
+            return ProtocolVersion(list(ProtocolVersion)[-1])
         normalized = value.upper()
         if not normalized.startswith("V"):
             normalized = f"V{normalized.replace('.', '_')}"
@@ -1305,16 +2211,22 @@ async def async_helper() -> None:
     TestConfig.registers_to_debug = _env_registers("MODBUS_TEST_SERVER_REGISTERS_TO_DEBUG")
     TestConfig.use_simplified_topics = _env_bool("MODBUS_TEST_SERVER_USE_SIMPLIFIED_TOPICS", True)
     TestConfig.simulate_grid_outages = _env_bool("MODBUS_TEST_SERVER_SIMULATE_GRID_OUTAGES", False)
-    TestConfig.grid_status_initial_state = _env_int("MODBUS_TEST_SERVER_GRID_STATUS_INITIAL_STATE", None)  # 0=On Grid, 1=Off Grid (auto), 2=Off Grid (manual), None=source/random
+    TestConfig.grid_status_initial_state = _env_int("MODBUS_TEST_SERVER_GRID_STATUS_INITIAL_STATE", 0)  # 0=On Grid, 1=Off Grid (auto), 2=Off Grid (manual), None=source/random
     TestConfig.grid_outage_initial_delay_seconds = _env_int("MODBUS_TEST_SERVER_GRID_OUTAGE_INITIAL_DELAY", 30)
     TestConfig.grid_outage_duration_seconds = _env_int("MODBUS_TEST_SERVER_GRID_OUTAGE_DURATION", 30)
     TestConfig.grid_outage_repeated = _env_bool("MODBUS_TEST_SERVER_GRID_OUTAGE_REPEATED", True)
+    TestConfig.simulate_internet_outage = _env_bool("MODBUS_TEST_SERVER_SIMULATE_INTERNET_OUTAGE", False)
+    TestConfig.internet_outage_initial_delay_seconds = _env_int("MODBUS_TEST_SERVER_INTERNET_OUTAGE_INITIAL_DELAY", 30)
+    TestConfig.internet_outage_duration_seconds = _env_int("MODBUS_TEST_SERVER_INTERNET_OUTAGE_DURATION", 30)
+    TestConfig.internet_outage_repeated = _env_bool("MODBUS_TEST_SERVER_INTERNET_OUTAGE_REPEATED", True)
+    TestConfig.internet_outage_status_code = _env_int("MODBUS_TEST_SERVER_INTERNET_OUTAGE_STATUS_CODE", web.HTTPServiceUnavailable.status_code)
     TestConfig.simulate_firmware_upgrade = _env_bool("MODBUS_TEST_SERVER_SIMULATE_FIRMWARE_UPGRADE", False)
     TestConfig.simulate_power_factor_errors = _env_bool("MODBUS_TEST_SERVER_SIMULATE_POWER_FACTOR_ERRORS", False)
     TestConfig.force_sensor_values = _env_json("MODBUS_TEST_SERVER_FORCE_SENSOR_VALUES_JSON")
 
     server_host = _env("MODBUS_TEST_SERVER_HOST") or "0.0.0.0"
     server_port = _env_int("MODBUS_TEST_SERVER_PORT", 502)
+    cloud_port = _env_int("MODBUS_TEST_SERVER_CLOUD_PORT", CLOUD_TEST_SERVER_DEFAULT_PORT)
 
     try:
         await run_async_server(
@@ -1325,6 +2237,7 @@ async def async_helper() -> None:
             log_level=TestConfig.log_level,
             host=server_host,
             port=server_port,
+            cloud_port=cloud_port,
         )
     finally:
         if mqtt_client is not None:

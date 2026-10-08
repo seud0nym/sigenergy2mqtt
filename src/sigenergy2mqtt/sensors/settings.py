@@ -6,9 +6,21 @@ values over MQTT.
 import logging
 from typing import Any, cast
 
-from sigenergy2mqtt.common import DeviceClass, ProtocolVersion, ScanIntervalDefault, UnitOfTime
+from sigenergy2mqtt.common import (
+    DeviceClass,
+    ProtocolVersion,
+    ScanIntervalDefault,
+    UnitOfTime,
+)
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.sensors.base import DiscoveryKeys, NumericSensorMixin, ReadableSensorMixin, SelectSensorMixin, SwitchSensorMixin, WriteableSensorMixin
+from sigenergy2mqtt.sensors.base import (
+    DiscoveryKeys,
+    NumericSensorMixin,
+    ReadableSensorMixin,
+    SelectSensorMixin,
+    SwitchSensorMixin,
+    WriteableSensorMixin,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -145,6 +157,16 @@ class ApplicationLogLevel(LogLevelSensor):
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "The sigenergy2mqtt application logging level"
+        return attributes
+
+
+class CloudLogLevel(LogLevelSensor):
+    def __init__(self):
+        super().__init__(setting="active_config.cloud.log_level", name="Cloud Log Level", logger="sigenergy2mqtt.cloud")
+
+    def get_attributes(self) -> dict[str, float | int | str]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "The sigenergy2mqtt cloud module logging level"
         return attributes
 
 

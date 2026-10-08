@@ -26,10 +26,15 @@ def mock_modules():
         yield
 
 
-from sigenergy2mqtt.common import ConsumptionMethod, DeviceClass, ProtocolVersion, StateClass  # noqa: E402
-from sigenergy2mqtt.config import Config, _swap_active_config  # noqa: E402
-from sigenergy2mqtt.sensors.base import PVPowerSensor, Sensor  # noqa: E402
-from sigenergy2mqtt.sensors.plant_derived import (  # noqa: E402
+from sigenergy2mqtt.common import (
+    ConsumptionMethod,
+    DeviceClass,
+    ProtocolVersion,
+    StateClass,
+)
+from sigenergy2mqtt.config import Config, _swap_active_config
+from sigenergy2mqtt.sensors.base import PVPowerSensor, Sensor
+from sigenergy2mqtt.sensors.plant.derived import (
     BatteryChargingPower,
     BatteryDischargingPower,
     GridSensorExportPower,
@@ -38,7 +43,12 @@ from sigenergy2mqtt.sensors.plant_derived import (  # noqa: E402
     TotalLifetimePVEnergy,
     TotalPVPower,
 )
-from sigenergy2mqtt.sensors.plant_read_only import BatteryPower, GridSensorActivePower, GridStatus, PlantPVPower  # noqa: E402
+from sigenergy2mqtt.sensors.plant.read_only import (
+    BatteryPower,
+    GridSensorActivePower,
+    GridStatus,
+    PlantPVPower,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -155,7 +165,7 @@ class TestPlantConsumedPower:
 
             mock_mqtt = AsyncMock()
             mock_modbus = AsyncMock()
-            with patch("sigenergy2mqtt.sensors.plant_derived.DerivedSensor.publish", new_callable=AsyncMock) as mock_pub:
+            with patch("sigenergy2mqtt.sensors.plant.derived.DerivedSensor.publish", new_callable=AsyncMock) as mock_pub:
                 assert await sensor.publish(mock_mqtt, mock_modbus) is True
                 mock_pub.assert_called_once()
                 assert sensor.latest_raw_state == 1700.0
@@ -184,7 +194,10 @@ class TestPlantConsumedPower:
             assert sensor.latest_raw_state == 1700.0
 
             # Test TotalLoadPower and GeneralLoadPower branches
-            from sigenergy2mqtt.sensors.plant_read_only import GeneralLoadPower, TotalLoadPower
+            from sigenergy2mqtt.sensors.plant.read_only import (
+                GeneralLoadPower,
+                TotalLoadPower,
+            )
 
             tlp = MagicMock(spec=TotalLoadPower)
             tlp.unique_id = "tlp"
@@ -222,7 +235,7 @@ class TestTotalPVPower:
             sensor = TotalPVPower(0, s1)
             sensor.debug_logging = False
 
-            with patch("sigenergy2mqtt.sensors.plant_derived.DerivedSensor.publish", new_callable=AsyncMock) as mock_pub:
+            with patch("sigenergy2mqtt.sensors.plant.derived.DerivedSensor.publish", new_callable=AsyncMock) as mock_pub:
                 s1.latest_raw_state = 600.0
                 sensor.update_from_source_sensor(s1)
                 assert sensor.latest_raw_state == 600.0
@@ -251,7 +264,10 @@ class TestTotalPVPower:
 
 class TestTotalLifetimePVEnergy:
     def test_total_lifetime_pv_energy_set_source_values(self):
-        from sigenergy2mqtt.sensors.plant_read_only import PlantPVTotalGeneration, ThirdPartyLifetimePVEnergy
+        from sigenergy2mqtt.sensors.plant.read_only import (
+            PlantPVTotalGeneration,
+            ThirdPartyLifetimePVEnergy,
+        )
 
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             sensor = TotalLifetimePVEnergy(0, PlantPVTotalGeneration(0), ThirdPartyLifetimePVEnergy(0))
