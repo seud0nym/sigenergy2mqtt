@@ -126,3 +126,26 @@ def test_empty_cloud_child_is_kept_for_recovery():
     assert any(task.cr_code.co_name == "recover_info" for task in scheduled)
     for task in scheduled:
         task.close()
+
+
+@pytest.mark.parametrize("home_assistant", [False, True])
+async def test_recovered_sensor_debug_subscription_works(monkeypatch, home_assistant):
+    config = Config()
+    config.home_assistant.enabled = home_assistant
+    with _swap_active_config(config):
+        child = CloudBattery(0, "station", {"serialNumber": "battery"}, {}, {"paramInfoVOList": []})
+        child.online = asyncio.get_running_loop().create_future()
+        mqtt, handler = MagicMock(), MagicMock()
+        child.subscribe(mqtt, handler)
+        handler.register.reset_mock()
+        port = FakeCloudControlPort()
+        port.device_dynamic_info.return_value = {"realTimeInfo": [{"paramKey": "SOC", "paramValueUnit": "%", "paramValueText": "50"}]}
+        monkeypatch.setattr("sigenergy2mqtt.devices.cloud.sigen_device.SensorGroupPoller.run", AsyncMock())
+        await child.recover_info(port, mqtt)
+        sensor = next(iter(child.sensors.values()))
+        topic = f"{sensor._get_base_topic(child.unique_id)}/debug"
+        handler.register.assert_called_once_with(mqtt, topic, sensor.set_debug_logging)
+        callback = handler.register.call_args.args[2]
+        await callback(port, mqtt, "true", topic, handler)
+        assert sensor.debug_logging
+        child.online = False

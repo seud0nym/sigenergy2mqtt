@@ -11,6 +11,7 @@ from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices.base.device import Device
 from sigenergy2mqtt.devices.base.poller import SensorGroupPoller
+from sigenergy2mqtt.mqtt import MqttHandler
 from sigenergy2mqtt.sensors.cloud.device_info import (
     DeviceInfoSensor,
     DeviceInfoSnapshot,
@@ -58,6 +59,7 @@ class SigenCloudDevice(Device):
             plant_suffix="" if plant_index == 0 else str(plant_index + 1),
             translate=False,
         )
+        self._mqtt_handler: MqttHandler | None = None
         self._station_id = station_id
         self._sn = sn
         self._pending_info = {static for static, payload, key in (
@@ -89,6 +91,10 @@ class SigenCloudDevice(Device):
                     )
                 )
 
+    def subscribe(self, mqtt_client: Any, mqtt_handler: MqttHandler) -> None:
+        self._mqtt_handler = mqtt_handler
+        super().subscribe(mqtt_client, mqtt_handler)
+
     async def recover_info(self, port: Any, mqtt_client: Any, parent: Device | None = None) -> None:
         """Retry missing startup metadata and start polling recovered sensors."""
         if parent is not None:
@@ -109,7 +115,12 @@ class SigenCloudDevice(Device):
                     before = set(self.all_sensors)
                     self._add_info(static, payload)
                     self._pending_info.remove(static)
-                    new = [sensor for uid, sensor in self.all_sensors.items() if uid not in before and sensor.publishable]
+                    added = [sensor for uid, sensor in self.all_sensors.items() if uid not in before]
+                    if self._mqtt_handler is not None:
+                        for sensor in added:
+                            debug_topic = f"{sensor._get_base_topic(self.unique_id)}/debug"
+                            self._mqtt_handler.register(mqtt_client, debug_topic, sensor.set_debug_logging)
+                    new = [sensor for sensor in added if sensor.publishable]
                     if new:
                         if active_config.home_assistant.enabled:
                             self.publish_discovery(mqtt_client, clean=False)

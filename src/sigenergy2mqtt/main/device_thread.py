@@ -78,17 +78,30 @@ async def read_and_publish_device_sensors(
                 config.retries,
             )
         elif config.transport_factory is not None and not active_config.clean:
-            while stop_event is None or not stop_event.is_set():
+            def stopping() -> bool:
+                return config.shutdown_requested or (stop_event is not None and stop_event.is_set())
+
+            while not stopping():
                 try:
-                    modbus_client = await config.transport_factory()
+                    connection = asyncio.ensure_future(config.transport_factory())
+                    try:
+                        while not connection.done() and not stopping():
+                            await asyncio.wait({connection}, timeout=0.1)
+                        if not connection.done():
+                            return
+                        modbus_client = await connection
+                    finally:
+                        if not connection.done():
+                            connection.cancel()
+                            await asyncio.gather(connection, return_exceptions=True)
                     break
                 except (ClientError, CloudControlError, OSError) as exc:
                     logger.warning("%s cloud connection failed; retrying: %s", log_label, exc)
                     for _ in range(50):
-                        if stop_event is not None and stop_event.is_set():
+                        if stopping():
                             return
                         await asyncio.sleep(0.1)
-            if stop_event is not None and stop_event.is_set():
+            if stopping():
                 return
 
         mqtt_client_id = f"{active_config.mqtt.client_id_prefix}_{config.description}"
