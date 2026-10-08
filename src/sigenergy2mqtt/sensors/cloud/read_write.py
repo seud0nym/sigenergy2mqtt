@@ -75,8 +75,9 @@ class OperationalMode(SelectSensorMixin, CloudReadWriteSensor):
     def _parse_modes(payload: dict[str, object]) -> tuple[list[str], list[tuple[int, int]]]:
         options: list[str] = []
         mode_values: list[tuple[int, int]] = []
+        no_mode = (-1, -1)  # placeholder for empty slots
 
-        def add_option(label: str, value: tuple[int, int], qualifier: str) -> None:
+        def place(index: int | None, label: str, value: tuple[int, int], qualifier: str) -> None:
             option = label
             if option in options:
                 option = f"{label} ({qualifier})"
@@ -84,8 +85,19 @@ class OperationalMode(SelectSensorMixin, CloudReadWriteSensor):
                 while option in options:
                     option = f"{label} ({qualifier} {suffix})"
                     suffix += 1
-            options.append(option)
-            mode_values.append(value)
+
+            # No usable index, or the slot is already taken: append at the end
+            if index is None or index < 0 or (index < len(options) and options[index]):
+                options.append(option)
+                mode_values.append(value)
+                return
+
+            # Pad with empty slots up to the index, then fill it
+            while len(options) <= index:
+                options.append("")
+                mode_values.append(no_mode)
+            options[index] = option
+            mode_values[index] = value
 
         default_modes = payload.get("defaultWorkingModes")
         for item in default_modes if isinstance(default_modes, list) else ():
@@ -97,7 +109,7 @@ class OperationalMode(SelectSensorMixin, CloudReadWriteSensor):
             except (KeyError, TypeError, ValueError):
                 continue
             if label:
-                add_option(label, (mode, -1), f"Mode {mode}")
+                place(mode, label, (mode, -1), f"Mode {mode}")
 
         energy_profiles = payload.get("energyProfileItems")
         for item in energy_profiles if isinstance(energy_profiles, list) else ():
@@ -109,9 +121,9 @@ class OperationalMode(SelectSensorMixin, CloudReadWriteSensor):
             except (KeyError, TypeError, ValueError):
                 continue
             if label:
-                add_option(label, (9, profile_id), f"Profile {profile_id}")
+                place(None, label, (9, profile_id), f"Profile {profile_id}")
 
-        if not options:
+        if not any(options):
             raise ValueError("OperationalMode: available_modes contains no valid modes")
         return options, mode_values
 
