@@ -1,5 +1,6 @@
 from typing import Any, cast
 
+from sigenergy2mqtt.cloud.mysigen_adapter import MySigenCloudAdapter
 from sigenergy2mqtt.config import ConsumptionSource, active_config
 from sigenergy2mqtt.i18n import _t
 from sigenergy2mqtt.metrics.metrics import Metrics
@@ -26,7 +27,7 @@ class DiagnosticsCollectors:
         if active_config.pvoutput.enabled:
             diagnostics_registry.register("pvoutput", cls._diagnostics_collect_pvoutput_metrics)
         if active_config.cloud.enabled:
-            diagnostics_registry.register("mysigen_cloud", cls._diagnostics_collect_cloud_metrics)
+            diagnostics_registry.register("cloud", cls._diagnostics_collect_cloud_metrics)
         diagnostics_registry.register("runtime_configuration", cls._diagnostics_collect_runtime_config)
         diagnostics_registry.register("sensor_debug_logging", cls._diagnostics_collect_sensor_debug)
 
@@ -224,7 +225,7 @@ class DiagnosticsCollectors:
                 "config": {
                     "region": active_config.cloud.region,
                     "scan_interval_secs": active_config.cloud.scan_interval,
-                    "unofficial_api_risk_accepted": "yes" if active_config.cloud.accept_unofficial_api_risk else "no",
+                    "mySigen_app_version": MySigenCloudAdapter.APP_VERSION,
                 },
             }
 
