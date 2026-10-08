@@ -3117,7 +3117,7 @@ cli:
   SIGENERGY2MQTT_NO_EMS_MODE_CHECK:
     help: Turn off validation that disables ESS Max Charging/Discharging and PV Max Power limits when Remote EMS Control Mode is not Command Charging/Discharging. This option is ignored for firmware SPC113 and later as these limits are globally available in those versions.
   SIGENERGY2MQTT_NO_METRICS:
-    help: Do not publish any sigenergy2mqtt metrics.
+    help: 'Deprecated: metrics publishing is disabled by default. Use --publish-metrics to enable it.'
   SIGENERGY2MQTT_PERSISTENCE_CACHE_WARMUP_TIMEOUT:
     help: 'Maximum seconds to wait for MQTT retained state during startup cache warming (default: 10.0, range: 1-60)'
   SIGENERGY2MQTT_PERSISTENCE_DEBUG:
@@ -3128,6 +3128,10 @@ cli:
     help: 'MQTT topic prefix for persisted state messages (default: sigenergy2mqtt/_state)'
   SIGENERGY2MQTT_PERSISTENCE_SYNC_TIMEOUT:
     help: 'Timeout in seconds for synchronous persistence operations when called from a non-asyncio thread (default: 5.0, range: 0.1-30.0)'
+  SIGENERGY2MQTT_PUBLISH_METRICS:
+    help: Publish sigenergy2mqtt metrics to MQTT (disabled by default).
+  SIGENERGY2MQTT_PUBLISH_RUNTIME_CONFIG:
+    help: Publish Runtime Configuration to MQTT, allowing settings to be changed at runtime (disabled by default).
   SIGENERGY2MQTT_PVOUTPUT_API_KEY:
     help: The API Key for PVOutput
   SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION:

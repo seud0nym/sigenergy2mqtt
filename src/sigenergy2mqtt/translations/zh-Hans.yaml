@@ -3117,7 +3117,7 @@ cli:
   SIGENERGY2MQTT_NO_EMS_MODE_CHECK:
     help: '当远程 EMS 控制模式不是“命令充电/放电”时，关闭禁用 ESS 最大充电/放电和 PV 最大功率限制的验证。'
   SIGENERGY2MQTT_NO_METRICS:
-    help: '不发布sigenergy2mqtt指标。'
+    help: '已弃用：指标发布功能默认处于禁用状态。请使用 --publish-metrics 启用该功能。'
   SIGENERGY2MQTT_PERSISTENCE_CACHE_WARMUP_TIMEOUT:
     help: '启动缓存预热期间等待 MQTT 保留状态的最大秒数（默认：10.0，范围：1-60）'
   SIGENERGY2MQTT_PERSISTENCE_DEBUG:
@@ -3128,6 +3128,10 @@ cli:
     help: '持久化状态消息的 MQTT 主题前缀（默认：sigenergy2mqtt/_state）'
   SIGENERGY2MQTT_PERSISTENCE_SYNC_TIMEOUT:
     help: '从非 asyncio 线程调用时同步持久化操作的超时秒数（默认：5.0，范围：0.1-30.0）'
+  SIGENERGY2MQTT_PUBLISH_METRICS:
+    help: 将 sigenergy2mqtt 指标发布到 MQTT（默认禁用）。
+  SIGENERGY2MQTT_PUBLISH_RUNTIME_CONFIG:
+    help: 将运行时配置发布到 MQTT，允许在运行时更改设置（默认禁用）。
   SIGENERGY2MQTT_PVOUTPUT_API_KEY:
     help: PVOutput API密钥
   SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION:

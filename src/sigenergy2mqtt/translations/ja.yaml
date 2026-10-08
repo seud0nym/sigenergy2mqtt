@@ -3117,7 +3117,7 @@ cli:
   SIGENERGY2MQTT_NO_EMS_MODE_CHECK:
     help: 'リモートEMS制御モードが「コマンド充電/放電」でない場合に、ESSの最大充電/放電およびPVの最大電力制限を無効にする検証をオフにします。'
   SIGENERGY2MQTT_NO_METRICS:
-    help: 'sigenergy2mqttメトリクスを公開しない。'
+    help: '非推奨：メトリクスの公開はデフォルトで無効になっています。有効にするには、--publish-metrics オプションを使用してください。'
   SIGENERGY2MQTT_PERSISTENCE_CACHE_WARMUP_TIMEOUT:
     help: '起動キャッシュウォームアップ中にMQTT保持状態を待つ最大秒数（デフォルト：10.0、範囲：1-60）'
   SIGENERGY2MQTT_PERSISTENCE_DEBUG:
@@ -3128,6 +3128,10 @@ cli:
     help: '永続化された状態メッセージのMQTTトピックプレフィックス（デフォルト：sigenergy2mqtt/_state）'
   SIGENERGY2MQTT_PERSISTENCE_SYNC_TIMEOUT:
     help: '非asyncioスレッドから呼び出された場合の同期永続化操作のタイムアウト（秒）（デフォルト：5.0、範囲：0.1-30.0）'
+  SIGENERGY2MQTT_PUBLISH_METRICS:
+    help: sigenergy2mqttのメトリクスをMQTTに公開します（デフォルトでは無効）。
+  SIGENERGY2MQTT_PUBLISH_RUNTIME_CONFIG:
+    help: ランタイム設定をMQTTに公開し、実行中に設定を変更できるようにします（デフォルトでは無効）。
   SIGENERGY2MQTT_PVOUTPUT_API_KEY:
     help: PVOutput APIキー
   SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION:

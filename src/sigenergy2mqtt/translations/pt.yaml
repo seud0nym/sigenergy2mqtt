@@ -3117,7 +3117,7 @@ cli:
   SIGENERGY2MQTT_NO_EMS_MODE_CHECK:
     help: 'Desative a validação que desativa os limites de Carga/Descarga Máxima do ESS e de Potência Máxima do PV quando o Modo de Controle EMS Remoto não for Carga/Descarga por Comando.'
   SIGENERGY2MQTT_NO_METRICS:
-    help: 'Não publicar métricas sigenergy2mqtt.'
+    help: 'Obsoleto: a publicação de métricas está desativada por predefinição. Utilize --publish-metrics para a ativar.'
   SIGENERGY2MQTT_PERSISTENCE_CACHE_WARMUP_TIMEOUT:
     help: 'Segundos máximos para aguardar o estado retido MQTT durante o aquecimento do cache de inicialização (padrão: 10.0, intervalo: 1-60)'
   SIGENERGY2MQTT_PERSISTENCE_DEBUG:
@@ -3128,6 +3128,10 @@ cli:
     help: 'Prefixo de tópico MQTT para mensagens de estado persistidas (padrão: sigenergy2mqtt/_state)'
   SIGENERGY2MQTT_PERSISTENCE_SYNC_TIMEOUT:
     help: 'Tempo limite em segundos para operações de persistência síncronas quando chamadas de um thread não asyncio (padrão: 5.0, intervalo: 0.1-30.0)'
+  SIGENERGY2MQTT_PUBLISH_METRICS:
+    help: Publicar métricas sigenergy2mqtt no MQTT (desativado por predefinição).
+  SIGENERGY2MQTT_PUBLISH_RUNTIME_CONFIG:
+    help: Publicar a configuração em tempo de execução no MQTT, permitindo que as definições sejam alteradas em tempo de execução (desativado por predefinição).
   SIGENERGY2MQTT_PVOUTPUT_API_KEY:
     help: Chave API para PVOutput
   SIGENERGY2MQTT_PVOUTPUT_CONSUMPTION:
