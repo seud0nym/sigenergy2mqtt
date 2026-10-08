@@ -246,7 +246,11 @@ class DiagnosticsCollectors:
                     "status_interval_secs": PVOutputSettings.interval * 60,
                     "exports": "yes" if active_config.pvoutput.exports else "no",
                     "imports": "yes" if active_config.pvoutput.imports else "no",
-                    "consumption": "yes" if active_config.pvoutput.consumption == ConsumptionSource.CONSUMPTION.value else active_config.pvoutput.consumption.value,
+                    "consumption": "no"
+                    if active_config.pvoutput.consumption is None
+                    else "yes"
+                    if active_config.pvoutput.consumption == ConsumptionSource.CONSUMPTION.value
+                    else active_config.pvoutput.consumption.value,
                     "voltage": active_config.pvoutput.voltage.value,
                     "end_of_day": "@ status interval" if active_config.pvoutput.output_hour == -1 else f"{active_config.pvoutput.output_hour}:00",
                 },
