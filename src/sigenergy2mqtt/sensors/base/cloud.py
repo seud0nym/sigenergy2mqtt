@@ -195,6 +195,7 @@ class CloudGridLimitSensor(NumericSensorMixin, CloudReadWriteSensor):
         self._current_key = current_key
         self._installer_key = installer_key
         self._updates_allowed = False
+        self._writable_topic: str | None = None
         super().__init__(minimum=0.0, maximum=0.0, **kwargs)
         self.state_topic_dict_key = current_key
 
@@ -202,8 +203,15 @@ class CloudGridLimitSensor(NumericSensorMixin, CloudReadWriteSensor):
         base = super().configure_mqtt_topics(device_id)
         if active_config.home_assistant.enabled:
             availability = cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY])
-            availability.append({"topic": f"{base}/state/enable"})
+            self._writable_topic = f"{base}/writable"
+            availability.append({"topic": self._writable_topic, "payload_available": "1", "payload_not_available": "0"})
         return base
+
+    async def publish(self, mqtt_client: mqtt.Client, transport: Any, republish: bool = False) -> bool:
+        published = await super().publish(mqtt_client, transport, republish)
+        if self._writable_topic is not None:
+            mqtt_client.publish(self._writable_topic, int(self._updates_allowed), qos=self._qos)
+        return published
 
     def _update_installer_maximum(self, maximum: float | None) -> None:
         """Update the entity's maximum to reflect the installer-configured grid limit.
@@ -262,7 +270,7 @@ class CloudGridLimitSensor(NumericSensorMixin, CloudReadWriteSensor):
         """Publish discovery if required before publishing state so altered maximum is in effect."""
         from sigenergy2mqtt.devices.base.ha_publisher import HaPublisherMixin
 
-        if self.parent_device.rediscover and isinstance(self.parent_device, HaPublisherMixin) and active_config.home_assistant.enabled:
+        if isinstance(self.parent_device, HaPublisherMixin) and self.parent_device.rediscover and active_config.home_assistant.enabled:
             if self.debug_logging:
                 logger.debug(f"{self.log_identity} Publishing discovery on {self.parent_device.name} to reset max/min values")
             info = self.parent_device.publish_discovery(mqtt_client, clean=False)
@@ -299,12 +307,11 @@ class CloudGridLimitSensor(NumericSensorMixin, CloudReadWriteSensor):
         enabled_valid = isinstance(enabled_value, bool)
         if not enabled_valid:
             logger.warning(f"{self.log_identity} cloud response contains invalid enable={enabled_value!r}")
-        enabled = bool(enabled_value)
         _, current_valid = self._parse_number(state, self._current_key)
         installer_maximum, installer_valid = self._parse_number(state, self._installer_key)
         # A write enables the limit in the same request, so a currently disabled
         # limit remains writable whenever its installer maximum is usable.
-        self._updates_allowed = enabled_valid and enabled and current_valid and installer_valid and installer_maximum is not None
+        self._updates_allowed = enabled_valid and current_valid and installer_valid and installer_maximum is not None
         if self.debug_logging:
             logger.debug(f"{self.log_identity} {self._updates_allowed=}")
         self._update_installer_maximum(installer_maximum)
@@ -329,7 +336,7 @@ class CloudGridLimitSensor(NumericSensorMixin, CloudReadWriteSensor):
             was refused due to ``_updates_allowed`` being ``False``.
         """
         if not self._updates_allowed:
-            logger.warning(f"{self.log_identity} cannot write: grid limit is disabled or has no installer limit")
+            logger.warning(f"{self.log_identity} cannot write: grid limit has invalid data or no installer limit")
             return False
         await getattr(port, self._write_method)(float(value), enabled=True)
         return True

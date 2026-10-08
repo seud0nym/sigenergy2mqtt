@@ -157,6 +157,12 @@ The attributes payload currently includes:
 """)
 
 
+def _reference_config() -> Config:
+    config = Config()
+    config.runtime_config_enabled = True
+    return config
+
+
 async def sensor_index() -> None:
     """Generate TOPICS.md by iterating over all sensor instances.
 
@@ -164,9 +170,9 @@ async def sensor_index() -> None:
     published (state) topics and subscribed (command) topics for every device
     category, plus the metrics service.
     """
-    with _swap_active_config(Config()):
+    with _swap_active_config(_reference_config()):
         hass_sensors = await get_sensor_instances(home_assistant_enabled=True, concrete_sensor_check=True)
-    with _swap_active_config(Config()):
+    with _swap_active_config(_reference_config()):
         mqtt_sensors = await get_sensor_instances(home_assistant_enabled=False, concrete_sensor_check=True)
 
     def extract_min_max(range_string: str, precision: int | None, gain: float):

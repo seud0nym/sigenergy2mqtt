@@ -345,7 +345,7 @@ async def test_selection_sensors_read_authoritative_cloud_values(monkeypatch) ->
     SensorGroupPoller._begin_coordinated_refresh([switch, mode, duration])
     assert await switch._read_cloud_state(port) == 1
     assert await mode._read_cloud_state(port) == 3
-    assert await duration._read_cloud_state(port) == 9
+    assert await duration._read_cloud_state(port) == 10
     port.instant_control_status.assert_awaited_once()
 
     SensorGroupPoller._begin_coordinated_refresh([switch, mode, duration])
@@ -568,7 +568,7 @@ async def test_grid_limit_empty_states_and_disallowed_updates(payload) -> None:
         assert state == payload
     else:
         assert state == payload
-    is_writable = bool(payload.get("enable")) and bool(payload.get("maxLimitationInstaller"))
+    is_writable = bool(payload.get("maxLimitationInstaller"))
     assert await sensor._write_cloud_value(port, 4.0) is is_writable
     if is_writable:
         port.set_grid_export_limit.assert_awaited_once_with(4.0, enabled=True)
@@ -633,7 +633,7 @@ async def test_battery_power_limit_preserves_unlimited_sentinel_as_none() -> Non
         "batteryMaxDischargingPower": "6.000",
     }
 
-    assert await charge._read_cloud_state(port) is None
+    assert await charge._read_cloud_state(port) == 4294967.295
     assert await charge._write_cloud_value(port, 2) is True
     port.set_battery_power_limit.assert_awaited_once_with(
         max_charge_kw=2.0,

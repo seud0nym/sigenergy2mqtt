@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import math
 import time
@@ -202,6 +203,7 @@ class _BatteryPowerLimitSnapshot:
     """Share one battery power-limit response across both limit sensors."""
 
     def __init__(self) -> None:
+        self.write_lock = asyncio.Lock()
         self._payload: dict[str, object] | None = None
         self._error: Exception | None = None
 
@@ -223,7 +225,18 @@ class _BatteryPowerLimitSnapshot:
         return self._payload
 
 
-class InstantControlMode(SelectSensorMixin, CloudReadWriteSensor):
+class _InstantControlSetting(CloudReadWriteSensor):
+    _control_switch: InstantControlSwitch | None = None
+
+    async def _write_value(self, transport: Any, mqtt_client: Client, value: float | str, source: str, handler: Any) -> bool:
+        result = await super()._write_value(transport, mqtt_client, value, source, handler)
+        switch = self._control_switch
+        if switch is not None:
+            switch._publish_control_availability(mqtt_client)
+        return result
+
+
+class InstantControlMode(SelectSensorMixin, _InstantControlSetting):
     """Mode to use the next time Instant Manual Control is enabled."""
 
     def __init__(self, plant_index: int, station_id: str) -> None:
@@ -313,7 +326,7 @@ class InstantControlMode(SelectSensorMixin, CloudReadWriteSensor):
         return changed
 
 
-class InstantControlDuration(NumericSensorMixin, CloudReadWriteSensor):
+class InstantControlDuration(NumericSensorMixin, _InstantControlSetting):
     """Duration in minutes for the next Instant Manual Control request."""
 
     def __init__(self, plant_index: int, station_id: str) -> None:
@@ -356,7 +369,7 @@ class InstantControlDuration(NumericSensorMixin, CloudReadWriteSensor):
         status = await self._status_snapshot.read(port)
         if status.ends_at is None:
             return 0
-        remaining = int(max(0.0, (status.ends_at - time.time()) / 60))
+        remaining = math.ceil(max(0.0, (status.ends_at - time.time()) / 60))
         return remaining
 
     async def _write_cloud_value(self, port: CloudControlPort, value: float | str) -> bool:
@@ -379,6 +392,8 @@ class InstantControlSwitch(SwitchSensorMixin, CloudReadWriteSensor, Availability
         self.plant_index = plant_index
         self._mode = mode
         self._duration = duration
+        mode._control_switch = self
+        duration._control_switch = self
         self._status_snapshot = mode._status_snapshot
         duration._status_snapshot = self._status_snapshot
         self._polling_coordinator = self._status_snapshot
@@ -451,18 +466,19 @@ class InstantControlSwitch(SwitchSensorMixin, CloudReadWriteSensor, Availability
             })
         return base
 
-    async def _pre_publish(self, state: Any, mqtt_client: Client, transport: Any, republish: bool) -> None:
+    def _publish_control_availability(self, mqtt_client: Client) -> None:
         if self._availability_topic is not None:
             mqtt_client.publish(
                 self._availability_topic,
-                "0" if self._mode.pending_value is None or self._duration.pending_value == 0 else "1",
+                "1" if self.latest_raw_state == 1 or (self._mode.pending_value is not None and self._duration.pending_value > 0) else "0",
                 qos=self._qos,
                 retain=False,
             )
-        return await super()._pre_publish(state, mqtt_client, transport, republish)
 
     async def publish(self, mqtt_client: Client, transport: Any, republish: bool = False) -> bool:
-        return await super().publish(mqtt_client, transport, republish)
+        published = await super().publish(mqtt_client, transport, republish)
+        self._publish_control_availability(mqtt_client)
+        return published
 
 
 class GridExportLimit(CloudGridLimitSensor):
@@ -545,8 +561,10 @@ class GridConnectionLimit(CloudGridLimitSensor):
 
 def _parse_power_limit(sensor: CloudReadWriteSensor, value: object, key: str) -> float | str | None:
     """Convert a cloud power-limit value into a number entity state."""
-    if value in (None, "") or is_unlimited_power(value):
+    if value in (None, ""):
         return None
+    if is_unlimited_power(value):
+        return UNLIMITED_POWER_KW
     try:
         parsed = float(value)  # type: ignore[arg-type]
     except (TypeError, ValueError):
@@ -596,6 +614,11 @@ class _BatteryPowerLimit(NumericSensorMixin, CloudReadWriteSensor):
         )
         self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
+    def _update_sanity_check_ranges(self, gain: float | None) -> None:
+        super()._update_sanity_check_ranges(gain)
+        # Cloud values are decimal kW, including the unlimited sentinel.
+        self.sanity_check.max_raw = float(self[DiscoveryKeys.MAX])
+
     def _parse_limits(self, payload: object) -> dict[str, float | None] | None:
         if not isinstance(payload, dict):
             logger.warning(f"{self.log_identity} cloud response is not an object: {payload!r}")
@@ -621,16 +644,17 @@ class _BatteryPowerLimit(NumericSensorMixin, CloudReadWriteSensor):
     async def _write_cloud_value(self, port: CloudControlPort, value: float | str) -> bool:
         # The endpoint replaces both limits, so always refresh immediately
         # before writing, without invalidating an in-progress polling snapshot.
-        limits = self._parse_limits(await port.battery_power_limit())
-        if limits is None:
-            logger.warning(f"{self.log_identity} cannot write without both current battery power limits")
-            return False
-        limits[self._key] = float(value)
-        await port.set_battery_power_limit(
-            max_charge_kw=limits[self._CHARGE_KEY],
-            max_discharge_kw=limits[self._DISCHARGE_KEY],
-        )
-        return True
+        async with self._snapshot.write_lock:
+            limits = self._parse_limits(await port.battery_power_limit())
+            if limits is None:
+                logger.warning(f"{self.log_identity} cannot write without both current battery power limits")
+                return False
+            limits[self._key] = float(value)
+            await port.set_battery_power_limit(
+                max_charge_kw=limits[self._CHARGE_KEY],
+                max_discharge_kw=limits[self._DISCHARGE_KEY],
+            )
+            return True
 
 
 class BatteryChargePowerLimit(_BatteryPowerLimit):
@@ -684,6 +708,11 @@ class SolarPowerLimit(NumericSensorMixin, CloudReadWriteSensor):
             maximum=UNLIMITED_POWER_KW,
             protocol_version=ProtocolVersion.N_A,
         )
+
+    def _update_sanity_check_ranges(self, gain: float | None) -> None:
+        super()._update_sanity_check_ranges(gain)
+        # Cloud values are decimal kW, including the unlimited sentinel.
+        self.sanity_check.max_raw = float(self[DiscoveryKeys.MAX])
 
     async def _read_cloud_state(self, port: CloudControlPort) -> float | str | None:
         payload = await port.solar_power_limit()

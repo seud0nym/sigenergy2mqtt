@@ -6471,7 +6471,7 @@ Cloud Control and child device topics are only published when the Cloud API acce
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_10000000000001/sigen_0_cloud_battery_charge_power_limit/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_battery_charge_power_limit/state</td></tr>
 </td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0.0 kW and 4294967.0 kW (0 ≦ raw value ≦ 4294967)</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0.0 kW and 4294967.295 kW (0 ≦ raw value ≦ 4294967)</td></tr>
 </table>
 <h5><a id='sigen_0_10000000000001_battery_discharge_power_limit'>Battery Discharge Power Limit</a></h5>
 <table>
@@ -6483,7 +6483,7 @@ Cloud Control and child device topics are only published when the Cloud API acce
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_10000000000001/sigen_0_cloud_battery_discharge_power_limit/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_battery_discharge_power_limit/state</td></tr>
 </td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0.0 kW and 4294967.0 kW (0 ≦ raw value ≦ 4294967)</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0.0 kW and 4294967.295 kW (0 ≦ raw value ≦ 4294967)</td></tr>
 </table>
 <h5><a id='sigen_0_10000000000001_grid_connection_limit'>Grid Connection Current Limit</a></h5>
 <table>
@@ -6574,7 +6574,7 @@ Cloud Control and child device topics are only published when the Cloud API acce
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_10000000000001/sigen_0_cloud_solar_power_limit/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_solar_power_limit/state</td></tr>
 </td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0.0 kW and 4294967.0 kW (0 ≦ raw value ≦ 4294967)</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0.0 kW and 4294967.295 kW (0 ≦ raw value ≦ 4294967)</td></tr>
 </table>
 
 #### Subscribed Topics
@@ -7708,6 +7708,271 @@ InfluxDB and PVOutput settings are only published when those options are enabled
 > Settings changed through publishing updated values to the command topics are transient. Settings are reset to their configured values on restart.
 
 
+#### Published Topics
+<h5><a id='sigenergy2mqtt_config_log_level'>Application Log Level</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>ApplicationLogLevel</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>60s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_config_log_level</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/log_level/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/log_level/state</td></tr>
+<tr><td>Raw&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/log_level/raw</td></tr>
+</td></tr>
+<tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='10'>DEBUG</li><li value='20'>INFO</li><li value='30'>WARNING</li><li value='40'>ERROR</li><li value='50'>CRITICAL</li></ol></td></tr>
+<tr><td>Comment</td><td>The sigenergy2mqtt application logging level</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0  and 50  (0 ≦ raw value ≦ 50)</td></tr>
+</table>
+<h5><a id='sigenergy2mqtt_config_cloud_log_level'>Cloud Log Level</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>CloudLogLevel</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>60s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_config_cloud_log_level</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/cloud/log_level/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/cloud/log_level/state</td></tr>
+<tr><td>Raw&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/cloud/log_level/raw</td></tr>
+</td></tr>
+<tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='10'>DEBUG</li><li value='20'>INFO</li><li value='30'>WARNING</li><li value='40'>ERROR</li><li value='50'>CRITICAL</li></ol></td></tr>
+<tr><td>Comment</td><td>The sigenergy2mqtt cloud module logging level</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0  and 50  (0 ≦ raw value ≦ 50)</td></tr>
+</table>
+<h5><a id='sigenergy2mqtt_config_diagnostics_log_level'>Diagnostics Log Level</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>DiagnosticsLogLevel</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>60s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_config_diagnostics_log_level</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/diagnostics/log_level/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/diagnostics/log_level/state</td></tr>
+<tr><td>Raw&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/diagnostics/log_level/raw</td></tr>
+</td></tr>
+<tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='10'>DEBUG</li><li value='20'>INFO</li><li value='30'>WARNING</li><li value='40'>ERROR</li><li value='50'>CRITICAL</li></ol></td></tr>
+<tr><td>Comment</td><td>The sigenergy2mqtt diagnostics module logging level</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0  and 50  (0 ≦ raw value ≦ 50)</td></tr>
+</table>
+<h5><a id='sigenergy2mqtt_config_influxdb_log_level'>InfluxDB Log Level</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>InfluxDBLogLevel</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>60s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_config_influxdb_log_level</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/influxdb/log_level/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/influxdb/log_level/state</td></tr>
+<tr><td>Raw&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/influxdb/log_level/raw</td></tr>
+</td></tr>
+<tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='10'>DEBUG</li><li value='20'>INFO</li><li value='30'>WARNING</li><li value='40'>ERROR</li><li value='50'>CRITICAL</li></ol></td></tr>
+<tr><td>Comment</td><td>The InfluxDB interface logging level</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0  and 50  (0 ≦ raw value ≦ 50)</td></tr>
+</table>
+<h5><a id='sigenergy2mqtt_config_mqtt_log_level'>MQTT Log Level</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>MQTTLogLevel</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>60s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_config_mqtt_log_level</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/mqtt/log_level/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/mqtt/log_level/state</td></tr>
+<tr><td>Raw&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/mqtt/log_level/raw</td></tr>
+</td></tr>
+<tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='10'>DEBUG</li><li value='20'>INFO</li><li value='30'>WARNING</li><li value='40'>ERROR</li><li value='50'>CRITICAL</li></ol></td></tr>
+<tr><td>Comment</td><td>The MQTT interface logging level</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0  and 50  (0 ≦ raw value ≦ 50)</td></tr>
+</table>
+<h5><a id='sigenergy2mqtt_config_modbus_log_level'>Modbus Log Level</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>ModbusLogLevel</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>60s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_config_modbus_log_level</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/modbus/log_level/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/modbus/log_level/state</td></tr>
+<tr><td>Raw&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/modbus/log_level/raw</td></tr>
+</td></tr>
+<tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='10'>DEBUG</li><li value='20'>INFO</li><li value='30'>WARNING</li><li value='40'>ERROR</li><li value='50'>CRITICAL</li></ol></td></tr>
+<tr><td>Comment</td><td>The Modbus interface logging level</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0  and 50  (0 ≦ raw value ≦ 50)</td></tr>
+</table>
+<h5><a id='sigenergy2mqtt_config_pvoutput_log_level'>PVOutput Log Level</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVOutputLogLevel</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>60s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_config_pvoutput_log_level</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/pvoutput/log_level/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/pvoutput/log_level/state</td></tr>
+<tr><td>Raw&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/pvoutput/log_level/raw</td></tr>
+</td></tr>
+<tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='10'>DEBUG</li><li value='20'>INFO</li><li value='30'>WARNING</li><li value='40'>ERROR</li><li value='50'>CRITICAL</li></ol></td></tr>
+<tr><td>Comment</td><td>The PVOutput interface logging level</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0  and 50  (0 ≦ raw value ≦ 50)</td></tr>
+</table>
+<h5><a id='sigenergy2mqtt_config_pvoutput_upload_log_level'>PVOutput Upload Log Level</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVOutputUploadLogLevel</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>60s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_config_pvoutput_upload_log_level</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/pvoutput/upload_log_level/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/pvoutput/upload_log_level/state</td></tr>
+<tr><td>Raw&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/pvoutput/upload_log_level/raw</td></tr>
+</td></tr>
+<tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='10'>DEBUG</li><li value='20'>INFO</li><li value='30'>WARNING</li><li value='40'>ERROR</li><li value='50'>CRITICAL</li></ol></td></tr>
+<tr><td>Comment</td><td>The PVOutput upload payload logging level. If the overall PVOutput Log Level is set to a level higher than the level specified for this option (e.g. this option is set to INFO and PVOutput Log Level is set to WARNING), then the upload log messages will be suppressed.</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0  and 50  (0 ≦ raw value ≦ 50)</td></tr>
+</table>
+<h5><a id='sigenergy2mqtt_config_pvoutput_calc_debug_logging'>PVOutput Value Calculation Debugging</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVOutputCalcDebugLogging</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>60s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_config_pvoutput_calc_debug_logging</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/pvoutput/calc_debug_logging/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/pvoutput/calc_debug_logging/state</td></tr>
+</td></tr>
+<tr><td>Comment</td><td>If enabled the aggregation of values for uploading to PVOutput will be logged at the `DEBUG` level.  Only applicable if the PVOutput Log Level is set to DEBUG.</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0  and 1  (0 ≦ raw value ≦ 1)</td></tr>
+</table>
+<h5><a id='sigenergy2mqtt_config_pvoutput_update_debug_logging'>PVOutput Value Update Debugging</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVOutputUpdateDebugLogging</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>60s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_config_pvoutput_update_debug_logging</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/pvoutput/update_debug_logging/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/pvoutput/update_debug_logging/state</td></tr>
+</td></tr>
+<tr><td>Comment</td><td>If enabled the updating of values for uploading to PVOutput will be logged at the DEBUG level. Only applicable if PVOutput Log Level is set to DEBUG.</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0  and 1  (0 ≦ raw value ≦ 1)</td></tr>
+</table>
+<h5><a id='sigenergy2mqtt_config_persistence_debug'>Persistence Debugging</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PersistenceDebugging</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>60s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_config_persistence_debug</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/persistence/debug/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/persistence/debug/state</td></tr>
+</td></tr>
+<tr><td>Comment</td><td>Enable debugging of all state store (persistence) operations</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0  and 1  (0 ≦ raw value ≦ 1)</td></tr>
+</table>
+<h5><a id='sigenergy2mqtt_config_repeated_state_publish_interval'>Repeated State Publish Interval</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>RepeatedStatePublishInterval</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>60s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_config_repeated_state_publish_interval</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/repeated_state_publish_interval/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/repeated_state_publish_interval/state</td></tr>
+</td></tr>
+<tr><td>Comment</td><td>The interval in seconds at which repeated states are published. (Repeated states occur when the state that is acquired is identical to the previous read.) <0=Never 0=Always >0=Interval</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between -1 s and 600 s (-1 ≦ raw value ≦ 600)</td></tr>
+</table>
+<h5><a id='sigenergy2mqtt_config_sanity_check_failures_increment'>Sanity Check Failures Increment</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>SanityCheckFailuresIncrement</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>60s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_config_sanity_check_failures_increment</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/sanity_check_failures_increment/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/config/sanity_check_failures_increment/state</td></tr>
+</td></tr>
+<tr><td>Comment</td><td>If enabled, the number of sensor read failures will be incremented when a sanity check fails. If sensor read failures pass the allowed threshold for errors, the sensor will be disabled until the next restart.</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0  and 1  (0 ≦ raw value ≦ 1)</td></tr>
+</table>
+
+#### Subscribed Topics
+<h5><a id='sigenergy2mqtt_config_log_level_set'>Application Log Level
+</a></h5>
+<table>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/log_level/set</td></tr>
+<tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/log_level/set</td></tr>
+<tr><td>Comment</td><td>The sigenergy2mqtt application logging level</td></tr>
+<tr><td>Valid&nbsp;Values</td><td><ul><li value='10'>"DEBUG"</li><li value='20'>"INFO"</li><li value='30'>"WARNING"</li><li value='40'>"ERROR"</li><li value='50'>"CRITICAL"</li></ol></td></tr>
+</table>
+<h5><a id='sigenergy2mqtt_config_cloud_log_level_set'>Cloud Log Level
+</a></h5>
+<table>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/cloud/log_level/set</td></tr>
+<tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/cloud/log_level/set</td></tr>
+<tr><td>Comment</td><td>The sigenergy2mqtt cloud module logging level</td></tr>
+<tr><td>Valid&nbsp;Values</td><td><ul><li value='10'>"DEBUG"</li><li value='20'>"INFO"</li><li value='30'>"WARNING"</li><li value='40'>"ERROR"</li><li value='50'>"CRITICAL"</li></ol></td></tr>
+</table>
+<h5><a id='sigenergy2mqtt_config_diagnostics_log_level_set'>Diagnostics Log Level
+</a></h5>
+<table>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/diagnostics/log_level/set</td></tr>
+<tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/diagnostics/log_level/set</td></tr>
+<tr><td>Comment</td><td>The sigenergy2mqtt diagnostics module logging level</td></tr>
+<tr><td>Valid&nbsp;Values</td><td><ul><li value='10'>"DEBUG"</li><li value='20'>"INFO"</li><li value='30'>"WARNING"</li><li value='40'>"ERROR"</li><li value='50'>"CRITICAL"</li></ol></td></tr>
+</table>
+<h5><a id='sigenergy2mqtt_config_influxdb_log_level_set'>InfluxDB Log Level
+</a></h5>
+<table>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/influxdb/log_level/set</td></tr>
+<tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/influxdb/log_level/set</td></tr>
+<tr><td>Comment</td><td>The InfluxDB interface logging level</td></tr>
+<tr><td>Valid&nbsp;Values</td><td><ul><li value='10'>"DEBUG"</li><li value='20'>"INFO"</li><li value='30'>"WARNING"</li><li value='40'>"ERROR"</li><li value='50'>"CRITICAL"</li></ol></td></tr>
+</table>
+<h5><a id='sigenergy2mqtt_config_mqtt_log_level_set'>MQTT Log Level
+</a></h5>
+<table>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/mqtt/log_level/set</td></tr>
+<tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/mqtt/log_level/set</td></tr>
+<tr><td>Comment</td><td>The MQTT interface logging level</td></tr>
+<tr><td>Valid&nbsp;Values</td><td><ul><li value='10'>"DEBUG"</li><li value='20'>"INFO"</li><li value='30'>"WARNING"</li><li value='40'>"ERROR"</li><li value='50'>"CRITICAL"</li></ol></td></tr>
+</table>
+<h5><a id='sigenergy2mqtt_config_modbus_log_level_set'>Modbus Log Level
+</a></h5>
+<table>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/modbus/log_level/set</td></tr>
+<tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/modbus/log_level/set</td></tr>
+<tr><td>Comment</td><td>The Modbus interface logging level</td></tr>
+<tr><td>Valid&nbsp;Values</td><td><ul><li value='10'>"DEBUG"</li><li value='20'>"INFO"</li><li value='30'>"WARNING"</li><li value='40'>"ERROR"</li><li value='50'>"CRITICAL"</li></ol></td></tr>
+</table>
+<h5><a id='sigenergy2mqtt_config_pvoutput_log_level_set'>PVOutput Log Level
+</a></h5>
+<table>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/pvoutput/log_level/set</td></tr>
+<tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/pvoutput/log_level/set</td></tr>
+<tr><td>Comment</td><td>The PVOutput interface logging level</td></tr>
+<tr><td>Valid&nbsp;Values</td><td><ul><li value='10'>"DEBUG"</li><li value='20'>"INFO"</li><li value='30'>"WARNING"</li><li value='40'>"ERROR"</li><li value='50'>"CRITICAL"</li></ol></td></tr>
+</table>
+<h5><a id='sigenergy2mqtt_config_pvoutput_upload_log_level_set'>PVOutput Upload Log Level
+</a></h5>
+<table>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/pvoutput/upload_log_level/set</td></tr>
+<tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/pvoutput/upload_log_level/set</td></tr>
+<tr><td>Comment</td><td>The PVOutput upload payload logging level. If the overall PVOutput Log Level is set to a level higher than the level specified for this option (e.g. this option is set to INFO and PVOutput Log Level is set to WARNING), then the upload log messages will be suppressed.</td></tr>
+<tr><td>Valid&nbsp;Values</td><td><ul><li value='10'>"DEBUG"</li><li value='20'>"INFO"</li><li value='30'>"WARNING"</li><li value='40'>"ERROR"</li><li value='50'>"CRITICAL"</li></ol></td></tr>
+</table>
+<h5><a id='sigenergy2mqtt_config_pvoutput_calc_debug_logging_set'>PVOutput Value Calculation Debugging
+</a></h5>
+<table>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/pvoutput/calc_debug_logging/set</td></tr>
+<tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/pvoutput/calc_debug_logging/set</td></tr>
+<tr><td>Comment</td><td>If enabled the aggregation of values for uploading to PVOutput will be logged at the `DEBUG` level.  Only applicable if the PVOutput Log Level is set to DEBUG.</td></tr>
+</table>
+<h5><a id='sigenergy2mqtt_config_pvoutput_update_debug_logging_set'>PVOutput Value Update Debugging
+</a></h5>
+<table>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/pvoutput/update_debug_logging/set</td></tr>
+<tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/pvoutput/update_debug_logging/set</td></tr>
+<tr><td>Comment</td><td>If enabled the updating of values for uploading to PVOutput will be logged at the DEBUG level. Only applicable if PVOutput Log Level is set to DEBUG.</td></tr>
+</table>
+<h5><a id='sigenergy2mqtt_config_persistence_debug_set'>Persistence Debugging
+</a></h5>
+<table>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/persistence/debug/set</td></tr>
+<tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/persistence/debug/set</td></tr>
+<tr><td>Comment</td><td>Enable debugging of all state store (persistence) operations</td></tr>
+</table>
+<h5><a id='sigenergy2mqtt_config_repeated_state_publish_interval_set'>Repeated State Publish Interval
+</a></h5>
+<table>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/repeated_state_publish_interval/set</td></tr>
+<tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/repeated_state_publish_interval/set</td></tr>
+<tr><td>Comment</td><td>The interval in seconds at which repeated states are published. (Repeated states occur when the state that is acquired is identical to the previous read.) <0=Never 0=Always >0=Interval</td></tr>
+<tr><td>Minimum&nbsp;Value</td><td>-1.0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>600.0</td></tr>
+</table>
+<h5><a id='sigenergy2mqtt_config_sanity_check_failures_increment_set'>Sanity Check Failures Increment
+</a></h5>
+<table>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/sanity_check_failures_increment/set</td></tr>
+<tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/config/sanity_check_failures_increment/set</td></tr>
+<tr><td>Comment</td><td>If enabled, the number of sensor read failures will be incremented when a sanity check fails. If sensor read failures pass the allowed threshold for errors, the sensor will be disabled until the next restart.</td></tr>
+</table>
+
 ## Service Health
 
 The monitor service publishes runtime health for both Docker and non-Docker observers:
@@ -8326,6 +8591,19 @@ The attributes payload currently includes:
 <a href='#sigen_state_store_saves'>State Store Saves</a><br>
 
 <h6>Settings</h6>
+<a href='#sigenergy2mqtt_config_log_level'>Application Log Level</a><br>
+<a href='#sigenergy2mqtt_config_cloud_log_level'>Cloud Log Level</a><br>
+<a href='#sigenergy2mqtt_config_diagnostics_log_level'>Diagnostics Log Level</a><br>
+<a href='#sigenergy2mqtt_config_influxdb_log_level'>InfluxDB Log Level</a><br>
+<a href='#sigenergy2mqtt_config_mqtt_log_level'>MQTT Log Level</a><br>
+<a href='#sigenergy2mqtt_config_modbus_log_level'>Modbus Log Level</a><br>
+<a href='#sigenergy2mqtt_config_pvoutput_log_level'>PVOutput Log Level</a><br>
+<a href='#sigenergy2mqtt_config_pvoutput_upload_log_level'>PVOutput Upload Log Level</a><br>
+<a href='#sigenergy2mqtt_config_pvoutput_calc_debug_logging'>PVOutput Value Calculation Debugging</a><br>
+<a href='#sigenergy2mqtt_config_pvoutput_update_debug_logging'>PVOutput Value Update Debugging</a><br>
+<a href='#sigenergy2mqtt_config_persistence_debug'>Persistence Debugging</a><br>
+<a href='#sigenergy2mqtt_config_repeated_state_publish_interval'>Repeated State Publish Interval</a><br>
+<a href='#sigenergy2mqtt_config_sanity_check_failures_increment'>Sanity Check Failures Increment</a><br>
 </td><td>
 
 <h6>Plant</h6>
@@ -8395,5 +8673,18 @@ The attributes payload currently includes:
 <a href='#sigen_metrics_reset_set'>Reset Metrics</a><br>
 
 <h6>Settings</h6>
+<a href='#sigenergy2mqtt_config_log_level_set'>Application Log Level</a><br>
+<a href='#sigenergy2mqtt_config_cloud_log_level_set'>Cloud Log Level</a><br>
+<a href='#sigenergy2mqtt_config_diagnostics_log_level_set'>Diagnostics Log Level</a><br>
+<a href='#sigenergy2mqtt_config_influxdb_log_level_set'>InfluxDB Log Level</a><br>
+<a href='#sigenergy2mqtt_config_mqtt_log_level_set'>MQTT Log Level</a><br>
+<a href='#sigenergy2mqtt_config_modbus_log_level_set'>Modbus Log Level</a><br>
+<a href='#sigenergy2mqtt_config_pvoutput_log_level_set'>PVOutput Log Level</a><br>
+<a href='#sigenergy2mqtt_config_pvoutput_upload_log_level_set'>PVOutput Upload Log Level</a><br>
+<a href='#sigenergy2mqtt_config_pvoutput_calc_debug_logging_set'>PVOutput Value Calculation Debugging</a><br>
+<a href='#sigenergy2mqtt_config_pvoutput_update_debug_logging_set'>PVOutput Value Update Debugging</a><br>
+<a href='#sigenergy2mqtt_config_persistence_debug_set'>Persistence Debugging</a><br>
+<a href='#sigenergy2mqtt_config_repeated_state_publish_interval_set'>Repeated State Publish Interval</a><br>
+<a href='#sigenergy2mqtt_config_sanity_check_failures_increment_set'>Sanity Check Failures Increment</a><br>
 <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></td></tr>
 </table>
