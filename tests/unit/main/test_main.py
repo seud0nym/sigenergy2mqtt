@@ -986,6 +986,7 @@ async def test_validate_publishable_sensors_ignores_non_inverter_device_attribut
 async def test_setup_services_comprehensive(clean_config):
     """Test setup_services with various enabled/disabled parts."""
     clean_config.metrics_enabled = True
+    clean_config.runtime_config_enabled = True
     clean_config.pvoutput.enabled = True
     clean_config.influxdb.enabled = True
     clean_config.log_level = logging.DEBUG

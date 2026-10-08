@@ -49,11 +49,19 @@ properties:
     description: "Internal pydantic field for EMS mode check"
     type: boolean
   no-metrics:
-    description: "If true, sigenergy2mqtt will not publish any metrics to MQTT."
+    description: "Deprecated: use publish-metrics. Still processed (true disables publishing, false enables it), but logs a deprecation warning whenever specified."
+    type: boolean
+    deprecated: true
+  publish-metrics:
+    description: "Enable publishing sigenergy2mqtt metrics to MQTT. Metrics are still recorded for the diagnostics web UI when disabled."
+    type: boolean
+    default: false
+  publish-runtime-config:
+    description: "Enable publishing Runtime Configuration to MQTT. Diagnostics settings remain available when disabled; previously retained discovery is removed when disabled and by --clean."
     type: boolean
     default: false
   metrics-enabled:
-    description: "Internal pydantic field for metrics enabled"
+    description: "Compatibility alias for publish-metrics"
     type: boolean
 
   modbus:
