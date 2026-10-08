@@ -356,8 +356,28 @@ class:
       source: Registro Modbus {address}
       source_range: Registros Modbus {start}-{end}
     name: Potencia de Batería
+  CloudAuthErrors:
+    name: Cloud Auth Errors
+  CloudAvailable:
+    name: Cloud Available
   CloudBattery:
     name: '{model_name} {sn}'
+  CloudConnected:
+    name: Cloud Connected
+  CloudConnectionAttempts:
+    name: Cloud Connection Attempts
+  CloudConnectionErrors:
+    name: Cloud Connection Errors
+  CloudConnectionMax:
+    name: Cloud Connection Max
+  CloudConnectionMean:
+    name: Cloud Connection Mean
+  CloudConnectionMin:
+    name: Cloud Connection Min
+  CloudConnectionTotal:
+    name: Cloud Connection Total
+  CloudConnections:
+    name: Cloud Successful Connections
   CloudControl:
     name: Sigenergy Cloud {plant_suffix}
   CloudInverter:
@@ -366,6 +386,22 @@ class:
     attributes:
       comment: El nivel de registro del módulo en la nube «sigenergy2mqtt»
     name: Nivel de registro en la nube
+  CloudQueries:
+    name: Cloud Queries
+  CloudQueryErrors:
+    name: Cloud Query Errors
+  CloudQueryMax:
+    name: Cloud Query Max
+  CloudQueryMean:
+    name: Cloud Query Mean
+  CloudQueryMin:
+    name: Cloud Query Min
+  CloudQueryTotal:
+    name: Cloud Query Total
+  CloudRateLimits:
+    name: Cloud Rate Limits
+  CloudReconnections:
+    name: Cloud Reconnections
   CurrentControlCommandValue:
     attributes:
       comment: Uso del Control de Salida Remota en Japón

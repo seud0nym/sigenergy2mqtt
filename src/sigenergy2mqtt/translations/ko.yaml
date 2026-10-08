@@ -356,8 +356,28 @@ class:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: 배터리 전력
+  CloudAuthErrors:
+    name: Cloud Auth Errors
+  CloudAvailable:
+    name: Cloud Available
   CloudBattery:
     name: '{model_name} {sn}'
+  CloudConnected:
+    name: Cloud Connected
+  CloudConnectionAttempts:
+    name: Cloud Connection Attempts
+  CloudConnectionErrors:
+    name: Cloud Connection Errors
+  CloudConnectionMax:
+    name: Cloud Connection Max
+  CloudConnectionMean:
+    name: Cloud Connection Mean
+  CloudConnectionMin:
+    name: Cloud Connection Min
+  CloudConnectionTotal:
+    name: Cloud Connection Total
+  CloudConnections:
+    name: Cloud Successful Connections
   CloudControl:
     name: Sigenergy Cloud {plant_suffix}
   CloudInverter:
@@ -366,6 +386,22 @@ class:
     attributes:
       comment: sigenergy2mqtt 클라우드 모듈의 로깅 수준
     name: 클라우드 로그 수준
+  CloudQueries:
+    name: Cloud Queries
+  CloudQueryErrors:
+    name: Cloud Query Errors
+  CloudQueryMax:
+    name: Cloud Query Max
+  CloudQueryMean:
+    name: Cloud Query Mean
+  CloudQueryMin:
+    name: Cloud Query Min
+  CloudQueryTotal:
+    name: Cloud Query Total
+  CloudRateLimits:
+    name: Cloud Rate Limits
+  CloudReconnections:
+    name: Cloud Reconnections
   CurrentControlCommandValue:
     attributes:
       comment: 일본에서 원격 출력 제어 사용
