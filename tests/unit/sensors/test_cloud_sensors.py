@@ -617,7 +617,7 @@ async def test_battery_power_limit_preserves_unlimited_sentinel_as_none() -> Non
         "batteryMaxDischargingPower": "6.000",
     }
 
-    assert await charge._read_cloud_state(port) == "None"
+    assert await charge._read_cloud_state(port) is None
     assert await charge._write_cloud_value(port, 2) is True
     port.set_battery_power_limit.assert_awaited_once_with(
         max_charge_kw=2.0,
@@ -685,7 +685,7 @@ async def test_solar_power_limit_malformed_payload_is_unavailable(payload) -> No
     port = FakeCloudControlPort()
     port.solar_power_limit.return_value = payload
 
-    assert await sensor._read_cloud_state(port) == "None"
+    assert await sensor._read_cloud_state(port) is None
 
 
 @pytest.mark.asyncio

@@ -87,8 +87,8 @@ async def test_settings_discovery_removed_via_device_thread(services, clean, pub
         teardown.assert_awaited_once_with(mqtt_client, mqtt_handler)
 
     assert service in config.devices
-    mqtt_client.publish.assert_any_call("custom-ha/device/sig_config/config", b"", qos=0, retain=True)
-    mqtt_client.publish.assert_any_call("custom-ha/device/sig_config/availability", b"", 0, True)
+    mqtt_client.publish.assert_any_call("custom-ha/device/sig_config/config", b"", qos=1, retain=True)
+    mqtt_client.publish.assert_any_call("custom-ha/device/sig_config/availability", b"", 1, True)
     assert len(mqtt_client.publish.call_args_list) == 2
     mqtt_handler.register.assert_not_called()
     assert service.schedule(None, mqtt_client) == []

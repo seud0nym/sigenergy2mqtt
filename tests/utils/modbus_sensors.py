@@ -513,6 +513,8 @@ async def get_sensor_instances(
             # and would otherwise produce spurious "has not been used?" warnings.
             if c.__module__.startswith("tests.") or "test_" in c.__module__:
                 continue
+            if "Mixin" in c.__name__:
+                continue
             if len(c.__subclasses__()) == 0:
                 classes[c.__name__] = 0
             else:
