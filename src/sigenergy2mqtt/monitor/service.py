@@ -12,9 +12,7 @@ import paho.mqtt.client as mqtt
 from paho.mqtt import MQTTException
 
 from sigenergy2mqtt.common import (
-    PERCENTAGE,
     ProtocolVersion,
-    UnitOfTemperature,
     service_health_registry,
 )
 from sigenergy2mqtt.config import active_config, is_docker
@@ -198,57 +196,6 @@ class MonitorService(Device):
             "sigenergy2mqtt_version": active_config.version,
         }
         return payload
-
-    async def _collect_plant_states(self) -> dict[str, Any]:
-        """Diagnostics provider callback: exposes the latest selected plant states."""
-        if self._topics_snapshot["snapshot"] is None or self._topics_snapshot["timestamp"] + active_config.diagnostics.refresh_interval < time.monotonic():
-            async with self._lock:
-                snapshot = {topic: replace(sensor) for topic, sensor in self._topics.items()}
-            self._topics_snapshot = {"timestamp": time.monotonic(), "snapshot": snapshot}
-        else:
-            snapshot = self._topics_snapshot["snapshot"]
-
-        states: dict[str, Any] = {}
-
-        def _format_value(sensor: MonitoredSensor) -> str:
-            if sensor.unit == "kWh" and isinstance(sensor.last_state, (int, float)) and sensor.last_state > 1000:
-                return f"{sensor.last_state / 1000:.2f} MWh"
-            if sensor.last_state is None:
-                return "unknown"
-            if sensor.unit is None:
-                return str(sensor.last_state)
-            if sensor.unit is PERCENTAGE or sensor.unit == UnitOfTemperature.CELSIUS or sensor.unit == UnitOfTemperature.FAHRENHEIT:
-                return f"{sensor.last_state}{sensor.unit}"
-            return f"{sensor.last_state} {sensor.unit}"
-
-        def _updates_states(classname: str, description: str | None = None) -> None:
-            values = {s.name: (s.description if description is None else description, _format_value(s)) for s in snapshot.values() if classname in s.sensor_name}
-            if len(values) == 1:
-                key, state = next(iter(values.values()))
-                states[key] = state
-            elif len(values) > 1:
-                for name, value in values.items():
-                    plant = name.split("plant=")[-1].rstrip("]")
-                    states[f"{value[0]}_{plant}"] = value[1]
-
-        _updates_states("PlantRunningState")
-        states[_t("InverterAlarm5.name")] = "-" if len(snapshot) == 0 else "No" if all(s.last_state == self._no_alarm_i18n for s in snapshot.values() if "Alarm" in s.sensor_name) else "** YES **"
-        _updates_states("GridStatus")
-        _updates_states("GridActivity")
-        _updates_states("PlantPVPower")
-        _updates_states("ThirdPartyPVPower")
-        _updates_states("TotalLifetimePVEnergy")
-        _updates_states("TotalLoadConsumption")
-        _updates_states("BatteryStatus")
-        _updates_states("PlantBatterySoC")
-        _updates_states("PlantBatterySoH")
-        _updates_states("ESSTotalChargedEnergy")
-        _updates_states("ESSTotalDischargedEnergy")
-        _updates_states("ESSAverageCellTemperature")
-        _updates_states("InverterTemperature", "Inverter Temperature")
-        _updates_states("InverterFirmwareVersion", "Firmware")
-
-        return states
 
     async def _monitor(self, mqtt_client: mqtt.Client) -> None:
         """Check for overdue topics and log warning/recovery events.
@@ -437,7 +384,6 @@ class MonitorService(Device):
             transport: Optional Modbus client instance.
             mqtt_client: MQTT client instance.
         """
-        diagnostics_registry.register("plant", self._collect_plant_states)
         diagnostics_registry.register("solar", self._collect_dashboard_states)
 
     def on_completion(self, transport: Any, mqtt_client: mqtt.Client) -> None:
