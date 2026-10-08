@@ -1,5 +1,6 @@
 from typing import Any, cast
 
+from sigenergy2mqtt.cloud.mysigen_adapter import MySigenCloudAdapter
 from sigenergy2mqtt.config import ConsumptionSource, active_config
 from sigenergy2mqtt.i18n import _t
 from sigenergy2mqtt.metrics.metrics import Metrics
@@ -18,15 +19,15 @@ class DiagnosticsCollectors:
     @classmethod
     def collect_metrics(cls) -> None:
         """Register diagnostics collectors for metrics components."""
+        if active_config.cloud.enabled:
+            diagnostics_registry.register("cloud", cls._diagnostics_collect_cloud_metrics)
         diagnostics_registry.register("modbus", cls._diagnostics_collect_modbus_metrics)
         diagnostics_registry.register("mqtt", cls._diagnostics_collect_mqtt_metrics)
-        diagnostics_registry.register("persistence", cls._diagnostics_collect_state_store_metrics)
+        diagnostics_registry.register("persistent_state_store", cls._diagnostics_collect_state_store_metrics)
         if active_config.influxdb.enabled:
             diagnostics_registry.register("influxdb", cls._diagnostics_collect_influxdb_metrics)
         if active_config.pvoutput.enabled:
             diagnostics_registry.register("pvoutput", cls._diagnostics_collect_pvoutput_metrics)
-        if active_config.cloud.enabled:
-            diagnostics_registry.register("mysigen_cloud", cls._diagnostics_collect_cloud_metrics)
         diagnostics_registry.register("runtime_configuration", cls._diagnostics_collect_runtime_config)
         diagnostics_registry.register("sensor_debug_logging", cls._diagnostics_collect_sensor_debug)
 
@@ -134,7 +135,6 @@ class DiagnosticsCollectors:
         """Diagnostics provider callback: exposes the latest InfluxDB metrics."""
         async with Metrics.lock(timeout=1.0):
             influxdb_metrics = {
-                "Write Count": Metrics.sigenergy2mqtt_influxdb_writes,
                 f"{_t('InfluxDBWriteErrors.name').removeprefix('InfluxDB ')}": Metrics.sigenergy2mqtt_influxdb_write_errors,
                 f"{_t('InfluxDBWriteMax.name').removeprefix('InfluxDB ')}_ms": Metrics.sigenergy2mqtt_influxdb_write_max,
                 f"{_t('InfluxDBWriteMean.name').removeprefix('InfluxDB ')}_ms": Metrics.sigenergy2mqtt_influxdb_write_mean,
@@ -147,7 +147,6 @@ class DiagnosticsCollectors:
             }
             if active_config.influxdb.load_hass_history:
                 influxdb_metrics.update({
-                    "Query Count": Metrics.sigenergy2mqtt_influxdb_queries,
                     f"{_t('InfluxDBRetries.name').removeprefix('InfluxDB ')}": Metrics.sigenergy2mqtt_influxdb_retries,
                     f"{_t('InfluxDBQueryErrors.name').removeprefix('InfluxDB ')}": Metrics.sigenergy2mqtt_influxdb_query_errors,
                     f"{_t('InfluxDBRateLimitWaits.name').removeprefix('InfluxDB ')}": Metrics.sigenergy2mqtt_influxdb_rate_limit_waits,
@@ -161,7 +160,6 @@ class DiagnosticsCollectors:
             return {
                 f"{_t('ModbusPhysicalReads.name').removeprefix('Modbus ')}_pct": Metrics.sigenergy2mqtt_modbus_physical_read_percentage,
                 f"{_t('ModbusCacheHits.name').removeprefix('Modbus ')}_pct": Metrics.sigenergy2mqtt_modbus_cache_hit_percentage,
-                "Read Count": Metrics.sigenergy2mqtt_modbus_reads,
                 f"{_t('ModbusReadMax.name').removeprefix('Modbus ')}_ms": Metrics.sigenergy2mqtt_modbus_read_max,
                 f"{_t('ModbusReadMean.name').removeprefix('Modbus ')}_ms": Metrics.sigenergy2mqtt_modbus_read_mean,
                 f"{_t('ModbusReadMin.name').removeprefix('Modbus ')}_ms": Metrics.sigenergy2mqtt_modbus_read_min if Metrics.sigenergy2mqtt_modbus_read_min != float("inf") else 0.0,
@@ -183,11 +181,10 @@ class DiagnosticsCollectors:
         """Diagnostics provider callback: exposes the latest MQTT metrics."""
         async with Metrics.lock(timeout=1.0):
             return {
-                "Publish Attempts": Metrics.sigenergy2mqtt_mqtt_publish_attempts,
                 f"{_t('MQTTPhysicalPublishes.name').removeprefix('MQTT ')}_pct": Metrics.sigenergy2mqtt_mqtt_physical_publish_percentage,
                 f"{_t('MQTTPublishFailures.name').removeprefix('MQTT ')}": Metrics.sigenergy2mqtt_mqtt_publish_failures,
                 "config": {
-                    "simplified_topics": "yes" if active_config.home_assistant.enabled or active_config.home_assistant.use_simplified_topics else "no",
+                    "simplified_topics": "no" if active_config.home_assistant.enabled and not active_config.home_assistant.use_simplified_topics else "yes",
                     "repeated_state_publish_interval_secs": active_config.repeated_state_publish_interval,
                     "keepalive_secs": active_config.mqtt.keepalive,
                     "retry_delay_secs": active_config.mqtt.retry_delay,
@@ -207,14 +204,13 @@ class DiagnosticsCollectors:
                 "status": status,
                 "Connected": connected,
                 "Available": available,
-                "Query Count": Metrics.sigenergy2mqtt_cloud_queries,
                 "Query Errors": Metrics.sigenergy2mqtt_cloud_query_errors,
                 "Query Max_ms": Metrics.sigenergy2mqtt_cloud_query_max,
                 "Query Mean_ms": Metrics.sigenergy2mqtt_cloud_query_mean,
                 "Query Min_ms": Metrics.sigenergy2mqtt_cloud_query_min if Metrics.sigenergy2mqtt_cloud_query_min != float("inf") else 0.0,
-                "Connections": Metrics.sigenergy2mqtt_cloud_connections,
-                "Connection Errors": Metrics.sigenergy2mqtt_cloud_connection_errors,
                 "Connection Attempts": Metrics.sigenergy2mqtt_cloud_connection_attempts,
+                "Successful Connections": Metrics.sigenergy2mqtt_cloud_connections,
+                "Connection Errors": Metrics.sigenergy2mqtt_cloud_connection_errors,
                 "Connection Max_ms": Metrics.sigenergy2mqtt_cloud_connection_max,
                 "Connection Mean_ms": Metrics.sigenergy2mqtt_cloud_connection_mean,
                 "Connection Min_ms": Metrics.sigenergy2mqtt_cloud_connection_min if Metrics.sigenergy2mqtt_cloud_connection_min != float("inf") else 0.0,
@@ -224,7 +220,7 @@ class DiagnosticsCollectors:
                 "config": {
                     "region": active_config.cloud.region,
                     "scan_interval_secs": active_config.cloud.scan_interval,
-                    "unofficial_api_risk_accepted": "yes" if active_config.cloud.accept_unofficial_api_risk else "no",
+                    "mySigen_app_version": MySigenCloudAdapter.APP_VERSION,
                 },
             }
 
@@ -235,7 +231,6 @@ class DiagnosticsCollectors:
 
         async with Metrics.lock(timeout=1.0):
             return {
-                "Upload Count": Metrics.sigenergy2mqtt_pvoutput_uploads,
                 f"{_t('PVOutputUploadErrors.name').removeprefix('PVOutput ')}": Metrics.sigenergy2mqtt_pvoutput_upload_errors,
                 f"{_t('PVOutputUploadSkipped.name').removeprefix('PVOutput ')}": Metrics.sigenergy2mqtt_pvoutput_upload_skipped,
                 f"{_t('PVOutputUploadMax.name').removeprefix('PVOutput ')}_ms": Metrics.sigenergy2mqtt_pvoutput_upload_max,
@@ -261,7 +256,6 @@ class DiagnosticsCollectors:
         """Diagnostics provider callback: exposes the latest StateStore metrics."""
         async with Metrics.lock(timeout=1.0):
             return {
-                "Save Count": Metrics.sigenergy2mqtt_state_store_saves,
                 f"{_t('StateStoreSaveMax.name').removeprefix('State Store ')}_ms": Metrics.sigenergy2mqtt_state_store_save_max,
                 f"{_t('StateStoreSaveMean.name').removeprefix('State Store ')}_ms": Metrics.sigenergy2mqtt_state_store_save_mean,
                 f"{_t('StateStoreSaveMin.name').removeprefix('State Store ')}_ms": Metrics.sigenergy2mqtt_state_store_save_min if Metrics.sigenergy2mqtt_state_store_save_min != float("inf") else 0.0,

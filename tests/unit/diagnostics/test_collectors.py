@@ -16,11 +16,22 @@ async def test_collect_modbus_metrics(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_collect_mqtt_metrics(monkeypatch):
-    monkeypatch.setattr(active_config.home_assistant, "enabled", True, raising=False)
+@pytest.mark.parametrize(
+    "ha_enabled, use_simplified_topics, expected_simplified_topics",
+    [
+        (True, False, "no"),
+        (True, True, "yes"),
+        (False, False, "yes"),
+        (False, True, "yes"),
+    ],
+)
+async def test_collect_mqtt_metrics(monkeypatch, ha_enabled, use_simplified_topics, expected_simplified_topics):
+    monkeypatch.setattr(active_config.home_assistant, "enabled", ha_enabled, raising=False)
+    monkeypatch.setattr(active_config.home_assistant, "use_simplified_topics", use_simplified_topics, raising=False)
     metrics = await DiagnosticsCollectors._diagnostics_collect_mqtt_metrics()
     assert "Physical Publishes_pct" in metrics
     assert "config" in metrics
+    assert metrics["config"]["simplified_topics"] == expected_simplified_topics
 
 
 @pytest.mark.asyncio
@@ -28,7 +39,6 @@ async def test_collect_influxdb_metrics_without_history(monkeypatch):
     monkeypatch.setattr(active_config.influxdb, "write_timeout", 10, raising=False)
     monkeypatch.setattr(active_config.influxdb, "load_hass_history", False, raising=False)
     metrics = await DiagnosticsCollectors._diagnostics_collect_influxdb_metrics()
-    assert "Write Count" in metrics
     assert "Write Errors" in metrics
     assert "config" in metrics
     assert "Query Count" not in metrics
@@ -41,14 +51,12 @@ async def test_collect_influxdb_metrics_with_history(monkeypatch):
 
     monkeypatch.setattr(active_config.influxdb, "write_timeout", 10, raising=False)
     monkeypatch.setattr(active_config.influxdb, "load_hass_history", True, raising=False)
-    Metrics.sigenergy2mqtt_influxdb_queries = 42
     Metrics.sigenergy2mqtt_influxdb_query_errors = 3
     metrics = await DiagnosticsCollectors._diagnostics_collect_influxdb_metrics()
     assert "Write Errors" in metrics
     assert "Retries" in metrics
     assert "Rate Limit Waits" in metrics
     assert "config" in metrics
-    assert metrics.get("Query Count") == 42
     assert metrics.get("Query Errors") == 3
 
 
@@ -146,12 +154,11 @@ async def test_collect_cloud_metrics(monkeypatch):
 
     assert metrics["status"] == "healthy"
     assert metrics["Available"] is True
-    assert metrics["Query Count"] == 3
     assert metrics["Query Min_ms"] == 12.5
     assert metrics["config"] == {
         "region": "eu",
         "scan_interval_secs": 30,
-        "unofficial_api_risk_accepted": "yes",
+        "mySigen_app_version": "4.1.0",
     }
 
     monkeypatch.setattr(Metrics, "sigenergy2mqtt_cloud_available", False)
