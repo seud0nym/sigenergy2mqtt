@@ -64,7 +64,7 @@ class MonitorService(Device):
         self._last_published_at: float = 0.0  # 0 = never published; guaranteed stale until first _publish_health call
         self._no_alarm_i18n = _t("AlarmSensor.no_alarm")  # Can't use constant because it gets initialised before i18n is available
 
-        diagnostics_registry.register("health_check", self._collect_diagnostics)
+        diagnostics_registry.register("monitor", self._collect_diagnostics)
 
     def _check_modbus(self) -> tuple[bool, int]:
         """Checks that all Modbus Client instances are connected"""
