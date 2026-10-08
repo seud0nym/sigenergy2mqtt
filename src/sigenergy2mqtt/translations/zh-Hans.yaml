@@ -356,8 +356,28 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 电池功率
+  CloudAuthErrors:
+    name: Cloud Auth Errors
+  CloudAvailable:
+    name: Cloud Available
   CloudBattery:
     name: '{model_name} {sn}'
+  CloudConnected:
+    name: Cloud Connected
+  CloudConnectionAttempts:
+    name: Cloud Connection Attempts
+  CloudConnectionErrors:
+    name: Cloud Connection Errors
+  CloudConnectionMax:
+    name: Cloud Connection Max
+  CloudConnectionMean:
+    name: Cloud Connection Mean
+  CloudConnectionMin:
+    name: Cloud Connection Min
+  CloudConnectionTotal:
+    name: Cloud Connection Total
+  CloudConnections:
+    name: Cloud Successful Connections
   CloudControl:
     name: Sigenergy Cloud {plant_suffix}
   CloudInverter:
@@ -366,6 +386,22 @@ class:
     attributes:
       comment: sigenergy2mqtt 云模块的日志级别
     name: 云日志级别
+  CloudQueries:
+    name: Cloud Queries
+  CloudQueryErrors:
+    name: Cloud Query Errors
+  CloudQueryMax:
+    name: Cloud Query Max
+  CloudQueryMean:
+    name: Cloud Query Mean
+  CloudQueryMin:
+    name: Cloud Query Min
+  CloudQueryTotal:
+    name: Cloud Query Total
+  CloudRateLimits:
+    name: Cloud Rate Limits
+  CloudReconnections:
+    name: Cloud Reconnections
   CurrentControlCommandValue:
     attributes:
       comment: 日本远程输出控制使用

@@ -307,3 +307,106 @@ class TestStateStoreLoads:
         Metrics.sigenergy2mqtt_state_store_loads = 100
         await sensor._update_internal_state()
         assert sensor.latest_raw_state == 100
+
+
+from sigenergy2mqtt.sensors.metrics import (
+    CloudAuthErrors,
+    CloudAvailable,
+    CloudConnected,
+    CloudConnectionAttempts,
+    CloudConnectionErrors,
+    CloudConnectionMax,
+    CloudConnectionMean,
+    CloudConnectionMin,
+    CloudConnections,
+    CloudConnectionTotal,
+    CloudQueries,
+    CloudQueryErrors,
+    CloudQueryMax,
+    CloudQueryMean,
+    CloudQueryMin,
+    CloudQueryTotal,
+    CloudRateLimits,
+    CloudReconnections,
+)
+
+
+class TestCloudMetricsSensors:
+    @pytest.mark.parametrize(
+        ("sensor_cls", "attribute", "test_value"),
+        [
+            (CloudQueries, "sigenergy2mqtt_cloud_queries", 10),
+            (CloudQueryTotal, "sigenergy2mqtt_cloud_query_total", 50.5),
+            (CloudQueryMax, "sigenergy2mqtt_cloud_query_max", 100.0),
+            (CloudQueryMean, "sigenergy2mqtt_cloud_query_mean", 20.0),
+            (CloudQueryMin, "sigenergy2mqtt_cloud_query_min", 1.0),
+            (CloudQueryErrors, "sigenergy2mqtt_cloud_query_errors", 2),
+            (CloudConnections, "sigenergy2mqtt_cloud_connections", 5),
+            (CloudConnectionErrors, "sigenergy2mqtt_cloud_connection_errors", 1),
+            (CloudConnectionAttempts, "sigenergy2mqtt_cloud_connection_attempts", 6),
+            (CloudConnectionTotal, "sigenergy2mqtt_cloud_connection_total", 500.0),
+            (CloudConnectionMax, "sigenergy2mqtt_cloud_connection_max", 200.0),
+            (CloudConnectionMean, "sigenergy2mqtt_cloud_connection_mean", 100.0),
+            (CloudConnectionMin, "sigenergy2mqtt_cloud_connection_min", 50.0),
+            (CloudReconnections, "sigenergy2mqtt_cloud_reconnections", 3),
+            (CloudRateLimits, "sigenergy2mqtt_cloud_rate_limits", 4),
+            (CloudAuthErrors, "sigenergy2mqtt_cloud_auth_errors", 1),
+            (CloudConnected, "sigenergy2mqtt_cloud_connected", True),
+            (CloudAvailable, "sigenergy2mqtt_cloud_available", False),
+        ],
+    )
+    @pytest.mark.asyncio
+    async def test_update_internal_state(self, sensor_cls, attribute, test_value):
+        sensor = sensor_cls()
+        setattr(Metrics, attribute, test_value)
+        await sensor._update_internal_state()
+        assert sensor.latest_raw_state == test_value
+
+    @pytest.mark.parametrize(
+        "sensor_cls",
+        [
+            CloudQueries,
+            CloudQueryTotal,
+            CloudQueryMax,
+            CloudQueryMean,
+            CloudQueryMin,
+            CloudQueryErrors,
+            CloudConnections,
+            CloudConnectionErrors,
+            CloudConnectionAttempts,
+            CloudConnectionTotal,
+            CloudConnectionMax,
+            CloudConnectionMean,
+            CloudConnectionMin,
+            CloudReconnections,
+            CloudRateLimits,
+            CloudAuthErrors,
+            CloudConnected,
+            CloudAvailable,
+        ],
+    )
+    def test_cloud_sensors_publishable(self, sensor_cls):
+        from sigenergy2mqtt.config import active_config
+
+        orig_user = active_config.cloud.username
+        orig_pass = active_config.cloud.password
+        orig_region = active_config.cloud.region
+        orig_risk = active_config.cloud.accept_unofficial_api_risk
+
+        try:
+            active_config.cloud.username = "test"
+            active_config.cloud.password = "test"
+            active_config.cloud.region = "eu"
+            active_config.cloud.accept_unofficial_api_risk = True
+
+            sensor = sensor_cls()
+            assert sensor.publishable is True
+
+            active_config.cloud.accept_unofficial_api_risk = False
+            sensor = sensor_cls()
+            assert sensor.publishable is False
+        finally:
+            active_config.cloud.username = orig_user
+            active_config.cloud.password = orig_pass
+            active_config.cloud.region = orig_region
+            active_config.cloud.accept_unofficial_api_risk = orig_risk

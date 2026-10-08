@@ -356,8 +356,28 @@ class:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
     name: Batterieleistung
+  CloudAuthErrors:
+    name: Cloud Auth Errors
+  CloudAvailable:
+    name: Cloud Available
   CloudBattery:
     name: '{model_name} {sn}'
+  CloudConnected:
+    name: Cloud Connected
+  CloudConnectionAttempts:
+    name: Cloud Connection Attempts
+  CloudConnectionErrors:
+    name: Cloud Connection Errors
+  CloudConnectionMax:
+    name: Cloud Connection Max
+  CloudConnectionMean:
+    name: Cloud Connection Mean
+  CloudConnectionMin:
+    name: Cloud Connection Min
+  CloudConnectionTotal:
+    name: Cloud Connection Total
+  CloudConnections:
+    name: Cloud Successful Connections
   CloudControl:
     name: Sigenergy Cloud {plant_suffix}
   CloudInverter:
@@ -366,6 +386,22 @@ class:
     attributes:
       comment: Die Protokollierungsstufe des sigenergy2mqtt-Cloud-Moduls
     name: Cloud-Protokollstufe
+  CloudQueries:
+    name: Cloud Queries
+  CloudQueryErrors:
+    name: Cloud Query Errors
+  CloudQueryMax:
+    name: Cloud Query Max
+  CloudQueryMean:
+    name: Cloud Query Mean
+  CloudQueryMin:
+    name: Cloud Query Min
+  CloudQueryTotal:
+    name: Cloud Query Total
+  CloudRateLimits:
+    name: Cloud Rate Limits
+  CloudReconnections:
+    name: Cloud Reconnections
   CurrentControlCommandValue:
     attributes:
       comment: Verwendung der Fernausgangssteuerung in Japan
