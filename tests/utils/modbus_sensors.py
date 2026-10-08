@@ -53,6 +53,7 @@ from sigenergy2mqtt.config import (
     active_config,
     initialize,
 )
+from sigenergy2mqtt.config.models import ModbusConfig
 from sigenergy2mqtt.devices import (
     PID,
     PSS,
@@ -427,6 +428,12 @@ async def get_sensor_instances(
         protocol_version = max(ProtocolVersion)
     logger.info(f"Sigenergy Modbus ProtocolVersion V{protocol_version.value} [{ProtocolApplies(protocol_version)}] ({home_assistant_enabled=})")
 
+    # Ensure the modbus list has enough entries for the requested plant_index.
+    # Config() may initialise with an empty list when no YAML file or host env
+    # var is present, so we pad with default ModbusConfig instances as needed.
+    while len(active_config.modbus) <= plant_index:
+        active_config.modbus.append(ModbusConfig())  # pyright: ignore[reportCallIssue]
+
     active_config.modbus[plant_index].dc_chargers.append(dc_charger_device_address)
     active_config.modbus[plant_index].ac_chargers.append(ac_charger_device_address)
 
@@ -624,4 +631,4 @@ async def get_sensor_instances(
 if __name__ == "__main__":
     logger.setLevel(logging.INFO)
     with _swap_active_config(Config()):
-        asyncio.run(get_sensor_instances())
+        asyncio.run(get_sensor_instances(home_assistant_enabled=False))
