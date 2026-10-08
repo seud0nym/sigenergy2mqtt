@@ -57,7 +57,7 @@ properties:
     type: boolean
     default: false
   publish-runtime-config:
-    description: "Enable publishing Runtime Configuration to MQTT, allowing settings to be changed at runtime."
+    description: "Enable publishing Runtime Configuration to MQTT. Diagnostics settings remain available when disabled; previously retained discovery is removed when disabled and by --clean."
     type: boolean
     default: false
   metrics-enabled:

@@ -127,7 +127,7 @@ Enable publishing sigenergy2mqtt metrics to MQTT. The default is `false`. Use th
 <tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
 <tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
 </table>
-Enable publishing Runtime Configuration to MQTT, allowing settings to be changed at runtime through MQTT or Home Assistant. The default is `false`. Use the CLI flag or set the ENV or YAML value to `true` to enable it.
+Enable publishing Runtime Configuration to MQTT, allowing settings to be changed at runtime through MQTT or Home Assistant. The default is `false`. Use the CLI flag or set the ENV or YAML value to `true` to enable it. Diagnostics settings controls remain available when MQTT publishing is disabled. Previously retained Runtime Configuration discovery is removed when publishing is disabled, and `--clean` still removes its discovery regardless of this option.
 
 <a id="opt_repeated_state_publish_interval"></a>
 ### Repeated State Publish Interval

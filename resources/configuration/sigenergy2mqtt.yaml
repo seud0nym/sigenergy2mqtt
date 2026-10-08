@@ -93,6 +93,8 @@ publish-metrics: false
 #   default: false
 #   description:  If true, publish Runtime Configuration to MQTT, allowing
 #                 settings to be changed at runtime through MQTT or Home Assistant.
+#                 Diagnostics settings remain available when false. Previously
+#                 retained discovery is removed when false and by --clean.
 publish-runtime-config: false
 # modbus
 #   default: [ ]

@@ -34,8 +34,9 @@ def setup_services(configs: list[ThreadConfig], protocol_version: ProtocolVersio
 
     svc_thread_cfg = ThreadConfig.create(name="Services", host=None, port=None)
 
-    if active_config.runtime_config_enabled:
-        svc_thread_cfg.add_device(SettingsService())
+    # Keep the settings sensors available to diagnostics and retain the device
+    # for clearing old discovery, even when MQTT publishing is disabled.
+    svc_thread_cfg.add_device(SettingsService())
 
     if active_config.diagnostics.enabled or is_docker():
         svc_thread_cfg.add_device(DiagnosticsService())

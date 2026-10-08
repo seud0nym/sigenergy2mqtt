@@ -123,12 +123,14 @@ def test_service_selection(publish_config, metrics, runtime_config):
             patch("sigenergy2mqtt.main.service_setup.MetricsService") as metrics_service,
         ):
             configs = setup_services([], ProtocolVersion.V2_8)
-            assert settings_service.call_count == int(runtime_config)
+            # The settings device remains available for diagnostics and cleanup;
+            # the publish flag gates its MQTT behavior rather than its existence.
+            assert settings_service.call_count == 1
             assert metrics_service.call_count == int(metrics)
-            assert len(configs) == int(metrics or runtime_config)
+            assert len(configs) == 1
             if configs:
                 assert configs[0].name == "Services"
-                assert len(configs[0].devices) == int(metrics) + int(runtime_config)
+                assert len(configs[0].devices) == int(metrics) + 1
                 if metrics:
                     metrics_service.assert_called_once_with(ProtocolVersion.V2_8)
     finally:
