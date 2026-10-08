@@ -139,7 +139,10 @@ class CloudReadWriteSensor(WriteableSensorMixin, CloudSensor):
             logger.error(f"{self.log_identity} cannot write: cloud backend unavailable")
             return False
         try:
-            return await self._write_cloud_value(port, value)
+            result = await self._write_cloud_value(port, value)
+            if result:
+                logger.info(f"{self.log_identity} _write_cloud_value value={self._raw2state(value)} (raw={value} latest_raw_state={self.latest_raw_state})")
+            return result
         except (ClientError, CloudControlError) as exc:
             logger.error(f"{self.log_identity} cloud write failed: {exc!r}")
             return False
