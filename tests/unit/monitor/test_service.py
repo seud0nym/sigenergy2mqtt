@@ -145,6 +145,58 @@ async def test_on_topic_update_known_and_unknown():
     assert ms.notified is False
     assert ms.last_seen >= old_last_seen
 
+@pytest.mark.asyncio
+async def test_monitor_service_maintains_degraded_status_until_recovery():
+    svc = MonitorService([])
+    svc._started = 0
+    topic = "topic/1"
+    ms = MonitoredSensor("Dev", "S", "S", 5, "", last_seen=time.time() - 20)
+    svc._topics[topic] = ms
+    
+    # First check: topic is overdue
+    count = await svc._check_topic_health()
+    assert count == 1
+    assert ms.notified is True
+    
+    # Second check: topic is no longer "is_overdue" because it's notified,
+    # but the service should still count it as degraded until it recovers.
+    assert ms.is_overdue is False
+    count2 = await svc._check_topic_health()
+    assert count2 == 1
+    
+    # Topic recovers
+    await svc.on_topic_update(None, None, "val", topic, None)
+    assert ms.notified is False
+    assert ms.is_overdue is False
+    
+    # Third check: fully healthy
+    count3 = await svc._check_topic_health()
+    assert count3 == 0
+
+@pytest.mark.asyncio
+async def test_monitor_service_logs_degraded_only_on_transition(caplog: pytest.LogCaptureFixture):
+    svc = MonitorService([])
+    svc._current_status = "healthy"
+    
+    with caplog.at_level(logging.WARNING):
+        caplog.clear()
+        
+        # Transition from healthy to degraded
+        with patch.object(svc, "_check_topic_health", return_value=1):
+            await svc._publish_health(FakeMqttClient())
+            
+        assert svc._current_status == "degraded"
+        assert len([r for r in caplog.records if r.levelname == "WARNING" and "DEGRADED" in r.message]) == 1
+        
+        # Second interval, still degraded
+        caplog.clear()
+        with patch.object(svc, "_check_topic_health", return_value=1):
+            await svc._publish_health(FakeMqttClient())
+            
+        assert svc._current_status == "degraded"
+        # Should not log another WARNING because status hasn't changed
+        assert len([r for r in caplog.records if r.levelname == "WARNING" and "DEGRADED" in r.message]) == 0
+
     # unknown topic
     res2 = await svc.on_topic_update(None, None, "val", "topic/unknown", None)
     assert res2 is False

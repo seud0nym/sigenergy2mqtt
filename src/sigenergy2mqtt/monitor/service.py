@@ -154,11 +154,12 @@ class MonitorService(Device):
             return 0
         async with self._lock:
             overdue: dict[str, MonitoredSensor] = {t: s for t, s in self._topics.items() if self._monitor_topic_updates and s.is_overdue}
+            still_degraded: dict[str, MonitoredSensor] = {t: s for t, s in self._topics.items() if self._monitor_topic_updates and s.notified}
         if any(overdue):
             for topic, sensor in overdue.items():
                 sensor.notified = True
                 logger.warning(f"{self.log_identity} '{sensor.name}' has not been seen for {sensor.overdue}s (scan_interval={sensor.scan_interval}s {topic=})")
-        return len(overdue)
+        return len(overdue) + len(still_degraded)
 
     async def _collect_dashboard_states(self) -> dict[str, Any]:
         """Diagnostics provider callback: exposes the latest selected plant states."""
@@ -260,7 +261,10 @@ class MonitorService(Device):
                 logger.debug(f"{self.log_identity} Status is HEALTHY (topic_{overdue_count=} {mqtt_connected=} {modbus_connected=} {service_contributors=})")
         else:
             status = "degraded"
-            logger.warning(f"{self.log_identity} Status is DEGRADED (topic_{overdue_count=} {mqtt_connected=} {modbus_connected=} {service_contributors=})")
+            if self._current_status != status:
+                logger.warning(f"{self.log_identity} Status is DEGRADED (topic_{overdue_count=} {mqtt_connected=} {modbus_connected=} {service_contributors=})")
+            else:
+                logger.debug(f"{self.log_identity} Status is DEGRADED (topic_{overdue_count=} {mqtt_connected=} {modbus_connected=} {service_contributors=})")
 
         payload = {
             "status": status,
