@@ -22,6 +22,10 @@ from .writeable import NumericSensorMixin
 
 logger = logging.getLogger(__name__)
 
+# Track which cloud ports are currently experiencing an outage to suppress
+# per-sensor log noise. Key: port id(), Value: repr of last exception.
+_port_outage: dict[int, str] = {}
+
 
 class CloudSensor(ReadableSensorMixin, AvailabilityMixin):
     """Readable sensor whose transport implements :class:`CloudControlPort`."""
@@ -57,11 +61,26 @@ class CloudSensor(ReadableSensorMixin, AvailabilityMixin):
         port = cast(CloudControlPort | None, kwargs.pop("modbus_client"))
         if port is None:
             return False
+        port_id = id(port)
         try:
             value = await self._read_cloud_state(port)
         except (ClientError, CloudControlError) as exc:
-            logger.warning(f"{self.log_identity} cloud read failed: {exc!r}")
+            exc_repr = repr(exc)
+            if port_id not in _port_outage:
+                # First failure for this port - log at WARNING level
+                logger.warning(f"{self.log_identity} cloud read failed: {exc_repr}")
+                _port_outage[port_id] = exc_repr
+            elif _port_outage[port_id] != exc_repr:
+                # Outage error changed (e.g. 503 → auth error) - log the change
+                logger.warning(f"{self.log_identity} cloud read failed (error changed): {exc_repr}")
+                _port_outage[port_id] = exc_repr
+            else:
+                # Same outage already reported - suppress to debug
+                logger.debug(f"{self.log_identity} cloud read failed (outage ongoing): {exc_repr}")
             return False
+        # Successful read: clear outage state and log recovery if there was one
+        if port_id in _port_outage:
+            logger.info(f"{self.log_identity} cloud read recovered (was: {_port_outage.pop(port_id)})")
         if value is None:
             return False
         return self.set_latest_state(cast(Any, value))
