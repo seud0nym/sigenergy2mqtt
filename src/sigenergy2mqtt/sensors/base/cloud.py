@@ -268,14 +268,14 @@ class CloudGridLimitSensor(NumericSensorMixin, CloudReadWriteSensor):
 
     async def _pre_publish(self, state: float | str | None, mqtt_client: mqtt.Client, transport: Any, republish: bool) -> None:
         """Publish discovery if required before publishing state so altered maximum is in effect."""
-        from sigenergy2mqtt.devices.base.ha_publisher import HaPublisherMixin
+        from sigenergy2mqtt.devices.base.device import Device
 
-        if isinstance(self.parent_device, HaPublisherMixin) and self.parent_device.rediscover and active_config.home_assistant.enabled:
+        if isinstance(self.parent_device, Device) and self.parent_device.rediscover and active_config.home_assistant.enabled:
             if self.debug_logging:
                 logger.debug(f"{self.log_identity} Publishing discovery on {self.parent_device.name} to reset max/min values")
             info = self.parent_device.publish_discovery(mqtt_client, clean=False)
             if info is not None and info.is_published():
-                self.parent_device.rediscover = False  # pyright: ignore[reportAttributeAccessIssue]
+                self.parent_device.rediscover = False
 
     async def _read_cloud_state(self, port: CloudControlPort) -> dict[str, Any] | None:
         """Read the current grid-limit state from the cloud backend.

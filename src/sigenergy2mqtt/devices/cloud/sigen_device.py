@@ -98,7 +98,10 @@ class SigenCloudDevice(Device):
     async def recover_info(self, port: Any, mqtt_client: Any, parent: Device | None = None) -> None:
         """Retry missing startup metadata and start polling recovered sensors."""
         if parent is not None:
-            self.online = parent._online
+            if isinstance(parent._online, asyncio.Future):
+                self.online = parent._online
+            elif parent._online is False:
+                self.online = False
         polling: list[asyncio.Task] = []
         try:
             while self._pending_info and self.online and not self._shutdown_event.is_set():
