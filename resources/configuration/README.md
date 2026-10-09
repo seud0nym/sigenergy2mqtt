@@ -230,10 +230,13 @@ A sub-directory will be created in the specified directory called `sigenergy2mqt
 
 ## Cloud
 
-If the username, password and region are all supplied, `sigenergy2mqtt` can access the Sigenergy Cloud service to read and control Sigenergy stations, batteries, and DC chargers.
+If the username, password and region are all supplied, `sigenergy2mqtt` can access the Sigenergy Cloud API to read and control your Sigenergy installation.
+
+> [!NOTE]
+> The official Sigenergy Cloud API is designed for applications that work as a backend service, and which are not deployed to local customer infrastructure as `sigenergy2mqtt` is. Sigenergy are currently working on making the changes that would support local deployment, but it is not yet available. However, there is an unofficial Cloud API that provides access to the Cloud features, which is what has now been incorporated into `sigenergy2mqtt` until the official API is available. There is no documentation for this API, and features have been discerned through observing the web app network traffic. Some features therefore may not work exactly as expected.
 
 > [!IMPORTANT]
-> Cloud control currently uses the unofficial mySigen app API. Create a delegated account in **mySigen → Settings → System Settings → System Share** with **View and Edit** access instead of using the primary account. You must also explicitly enable [Accept Unofficial API Risk](#opt_cloud_accept_unofficial_api_risk).
+> It is _strongly_ recommended that you create a delegated account in **mySigen → Settings → System Settings → System Share** with **View and Edit** access instead of using your primary account. You must also explicitly enable [Accept Unofficial API Risk](#opt_cloud_accept_unofficial_api_risk).
 
 <a id="opt_cloud_username"></a>
 ### Username
@@ -270,7 +273,7 @@ The user's Sigenergy Cloud region. If specified, username and password must also
 
 Must be one of: 
 
-- `aus` (Australia & New Zealand)
+- `aus` (Australia)
 - `eu` (Europe)
 - `cn` (China)
 - `apac` (Asia Pacific)
@@ -292,6 +295,8 @@ environment-only `SIGENERGY2MQTT_CLOUD_TESTING_URL` variable points to an
 Set to `true` to discover inverter devices from the Sigenergy cloud. The default is `false`.
 When disabled, cloud inverter devices are excluded from startup discovery, while batteries and other cloud-backed devices remain available.
 
+Usually leave this disabled because the cloud API does not at this time provide additional information to that provided by the Modbus interface.
+
 <a id="opt_cloud_accept_unofficial_api_risk"></a>
 ### Accept Unofficial API Risk
 <table>
@@ -301,7 +306,9 @@ When disabled, cloud inverter devices are excluded from startup discovery, while
 <tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
 <tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
 </table>
-Explicitly permits the unpublished mySigen app API to be used for cloud battery control. This option must be enabled when cloud credentials are configured; the default is `false`.
+This option must be set to true to enable use of the cloud integration; the default is `false`.
+
+This Cloud integration uses unofficial mySigen APIs that may be subject to change, and may be disabled at any time by Sigenergy. By enabling this option, you acknowledge that you understand the risks of using unofficial APIs, and that you accept that this integration may stop working at any time without notice.
 
 Use a delegated mySigen account with **View and Edit** access rather than the primary account. The opt-in is still required when delegated credentials are used.
 

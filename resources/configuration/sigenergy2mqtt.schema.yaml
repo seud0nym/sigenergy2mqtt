@@ -69,11 +69,12 @@ properties:
     type: object
     additionalProperties: false
     properties:
+      region: 
+        type: string
+        enum: [aus, eu, cn, apac, us]
       username: 
         type: string
       password: 
-        type: string
-      region: 
         type: string
       discover-inverters:
         description: "Discover inverter devices exposed by the Sigenergy cloud."
