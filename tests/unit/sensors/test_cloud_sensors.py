@@ -263,7 +263,7 @@ async def test_operational_mode_reads_current_mode_when_option_refresh_fails(
 
 @pytest.mark.asyncio
 async def test_cloud_sensor_suppresses_repeated_outage_warnings(caplog: pytest.LogCaptureFixture) -> None:
-    from sigenergy2mqtt.sensors.base.cloud import _port_outage, CloudSensor
+    from sigenergy2mqtt.sensors.base.cloud import _port_latest_error, _port_outage, CloudSensor
 
     class TestSensor(CloudSensor):
         def __init__(self, uid_suffix="t1"):
@@ -278,6 +278,7 @@ async def test_cloud_sensor_suppresses_repeated_outage_warnings(caplog: pytest.L
     
     # Ensure port outage state is clear before test
     _port_outage.clear()
+    _port_latest_error.clear()
     
     # 1. First failure for port -> logs WARNING
     port.get_operational_mode.side_effect = CloudControlUnavailableError("HTTP 503")
@@ -301,7 +302,14 @@ async def test_cloud_sensor_suppresses_repeated_outage_warnings(caplog: pytest.L
         assert await sensor1._update_internal_state(modbus_client=port) is False
         assert len([r for r in caplog.records if r.levelname == "WARNING"]) == 1
 
-    # 4. Partial recovery: sensor2 succeeds, but sensor1 is still failing -> logs DEBUG
+    # 4. Sensor 2 fails with the same new error -> logs DEBUG (error changed for sensor, but matches global latest)
+    with caplog.at_level(logging.DEBUG):
+        caplog.clear()
+        assert await sensor2._update_internal_state(modbus_client=port) is False
+        assert len([r for r in caplog.records if r.levelname == "WARNING"]) == 0
+        assert len([r for r in caplog.records if r.levelname == "DEBUG" and "outage ongoing" in r.message]) == 1
+
+    # 5. Partial recovery: sensor2 succeeds, but sensor1 is still failing -> logs DEBUG
     port.get_operational_mode.side_effect = None
     port.get_operational_mode.return_value = 1
     with caplog.at_level(logging.DEBUG), patch.object(sensor2, "set_latest_state", return_value=True):
@@ -310,7 +318,7 @@ async def test_cloud_sensor_suppresses_repeated_outage_warnings(caplog: pytest.L
         assert len([r for r in caplog.records if r.levelname == "INFO"]) == 0
         assert len([r for r in caplog.records if r.levelname == "DEBUG" and "recovered, but other sensors" in r.message]) == 1
 
-    # 5. sensor1 fails again (port still in partial outage) -> logs DEBUG
+    # 6. sensor1 fails again (port still in partial outage) -> logs DEBUG
     port.get_operational_mode.side_effect = CloudControlUnavailableError("HTTP 401")
     with caplog.at_level(logging.DEBUG):
         caplog.clear()
@@ -328,6 +336,7 @@ async def test_cloud_sensor_suppresses_repeated_outage_warnings(caplog: pytest.L
 
     # Ensure port outage state is clear after test
     _port_outage.clear()
+    _port_latest_error.clear()
 
 
 def test_cloud_power_limit_sensors_expose_vendor_maximum() -> None:
