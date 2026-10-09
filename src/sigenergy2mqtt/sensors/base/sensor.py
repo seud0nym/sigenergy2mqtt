@@ -1001,8 +1001,8 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
 
         state = await self.get_state(modbus_client=transport, raw=False, republish=republish)
 
-        if state is None and not self.force_publish:
-            if self.debug_logging:
+        if state is None:
+            if self.debug_logging or self.force_publish:
                 logger.debug(f"{self.log_identity} Publishing SKIPPED: State is None")
             await Metrics.mqtt_publish_attempt(physical_publish=False)
             return False

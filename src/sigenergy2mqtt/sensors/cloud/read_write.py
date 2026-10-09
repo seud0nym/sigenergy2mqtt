@@ -617,7 +617,7 @@ class _BatteryPowerLimit(NumericSensorMixin, CloudReadWriteSensor):
     def _update_sanity_check_ranges(self, gain: float | None) -> None:
         super()._update_sanity_check_ranges(gain)
         # Cloud values are decimal kW, including the unlimited sentinel.
-        self.sanity_check.max_raw = float(self[DiscoveryKeys.MAX])
+        self.sanity_check.max_raw = float(cast(float | str, self[DiscoveryKeys.MAX]))
 
     def _parse_limits(self, payload: object) -> dict[str, float | None] | None:
         if not isinstance(payload, dict):
@@ -712,7 +712,7 @@ class SolarPowerLimit(NumericSensorMixin, CloudReadWriteSensor):
     def _update_sanity_check_ranges(self, gain: float | None) -> None:
         super()._update_sanity_check_ranges(gain)
         # Cloud values are decimal kW, including the unlimited sentinel.
-        self.sanity_check.max_raw = float(self[DiscoveryKeys.MAX])
+        self.sanity_check.max_raw = float(cast(float | str, self[DiscoveryKeys.MAX]))
 
     async def _read_cloud_state(self, port: CloudControlPort) -> float | str | None:
         payload = await port.solar_power_limit()

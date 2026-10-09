@@ -22,6 +22,12 @@ from .writeable import NumericSensorMixin
 
 logger = logging.getLogger(__name__)
 
+# Track which cloud ports are currently experiencing an outage to suppress
+# per-sensor log noise. Key: port id() -> dict of sensor id() -> exc_repr
+_port_outage: dict[int, dict[int, str]] = {}
+# Track the latest error message for the port to deduplicate "error changed" warnings
+_port_latest_error: dict[int, str] = {}
+
 
 class CloudSensor(ReadableSensorMixin, AvailabilityMixin):
     """Readable sensor whose transport implements :class:`CloudControlPort`."""
@@ -57,11 +63,53 @@ class CloudSensor(ReadableSensorMixin, AvailabilityMixin):
         port = cast(CloudControlPort | None, kwargs.pop("modbus_client"))
         if port is None:
             return False
+        port_id = id(port)
+        sensor_id = id(self)
         try:
             value = await self._read_cloud_state(port)
         except (ClientError, CloudControlError) as exc:
-            logger.warning(f"{self.log_identity} cloud read failed: {exc!r}")
+            exc_repr = repr(exc)
+            port_outages = _port_outage.setdefault(port_id, {})
+            
+            if not port_outages:
+                # First failure for this port - log at WARNING level
+                logger.warning(f"{self.log_identity} cloud read failed: {exc_repr}")
+                port_outages[sensor_id] = exc_repr
+                _port_latest_error[port_id] = exc_repr
+            elif sensor_id not in port_outages:
+                # Port already in outage, new sensor failing - check if error is new
+                port_outages[sensor_id] = exc_repr
+                if exc_repr != _port_latest_error.get(port_id):
+                    logger.warning(f"{self.log_identity} cloud read failed (error changed): {exc_repr}")
+                    _port_latest_error[port_id] = exc_repr
+                else:
+                    logger.debug(f"{self.log_identity} cloud read failed (outage ongoing): {exc_repr}")
+            elif port_outages[sensor_id] != exc_repr:
+                # Error changed for this specific sensor - check if it's new for the port
+                port_outages[sensor_id] = exc_repr
+                if exc_repr != _port_latest_error.get(port_id):
+                    logger.warning(f"{self.log_identity} cloud read failed (error changed): {exc_repr}")
+                    _port_latest_error[port_id] = exc_repr
+                else:
+                    logger.debug(f"{self.log_identity} cloud read failed (outage ongoing): {exc_repr}")
+            else:
+                # Same outage already reported for this sensor - suppress to debug
+                logger.debug(f"{self.log_identity} cloud read failed (outage ongoing): {exc_repr}")
             return False
+            
+        # Successful read: clear outage state for this sensor
+        if port_id in _port_outage:
+            port_outages = _port_outage[port_id]
+            if sensor_id in port_outages:
+                was_exc = port_outages.pop(sensor_id)
+                if not port_outages:
+                    # Last failing sensor recovered
+                    logger.info(f"{self.log_identity} cloud read recovered for all sensors (was: {was_exc})")
+                    del _port_outage[port_id]
+                    _port_latest_error.pop(port_id, None)
+                else:
+                    logger.debug(f"{self.log_identity} cloud read recovered, but other sensors are still failing")
+                    
         if value is None:
             return False
         return self.set_latest_state(cast(Any, value))
@@ -268,14 +316,14 @@ class CloudGridLimitSensor(NumericSensorMixin, CloudReadWriteSensor):
 
     async def _pre_publish(self, state: float | str | None, mqtt_client: mqtt.Client, transport: Any, republish: bool) -> None:
         """Publish discovery if required before publishing state so altered maximum is in effect."""
-        from sigenergy2mqtt.devices.base.ha_publisher import HaPublisherMixin
+        from sigenergy2mqtt.devices.base.device import Device
 
-        if isinstance(self.parent_device, HaPublisherMixin) and self.parent_device.rediscover and active_config.home_assistant.enabled:
+        if isinstance(self.parent_device, Device) and self.parent_device.rediscover and active_config.home_assistant.enabled:
             if self.debug_logging:
                 logger.debug(f"{self.log_identity} Publishing discovery on {self.parent_device.name} to reset max/min values")
             info = self.parent_device.publish_discovery(mqtt_client, clean=False)
             if info is not None and info.is_published():
-                self.parent_device.rediscover = False  # pyright: ignore[reportAttributeAccessIssue]
+                self.parent_device.rediscover = False
 
     async def _read_cloud_state(self, port: CloudControlPort) -> dict[str, Any] | None:
         """Read the current grid-limit state from the cloud backend.
