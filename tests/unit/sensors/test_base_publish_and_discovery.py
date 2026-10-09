@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import time
 from unittest.mock import MagicMock, patch
 
@@ -81,6 +82,20 @@ class TestPublishMethod:
         with _swap_active_config(cfg), patch("sigenergy2mqtt.sensors.base.sensor.logger"):
             published = await s.publish(mqtt, None)
         assert published is False
+
+    @pytest.mark.asyncio
+    async def test_publish_skips_none_state_even_if_force_publish_true(self, caplog: pytest.LogCaptureFixture):
+        """Cover debug branch when state is None and force_publish is True. 
+        It should still skip publishing rather than warning about NoneType."""
+        s = self._sensor_with_topics("pub_none_force", debug=False)
+        s.force_publish = True
+        mqtt = _mqtt_mock()
+        cfg = Config()
+        with _swap_active_config(cfg), caplog.at_level(logging.WARNING):
+            caplog.clear()
+            published = await s.publish(mqtt, None)
+            assert published is False
+            assert not any(r for r in caplog.records if r.levelname == "WARNING" and "Unsupported state type" in r.message)
 
     @pytest.mark.asyncio
     async def test_publish_resets_failures_on_success(self):
