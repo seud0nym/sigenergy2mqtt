@@ -329,7 +329,10 @@ async def sensor_index() -> None:
                     if not isinstance(sensor, (CloudSensor, MetricsSensor, ResetMetrics, SettingsSensor)):
                         f.write(f"<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>{protocol}</td></tr>\n")
                     if sensor.sanity_check.is_enabled:
-                        f.write(f"<tr><td>Sanity&nbsp;Check</td><td>{sensor.sanity_check.description}</td></tr>\n")
+                        if isinstance(sensor, CloudSensor) and sensor.sanity_check.min_raw == 0.0 and sensor.sanity_check.max_raw == 0.0:
+                            f.write(f"<tr><td>Sanity&nbsp;Check&nbsp;Type</td><td>fThe value must be between 0 {sensor.unit} and maximum set by installer</td></tr>\n")
+                        else:
+                            f.write(f"<tr><td>Sanity&nbsp;Check</td><td>{sensor.sanity_check.description}</td></tr>\n")
                     f.write("</table>\n")
         return count
 
@@ -377,7 +380,10 @@ async def sensor_index() -> None:
                     if "min" in sensor:
                         f.write(f"<tr><td>Minimum&nbsp;Value</td><td>{min if min is not None else sensor['min']}</td></tr>\n")
                     if "max" in sensor:
-                        f.write(f"<tr><td>Maximum&nbsp;Value</td><td>{max if max is not None else sensor['max']}</td></tr>\n")
+                        if isinstance(sensor, CloudSensor) and sensor.sanity_check.max_raw == 0.0:
+                            f.write("<tr><td>Maximum&nbsp;Value</td><td>Set by installer</td></tr>\n")
+                        else:
+                            f.write(f"<tr><td>Maximum&nbsp;Value</td><td>{max if max is not None else sensor['max']}</td></tr>\n")
                     if "options" in sensor:
                         f.write("<tr><td>Valid&nbsp;Values</td><td><ul>")
                         options = cast(list[str], sensor["options"])

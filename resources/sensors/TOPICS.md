@@ -6495,7 +6495,7 @@ Cloud Control and child device topics are only published when the Cloud API acce
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_grid_connection_limit/state/currentLimitation</td></tr>
 </td></tr>
 <tr><td>Comment</td><td>Only available when the installer has configured a maximum limit.</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0 A and 0 A (0 ≦ raw value ≦ 0)</td></tr>
+<tr><td>Sanity&nbsp;Check&nbsp;Type</td><td>fThe value must be between 0 A and maximum set by installer</td></tr>
 </table>
 <h5><a id='sigen_0_10000000000001_grid_export_limit'>Grid Export Limit</a></h5>
 <table>
@@ -6507,7 +6507,7 @@ Cloud Control and child device topics are only published when the Cloud API acce
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_grid_export_limit/state/maxLimitation</td></tr>
 </td></tr>
 <tr><td>Comment</td><td>Only available when the installer has configured a maximum limit.</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0 kW and 0 kW (0 ≦ raw value ≦ 0)</td></tr>
+<tr><td>Sanity&nbsp;Check&nbsp;Type</td><td>fThe value must be between 0 kW and maximum set by installer</td></tr>
 </table>
 <h5><a id='sigen_0_10000000000001_grid_import_limit'>Grid Import Limit</a></h5>
 <table>
@@ -6519,7 +6519,7 @@ Cloud Control and child device topics are only published when the Cloud API acce
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_grid_import_limit/state/maxLimitation</td></tr>
 </td></tr>
 <tr><td>Comment</td><td>Only available when the installer has configured a maximum limit.</td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0 kW and 0 kW (0 ≦ raw value ≦ 0)</td></tr>
+<tr><td>Sanity&nbsp;Check&nbsp;Type</td><td>fThe value must be between 0 kW and maximum set by installer</td></tr>
 </table>
 <h5><a id='sigen_0_10000000000001_instant_control'>Instant Manual Control</a></h5>
 <table>
@@ -6601,7 +6601,7 @@ Cloud Control and child device topics are only published when the Cloud API acce
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_grid_connection_limit/set</td></tr>
 <tr><td>Comment</td><td>Only available when the installer has configured a maximum limit.</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
-<tr><td>Maximum&nbsp;Value</td><td>0.0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>Set by installer</td></tr>
 </table>
 <h5><a id='sigen_0_10000000000001_grid_export_limit_set'>Grid Export Limit
 </a></h5>
@@ -6610,7 +6610,7 @@ Cloud Control and child device topics are only published when the Cloud API acce
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_grid_export_limit/set</td></tr>
 <tr><td>Comment</td><td>Only available when the installer has configured a maximum limit.</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
-<tr><td>Maximum&nbsp;Value</td><td>0.0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>Set by installer</td></tr>
 </table>
 <h5><a id='sigen_0_10000000000001_grid_import_limit_set'>Grid Import Limit
 </a></h5>
@@ -6619,7 +6619,7 @@ Cloud Control and child device topics are only published when the Cloud API acce
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_grid_import_limit/set</td></tr>
 <tr><td>Comment</td><td>Only available when the installer has configured a maximum limit.</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
-<tr><td>Maximum&nbsp;Value</td><td>0.0</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>Set by installer</td></tr>
 </table>
 <h5><a id='sigen_0_10000000000001_instant_control_set'>Instant Manual Control
 </a></h5>
