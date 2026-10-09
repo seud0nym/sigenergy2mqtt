@@ -23,8 +23,8 @@ from .writeable import NumericSensorMixin
 logger = logging.getLogger(__name__)
 
 # Track which cloud ports are currently experiencing an outage to suppress
-# per-sensor log noise. Key: port id(), Value: repr of last exception.
-_port_outage: dict[int, str] = {}
+# per-sensor log noise. Key: port id() -> dict of sensor id() -> exc_repr
+_port_outage: dict[int, dict[int, str]] = {}
 
 
 class CloudSensor(ReadableSensorMixin, AvailabilityMixin):
@@ -62,25 +62,42 @@ class CloudSensor(ReadableSensorMixin, AvailabilityMixin):
         if port is None:
             return False
         port_id = id(port)
+        sensor_id = id(self)
         try:
             value = await self._read_cloud_state(port)
         except (ClientError, CloudControlError) as exc:
             exc_repr = repr(exc)
-            if port_id not in _port_outage:
+            port_outages = _port_outage.setdefault(port_id, {})
+            
+            if not port_outages:
                 # First failure for this port - log at WARNING level
                 logger.warning(f"{self.log_identity} cloud read failed: {exc_repr}")
-                _port_outage[port_id] = exc_repr
-            elif _port_outage[port_id] != exc_repr:
+                port_outages[sensor_id] = exc_repr
+            elif sensor_id not in port_outages:
+                # Port already in outage, new sensor failing - log at DEBUG level
+                port_outages[sensor_id] = exc_repr
+                logger.debug(f"{self.log_identity} cloud read failed (outage ongoing): {exc_repr}")
+            elif port_outages[sensor_id] != exc_repr:
                 # Outage error changed (e.g. 503 → auth error) - log the change
                 logger.warning(f"{self.log_identity} cloud read failed (error changed): {exc_repr}")
-                _port_outage[port_id] = exc_repr
+                port_outages[sensor_id] = exc_repr
             else:
-                # Same outage already reported - suppress to debug
+                # Same outage already reported for this sensor - suppress to debug
                 logger.debug(f"{self.log_identity} cloud read failed (outage ongoing): {exc_repr}")
             return False
-        # Successful read: clear outage state and log recovery if there was one
+            
+        # Successful read: clear outage state for this sensor
         if port_id in _port_outage:
-            logger.info(f"{self.log_identity} cloud read recovered (was: {_port_outage.pop(port_id)})")
+            port_outages = _port_outage[port_id]
+            if sensor_id in port_outages:
+                was_exc = port_outages.pop(sensor_id)
+                if not port_outages:
+                    # Last failing sensor recovered
+                    logger.info(f"{self.log_identity} cloud read recovered for all sensors (was: {was_exc})")
+                    del _port_outage[port_id]
+                else:
+                    logger.debug(f"{self.log_identity} cloud read recovered, but other sensors are still failing")
+                    
         if value is None:
             return False
         return self.set_latest_state(cast(Any, value))
