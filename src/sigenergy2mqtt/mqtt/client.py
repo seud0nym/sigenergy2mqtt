@@ -12,7 +12,7 @@ import time
 from typing import Literal
 
 import paho.mqtt.client as mqtt
-from paho.mqtt.enums import CallbackAPIVersion
+from paho.mqtt.enums import CallbackAPIVersion, MQTTErrorCode
 
 from .handler import MqttHandler
 
@@ -77,7 +77,7 @@ class MqttClient(mqtt.Client):
         self.on_subscribe = on_subscribe
         self.on_unsubscribe = on_unsubscribe
 
-    def reconnect(self) -> mqtt.MQTTErrorCode:
+    def reconnect(self) -> MQTTErrorCode:
         """Track initial and automatic reconnect attempts through CONNACK."""
         from sigenergy2mqtt.metrics import Metrics
 
