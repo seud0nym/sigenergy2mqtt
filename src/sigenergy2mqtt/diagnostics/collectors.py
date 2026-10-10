@@ -1,3 +1,4 @@
+import re
 from typing import Any, cast
 
 from sigenergy2mqtt.cloud.mysigen_adapter import MySigenCloudAdapter
@@ -13,6 +14,22 @@ from sigenergy2mqtt.sensors.base.writeable import (
 )
 
 from .registry import diagnostics_registry
+
+
+def make_stripper(*terms: str):
+    alternation = "|".join(re.escape(t) for t in terms)
+    pattern = re.compile(rf"[\s\-–—]*(?:{alternation})[\s\-–—]*", re.IGNORECASE)
+
+    def strip_terms(text: str) -> str:
+        return pattern.sub(" ", text).strip()
+
+    return strip_terms
+
+
+strip_influxdb = make_stripper("InfluxDB")
+strip_modbus = make_stripper("Modbus")
+strip_mqtt = make_stripper("MQTT")
+strip_pvoutput = make_stripper("PVOutput")
 
 
 class DiagnosticsCollectors:
@@ -135,10 +152,10 @@ class DiagnosticsCollectors:
         """Diagnostics provider callback: exposes the latest InfluxDB metrics."""
         async with Metrics.lock(timeout=1.0):
             influxdb_metrics = {
-                f"{_t('InfluxDBWriteErrors.name').removeprefix('InfluxDB ')}": Metrics.sigenergy2mqtt_influxdb_write_errors,
-                f"{_t('InfluxDBWriteMax.name').removeprefix('InfluxDB ')}_ms": Metrics.sigenergy2mqtt_influxdb_write_max,
-                f"{_t('InfluxDBWriteMean.name').removeprefix('InfluxDB ')}_ms": Metrics.sigenergy2mqtt_influxdb_write_mean,
-                f"{_t('InfluxDBWriteMin.name').removeprefix('InfluxDB ')}_ms": Metrics.sigenergy2mqtt_influxdb_write_min if Metrics.sigenergy2mqtt_influxdb_write_min != float("inf") else 0.0,
+                f"{strip_influxdb(_t('InfluxDBWriteErrors.name'))}": Metrics.sigenergy2mqtt_influxdb_write_errors,
+                f"{strip_influxdb(_t('InfluxDBWriteMax.name'))}_ms": Metrics.sigenergy2mqtt_influxdb_write_max,
+                f"{strip_influxdb(_t('InfluxDBWriteMean.name'))}_ms": Metrics.sigenergy2mqtt_influxdb_write_mean,
+                f"{strip_influxdb(_t('InfluxDBWriteMin.name'))}_ms": Metrics.sigenergy2mqtt_influxdb_write_min if Metrics.sigenergy2mqtt_influxdb_write_min != float("inf") else 0.0,
                 "config": {
                     "write_timeout_secs": active_config.influxdb.write_timeout,
                     "batch_size": active_config.influxdb.batch_size,
@@ -147,9 +164,9 @@ class DiagnosticsCollectors:
             }
             if active_config.influxdb.load_hass_history:
                 influxdb_metrics.update({
-                    f"{_t('InfluxDBRetries.name').removeprefix('InfluxDB ')}": Metrics.sigenergy2mqtt_influxdb_retries,
-                    f"{_t('InfluxDBQueryErrors.name').removeprefix('InfluxDB ')}": Metrics.sigenergy2mqtt_influxdb_query_errors,
-                    f"{_t('InfluxDBRateLimitWaits.name').removeprefix('InfluxDB ')}": Metrics.sigenergy2mqtt_influxdb_rate_limit_waits,
+                    f"{strip_influxdb(_t('InfluxDBRetries.name'))}": Metrics.sigenergy2mqtt_influxdb_retries,
+                    f"{strip_influxdb(_t('InfluxDBQueryErrors.name'))}": Metrics.sigenergy2mqtt_influxdb_query_errors,
+                    f"{strip_influxdb(_t('InfluxDBRateLimitWaits.name'))}": Metrics.sigenergy2mqtt_influxdb_rate_limit_waits,
                 })
             return influxdb_metrics
 
@@ -158,17 +175,17 @@ class DiagnosticsCollectors:
         """Diagnostics provider callback: exposes the latest Modbus metric."""
         async with Metrics.lock(timeout=1.0):
             return {
-                f"{_t('ModbusPhysicalReads.name').removeprefix('Modbus ')}_pct": Metrics.sigenergy2mqtt_modbus_physical_read_percentage,
-                f"{_t('ModbusCacheHits.name').removeprefix('Modbus ')}_pct": Metrics.sigenergy2mqtt_modbus_cache_hit_percentage,
-                f"{_t('ModbusReadMax.name').removeprefix('Modbus ')}_ms": Metrics.sigenergy2mqtt_modbus_read_max,
-                f"{_t('ModbusReadMean.name').removeprefix('Modbus ')}_ms": Metrics.sigenergy2mqtt_modbus_read_mean,
-                f"{_t('ModbusReadMin.name').removeprefix('Modbus ')}_ms": Metrics.sigenergy2mqtt_modbus_read_min if Metrics.sigenergy2mqtt_modbus_read_min != float("inf") else 0.0,
-                f"{_t('ModbusReadErrors.name').removeprefix('Modbus ')}": Metrics.sigenergy2mqtt_modbus_read_errors,
-                f"{_t('ModbusWriteMax.name').removeprefix('Modbus ')}_ms": Metrics.sigenergy2mqtt_modbus_write_max,
-                f"{_t('ModbusWriteMean.name').removeprefix('Modbus ')}_ms": Metrics.sigenergy2mqtt_modbus_write_mean,
-                f"{_t('ModbusWriteMin.name').removeprefix('Modbus ')}_ms": Metrics.sigenergy2mqtt_modbus_write_min if Metrics.sigenergy2mqtt_modbus_write_min != float("inf") else 0.0,
-                f"{_t('ModbusWriteErrors.name').removeprefix('Modbus ')}": Metrics.sigenergy2mqtt_modbus_write_errors,
-                f"{_t('ModbusSkippedErrors.name').removeprefix('Modbus ')}": Metrics.sigenergy2mqtt_modbus_skipped_errors,
+                f"{strip_modbus(_t('ModbusPhysicalReads.name'))}_pct": Metrics.sigenergy2mqtt_modbus_physical_read_percentage,
+                f"{strip_modbus(_t('ModbusCacheHits.name'))}_pct": Metrics.sigenergy2mqtt_modbus_cache_hit_percentage,
+                f"{strip_modbus(_t('ModbusReadMax.name'))}_ms": Metrics.sigenergy2mqtt_modbus_read_max,
+                f"{strip_modbus(_t('ModbusReadMean.name'))}_ms": Metrics.sigenergy2mqtt_modbus_read_mean,
+                f"{strip_modbus(_t('ModbusReadMin.name'))}_ms": Metrics.sigenergy2mqtt_modbus_read_min if Metrics.sigenergy2mqtt_modbus_read_min != float("inf") else 0.0,
+                f"{strip_modbus(_t('ModbusReadErrors.name'))}": Metrics.sigenergy2mqtt_modbus_read_errors,
+                f"{strip_modbus(_t('ModbusWriteMax.name'))}_ms": Metrics.sigenergy2mqtt_modbus_write_max,
+                f"{strip_modbus(_t('ModbusWriteMean.name'))}_ms": Metrics.sigenergy2mqtt_modbus_write_mean,
+                f"{strip_modbus(_t('ModbusWriteMin.name'))}_ms": Metrics.sigenergy2mqtt_modbus_write_min if Metrics.sigenergy2mqtt_modbus_write_min != float("inf") else 0.0,
+                f"{strip_modbus(_t('ModbusWriteErrors.name'))}": Metrics.sigenergy2mqtt_modbus_write_errors,
+                f"{strip_modbus(_t('ModbusSkippedErrors.name'))}": Metrics.sigenergy2mqtt_modbus_skipped_errors,
                 "config": {
                     "disable_chunking": "yes" if active_config.modbus[0].disable_chunking else "no",
                     "timeout_0_secs": active_config.modbus[0].timeout,
@@ -181,15 +198,15 @@ class DiagnosticsCollectors:
         """Diagnostics provider callback: exposes the latest MQTT metrics."""
         async with Metrics.lock(timeout=1.0):
             return {
-                f"{_t('MQTTConnectionAttempts.name').removeprefix('MQTT ')}": Metrics.sigenergy2mqtt_mqtt_connection_attempts,
-                f"{_t('MQTTConnections.name').removeprefix('MQTT ')}": Metrics.sigenergy2mqtt_mqtt_connections,
-                f"{_t('MQTTConnectionErrors.name').removeprefix('MQTT ')}": Metrics.sigenergy2mqtt_mqtt_connection_errors,
-                f"{_t('MQTTConnectionMax.name').removeprefix('MQTT ')}_ms": Metrics.sigenergy2mqtt_mqtt_connection_max,
-                f"{_t('MQTTConnectionMean.name').removeprefix('MQTT ')}_ms": Metrics.sigenergy2mqtt_mqtt_connection_mean,
-                f"{_t('MQTTConnectionMin.name').removeprefix('MQTT ')}_ms": Metrics.sigenergy2mqtt_mqtt_connection_min if Metrics.sigenergy2mqtt_mqtt_connection_min != float("inf") else 0.0,
-                f"{_t('MQTTReconnections.name').removeprefix('MQTT ')}": Metrics.sigenergy2mqtt_mqtt_reconnections,
-                f"{_t('MQTTPhysicalPublishes.name').removeprefix('MQTT ')}_pct": Metrics.sigenergy2mqtt_mqtt_physical_publish_percentage,
-                f"{_t('MQTTPublishFailures.name').removeprefix('MQTT ')}": Metrics.sigenergy2mqtt_mqtt_publish_failures,
+                f"{strip_mqtt(_t('MQTTPhysicalPublishes.name'))}_pct": Metrics.sigenergy2mqtt_mqtt_physical_publish_percentage,
+                f"{strip_mqtt(_t('MQTTPublishFailures.name'))}": Metrics.sigenergy2mqtt_mqtt_publish_failures,
+                f"{strip_mqtt(_t('MQTTConnectionAttempts.name'))}": Metrics.sigenergy2mqtt_mqtt_connection_attempts,
+                f"{strip_mqtt(_t('MQTTConnections.name'))}": Metrics.sigenergy2mqtt_mqtt_connections,
+                f"{strip_mqtt(_t('MQTTConnectionErrors.name'))}": Metrics.sigenergy2mqtt_mqtt_connection_errors,
+                f"{strip_mqtt(_t('MQTTConnectionMax.name'))}_ms": Metrics.sigenergy2mqtt_mqtt_connection_max,
+                f"{strip_mqtt(_t('MQTTConnectionMean.name'))}_ms": Metrics.sigenergy2mqtt_mqtt_connection_mean,
+                f"{strip_mqtt(_t('MQTTConnectionMin.name'))}_ms": Metrics.sigenergy2mqtt_mqtt_connection_min if Metrics.sigenergy2mqtt_mqtt_connection_min != float("inf") else 0.0,
+                f"{strip_mqtt(_t('MQTTReconnections.name'))}": Metrics.sigenergy2mqtt_mqtt_reconnections,
                 "config": {
                     "simplified_topics": "no" if active_config.home_assistant.enabled and not active_config.home_assistant.use_simplified_topics else "yes",
                     "repeated_state_publish_interval_secs": active_config.repeated_state_publish_interval,
@@ -238,11 +255,11 @@ class DiagnosticsCollectors:
 
         async with Metrics.lock(timeout=1.0):
             return {
-                f"{_t('PVOutputUploadErrors.name').removeprefix('PVOutput ')}": Metrics.sigenergy2mqtt_pvoutput_upload_errors,
-                f"{_t('PVOutputUploadSkipped.name').removeprefix('PVOutput ')}": Metrics.sigenergy2mqtt_pvoutput_upload_skipped,
-                f"{_t('PVOutputUploadMax.name').removeprefix('PVOutput ')}_ms": Metrics.sigenergy2mqtt_pvoutput_upload_max,
-                f"{_t('PVOutputUploadMean.name').removeprefix('PVOutput ')}_ms": Metrics.sigenergy2mqtt_pvoutput_upload_mean,
-                f"{_t('PVOutputUploadMin.name').removeprefix('PVOutput ')}_ms": Metrics.sigenergy2mqtt_pvoutput_upload_min if Metrics.sigenergy2mqtt_pvoutput_upload_min != float("inf") else 0.0,
+                f"{strip_pvoutput(_t('PVOutputUploadErrors.name'))}": Metrics.sigenergy2mqtt_pvoutput_upload_errors,
+                f"{strip_pvoutput(_t('PVOutputUploadSkipped.name'))}": Metrics.sigenergy2mqtt_pvoutput_upload_skipped,
+                f"{strip_pvoutput(_t('PVOutputUploadMax.name'))}_ms": Metrics.sigenergy2mqtt_pvoutput_upload_max,
+                f"{strip_pvoutput(_t('PVOutputUploadMean.name'))}_ms": Metrics.sigenergy2mqtt_pvoutput_upload_mean,
+                f"{strip_pvoutput(_t('PVOutputUploadMin.name'))}_ms": Metrics.sigenergy2mqtt_pvoutput_upload_min if Metrics.sigenergy2mqtt_pvoutput_upload_min != float("inf") else 0.0,
                 "config": {
                     "donator": "yes" if PVOutputSettings.donator else "no",
                     "status_interval_secs": PVOutputSettings.interval * 60,
