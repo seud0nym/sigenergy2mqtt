@@ -3491,7 +3491,7 @@
   "ZH:MQTT Connection Mean": "MQTT 连接说明",
   "ZH:MQTT Connection Attempts": "MQTT 连接尝试次数",
   "ZH:MQTT Connection Max": "MQTT 连接上限",
-  "DE:Modbus Write Average": "Modbus-Schreibbefehl „Average“",
+  "DE:Modbus Write Average": "Durchschnittliche Modbus-Schreibdauer“",
   "DE:Modbus Read Average": "Modbus-Durchschnittswert lesen",
   "DE:MQTT Connection Average": "Durchschnittliche MQTT-Verbindung",
   "DE:PVOutput Upload Average": "PVOutput-Upload-Durchschnitt",

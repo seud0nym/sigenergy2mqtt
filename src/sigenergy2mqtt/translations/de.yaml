@@ -1416,7 +1416,7 @@ class:
   ModbusWriteMax:
     name: Modbus-Schreiben Max
   ModbusWriteMean:
-    name: Modbus-Schreibbefehl „Average“
+    name: Durchschnittliche Modbus-Schreibdauer“
   ModbusWriteMin:
     name: Modbus-Schreiben Min
   MonitorService:
