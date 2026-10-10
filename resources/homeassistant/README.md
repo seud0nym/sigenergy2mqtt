@@ -46,12 +46,15 @@ For each Sigenergy host, an MQTT device will be created in Home Assistant. A hos
 
 The first host will be called `Sigenergy Plant` (plant is the terminology used in the "Sigenergy Modbus Protocol", and is in the context of a power plant). Each plant will have one or more related MQTT devices, such as `Sigenergy Plant Grid Sensor` and `Sigenergy Plant Statistics`. Plants will also have associated inverters, and their names will include the model and serial number (e.g. `SigenStor CMUxxxxxxxxxx Energy Controller`). Each inverter will have an an Energy Storage System device (e.g. `SigenStor CMUxxxxxxxxxx ESS`) and as many PV String devices as the inverter supports. Chargers will be named `Sigenergy AC Charger` and `Sigenergy DC Charger`.
 
-If Cloud API access is enabled, the Cloud and Gateway devices will also be created.
+If Cloud API access is enabled, the Cloud and Gateway devices will also be created, along with a device for each battery and, optionally, a device for each inverter.
 
 Example:
 ```
 Sigenergy Plant
    ├─ Sigenergy Cloud
+   │    ├─ SigenStor BAT 8.0 1
+   │    ├─ SigenStor BAT 8.0 2
+   │    ├─ SigenStor xxxxxxxxxx Energy Controller
    │    └─ Sigen Gateway SP AU
    ├─ Sigenergy Plant ESS Pre-Heating
    ├─ Sigenergy Plant Grid Code
