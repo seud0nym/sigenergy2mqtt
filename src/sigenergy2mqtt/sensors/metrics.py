@@ -119,6 +119,107 @@ class MetricsSensor(ReadableSensorMixin):
 # =============================================================================
 
 
+class MQTTConnectionAttempts(MetricsSensor):
+    """MQTT connection attempts."""
+
+    def __init__(self):
+        super().__init__(
+            attribute="sigenergy2mqtt_mqtt_connection_attempts",
+            name="MQTT Connection Attempts",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_mqtt_connection_attempts",
+            object_id="sigenergy2mqtt_mqtt_connection_attempts",
+            icon="mdi:counter",
+            precision=0,
+        )
+
+
+class MQTTConnections(MetricsSensor):
+    """MQTT successful connections."""
+
+    def __init__(self):
+        super().__init__(
+            attribute="sigenergy2mqtt_mqtt_connections",
+            name="MQTT Successful Connections",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_mqtt_connections",
+            object_id="sigenergy2mqtt_mqtt_connections",
+            icon="mdi:counter",
+            precision=0,
+        )
+
+
+class MQTTConnectionErrors(MetricsSensor):
+    """MQTT connection errors."""
+
+    def __init__(self):
+        super().__init__(
+            attribute="sigenergy2mqtt_mqtt_connection_errors",
+            name="MQTT Connection Errors",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_mqtt_connection_errors",
+            object_id="sigenergy2mqtt_mqtt_connection_errors",
+            icon="mdi:counter",
+            precision=0,
+        )
+
+
+class MQTTConnectionMax(MetricsSensor):
+    """MQTT connection max, in milliseconds."""
+
+    def __init__(self):
+        super().__init__(
+            attribute="sigenergy2mqtt_mqtt_connection_max",
+            name="MQTT Connection Max",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_mqtt_connection_max",
+            object_id="sigenergy2mqtt_mqtt_connection_max",
+            unit="ms",
+            icon="mdi:timer-plus-outline",
+            precision=2,
+        )
+
+
+class MQTTConnectionMean(MetricsSensor):
+    """MQTT connection mean, in milliseconds."""
+
+    def __init__(self):
+        super().__init__(
+            attribute="sigenergy2mqtt_mqtt_connection_mean",
+            name="MQTT Connection Mean",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_mqtt_connection_mean",
+            object_id="sigenergy2mqtt_mqtt_connection_mean",
+            unit="ms",
+            icon="mdi:timer-outline",
+            precision=2,
+        )
+
+
+class MQTTConnectionMin(MetricsSensor):
+    """MQTT connection min, in milliseconds."""
+
+    def __init__(self):
+        super().__init__(
+            attribute="sigenergy2mqtt_mqtt_connection_min",
+            name="MQTT Connection Min",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_mqtt_connection_min",
+            object_id="sigenergy2mqtt_mqtt_connection_min",
+            unit="ms",
+            icon="mdi:timer-minus-outline",
+            precision=2,
+        )
+
+
+class MQTTReconnections(MetricsSensor):
+    """MQTT reconnections."""
+
+    def __init__(self):
+        super().__init__(
+            attribute="sigenergy2mqtt_mqtt_reconnections",
+            name="MQTT Reconnections",
+            unique_id=f"{active_config.home_assistant.unique_id_prefix}_mqtt_reconnections",
+            object_id="sigenergy2mqtt_mqtt_reconnections",
+            icon="mdi:refresh",
+            precision=0,
+        )
+
+
 class MQTTPublishFailures(MetricsSensor):
     """Cumulative count of MQTT state publish failures."""
 

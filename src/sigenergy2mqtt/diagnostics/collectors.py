@@ -181,6 +181,13 @@ class DiagnosticsCollectors:
         """Diagnostics provider callback: exposes the latest MQTT metrics."""
         async with Metrics.lock(timeout=1.0):
             return {
+                f"{_t('MQTTConnectionAttempts.name').removeprefix('MQTT ')}": Metrics.sigenergy2mqtt_mqtt_connection_attempts,
+                f"{_t('MQTTConnections.name').removeprefix('MQTT ')}": Metrics.sigenergy2mqtt_mqtt_connections,
+                f"{_t('MQTTConnectionErrors.name').removeprefix('MQTT ')}": Metrics.sigenergy2mqtt_mqtt_connection_errors,
+                f"{_t('MQTTConnectionMax.name').removeprefix('MQTT ')}_ms": Metrics.sigenergy2mqtt_mqtt_connection_max,
+                f"{_t('MQTTConnectionMean.name').removeprefix('MQTT ')}_ms": Metrics.sigenergy2mqtt_mqtt_connection_mean,
+                f"{_t('MQTTConnectionMin.name').removeprefix('MQTT ')}_ms": Metrics.sigenergy2mqtt_mqtt_connection_min if Metrics.sigenergy2mqtt_mqtt_connection_min != float("inf") else 0.0,
+                f"{_t('MQTTReconnections.name').removeprefix('MQTT ')}": Metrics.sigenergy2mqtt_mqtt_reconnections,
                 f"{_t('MQTTPhysicalPublishes.name').removeprefix('MQTT ')}_pct": Metrics.sigenergy2mqtt_mqtt_physical_publish_percentage,
                 f"{_t('MQTTPublishFailures.name').removeprefix('MQTT ')}": Metrics.sigenergy2mqtt_mqtt_publish_failures,
                 "config": {

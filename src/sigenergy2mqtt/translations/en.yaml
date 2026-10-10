@@ -1303,6 +1303,20 @@ class:
     attributes:
       comment: The MQTT interface logging level
     name: MQTT Log Level
+  MQTTConnectionAttempts:
+    name: MQTT Connection Attempts
+  MQTTConnections:
+    name: MQTT Successful Connections
+  MQTTConnectionErrors:
+    name: MQTT Connection Errors
+  MQTTConnectionMax:
+    name: MQTT Connection Max
+  MQTTConnectionMean:
+    name: MQTT Connection Mean
+  MQTTConnectionMin:
+    name: MQTT Connection Min
+  MQTTReconnections:
+    name: MQTT Reconnections
   MQTTPhysicalPublishes:
     name: MQTT Physical Publishes
   MQTTPublishFailures:
