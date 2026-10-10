@@ -60,6 +60,13 @@ class MetricsService(Device):
         self._add_sensor(metrics.ModbusWriteMean())
         self._add_sensor(metrics.ModbusWriteMin())
 
+        self._add_sensor(metrics.MQTTConnectionAttempts())
+        self._add_sensor(metrics.MQTTConnections())
+        self._add_sensor(metrics.MQTTConnectionErrors())
+        self._add_sensor(metrics.MQTTConnectionMax())
+        self._add_sensor(metrics.MQTTConnectionMean())
+        self._add_sensor(metrics.MQTTConnectionMin())
+        self._add_sensor(metrics.MQTTReconnections())
         self._add_sensor(metrics.MQTTPublishFailures())
         self._add_sensor(metrics.MQTTPhysicalPublishes())
 

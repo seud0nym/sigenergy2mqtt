@@ -77,8 +77,32 @@ class Metrics:
     """Number of modbus skipped read errors."""
 
     # ------------------------------------------------------------------
-    # MQTT publish metrics
+    # MQTT connection and publish metrics
     # ------------------------------------------------------------------
+
+    sigenergy2mqtt_mqtt_connection_attempts: int = 0
+    """Total initial and automatic MQTT connection attempts across all clients."""
+
+    sigenergy2mqtt_mqtt_connections: int = 0
+    """Number of successful MQTT broker connections."""
+
+    sigenergy2mqtt_mqtt_connection_errors: int = 0
+    """Number of MQTT transport failures and refused connections."""
+
+    sigenergy2mqtt_mqtt_connection_max: float = 0.0
+    """Maximum completed MQTT connection attempt duration, in milliseconds."""
+
+    sigenergy2mqtt_mqtt_connection_mean: float = 0.0
+    """Mean completed MQTT connection attempt duration, in milliseconds."""
+
+    sigenergy2mqtt_mqtt_connection_min: float = float("inf")
+    """Minimum completed MQTT connection attempt duration, in milliseconds."""
+
+    sigenergy2mqtt_mqtt_reconnections: int = 0
+    """Successful connections after the same client previously connected."""
+
+    sigenergy2mqtt_mqtt_connection_total: float = 0.0
+    _mqtt_connection_timings: int = 0
 
     sigenergy2mqtt_mqtt_publish_attempts: int = 0
     """Total number of logical MQTT state publish attempts."""
@@ -293,6 +317,7 @@ class Metrics:
 
         def _update() -> None:
             def _operation() -> None:
+                cls._mqtt_connection_timings = 0
                 for name, default in cls._defaults.items():
                     setattr(cls, name, default)
 
@@ -540,6 +565,34 @@ class Metrics:
             cls._update_with_lock(_operation, "modbus write metrics collection")
 
         cls._submit(_update)
+
+    @classmethod
+    def mqtt_connection_attempt(cls) -> None:
+        """Record an attempt from a synchronous paho client thread."""
+        def operation() -> None:
+            cls.sigenergy2mqtt_mqtt_connection_attempts += 1
+
+        cls._submit(lambda: cls._update_with_lock(operation, "mqtt connection attempt metrics collection"))
+
+    @classmethod
+    def mqtt_connection_result(cls, seconds: float, success: bool, reconnect: bool = False) -> None:
+        """Record transport/CONNACK outcome and elapsed attempt time."""
+        elapsed = seconds * 1000.0
+
+        def operation() -> None:
+            cls._mqtt_connection_timings += 1
+            cls.sigenergy2mqtt_mqtt_connection_total += elapsed
+            cls.sigenergy2mqtt_mqtt_connection_max = max(cls.sigenergy2mqtt_mqtt_connection_max, elapsed)
+            cls.sigenergy2mqtt_mqtt_connection_min = min(cls.sigenergy2mqtt_mqtt_connection_min, elapsed)
+            cls.sigenergy2mqtt_mqtt_connection_mean = cls.sigenergy2mqtt_mqtt_connection_total / cls._mqtt_connection_timings
+            if success:
+                cls.sigenergy2mqtt_mqtt_connections += 1
+                if reconnect:
+                    cls.sigenergy2mqtt_mqtt_reconnections += 1
+            else:
+                cls.sigenergy2mqtt_mqtt_connection_errors += 1
+
+        cls._submit(lambda: cls._update_with_lock(operation, "mqtt connection result metrics collection"))
 
     @classmethod
     async def mqtt_publish_attempt(cls, physical_publish: bool) -> None:

@@ -8,10 +8,11 @@ the :class:`~.handler.MqttHandler` interface, and optionally configures TLS.
 import _thread
 import logging
 import ssl
+import time
 from typing import Literal
 
 import paho.mqtt.client as mqtt
-from paho.mqtt.enums import CallbackAPIVersion
+from paho.mqtt.enums import CallbackAPIVersion, MQTTErrorCode
 
 from .handler import MqttHandler
 
@@ -45,6 +46,8 @@ class MqttClient(mqtt.Client):
         tls: bool = False,
         tls_insecure: bool = False,
     ):
+        self._connection_started: float | None = None
+        self._has_connected = False
         self.client_id_str = client_id
         super().__init__(
             CallbackAPIVersion.VERSION2,
@@ -73,6 +76,33 @@ class MqttClient(mqtt.Client):
         self.on_publish = on_publish
         self.on_subscribe = on_subscribe
         self.on_unsubscribe = on_unsubscribe
+
+    def reconnect(self) -> MQTTErrorCode:
+        """Track initial and automatic reconnect attempts through CONNACK."""
+        from sigenergy2mqtt.metrics import Metrics
+
+        self._record_connection_result(False)
+        self._connection_started = time.monotonic()
+        Metrics.mqtt_connection_attempt()
+        try:
+            result = super().reconnect()
+        except Exception:
+            self._record_connection_result(False)
+            raise
+        if result != mqtt.MQTT_ERR_SUCCESS:
+            self._record_connection_result(False)
+        return result
+
+    def _record_connection_result(self, success: bool) -> None:
+        from sigenergy2mqtt.metrics import Metrics
+
+        started = self._connection_started
+        if started is None:
+            return
+        self._connection_started = None
+        Metrics.mqtt_connection_result(time.monotonic() - started, success, self._has_connected)
+        if success:
+            self._has_connected = True
 
 
 # ---------------------------------------------------------------------------
@@ -124,6 +154,8 @@ def on_connect(client: mqtt.Client, userdata: MqttHandler, flags, reason_code, p
     properties:
         MQTT v5 properties (unused for MQTTv311).
     """
+    if isinstance(client, MqttClient):
+        client._record_connection_result(reason_code == 0)
     if reason_code == 0:
         logger.debug(f"Connected to mqtt://{client.host}:{client.port} (client_id={userdata.client_id})")
         userdata.registry.mark_connected(userdata.client_id)
@@ -156,6 +188,8 @@ def on_disconnect(client: mqtt.Client, userdata: MqttHandler, disconnect_flags, 
     properties:
         MQTT v5 properties (unused for MQTTv311).
     """
+    if isinstance(client, MqttClient):
+        client._record_connection_result(False)
     userdata.connected = False
     logger.info(f"Disconnected from mqtt://{client.host}:{client.port} - {reason_code} (client_id={userdata.client_id})")
     userdata.registry.mark_disconnected(userdata.client_id)

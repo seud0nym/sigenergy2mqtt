@@ -371,7 +371,7 @@ class:
   CloudConnectionMax:
     name: Cloud Connection Max  # verify:ignore
   CloudConnectionMean:
-    name: Significato della connessione al cloud
+    name: Connessione al cloud media
   CloudConnectionMin:
     name: Connessione al cloud Min
   CloudConnectionTotal:
@@ -396,7 +396,7 @@ class:
   CloudQueryMax:
     name: Cloud Query Max  # verify:ignore
   CloudQueryMean:
-    name: Media delle query cloud
+    name: Media delle query sul cloud
   CloudQueryMin:
     name: Cloud Query Min  # verify:ignore
   CloudQueryTotal:
@@ -1031,7 +1031,7 @@ class:
   InfluxDBWriteMax:
     name: Latenza massima scrittura InfluxDB
   InfluxDBWriteMean:
-    name: Latenza media scrittura InfluxDB
+    name: Media delle scritture in InfluxDB
   InfluxDBWriteMin:
     name: Scrittura DB di afflusso min
   InfluxDBWrites:
@@ -1299,6 +1299,18 @@ class:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Conteggio MPPT
+  MQTTConnectionAttempts:
+    name: Tentativi di connessione MQTT
+  MQTTConnectionErrors:
+    name: Errori di connessione MQTT
+  MQTTConnectionMax:
+    name: Connessione MQTT massima
+  MQTTConnectionMean:
+    name: Media delle connessioni MQTT
+  MQTTConnectionMin:
+    name: Connessione MQTT Min
+  MQTTConnections:
+    name: Connessioni MQTT riuscite
   MQTTLogLevel:
     attributes:
       comment: Il livello di registrazione dell’interfaccia MQTT
@@ -1307,6 +1319,8 @@ class:
     name: Pubblicazioni Fisiche MQTT
   MQTTPublishFailures:
     name: Fallimenti di Pubblicazione MQTT
+  MQTTReconnections:
+    name: Riconnessioni MQTT
   MV:
     name: 'XPLACEholderx0X Xplaceholderx1X MV'
   MaxAbsorptionPower:
@@ -1390,7 +1404,7 @@ class:
   ModbusReadMax:
     name: Lettura Modbus Max
   ModbusReadMean:
-    name: Lettura Modbus Media
+    name: Media di lettura Modbus
   ModbusReadMin:
     name: Lettura Modbus Min
   ModbusReadsPerSecond:
@@ -1402,7 +1416,7 @@ class:
   ModbusWriteMax:
     name: Scrittura Modbus Max
   ModbusWriteMean:
-    name: Scrittura Modbus Media
+    name: Media scrittura Modbus
   ModbusWriteMin:
     name: Scrittura Modbus Min
   MonitorService:
@@ -2379,7 +2393,7 @@ class:
   PVOutputUploadMax:
     name: Caricamento PVOutput max
   PVOutputUploadMean:
-    name: Media caricamento PVOutput
+    name: Media dei dati caricati su PVOutput
   PVOutputUploadMin:
     name: Caricamento PVOutput min
   PVOutputUploadSkipped:
@@ -2873,7 +2887,7 @@ class:
   StateStoreSaveMax:
     name: Scrittura Registro di Stato Max
   StateStoreSaveMean:
-    name: Scrittura Registro di Stato Media
+    name: Memorizzazione stato Salva media
   StateStoreSaveMin:
     name: Scrittura Registro di Stato Min
   StateStoreSaves:

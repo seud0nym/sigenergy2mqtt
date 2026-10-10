@@ -371,7 +371,7 @@ class:
   CloudConnectionMax:
     name: Cloud Connection Max  # verify:ignore
   CloudConnectionMean:
-    name: クラウド接続の意味
+    name: クラウド接続の平均値
   CloudConnectionMin:
     name: クラウド接続（最小）
   CloudConnectionTotal:
@@ -1031,7 +1031,7 @@ class:
   InfluxDBWriteMax:
     name: InfluxDB 書き込み最大レイテンシ
   InfluxDBWriteMean:
-    name: InfluxDB 書き込み平均レイテンシ
+    name: InfluxDB 書き込み平均
   InfluxDBWriteMin:
     name: InfluxDB 書き込み最小値
   InfluxDBWrites:
@@ -1299,6 +1299,18 @@ class:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: MPPT数
+  MQTTConnectionAttempts:
+    name: MQTT接続試行回数
+  MQTTConnectionErrors:
+    name: MQTT接続エラー
+  MQTTConnectionMax:
+    name: MQTT接続数の上限
+  MQTTConnectionMean:
+    name: MQTT接続の平均値
+  MQTTConnectionMin:
+    name: MQTT接続（最小）
+  MQTTConnections:
+    name: MQTT 接続成功
   MQTTLogLevel:
     attributes:
       comment: MQTTインターフェースのロギングレベル
@@ -1307,6 +1319,8 @@ class:
     name: MQTT 物理パブリッシュ
   MQTTPublishFailures:
     name: MQTT パブリッシュ失敗
+  MQTTReconnections:
+    name: MQTTの再接続
   MV:
     name: '{model_id} {serial} MV'  # verify:ignore
   MaxAbsorptionPower:
@@ -1390,7 +1404,7 @@ class:
   ModbusReadMax:
     name: Modbus読み取り最大
   ModbusReadMean:
-    name: Modbus読み取り平均
+    name: Modbus 平均値の読み取り
   ModbusReadMin:
     name: Modbus読み取り最小
   ModbusReadsPerSecond:
@@ -1402,7 +1416,7 @@ class:
   ModbusWriteMax:
     name: Modbus書き込み最大
   ModbusWriteMean:
-    name: Modbus書き込み平均
+    name: Modbus 書き込み（平均値）
   ModbusWriteMin:
     name: Modbus書き込み最小
   MonitorService:
@@ -2379,7 +2393,7 @@ class:
   PVOutputUploadMax:
     name: PV出力アップロード最大値
   PVOutputUploadMean:
-    name: PV出力アップロード平均
+    name: PVOutput アップロード平均値
   PVOutputUploadMin:
     name: PV出力アップロード最小値
   PVOutputUploadSkipped:
@@ -2873,7 +2887,7 @@ class:
   StateStoreSaveMax:
     name: 状態ストア書き込み最大
   StateStoreSaveMean:
-    name: 状態ストア書き込み平均
+    name: 状態保存 平均値の保存
   StateStoreSaveMin:
     name: 状態ストア書き込み最小
   StateStoreSaves:

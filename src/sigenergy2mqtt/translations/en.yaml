@@ -371,7 +371,7 @@ class:
   CloudConnectionMax:
     name: Cloud Connection Max
   CloudConnectionMean:
-    name: Cloud Connection Mean
+    name: Cloud Connection Average
   CloudConnectionMin:
     name: Cloud Connection Min
   CloudConnectionTotal:
@@ -396,7 +396,7 @@ class:
   CloudQueryMax:
     name: Cloud Query Max
   CloudQueryMean:
-    name: Cloud Query Mean
+    name: Cloud Query Average
   CloudQueryMin:
     name: Cloud Query Min
   CloudQueryTotal:
@@ -1031,7 +1031,7 @@ class:
   InfluxDBWriteMax:
     name: InfluxDB Write Max
   InfluxDBWriteMean:
-    name: InfluxDB Write Mean
+    name: InfluxDB Write Average
   InfluxDBWriteMin:
     name: InfluxDB Write Min
   InfluxDBWrites:
@@ -1299,6 +1299,18 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: MPPT Count
+  MQTTConnectionAttempts:
+    name: MQTT Connection Attempts
+  MQTTConnectionErrors:
+    name: MQTT Connection Errors
+  MQTTConnectionMax:
+    name: MQTT Connection Max
+  MQTTConnectionMean:
+    name: MQTT Connection Average
+  MQTTConnectionMin:
+    name: MQTT Connection Min
+  MQTTConnections:
+    name: MQTT Successful Connections
   MQTTLogLevel:
     attributes:
       comment: The MQTT interface logging level
@@ -1307,6 +1319,8 @@ class:
     name: MQTT Physical Publishes
   MQTTPublishFailures:
     name: MQTT Publish Failures
+  MQTTReconnections:
+    name: MQTT Reconnections
   MV:
     name: '{model_id} {serial} MV'
   MaxAbsorptionPower:
@@ -1390,7 +1404,7 @@ class:
   ModbusReadMax:
     name: Modbus Read Max
   ModbusReadMean:
-    name: Modbus Read Mean
+    name: Modbus Read Average
   ModbusReadMin:
     name: Modbus Read Min
   ModbusReadsPerSecond:
@@ -1402,7 +1416,7 @@ class:
   ModbusWriteMax:
     name: Modbus Write Max
   ModbusWriteMean:
-    name: Modbus Write Mean
+    name: Modbus Write Average
   ModbusWriteMin:
     name: Modbus Write Min
   MonitorService:
@@ -2379,7 +2393,7 @@ class:
   PVOutputUploadMax:
     name: PVOutput Upload Max
   PVOutputUploadMean:
-    name: PVOutput Upload Mean
+    name: PVOutput Upload Average
   PVOutputUploadMin:
     name: PVOutput Upload Min
   PVOutputUploadSkipped:
@@ -2873,7 +2887,7 @@ class:
   StateStoreSaveMax:
     name: State Store Save Max
   StateStoreSaveMean:
-    name: State Store Save Mean
+    name: State Store Save Average
   StateStoreSaveMin:
     name: State Store Save Min
   StateStoreSaves:

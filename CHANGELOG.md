@@ -6,6 +6,7 @@
 ### Added
 
 - Optional Sigenergy Cloud access using the unofficial mySigen API to expose controls and sensors not available via local Modbus
+- MQTT Connection metrics
 
 ### Fixed
 
