@@ -371,7 +371,7 @@ class:
   CloudConnectionMax:
     name: Cloud Connection Max  # verify:ignore
   CloudConnectionMean:
-    name: Significado da ligação à nuvem
+    name: Média da ligação à nuvem
   CloudConnectionMin:
     name: Ligação à nuvem mínima
   CloudConnectionTotal:
@@ -396,7 +396,7 @@ class:
   CloudQueryMax:
     name: Cloud Query Max  # verify:ignore
   CloudQueryMean:
-    name: Média da consulta na nuvem
+    name: Média de consultas na nuvem
   CloudQueryMin:
     name: Cloud Query Min  # verify:ignore
   CloudQueryTotal:
@@ -1031,7 +1031,7 @@ class:
   InfluxDBWriteMax:
     name: Latência máxima de escrita InfluxDB
   InfluxDBWriteMean:
-    name: Latência média de escrita InfluxDB
+    name: Média de gravações no InfluxDB
   InfluxDBWriteMin:
     name: Mínimo de gravação do InfluxDB
   InfluxDBWrites:
@@ -1306,7 +1306,7 @@ class:
   MQTTConnectionMax:
     name: Máximo de ligações MQTT
   MQTTConnectionMean:
-    name: Significado da ligação MQTT
+    name: Média de ligações MQTT
   MQTTConnectionMin:
     name: Conexão MQTT mínima
   MQTTConnections:
@@ -1404,7 +1404,7 @@ class:
   ModbusReadMax:
     name: Leitura Modbus Máx
   ModbusReadMean:
-    name: Leitura Modbus Média
+    name: Média de leitura Modbus
   ModbusReadMin:
     name: Leitura Modbus Mín
   ModbusReadsPerSecond:
@@ -1416,7 +1416,7 @@ class:
   ModbusWriteMax:
     name: Escrita Modbus Máx
   ModbusWriteMean:
-    name: Escrita Modbus Média
+    name: Média de gravação Modbus
   ModbusWriteMin:
     name: Escrita Modbus Mín
   MonitorService:
@@ -2393,7 +2393,7 @@ class:
   PVOutputUploadMax:
     name: Máximo de upload de saída PV
   PVOutputUploadMean:
-    name: Média de upload de PVOutput
+    name: Média de envio de dados do PVOutput
   PVOutputUploadMin:
     name: Mínimo de upload de saída PV
   PVOutputUploadSkipped:
@@ -2887,7 +2887,7 @@ class:
   StateStoreSaveMax:
     name: Escrita do Repositório de Estado Máx
   StateStoreSaveMean:
-    name: Escrita do Repositório de Estado Média
+    name: Armazenamento de estado, guardar média
   StateStoreSaveMin:
     name: Escrita do Repositório de Estado Mín
   StateStoreSaves:

@@ -371,7 +371,7 @@ class:
   CloudConnectionMax:
     name: Cloud Connection Max  # verify:ignore
   CloudConnectionMean:
-    name: 클라우드 연결 의미
+    name: 클라우드 연결 평균
   CloudConnectionMin:
     name: 클라우드 연결 최소값
   CloudConnectionTotal:
@@ -1031,7 +1031,7 @@ class:
   InfluxDBWriteMax:
     name: InfluxDB 최대 쓰기 지연 시간
   InfluxDBWriteMean:
-    name: InfluxDB 평균 쓰기 지연 시간
+    name: InfluxDB 평균 기록
   InfluxDBWriteMin:
     name: InfluxDB 쓰기 최소
   InfluxDBWrites:
@@ -1306,7 +1306,7 @@ class:
   MQTTConnectionMax:
     name: MQTT 연결 최대 수
   MQTTConnectionMean:
-    name: MQTT 연결 방법
+    name: MQTT 연결 평균
   MQTTConnectionMin:
     name: MQTT 연결 최소값
   MQTTConnections:
@@ -1404,7 +1404,7 @@ class:
   ModbusReadMax:
     name: Modbus 읽기 최대
   ModbusReadMean:
-    name: Modbus 읽기 평균
+    name: Modbus 평균값 읽기
   ModbusReadMin:
     name: Modbus 읽기 최소
   ModbusReadsPerSecond:
@@ -2887,7 +2887,7 @@ class:
   StateStoreSaveMax:
     name: 상태 저장소 쓰기 최대
   StateStoreSaveMean:
-    name: 상태 저장소 쓰기 평균
+    name: 상태 저장소 저장 평균
   StateStoreSaveMin:
     name: 상태 저장소 쓰기 최소
   StateStoreSaves:

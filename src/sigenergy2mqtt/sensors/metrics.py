@@ -182,7 +182,7 @@ class MQTTConnectionMean(MetricsSensor):
     def __init__(self):
         super().__init__(
             attribute="sigenergy2mqtt_mqtt_connection_mean",
-            name="MQTT Connection Mean",
+            name="MQTT Connection Average",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_mqtt_connection_mean",
             object_id="sigenergy2mqtt_mqtt_connection_mean",
             unit="ms",
@@ -337,12 +337,12 @@ class ModbusReadMax(MetricsSensor):
 
 
 class ModbusReadMean(MetricsSensor):
-    """Mean modbus read duration per register read, in milliseconds."""
+    """Average modbus read duration per register read, in milliseconds."""
 
     def __init__(self):
         super().__init__(
             attribute="sigenergy2mqtt_modbus_read_mean",
-            name="Modbus Read Mean",
+            name="Modbus Read Average",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_modbus_read_mean",
             object_id="sigenergy2mqtt_modbus_read_mean",
             unit="ms",
@@ -411,12 +411,12 @@ class ModbusWriteMax(MetricsSensor):
 
 
 class ModbusWriteMean(MetricsSensor):
-    """Mean modbus write duration per write call, in milliseconds."""
+    """Average modbus write duration per write call, in milliseconds."""
 
     def __init__(self):
         super().__init__(
             attribute="sigenergy2mqtt_modbus_write_mean",
-            name="Modbus Write Mean",
+            name="Modbus Write Average",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_modbus_write_mean",
             object_id="sigenergy2mqtt_modbus_write_mean",
             unit="ms",
@@ -589,12 +589,12 @@ class InfluxDBWriteMin(MetricsSensor):
 
 
 class InfluxDBWriteMean(MetricsSensor):
-    """Mean InfluxDB write duration per write call, in milliseconds."""
+    """Average InfluxDB write duration per write call, in milliseconds."""
 
     def __init__(self):
         super().__init__(
             attribute="sigenergy2mqtt_influxdb_write_mean",
-            name="InfluxDB Write Mean",
+            name="InfluxDB Write Average",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_influxdb_write_mean",
             object_id="sigenergy2mqtt_influxdb_write_mean",
             unit="ms",
@@ -737,12 +737,12 @@ class StateStoreSaveMax(MetricsSensor):
 
 
 class StateStoreSaveMean(MetricsSensor):
-    """Mean StateStore save duration per save call, in milliseconds."""
+    """Average StateStore save duration per save call, in milliseconds."""
 
     def __init__(self):
         super().__init__(
             attribute="sigenergy2mqtt_state_store_save_mean",
-            name="State Store Save Mean",
+            name="State Store Save Average",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_state_store_save_mean",
             object_id="sigenergy2mqtt_state_store_save_mean",
             unit="ms",
@@ -904,12 +904,12 @@ class PVOutputUploadMax(MetricsSensor):
 
 
 class PVOutputUploadMean(MetricsSensor):
-    """Mean PVOutput upload duration per upload call, in milliseconds."""
+    """Average PVOutput upload duration per upload call, in milliseconds."""
 
     def __init__(self):
         super().__init__(
             attribute="sigenergy2mqtt_pvoutput_upload_mean",
-            name="PVOutput Upload Mean",
+            name="PVOutput Upload Average",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_pvoutput_upload_mean",
             object_id="sigenergy2mqtt_pvoutput_upload_mean",
             unit="ms",
@@ -988,12 +988,12 @@ class CloudQueryMax(MetricsSensor):
 
 
 class CloudQueryMean(MetricsSensor):
-    """Mean cloud API request duration in milliseconds."""
+    """Average cloud API request duration in milliseconds."""
 
     def __init__(self):
         super().__init__(
             attribute="sigenergy2mqtt_cloud_query_mean",
-            name="Cloud Query Mean",
+            name="Cloud Query Average",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_cloud_query_mean",
             object_id="sigenergy2mqtt_cloud_query_mean",
             unit="ms",
@@ -1112,12 +1112,12 @@ class CloudConnectionMax(MetricsSensor):
 
 
 class CloudConnectionMean(MetricsSensor):
-    """Mean cloud login and station-discovery duration, in milliseconds."""
+    """Average cloud login and station-discovery duration, in milliseconds."""
 
     def __init__(self):
         super().__init__(
             attribute="sigenergy2mqtt_cloud_connection_mean",
-            name="Cloud Connection Mean",
+            name="Cloud Connection Average",
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_cloud_connection_mean",
             object_id="sigenergy2mqtt_cloud_connection_mean",
             unit="ms",

@@ -371,7 +371,7 @@ class:
   CloudConnectionMax:
     name: Cloud Connection Max  # verify:ignore
   CloudConnectionMean:
-    name: Bedeutung der Cloud-Verbindung
+    name: Durchschnittliche Cloud-Verbindung
   CloudConnectionMin:
     name: Cloud-Verbindung Min
   CloudConnectionTotal:
@@ -396,7 +396,7 @@ class:
   CloudQueryMax:
     name: Cloud Query Max  # verify:ignore
   CloudQueryMean:
-    name: Cloud-Abfrage-Mittelwert
+    name: Durchschnittliche Cloud-Abfrage
   CloudQueryMin:
     name: Cloud Query Min  # verify:ignore
   CloudQueryTotal:
@@ -1031,7 +1031,7 @@ class:
   InfluxDBWriteMax:
     name: InfluxDB maximale Schreiblatenz
   InfluxDBWriteMean:
-    name: InfluxDB mittlere Schreiblatenz
+    name: InfluxDB-Schreibdurchschnitt
   InfluxDBWriteMin:
     name: Min. InfluxDB-Schreibzugriff
   InfluxDBWrites:
@@ -1306,7 +1306,7 @@ class:
   MQTTConnectionMax:
     name: Maximale MQTT-Verbindungen
   MQTTConnectionMean:
-    name: MQTT-Verbindung bedeutet
+    name: Durchschnittliche MQTT-Verbindung
   MQTTConnectionMin:
     name: MQTT-Verbindung Min
   MQTTConnections:
@@ -1404,7 +1404,7 @@ class:
   ModbusReadMax:
     name: Modbus-Lesen Max
   ModbusReadMean:
-    name: Modbus-Lesen Mittel
+    name: Modbus-Durchschnittswert lesen
   ModbusReadMin:
     name: Modbus-Lesen Min
   ModbusReadsPerSecond:
@@ -1416,7 +1416,7 @@ class:
   ModbusWriteMax:
     name: Modbus-Schreiben Max
   ModbusWriteMean:
-    name: Modbus-Schreiben Mittel
+    name: Modbus-Schreibbefehl „Average“
   ModbusWriteMin:
     name: Modbus-Schreiben Min
   MonitorService:
@@ -2393,7 +2393,7 @@ class:
   PVOutputUploadMax:
     name: PVOutput Hochladen Max
   PVOutputUploadMean:
-    name: PVOutput-Upload-Mittelwert
+    name: PVOutput-Upload-Durchschnitt
   PVOutputUploadMin:
     name: PVOutput-Upload Min
   PVOutputUploadSkipped:
@@ -2887,7 +2887,7 @@ class:
   StateStoreSaveMax:
     name: Statusdatei-Schreiben Max
   StateStoreSaveMean:
-    name: Statusdatei-Schreiben Mittel
+    name: Zustandsspeicher – Durchschnitt speichern
   StateStoreSaveMin:
     name: Statusdatei-Schreiben Min
   StateStoreSaves:

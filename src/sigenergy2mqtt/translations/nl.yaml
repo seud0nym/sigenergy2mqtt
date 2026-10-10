@@ -371,7 +371,7 @@ class:
   CloudConnectionMax:
     name: Cloud Connection Max  # verify:ignore
   CloudConnectionMean:
-    name: Betekenis van ‘Cloud Connection’
+    name: Gemiddelde cloudverbinding
   CloudConnectionMin:
     name: Cloudverbinding Min
   CloudConnectionTotal:
@@ -396,7 +396,7 @@ class:
   CloudQueryMax:
     name: Cloud Query Max  # verify:ignore
   CloudQueryMean:
-    name: Gemiddelde van Cloud Query
+    name: Gemiddelde cloudquery
   CloudQueryMin:
     name: Cloud Query Min  # verify:ignore
   CloudQueryTotal:
@@ -1031,7 +1031,7 @@ class:
   InfluxDBWriteMax:
     name: InfluxDB maximale schrijflatentie
   InfluxDBWriteMean:
-    name: InfluxDB gemiddelde schrijflatentie
+    name: InfluxDB-schrijfgemiddelde
   InfluxDBWriteMin:
     name: InfluxDB Schrijven Min
   InfluxDBWrites:
@@ -1306,7 +1306,7 @@ class:
   MQTTConnectionMax:
     name: Max. aantal MQTT-verbindingen
   MQTTConnectionMean:
-    name: Betekenis van MQTT-verbinding
+    name: Gemiddelde MQTT-verbinding
   MQTTConnectionMin:
     name: MQTT-verbinding Min
   MQTTConnections:
@@ -1404,7 +1404,7 @@ class:
   ModbusReadMax:
     name: Modbus Lezen Max
   ModbusReadMean:
-    name: Modbus Lezen Gemiddeld
+    name: Modbus-gemiddelde uitlezen
   ModbusReadMin:
     name: Modbus Lezen Min
   ModbusReadsPerSecond:
@@ -1416,7 +1416,7 @@ class:
   ModbusWriteMax:
     name: Modbus Schrijven Max
   ModbusWriteMean:
-    name: Modbus Schrijven Gemiddeld
+    name: Modbus-schrijfgemiddelde
   ModbusWriteMin:
     name: Modbus Schrijven Min
   MonitorService:
@@ -2393,7 +2393,7 @@ class:
   PVOutputUploadMax:
     name: PV-uitgang uploaden Max
   PVOutputUploadMean:
-    name: PVOutput-uploadgemiddelde
+    name: PVOutput-gemiddelde uploaden
   PVOutputUploadMin:
     name: PV-uitgang uploaden Min
   PVOutputUploadSkipped:
@@ -2887,7 +2887,7 @@ class:
   StateStoreSaveMax:
     name: Statusopslag Schrijven Max
   StateStoreSaveMean:
-    name: Statusopslag Schrijven Gemiddeld
+    name: Status opslaan Gemiddelde opslaan
   StateStoreSaveMin:
     name: Statusopslag Schrijven Min
   StateStoreSaves:

@@ -371,7 +371,7 @@ class:
   CloudConnectionMax:
     name: Cloud Connection Max  # verify:ignore
   CloudConnectionMean:
-    name: 云连接含义
+    name: 云连接平均值
   CloudConnectionMin:
     name: 云连接（最低）
   CloudConnectionTotal:
@@ -396,7 +396,7 @@ class:
   CloudQueryMax:
     name: Cloud Query Max  # verify:ignore
   CloudQueryMean:
-    name: 云查询均值
+    name: 云查询平均值
   CloudQueryMin:
     name: Cloud Query Min  # verify:ignore
   CloudQueryTotal:
@@ -1031,7 +1031,7 @@ class:
   InfluxDBWriteMax:
     name: InfluxDB 最大写入延迟
   InfluxDBWriteMean:
-    name: InfluxDB 平均写入延迟
+    name: InfluxDB 写入平均值
   InfluxDBWriteMin:
     name: InfluxDB 写入最小值
   InfluxDBWrites:
@@ -1306,7 +1306,7 @@ class:
   MQTTConnectionMax:
     name: MQTT 连接上限
   MQTTConnectionMean:
-    name: MQTT 连接说明
+    name: MQTT 连接平均值
   MQTTConnectionMin:
     name: MQTT 连接最小要求
   MQTTConnections:
@@ -2393,7 +2393,7 @@ class:
   PVOutputUploadMax:
     name: PV输出上传最大值
   PVOutputUploadMean:
-    name: PV输出上传平均值
+    name: PVOutput 上传平均值
   PVOutputUploadMin:
     name: PV输出上传最小值
   PVOutputUploadSkipped:
@@ -2887,7 +2887,7 @@ class:
   StateStoreSaveMax:
     name: 状态存储写入最大值
   StateStoreSaveMean:
-    name: 状态存储写入平均值
+    name: 状态存储 保存平均值
   StateStoreSaveMin:
     name: 状态存储写入最小值
   StateStoreSaves:

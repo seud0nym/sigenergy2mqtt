@@ -371,7 +371,7 @@ class:
   CloudConnectionMax:
     name: Cloud Connection Max  # verify:ignore
   CloudConnectionMean:
-    name: 'Connexion au cloud : signification'
+    name: 'Connexion au cloud : moyenne'
   CloudConnectionMin:
     name: Connexion au cloud Min
   CloudConnectionTotal:
@@ -1031,7 +1031,7 @@ class:
   InfluxDBWriteMax:
     name: Latence maximale d'écriture InfluxDB
   InfluxDBWriteMean:
-    name: Latence moyenne d'écriture InfluxDB
+    name: Moyenne des écritures dans InfluxDB
   InfluxDBWriteMin:
     name: Min. d'écriture d'InfluxDB
   InfluxDBWrites:
@@ -1306,7 +1306,7 @@ class:
   MQTTConnectionMax:
     name: Connexion MQTT maximale
   MQTTConnectionMean:
-    name: Connexion MQTT
+    name: Moyenne des connexions MQTT
   MQTTConnectionMin:
     name: Connexion MQTT Min
   MQTTConnections:
@@ -1404,7 +1404,7 @@ class:
   ModbusReadMax:
     name: Lecture Modbus Max
   ModbusReadMean:
-    name: Lecture Modbus Moyenne
+    name: Moyenne de lecture Modbus
   ModbusReadMin:
     name: Lecture Modbus Min
   ModbusReadsPerSecond:
@@ -1416,7 +1416,7 @@ class:
   ModbusWriteMax:
     name: Écriture Modbus Max
   ModbusWriteMean:
-    name: Écriture Modbus Moyenne
+    name: Écriture Modbus moyenne
   ModbusWriteMin:
     name: Écriture Modbus Min
   MonitorService:
@@ -2393,7 +2393,7 @@ class:
   PVOutputUploadMax:
     name: PVSortie Téléchargement Max.
   PVOutputUploadMean:
-    name: Moyenne de téléchargement PVOutput
+    name: Moyenne des données PVOutput téléchargées
   PVOutputUploadMin:
     name: PVSortie Téléchargement Min.
   PVOutputUploadSkipped:
@@ -2887,7 +2887,7 @@ class:
   StateStoreSaveMax:
     name: Écriture du Magasin d'État Max
   StateStoreSaveMean:
-    name: Écriture du Magasin d'État Moyenne
+    name: Enregistrement de l'état – Enregistrer la moyenne
   StateStoreSaveMin:
     name: Écriture du Magasin d'État Min
   StateStoreSaves:
