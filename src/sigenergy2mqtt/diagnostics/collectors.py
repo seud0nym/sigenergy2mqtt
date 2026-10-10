@@ -135,10 +135,10 @@ class DiagnosticsCollectors:
         """Diagnostics provider callback: exposes the latest InfluxDB metrics."""
         async with Metrics.lock(timeout=1.0):
             influxdb_metrics = {
-                f"{_t('InfluxDBWriteErrors.name').removeprefix('InfluxDB ')}": Metrics.sigenergy2mqtt_influxdb_write_errors,
                 f"{_t('InfluxDBWriteMax.name').removeprefix('InfluxDB ')}_ms": Metrics.sigenergy2mqtt_influxdb_write_max,
                 f"{_t('InfluxDBWriteMean.name').removeprefix('InfluxDB ')}_ms": Metrics.sigenergy2mqtt_influxdb_write_mean,
                 f"{_t('InfluxDBWriteMin.name').removeprefix('InfluxDB ')}_ms": Metrics.sigenergy2mqtt_influxdb_write_min if Metrics.sigenergy2mqtt_influxdb_write_min != float("inf") else 0.0,
+                f"{_t('InfluxDBWriteErrors.name').removeprefix('InfluxDB ')}": Metrics.sigenergy2mqtt_influxdb_write_errors,
                 "config": {
                     "write_timeout_secs": active_config.influxdb.write_timeout,
                     "batch_size": active_config.influxdb.batch_size,
@@ -158,12 +158,12 @@ class DiagnosticsCollectors:
         """Diagnostics provider callback: exposes the latest Modbus metric."""
         async with Metrics.lock(timeout=1.0):
             return {
-                f"{_t('ModbusPhysicalReads.name').removeprefix('Modbus ')}_pct": Metrics.sigenergy2mqtt_modbus_physical_read_percentage,
-                f"{_t('ModbusCacheHits.name').removeprefix('Modbus ')}_pct": Metrics.sigenergy2mqtt_modbus_cache_hit_percentage,
                 f"{_t('ModbusReadMax.name').removeprefix('Modbus ')}_ms": Metrics.sigenergy2mqtt_modbus_read_max,
                 f"{_t('ModbusReadMean.name').removeprefix('Modbus ')}_ms": Metrics.sigenergy2mqtt_modbus_read_mean,
                 f"{_t('ModbusReadMin.name').removeprefix('Modbus ')}_ms": Metrics.sigenergy2mqtt_modbus_read_min if Metrics.sigenergy2mqtt_modbus_read_min != float("inf") else 0.0,
                 f"{_t('ModbusReadErrors.name').removeprefix('Modbus ')}": Metrics.sigenergy2mqtt_modbus_read_errors,
+                f"{_t('ModbusPhysicalReads.name').removeprefix('Modbus ')}_pct": Metrics.sigenergy2mqtt_modbus_physical_read_percentage,
+                f"{_t('ModbusCacheHits.name').removeprefix('Modbus ')}_pct": Metrics.sigenergy2mqtt_modbus_cache_hit_percentage,
                 f"{_t('ModbusWriteMax.name').removeprefix('Modbus ')}_ms": Metrics.sigenergy2mqtt_modbus_write_max,
                 f"{_t('ModbusWriteMean.name').removeprefix('Modbus ')}_ms": Metrics.sigenergy2mqtt_modbus_write_mean,
                 f"{_t('ModbusWriteMin.name').removeprefix('Modbus ')}_ms": Metrics.sigenergy2mqtt_modbus_write_min if Metrics.sigenergy2mqtt_modbus_write_min != float("inf") else 0.0,
@@ -173,6 +173,10 @@ class DiagnosticsCollectors:
                     "disable_chunking": "yes" if active_config.modbus[0].disable_chunking else "no",
                     "timeout_0_secs": active_config.modbus[0].timeout,
                     "max_retries_0": active_config.modbus[0].retries,
+                    "low_scan_interval_secs": active_config.modbus[0].scan_interval.low,
+                    "medium_scan_interval_secs": active_config.modbus[0].scan_interval.medium,
+                    "high_scan_interval_secs": active_config.modbus[0].scan_interval.high,
+                    "realtime_scan_interval_secs": active_config.modbus[0].scan_interval.realtime,
                 },
             }
 
@@ -204,16 +208,16 @@ class DiagnosticsCollectors:
                 "status": status,
                 f"{_t('CloudConnected.name').removeprefix('Cloud ')}": connected,
                 f"{_t('CloudAvailable.name').removeprefix('Cloud ')}": available,
-                f"{_t('CloudQueryErrors.name').removeprefix('Cloud ')}": Metrics.sigenergy2mqtt_cloud_query_errors,
                 f"{_t('CloudQueryMax.name').removeprefix('Cloud ')}_ms": Metrics.sigenergy2mqtt_cloud_query_max,
                 f"{_t('CloudQueryMean.name').removeprefix('Cloud ')}_ms": Metrics.sigenergy2mqtt_cloud_query_mean,
                 f"{_t('CloudQueryMin.name').removeprefix('Cloud ')}_ms": Metrics.sigenergy2mqtt_cloud_query_min if Metrics.sigenergy2mqtt_cloud_query_min != float("inf") else 0.0,
-                f"{_t('CloudConnectionAttempts.name').removeprefix('Cloud ')}": Metrics.sigenergy2mqtt_cloud_connection_attempts,
-                f"{_t('CloudConnections.name').removeprefix('Cloud ')}": Metrics.sigenergy2mqtt_cloud_connections,
-                f"{_t('CloudConnectionErrors.name').removeprefix('Cloud ')}": Metrics.sigenergy2mqtt_cloud_connection_errors,
+                f"{_t('CloudQueryErrors.name').removeprefix('Cloud ')}": Metrics.sigenergy2mqtt_cloud_query_errors,
                 f"{_t('CloudConnectionMax.name').removeprefix('Cloud ')}_ms": Metrics.sigenergy2mqtt_cloud_connection_max,
                 f"{_t('CloudConnectionMean.name').removeprefix('Cloud ')}_ms": Metrics.sigenergy2mqtt_cloud_connection_mean,
                 f"{_t('CloudConnectionMin.name').removeprefix('Cloud ')}_ms": Metrics.sigenergy2mqtt_cloud_connection_min if Metrics.sigenergy2mqtt_cloud_connection_min != float("inf") else 0.0,
+                f"{_t('CloudConnectionAttempts.name').removeprefix('Cloud ')}": Metrics.sigenergy2mqtt_cloud_connection_attempts,
+                f"{_t('CloudConnectionErrors.name').removeprefix('Cloud ')}": Metrics.sigenergy2mqtt_cloud_connection_errors,
+                f"{_t('CloudConnections.name').removeprefix('Cloud ')}": Metrics.sigenergy2mqtt_cloud_connections,
                 f"{_t('CloudReconnections.name').removeprefix('Cloud ')}": Metrics.sigenergy2mqtt_cloud_reconnections,
                 f"{_t('CloudAuthErrors.name').removeprefix('Cloud ')}": Metrics.sigenergy2mqtt_cloud_auth_errors,
                 f"{_t('CloudRateLimits.name').removeprefix('Cloud ')}": Metrics.sigenergy2mqtt_cloud_rate_limits,
@@ -231,11 +235,11 @@ class DiagnosticsCollectors:
 
         async with Metrics.lock(timeout=1.0):
             return {
-                f"{_t('PVOutputUploadErrors.name').removeprefix('PVOutput ')}": Metrics.sigenergy2mqtt_pvoutput_upload_errors,
-                f"{_t('PVOutputUploadSkipped.name').removeprefix('PVOutput ')}": Metrics.sigenergy2mqtt_pvoutput_upload_skipped,
                 f"{_t('PVOutputUploadMax.name').removeprefix('PVOutput ')}_ms": Metrics.sigenergy2mqtt_pvoutput_upload_max,
                 f"{_t('PVOutputUploadMean.name').removeprefix('PVOutput ')}_ms": Metrics.sigenergy2mqtt_pvoutput_upload_mean,
                 f"{_t('PVOutputUploadMin.name').removeprefix('PVOutput ')}_ms": Metrics.sigenergy2mqtt_pvoutput_upload_min if Metrics.sigenergy2mqtt_pvoutput_upload_min != float("inf") else 0.0,
+                f"{_t('PVOutputUploadErrors.name').removeprefix('PVOutput ')}": Metrics.sigenergy2mqtt_pvoutput_upload_errors,
+                f"{_t('PVOutputUploadSkipped.name').removeprefix('PVOutput ')}": Metrics.sigenergy2mqtt_pvoutput_upload_skipped,
                 "config": {
                     "donator": "yes" if PVOutputSettings.donator else "no",
                     "status_interval_secs": PVOutputSettings.interval * 60,
@@ -259,8 +263,8 @@ class DiagnosticsCollectors:
                 f"{_t('StateStoreSaveMax.name').removeprefix('State Store ')}_ms": Metrics.sigenergy2mqtt_state_store_save_max,
                 f"{_t('StateStoreSaveMean.name').removeprefix('State Store ')}_ms": Metrics.sigenergy2mqtt_state_store_save_mean,
                 f"{_t('StateStoreSaveMin.name').removeprefix('State Store ')}_ms": Metrics.sigenergy2mqtt_state_store_save_min if Metrics.sigenergy2mqtt_state_store_save_min != float("inf") else 0.0,
-                f"{_t('StateStoreLoadHitPercentage.name').removeprefix('State Store ')}": Metrics.sigenergy2mqtt_state_store_load_hit_percentage,
                 f"{_t('StateStoreSaveErrors.name').removeprefix('State Store ')}": Metrics.sigenergy2mqtt_state_store_save_errors,
+                f"{_t('StateStoreLoadHitPercentage.name').removeprefix('State Store ')}": Metrics.sigenergy2mqtt_state_store_load_hit_percentage,
                 f"{_t('StateStoreLoadErrors.name').removeprefix('State Store ')}": Metrics.sigenergy2mqtt_state_store_load_errors,
                 f"{_t('StateStoreDeleteErrors.name').removeprefix('State Store ')}": Metrics.sigenergy2mqtt_state_store_delete_errors,
                 "config": {
