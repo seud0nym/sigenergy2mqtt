@@ -23,17 +23,14 @@ async def test_connection_outcomes_and_exposure(clean_metrics):
     handler = MagicMock()
     client = MqttClient("metrics-test", handler)
     # A success, a reconnect and a transport failure take 100, 300 and 200 ms.
-    with patch.object(mqtt.Client, "reconnect", return_value=mqtt.MQTT_ERR_SUCCESS), patch(
-        "sigenergy2mqtt.mqtt.client.time.monotonic", side_effect=[1.0, 1.1, 2.0, 2.3, 3.0, 3.2]
-    ):
+    with patch.object(mqtt.Client, "reconnect", return_value=mqtt.MQTT_ERR_SUCCESS), patch("sigenergy2mqtt.mqtt.client.time.monotonic", side_effect=[1.0, 1.1, 2.0, 2.3, 3.0, 3.2]):
         client.reconnect()
         on_connect(client, handler, None, 0, None)
         on_disconnect(client, handler, None, 0, None)
         client.reconnect()
         on_connect(client, handler, None, 0, None)
-        with patch.object(mqtt.Client, "reconnect", side_effect=OSError("unreachable")):
-            with pytest.raises(OSError):
-                client.reconnect()
+        with patch.object(mqtt.Client, "reconnect", side_effect=OSError("unreachable")), pytest.raises(OSError):
+            client.reconnect()
     await Metrics.drain()
     values = {
         "connection_attempts": 3,
@@ -56,7 +53,7 @@ async def test_connection_outcomes_and_exposure(clean_metrics):
     assert diagnostics["Successful Connections"] == 2
     assert diagnostics["Connection Errors"] == 1
     assert diagnostics["Reconnections"] == 1
-    for label, expected in [("Max", 300), ("Mean", 200), ("Min", 100)]:
+    for label, expected in [("Max", 300), ("Average", 200), ("Min", 100)]:
         assert diagnostics[f"Connection {label}_ms"] == pytest.approx(expected)
 
 
@@ -148,11 +145,12 @@ async def test_paho_automatic_retries_record_attempts_and_results(clean_metrics)
 
     # Only socket creation and socket readiness are replaced. Paho sends CONNECT,
     # parses CONNACK, detects EOF, handles the failed retry, and retries again.
-    with patch.object(
-        client, "_create_socket", side_effect=[first_socket, OSError("broker unavailable"), retry_socket]
-    ) as create_socket, patch(
-        "paho.mqtt.client.select.select",
-        side_effect=lambda readers, writers, errors, timeout: ([client.socket()] if client.socket() else [], writers, []),
+    with (
+        patch.object(client, "_create_socket", side_effect=[first_socket, OSError("broker unavailable"), retry_socket]) as create_socket,
+        patch(
+            "paho.mqtt.client.select.select",
+            side_effect=lambda readers, writers, errors, timeout: ([client.socket()] if client.socket() else [], writers, []),
+        ),
     ):
         client.connect("broker.test", port=1883, keepalive=60)
         client.loop_forever(timeout=0)
