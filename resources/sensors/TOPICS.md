@@ -7161,6 +7161,16 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_connection_attempts</td></tr>
 </td></tr>
 </table>
+<h5><a id='sigen_cloud_connection_mean'>Cloud Connection Average</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>CloudConnectionMean</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>ms</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_cloud_connection_mean</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_connection_mean</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_connection_mean</td></tr>
+</td></tr>
+</table>
 <h5><a id='sigen_cloud_connection_errors'>Cloud Connection Errors</a></h5>
 <table>
 <tr><td>Sensor&nbsp;Class</td><td>CloudConnectionErrors</td></tr>
@@ -7178,16 +7188,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_cloud_connection_max</td></tr>
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_connection_max</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_connection_max</td></tr>
-</td></tr>
-</table>
-<h5><a id='sigen_cloud_connection_mean'>Cloud Connection Mean</a></h5>
-<table>
-<tr><td>Sensor&nbsp;Class</td><td>CloudConnectionMean</td></tr>
-<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
-<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>ms</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_cloud_connection_mean</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_connection_mean</td></tr>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_connection_mean</td></tr>
 </td></tr>
 </table>
 <h5><a id='sigen_cloud_connection_min'>Cloud Connection Min</a></h5>
@@ -7219,6 +7219,16 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_queries</td></tr>
 </td></tr>
 </table>
+<h5><a id='sigen_cloud_query_mean'>Cloud Query Average</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>CloudQueryMean</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>ms</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_cloud_query_mean</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_query_mean</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_query_mean</td></tr>
+</td></tr>
+</table>
 <h5><a id='sigen_cloud_query_errors'>Cloud Query Errors</a></h5>
 <table>
 <tr><td>Sensor&nbsp;Class</td><td>CloudQueryErrors</td></tr>
@@ -7236,16 +7246,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_cloud_query_max</td></tr>
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_query_max</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_query_max</td></tr>
-</td></tr>
-</table>
-<h5><a id='sigen_cloud_query_mean'>Cloud Query Mean</a></h5>
-<table>
-<tr><td>Sensor&nbsp;Class</td><td>CloudQueryMean</td></tr>
-<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
-<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>ms</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_cloud_query_mean</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_query_mean</td></tr>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/cloud_query_mean</td></tr>
 </td></tr>
 </table>
 <h5><a id='sigen_cloud_query_min'>Cloud Query Min</a></h5>
@@ -7304,6 +7304,16 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/influxdb_throughput</td></tr>
 </td></tr>
 </table>
+<h5><a id='sigen_influxdb_write_mean'>InfluxDB Write Average</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>InfluxDBWriteMean</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>ms</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_influxdb_write_mean</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/influxdb_write_mean</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/influxdb_write_mean</td></tr>
+</td></tr>
+</table>
 <h5><a id='sigen_influxdb_write_errors'>InfluxDB Write Errors</a></h5>
 <table>
 <tr><td>Sensor&nbsp;Class</td><td>InfluxDBWriteErrors</td></tr>
@@ -7321,16 +7331,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_influxdb_write_max</td></tr>
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/influxdb_write_max</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/influxdb_write_max</td></tr>
-</td></tr>
-</table>
-<h5><a id='sigen_influxdb_write_mean'>InfluxDB Write Mean</a></h5>
-<table>
-<tr><td>Sensor&nbsp;Class</td><td>InfluxDBWriteMean</td></tr>
-<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
-<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>ms</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_influxdb_write_mean</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/influxdb_write_mean</td></tr>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/influxdb_write_mean</td></tr>
 </td></tr>
 </table>
 <h5><a id='sigen_influxdb_write_min'>InfluxDB Write Min</a></h5>
@@ -7352,6 +7352,54 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/influxdb_writes</td></tr>
 </td></tr>
 </table>
+<h5><a id='sigen_mqtt_connection_attempts'>MQTT Connection Attempts</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>MQTTConnectionAttempts</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_mqtt_connection_attempts</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/mqtt_connection_attempts</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/mqtt_connection_attempts</td></tr>
+</td></tr>
+</table>
+<h5><a id='sigen_mqtt_connection_mean'>MQTT Connection Average</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>MQTTConnectionMean</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>ms</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_mqtt_connection_mean</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/mqtt_connection_mean</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/mqtt_connection_mean</td></tr>
+</td></tr>
+</table>
+<h5><a id='sigen_mqtt_connection_errors'>MQTT Connection Errors</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>MQTTConnectionErrors</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_mqtt_connection_errors</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/mqtt_connection_errors</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/mqtt_connection_errors</td></tr>
+</td></tr>
+</table>
+<h5><a id='sigen_mqtt_connection_max'>MQTT Connection Max</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>MQTTConnectionMax</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>ms</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_mqtt_connection_max</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/mqtt_connection_max</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/mqtt_connection_max</td></tr>
+</td></tr>
+</table>
+<h5><a id='sigen_mqtt_connection_min'>MQTT Connection Min</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>MQTTConnectionMin</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>ms</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_mqtt_connection_min</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/mqtt_connection_min</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/mqtt_connection_min</td></tr>
+</td></tr>
+</table>
 <h5><a id='sigen_mqtt_physical_publish_percentage'>MQTT Physical Publishes</a></h5>
 <table>
 <tr><td>Sensor&nbsp;Class</td><td>MQTTPhysicalPublishes</td></tr>
@@ -7370,6 +7418,24 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_mqtt_publish_failures</td></tr>
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/mqtt_publish_failures</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/mqtt_publish_failures</td></tr>
+</td></tr>
+</table>
+<h5><a id='sigen_mqtt_reconnections'>MQTT Reconnections</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>MQTTReconnections</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_mqtt_reconnections</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/mqtt_reconnections</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/mqtt_reconnections</td></tr>
+</td></tr>
+</table>
+<h5><a id='sigen_mqtt_connections'>MQTT Successful Connections</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>MQTTConnections</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_mqtt_connections</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/mqtt_connections</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/mqtt_connections</td></tr>
 </td></tr>
 </table>
 <h5><a id='sigen_modbus_locks'>Modbus Active Locks</a></h5>
@@ -7403,6 +7469,16 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 </td></tr>
 <tr><td>Sanity&nbsp;Check</td><td>The value must be a maximum of 100 % (raw value ≦ 100)</td></tr>
 </table>
+<h5><a id='sigen_modbus_read_mean'>Modbus Read Average</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>ModbusReadMean</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>ms</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_modbus_read_mean</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_read_mean</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_read_mean</td></tr>
+</td></tr>
+</table>
 <h5><a id='sigen_modbus_read_errors'>Modbus Read Errors</a></h5>
 <table>
 <tr><td>Sensor&nbsp;Class</td><td>ModbusReadErrors</td></tr>
@@ -7420,16 +7496,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_modbus_read_max</td></tr>
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_read_max</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_read_max</td></tr>
-</td></tr>
-</table>
-<h5><a id='sigen_modbus_read_mean'>Modbus Read Mean</a></h5>
-<table>
-<tr><td>Sensor&nbsp;Class</td><td>ModbusReadMean</td></tr>
-<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
-<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>ms</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_modbus_read_mean</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_read_mean</td></tr>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_read_mean</td></tr>
 </td></tr>
 </table>
 <h5><a id='sigen_modbus_read_min'>Modbus Read Min</a></h5>
@@ -7460,6 +7526,16 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_skipped_reads</td></tr>
 </td></tr>
 </table>
+<h5><a id='sigen_modbus_write_mean'>Modbus Write Average</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>ModbusWriteMean</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>ms</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_modbus_write_mean</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_write_mean</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_write_mean</td></tr>
+</td></tr>
+</table>
 <h5><a id='sigen_modbus_write_errors'>Modbus Write Errors</a></h5>
 <table>
 <tr><td>Sensor&nbsp;Class</td><td>ModbusWriteErrors</td></tr>
@@ -7479,16 +7555,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_write_max</td></tr>
 </td></tr>
 </table>
-<h5><a id='sigen_modbus_write_mean'>Modbus Write Mean</a></h5>
-<table>
-<tr><td>Sensor&nbsp;Class</td><td>ModbusWriteMean</td></tr>
-<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
-<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>ms</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_modbus_write_mean</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_write_mean</td></tr>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_write_mean</td></tr>
-</td></tr>
-</table>
 <h5><a id='sigen_modbus_write_min'>Modbus Write Min</a></h5>
 <table>
 <tr><td>Sensor&nbsp;Class</td><td>ModbusWriteMin</td></tr>
@@ -7497,6 +7563,16 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_modbus_write_min</td></tr>
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_write_min</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/modbus_write_min</td></tr>
+</td></tr>
+</table>
+<h5><a id='sigen_pvoutput_upload_mean'>PVOutput Upload Average</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>PVOutputUploadMean</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>ms</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_pvoutput_upload_mean</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/pvoutput_upload_mean</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/pvoutput_upload_mean</td></tr>
 </td></tr>
 </table>
 <h5><a id='sigen_pvoutput_upload_errors'>PVOutput Upload Errors</a></h5>
@@ -7516,16 +7592,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_pvoutput_upload_max</td></tr>
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/pvoutput_upload_max</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/pvoutput_upload_max</td></tr>
-</td></tr>
-</table>
-<h5><a id='sigen_pvoutput_upload_mean'>PVOutput Upload Mean</a></h5>
-<table>
-<tr><td>Sensor&nbsp;Class</td><td>PVOutputUploadMean</td></tr>
-<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
-<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>ms</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_pvoutput_upload_mean</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/pvoutput_upload_mean</td></tr>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/pvoutput_upload_mean</td></tr>
 </td></tr>
 </table>
 <h5><a id='sigen_pvoutput_upload_min'>PVOutput Upload Min</a></h5>
@@ -7638,6 +7704,16 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/state_store_loads</td></tr>
 </td></tr>
 </table>
+<h5><a id='sigen_state_store_save_mean'>State Store Save Average</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>StateStoreSaveMean</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>ms</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_state_store_save_mean</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/state_store_save_mean</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/state_store_save_mean</td></tr>
+</td></tr>
+</table>
 <h5><a id='sigen_state_store_save_errors'>State Store Save Errors</a></h5>
 <table>
 <tr><td>Sensor&nbsp;Class</td><td>StateStoreSaveErrors</td></tr>
@@ -7655,16 +7731,6 @@ InfluxDB Metrics are only published when the InfluxDB integration is enabled.
 <tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_state_store_save_max</td></tr>
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/state_store_save_max</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/state_store_save_max</td></tr>
-</td></tr>
-</table>
-<h5><a id='sigen_state_store_save_mean'>State Store Save Mean</a></h5>
-<table>
-<tr><td>Sensor&nbsp;Class</td><td>StateStoreSaveMean</td></tr>
-<tr><td>Scan&nbsp;Interval</td><td>1s</td></tr>
-<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>ms</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigenergy2mqtt_state_store_save_mean</td></tr>
-<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/state_store_save_mean</td></tr>
-<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/metrics/state_store_save_mean</td></tr>
 </td></tr>
 </table>
 <h5><a id='sigen_state_store_save_min'>State Store Save Min</a></h5>
@@ -8534,44 +8600,51 @@ The attributes payload currently includes:
 <a href='#sigen_cloud_available'>Cloud Available</a><br>
 <a href='#sigen_cloud_connected'>Cloud Connected</a><br>
 <a href='#sigen_cloud_connection_attempts'>Cloud Connection Attempts</a><br>
+<a href='#sigen_cloud_connection_mean'>Cloud Connection Average</a><br>
 <a href='#sigen_cloud_connection_errors'>Cloud Connection Errors</a><br>
 <a href='#sigen_cloud_connection_max'>Cloud Connection Max</a><br>
-<a href='#sigen_cloud_connection_mean'>Cloud Connection Mean</a><br>
 <a href='#sigen_cloud_connection_min'>Cloud Connection Min</a><br>
 <a href='#sigen_cloud_connection_total'>Cloud Connection Total</a><br>
 <a href='#sigen_cloud_queries'>Cloud Queries</a><br>
+<a href='#sigen_cloud_query_mean'>Cloud Query Average</a><br>
 <a href='#sigen_cloud_query_errors'>Cloud Query Errors</a><br>
 <a href='#sigen_cloud_query_max'>Cloud Query Max</a><br>
-<a href='#sigen_cloud_query_mean'>Cloud Query Mean</a><br>
 <a href='#sigen_cloud_query_min'>Cloud Query Min</a><br>
 <a href='#sigen_cloud_query_total'>Cloud Query Total</a><br>
 <a href='#sigen_cloud_rate_limits'>Cloud Rate Limits</a><br>
 <a href='#sigen_cloud_reconnections'>Cloud Reconnections</a><br>
 <a href='#sigen_cloud_connections'>Cloud Successful Connections</a><br>
 <a href='#sigen_influxdb_throughput'>InfluxDB Throughput</a><br>
+<a href='#sigen_influxdb_write_mean'>InfluxDB Write Average</a><br>
 <a href='#sigen_influxdb_write_errors'>InfluxDB Write Errors</a><br>
 <a href='#sigen_influxdb_write_max'>InfluxDB Write Max</a><br>
-<a href='#sigen_influxdb_write_mean'>InfluxDB Write Mean</a><br>
 <a href='#sigen_influxdb_write_min'>InfluxDB Write Min</a><br>
 <a href='#sigen_influxdb_writes'>InfluxDB Writes</a><br>
+<a href='#sigen_mqtt_connection_attempts'>MQTT Connection Attempts</a><br>
+<a href='#sigen_mqtt_connection_mean'>MQTT Connection Average</a><br>
+<a href='#sigen_mqtt_connection_errors'>MQTT Connection Errors</a><br>
+<a href='#sigen_mqtt_connection_max'>MQTT Connection Max</a><br>
+<a href='#sigen_mqtt_connection_min'>MQTT Connection Min</a><br>
 <a href='#sigen_mqtt_physical_publish_percentage'>MQTT Physical Publishes</a><br>
 <a href='#sigen_mqtt_publish_failures'>MQTT Publish Failures</a><br>
+<a href='#sigen_mqtt_reconnections'>MQTT Reconnections</a><br>
+<a href='#sigen_mqtt_connections'>MQTT Successful Connections</a><br>
 <a href='#sigen_modbus_locks'>Modbus Active Locks</a><br>
 <a href='#sigen_modbus_cache_hit_percentage'>Modbus Cache Hits</a><br>
 <a href='#sigen_modbus_physical_reads'>Modbus Physical Reads</a><br>
+<a href='#sigen_modbus_read_mean'>Modbus Read Average</a><br>
 <a href='#sigen_modbus_read_errors'>Modbus Read Errors</a><br>
 <a href='#sigen_modbus_read_max'>Modbus Read Max</a><br>
-<a href='#sigen_modbus_read_mean'>Modbus Read Mean</a><br>
 <a href='#sigen_modbus_read_min'>Modbus Read Min</a><br>
 <a href='#sigen_modbus_reads_sec'>Modbus Reads/second</a><br>
 <a href='#sigen_modbus_skipped_errors'>Modbus Skipped Errors</a><br>
+<a href='#sigen_modbus_write_mean'>Modbus Write Average</a><br>
 <a href='#sigen_modbus_write_errors'>Modbus Write Errors</a><br>
 <a href='#sigen_modbus_write_max'>Modbus Write Max</a><br>
-<a href='#sigen_modbus_write_mean'>Modbus Write Mean</a><br>
 <a href='#sigen_modbus_write_min'>Modbus Write Min</a><br>
+<a href='#sigen_pvoutput_upload_mean'>PVOutput Upload Average</a><br>
 <a href='#sigen_pvoutput_upload_errors'>PVOutput Upload Errors</a><br>
 <a href='#sigen_pvoutput_upload_max'>PVOutput Upload Max</a><br>
-<a href='#sigen_pvoutput_upload_mean'>PVOutput Upload Mean</a><br>
 <a href='#sigen_pvoutput_upload_min'>PVOutput Upload Min</a><br>
 <a href='#sigen_pvoutput_upload_skipped'>PVOutput Upload Skipped</a><br>
 <a href='#sigen_pvoutput_uploads'>PVOutput Uploads</a><br>
@@ -8584,9 +8657,9 @@ The attributes payload currently includes:
 <a href='#sigen_state_store_load_errors'>State Store Load Errors</a><br>
 <a href='#sigen_state_store_load_hit_percentage'>State Store Load Hits %</a><br>
 <a href='#sigen_state_store_loads'>State Store Loads</a><br>
+<a href='#sigen_state_store_save_mean'>State Store Save Average</a><br>
 <a href='#sigen_state_store_save_errors'>State Store Save Errors</a><br>
 <a href='#sigen_state_store_save_max'>State Store Save Max</a><br>
-<a href='#sigen_state_store_save_mean'>State Store Save Mean</a><br>
 <a href='#sigen_state_store_save_min'>State Store Save Min</a><br>
 <a href='#sigen_state_store_saves'>State Store Saves</a><br>
 
@@ -8686,5 +8759,5 @@ The attributes payload currently includes:
 <a href='#sigenergy2mqtt_config_persistence_debug_set'>Persistence Debugging</a><br>
 <a href='#sigenergy2mqtt_config_repeated_state_publish_interval_set'>Repeated State Publish Interval</a><br>
 <a href='#sigenergy2mqtt_config_sanity_check_failures_increment_set'>Sanity Check Failures Increment</a><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></td></tr>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></td></tr>
 </table>
