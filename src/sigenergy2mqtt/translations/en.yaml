@@ -1299,14 +1299,8 @@ class:
       source: Modbus Register {address}
       source_range: Modbus Registers {start}-{end}
     name: MPPT Count
-  MQTTLogLevel:
-    attributes:
-      comment: The MQTT interface logging level
-    name: MQTT Log Level
   MQTTConnectionAttempts:
     name: MQTT Connection Attempts
-  MQTTConnections:
-    name: MQTT Successful Connections
   MQTTConnectionErrors:
     name: MQTT Connection Errors
   MQTTConnectionMax:
@@ -1315,12 +1309,18 @@ class:
     name: MQTT Connection Mean
   MQTTConnectionMin:
     name: MQTT Connection Min
-  MQTTReconnections:
-    name: MQTT Reconnections
+  MQTTConnections:
+    name: MQTT Successful Connections
+  MQTTLogLevel:
+    attributes:
+      comment: The MQTT interface logging level
+    name: MQTT Log Level
   MQTTPhysicalPublishes:
     name: MQTT Physical Publishes
   MQTTPublishFailures:
     name: MQTT Publish Failures
+  MQTTReconnections:
+    name: MQTT Reconnections
   MV:
     name: '{model_id} {serial} MV'
   MaxAbsorptionPower:

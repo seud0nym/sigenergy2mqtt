@@ -1299,6 +1299,18 @@ class:
       source: Registo Modbus {address}
       source_range: Registos Modbus {start}-{end}
     name: Contagem MPPT
+  MQTTConnectionAttempts:
+    name: Tentativas de ligação MQTT
+  MQTTConnectionErrors:
+    name: Erros de ligação MQTT
+  MQTTConnectionMax:
+    name: Máximo de ligações MQTT
+  MQTTConnectionMean:
+    name: Significado da ligação MQTT
+  MQTTConnectionMin:
+    name: Conexão MQTT mínima
+  MQTTConnections:
+    name: Ligações MQTT bem-sucedidas
   MQTTLogLevel:
     attributes:
       comment: O nível de registo da interface MQTT
@@ -1307,6 +1319,8 @@ class:
     name: Publicações Físicas MQTT
   MQTTPublishFailures:
     name: Falhas de Publicação MQTT
+  MQTTReconnections:
+    name: Reconexões MQTT
   MV:
     name: '{model_id} {serial} MV'  # verify:ignore
   MaxAbsorptionPower:

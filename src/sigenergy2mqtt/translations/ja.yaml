@@ -1299,6 +1299,18 @@ class:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: MPPT数
+  MQTTConnectionAttempts:
+    name: MQTT接続試行回数
+  MQTTConnectionErrors:
+    name: MQTT接続エラー
+  MQTTConnectionMax:
+    name: MQTT接続数の上限
+  MQTTConnectionMean:
+    name: MQTT接続の概要
+  MQTTConnectionMin:
+    name: MQTT接続（最小）
+  MQTTConnections:
+    name: MQTT 接続成功
   MQTTLogLevel:
     attributes:
       comment: MQTTインターフェースのロギングレベル
@@ -1307,6 +1319,8 @@ class:
     name: MQTT 物理パブリッシュ
   MQTTPublishFailures:
     name: MQTT パブリッシュ失敗
+  MQTTReconnections:
+    name: MQTTの再接続
   MV:
     name: '{model_id} {serial} MV'  # verify:ignore
   MaxAbsorptionPower:

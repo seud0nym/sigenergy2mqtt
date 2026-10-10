@@ -1299,6 +1299,18 @@ class:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: MPPT 수
+  MQTTConnectionAttempts:
+    name: MQTT 연결 시도 횟수
+  MQTTConnectionErrors:
+    name: MQTT 연결 오류
+  MQTTConnectionMax:
+    name: MQTT 연결 최대 수
+  MQTTConnectionMean:
+    name: MQTT 연결 방법
+  MQTTConnectionMin:
+    name: MQTT 연결 최소값
+  MQTTConnections:
+    name: MQTT 연결 성공
   MQTTLogLevel:
     attributes:
       comment: MQTT 인터페이스 로깅 수준
@@ -1307,6 +1319,8 @@ class:
     name: MQTT 물리 패블리시
   MQTTPublishFailures:
     name: MQTT 패블리시 실패
+  MQTTReconnections:
+    name: MQTT 재연결
   MV:
     name: '{model_id} {serial} MV'  # verify:ignore
   MaxAbsorptionPower:

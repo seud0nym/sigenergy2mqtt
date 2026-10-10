@@ -1299,6 +1299,18 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: MPPT数量
+  MQTTConnectionAttempts:
+    name: MQTT 连接尝试次数
+  MQTTConnectionErrors:
+    name: MQTT 连接错误
+  MQTTConnectionMax:
+    name: MQTT 连接上限
+  MQTTConnectionMean:
+    name: MQTT 连接说明
+  MQTTConnectionMin:
+    name: MQTT 连接最小要求
+  MQTTConnections:
+    name: MQTT 连接成功
   MQTTLogLevel:
     attributes:
       comment: MQTT 接口日志级别
@@ -1307,6 +1319,8 @@ class:
     name: MQTT 物理发布
   MQTTPublishFailures:
     name: MQTT 发布失败
+  MQTTReconnections:
+    name: MQTT 重连
   MV:
     name: '{model_id} {serial} MV'  # verify:ignore
   MaxAbsorptionPower:
