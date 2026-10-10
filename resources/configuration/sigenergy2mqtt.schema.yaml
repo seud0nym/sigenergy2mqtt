@@ -71,7 +71,7 @@ properties:
     properties:
       region: 
         type: string
-        enum: [aus, eu, cn, apac, us]
+        enum: ["", aus, eu, cn, apac, us, testing] # Need to include "" (default in Settings) and "testing" for testing use.
       username: 
         type: string
       password: 

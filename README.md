@@ -51,7 +51,7 @@ The combined reference for CLI flags, environment variables, and YAML configurat
 
 The official Sigenergy Cloud API is designed for applications that work as a backend service, and which are not deployed to local customer infrastructure as `sigenergy2mqtt` is. Whilst they are currently working on making the changes that would support local deployment, it is not yet available.
 
-However, there is an unofficial Cloud API that provides access to the Cloud features, which is what has now been incorporated into `sigenergy2mqtt` until the official API is available. There is no documentation for this API, and features have been discerned through observing the web app network traffic. Some features therefore may not work exactly as expected.
+However, there is an unofficial Cloud API that provides access to the Cloud features, which is what has now been incorporated into `sigenergy2mqtt` until the official API is available. There is no documentation for this API, and features have been discerned through observing web app network traffic.
 
 To use the Cloud API in `sigenergy2mqtt`, it is _strongly_ recommended that you use delegated access created through the `mySigen` app. Navigate to `Settings` → `System Settings` → `System Share`, and add another email address (not your primary mySigen login email address) with "View and Edit" permission. When you receive the invitation email, log in and set your password. Use this new email address and password when configuring Cloud access in `sigenergy2mqtt`. _Only_ use this delegated email for the `sigenergy2mqtt` Cloud connection, and for no other purpose, because too many sessions cause connections to be dropped.
 
