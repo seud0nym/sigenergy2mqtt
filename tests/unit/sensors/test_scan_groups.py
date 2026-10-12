@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import paho.mqtt.client as mqtt
 import pytest
 
+from sigenergy2mqtt.cloud.exceptions import CloudControlRateLimitedError
 from sigenergy2mqtt.common import Constants, InputType, ProtocolVersion
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices import Device, DeviceRegistry
@@ -675,3 +676,52 @@ class TestSensorScanGroupsEdgeCases:
         assert len(auto_group) == 2
         assert s1 in auto_group
         assert s4 in auto_group
+
+
+@pytest.mark.asyncio
+async def test_rate_limited_cloud_sensor_is_rescheduled_without_stopping_poller(
+    monkeypatch: pytest.MonkeyPatch,
+    mock_config,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    import logging
+    from types import SimpleNamespace
+
+    clock = [100.0]
+    original_sleep = asyncio.sleep
+    publish_times: list[float] = []
+    device = Device("cloud", 0, "uid", "mf", "mdl", ProtocolVersion.V1_8)
+    sensor = DummyModbusSensor("cloud_sensor", address=100, scan_interval=1)
+    sensor.force_publish = False
+    device._add_sensor(cast(Sensor, sensor))
+    device._online = True
+
+    async def fake_publish(*args, **kwargs) -> bool:
+        publish_times.append(clock[0])
+        if len(publish_times) == 1:
+            raise CloudControlRateLimitedError("limited", retry_after=30)
+        device._online = False
+        return True
+
+    sensor.publish = fake_publish  # type: ignore[method-assign]
+
+    async def fake_sleep(delay: float) -> None:
+        clock[0] += delay
+        await original_sleep(0)
+
+    monkeypatch.setattr("sigenergy2mqtt.devices.base.poller.time", SimpleNamespace(time=lambda: clock[0], localtime=lambda *_: time.localtime(0)))
+    monkeypatch.setattr("sigenergy2mqtt.devices.base.poller.asyncio.sleep", fake_sleep)
+
+    poller = SensorGroupPoller(device)
+    monkeypatch.setattr(
+        poller,
+        "_init_next_publish_times",
+        AsyncMock(return_value=({sensor: clock[0]}, [], False)),
+    )
+
+    with caplog.at_level(logging.WARNING):
+        await poller.run(None, MagicMock(spec=mqtt.Client), "cloud", sensor)
+
+    assert len(publish_times) == 2
+    assert publish_times[1] - publish_times[0] >= 30
+    assert "cloud rate limited; retrying in 30 seconds" in caplog.text

@@ -557,6 +557,43 @@ async def test_operations_translate_vendor_errors(
 
 
 @pytest.mark.asyncio
+async def test_rate_limits_pause_requests_with_exponential_backoff(
+    mysigen_adapter: MySigenCloudAdapter,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    now = 100.0
+    pauses: list[float] = []
+
+    async def fake_sleep(delay: float) -> None:
+        nonlocal now
+        pauses.append(delay)
+        now += delay
+
+    monkeypatch.setattr(
+        "sigenergy2mqtt.cloud.mysigen_adapter.time",
+        SimpleNamespace(monotonic=lambda: now),
+    )
+    monkeypatch.setattr("sigenergy2mqtt.cloud.mysigen_adapter.asyncio.sleep", fake_sleep)
+    mysigen_adapter._connected = True  # type: ignore[reportPrivateUsage]
+    mysigen_adapter._client.get_operational_mode.side_effect = [  # type: ignore[reportPrivateUsage]
+        SigenergyCloudRateLimitError("limited"),
+        SigenergyCloudRateLimitError("still limited"),
+        (2, -1),
+    ]
+
+    with pytest.raises(CloudControlRateLimitedError) as first:
+        await mysigen_adapter.get_operational_mode()
+    with pytest.raises(CloudControlRateLimitedError) as second:
+        await mysigen_adapter.get_operational_mode()
+    assert await mysigen_adapter.get_operational_mode() == (2, -1)
+
+    assert first.value.retry_after == pytest.approx(30.0)
+    assert second.value.retry_after == pytest.approx(60.0)
+    assert pauses == [30.0, 60.0]
+    assert mysigen_adapter._client.get_operational_mode.await_count == 3  # type: ignore[reportPrivateUsage]
+
+
+@pytest.mark.asyncio
 async def test_rejected_command_keeps_cloud_available(
     mysigen_adapter: MySigenCloudAdapter,
 ) -> None:

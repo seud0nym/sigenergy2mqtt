@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any
 import paho.mqtt.client as mqtt
 from pymodbus import ModbusException
 
+from sigenergy2mqtt.cloud.exceptions import CloudControlRateLimitedError
 from sigenergy2mqtt.common import Constants
 from sigenergy2mqtt.modbus import ModbusClient, ModbusLock, ModbusLockFactory
 from sigenergy2mqtt.sensors.base import (
@@ -358,6 +359,20 @@ class SensorGroupPoller:
                                 reconnected = await self._reconnect_modbus_with_backoff(transport)
                                 if not reconnected and device.online:
                                     logger.error(f"{device.log_identity} failed to reconnect to Modbus, sensor updates paused")
+                except CloudControlRateLimitedError as e:
+                    # Do not let a vendor 429 terminate this polling task. The
+                    # adapter also applies a shared cooldown across scan groups;
+                    # moving this group's due times avoids a tight retry loop.
+                    delay = max(1.0, e.retry_after or 30.0)
+                    retry_at = time.time() + delay
+                    for sensor in due_sensors:
+                        next_publish_times[sensor] = retry_at
+                    logger.warning(
+                        "%s Sensor Scan Group [%s] cloud rate limited; retrying in %.0f seconds",
+                        device.log_identity,
+                        name,
+                        delay,
+                    )
                 except RuntimeError as e:
                     logger.error(f"{device.log_identity} Sensor Scan Group [{name}] encountered an error: {e!r}")
 
