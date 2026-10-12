@@ -78,6 +78,21 @@ def test_device_temperature_sensor_supports_celsius_and_fahrenheit_units(api_uni
     assert sensor[DiscoveryKeys.DEVICE_CLASS] == DeviceClass.TEMPERATURE
 
 
+def test_rated_battery_capacity_uses_energy_class_without_state_class() -> None:
+    sensor = DeviceInfoSensor(
+        0,
+        FakeCloudControlPort.station_id,
+        "BAT-1",
+        "Rated Battery Capacity",
+        "kWh",
+        DeviceInfoSnapshot(4, "BAT-1", True),
+        static=True,
+    )
+
+    assert sensor[DiscoveryKeys.DEVICE_CLASS] == DeviceClass.ENERGY
+    assert sensor[DiscoveryKeys.STATE_CLASS] is None
+
+
 def test_cloud_control_adds_each_inverter_and_battery_as_child() -> None:
     devices = [
         {"deviceType": "Inverter", "serialNumber": "INV-1", "attrMap": {}},

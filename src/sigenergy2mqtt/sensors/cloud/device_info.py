@@ -77,9 +77,14 @@ class DeviceInfoSensor(CloudSensor):
         object_id, unique_id = _identity(plant_index, station_id, suffix)
         normalized_unit = _NORMALIZED_UNITS.get(unit, unit) or None
         device_class = _UNIT_CLASSES.get(unit)
-        state_class = StateClass.MEASUREMENT if unit else None
-        if param_key == "Total Discharge Amount":
+        if param_key == "Rated Battery Capacity":
+            state_class = None
+        elif param_key == "Total Discharge Amount":
             state_class = StateClass.TOTAL_INCREASING
+        elif unit:
+            state_class = StateClass.MEASUREMENT
+        else:
+            state_class = None
         super().__init__(
             name=param_key,
             object_id=object_id,
