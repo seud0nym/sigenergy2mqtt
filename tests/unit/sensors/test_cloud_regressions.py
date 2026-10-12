@@ -5,12 +5,20 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from sigenergy2mqtt.cloud.vendor.solidfox.sigenergy_cloud.auth import OAuthSession, TokenBundle
+from sigenergy2mqtt.cloud.exceptions import CloudControlUnavailableError
+from sigenergy2mqtt.cloud.models import InstantControlStatus
+from sigenergy2mqtt.cloud.vendor.solidfox.sigenergy_cloud.auth import (
+    OAuthSession,
+    TokenBundle,
+)
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.devices.cloud.sigen_device import CloudBattery
-from sigenergy2mqtt.sensors.cloud.read_write import BatteryChargePowerLimit, BatteryDischargePowerLimit, SolarPowerLimit
+from sigenergy2mqtt.sensors.cloud.read_write import (
+    BatteryChargePowerLimit,
+    BatteryDischargePowerLimit,
+    SolarPowerLimit,
+)
 from tests.unit.sensors.test_cloud_sensors import FakeCloudControlPort, _controls
-from sigenergy2mqtt.cloud.models import InstantControlStatus
 
 
 async def test_concurrent_battery_writes_preserve_both_changes():
@@ -91,6 +99,7 @@ async def test_failed_startup_device_info_recovers_and_starts_polling(monkeypatc
         child.online = asyncio.get_running_loop().create_future()
         port = FakeCloudControlPort()
         port.device_dynamic_info.return_value = {"realTimeInfo": [{"paramKey": "SOC", "paramValueUnit": "%", "paramValueText": "50"}]}
+        port.battery_pack_merge_info.return_value = {"paramInfoVOList": []}
         poll = AsyncMock()
         monkeypatch.setattr("sigenergy2mqtt.devices.cloud.sigen_device.SensorGroupPoller.run", poll)
         mqtt = MagicMock()
@@ -122,6 +131,7 @@ def test_empty_cloud_child_is_kept_for_recovery():
     ))
     assert len(control.children) == 1
     assert control.children[0]._pending_info == {False, True}
+    assert control.children[0]._pending_pack_info
     scheduled = control.schedule(FakeCloudControlPort(), MagicMock())
     assert any(task.cr_code.co_name == "recover_info" for task in scheduled)
     for task in scheduled:
@@ -140,6 +150,7 @@ async def test_recovered_sensor_debug_subscription_works(monkeypatch, home_assis
         handler.register.reset_mock()
         port = FakeCloudControlPort()
         port.device_dynamic_info.return_value = {"realTimeInfo": [{"paramKey": "SOC", "paramValueUnit": "%", "paramValueText": "50"}]}
+        port.battery_pack_merge_info.return_value = {"paramInfoVOList": []}
         monkeypatch.setattr("sigenergy2mqtt.devices.cloud.sigen_device.SensorGroupPoller.run", AsyncMock())
         await child.recover_info(port, mqtt)
         sensor = next(iter(child.sensors.values()))
@@ -148,4 +159,42 @@ async def test_recovered_sensor_debug_subscription_works(monkeypatch, home_assis
         callback = handler.register.call_args.args[2]
         await callback(port, mqtt, "true", topic, handler)
         assert sensor.debug_logging
+        child.online = False
+
+
+async def test_missing_battery_pack_info_recovers_after_startup_failure(monkeypatch):
+    config = Config()
+    config.cloud.scan_interval = 1
+    with _swap_active_config(config):
+        child = CloudBattery(
+            0,
+            "station",
+            {"serialNumber": "battery"},
+            {"realTimeInfo": []},
+            {"paramInfoVOList": []},
+        )
+        child.online = asyncio.get_running_loop().create_future()
+        port = FakeCloudControlPort()
+        pack_info = {
+            "paramInfoVOList": [
+                {
+                    "paramKey": "Total Discharge Amount",
+                    "paramValueText": "2.96",
+                    "paramValueUnit": "MWh",
+                }
+            ]
+        }
+        port.battery_pack_merge_info.side_effect = [
+            CloudControlUnavailableError("offline"),
+            pack_info,
+        ]
+        poll = AsyncMock()
+        monkeypatch.setattr("sigenergy2mqtt.devices.cloud.sigen_device.SensorGroupPoller.run", poll)
+
+        await child.recover_info(port, MagicMock())
+
+        assert not child._pending_pack_info
+        assert [sensor.name for sensor in child.sensors.values()] == ["Total Discharge Amount"]
+        assert port.battery_pack_merge_info.await_count == 2
+        poll.assert_awaited_once()
         child.online = False
