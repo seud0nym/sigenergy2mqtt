@@ -22,8 +22,8 @@ _UNIT_CLASSES = {
     "Hz": DeviceClass.FREQUENCY,
     "kW": DeviceClass.POWER,
     "kVar": DeviceClass.REACTIVE_POWER,
-    "kWh": DeviceClass.ENERGY_STORAGE,
-    "MWh": DeviceClass.ENERGY_STORAGE,
+    "kWh": DeviceClass.ENERGY,
+    "MWh": DeviceClass.ENERGY,
     "%": DeviceClass.BATTERY,
     "℃": DeviceClass.TEMPERATURE,
     "℉": DeviceClass.TEMPERATURE,
@@ -77,6 +77,9 @@ class DeviceInfoSensor(CloudSensor):
         object_id, unique_id = _identity(plant_index, station_id, suffix)
         normalized_unit = _NORMALIZED_UNITS.get(unit, unit) or None
         device_class = _UNIT_CLASSES.get(unit)
+        state_class = StateClass.MEASUREMENT if unit else None
+        if param_key == "Total Discharge Amount":
+            state_class = StateClass.TOTAL_INCREASING
         super().__init__(
             name=param_key,
             object_id=object_id,
@@ -84,7 +87,7 @@ class DeviceInfoSensor(CloudSensor):
             scan_interval=ScanIntervalDefault.LOW if static else active_config.cloud.scan_interval,
             unit=normalized_unit,
             device_class=device_class,
-            state_class=StateClass.MEASUREMENT if unit else None,
+            state_class=state_class,
             icon=None,
             gain=None,
             precision=None,

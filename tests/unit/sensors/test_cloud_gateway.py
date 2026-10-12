@@ -141,6 +141,10 @@ async def test_battery_pack_merge_sensors_belong_to_the_matching_battery() -> No
     sensors = {sensor.name: sensor for sensor in battery.sensors.values()}
     assert set(sensors) == {"Total Discharge Amount", "Average Cell Voltage", "Average Cell Temperature"}
     assert all(sensor[DiscoveryKeys.UNIQUE_ID].startswith("sigen_0_station-123_4_BAT-1_") for sensor in sensors.values())
+    assert sensors["Total Discharge Amount"][DiscoveryKeys.DEVICE_CLASS] == DeviceClass.ENERGY
+    assert sensors["Total Discharge Amount"][DiscoveryKeys.STATE_CLASS] == "total_increasing"
+    assert sensors["Average Cell Voltage"][DiscoveryKeys.STATE_CLASS] == "measurement"
+    assert sensors["Average Cell Temperature"][DiscoveryKeys.STATE_CLASS] == "measurement"
     port = FakeCloudControlPort()
     port.battery_pack_merge_info = AsyncMock(return_value=packs["BAT-1"])
     assert await sensors["Average Cell Temperature"]._read_cloud_state(port) == 25.3
