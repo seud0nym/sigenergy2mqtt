@@ -3,6 +3,37 @@
 
 ## [Unreleased]
 
+## Added
+
+device/device/pack/queryPackMergeInfo?stationId={stationId}&snCode={battery serial number}
+
+{
+    "code": 0,
+    "msg": "success",
+    "data": {
+        "paramInfoVOList": [
+            {
+                "paramKey": "Total Discharge Amount",
+                "paramValue": "2.96 MWh",
+                "paramValueText": "2.96",
+                "paramValueUnit": "MWh"
+            },
+            {
+                "paramKey": "Average Cell Voltage",
+                "paramValue": "3.338 V",
+                "paramValueText": "3.338",
+                "paramValueUnit": "V"
+            },
+            {
+                "paramKey": "Average Cell Temperature",
+                "paramValue": "25.3 ℃",
+                "paramValueText": "25.3",
+                "paramValueUnit": "℃"
+            }
+        ]
+    }
+}
+
 ### Fixed
 
 - Added a cool down on cloud rate limit errors with exponential backoff
