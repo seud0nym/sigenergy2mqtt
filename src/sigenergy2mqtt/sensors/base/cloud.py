@@ -10,7 +10,10 @@ from typing import Any, cast
 import paho.mqtt.client as mqtt
 from aiohttp import ClientError
 
-from sigenergy2mqtt.cloud.exceptions import CloudControlError
+from sigenergy2mqtt.cloud.exceptions import (
+    CloudControlError,
+    CloudControlRateLimitedError,
+)
 from sigenergy2mqtt.cloud.port import CloudControlPort
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.mqtt import MqttHandler
@@ -67,6 +70,10 @@ class CloudSensor(ReadableSensorMixin, AvailabilityMixin):
         sensor_id = id(self)
         try:
             value = await self._read_cloud_state(port)
+        except CloudControlRateLimitedError:
+            # The polling coordinator must see a 429 so it can reschedule this
+            # sensor group for the adapter's shared cooldown.
+            raise
         except (ClientError, CloudControlError) as exc:
             exc_repr = repr(exc)
             port_outages = _port_outage.setdefault(port_id, {})

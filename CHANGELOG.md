@@ -1,6 +1,14 @@
 <!-- git log [since tag]..HEAD --oneline -->
 # Changelog 
 
+## [Unreleased]
+
+### Fixed
+
+- Added a cool down on cloud rate limit errors with exponential backoff
+
+---
+
 ## [2026.10.10] - 2026-10-10
 
 ### Added
