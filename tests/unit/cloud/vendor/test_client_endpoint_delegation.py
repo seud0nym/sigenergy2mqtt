@@ -150,6 +150,18 @@ async def test_read_endpoints_delegate_to_expected_helpers(
 
 
 @pytest.mark.asyncio
+async def test_battery_pack_merge_info_uses_station_and_battery_serial(
+    client: SigenergyCloudClient,
+) -> None:
+    assert await client.battery_pack_merge_info("BAT-1") == {"value": 1}
+    client._data.assert_awaited_once_with(  # type: ignore[reportPrivateUsage]
+        "GET",
+        "device/device/pack/queryPackMergeInfo",
+        params={"stationId": "123", "snCode": "BAT-1"},
+    )
+
+
+@pytest.mark.asyncio
 async def test_write_endpoints_build_payloads_and_validate_ranges(
     client: SigenergyCloudClient,
 ) -> None:

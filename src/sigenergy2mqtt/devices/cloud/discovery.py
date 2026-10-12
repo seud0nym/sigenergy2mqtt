@@ -28,6 +28,7 @@ class CloudDiscovery:
     gateway_info: dict[str, Any] | None = None
     operational_modes: dict[str, object] | None = None
     device_info: dict[str, tuple[dict[str, Any], dict[str, Any]]] | None = None
+    battery_pack_info: dict[str, dict[str, Any]] | None = None
 
     @property
     def has_battery(self) -> bool:
@@ -68,6 +69,7 @@ async def discover_cloud(cloud_port: CloudControlPort) -> CloudDiscovery | None:
     if not active_config.cloud.discover_inverters:
         logger.info("Cloud inverter discovery disabled by configuration; discovered inverters will be ignored")
     device_info: dict[str, tuple[dict[str, Any], dict[str, Any]]] = {}
+    battery_pack_info: dict[str, dict[str, Any]] = {}
     for device in device_list:
         device_name = device.get("deviceType")
         if not active_config.cloud.discover_inverters and device_name == "Inverter":
@@ -94,7 +96,12 @@ async def discover_cloud(cloud_port: CloudControlPort) -> CloudDiscovery | None:
 
         dynamic, static = await asyncio.gather(read_info(False), read_info(True), return_exceptions=False)
         device_info[valid_sn_code] = (dynamic, static)
-    return CloudDiscovery(device_list=device_list, gateway_info=gateway_info, device_info=device_info)
+        if device_name == "Battery":
+            try:
+                battery_pack_info[valid_sn_code] = await cloud_port.battery_pack_merge_info(valid_sn_code)
+            except (ClientError, CloudControlError) as exc:
+                logger.warning("Cloud battery pack discovery failed for %s: %s", valid_sn_code, exc)
+    return CloudDiscovery(device_list=device_list, gateway_info=gateway_info, device_info=device_info, battery_pack_info=battery_pack_info)
 
 
 async def discover_operational_modes(cloud_port: CloudControlPort, discovery: CloudDiscovery) -> CloudDiscovery:

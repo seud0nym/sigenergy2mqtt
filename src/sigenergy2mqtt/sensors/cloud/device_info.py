@@ -23,6 +23,7 @@ _UNIT_CLASSES = {
     "kW": DeviceClass.POWER,
     "kVar": DeviceClass.REACTIVE_POWER,
     "kWh": DeviceClass.ENERGY_STORAGE,
+    "MWh": DeviceClass.ENERGY_STORAGE,
     "%": DeviceClass.BATTERY,
     "℃": DeviceClass.TEMPERATURE,
     "℉": DeviceClass.TEMPERATURE,
@@ -34,8 +35,9 @@ _NORMALIZED_UNITS = {"kVar": "kvar", "℃": "°C", "℉": "°F"}
 
 
 class DeviceInfoSnapshot:
-    def __init__(self, device_type: int, sn_code: str, static: bool) -> None:
+    def __init__(self, device_type: int, sn_code: str, static: bool, *, pack_merge: bool = False) -> None:
         self.device_type, self.sn_code, self.static = device_type, sn_code, static
+        self.pack_merge = pack_merge
         self._payload: dict[str, Any] | None = None
         self._error: Exception | None = None
 
@@ -47,9 +49,12 @@ class DeviceInfoSnapshot:
         if self._error is not None:
             raise self._error
         if self._payload is None:
-            method = port.device_static_info if self.static else port.device_dynamic_info
             try:
-                self._payload = await method(self.device_type, self.sn_code)
+                if self.pack_merge:
+                    self._payload = await port.battery_pack_merge_info(self.sn_code)
+                else:
+                    method = port.device_static_info if self.static else port.device_dynamic_info
+                    self._payload = await method(self.device_type, self.sn_code)
             except Exception as exc:
                 self._error = exc
                 raise
@@ -98,7 +103,7 @@ class DeviceInfoSensor(CloudSensor):
 
     async def _read_cloud_state(self, port: CloudControlPort) -> float | str | None:
         payload = await self._snapshot.read(port)
-        entries = payload.get("paramInfoVOList" if self._static else "realTimeInfo", [])
+        entries = payload.get("paramInfoVOList" if self._static or self._snapshot.pack_merge else "realTimeInfo", [])
         for entry in entries if isinstance(entries, list) else []:
             if isinstance(entry, dict) and entry.get("paramKey") == self.param_key:
                 value = entry.get("paramValueText")

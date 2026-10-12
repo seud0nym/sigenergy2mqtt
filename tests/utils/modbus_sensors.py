@@ -303,6 +303,9 @@ class DummyCloudControlPort(CloudControlPort):
     async def device_static_info(self, device_type: int, sn_code: str) -> dict[str, Any]:
         return self._server.device_static_info.get(device_type, {})
 
+    async def battery_pack_merge_info(self, sn_code: str) -> dict[str, Any]:
+        return self._server.battery_pack_merge_info
+
     async def set_instant_override(self, command: InstantOverrideCommand) -> None: ...
 
     async def clear_instant_override(self) -> None: ...

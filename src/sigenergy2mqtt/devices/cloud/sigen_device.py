@@ -33,6 +33,7 @@ class SigenCloudDevice(Device):
         device: dict[str, Any],
         dynamic: dict[str, Any],
         static: dict[str, Any],
+        battery_pack_info: dict[str, Any] | None = None,
     ) -> None:
         sn = str(device["serialNumber"])
         position = device.get("attrMap", {}).get("batPosition")
@@ -67,11 +68,13 @@ class SigenCloudDevice(Device):
         ) if key not in payload}
         self._add_info(False, dynamic)
         self._add_info(True, static)
+        if self.device_type == 4 and battery_pack_info is not None:
+            self._add_info(True, battery_pack_info, pack_merge=True)
 
-    def _add_info(self, is_static: bool, payload: dict[str, Any]) -> None:
+    def _add_info(self, is_static: bool, payload: dict[str, Any], *, pack_merge: bool = False) -> None:
         key = "paramInfoVOList" if is_static else "realTimeInfo"
         plant_index, station_id, sn = self.plant_index, self._station_id, self._sn
-        snapshot = DeviceInfoSnapshot(self.device_type, sn, is_static)
+        snapshot = DeviceInfoSnapshot(self.device_type, sn, is_static, pack_merge=pack_merge)
         seen_suffixes: set[str] = set()
         entries = payload.get(key, [])
         for entry in entries if isinstance(entries, list) else []:
@@ -87,7 +90,7 @@ class SigenCloudDevice(Device):
                         param_key,
                         str(entry.get("paramValueUnit") or ""),
                         snapshot,
-                        static=is_static,
+                        static=is_static and not pack_merge,
                     )
                 )
 
@@ -161,7 +164,11 @@ def build_sigen_devices(plant_index: int, station_id: str, discovery: CloudDisco
             continue
         cls = {"Inverter": CloudInverter, "Battery": CloudBattery}.get(device_name) if isinstance(device_name, str) else None
         sn = device.get("serialNumber")
-        info = (discovery.device_info or {}).get(sn) if isinstance(sn, str) else None
-        if cls is not None and info is not None:
-            result.append(cls(plant_index, station_id, device, *info))
+        if cls is None or not isinstance(sn, str):
+            continue
+        info = (discovery.device_info or {}).get(sn)
+        if info is None:
+            continue
+        battery_pack_info = (discovery.battery_pack_info or {}).get(sn) if cls is CloudBattery else None
+        result.append(cls(plant_index, station_id, device, *info, battery_pack_info))
     return result

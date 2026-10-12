@@ -300,6 +300,13 @@ async def test_cloud_api_test_server_exposes_all_limit_endpoints() -> None:
         assert (await response.json())["data"]["maxLimitation"] == "10.000"
 
         response = await client.get(
+            "/device/device/pack/queryPackMergeInfo",
+            params={"stationId": str(api.device_topology["stationId"]), "snCode": "BAT-1"},
+            headers=headers,
+        )
+        assert (await response.json())["data"] == api.battery_pack_merge_info
+
+        response = await client.get(
             "/device/devicetreepanel/topology",
             headers=headers,
             params={"stationId": 1},

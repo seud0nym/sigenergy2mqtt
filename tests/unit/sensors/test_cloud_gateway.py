@@ -123,6 +123,30 @@ def test_cloud_control_adds_each_inverter_and_battery_as_child() -> None:
     assert static_sensor.scan_interval == ScanIntervalDefault.LOW  # type: ignore[attr-defined]
 
 
+@pytest.mark.asyncio
+async def test_battery_pack_merge_sensors_belong_to_the_matching_battery() -> None:
+    packs = {
+        "BAT-1": {"paramInfoVOList": [
+            {"paramKey": "Total Discharge Amount", "paramValueText": "2.96", "paramValueUnit": "MWh"},
+            {"paramKey": "Average Cell Voltage", "paramValueText": "3.338", "paramValueUnit": "V"},
+            {"paramKey": "Average Cell Temperature", "paramValueText": "25.3", "paramValueUnit": "℃"},
+        ]}
+    }
+    discovery = CloudDiscovery(
+        device_list=[{"deviceType": "Battery", "serialNumber": "BAT-1", "attrMap": {}}],
+        device_info={"BAT-1": ({}, {})},
+        battery_pack_info=packs,
+    )
+    battery = CloudControl(0, FakeCloudControlPort(), discovery).children[0]
+    sensors = {sensor.name: sensor for sensor in battery.sensors.values()}
+    assert set(sensors) == {"Total Discharge Amount", "Average Cell Voltage", "Average Cell Temperature"}
+    assert all(sensor[DiscoveryKeys.UNIQUE_ID].startswith("sigen_0_station-123_4_BAT-1_") for sensor in sensors.values())
+    port = FakeCloudControlPort()
+    port.battery_pack_merge_info = AsyncMock(return_value=packs["BAT-1"])
+    assert await sensors["Average Cell Temperature"]._read_cloud_state(port) == 25.3
+    port.battery_pack_merge_info.assert_awaited_once_with("BAT-1")
+
+
 def test_cloud_device_names_fall_back_when_device_model_is_missing() -> None:
     devices = [
         {"deviceType": "Inverter", "serialNumber": "INV-1", "attrMap": {}},
