@@ -22,6 +22,10 @@ from sigenergy2mqtt.sensors.base import (
     ReservedSensor,
     Sensor,
 )
+from sigenergy2mqtt.sensors.cloud.read_only import (
+    GatewayCommunicationStatus,
+    GatewayInfoSnapshot,
+)
 
 
 class DummyModbusSensor(ModbusSensorMixin, ReadableSensorMixin):
@@ -689,21 +693,18 @@ async def test_rate_limited_cloud_sensor_is_rescheduled_without_stopping_poller(
 
     clock = [100.0]
     original_sleep = asyncio.sleep
-    publish_times: list[float] = []
+    request_times: list[float] = []
     device = Device("cloud", 0, "uid", "mf", "mdl", ProtocolVersion.V1_8)
-    sensor = DummyModbusSensor("cloud_sensor", address=100, scan_interval=1)
-    sensor.force_publish = False
+    sensor = GatewayCommunicationStatus(0, "station", GatewayInfoSnapshot())
     device._add_sensor(cast(Sensor, sensor))
     device._online = True
 
-    async def fake_publish(*args, **kwargs) -> bool:
-        publish_times.append(clock[0])
-        if len(publish_times) == 1:
+    class RateLimitedCloudPort:
+        async def gateway_info(self) -> dict[str, object]:
+            request_times.append(clock[0])
+            if len(request_times) == 2:
+                device._online = False
             raise CloudControlRateLimitedError("limited", retry_after=30)
-        device._online = False
-        return True
-
-    sensor.publish = fake_publish  # type: ignore[method-assign]
 
     async def fake_sleep(delay: float) -> None:
         clock[0] += delay
@@ -720,8 +721,8 @@ async def test_rate_limited_cloud_sensor_is_rescheduled_without_stopping_poller(
     )
 
     with caplog.at_level(logging.WARNING):
-        await poller.run(None, MagicMock(spec=mqtt.Client), "cloud", sensor)
+        await poller.run(RateLimitedCloudPort(), MagicMock(spec=mqtt.Client), "cloud", sensor)
 
-    assert len(publish_times) == 2
-    assert publish_times[1] - publish_times[0] >= 30
+    assert len(request_times) == 2
+    assert request_times[1] - request_times[0] >= 30
     assert "cloud rate limited; retrying in 30 seconds" in caplog.text

@@ -133,9 +133,28 @@ async def test_connect_normalizes_aiohttp_transport_errors(
 @pytest.mark.asyncio
 async def test_connect_records_login_timing(
     mysigen_adapter: MySigenCloudAdapter,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    now = 10.0
+    pauses: list[float] = []
+
+    async def fake_sleep(delay: float) -> None:
+        nonlocal now
+        pauses.append(delay)
+        now += delay
+
+    async def slow_connect() -> None:
+        nonlocal now
+        now += 0.25
+
+    mysigen_adapter._rate_limit_until = 40.0  # type: ignore[reportPrivateUsage]
+    mysigen_adapter._client.connect.side_effect = slow_connect  # type: ignore[reportPrivateUsage]
+    monkeypatch.setattr(
+        "sigenergy2mqtt.cloud.mysigen_adapter.time",
+        SimpleNamespace(monotonic=lambda: now),
+    )
+    monkeypatch.setattr("sigenergy2mqtt.cloud.mysigen_adapter.asyncio.sleep", fake_sleep)
     with (
-        patch("sigenergy2mqtt.cloud.mysigen_adapter.time.monotonic", side_effect=[10.0, 10.25]),
         patch("sigenergy2mqtt.cloud.mysigen_adapter.Metrics.cloud_connection", new_callable=AsyncMock) as connection_metric,
         patch("sigenergy2mqtt.cloud.mysigen_adapter.Metrics.cloud_connection_attempt", new_callable=AsyncMock) as timing_metric,
     ):
@@ -143,6 +162,7 @@ async def test_connect_records_login_timing(
 
     connection_metric.assert_awaited_once_with(connected=True)
     timing_metric.assert_awaited_once_with(0.25)
+    assert pauses == [30.0]
 
 
 @pytest.mark.asyncio
@@ -574,6 +594,8 @@ async def test_rate_limits_pause_requests_with_exponential_backoff(
         SimpleNamespace(monotonic=lambda: now),
     )
     monkeypatch.setattr("sigenergy2mqtt.cloud.mysigen_adapter.asyncio.sleep", fake_sleep)
+    query_metric = AsyncMock()
+    monkeypatch.setattr("sigenergy2mqtt.cloud.mysigen_adapter.Metrics.cloud_query", query_metric)
     mysigen_adapter._connected = True  # type: ignore[reportPrivateUsage]
     mysigen_adapter._client.get_operational_mode.side_effect = [  # type: ignore[reportPrivateUsage]
         SigenergyCloudRateLimitError("limited"),
@@ -591,6 +613,82 @@ async def test_rate_limits_pause_requests_with_exponential_backoff(
     assert second.value.retry_after == pytest.approx(60.0)
     assert pauses == [30.0, 60.0]
     assert mysigen_adapter._client.get_operational_mode.await_count == 3  # type: ignore[reportPrivateUsage]
+    assert [call.args[0] for call in query_metric.await_args_list] == [0.0, 0.0, 0.0]
+
+
+@pytest.mark.asyncio
+async def test_rate_limit_waiter_rechecks_deadline_extended_while_sleeping(
+    mysigen_adapter: MySigenCloudAdapter,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    now = 100.0
+    pauses: list[float] = []
+    sensor_request_time: list[float] = []
+    mysigen_adapter._rate_limit_streak = 1  # type: ignore[reportPrivateUsage]
+    mysigen_adapter._rate_limit_generation = 1  # type: ignore[reportPrivateUsage]
+    mysigen_adapter._rate_limit_until = 130.0  # type: ignore[reportPrivateUsage]
+
+    async def fake_sleep(delay: float) -> None:
+        nonlocal now
+        pauses.append(delay)
+        now += delay
+        if len(pauses) == 1:
+            # Simulate another in-flight request reporting a 429 as this task
+            # reaches the original deadline.
+            mysigen_adapter._record_rate_limit()  # type: ignore[reportPrivateUsage]
+
+    monkeypatch.setattr(
+        "sigenergy2mqtt.cloud.mysigen_adapter.time",
+        SimpleNamespace(monotonic=lambda: now),
+    )
+    monkeypatch.setattr("sigenergy2mqtt.cloud.mysigen_adapter.asyncio.sleep", fake_sleep)
+    mysigen_adapter._connected = True  # type: ignore[reportPrivateUsage]
+
+    async def request() -> tuple[int, int]:
+        sensor_request_time.append(now)
+        return (2, -1)
+
+    mysigen_adapter._client.get_operational_mode.side_effect = request  # type: ignore[reportPrivateUsage]
+
+    assert await mysigen_adapter.get_operational_mode() == (2, -1)
+
+    assert pauses == [30.0, 60.0]
+    assert sensor_request_time == [190.0]
+
+
+@pytest.mark.asyncio
+async def test_late_success_does_not_clear_a_newer_rate_limit(
+    mysigen_adapter: MySigenCloudAdapter,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    first_started = asyncio.Event()
+    release_first = asyncio.Event()
+    calls = 0
+    mysigen_adapter._connected = True  # type: ignore[reportPrivateUsage]
+    monkeypatch.setattr(mysigen_adapter, "_wait_for_rate_limit", AsyncMock())  # type: ignore[reportPrivateUsage]
+
+    async def request() -> tuple[int, int]:
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            first_started.set()
+            await release_first.wait()
+            return (2, -1)
+        raise SigenergyCloudRateLimitError("limited")
+
+    mysigen_adapter._client.get_operational_mode.side_effect = request  # type: ignore[reportPrivateUsage]
+    late_success = asyncio.create_task(mysigen_adapter.get_operational_mode())
+    await first_started.wait()
+
+    with pytest.raises(CloudControlRateLimitedError):
+        await mysigen_adapter.get_operational_mode()
+    release_first.set()
+    assert await late_success == (2, -1)
+    assert mysigen_adapter._rate_limit_streak == 1  # type: ignore[reportPrivateUsage]
+
+    with pytest.raises(CloudControlRateLimitedError) as repeated_limit:
+        await mysigen_adapter.get_operational_mode()
+    assert repeated_limit.value.retry_after == pytest.approx(60.0)
 
 
 @pytest.mark.asyncio

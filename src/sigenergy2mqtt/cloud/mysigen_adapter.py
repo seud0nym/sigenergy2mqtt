@@ -92,6 +92,7 @@ class MySigenCloudAdapter:
         self._connect_lock = asyncio.Lock()
         self._rate_limit_until = 0.0
         self._rate_limit_streak = 0
+        self._rate_limit_generation = 0
         self._rate_limit_lock = asyncio.Lock()
 
     async def _wait_for_rate_limit(self) -> None:
@@ -99,14 +100,19 @@ class MySigenCloudAdapter:
         if self._rate_limit_until <= 0:
             return
         async with self._rate_limit_lock:
-            delay = self._rate_limit_until - time.monotonic()
-            if delay > 0:
-                logger.warning("mySigen Cloud rate limited; pausing requests for %.0f seconds", delay)
+            logged = False
+            while (delay := self._rate_limit_until - time.monotonic()) > 0:
+                if not logged:
+                    logger.warning("mySigen Cloud rate limited; pausing requests for %.0f seconds", delay)
+                    logged = True
+                # A newer 429 may extend the deadline while this task sleeps.
+                # Recheck it before allowing the request through.
                 await asyncio.sleep(delay)
 
     def _record_rate_limit(self) -> float:
         """Extend a shared, exponentially increasing cooldown after HTTP 429."""
         self._rate_limit_streak += 1
+        self._rate_limit_generation += 1
         delay = min(30.0 * (2 ** (self._rate_limit_streak - 1)), 900.0)
         self._rate_limit_until = max(self._rate_limit_until, time.monotonic() + delay)
         return max(0.0, self._rate_limit_until - time.monotonic())
@@ -138,9 +144,9 @@ class MySigenCloudAdapter:
         """Connect while the caller holds ``_connect_lock``."""
         if self._connected:
             return
+        await self._wait_for_rate_limit()
         started = time.monotonic()
         try:
-            await self._wait_for_rate_limit()
             await self._client.connect()
             logger.info(f"Connected to {self._client.base_url} unofficial mySigen Cloud API v{MySigenCloudAdapter.APP_VERSION} (region={self._client.region})")
         except SigenergyCloudAuthError as exc:
@@ -298,10 +304,11 @@ class MySigenCloudAdapter:
         generation = self._connection_generation
         operation_label = self._operation_name(operation, operation_name=operation_name)
         for attempt in range(2):
+            await self._wait_for_rate_limit()
+            rate_limit_generation = self._rate_limit_generation
             started = time.monotonic()
             try:
                 try:
-                    await self._wait_for_rate_limit()
                     logger.debug(f"mySigen {operation_label} executing (attempt {attempt + 1}/2, generation={generation})")
                     result = await operation()
                 finally:
@@ -309,7 +316,8 @@ class MySigenCloudAdapter:
                     # station-discovery latency is tracked independently.
                     await Metrics.cloud_query(time.monotonic() - started)
                 await Metrics.cloud_availability(True)
-                self._rate_limit_streak = 0
+                if rate_limit_generation == self._rate_limit_generation:
+                    self._rate_limit_streak = 0
                 return result
             except SigenergyCloudRateLimitError as exc:
                 retry_after = self._record_rate_limit()
