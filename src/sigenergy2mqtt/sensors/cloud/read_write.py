@@ -724,3 +724,62 @@ class SolarPowerLimit(NumericSensorMixin, CloudReadWriteSensor):
     async def _write_cloud_value(self, port: CloudControlPort, value: float | str) -> bool:
         await port.set_solar_power_limit(float(value))
         return True
+
+
+class BatteryExportLimitation(SwitchSensorMixin, CloudReadWriteSensor):
+    """Control whether the battery is permitted to export to the grid."""
+
+    def __init__(self, plant_index: int, station_id: str) -> None:
+        object_id, unique_id = _identity(plant_index, station_id, "battery_export_limitation")
+        super().__init__(
+            availability_control_sensor=None,
+            name="Block Battery Export to Grid",
+            object_id=object_id,
+            unique_id=unique_id,
+            scan_interval=active_config.cloud.scan_interval,
+            unit=None,
+            device_class=None,
+            state_class=None,
+            icon="mdi:battery-arrow-up-outline",
+            gain=None,
+            precision=0,
+            protocol_version=ProtocolVersion.N_A,
+        )
+        self._updates_allowed = False
+        self._writable_topic: str | None = None
+
+    def configure_mqtt_topics(self, device_id: str) -> str:
+        base = super().configure_mqtt_topics(device_id)
+        if active_config.home_assistant.enabled:
+            availability = cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY])
+            self._writable_topic = f"{base}/writable"
+            availability.append({"topic": self._writable_topic, "payload_available": "1", "payload_not_available": "0"})
+        return base
+
+    def get_attributes(self) -> dict[str, float | int | str]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Not available when disabled by installer."
+        return attributes
+
+    async def publish(self, mqtt_client: Client, transport: Any, republish: bool = False) -> bool:
+        published = await super().publish(mqtt_client, transport, republish)
+        if self._writable_topic is not None:
+            mqtt_client.publish(self._writable_topic, int(self._updates_allowed), qos=self._qos)
+        return published
+
+    async def _read_cloud_state(self, port: CloudControlPort) -> int | None:
+        payload = await port.battery_export_limitation()
+        if not isinstance(payload, dict) or not isinstance(payload.get("currentEnable"), (bool, int)):
+            logger.warning(f"{self.log_identity} cloud response contains invalid currentEnable: {payload!r}")
+            self._updates_allowed = False
+            return None
+        installerSetEnable = payload.get("installerSetEnable", None)
+        self._updates_allowed = True if installerSetEnable is None else bool(installerSetEnable)
+        return int(bool(payload.get("currentEnable", False)))
+
+    async def _write_cloud_value(self, port: CloudControlPort, value: float | str) -> bool:
+        if not self._updates_allowed:
+            logger.warning(f"{self.log_identity} cloud response indicates battery export limitation cannot be changed by the owner")
+            return False
+        await port.set_battery_export_limitation(bool(int(value)))
+        return True

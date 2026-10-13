@@ -322,6 +322,10 @@ class:
     attributes:
       source: BatteryPower < 0 × -1 #verify:ignore
     name: Batterij Ontlaadvermogen
+  BatteryExportLimitation:
+    attributes:
+      comment: Niet beschikbaar wanneer uitgeschakeld door de installateur.
+    name: Blokkeer het terugleveren van batterijstroom naar het net
   BatteryPower:
     attributes:
       comment: "ESS Vermogen: <0 = ontladen, >0 = laden"

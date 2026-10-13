@@ -322,6 +322,10 @@ class:
     attributes:
       source: BatteryPower < 0 × -1 #verify:ignore
     name: 电池放电功率
+  BatteryExportLimitation:
+    attributes:
+      comment: 若被安装人员禁用，则不可用。
+    name: 阻止电池向电网放电
   BatteryPower:
     attributes:
       comment: "ESS功率：<0 = 放电，>0 = 充电"

@@ -322,6 +322,10 @@ class:
     attributes:
       source: BatteryPower < 0 × -1 #verify:ignore
     name: 배터리 방전 전력
+  BatteryExportLimitation:
+    attributes:
+      comment: 설치자가 비활성화한 경우에는 사용할 수 없습니다.
+    name: 배터리에서 전력망으로의 송출 차단
   BatteryPower:
     attributes:
       comment: "ESS 전력: <0 = 방전, >0 = 충전"

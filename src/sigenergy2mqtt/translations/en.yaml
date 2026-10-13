@@ -322,6 +322,10 @@ class:
     attributes:
       source: BatteryPower < 0 × -1
     name: Battery Discharging Power
+  BatteryExportLimitation:
+    attributes:
+      comment: Not available when disabled by installer.
+    name: Block Battery Export to Grid
   BatteryPower:
     attributes:
       comment: 'ESS Power: <0 = discharging >0 = charging'

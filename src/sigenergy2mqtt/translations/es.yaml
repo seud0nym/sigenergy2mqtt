@@ -322,6 +322,10 @@ class:
     attributes:
       source: BatteryPower < 0 × -1 #verify:ignore
     name: Potencia de Descarga de Batería
+  BatteryExportLimitation:
+    attributes:
+      comment: No disponible si el instalador lo ha desactivado.
+    name: Bloquear la exportación de energía de la batería a la red eléctrica
   BatteryPower:
     attributes:
       comment: "Potencia ESS: <0 = descarga, >0 = carga"
