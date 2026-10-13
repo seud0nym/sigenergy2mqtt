@@ -304,6 +304,10 @@ class DiagnosticsServer:
 
                 await Metrics.reset()
                 revision = diagnostics_registry.bump_revision("runtime_configuration")
+                try:
+                    await self._broadcast_snapshot()
+                except Exception as exc:  # noqa: BLE001 - a refresh failure must not undo a successful reset
+                    logger.warning(f"DiagnosticsServer Immediate snapshot after metrics reset failed: {exc}")
                 logger.info(f"DiagnosticsServer Reset all metrics via HTTP: {endpoint!r}")
                 return web.json_response({"ok": True, "revision": revision})
             return web.json_response({"ok": False, "error": f"Unknown config endpoint: {endpoint!r}"}, status=404)
@@ -431,20 +435,24 @@ class DiagnosticsServer:
             logger.debug(f"DiagnosticsServer WebSocket client disconnected ({len(self._sockets)} remaining)")
         return ws
 
+    async def _broadcast_snapshot(self) -> None:
+        """Collect a fresh diagnostics snapshot and push it to connected clients."""
+        self._last_snapshot = await diagnostics_registry.snapshot()
+        logger.debug(f"DiagnosticsServer Snapshot: {self._last_snapshot}")
+        if self._sockets:
+            dead: set[web.WebSocketResponse] = set()
+            for ws in self._sockets:
+                try:
+                    await ws.send_json(self._last_snapshot)
+                except (ConnectionResetError, RuntimeError):
+                    dead.add(ws)
+            self._sockets -= dead
+
     async def _broadcast_loop(self) -> None:
         """Periodically snapshot all providers and push to connected clients."""
         while True:
             try:
-                self._last_snapshot = await diagnostics_registry.snapshot()
-                logger.debug(f"DiagnosticsServer Snapshot: {self._last_snapshot}")
-                if self._sockets:
-                    dead: set[web.WebSocketResponse] = set()
-                    for ws in self._sockets:
-                        try:
-                            await ws.send_json(self._last_snapshot)
-                        except (ConnectionResetError, RuntimeError):
-                            dead.add(ws)
-                    self._sockets -= dead
+                await self._broadcast_snapshot()
             except asyncio.CancelledError:
                 raise
             except Exception as exc:  # noqa: BLE001 - this loop must survive indefinitely; a provider or send_json failure here must never kill the only task pushing live diagnostics

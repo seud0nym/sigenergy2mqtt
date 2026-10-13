@@ -313,7 +313,7 @@ class Metrics:
 
     @classmethod
     async def reset(cls) -> None:
-        """Reset all public int and float metrics class fields to their default values."""
+        """Reset numeric counters and timings, preserving live boolean gauges."""
 
         def _update() -> None:
             def _operation() -> None:
@@ -952,5 +952,7 @@ class Metrics:
 # metrics have been mutated, so that :meth:`Metrics.reset` restores them
 # faithfully.
 for _name, _value in vars(Metrics).items():
-    if not _name.startswith("_") and isinstance(_value, (int, float)):
+    # bool is a subclass of int, but connection state is a live gauge rather
+    # than a counter/timing metric and must survive a metrics reset.
+    if not _name.startswith("_") and isinstance(_value, (int, float)) and not isinstance(_value, bool):
         Metrics._defaults[_name] = _value
