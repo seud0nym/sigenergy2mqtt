@@ -7103,7 +7103,7 @@ In the following topics, the identifier `987B65BC1238` is a placeholder for the 
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_battery_987B65BC1238/sigen_0_cloud_4_987B65BC1238_rated_battery_capacity/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_4_987B65BC1238_rated_battery_capacity/state</td></tr>
 </td></tr>
-<tr><td>Sanity&nbsp;Check</td><td>The value must be a maximum of 500000.0 kWh (raw value ≦ 500000)</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The delta of the value compared to the previous value must be a maximum of 500000.0 kWh (raw value ≦ 500000)</td></tr>
 </table>
 <h5><a id='sigen_0_10000000000001_4_987B65BC1238_software_version'>Software Version</a></h5>
 <table>
