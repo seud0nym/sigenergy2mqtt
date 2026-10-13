@@ -12,6 +12,7 @@
 ### Fixed
 
 - Added a cool down on cloud rate limit errors with exponential backoff
+- Fixed logging identity for cloud devices
 
 ---
 
