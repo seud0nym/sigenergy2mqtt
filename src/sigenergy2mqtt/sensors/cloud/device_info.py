@@ -22,7 +22,8 @@ _UNIT_CLASSES = {
     "Hz": DeviceClass.FREQUENCY,
     "kW": DeviceClass.POWER,
     "kVar": DeviceClass.REACTIVE_POWER,
-    "kWh": DeviceClass.ENERGY_STORAGE,
+    "kWh": DeviceClass.ENERGY,
+    "MWh": DeviceClass.ENERGY,
     "%": DeviceClass.BATTERY,
     "℃": DeviceClass.TEMPERATURE,
     "℉": DeviceClass.TEMPERATURE,
@@ -34,8 +35,9 @@ _NORMALIZED_UNITS = {"kVar": "kvar", "℃": "°C", "℉": "°F"}
 
 
 class DeviceInfoSnapshot:
-    def __init__(self, device_type: int, sn_code: str, static: bool) -> None:
+    def __init__(self, device_type: int, sn_code: str, static: bool, *, pack_merge: bool = False) -> None:
         self.device_type, self.sn_code, self.static = device_type, sn_code, static
+        self.pack_merge = pack_merge
         self._payload: dict[str, Any] | None = None
         self._error: Exception | None = None
 
@@ -47,9 +49,12 @@ class DeviceInfoSnapshot:
         if self._error is not None:
             raise self._error
         if self._payload is None:
-            method = port.device_static_info if self.static else port.device_dynamic_info
             try:
-                self._payload = await method(self.device_type, self.sn_code)
+                if self.pack_merge:
+                    self._payload = await port.battery_pack_merge_info(self.sn_code)
+                else:
+                    method = port.device_static_info if self.static else port.device_dynamic_info
+                    self._payload = await method(self.device_type, self.sn_code)
             except Exception as exc:
                 self._error = exc
                 raise
@@ -72,6 +77,14 @@ class DeviceInfoSensor(CloudSensor):
         object_id, unique_id = _identity(plant_index, station_id, suffix)
         normalized_unit = _NORMALIZED_UNITS.get(unit, unit) or None
         device_class = _UNIT_CLASSES.get(unit)
+        if param_key == "Rated Battery Capacity":
+            state_class = None
+        elif param_key == "Total Discharge Amount":
+            state_class = StateClass.TOTAL_INCREASING
+        elif unit:
+            state_class = StateClass.MEASUREMENT
+        else:
+            state_class = None
         super().__init__(
             name=param_key,
             object_id=object_id,
@@ -79,7 +92,7 @@ class DeviceInfoSensor(CloudSensor):
             scan_interval=ScanIntervalDefault.LOW if static else active_config.cloud.scan_interval,
             unit=normalized_unit,
             device_class=device_class,
-            state_class=StateClass.MEASUREMENT if unit else None,
+            state_class=state_class,
             icon=None,
             gain=None,
             precision=None,
@@ -98,7 +111,7 @@ class DeviceInfoSensor(CloudSensor):
 
     async def _read_cloud_state(self, port: CloudControlPort) -> float | str | None:
         payload = await self._snapshot.read(port)
-        entries = payload.get("paramInfoVOList" if self._static else "realTimeInfo", [])
+        entries = payload.get("paramInfoVOList" if self._static or self._snapshot.pack_merge else "realTimeInfo", [])
         for entry in entries if isinstance(entries, list) else []:
             if isinstance(entry, dict) and entry.get("paramKey") == self.param_key:
                 value = entry.get("paramValueText")

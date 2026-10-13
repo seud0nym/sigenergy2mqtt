@@ -154,15 +154,6 @@ class DeviceClass(StrEnum):
     Unit of measurement: `kWh/100km`, `Wh/km`, `mi/kWh`, `km/kWh`
     """
 
-    ENERGY_STORAGE = "energy_storage"
-    """Stored energy.
-
-    Use this device class for sensors measuring stored energy, for example the amount
-    of electric energy currently stored in a battery or the capacity of a battery.
-
-    Unit of measurement: `J`, `kJ`, `MJ`, `GJ`, `mWh`, `Wh`, `kWh`, `MWh`, `GWh`, `TWh`, `cal`, `kcal`, `Mcal`, `Gcal`
-    """
-
     FREQUENCY = "frequency"
     """Frequency.
 
@@ -598,7 +589,6 @@ _DEVICE_CLASS_UNITS: dict[DeviceClass, frozenset[str | None] | None] = {
     DeviceClass.DURATION: frozenset(UnitOfTime),
     DeviceClass.ENERGY: _ENERGY_UNITS,
     DeviceClass.ENERGY_DISTANCE: frozenset({"kWh/100km", "Wh/km", "mi/kWh", "km/kWh"}),
-    DeviceClass.ENERGY_STORAGE: _ENERGY_UNITS,
     DeviceClass.FREQUENCY: frozenset(UnitOfFrequency),
     DeviceClass.GAS: frozenset({"L", "m³", "ft³", "CCF", "MCF"}),
     DeviceClass.HUMIDITY: frozenset({PERCENTAGE}),

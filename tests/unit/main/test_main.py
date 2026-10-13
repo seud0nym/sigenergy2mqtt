@@ -196,12 +196,14 @@ async def test_cloud_discovery_keeps_inverter_for_matching_when_disabled(monkeyp
     )
     cloud_port.device_dynamic_info = AsyncMock(return_value={})
     cloud_port.device_static_info = AsyncMock(return_value={})
+    cloud_port.battery_pack_merge_info = AsyncMock(return_value={})
 
     discovery = await discover_cloud(cloud_port)
 
     assert discovery is not None
     assert [device["deviceType"] for device in discovery.device_list] == ["Inverter", "Battery"]
     assert _cloud_control_plant_index(discovery.device_list) == 2
+    cloud_port.battery_pack_merge_info.assert_awaited_once_with("BAT-1")
 
 
 @pytest.mark.asyncio

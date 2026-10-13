@@ -386,6 +386,15 @@ class SigenergyCloudClient:
         )
         return data if isinstance(data, dict) else {"raw": data}
 
+    async def battery_pack_merge_info(self, sn_code: str) -> dict[str, Any]:
+        """Return merged battery pack measurements for one battery."""
+        data = await self._data(
+            "GET",
+            "device/device/pack/queryPackMergeInfo",
+            params={"stationId": self._station_id(), "snCode": sn_code},
+        )
+        return data if isinstance(data, dict) else {"raw": data}
+
     async def grid_connection_point_devices(self) -> list[dict[str, Any]]:
         """Return devices attached to the grid connection point (gateway)."""
         data = await self._station_data(

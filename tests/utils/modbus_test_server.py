@@ -520,6 +520,13 @@ class CloudApiTestServer:
             },
             4: {"stationStatus": 1, "softwareVersion": FIRMWARE_VERSION, "runStatus": 1, "findCheck": None, "paramInfoVOList": self._device_parameters("987B65BC1238", "SigenStor BAT 8.0", "8.06", "kWh")},
         }
+        self.battery_pack_merge_info = {
+            "paramInfoVOList": [
+                {"paramKey": "Total Discharge Amount", "paramValue": "2.96 MWh", "paramValueText": "2.96", "paramValueUnit": "MWh"},
+                {"paramKey": "Average Cell Voltage", "paramValue": "3.338 V", "paramValueText": "3.338", "paramValueUnit": "V"},
+                {"paramKey": "Average Cell Temperature", "paramValue": "25.3 ℃", "paramValueText": "25.3", "paramValueUnit": "℃"},
+            ]
+        }
 
         self.grid_export_limit = {
             "enable": True,
@@ -686,6 +693,13 @@ class CloudApiTestServer:
         except (KeyError, ValueError):
             return web.json_response({"code": 400, "msg": "Invalid device"}, status=400)
 
+    async def get_battery_pack_merge_info(self, request: web.Request) -> web.Response:
+        if (response := await self.authorized(request)) is not None:
+            return response
+        if request.query.get("stationId") != str(self.device_topology["stationId"]) or not request.query.get("snCode"):
+            return web.json_response({"code": 400, "msg": "Invalid battery"}, status=400)
+        return self._success(copy.deepcopy(self.battery_pack_merge_info))
+
     async def available_modes(self, request: web.Request) -> web.Response:
         if (response := await self.authorized(request)) is not None:
             return response
@@ -809,6 +823,7 @@ class CloudApiTestServer:
             web.get("/device/devicetreepanel/topology", self.get_device_topology),
             web.get("/device/gateway/{station_id}", self.get_gateway_info),
             web.get("/device/sigen/device/{kind}/info", self.get_device_info),
+            web.get("/device/device/pack/queryPackMergeInfo", self.get_battery_pack_merge_info),
             web.get(
                 "/device/energy-profile/mode/all/{station_id}",
                 self.available_modes,

@@ -102,6 +102,8 @@ async def test_mysigen_cloud_adapter_against_test_server(
             assert any(item["paramKey"] == "Phase C Voltage" for item in inverter_dynamic["realTimeInfo"])
             battery_static = await adapter.device_static_info(4, "987B65BC1237")
             assert battery_static["paramInfoVOList"][0]["paramValueText"] == "987B65BC1237"
+            battery_pack = await adapter.battery_pack_merge_info("987B65BC1237")
+            assert battery_pack["paramInfoVOList"][0]["paramKey"] == "Total Discharge Amount"
             assert gateway["snCode"] == CLOUD_TEST_GATEWAY_SERIAL
             assert {item["paramKey"] for item in gateway["gridSideInfoList"]} >= {
                 "Phase A Voltage",

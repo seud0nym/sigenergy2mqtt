@@ -240,6 +240,12 @@ class MySigenCloudAdapter:
             operation_name="device_static_info",
         )
 
+    async def battery_pack_merge_info(self, sn_code: str) -> dict[str, Any]:
+        return await self._cloud_operation(
+            lambda: self._client.battery_pack_merge_info(sn_code),
+            operation_name="battery_pack_merge_info",
+        )
+
     async def set_instant_override(self, command: InstantOverrideCommand) -> None:
         unsupported = []
         if command.power_kw is not None:

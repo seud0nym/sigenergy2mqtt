@@ -33,6 +33,7 @@ class SigenCloudDevice(Device):
         device: dict[str, Any],
         dynamic: dict[str, Any],
         static: dict[str, Any],
+        battery_pack_info: dict[str, Any] | None = None,
     ) -> None:
         sn = str(device["serialNumber"])
         position = device.get("attrMap", {}).get("batPosition")
@@ -65,13 +66,19 @@ class SigenCloudDevice(Device):
         self._pending_info = {static for static, payload, key in (
             (False, dynamic, "realTimeInfo"), (True, static, "paramInfoVOList")
         ) if key not in payload}
+        self._pending_pack_info = self.device_type == 4 and (
+            not isinstance(battery_pack_info, dict)
+            or not isinstance(battery_pack_info.get("paramInfoVOList"), list)
+        )
         self._add_info(False, dynamic)
         self._add_info(True, static)
+        if self.device_type == 4 and battery_pack_info is not None:
+            self._add_info(True, battery_pack_info, pack_merge=True)
 
-    def _add_info(self, is_static: bool, payload: dict[str, Any]) -> None:
+    def _add_info(self, is_static: bool, payload: dict[str, Any], *, pack_merge: bool = False) -> None:
         key = "paramInfoVOList" if is_static else "realTimeInfo"
         plant_index, station_id, sn = self.plant_index, self._station_id, self._sn
-        snapshot = DeviceInfoSnapshot(self.device_type, sn, is_static)
+        snapshot = DeviceInfoSnapshot(self.device_type, sn, is_static, pack_merge=pack_merge)
         seen_suffixes: set[str] = set()
         entries = payload.get(key, [])
         for entry in entries if isinstance(entries, list) else []:
@@ -87,7 +94,7 @@ class SigenCloudDevice(Device):
                         param_key,
                         str(entry.get("paramValueUnit") or ""),
                         snapshot,
-                        static=is_static,
+                        static=is_static and not pack_merge,
                     )
                 )
 
@@ -104,7 +111,7 @@ class SigenCloudDevice(Device):
                 self.online = False
         polling: list[asyncio.Task] = []
         try:
-            while self._pending_info and self.online and not self._shutdown_event.is_set():
+            while (self._pending_info or self._pending_pack_info) and self.online and not self._shutdown_event.is_set():
                 for static in tuple(self._pending_info):
                     method = port.device_static_info if static else port.device_dynamic_info
                     try:
@@ -131,7 +138,30 @@ class SigenCloudDevice(Device):
                         else:
                             self.publish_attributes(mqtt_client, clean=False)
                         polling.append(asyncio.create_task(SensorGroupPoller(self).run(port, mqtt_client, f"Recovered-{static}", *new)))
-                if self._pending_info:
+                if self._pending_pack_info:
+                    try:
+                        payload = await port.battery_pack_merge_info(self._sn)
+                    except (ClientError, CloudControlError) as exc:
+                        logger.warning("%s battery pack info recovery failed: %s", self.log_identity, exc)
+                        payload = None
+                    if isinstance(payload, dict) and isinstance(payload.get("paramInfoVOList"), list):
+                        before = set(self.all_sensors)
+                        self._add_info(True, payload, pack_merge=True)
+                        self._pending_pack_info = False
+                        added = [sensor for uid, sensor in self.all_sensors.items() if uid not in before]
+                        if self._mqtt_handler is not None:
+                            for sensor in added:
+                                debug_topic = f"{sensor._get_base_topic(self.unique_id)}/debug"
+                                self._mqtt_handler.register(mqtt_client, debug_topic, sensor.set_debug_logging)
+                        new = [sensor for sensor in added if sensor.publishable]
+                        if new:
+                            if active_config.home_assistant.enabled:
+                                self.publish_discovery(mqtt_client, clean=False)
+                                self.publish_availability(mqtt_client, "online")
+                            else:
+                                self.publish_attributes(mqtt_client, clean=False)
+                            polling.append(asyncio.create_task(SensorGroupPoller(self).run(port, mqtt_client, "Recovered-pack", *new)))
+                if self._pending_info or self._pending_pack_info:
                     try:
                         await asyncio.wait_for(self._shutdown_event.wait(), timeout=max(1.0, active_config.cloud.scan_interval))
                     except TimeoutError:
@@ -161,7 +191,11 @@ def build_sigen_devices(plant_index: int, station_id: str, discovery: CloudDisco
             continue
         cls = {"Inverter": CloudInverter, "Battery": CloudBattery}.get(device_name) if isinstance(device_name, str) else None
         sn = device.get("serialNumber")
-        info = (discovery.device_info or {}).get(sn) if isinstance(sn, str) else None
-        if cls is not None and info is not None:
-            result.append(cls(plant_index, station_id, device, *info))
+        if cls is None or not isinstance(sn, str):
+            continue
+        info = (discovery.device_info or {}).get(sn)
+        if info is None:
+            continue
+        battery_pack_info = (discovery.battery_pack_info or {}).get(sn) if cls is CloudBattery else None
+        result.append(cls(plant_index, station_id, device, *info, battery_pack_info))
     return result
