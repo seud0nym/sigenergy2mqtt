@@ -313,7 +313,7 @@ class Metrics:
 
     @classmethod
     async def reset(cls) -> None:
-        """Reset all public int and float metrics class fields to their default values."""
+        """Reset numeric counters and timings, preserving live boolean gauges."""
 
         def _update() -> None:
             def _operation() -> None:
@@ -323,7 +323,9 @@ class Metrics:
 
             cls._update_with_lock(_operation, "metrics reset")
 
-        cls._submit(_update)
+        # Unlike ordinary metric updates, the diagnostics reset response is
+        # followed by a snapshot that must observe the reset values.
+        await asyncio.wrap_future(cls._submit(_update))
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -393,8 +395,8 @@ class Metrics:
         DiagnosticsCollectors.collect_metrics()
 
     @classmethod
-    def _submit(cls, operation: Callable[[], None]) -> None:
-        """Queue a metric update to the internal worker and return immediately."""
+    def _submit(cls, operation: Callable[[], None]) -> Future:
+        """Queue a metric update to the internal worker and return its future."""
         with cls._executor_lock:
             if cls._executor is None:
                 cls._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="metrics")
@@ -410,6 +412,7 @@ class Metrics:
                     cls._pending_updates.remove(completed)
 
         future.add_done_callback(_cleanup)
+        return future
 
     @classmethod
     def _update_with_lock(cls, operation: Callable[[], None], warning: str) -> None:
@@ -952,5 +955,7 @@ class Metrics:
 # metrics have been mutated, so that :meth:`Metrics.reset` restores them
 # faithfully.
 for _name, _value in vars(Metrics).items():
-    if not _name.startswith("_") and isinstance(_value, (int, float)):
+    # bool is a subclass of int, but connection state is a live gauge rather
+    # than a counter/timing metric and must survive a metrics reset.
+    if not _name.startswith("_") and isinstance(_value, (int, float)) and not isinstance(_value, bool):
         Metrics._defaults[_name] = _value

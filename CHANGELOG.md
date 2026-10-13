@@ -6,6 +6,7 @@
 ## Added
 
 - Added additional individual battery sensors from Cloud API (Total Discharge Amount and Average Cell Voltage/Temperature)
+- Added Reset button to Diagnostics web page
 
 ### Fixed
 

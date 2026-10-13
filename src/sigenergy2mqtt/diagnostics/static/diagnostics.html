@@ -463,6 +463,7 @@
     </div>
     <div class="header-right">
       <span class="conn-pill" id="connPill"><span class="conn-dot"></span><span id="connLabel">Connecting…</span></span>
+      <button class="btn" id="resetMetrics" type="button" title="Reset all collected metrics">↺ Reset</button>
       <a class="btn" href="export" download>⬇ Export JSON</a>
       <a class="btn" href="debug"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
           stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"
@@ -509,8 +510,18 @@
       const connPill = document.getElementById('connPill');
       const connLabel = document.getElementById('connLabel');
       const themeToggle = document.getElementById('themeToggle');
+      const resetMetricsButton = document.getElementById('resetMetrics');
 
       initThemeToggle(themeToggle);
+
+      resetMetricsButton.addEventListener('click', async () => {
+        resetMetricsButton.disabled = true;
+        try {
+          await postJSON('config/metrics_reset', {}, resetMetricsButton);
+        } finally {
+          resetMetricsButton.disabled = false;
+        }
+      });
 
       function pillClassFor(value) {
         if (value === true || value === 'healthy') return 'ok';
