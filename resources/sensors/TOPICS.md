@@ -6485,6 +6485,17 @@ Cloud Control and child device topics are only published when the Cloud API acce
 </td></tr>
 <tr><td>Sanity&nbsp;Check</td><td>The value must be between 0.0 kW and 4294967.295 kW (0 ≦ raw value ≦ 4294967)</td></tr>
 </table>
+<h5><a id='sigen_0_10000000000001_battery_export_limitation'>Block Battery Export to Grid</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>BatteryExportLimitation</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_battery_export_limitation</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/switch/sigen_0_10000000000001/sigen_0_cloud_battery_export_limitation/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_battery_export_limitation/state</td></tr>
+</td></tr>
+<tr><td>Comment</td><td>Not available when disabled by installer.</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0  and 1  (0 ≦ raw value ≦ 1)</td></tr>
+</table>
 <h5><a id='sigen_0_10000000000001_grid_connection_limit'>Grid Connection Current Limit</a></h5>
 <table>
 <tr><td>Sensor&nbsp;Class</td><td>GridConnectionLimit</td></tr>
@@ -6593,6 +6604,13 @@ Cloud Control and child device topics are only published when the Cloud API acce
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_battery_discharge_power_limit/set</td></tr>
 <tr><td>Minimum&nbsp;Value</td><td>0.0</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>4294967.295</td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_battery_export_limitation_set'>Block Battery Export to Grid
+</a></h5>
+<table>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/switch/sigen_0_10000000000001/sigen_0_cloud_battery_export_limitation/set</td></tr>
+<tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_battery_export_limitation/set</td></tr>
+<tr><td>Comment</td><td>Not available when disabled by installer.</td></tr>
 </table>
 <h5><a id='sigen_0_10000000000001_grid_connection_limit_set'>Grid Connection Current Limit
 </a></h5>
@@ -8537,6 +8555,7 @@ The attributes payload currently includes:
 <h6>Cloud Control</h6>
 <a href='#sigen_0_10000000000001_battery_charge_power_limit'>Battery Charge Power Limit</a><br>
 <a href='#sigen_0_10000000000001_battery_discharge_power_limit'>Battery Discharge Power Limit</a><br>
+<a href='#sigen_0_10000000000001_battery_export_limitation'>Block Battery Export to Grid</a><br>
 <a href='#sigen_0_10000000000001_grid_connection_limit'>Grid Connection Current Limit</a><br>
 <a href='#sigen_0_10000000000001_grid_export_limit'>Grid Export Limit</a><br>
 <a href='#sigen_0_10000000000001_grid_import_limit'>Grid Import Limit</a><br>
@@ -8733,6 +8752,7 @@ The attributes payload currently includes:
 <h6>Cloud Control</h6>
 <a href='#sigen_0_10000000000001_battery_charge_power_limit_set'>Battery Charge Power Limit</a><br>
 <a href='#sigen_0_10000000000001_battery_discharge_power_limit_set'>Battery Discharge Power Limit</a><br>
+<a href='#sigen_0_10000000000001_battery_export_limitation_set'>Block Battery Export to Grid</a><br>
 <a href='#sigen_0_10000000000001_grid_connection_limit_set'>Grid Connection Current Limit</a><br>
 <a href='#sigen_0_10000000000001_grid_export_limit_set'>Grid Export Limit</a><br>
 <a href='#sigen_0_10000000000001_grid_import_limit_set'>Grid Import Limit</a><br>
