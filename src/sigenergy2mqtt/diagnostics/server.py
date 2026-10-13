@@ -60,6 +60,7 @@ class DiagnosticsServer:
         self._sockets: set[web.WebSocketResponse] = set()
         self._broadcast_task: asyncio.Task | None = None
         self._last_snapshot: dict[str, Any] = {}
+        self._snapshot_lock = asyncio.Lock()
 
     def _configure_routes(self) -> None:
         if self._app is None:
@@ -304,10 +305,7 @@ class DiagnosticsServer:
 
                 await Metrics.reset()
                 revision = diagnostics_registry.bump_revision("runtime_configuration")
-                try:
-                    await self._broadcast_snapshot()
-                except Exception as exc:  # noqa: BLE001 - a refresh failure must not undo a successful reset
-                    logger.warning(f"DiagnosticsServer Immediate snapshot after metrics reset failed: {exc}")
+                await self._broadcast_after_metrics_reset()
                 logger.info(f"DiagnosticsServer Reset all metrics via HTTP: {endpoint!r}")
                 return web.json_response({"ok": True, "revision": revision})
             return web.json_response({"ok": False, "error": f"Unknown config endpoint: {endpoint!r}"}, status=404)
@@ -345,6 +343,8 @@ class DiagnosticsServer:
         if ok:
             revision = diagnostics_registry.bump_revision("runtime_configuration")
             logger.info(f"DiagnosticsServer Config updated via HTTP: {endpoint!r} = {raw_value!r}")
+            if endpoint in ("metrics_reset", "reset_metrics"):
+                await self._broadcast_after_metrics_reset()
             return web.json_response({"ok": True, "revision": revision})
         return web.json_response({"ok": False, "error": "Update rejected by sensor validation"}, status=422)
 
@@ -437,16 +437,24 @@ class DiagnosticsServer:
 
     async def _broadcast_snapshot(self) -> None:
         """Collect a fresh diagnostics snapshot and push it to connected clients."""
-        self._last_snapshot = await diagnostics_registry.snapshot()
-        logger.debug(f"DiagnosticsServer Snapshot: {self._last_snapshot}")
-        if self._sockets:
-            dead: set[web.WebSocketResponse] = set()
-            for ws in self._sockets:
-                try:
-                    await ws.send_json(self._last_snapshot)
-                except (ConnectionResetError, RuntimeError):
-                    dead.add(ws)
-            self._sockets -= dead
+        async with self._snapshot_lock:
+            self._last_snapshot = await diagnostics_registry.snapshot()
+            logger.debug(f"DiagnosticsServer Snapshot: {self._last_snapshot}")
+            if self._sockets:
+                dead: set[web.WebSocketResponse] = set()
+                for ws in self._sockets:
+                    try:
+                        await ws.send_json(self._last_snapshot)
+                    except (ConnectionResetError, RuntimeError):
+                        dead.add(ws)
+                self._sockets -= dead
+
+    async def _broadcast_after_metrics_reset(self) -> None:
+        """Refresh diagnostics immediately after a successful metrics reset."""
+        try:
+            await self._broadcast_snapshot()
+        except Exception as exc:  # noqa: BLE001 - a refresh failure must not undo a successful reset
+            logger.warning(f"DiagnosticsServer Immediate snapshot after metrics reset failed: {exc}")
 
     async def _broadcast_loop(self) -> None:
         """Periodically snapshot all providers and push to connected clients."""
