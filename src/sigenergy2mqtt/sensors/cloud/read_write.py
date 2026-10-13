@@ -771,6 +771,7 @@ class BatteryExportLimitation(SwitchSensorMixin, CloudReadWriteSensor):
         payload = await port.battery_export_limitation()
         if not isinstance(payload, dict) or not isinstance(payload.get("currentEnable"), (bool, int)):
             logger.warning(f"{self.log_identity} cloud response contains invalid currentEnable: {payload!r}")
+            self._updates_allowed = False
             return None
         installerSetEnable = payload.get("installerSetEnable", None)
         self._updates_allowed = True if installerSetEnable is None else bool(installerSetEnable)

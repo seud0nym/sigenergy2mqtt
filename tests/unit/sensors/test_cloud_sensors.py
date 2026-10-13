@@ -178,6 +178,22 @@ async def test_battery_export_limitation_rejects_invalid_cloud_state(payload) ->
 
 
 @pytest.mark.asyncio
+async def test_battery_export_limitation_invalid_read_clears_previous_write_permission() -> None:
+    sensor = BatteryExportLimitation(0, FakeCloudControlPort.station_id)
+    port = FakeCloudControlPort()
+    port.battery_export_limitation.return_value = {"currentEnable": True, "installerSetEnable": True}
+
+    assert await sensor._read_cloud_state(port) == 1
+    assert sensor._updates_allowed is True
+
+    port.battery_export_limitation.return_value = {"currentEnable": "invalid", "installerSetEnable": True}
+    assert await sensor._read_cloud_state(port) is None
+    assert sensor._updates_allowed is False
+    assert await sensor._write_cloud_value(port, 0) is False
+    port.set_battery_export_limitation.assert_not_awaited()
+
+
+@pytest.mark.asyncio
 async def test_battery_export_limitation_defaults_missing_installer_permission_to_allowed() -> None:
     sensor = BatteryExportLimitation(0, FakeCloudControlPort.station_id)
     port = FakeCloudControlPort()
