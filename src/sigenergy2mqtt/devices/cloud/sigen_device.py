@@ -49,12 +49,15 @@ class SigenCloudDevice(Device):
         )
         model_name = str(device_model) if device_model else default_model
         name = f"{model_name} {sn if self.device_type == 3 else battery_name}"
+        self._cloud_log_discriminator = (
+            f"sn={sn}" if self.device_type == 3 or position is None else f"batPosition={position}"
+        )
         super().__init__(
             name,
             plant_index,
             unique_id=f"{active_config.home_assistant.unique_id_prefix}_{plant_index}_{station_id}_{kind}_{sn}",
             manufacturer="Sigenergy",
-            model=kind.title(),
+            model=device_model if device_model else kind.title(),
             protocol_version=ProtocolVersion.N_A,
             sn=sn,
             plant_suffix="" if plant_index == 0 else str(plant_index + 1),
@@ -74,6 +77,13 @@ class SigenCloudDevice(Device):
         self._add_info(True, static)
         if self.device_type == 4 and battery_pack_info is not None:
             self._add_info(True, battery_pack_info, pack_merge=True)
+
+    def _build_log_identity(self) -> str:
+        identity = super()._build_log_identity()
+        discriminator = getattr(self, "_cloud_log_discriminator", None)
+        if discriminator:
+            return f"{identity[:-1]},{discriminator}]"
+        return identity
 
     def _add_info(self, is_static: bool, payload: dict[str, Any], *, pack_merge: bool = False) -> None:
         key = "paramInfoVOList" if is_static else "realTimeInfo"
