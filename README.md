@@ -69,6 +69,15 @@ To use the Cloud API in `sigenergy2mqtt`, it is _strongly_ recommended that you 
 
 The topics that are published and subscribed to by `sigenergy2mqtt` can be found [here](resources/sensors/TOPICS.md).
 
-## Disclaimer
+## Disclaimers
 
-`sigenergy2mqtt` was developed for my own use, and as such has only been tested in my single-phase environment without AC or DC chargers, although I have developed a testing environment in software that emulates the chargers and three phase implementations. If you find a problem, please raise an issue.
+`sigenergy2mqtt` was developed for my own use, and as such has only been fully tested in my single-phase environment without AC or DC chargers, although I have developed a testing environment in software that emulates charger, three phase implementations and the Cloud API. If you find a problem, please raise an issue.
+
+### AI Tools & Usage
+
+This project uses AI tools to assist development, under human direction and review:
+
+* **Code Generation & Scaffolding**: VS Code / Antigravity IDE AI assistants and Codex for unit tests, issue investigation/resolution and new features.
+* **Code Quality & Refinement**: Greptile for automated PR code reviews and Snyk for automated security reviews, plus Claude for single module code reviews.
+
+All AI-assisted code and suggestions are reviewed, tested, and validated by maintainer prior to merging.
