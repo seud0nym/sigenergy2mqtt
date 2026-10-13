@@ -322,6 +322,10 @@ class:
     attributes:
       source: BatteryPower < 0 × -1 #verify:ignore
     name: バッテリー放電電力
+  BatteryExportLimitation:
+    attributes:
+      comment: 設置業者によって無効化されている場合は利用できません。
+    name: バッテリーからの系統への電力供給を遮断
   BatteryPower:
     attributes:
       comment: "ESS電力：<0 = 放電、>0 = 充電"

@@ -10,6 +10,7 @@ from sigenergy2mqtt.devices.base.device import Device
 from sigenergy2mqtt.sensors.cloud.read_write import (
     BatteryChargePowerLimit,
     BatteryDischargePowerLimit,
+    BatteryExportLimitation,
     GridConnectionLimit,
     GridExportLimit,
     GridImportLimit,
@@ -70,6 +71,7 @@ class CloudControl(Device):
             battery_discharge_limit = BatteryDischargePowerLimit(plant_index, station_id, battery_charge_limit._snapshot)
             self._add_sensor(battery_charge_limit)
             self._add_sensor(battery_discharge_limit)
+            self._add_sensor(BatteryExportLimitation(plant_index, station_id))
 
         for build_child in _CHILD_BUILDERS:
             if (child := build_child(plant_index, station_id, discovery)) is not None:

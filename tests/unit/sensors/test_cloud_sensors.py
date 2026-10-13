@@ -25,6 +25,7 @@ from sigenergy2mqtt.sensors.cloud.functions import _identity
 from sigenergy2mqtt.sensors.cloud.read_write import (
     BatteryChargePowerLimit,
     BatteryDischargePowerLimit,
+    BatteryExportLimitation,
     GridConnectionLimit,
     GridExportLimit,
     GridImportLimit,
@@ -135,16 +136,68 @@ def test_cloud_control_device_registers_normal_mqtt_entities() -> None:
         SolarPowerLimit,
         BatteryChargePowerLimit,
         BatteryDischargePowerLimit,
+        BatteryExportLimitation,
     ]
     assert sensors[0][DiscoveryKeys.PLATFORM] == "switch"
     assert sensors[1][DiscoveryKeys.PLATFORM] == "select"
     assert sensors[2][DiscoveryKeys.PLATFORM] == "number"
     assert sensors[3][DiscoveryKeys.PLATFORM] == "select"
     assert all(sensor[DiscoveryKeys.PLATFORM] == "number" for sensor in sensors[4:10])
+    assert sensors[10][DiscoveryKeys.PLATFORM] == "switch"
     assert device.protocol_version is ProtocolVersion.N_A
     assert device.name == "Sigenergy Cloud"
     assert device["model"] == "Test Cloud"
     assert all(sensor.protocol_version is ProtocolVersion.N_A for sensor in sensors)
+
+
+@pytest.mark.asyncio
+async def test_battery_export_limitation_reads_state_and_honors_installer_permission() -> None:
+    sensor = BatteryExportLimitation(0, FakeCloudControlPort.station_id)
+    port = FakeCloudControlPort()
+    port.battery_export_limitation.return_value = {"currentEnable": True, "installerSetEnable": False}
+
+    assert await sensor._read_cloud_state(port) == 1
+    port.battery_export_limitation.assert_awaited_once_with()
+    assert await sensor._write_cloud_value(port, 0) is False
+    port.set_battery_export_limitation.assert_not_awaited()
+
+    port.battery_export_limitation.return_value = {"currentEnable": 0, "installerSetEnable": 1}
+    assert await sensor._read_cloud_state(port) == 0
+    assert await sensor._write_cloud_value(port, 1) is True
+    port.set_battery_export_limitation.assert_awaited_once_with(True)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("payload", [None, [], {}, {"currentEnable": "true"}, {"currentEnable": None}])
+async def test_battery_export_limitation_rejects_invalid_cloud_state(payload) -> None:
+    sensor = BatteryExportLimitation(0, FakeCloudControlPort.station_id)
+    port = FakeCloudControlPort()
+    port.battery_export_limitation.return_value = payload
+
+    assert await sensor._read_cloud_state(port) is None
+
+
+@pytest.mark.asyncio
+async def test_battery_export_limitation_defaults_missing_installer_permission_to_allowed() -> None:
+    sensor = BatteryExportLimitation(0, FakeCloudControlPort.station_id)
+    port = FakeCloudControlPort()
+    port.battery_export_limitation.return_value = {"currentEnable": False}
+
+    assert await sensor._read_cloud_state(port) == 0
+    assert await sensor._write_cloud_value(port, 1) is True
+    port.set_battery_export_limitation.assert_awaited_once_with(True)
+
+
+def test_battery_export_limitation_configures_home_assistant_writable_availability() -> None:
+    config = Config()
+    config.home_assistant.enabled = True
+    with _swap_active_config(config):
+        sensor = BatteryExportLimitation(0, FakeCloudControlPort.station_id)
+        base = sensor.configure_mqtt_topics("cloud-device")
+
+    assert sensor._writable_topic == f"{base}/writable"
+    assert {"topic": sensor._writable_topic, "payload_available": "1", "payload_not_available": "0"} in sensor[DiscoveryKeys.AVAILABILITY]
+    assert sensor.get_attributes()["comment"] == "Not available when disabled by installer."
 
 
 @pytest.mark.asyncio

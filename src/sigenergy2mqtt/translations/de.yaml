@@ -322,6 +322,10 @@ class:
     attributes:
       source: BatteryPower < 0 × -1 #verify:ignore
     name: Batterieentladeleistung
+  BatteryExportLimitation:
+    attributes:
+      comment: Nicht verfügbar, wenn vom Installateur deaktiviert.
+    name: Batterie-Export ins Netz blockieren
   BatteryPower:
     attributes:
       comment: "ESS-Leistung: <0 = Entladen, >0 = Laden"
