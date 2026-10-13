@@ -475,6 +475,10 @@ class DiagnosticsServer:
         config reload that changed the port/host/refresh interval is picked
         up here rather than being stuck with whatever was set at import time.
         """
+        # Services restarts create a new event loop, so any lock used by the
+        # previous run must not be reused by this broadcast loop.
+        self._snapshot_lock = asyncio.Lock()
+
         cfg = active_config.diagnostics
         self._host = getattr(cfg, "host", self._host)
         self._port = DEFAULT_PORT if is_docker() else getattr(cfg, "port", self._port)
