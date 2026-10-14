@@ -81,3 +81,5 @@ This project uses AI tools to assist development, under human direction and revi
 * **Code Quality & Refinement**: Greptile for automated PR code reviews and Snyk for automated security reviews, plus Claude for single module code reviews.
 
 All AI-assisted code and suggestions are reviewed, tested, and validated by maintainer prior to merging.
+
+Contributors may use AI tools, provided PRs are verified and include tests.
