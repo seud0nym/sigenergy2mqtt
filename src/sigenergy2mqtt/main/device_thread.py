@@ -28,10 +28,15 @@ from .thread_config import ThreadConfig
 
 logger = logging.getLogger(__name__)
 
+_current_ha_status: str | None = None
+
 
 async def log_ha_status(transport: Any, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
     """Log Home Assistant status messages received via MQTT."""
-    logger.info(f"Received Home Assistant status: {value}")
+    global _current_ha_status
+    if _current_ha_status != str(value):
+        _current_ha_status = str(value)
+        logger.info(f"Home Assistant is {_current_ha_status}")
     return True
 
 
