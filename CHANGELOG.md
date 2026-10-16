@@ -15,6 +15,12 @@
 - Fixed logging identity for cloud devices
 - Reduced log spamming from every device when Home Assistant goes offline/online
 
+### Changed
+- Updated aiohttp from 3.14.4 to 3.14.5
+- Updated pycryptodome from 3.24.0 to 3.24.1
+- Updated pymodbus from 3.15.0 to 3.16.1
+- Updated pydantic-settings from 2.15.0 to 2.16.0
+
 ---
 
 ## [2026.10.10] - 2026-10-10
