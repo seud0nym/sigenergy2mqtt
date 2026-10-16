@@ -10,10 +10,7 @@ from typing import Any, cast
 import paho.mqtt.client as mqtt
 from aiohttp import ClientError
 
-from sigenergy2mqtt.cloud.exceptions import (
-    CloudControlError,
-    CloudControlRateLimitedError,
-)
+from sigenergy2mqtt.cloud.exceptions import CloudControlError, CloudControlRateLimitedError, CloudControlUnavailableError
 from sigenergy2mqtt.cloud.port import CloudControlPort
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.mqtt import MqttHandler
@@ -34,6 +31,10 @@ _port_latest_error: dict[int, str] = {}
 
 class CloudSensor(ReadableSensorMixin, AvailabilityMixin):
     """Readable sensor whose transport implements :class:`CloudControlPort`."""
+
+    def __init__(self, *args, **kwargs) -> None:
+        self._monitorable_before_cloud_outage: bool | None = None
+        super().__init__(*args, **kwargs)
 
     @property
     def payload_available(self) -> bool | int | float | str | None:
@@ -73,6 +74,9 @@ class CloudSensor(ReadableSensorMixin, AvailabilityMixin):
         except CloudControlRateLimitedError:
             # The polling coordinator must see a 429 so it can reschedule this
             # sensor group for the adapter's shared cooldown.
+            if self._monitorable_before_cloud_outage is None:
+                self._monitorable_before_cloud_outage = self.monitorable
+            self.monitorable = False
             raise
         except (ClientError, CloudControlError) as exc:
             exc_repr = repr(exc)
@@ -86,23 +90,20 @@ class CloudSensor(ReadableSensorMixin, AvailabilityMixin):
             elif sensor_id not in port_outages:
                 # Port already in outage, new sensor failing - check if error is new
                 port_outages[sensor_id] = exc_repr
-                if exc_repr != _port_latest_error.get(port_id):
-                    logger.warning(f"{self.log_identity} cloud read failed (error changed): {exc_repr}")
-                    _port_latest_error[port_id] = exc_repr
-                else:
-                    logger.debug(f"{self.log_identity} cloud read failed (outage ongoing): {exc_repr}")
+                logger.debug(f"{self.log_identity} cloud read failed (outage ongoing): {exc_repr}")
             elif port_outages[sensor_id] != exc_repr:
                 # Error changed for this specific sensor - check if it's new for the port
                 port_outages[sensor_id] = exc_repr
-                if exc_repr != _port_latest_error.get(port_id):
-                    logger.warning(f"{self.log_identity} cloud read failed (error changed): {exc_repr}")
-                    _port_latest_error[port_id] = exc_repr
-                else:
-                    logger.debug(f"{self.log_identity} cloud read failed (outage ongoing): {exc_repr}")
+                logger.debug(f"{self.log_identity} cloud read failed (outage ongoing): {exc_repr}")
             else:
                 # Same outage already reported for this sensor - suppress to debug
                 logger.debug(f"{self.log_identity} cloud read failed (outage ongoing): {exc_repr}")
-            return False
+            # Let the scan-group poller slow down the whole cloud group. The
+            # adapter's rate-limit path uses the same group-level behavior.
+            if self._monitorable_before_cloud_outage is None:
+                self._monitorable_before_cloud_outage = self.monitorable
+            self.monitorable = False
+            raise CloudControlUnavailableError(str(exc)) from exc
             
         # Successful read: clear outage state for this sensor
         if port_id in _port_outage:
@@ -116,6 +117,10 @@ class CloudSensor(ReadableSensorMixin, AvailabilityMixin):
                     _port_latest_error.pop(port_id, None)
                 else:
                     logger.debug(f"{self.log_identity} cloud read recovered, but other sensors are still failing")
+
+        if self._monitorable_before_cloud_outage is not None:
+            self.monitorable = self._monitorable_before_cloud_outage
+            self._monitorable_before_cloud_outage = None
                     
         if value is None:
             return False

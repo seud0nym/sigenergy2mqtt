@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any
 import paho.mqtt.client as mqtt
 from pymodbus import ModbusException
 
-from sigenergy2mqtt.cloud.exceptions import CloudControlRateLimitedError
+from sigenergy2mqtt.cloud.exceptions import CloudControlRateLimitedError, CloudControlUnavailableError
 from sigenergy2mqtt.common import Constants
 from sigenergy2mqtt.modbus import ModbusClient, ModbusLock, ModbusLockFactory
 from sigenergy2mqtt.sensors.base import (
@@ -315,6 +315,7 @@ class SensorGroupPoller:
 
         lock = ModbusLockFactory.get(transport)
         last_day = time.localtime(time.time()).tm_yday
+        cloud_failure_streak = 0
 
         # Main publishing loop - respects shutdown event
         while device.online and not device._shutdown_event.is_set():
@@ -346,6 +347,8 @@ class SensorGroupPoller:
                         next_publish_times[sensor] = now + sensor.scan_interval
                         sensor.force_publish = False
 
+                    cloud_failure_streak = 0
+
                     if device.rediscover:
                         device.rediscover = False
                         device.publish_discovery(mqtt_client, clean=False)
@@ -373,6 +376,31 @@ class SensorGroupPoller:
                         name,
                         delay,
                     )
+                except CloudControlUnavailableError as e:
+                    # Cloud errors are often shared by every sensor in this
+                    # group. Back off the entire group to avoid hammering the
+                    # service and let sensor-level outage logging report only
+                    # the initial failure until recovery.
+                    cloud_failure_streak += 1
+                    delay = min(30.0 * (2 ** (cloud_failure_streak - 1)), 900.0)
+                    retry_at = time.time() + delay
+                    for sensor in due_sensors:
+                        next_publish_times[sensor] = retry_at
+                    if cloud_failure_streak == 1:
+                        logger.warning(
+                            "%s Sensor Scan Group [%s] cloud unavailable; retrying in %.0f seconds: %s",
+                            device.log_identity,
+                            name,
+                            delay,
+                            e,
+                        )
+                    else:
+                        logger.debug(
+                            "%s Sensor Scan Group [%s] cloud outage continues; retrying in %.0f seconds",
+                            device.log_identity,
+                            name,
+                            delay,
+                        )
                 except RuntimeError as e:
                     logger.error(f"{device.log_identity} Sensor Scan Group [{name}] encountered an error: {e!r}")
 

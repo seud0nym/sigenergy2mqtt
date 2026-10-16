@@ -12,7 +12,7 @@ from typing import Any, cast
 from aiohttp import ClientError
 from paho.mqtt.client import Client
 
-from sigenergy2mqtt.cloud.exceptions import CloudControlError
+from sigenergy2mqtt.cloud.exceptions import CloudControlError, CloudControlUnavailableError
 from sigenergy2mqtt.cloud.models import InstantControlMode as Mode
 from sigenergy2mqtt.cloud.models import InstantControlStatus, InstantOverrideCommand
 from sigenergy2mqtt.cloud.port import CloudControlPort
@@ -570,8 +570,7 @@ def _parse_power_limit(sensor: CloudReadWriteSensor, value: object, key: str) ->
     except (TypeError, ValueError):
         parsed = math.nan
     if not math.isfinite(parsed) or parsed < 0:
-        logger.warning(f"{sensor.log_identity} cloud response contains invalid {key}={value!r}")
-        return None
+        raise CloudControlUnavailableError(f"invalid {key} in cloud response: {value!r}")
     return parsed
 
 
@@ -621,11 +620,9 @@ class _BatteryPowerLimit(NumericSensorMixin, CloudReadWriteSensor):
 
     def _parse_limits(self, payload: object) -> dict[str, float | None] | None:
         if not isinstance(payload, dict):
-            logger.warning(f"{self.log_identity} cloud response is not an object: {payload!r}")
-            return None
+            raise CloudControlUnavailableError("cloud response is not an object")
         if any(key not in payload for key in (self._CHARGE_KEY, self._DISCHARGE_KEY)):
-            logger.warning(f"{self.log_identity} cloud response contains incomplete battery limits: {payload!r}")
-            return None
+            raise CloudControlUnavailableError("cloud response contains incomplete battery limits")
         limits: dict[str, float | None] = {}
         for key in (self._CHARGE_KEY, self._DISCHARGE_KEY):
             state = _parse_power_limit(self, payload.get(key), key)
@@ -717,8 +714,9 @@ class SolarPowerLimit(NumericSensorMixin, CloudReadWriteSensor):
     async def _read_cloud_state(self, port: CloudControlPort) -> float | str | None:
         payload = await port.solar_power_limit()
         if not isinstance(payload, dict):
-            logger.warning(f"{self.log_identity} cloud response is not an object: {payload!r}")
-            return None
+            raise CloudControlUnavailableError("cloud response is not an object")
+        if "powerLimit" not in payload:
+            raise CloudControlUnavailableError("cloud response is missing powerLimit")
         return _parse_power_limit(self, payload.get("powerLimit"), "powerLimit")
 
     async def _write_cloud_value(self, port: CloudControlPort, value: float | str) -> bool:
@@ -770,9 +768,8 @@ class BatteryExportLimitation(SwitchSensorMixin, CloudReadWriteSensor):
     async def _read_cloud_state(self, port: CloudControlPort) -> int | None:
         payload = await port.battery_export_limitation()
         if not isinstance(payload, dict) or not isinstance(payload.get("currentEnable"), (bool, int)):
-            logger.warning(f"{self.log_identity} cloud response contains invalid currentEnable: {payload!r}")
             self._updates_allowed = False
-            return None
+            raise CloudControlUnavailableError("cloud response contains invalid currentEnable")
         installerSetEnable = payload.get("installerSetEnable", None)
         self._updates_allowed = True if installerSetEnable is None else bool(installerSetEnable)
         return int(bool(payload.get("currentEnable", False)))
