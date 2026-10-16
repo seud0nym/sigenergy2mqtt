@@ -174,7 +174,8 @@ async def test_battery_export_limitation_rejects_invalid_cloud_state(payload) ->
     port = FakeCloudControlPort()
     port.battery_export_limitation.return_value = payload
 
-    assert await sensor._read_cloud_state(port) is None
+    with pytest.raises(CloudControlUnavailableError, match="invalid currentEnable"):
+        await sensor._read_cloud_state(port)
 
 
 @pytest.mark.asyncio
@@ -187,10 +188,25 @@ async def test_battery_export_limitation_invalid_read_clears_previous_write_perm
     assert sensor._updates_allowed is True
 
     port.battery_export_limitation.return_value = {"currentEnable": "invalid", "installerSetEnable": True}
-    assert await sensor._read_cloud_state(port) is None
+    with pytest.raises(CloudControlUnavailableError, match="invalid currentEnable"):
+        await sensor._read_cloud_state(port)
     assert sensor._updates_allowed is False
     assert await sensor._write_cloud_value(port, 0) is False
     port.set_battery_export_limitation.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_battery_export_limitation_publish_updates_availability_when_read_raises() -> None:
+    sensor = BatteryExportLimitation(0, FakeCloudControlPort.station_id)
+    sensor._writable_topic = "cloud/export/writable"
+    sensor._updates_allowed = False
+    mqtt_client = MagicMock()
+
+    with patch.object(CloudReadWriteSensor, "publish", new=AsyncMock(side_effect=CloudControlUnavailableError("malformed response"))):
+        with pytest.raises(CloudControlUnavailableError):
+            await sensor.publish(mqtt_client, FakeCloudControlPort())
+
+    mqtt_client.publish.assert_called_once_with(sensor._writable_topic, 0, qos=sensor._qos)
 
 
 @pytest.mark.asyncio
@@ -354,14 +370,18 @@ async def test_cloud_sensor_suppresses_repeated_outage_warnings(caplog: pytest.L
     port.get_operational_mode.side_effect = CloudControlUnavailableError("HTTP 503")
     with caplog.at_level(logging.DEBUG):
         caplog.clear()
-        assert await sensor1._update_internal_state(modbus_client=port) is False
+        with pytest.raises(CloudControlUnavailableError):
+            await sensor1._update_internal_state(modbus_client=port)
+        assert sensor1.monitorable is False
         assert len([r for r in caplog.records if r.levelname == "WARNING"]) == 1
-        assert len([r for r in caplog.records if r.levelname == "DEBUG"]) == 0
+        assert len([r for r in caplog.records if r.levelname == "DEBUG" and "monitorable" not in r.message]) == 0
 
     # 2. Second sensor fails -> logs DEBUG (port already in outage)
     with caplog.at_level(logging.DEBUG):
         caplog.clear()
-        assert await sensor2._update_internal_state(modbus_client=port) is False
+        with pytest.raises(CloudControlUnavailableError):
+            await sensor2._update_internal_state(modbus_client=port)
+        assert sensor2.monitorable is False
         assert len([r for r in caplog.records if r.levelname == "WARNING"]) == 0
         assert len([r for r in caplog.records if r.levelname == "DEBUG" and "outage ongoing" in r.message]) == 1
 
@@ -369,13 +389,15 @@ async def test_cloud_sensor_suppresses_repeated_outage_warnings(caplog: pytest.L
     port.get_operational_mode.side_effect = CloudControlUnavailableError("HTTP 401")
     with caplog.at_level(logging.DEBUG):
         caplog.clear()
-        assert await sensor1._update_internal_state(modbus_client=port) is False
-        assert len([r for r in caplog.records if r.levelname == "WARNING"]) == 1
+        with pytest.raises(CloudControlUnavailableError):
+            await sensor1._update_internal_state(modbus_client=port)
+        assert len([r for r in caplog.records if r.levelname == "WARNING"]) == 0
 
     # 4. Sensor 2 fails with the same new error -> logs DEBUG (error changed for sensor, but matches global latest)
     with caplog.at_level(logging.DEBUG):
         caplog.clear()
-        assert await sensor2._update_internal_state(modbus_client=port) is False
+        with pytest.raises(CloudControlUnavailableError):
+            await sensor2._update_internal_state(modbus_client=port)
         assert len([r for r in caplog.records if r.levelname == "WARNING"]) == 0
         assert len([r for r in caplog.records if r.levelname == "DEBUG" and "outage ongoing" in r.message]) == 1
 
@@ -385,6 +407,8 @@ async def test_cloud_sensor_suppresses_repeated_outage_warnings(caplog: pytest.L
     with caplog.at_level(logging.DEBUG), patch.object(sensor2, "set_latest_state", return_value=True):
         caplog.clear()
         assert await sensor2._update_internal_state(modbus_client=port) is True
+        sensor2.restore_monitoring_after_cloud_outage()
+        assert sensor2.monitorable is True
         assert len([r for r in caplog.records if r.levelname == "INFO"]) == 0
         assert len([r for r in caplog.records if r.levelname == "DEBUG" and "recovered, but other sensors" in r.message]) == 1
 
@@ -392,7 +416,8 @@ async def test_cloud_sensor_suppresses_repeated_outage_warnings(caplog: pytest.L
     port.get_operational_mode.side_effect = CloudControlUnavailableError("HTTP 401")
     with caplog.at_level(logging.DEBUG):
         caplog.clear()
-        assert await sensor1._update_internal_state(modbus_client=port) is False
+        with pytest.raises(CloudControlUnavailableError):
+            await sensor1._update_internal_state(modbus_client=port)
         assert len([r for r in caplog.records if r.levelname == "WARNING"]) == 0
         assert len([r for r in caplog.records if r.levelname == "DEBUG" and "outage ongoing" in r.message]) == 1
 
@@ -402,6 +427,8 @@ async def test_cloud_sensor_suppresses_repeated_outage_warnings(caplog: pytest.L
     with caplog.at_level(logging.INFO), patch.object(sensor1, "set_latest_state", return_value=True):
         caplog.clear()
         assert await sensor1._update_internal_state(modbus_client=port) is True
+        sensor1.restore_monitoring_after_cloud_outage()
+        assert sensor1.monitorable is True
         assert len([r for r in caplog.records if r.levelname == "INFO" and "recovered for all sensors" in r.message]) == 1
 
     # Ensure port outage state is clear after test
@@ -570,13 +597,15 @@ async def test_cloud_sensor_handles_failed_and_unknown_reads(caplog) -> None:
         side_effect=CloudControlUnavailableError("offline")
     )
 
-    assert await switch._update_internal_state(modbus_client=port) is False
+    with pytest.raises(CloudControlUnavailableError):
+        await switch._update_internal_state(modbus_client=port)
     assert "cloud read failed" in caplog.text
 
     switch._read_cloud_state = AsyncMock(  # type: ignore[method-assign]
         side_effect=ClientPayloadError("truncated response")
     )
-    assert await switch._update_internal_state(modbus_client=port) is False
+    with pytest.raises(CloudControlUnavailableError):
+        await switch._update_internal_state(modbus_client=port)
 
     switch._read_cloud_state = AsyncMock(return_value=None)  # type: ignore[method-assign]
     assert await switch._update_internal_state(modbus_client=port) is False
@@ -850,7 +879,8 @@ async def test_solar_power_limit_malformed_payload_is_unavailable(payload) -> No
     port = FakeCloudControlPort()
     port.solar_power_limit.return_value = payload
 
-    assert await sensor._read_cloud_state(port) is None
+    with pytest.raises(CloudControlUnavailableError):
+        await sensor._read_cloud_state(port)
 
 
 @pytest.mark.asyncio

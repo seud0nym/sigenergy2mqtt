@@ -26,7 +26,7 @@ from sigenergy2mqtt.mqtt import (
     mqtt_setup,
     mqtt_teardown,
 )
-from sigenergy2mqtt.sensors.base import DerivedSensor, ReadableSensorMixin
+from sigenergy2mqtt.sensors.base import DerivedSensor, ReadableSensorMixin, Sensor
 from sigenergy2mqtt.sensors.monitor import MonitoredSensor
 
 from .dashboard import extract_dashboard_state
@@ -49,6 +49,7 @@ class MonitorService(Device):
         self._devices: list[Device] = devices
         self._lock = asyncio.Lock()
         self._topics: dict[str, MonitoredSensor] = {}
+        self._topic_sensors: dict[str, Sensor] = {}
         self._topics_snapshot: dict[str, Any] = {"timestamp": time.monotonic(), "snapshot": None}
         self._health_state_topic = "sigenergy2mqtt/health/state"
         self._health_attributes_topic = "sigenergy2mqtt/health/attributes"
@@ -163,8 +164,16 @@ class MonitorService(Device):
             )
             return 0
         async with self._lock:
-            overdue: dict[str, MonitoredSensor] = {t: s for t, s in self._topics.items() if self._monitor_topic_updates and s.is_overdue}
-            still_degraded: dict[str, MonitoredSensor] = {t: s for t, s in self._topics.items() if self._monitor_topic_updates and s.notified}
+            overdue: dict[str, MonitoredSensor] = {
+                t: s for t, s in self._topics.items()
+                if self._monitor_topic_updates
+                and (t not in self._topic_sensors or self._topic_sensors[t].monitorable) and s.is_overdue
+            }
+            still_degraded: dict[str, MonitoredSensor] = {
+                t: s for t, s in self._topics.items()
+                if self._monitor_topic_updates
+                and (t not in self._topic_sensors or self._topic_sensors[t].monitorable) and s.notified
+            }
         if any(overdue):
             for topic, sensor in overdue.items():
                 sensor.notified = True
@@ -491,6 +500,7 @@ class MonitorService(Device):
                         scan_interval=scan_interval,
                         unit=str(unit) if unit else None,
                     )
+                    self._topic_sensors[topic] = s
                     sensors += 1
                     mqtt_handler.register(mqtt_client, topic, handler=self.on_topic_update)
             if sensors > 0:

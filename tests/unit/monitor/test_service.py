@@ -173,6 +173,25 @@ async def test_monitor_service_maintains_degraded_status_until_recovery():
     count3 = await svc._check_topic_health()
     assert count3 == 0
 
+
+@pytest.mark.asyncio
+async def test_topic_health_ignores_sensor_while_dynamically_unmonitorable():
+    svc = MonitorService([])
+    svc._started = 0
+    topic = "topic/cloud"
+    sensor = DummyReadable(name="cloud", scan_interval=5, state_topic=topic)
+    monitored = MonitoredSensor("Dev", "Cloud", "Cloud", 5, "", last_seen=time.time() - 20)
+    svc._topics[topic] = monitored
+    svc._topic_sensors[topic] = sensor
+
+    sensor.monitorable = False
+    assert await svc._check_topic_health() == 0
+    assert monitored.notified is False
+
+    sensor.monitorable = True
+    assert await svc._check_topic_health() == 1
+    assert monitored.notified is True
+
 @pytest.mark.asyncio
 async def test_monitor_service_logs_degraded_only_on_transition(caplog: pytest.LogCaptureFixture):
     svc = MonitorService([])

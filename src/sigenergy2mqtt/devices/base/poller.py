@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any
 import paho.mqtt.client as mqtt
 from pymodbus import ModbusException
 
-from sigenergy2mqtt.cloud.exceptions import CloudControlRateLimitedError
+from sigenergy2mqtt.cloud.exceptions import CloudControlRateLimitedError, CloudControlUnavailableError
 from sigenergy2mqtt.common import Constants
 from sigenergy2mqtt.modbus import ModbusClient, ModbusLock, ModbusLockFactory
 from sigenergy2mqtt.sensors.base import (
@@ -27,6 +27,13 @@ MAX_RECONNECTION_ATTEMPTS = 10
 INITIAL_RECONNECT_DELAY = 0.5
 MAX_RECONNECT_DELAY = 60.0
 RECONNECT_BACKOFF_MULTIPLIER = 2.0
+MAX_CLOUD_RETRY_DELAY = 900.0
+
+
+def _cloud_retry_delay(failure_streak: int) -> float:
+    """Return a capped exponential cloud retry delay without a large exponent."""
+    exponent = min(max(failure_streak - 1, 0), 5)
+    return min(30.0 * (2**exponent), MAX_CLOUD_RETRY_DELAY)
 
 logger = logging.getLogger(__name__)
 
@@ -106,6 +113,7 @@ class SensorGroupPoller:
         now: float,
         name: str,
         debug_logging: bool,
+        not_before: float | None = None,
     ) -> list[ReadableSensorMixin]:
         """Return the subset of sensors that are due for publishing on this iteration.
 
@@ -125,6 +133,8 @@ class SensorGroupPoller:
         due_sensors: list[ReadableSensorMixin] = []
         for sensor, next_time in next_publish_times.items():
             if not sensor.publishable:
+                continue
+            if not_before is not None and now < not_before:
                 continue
             if sensor.force_publish:
                 if debug_logging:
@@ -315,10 +325,30 @@ class SensorGroupPoller:
 
         lock = ModbusLockFactory.get(transport)
         last_day = time.localtime(time.time()).tm_yday
+        cloud_failure_streak = 0
+        cloud_retry_at: float | None = None
+
+        def pause_cloud_monitoring() -> None:
+            for sensor in sensors:
+                pause = getattr(sensor, "pause_monitoring_for_cloud_outage", None)
+                if pause is not None:
+                    pause()
+
+        def restore_cloud_monitoring() -> None:
+            for sensor in sensors:
+                restore = getattr(sensor, "restore_monitoring_after_cloud_outage", None)
+                if restore is not None:
+                    restore()
 
         # Main publishing loop - respects shutdown event
         while device.online and not device._shutdown_event.is_set():
             now = time.time()
+            if cloud_retry_at is not None:
+                if now < cloud_retry_at:
+                    for sensor in next_publish_times:
+                        next_publish_times[sensor] = max(next_publish_times[sensor], cloud_retry_at)
+                else:
+                    cloud_retry_at = None
 
             # Check for day change (affects daily sensors)
             now_struct = time.localtime(now)
@@ -332,7 +362,13 @@ class SensorGroupPoller:
                             logger.debug(f"{device.log_identity} Sensor Scan Group [{name}] day changed, forcing {sensor.__class__.__name__} to publish")
 
             # Determine which sensors are due for publishing
-            due_sensors: list[ReadableSensorMixin] = self._get_sensors_to_publish_now(next_publish_times, now, name, debug_logging)
+            due_sensors: list[ReadableSensorMixin] = self._get_sensors_to_publish_now(
+                next_publish_times,
+                now,
+                name,
+                debug_logging,
+                not_before=cloud_retry_at,
+            )
 
             if due_sensors:
                 try:
@@ -345,6 +381,9 @@ class SensorGroupPoller:
                         await sensor.publish(mqtt_client, transport)
                         next_publish_times[sensor] = now + sensor.scan_interval
                         sensor.force_publish = False
+
+                    cloud_failure_streak = 0
+                    restore_cloud_monitoring()
 
                     if device.rediscover:
                         device.rediscover = False
@@ -365,7 +404,9 @@ class SensorGroupPoller:
                     # moving this group's due times avoids a tight retry loop.
                     delay = max(1.0, e.retry_after or 30.0)
                     retry_at = time.time() + delay
-                    for sensor in due_sensors:
+                    cloud_retry_at = retry_at
+                    pause_cloud_monitoring()
+                    for sensor in next_publish_times:
                         next_publish_times[sensor] = retry_at
                     logger.warning(
                         "%s Sensor Scan Group [%s] cloud rate limited; retrying in %.0f seconds",
@@ -373,6 +414,33 @@ class SensorGroupPoller:
                         name,
                         delay,
                     )
+                except CloudControlUnavailableError as e:
+                    # Cloud errors are often shared by every sensor in this
+                    # group. Back off the entire group to avoid hammering the
+                    # service and let sensor-level outage logging report only
+                    # the initial failure until recovery.
+                    cloud_failure_streak = min(cloud_failure_streak + 1, 6)
+                    delay = _cloud_retry_delay(cloud_failure_streak)
+                    retry_at = time.time() + delay
+                    cloud_retry_at = retry_at
+                    pause_cloud_monitoring()
+                    for sensor in next_publish_times:
+                        next_publish_times[sensor] = retry_at
+                    if cloud_failure_streak == 1:
+                        logger.warning(
+                            "%s Sensor Scan Group [%s] cloud unavailable; retrying in %.0f seconds: %s",
+                            device.log_identity,
+                            name,
+                            delay,
+                            e,
+                        )
+                    else:
+                        logger.debug(
+                            "%s Sensor Scan Group [%s] cloud outage continues; retrying in %.0f seconds",
+                            device.log_identity,
+                            name,
+                            delay,
+                        )
                 except RuntimeError as e:
                     logger.error(f"{device.log_identity} Sensor Scan Group [{name}] encountered an error: {e!r}")
 
