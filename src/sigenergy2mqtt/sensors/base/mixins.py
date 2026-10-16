@@ -248,7 +248,7 @@ class ModbusSensorMixin(SensorDebuggingMixin):
             logging.ERROR if "skip_failure_logging" not in kwargs or not kwargs["skip_failure_logging"] else logging.DEBUG,
             f"{self.log_identity} Modbus {source} returned {rr}",
         )
-        raise ModbusException(rr)
+        raise ModbusException(f"{rr!r}")
 
 
 # =============================================================================
