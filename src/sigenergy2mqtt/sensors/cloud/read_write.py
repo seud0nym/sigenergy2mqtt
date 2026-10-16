@@ -760,10 +760,11 @@ class BatteryExportLimitation(SwitchSensorMixin, CloudReadWriteSensor):
         return attributes
 
     async def publish(self, mqtt_client: Client, transport: Any, republish: bool = False) -> bool:
-        published = await super().publish(mqtt_client, transport, republish)
-        if self._writable_topic is not None:
-            mqtt_client.publish(self._writable_topic, int(self._updates_allowed), qos=self._qos)
-        return published
+        try:
+            return await super().publish(mqtt_client, transport, republish)
+        finally:
+            if self._writable_topic is not None:
+                mqtt_client.publish(self._writable_topic, int(self._updates_allowed), qos=self._qos)
 
     async def _read_cloud_state(self, port: CloudControlPort) -> int | None:
         payload = await port.battery_export_limitation()

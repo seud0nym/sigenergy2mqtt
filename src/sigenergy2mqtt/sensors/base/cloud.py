@@ -36,6 +36,18 @@ class CloudSensor(ReadableSensorMixin, AvailabilityMixin):
         self._monitorable_before_cloud_outage: bool | None = None
         super().__init__(*args, **kwargs)
 
+    def pause_monitoring_for_cloud_outage(self) -> None:
+        """Temporarily exclude this sensor from topic health checks."""
+        if self._monitorable_before_cloud_outage is None:
+            self._monitorable_before_cloud_outage = self.monitorable
+        self.monitorable = False
+
+    def restore_monitoring_after_cloud_outage(self) -> None:
+        """Restore the monitorability setting saved before a cloud outage."""
+        if self._monitorable_before_cloud_outage is not None:
+            self.monitorable = self._monitorable_before_cloud_outage
+            self._monitorable_before_cloud_outage = None
+
     @property
     def payload_available(self) -> bool | int | float | str | None:
         return 1
@@ -74,9 +86,7 @@ class CloudSensor(ReadableSensorMixin, AvailabilityMixin):
         except CloudControlRateLimitedError:
             # The polling coordinator must see a 429 so it can reschedule this
             # sensor group for the adapter's shared cooldown.
-            if self._monitorable_before_cloud_outage is None:
-                self._monitorable_before_cloud_outage = self.monitorable
-            self.monitorable = False
+            self.pause_monitoring_for_cloud_outage()
             raise
         except (ClientError, CloudControlError) as exc:
             exc_repr = repr(exc)
@@ -100,9 +110,7 @@ class CloudSensor(ReadableSensorMixin, AvailabilityMixin):
                 logger.debug(f"{self.log_identity} cloud read failed (outage ongoing): {exc_repr}")
             # Let the scan-group poller slow down the whole cloud group. The
             # adapter's rate-limit path uses the same group-level behavior.
-            if self._monitorable_before_cloud_outage is None:
-                self._monitorable_before_cloud_outage = self.monitorable
-            self.monitorable = False
+            self.pause_monitoring_for_cloud_outage()
             raise CloudControlUnavailableError(str(exc)) from exc
             
         # Successful read: clear outage state for this sensor
@@ -118,10 +126,6 @@ class CloudSensor(ReadableSensorMixin, AvailabilityMixin):
                 else:
                     logger.debug(f"{self.log_identity} cloud read recovered, but other sensors are still failing")
 
-        if self._monitorable_before_cloud_outage is not None:
-            self.monitorable = self._monitorable_before_cloud_outage
-            self._monitorable_before_cloud_outage = None
-                    
         if value is None:
             return False
         return self.set_latest_state(cast(Any, value))

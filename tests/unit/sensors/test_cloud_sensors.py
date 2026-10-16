@@ -196,6 +196,20 @@ async def test_battery_export_limitation_invalid_read_clears_previous_write_perm
 
 
 @pytest.mark.asyncio
+async def test_battery_export_limitation_publish_updates_availability_when_read_raises() -> None:
+    sensor = BatteryExportLimitation(0, FakeCloudControlPort.station_id)
+    sensor._writable_topic = "cloud/export/writable"
+    sensor._updates_allowed = False
+    mqtt_client = MagicMock()
+
+    with patch.object(CloudReadWriteSensor, "publish", new=AsyncMock(side_effect=CloudControlUnavailableError("malformed response"))):
+        with pytest.raises(CloudControlUnavailableError):
+            await sensor.publish(mqtt_client, FakeCloudControlPort())
+
+    mqtt_client.publish.assert_called_once_with(sensor._writable_topic, 0, qos=sensor._qos)
+
+
+@pytest.mark.asyncio
 async def test_battery_export_limitation_defaults_missing_installer_permission_to_allowed() -> None:
     sensor = BatteryExportLimitation(0, FakeCloudControlPort.station_id)
     port = FakeCloudControlPort()
@@ -393,6 +407,7 @@ async def test_cloud_sensor_suppresses_repeated_outage_warnings(caplog: pytest.L
     with caplog.at_level(logging.DEBUG), patch.object(sensor2, "set_latest_state", return_value=True):
         caplog.clear()
         assert await sensor2._update_internal_state(modbus_client=port) is True
+        sensor2.restore_monitoring_after_cloud_outage()
         assert sensor2.monitorable is True
         assert len([r for r in caplog.records if r.levelname == "INFO"]) == 0
         assert len([r for r in caplog.records if r.levelname == "DEBUG" and "recovered, but other sensors" in r.message]) == 1
@@ -412,6 +427,7 @@ async def test_cloud_sensor_suppresses_repeated_outage_warnings(caplog: pytest.L
     with caplog.at_level(logging.INFO), patch.object(sensor1, "set_latest_state", return_value=True):
         caplog.clear()
         assert await sensor1._update_internal_state(modbus_client=port) is True
+        sensor1.restore_monitoring_after_cloud_outage()
         assert sensor1.monitorable is True
         assert len([r for r in caplog.records if r.levelname == "INFO" and "recovered for all sensors" in r.message]) == 1
 

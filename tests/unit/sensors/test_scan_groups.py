@@ -12,6 +12,7 @@ from sigenergy2mqtt.common import Constants, InputType, ProtocolVersion
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices import Device, DeviceRegistry
 from sigenergy2mqtt.devices.base.poller import SensorGroupPoller
+from sigenergy2mqtt.devices.base.poller import _cloud_retry_delay
 from sigenergy2mqtt.devices.base.scan_groups import create_sensor_scan_groups
 from sigenergy2mqtt.modbus.client import ModbusClient
 from sigenergy2mqtt.sensors.base import (
@@ -24,6 +25,7 @@ from sigenergy2mqtt.sensors.base import (
 )
 from sigenergy2mqtt.sensors.cloud.read_only import (
     GatewayCommunicationStatus,
+    GatewayFirmwareVersion,
     GatewayInfoSnapshot,
 )
 
@@ -767,3 +769,59 @@ async def test_unavailable_cloud_sensor_uses_exponential_backoff(
     assert [later - earlier for earlier, later in zip(request_times, request_times[1:])] == [30.0, 60.0]
     assert caplog.text.count("cloud unavailable; retrying") == 1
     assert "cloud outage continues" in caplog.text
+
+
+def test_cloud_retry_delay_caps_large_failure_streak() -> None:
+    assert _cloud_retry_delay(1) == 30
+    assert _cloud_retry_delay(2) == 60
+    assert _cloud_retry_delay(6) == 900
+    assert _cloud_retry_delay(1025) == 900
+
+
+@pytest.mark.asyncio
+async def test_cloud_outage_pauses_entire_group_and_sets_one_retry_deadline(
+    monkeypatch: pytest.MonkeyPatch,
+    mock_config,
+) -> None:
+    from types import SimpleNamespace
+
+    clock = [100.0]
+    original_sleep = asyncio.sleep
+    request_times: list[float] = []
+    device = Device("cloud", 0, "uid", "mf", "mdl", ProtocolVersion.V1_8)
+    snapshot = GatewayInfoSnapshot()
+    fast_sensor = GatewayCommunicationStatus(0, "station", snapshot)
+    slow_sensor = GatewayFirmwareVersion(0, "station", GatewayInfoSnapshot())
+    slow_sensor.monitorable = False
+    device._add_sensor(cast(Sensor, fast_sensor))
+    device._add_sensor(cast(Sensor, slow_sensor))
+    device._online = True
+
+    class RecoveringCloudPort:
+        async def gateway_info(self) -> dict[str, object]:
+            request_times.append(clock[0])
+            if len(request_times) == 1:
+                slow_sensor.force_publish = True
+                raise CloudControlUnavailableError("temporary outage")
+            if len(request_times) == 3:
+                device._online = False
+            return {"communicationStatus": 2, "softVersion": "1.0"}
+
+    async def fake_sleep(delay: float) -> None:
+        clock[0] += delay
+        await original_sleep(0)
+
+    monkeypatch.setattr("sigenergy2mqtt.devices.base.poller.time", SimpleNamespace(time=lambda: clock[0], localtime=lambda *_: time.localtime(0)))
+    monkeypatch.setattr("sigenergy2mqtt.devices.base.poller.asyncio.sleep", fake_sleep)
+    poller = SensorGroupPoller(device)
+    monkeypatch.setattr(
+        poller,
+        "_init_next_publish_times",
+        AsyncMock(return_value=({fast_sensor: 100.0, slow_sensor: 115.0}, [], False)),
+    )
+
+    await poller.run(RecoveringCloudPort(), MagicMock(spec=mqtt.Client), "cloud", fast_sensor, slow_sensor)
+
+    assert request_times == [100.0, 130.0, 130.0]
+    assert fast_sensor.monitorable is True
+    assert slow_sensor.monitorable is False
