@@ -23,6 +23,7 @@ class MqttClientHealth:
     last_connected_at: float | None = None
     last_disconnected_at: float | None = None
     last_message_at: float | None = None
+    last_publish_at: float | None = None
     last_publish_ack_at: float | None = None
     connect_count: int = 0
     disconnect_count: int = 0
@@ -97,6 +98,12 @@ class MqttHealthRegistry:
                     logger.info(f"MQTT client {client_id} currently marked as disconnected but message received so assume it IS connected")
                     entry.connected = True
                     entry.connect_count += 2
+
+    def record_publish(self, client_id: str) -> None:
+        with self._lock:
+            entry = self._clients.get(client_id)
+            if entry:
+                entry.last_publish_at = time.monotonic()
 
     def record_publish_ack(self, client_id: str) -> None:
         with self._lock:

@@ -93,6 +93,20 @@ class MqttClient(mqtt.Client):
             self._record_connection_result(False)
         return result
 
+    def publish(self, topic, payload=None, qos=0, retain=False, properties=None):
+        """Record outbound publish timestamp before delegating to paho.
+
+        The registry's ``last_publish_at`` field is used by the health-check
+        monitor to detect clients that have published recently but have not yet
+        received a PUBACK.  Recording at send-time (rather than PUBACK-time)
+        ensures that an inbound message received *after* the last PUBACK does
+        not falsely advance the "pending publish" window.
+        """
+        handler: MqttHandler = self._userdata
+        if handler is not None and hasattr(handler, "registry"):
+            handler.registry.record_publish(handler.client_id)
+        return super().publish(topic, payload=payload, qos=qos, retain=retain, properties=properties)
+
     def _record_connection_result(self, success: bool) -> None:
         from sigenergy2mqtt.metrics import Metrics
 

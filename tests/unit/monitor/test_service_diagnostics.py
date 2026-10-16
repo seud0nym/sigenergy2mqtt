@@ -26,6 +26,7 @@ async def test_check_mqtt_debug_logging(monkeypatch):
     class MockMqttHealth:
         connected = True
         last_message_at = time.monotonic() - 1
+        last_publish_at = time.monotonic() - 1
         last_publish_ack_at = time.monotonic() - 1
         connect_count = 1
         disconnect_count = 0
@@ -33,6 +34,7 @@ async def test_check_mqtt_debug_logging(monkeypatch):
     class MockMqttHealthNoMsg:
         connected = True
         last_message_at = None
+        last_publish_at = None
         last_publish_ack_at = None
         connect_count = 1
         disconnect_count = 0

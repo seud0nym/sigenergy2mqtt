@@ -268,6 +268,7 @@ async def test_publish_health_includes_modbus_and_mqtt_connectivity(monkeypatch,
     class MockMqttHealth:
         connected = True
         last_message_at = time.monotonic()
+        last_publish_at = time.monotonic()
         last_publish_ack_at = time.monotonic()
         connect_count = 1
         disconnect_count = 0
@@ -418,6 +419,7 @@ async def test_publish_health_considers_all_modbus_clients(monkeypatch, tmp_path
     class MockMqttHealth:
         connected = True
         last_message_at = time.monotonic()
+        last_publish_at = time.monotonic()
         last_publish_ack_at = time.monotonic()
         connect_count = 1
         disconnect_count = 0

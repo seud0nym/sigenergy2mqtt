@@ -113,3 +113,21 @@ def test_repr_and_is_connected_unknown():
     assert 'up' in rep
     # unknown client returns None
     assert reg.is_connected('nonexistent') is None
+
+
+def test_record_publish_sets_timestamp():
+    """record_publish updates last_publish_at for a registered client."""
+    reg = MqttHealthRegistry()
+    reg.register('c8')
+    entry = reg._clients['c8']
+    assert entry.last_publish_at is None
+    reg.record_publish('c8')
+    assert entry.last_publish_at is not None
+
+
+def test_record_publish_unknown_client_is_noop():
+    """record_publish silently ignores unknown client IDs."""
+    reg = MqttHealthRegistry()
+    reg.record_publish('unknown')  # must not raise
+    assert reg._clients == {}
+

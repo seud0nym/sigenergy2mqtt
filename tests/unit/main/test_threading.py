@@ -82,10 +82,16 @@ async def test_log_ha_status_emits_one_message(caplog):
     logger_name = "sigenergy2mqtt.main.device_thread"
     caplog.set_level(logging.INFO, logger=logger_name)
 
+    threading_mod._current_ha_status = None
     result = await threading_mod.log_ha_status(None, None, "online", "test", None)
 
     assert result is True
-    assert [record.getMessage() for record in caplog.records if record.name == logger_name] == ["Received Home Assistant status: online"]
+    assert [record.getMessage() for record in caplog.records if record.name == logger_name] == ["Home Assistant is online"]
+
+    # Calling again with the same status does not emit a duplicate message
+    result2 = await threading_mod.log_ha_status(None, None, "online", "test", None)
+    assert result2 is True
+    assert [record.getMessage() for record in caplog.records if record.name == logger_name] == ["Home Assistant is online"]
 
 
 @pytest.mark.asyncio
