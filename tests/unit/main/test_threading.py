@@ -78,6 +78,17 @@ class DummyDevice:
 
 
 @pytest.mark.asyncio
+async def test_log_ha_status_emits_one_message(caplog):
+    logger_name = "sigenergy2mqtt.main.device_thread"
+    caplog.set_level(logging.INFO, logger=logger_name)
+
+    result = await threading_mod.log_ha_status(None, None, "online", "test", None)
+
+    assert result is True
+    assert [record.getMessage() for record in caplog.records if record.name == logger_name] == ["Received Home Assistant status: online"]
+
+
+@pytest.mark.asyncio
 async def test_read_and_publish_device_sensors_no_modbus(monkeypatch):
     # Config: clean True should prevent modbus usage
     cfg_obj = Config()

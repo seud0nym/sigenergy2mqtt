@@ -106,7 +106,7 @@ class HaPublisherMixin(abc.ABC):
         """
         if ha_state == "online":
             seconds = uniform(HA_REPUBLISH_MIN_JITTER, HA_REPUBLISH_MAX_JITTER)
-            logger.info(f"{self.log_identity} received online state from Home Assistant ({source=}): Republishing discovery and forcing republish of all sensors in {seconds:.1f}s")
+            logger.debug(f"{self.log_identity} received online state from Home Assistant ({source=}): Republishing discovery and forcing republish of all sensors in {seconds:.1f}s")
             try:
                 await asyncio.sleep(seconds)  # https://www.home-assistant.io/integrations/mqtt/#birth-and-last-will-messages
                 await mqtt_handler.wait_for(2, self.name, self.publish_discovery, mqtt_client, clean=False)
