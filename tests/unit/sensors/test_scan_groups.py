@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import paho.mqtt.client as mqtt
 import pytest
 
-from sigenergy2mqtt.cloud.exceptions import CloudControlRateLimitedError
+from sigenergy2mqtt.cloud.exceptions import CloudControlRateLimitedError, CloudControlUnavailableError
 from sigenergy2mqtt.common import Constants, InputType, ProtocolVersion
 from sigenergy2mqtt.config import Config
 from sigenergy2mqtt.devices import Device, DeviceRegistry
@@ -726,3 +726,44 @@ async def test_rate_limited_cloud_sensor_is_rescheduled_without_stopping_poller(
     assert len(request_times) == 2
     assert request_times[1] - request_times[0] >= 30
     assert "cloud rate limited; retrying in 30 seconds" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_unavailable_cloud_sensor_uses_exponential_backoff(
+    monkeypatch: pytest.MonkeyPatch,
+    mock_config,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    import logging
+    from types import SimpleNamespace
+
+    clock = [100.0]
+    original_sleep = asyncio.sleep
+    request_times: list[float] = []
+    device = Device("cloud", 0, "uid", "mf", "mdl", ProtocolVersion.V1_8)
+    sensor = GatewayCommunicationStatus(0, "station", GatewayInfoSnapshot())
+    device._add_sensor(cast(Sensor, sensor))
+    device._online = True
+
+    class UnavailableCloudPort:
+        async def gateway_info(self) -> dict[str, object]:
+            request_times.append(clock[0])
+            if len(request_times) == 3:
+                device._online = False
+            raise CloudControlUnavailableError("upstream unavailable")
+
+    async def fake_sleep(delay: float) -> None:
+        clock[0] += delay
+        await original_sleep(0)
+
+    monkeypatch.setattr("sigenergy2mqtt.devices.base.poller.time", SimpleNamespace(time=lambda: clock[0], localtime=lambda *_: time.localtime(0)))
+    monkeypatch.setattr("sigenergy2mqtt.devices.base.poller.asyncio.sleep", fake_sleep)
+    poller = SensorGroupPoller(device)
+    monkeypatch.setattr(poller, "_init_next_publish_times", AsyncMock(return_value=({sensor: clock[0]}, [], False)))
+
+    with caplog.at_level(logging.DEBUG):
+        await poller.run(UnavailableCloudPort(), MagicMock(spec=mqtt.Client), "cloud", sensor)
+
+    assert [later - earlier for earlier, later in zip(request_times, request_times[1:])] == [30.0, 60.0]
+    assert caplog.text.count("cloud unavailable; retrying") == 1
+    assert "cloud outage continues" in caplog.text
