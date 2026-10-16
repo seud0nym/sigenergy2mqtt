@@ -95,12 +95,12 @@ class MonitorService(Device):
         for cid, health in mqtt_snapshot.items():
             is_monitor = bool(cid.encode("utf-8") == mqtt_client._client_id)
             max = 2 * self._health_publish_interval if is_monitor else self._health_publish_interval
-            oldest_pending = getattr(health, "oldest_pending_publish_at", None)
-            if oldest_pending is None:
+            if hasattr(health, "oldest_pending_publish_at"):
+                oldest_pending = health.oldest_pending_publish_at
+            else:
                 last_pub = getattr(health, "last_publish_at", None)
                 last_ack = getattr(health, "last_publish_ack_at", None)
-                if last_pub and last_ack and last_ack < last_pub:
-                    oldest_pending = last_pub
+                oldest_pending = last_pub if (last_pub and last_ack and last_ack < last_pub) else None
             if not health.connected:
                 logger.warning(f"{self.log_identity} MQTT Client ID {cid} disconnected ({health.disconnect_count}x total)")
             elif is_monitor and (self._started + self._health_publish_interval) > now:
