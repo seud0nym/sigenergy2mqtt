@@ -9,7 +9,7 @@ import copy
 import logging
 import threading
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
 
@@ -25,8 +25,11 @@ class MqttClientHealth:
     last_message_at: float | None = None
     last_publish_at: float | None = None
     last_publish_ack_at: float | None = None
+    oldest_pending_publish_at: float | None = None
     connect_count: int = 0
     disconnect_count: int = 0
+    _pending_publishes: dict[int, float] = field(default_factory=dict, repr=False)
+    _seen_ack_mids: set[int] = field(default_factory=set, repr=False)
 
 
 class MqttHealthRegistry:
@@ -78,6 +81,9 @@ class MqttHealthRegistry:
             entry.connected = True
             entry.last_connected_at = time.monotonic()
             entry.connect_count += 1
+            entry._pending_publishes.clear()
+            entry._seen_ack_mids.clear()
+            entry.oldest_pending_publish_at = None
 
     def mark_disconnected(self, client_id: str) -> None:
         with self._lock:
@@ -87,6 +93,9 @@ class MqttHealthRegistry:
             entry.connected = False
             entry.last_disconnected_at = time.monotonic()
             entry.disconnect_count += 1
+            entry._pending_publishes.clear()
+            entry._seen_ack_mids.clear()
+            entry.oldest_pending_publish_at = None
 
     def record_message(self, client_id: str) -> None:
         with self._lock:
@@ -99,17 +108,48 @@ class MqttHealthRegistry:
                     entry.connected = True
                     entry.connect_count += 2
 
-    def record_publish(self, client_id: str) -> None:
+    def record_publish(self, client_id: str, mid: int | None = None) -> None:
         with self._lock:
             entry = self._clients.get(client_id)
             if entry:
-                entry.last_publish_at = time.monotonic()
+                now = time.monotonic()
+                entry.last_publish_at = now
+                if mid is not None:
+                    if mid in entry._seen_ack_mids:
+                        entry._seen_ack_mids.remove(mid)
+                    else:
+                        entry._pending_publishes[mid] = now
+                    entry.oldest_pending_publish_at = (
+                        min(entry._pending_publishes.values())
+                        if entry._pending_publishes
+                        else None
+                    )
+                else:
+                    if entry.oldest_pending_publish_at is None:
+                        entry.oldest_pending_publish_at = now
 
-    def record_publish_ack(self, client_id: str) -> None:
+    def record_publish_ack(self, client_id: str, mid: int | None = None) -> None:
         with self._lock:
             entry = self._clients.get(client_id)
             if entry:
-                entry.last_publish_ack_at = time.monotonic()
+                now = time.monotonic()
+                entry.last_publish_ack_at = now
+                if mid is not None:
+                    if mid in entry._pending_publishes:
+                        entry._pending_publishes.pop(mid, None)
+                    else:
+                        entry._seen_ack_mids.add(mid)
+                        if len(entry._seen_ack_mids) > 1000:
+                            entry._seen_ack_mids.clear()
+                    entry.oldest_pending_publish_at = (
+                        min(entry._pending_publishes.values())
+                        if entry._pending_publishes
+                        else None
+                    )
+                else:
+                    entry._pending_publishes.clear()
+                    entry._seen_ack_mids.clear()
+                    entry.oldest_pending_publish_at = None
                 # if last_publish_ack_at is later than last_connected_at, then the client must be connected
                 if not entry.connected and entry.last_publish_ack_at and entry.last_connected_at and entry.last_publish_ack_at > entry.last_connected_at:
                     logger.info(f"MQTT client {client_id} currently marked as disconnected but publish ACK received so assume it IS connected")

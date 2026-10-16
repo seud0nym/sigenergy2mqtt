@@ -147,6 +147,29 @@ def test_check_mqtt_inbound_message_after_ack_does_not_degrade(monkeypatch, capl
     assert result[0] is True
 
 
+def test_check_mqtt_repeated_publishes_do_not_postpone_timeout(monkeypatch, caplog):
+    """If an earlier publish is unacknowledged, newer publishes must not postpone the timeout."""
+    now = time.monotonic()
+    health = MqttClientHealth(
+        client_id="other_client",
+        connected=True,
+        # A newer publish happened recently (10s ago, well within the 30s interval):
+        last_publish_at=now - 10,
+        last_publish_ack_at=now - 200,
+        # But the oldest unacknowledged publish happened 100s ago (> 30s timeout):
+        oldest_pending_publish_at=now - 100,
+        connect_count=1,
+    )
+    monkeypatch.setattr("sigenergy2mqtt.mqtt.mqtt_health_registry.snapshot", lambda: {"other_client": health}, raising=False)
+
+    svc = MonitorService([])
+    result = svc._check_mqtt(FakeMqttClient())
+
+    assert "connected but no publish acknowledgement received for 100" in caplog.text
+    assert result[0] is False
+
+
+
 @pytest.mark.asyncio
 async def test_on_ha_state_change():
     """on_ha_state_change returns True."""

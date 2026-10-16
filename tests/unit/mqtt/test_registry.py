@@ -123,6 +123,7 @@ def test_record_publish_sets_timestamp():
     assert entry.last_publish_at is None
     reg.record_publish('c8')
     assert entry.last_publish_at is not None
+    assert entry.oldest_pending_publish_at is not None
 
 
 def test_record_publish_unknown_client_is_noop():
@@ -130,4 +131,70 @@ def test_record_publish_unknown_client_is_noop():
     reg = MqttHealthRegistry()
     reg.record_publish('unknown')  # must not raise
     assert reg._clients == {}
+
+
+def test_multiple_publishes_track_oldest_deadline():
+    """Subsequent publishes must NOT postpone oldest_pending_publish_at."""
+    reg = MqttHealthRegistry()
+    reg.register('c9')
+    entry = reg._clients['c9']
+
+    # Publish 1 at t0
+    reg.record_publish('c9', mid=1)
+    t0 = entry.oldest_pending_publish_at
+    assert t0 is not None
+
+    # Publish 2 later
+    time.sleep(0.01)
+    reg.record_publish('c9', mid=2)
+    # Oldest pending publish must STILL be t0, not updated to publish 2
+    assert entry.oldest_pending_publish_at == t0
+    assert entry.last_publish_at > t0
+
+    # Ack for mid=1 arrives -> oldest should now advance to mid=2
+    reg.record_publish_ack('c9', mid=1)
+    assert entry.oldest_pending_publish_at == entry._pending_publishes[2]
+    assert entry.oldest_pending_publish_at > t0
+
+    # Ack for mid=2 arrives -> no more pending publishes
+    reg.record_publish_ack('c9', mid=2)
+    assert entry.oldest_pending_publish_at is None
+
+
+def test_ack_arriving_before_publish_is_handled():
+    """If an ACK arrives before publish returns (race condition), mid is not left pending."""
+    reg = MqttHealthRegistry()
+    reg.register('c10')
+    entry = reg._clients['c10']
+
+    # Ack arrives first
+    reg.record_publish_ack('c10', mid=42)
+    assert 42 in entry._seen_ack_mids
+
+    # Publish registers second
+    reg.record_publish('c10', mid=42)
+    assert 42 not in entry._pending_publishes
+    assert entry.oldest_pending_publish_at is None
+
+
+def test_disconnect_and_reconnect_clears_pending_publishes():
+    """Disconnecting or reconnecting clears pending publishes and resets oldest_pending_publish_at."""
+    reg = MqttHealthRegistry()
+    reg.register('c11')
+    entry = reg._clients['c11']
+
+    reg.record_publish('c11', mid=99)
+    assert entry.oldest_pending_publish_at is not None
+
+    reg.mark_disconnected('c11')
+    assert entry.oldest_pending_publish_at is None
+    assert entry._pending_publishes == {}
+
+    reg.record_publish('c11', mid=100)
+    assert entry.oldest_pending_publish_at is not None
+
+    reg.mark_connected('c11')
+    assert entry.oldest_pending_publish_at is None
+    assert entry._pending_publishes == {}
+
 

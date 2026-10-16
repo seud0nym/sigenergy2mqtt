@@ -94,18 +94,18 @@ class MqttClient(mqtt.Client):
         return result
 
     def publish(self, topic, payload=None, qos=0, retain=False, properties=None):
-        """Record outbound publish timestamp before delegating to paho.
+        """Record outbound publish before delegating to paho.
 
-        The registry's ``last_publish_at`` field is used by the health-check
-        monitor to detect clients that have published recently but have not yet
-        received a PUBACK.  Recording at send-time (rather than PUBACK-time)
-        ensures that an inbound message received *after* the last PUBACK does
-        not falsely advance the "pending publish" window.
+        The registry tracks pending publishes by message identifier (MID) to determine
+        the oldest unacknowledged publish deadline. This ensures that repeated publishes
+        do not postpone the health check timeout if earlier messages remain unacknowledged.
         """
+        info = super().publish(topic, payload=payload, qos=qos, retain=retain, properties=properties)
         handler: MqttHandler = self._userdata
         if handler is not None and hasattr(handler, "registry"):
-            handler.registry.record_publish(handler.client_id)
-        return super().publish(topic, payload=payload, qos=qos, retain=retain, properties=properties)
+            mid = getattr(info, "mid", None) if getattr(info, "rc", 0) == mqtt.MQTT_ERR_SUCCESS else None
+            handler.registry.record_publish(handler.client_id, mid=mid)
+        return info
 
     def _record_connection_result(self, success: bool) -> None:
         from sigenergy2mqtt.metrics import Metrics
@@ -252,7 +252,7 @@ def on_publish(client: mqtt.Client, userdata: MqttHandler, mid: int, reason_code
     """
     logger.debug(f"Acknowledged publish MID={mid} (client_id={userdata.client_id})")
     userdata.on_response(mid, "publish", client)
-    userdata.registry.record_publish_ack(userdata.client_id)
+    userdata.registry.record_publish_ack(userdata.client_id, mid=mid)
     _ensure_subscriptions_are_fresh(client, userdata)
 
 
