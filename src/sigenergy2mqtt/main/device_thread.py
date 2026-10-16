@@ -13,6 +13,7 @@ import threading
 from collections.abc import Awaitable
 from typing import Any
 
+import paho.mqtt.client as mqtt
 from aiohttp import ClientError
 from paho.mqtt import MQTTException
 from pymodbus.exceptions import ModbusException
@@ -21,11 +22,22 @@ from sigenergy2mqtt.cloud.exceptions import CloudControlError
 from sigenergy2mqtt.config import SettingsService, active_config
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.modbus import ModbusClientFactory
-from sigenergy2mqtt.mqtt import mqtt_setup, mqtt_teardown
+from sigenergy2mqtt.mqtt import MqttHandler, mqtt_setup, mqtt_teardown
 
 from .thread_config import ThreadConfig
 
 logger = logging.getLogger(__name__)
+
+_current_ha_status: str | None = None
+
+
+async def log_ha_status(transport: Any, mqtt_client: mqtt.Client, value: float | str, source: str, handler: MqttHandler) -> bool:
+    """Log Home Assistant status messages received via MQTT."""
+    global _current_ha_status
+    if _current_ha_status != str(value):
+        _current_ha_status = str(value)
+        logger.info(f"Home Assistant is {_current_ha_status}")
+    return True
 
 
 async def read_and_publish_device_sensors(
@@ -64,20 +76,22 @@ async def read_and_publish_device_sensors(
     # when host is absent (e.g. clean/discovery-only runs).
     log_label = config.url if config.host is not None else config.description
 
-    modbus_client: Any = None
-    mqtt_client: Any = None
-    mqtt_handler: Any = None
+    device: Device
+    mqtt_client: mqtt.Client | None = None
+    mqtt_handler: MqttHandler | None = None
     tasks: list[Awaitable[Any]] = []
+    transport: Any = None
 
     try:
         if config.host is not None and not active_config.clean:
-            modbus_client = await ModbusClientFactory.get_client(
+            transport = await ModbusClientFactory.get_client(
                 config.host,
                 config.port if config.port else 502,
                 config.timeout,
                 config.retries,
             )
         elif config.transport_factory is not None and not active_config.clean:
+
             def stopping() -> bool:
                 return config.shutdown_requested or (stop_event is not None and stop_event.is_set())
 
@@ -89,7 +103,7 @@ async def read_and_publish_device_sensors(
                             await asyncio.wait({connection}, timeout=0.1)
                         if not connection.done():
                             return
-                        modbus_client = await connection
+                        transport = await connection
                     finally:
                         if not connection.done():
                             connection.cancel()
@@ -105,9 +119,11 @@ async def read_and_publish_device_sensors(
                 return
 
         mqtt_client_id = f"{active_config.mqtt.client_id_prefix}_{config.description}"
-        mqtt_client, mqtt_handler = await mqtt_setup(mqtt_client_id, modbus_client, loop)
+        mqtt_client, mqtt_handler = await mqtt_setup(mqtt_client_id, transport, loop)
 
-        device: Device
+        if not active_config.clean and active_config.home_assistant.enabled and not active_config.home_assistant.discovery_only:
+            mqtt_handler.register(mqtt_client, f"{active_config.home_assistant.discovery_prefix}/status", log_ha_status)
+
         for device in config.devices:
             # Cleanup must still reach HA discovery when HA integration has been
             # disabled. SettingsService also removes stale discovery on startup
@@ -127,7 +143,7 @@ async def read_and_publish_device_sensors(
                     device.publish_availability(mqtt_client, "online")
 
                 logger.debug(f"{device.log_identity} scheduling tasks")
-                tasks.extend(device.schedule(modbus_client, mqtt_client))
+                tasks.extend(device.schedule(transport, mqtt_client))
 
         if tasks:
             task_word = "task" if len(tasks) == 1 else "tasks"
@@ -138,7 +154,7 @@ async def read_and_publish_device_sensors(
 
             for device in config.devices:
                 try:
-                    device.on_commencement(modbus_client, mqtt_client)
+                    device.on_commencement(transport, mqtt_client)
                 except (ModbusException, MQTTException):
                     logger.exception(f"{device.log_identity} on commencement failed")
 
@@ -160,7 +176,7 @@ async def read_and_publish_device_sensors(
 
             for device in config.devices:
                 try:
-                    device.on_completion(modbus_client, mqtt_client)
+                    device.on_completion(transport, mqtt_client)
                 except (ModbusException, MQTTException):
                     logger.exception(f"{device.log_identity} on completion failed")
                 if active_config.home_assistant.enabled:
@@ -171,13 +187,13 @@ async def read_and_publish_device_sensors(
             if mqtt_client is not None and mqtt_handler is not None:
                 await mqtt_teardown(mqtt_client, mqtt_handler)
         finally:
-            if modbus_client is not None and config.host is not None:
-                ModbusClientFactory.remove(modbus_client)
-            elif modbus_client is not None:
+            if transport is not None and config.host is not None:
+                ModbusClientFactory.remove(transport)
+            elif transport is not None:
                 # Non-Modbus transports (currently CloudControlPort) are
                 # created and connected in this thread's event loop. Close
                 # them here, before run_modbus_event_loop closes that loop.
-                close = getattr(modbus_client, "close", None)
+                close = getattr(transport, "close", None)
                 if close is not None:
                     await close()
 

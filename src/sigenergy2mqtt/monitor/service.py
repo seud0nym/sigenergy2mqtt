@@ -95,18 +95,28 @@ class MonitorService(Device):
         for cid, health in mqtt_snapshot.items():
             is_monitor = bool(cid.encode("utf-8") == mqtt_client._client_id)
             max = 2 * self._health_publish_interval if is_monitor else self._health_publish_interval
+            if hasattr(health, "oldest_pending_publish_at"):
+                oldest_pending = health.oldest_pending_publish_at
+            else:
+                last_pub = getattr(health, "last_publish_at", None)
+                last_ack = getattr(health, "last_publish_ack_at", None)
+                oldest_pending = last_pub if (last_pub and last_ack and last_ack < last_pub) else None
             if not health.connected:
                 logger.warning(f"{self.log_identity} MQTT Client ID {cid} disconnected ({health.disconnect_count}x total)")
             elif is_monitor and (self._started + self._health_publish_interval) > now:
                 logger.debug(f"{self.log_identity} MQTT Client ID {cid} not checked (first interval)")
                 mqtt_healthy_connections += 1
-            elif health.last_message_at and health.last_publish_ack_at and health.last_publish_ack_at < health.last_message_at and (now - health.last_message_at) > max:
-                logger.warning(f"{self.log_identity} MQTT Client ID {cid} connected but no publish acknowledgement received for {(now - health.last_message_at):0.2f}s")
+            elif oldest_pending is not None and (now - oldest_pending) > max:
+                logger.warning(
+                    f"{self.log_identity} MQTT Client ID {cid} connected but no publish acknowledgement received for {(now - oldest_pending):0.2f}s"
+                )
             else:
                 if logging.getLogger().isEnabledFor(logging.DEBUG):
-                    if health.last_message_at and health.last_publish_ack_at:
+                    last_pub = getattr(health, "last_publish_at", None)
+                    last_ack = getattr(health, "last_publish_ack_at", None)
+                    if last_pub and last_ack:
                         logger.debug(
-                            f"{self.log_identity} MQTT Client ID {cid} healthy (connected {health.connect_count}x, last message {now - health.last_message_at:0.2f}s ago, last ack {now - health.last_publish_ack_at:0.2f}s ago)"
+                            f"{self.log_identity} MQTT Client ID {cid} healthy (connected {health.connect_count}x, last publish {now - last_pub:0.2f}s ago, last ack {now - last_ack:0.2f}s ago)"
                         )
                     else:
                         logger.debug(f"{self.log_identity} MQTT Client ID {cid} healthy (connected {health.connect_count}x)")

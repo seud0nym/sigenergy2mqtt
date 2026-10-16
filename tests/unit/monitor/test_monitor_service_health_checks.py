@@ -77,8 +77,16 @@ def test_check_mqtt_disconnected(monkeypatch, caplog):
 
 
 def test_check_mqtt_no_ack_no_msg(monkeypatch, caplog):
-    """MQTT connected but no ack and/or no msg."""
-    health = MqttClientHealth(client_id="other_client", connected=True, last_publish_ack_at=time.monotonic() - 10000, last_message_at=time.monotonic() - 10000, connect_count=1)
+    """MQTT connected with a pending publish that is overdue."""
+    now = time.monotonic()
+    health = MqttClientHealth(
+        client_id="other_client",
+        connected=True,
+        last_publish_at=now - 10000,
+        last_publish_ack_at=now - 20000,
+        oldest_pending_publish_at=now - 10000,
+        connect_count=1,
+    )
     monkeypatch.setattr("sigenergy2mqtt.mqtt.mqtt_health_registry.snapshot", lambda: {"other_client": health}, raising=False)
 
     svc = MonitorService([])
@@ -88,6 +96,25 @@ def test_check_mqtt_no_ack_no_msg(monkeypatch, caplog):
     assert result[0] is False
 
 
+def test_check_mqtt_legacy_fallback_when_attribute_absent(monkeypatch, caplog):
+    """When oldest_pending_publish_at attribute is absent entirely, fall back to last_publish_at comparison."""
+    class LegacyHealthMock:
+        connected = True
+        disconnect_count = 0
+        connect_count = 1
+        last_publish_at = time.monotonic() - 10000
+        last_publish_ack_at = time.monotonic() - 20000
+
+    monkeypatch.setattr("sigenergy2mqtt.mqtt.mqtt_health_registry.snapshot", lambda: {"legacy_client": LegacyHealthMock()}, raising=False)
+
+    svc = MonitorService([])
+    result = svc._check_mqtt(FakeMqttClient())
+
+    assert "connected but no publish acknowledgement received" in caplog.text
+    assert result[0] is False
+
+
+
 def test_check_mqtt_healthy_ack_msg(monkeypatch, caplog):
     """MQTT healthy branch."""
     import logging
@@ -95,7 +122,13 @@ def test_check_mqtt_healthy_ack_msg(monkeypatch, caplog):
     with _swap_active_config(Config()) as cfg:
         cfg.diagnostics.log_level = logging.DEBUG
         caplog.set_level(logging.DEBUG)
-        health = MqttClientHealth(client_id="other_client", connected=True, last_publish_ack_at=time.monotonic(), last_message_at=time.monotonic(), connect_count=3)
+        health = MqttClientHealth(
+            client_id="other_client",
+            connected=True,
+            last_publish_at=time.monotonic(),
+            last_publish_ack_at=time.monotonic(),
+            connect_count=3,
+        )
         monkeypatch.setattr("sigenergy2mqtt.mqtt.mqtt_health_registry.snapshot", lambda: {"other_client": health}, raising=False)
 
         svc = MonitorService([])
@@ -103,6 +136,84 @@ def test_check_mqtt_healthy_ack_msg(monkeypatch, caplog):
 
         assert "healthy (connected 3x" in caplog.text
         assert result[0] is True
+
+
+def test_check_mqtt_inbound_message_after_ack_does_not_degrade(monkeypatch, caplog):
+    """Regression: inbound message (e.g. HA offline/online status) received after the
+    last publish was acknowledged must NOT trigger the 'no publish acknowledgement'
+    warning.  Before the fix, last_message_at (inbound) was used as the 'sent-at'
+    reference, so receiving an HA status topic update advanced the window and made
+    the health check falsely report the connection as degraded.
+    """
+    now = time.monotonic()
+    health = MqttClientHealth(
+        client_id="other_client",
+        connected=True,
+        # Simulates receiving an HA status message 55 s ago (after the last publish ack).
+        last_message_at=now - 55,
+        # The last publish was acknowledged 60 s ago — before the inbound message.
+        last_publish_at=now - 70,
+        last_publish_ack_at=now - 60,
+        connect_count=1,
+    )
+    monkeypatch.setattr("sigenergy2mqtt.mqtt.mqtt_health_registry.snapshot", lambda: {"other_client": health}, raising=False)
+
+    svc = MonitorService([])
+    result = svc._check_mqtt(FakeMqttClient())
+
+    # The publish was acknowledged (last_publish_ack_at > last_publish_at is False here, so
+    # the pending-ack check should NOT fire).  Wait — last_publish_ack_at=now-60 and
+    # last_publish_at=now-70, so ack IS newer than publish: no warning expected.
+    assert "connected but no publish acknowledgement received" not in caplog.text
+    assert result[0] is True
+
+
+def test_check_mqtt_repeated_publishes_do_not_postpone_timeout(monkeypatch, caplog):
+    """If an earlier publish is unacknowledged, newer publishes must not postpone the timeout."""
+    now = time.monotonic()
+    health = MqttClientHealth(
+        client_id="other_client",
+        connected=True,
+        # A newer publish happened recently (10s ago, well within the 30s interval):
+        last_publish_at=now - 10,
+        last_publish_ack_at=now - 200,
+        # But the oldest unacknowledged publish happened 100s ago (> 30s timeout):
+        oldest_pending_publish_at=now - 100,
+        connect_count=1,
+    )
+    monkeypatch.setattr("sigenergy2mqtt.mqtt.mqtt_health_registry.snapshot", lambda: {"other_client": health}, raising=False)
+
+    svc = MonitorService([])
+    result = svc._check_mqtt(FakeMqttClient())
+
+    assert "connected but no publish acknowledgement received for 100" in caplog.text
+    assert result[0] is False
+
+
+def test_check_mqtt_no_fallback_when_oldest_pending_is_none(monkeypatch, caplog):
+    """When oldest_pending_publish_at is explicitly None (e.g. ACK arrived before publish returned),
+    the monitor must NOT use the timestamp fallback even if last_publish_ack_at < last_publish_at.
+    """
+    now = time.monotonic()
+    health = MqttClientHealth(
+        client_id="other_client",
+        connected=True,
+        # ACK arrived before publish() returned:
+        last_publish_ack_at=now - 100.1,
+        last_publish_at=now - 100.0,
+        # But all messages were acknowledged, so oldest_pending_publish_at is explicitly None:
+        oldest_pending_publish_at=None,
+        connect_count=1,
+    )
+    monkeypatch.setattr("sigenergy2mqtt.mqtt.mqtt_health_registry.snapshot", lambda: {"other_client": health}, raising=False)
+
+    svc = MonitorService([])
+    result = svc._check_mqtt(FakeMqttClient())
+
+    assert "connected but no publish acknowledgement received" not in caplog.text
+    assert result[0] is True
+
+
 
 
 @pytest.mark.asyncio

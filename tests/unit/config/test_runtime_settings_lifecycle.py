@@ -64,6 +64,7 @@ async def test_settings_discovery_removed_via_device_thread(services, clean, pub
     active_config.diagnostics.enabled = False
     active_config.runtime_config_enabled = publishing
     active_config.home_assistant.enabled = ha_enabled
+    active_config.home_assistant.discovery_only = False
     active_config.home_assistant.unique_id_prefix = "sig"
     active_config.home_assistant.discovery_prefix = "custom-ha"
     active_config.home_assistant.republish_discovery_interval = 1
@@ -90,7 +91,14 @@ async def test_settings_discovery_removed_via_device_thread(services, clean, pub
     mqtt_client.publish.assert_any_call("custom-ha/device/sig_config/config", b"", qos=1, retain=True)
     mqtt_client.publish.assert_any_call("custom-ha/device/sig_config/availability", b"", 1, True)
     assert len(mqtt_client.publish.call_args_list) == 2
-    mqtt_handler.register.assert_not_called()
+    if ha_enabled and not clean:
+        mqtt_handler.register.assert_called_once_with(
+            mqtt_client,
+            "custom-ha/status",
+            device_thread.log_ha_status,
+        )
+    else:
+        mqtt_handler.register.assert_not_called()
     assert service.schedule(None, mqtt_client) == []
 
 
