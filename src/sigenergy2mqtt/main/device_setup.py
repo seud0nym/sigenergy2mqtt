@@ -109,7 +109,7 @@ async def _setup_cloud_control() -> None:
     if discovery is None or plant_index is None or close_failed:
         return
 
-    cloud_config = ThreadConfig.create(host=None, port=None, name="Sigenergy Cloud")
+    cloud_config = ThreadConfig.create(host=None, port=None, name="Cloud")
     cloud_config.transport_factory = cloud_control_registry.transport_factory
     cloud_config.add_device(CloudControl(plant_index, cloud_port, discovery))
 
