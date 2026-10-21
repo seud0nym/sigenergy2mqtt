@@ -2,6 +2,8 @@ import asyncio
 import logging
 import time
 from datetime import UTC, datetime
+from types import SimpleNamespace
+from typing import cast
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -173,15 +175,37 @@ class TestPVOutputOutput:
     async def test_verify_parses_remote_response(self, monkeypatch):
         svc = make_output_service()
         with patch.object(active_config.pvoutput, "testing", False), patch.object(active_config.pvoutput, "exports", True), patch.object(active_config.pvoutput, "imports", True):
-            payload = {"d": "20250101", "pp": 10, "ep": 0}
-            parts = ["NaN"] * 18
-            parts[0], parts[5], parts[14] = "20250101", "10", "0"
-            text = ",".join(parts)
+            payload = {"d": "20261020", "e": 27180, "pp": 7132, "ip": 20, "io": 30, "is": 60, "ih": 0, "ep": 11410, "eo": 7340, "es": 8430, "eh": 0}
+            fields = ("e", "pp", "ip", "io", "is", "ih", "ep", "eo", "es", "eh")
+            svc._service_topics = cast(dict[str, ServiceTopics], {key: SimpleNamespace(enabled=True, _value_key=SimpleNamespace(value=key)) for key in fields})
+            text = "20261020,38506,4.416,27180,11436,7132,13:45,Fine,20,32,20,30,60,0"
 
             monkeypatch.setattr("requests.get", lambda *a, **k: DummyResponse(text))
             monkeypatch.setattr(asyncio, "sleep", AsyncMock())
 
             assert await svc._verify(payload, force=False) is True
+
+    @pytest.mark.asyncio
+    async def test_verify_counts_a_reported_value_mismatch(self, monkeypatch):
+        svc = make_output_service()
+        payload = {"d": "20261020", "e": 27180, "pp": 7132}
+        svc._service_topics = cast(
+            dict[str, ServiceTopics],
+            {key: SimpleNamespace(enabled=True, _value_key=SimpleNamespace(value=key)) for key in ("e", "pp")},
+        )
+        error_metric = AsyncMock()
+
+        with (
+            patch.object(active_config.pvoutput, "testing", False),
+            patch.object(active_config.pvoutput, "exports", True),
+            patch.object(active_config.pvoutput, "imports", False),
+            patch("sigenergy2mqtt.pvoutput.output.Metrics.pvoutput_upload_error", error_metric),
+        ):
+            monkeypatch.setattr("requests.get", lambda *a, **k: DummyResponse("20261020,38506,4.416,0,11237,6053,13:00,Fine,20,32,NaN,NaN,NaN,NaN"))
+            monkeypatch.setattr(asyncio, "sleep", AsyncMock())
+
+            assert await svc._verify(payload, force=False) is False
+            error_metric.assert_awaited_once()
 
     @pytest.mark.asyncio
     async def test_verify_http_error_handling(self, caplog):
