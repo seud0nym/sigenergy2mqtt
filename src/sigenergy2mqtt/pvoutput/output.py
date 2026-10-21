@@ -178,16 +178,21 @@ class PVOutputOutputService(Service):
                         )
                         v = re.split(r"[,]", response.text)
                         result["d"] = v[0]
-                        result["e"] = int(v[3]) if active_config.pvoutput.exports and len(v) > 3 and v[3] != "NaN" else None
-                        result["pp"] = int(v[5]) if len(v) > 5 and v[5] != "NaN" else None
-                        result["ip"] = int(v[10]) if active_config.pvoutput.imports and len(v) > 10 and v[10] != "NaN" else None
-                        result["io"] = int(v[11]) if active_config.pvoutput.imports and len(v) > 11 and v[11] != "NaN" else None
-                        result["is"] = int(v[12]) if active_config.pvoutput.imports and len(v) > 12 and v[12] != "NaN" else None
-                        result["ih"] = int(v[13]) if active_config.pvoutput.imports and len(v) > 13 and v[13] != "NaN" else None
-                        result["ep"] = int(v[14]) if active_config.pvoutput.exports and len(v) > 14 and v[14] != "NaN" else None
-                        result["eo"] = int(v[15]) if active_config.pvoutput.exports and len(v) > 15 and v[15] != "NaN" else None
-                        result["es"] = int(v[16]) if active_config.pvoutput.exports and len(v) > 16 and v[16] != "NaN" else None
-                        result["eh"] = int(v[17]) if active_config.pvoutput.exports and len(v) > 17 and v[17] != "NaN" else None
+                        verification_fields = {
+                            "e": (3, active_config.pvoutput.exports),
+                            "pp": (5, True),
+                            "ip": (10, active_config.pvoutput.imports),
+                            "io": (11, active_config.pvoutput.imports),
+                            "is": (12, active_config.pvoutput.imports),
+                            "ih": (13, active_config.pvoutput.imports),
+                            "ep": (14, active_config.pvoutput.exports),
+                            "eo": (15, active_config.pvoutput.exports),
+                            "es": (16, active_config.pvoutput.exports),
+                            "eh": (17, active_config.pvoutput.exports),
+                        }
+                        for key, (index, enabled) in verification_fields.items():
+                            if enabled and len(v) > index and v[index] != "NaN":
+                                result[key] = int(v[index])
                         matches = True
                     else:
                         logger.debug(f"{self.log_identity} Verification attempt #{validate} FAILED status_code={response.status_code} reason={response.reason}")
@@ -219,6 +224,8 @@ class PVOutputOutputService(Service):
                 logger.error(f"{self.log_identity} Error Connecting: {exc}")
             except (OSError, TimeoutError) as exc:
                 logger.error(f"{self.log_identity} {exc}")
+        if not matches and not active_config.pvoutput.testing:
+            await Metrics.pvoutput_upload_error()
         return matches
 
     async def _upload(self, payload: dict[str, float | int | str], last_upload_of_day: bool = False) -> None:
