@@ -589,6 +589,92 @@ class TestConfigureLogging:
             record2 = logging.LogRecord("name", logging.ERROR, "pathname", 1, "Some other error", None, None)
             assert filter_obj.filter(record2) is True
 
+    def test_framer_skip_filter_repeating_suppressed_through_transport_records(self):
+        """Repeating.... after a suppressed Skipping is filtered even when transport-dump
+        DEBUG records (send:/recv:/extra:) appear between them."""
+        from sigenergy2mqtt.main.logging_setup import _FramerSkipFilter
+
+        mock_device = MagicMock()
+        mock_device.log_skipped = False
+
+        with patch.object(active_config, "modbus", [mock_device]):
+            f = _FramerSkipFilter()
+
+            skip_record = logging.LogRecord(
+                "pymodbus.logging", logging.ERROR, "base.py", 82,
+                "ERROR: request ask for id=1 but got id=2, Skipping.", None, None,
+            )
+            send_record = logging.LogRecord(
+                "pymodbus.logging", logging.DEBUG, "logging.py", 124,
+                "send: 0xe3 0xaa 0x00 0x00 0x00 0x06 0x01 0x04 0x79 0x18 0x00 0x05", None, None,
+            )
+            recv_record = logging.LogRecord(
+                "pymodbus.logging", logging.DEBUG, "logging.py", 124,
+                "recv: 0xe3 0xaa 0x00 0x00 0x00 0x0d 0x01 0x04 0x0a extra data: ", None, None,
+            )
+            extra_record = logging.LogRecord(
+                "pymodbus.logging", logging.DEBUG, "logging.py", 124,
+                "extra: 0x01 0x02 unexpected data: 0x03", None, None,
+            )
+            repeat_record = logging.LogRecord(
+                "pymodbus.logging", logging.ERROR, "base.py", 82,
+                "Repeating....", None, None,
+            )
+            unrelated_record = logging.LogRecord(
+                "pymodbus.logging", logging.ERROR, "base.py", 99,
+                "Some completely different error", None, None,
+            )
+
+            # Skipping is suppressed → chain becomes active
+            assert f.filter(skip_record) is False
+            assert f._chain_active is True
+
+            # Transport-dump records pass through without resetting the chain
+            assert f.filter(send_record) is True
+            assert f._chain_active is True
+
+            assert f.filter(recv_record) is True
+            assert f._chain_active is True
+
+            assert f.filter(extra_record) is True
+            assert f._chain_active is True
+
+            # Repeating.... is still suppressed because chain is still active
+            assert f.filter(repeat_record) is False
+            assert f._chain_active is True  # chain stays open for further repeats
+
+            # An unrelated record ends the chain
+            assert f.filter(unrelated_record) is True
+            assert f._chain_active is False
+
+    def test_framer_skip_filter_transport_records_do_not_start_chain(self):
+        """Transport-dump records that arrive when no chain is active do not start one."""
+        from sigenergy2mqtt.main.logging_setup import _FramerSkipFilter
+
+        mock_device = MagicMock()
+        mock_device.log_skipped = False
+
+        with patch.object(active_config, "modbus", [mock_device]):
+            f = _FramerSkipFilter()
+
+            send_record = logging.LogRecord(
+                "pymodbus.logging", logging.DEBUG, "logging.py", 124,
+                "send: 0xe3 0xaa 0x00 0x00", None, None,
+            )
+            repeat_record = logging.LogRecord(
+                "pymodbus.logging", logging.ERROR, "base.py", 82,
+                "Repeating....", None, None,
+            )
+
+            # Transport record with no active chain: passes through, no chain started
+            assert f.filter(send_record) is True
+            assert f._chain_active is False
+
+            # Repeating.... with no active chain: passes through (not a Skipping repeat)
+            assert f.filter(repeat_record) is True
+            assert f._chain_active is False
+
+
 
 class TestGetState:
     """Tests for the get_state helper function and related sensor behaviors."""
