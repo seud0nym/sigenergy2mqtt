@@ -13,7 +13,6 @@ dependencies = [
     "pymodbus==3.16.1",
     "requests==2.34.2",
     "ruamel.yaml==0.19.1",
-    "sigenergy-cloud==0.1.7",
 ]
 description = "Publish Modbus data from Sigenergy to MQTT, with optional Home Assistant Auto-Discovery and PVOutput updating"
 dynamic = ["version"]

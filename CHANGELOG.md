@@ -18,9 +18,9 @@
 
 ### Changed
 - Updated aiohttp from 3.14.4 to 3.14.5
-- Updated pycryptodome from 3.24.0 to 3.24.1
+- Updated pycryptodome from 3.24.0 to 4.1.0
 - Updated pymodbus from 3.15.0 to 3.16.1
-- Updated pydantic-settings from 2.15.0 to 2.16.0
+- Updated pydantic-settings from 2.15.0 to 2.16.1
 
 ---
 
