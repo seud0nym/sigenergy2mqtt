@@ -14,7 +14,7 @@
 - Added a cool down on cloud rate limit errors with exponential backoff
 - Fixed logging identity for cloud devices
 - Reduced log spamming from every device when Home Assistant goes offline/online
-- Fixed PVOutput upload verification logic and error counting for non-donators
+- Fixed PVOutput upload verification logic for non-donators and error counting in diagnostics
 
 ### Changed
 - Updated aiohttp from 3.14.4 to 3.14.5
