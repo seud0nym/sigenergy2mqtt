@@ -15,6 +15,7 @@
 - Fixed logging identity for cloud devices
 - Reduced log spamming from every device when Home Assistant goes offline/online
 - Fixed PVOutput upload verification logic for non-donators and error counting in diagnostics
+- Improved pymodbus 'Skipping' logging filter to catch the send:/recv: DEBUG level transport dump records before subsequent 'Repeating'  messages
 
 ### Changed
 - Updated aiohttp from 3.14.4 to 3.14.5

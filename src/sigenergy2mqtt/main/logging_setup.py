@@ -14,13 +14,25 @@ _framer_skip_filter: "_FramerSkipFilter | None" = None
 
 
 class _FramerSkipFilter(logging.Filter):
-    """..."""  # (docstring unchanged)
+    """Suppress pymodbus "Skipping." error records (and their "Repeating...."
+    duplicates) when the user has not opted in to skipped-error logging.
+
+    pymodbus emits DEBUG-level transport-dump records ("send: …" / "recv: …
+    extra data: …") between the initial Skipping error and the subsequent
+    "Repeating…." record that represents a repeat of that same error.  Those
+    transport records must not break the suppression chain, so they are treated
+    as chain-transparent: they pass through without resetting ``_chain_active``.
+    """
+
+    # Prefixes used by pymodbus Log.build_frame_log_line() for transport dumps.
+    _TRANSPORT_PREFIXES = ("send: ", "recv: ", "extra: ")
 
     def __init__(self) -> None:
         super().__init__()
-        # True only while the immediately preceding record on this logger
-        # was a Skipping match we suppressed (or a Repeating.... we suppressed
-        # as a continuation of that same chain). Reset by any other record.
+        # True only while the immediately preceding *non-transport* record on
+        # this logger was a Skipping match we suppressed (or a Repeating....
+        # we suppressed as a continuation of that same chain).  Transport-dump
+        # DEBUG records are transparent and do not alter this flag.
         self._chain_active = False
 
     def filter(self, record: logging.LogRecord) -> bool:
@@ -46,6 +58,13 @@ class _FramerSkipFilter(logging.Filter):
                 return True
             Metrics.modbus_skipped_error()
             return False  # chain stays open, in case of a further repeat
+
+        # Transport-dump records (send:/recv:/extra: DEBUG lines emitted by
+        # Log.transport_dump) appear between a Skipping error and its
+        # subsequent Repeating.... record.  They are not skip-related, so they
+        # always pass through, but they must NOT reset the suppression chain.
+        if self._chain_active and any(msg.startswith(pfx) for pfx in self._TRANSPORT_PREFIXES):
+            return True
 
         # Anything else - including a "Repeating...." NOT chained to a
         # Skipping message we suppressed - ends the chain and passes through.
