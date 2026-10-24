@@ -14,13 +14,13 @@
 - Added a cool down on cloud rate limit errors with exponential backoff
 - Fixed logging identity for cloud devices
 - Reduced log spamming from every device when Home Assistant goes offline/online
-- Fixed PVOutput upload verification logic and error counting
+- Fixed PVOutput upload verification logic and error counting for non-donators
 
 ### Changed
 - Updated aiohttp from 3.14.4 to 3.14.5
-- Updated pycryptodome from 3.24.0 to 3.24.1
+- Updated pycryptodome from 3.24.0 to 4.1.0
 - Updated pymodbus from 3.15.0 to 3.16.1
-- Updated pydantic-settings from 2.15.0 to 2.16.0
+- Updated pydantic-settings from 2.15.0 to 2.16.1
 
 ---
 
