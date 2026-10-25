@@ -67,8 +67,6 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
             **kwargs,
         )
         self.alarm_type = alarm_type
-        self._alarm_availability_topic: str | None = None
-        self._alarm_available: bool | None = None
 
     @abc.abstractmethod
     def decode_alarm_bit(self, bit_position: int) -> str | None:
@@ -98,7 +96,7 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
             return value
 
         if self._is_invalid_alarm(value):
-            return None
+            return "Unknown"
 
         # Treat None as no alarm
         if value is None:
@@ -144,30 +142,6 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
             return not all(self.decode_alarm_bit(bit) is not None for bit in range(16))
         except TypeError:
             return True
-
-    def configure_mqtt_topics(self, device_id: str) -> str:
-        base = super().configure_mqtt_topics(device_id)
-        if active_config.home_assistant.enabled:
-            self._alarm_availability_topic = f"{base}/availability"
-            availability = cast(list[dict[str, Any]], self[DiscoveryKeys.AVAILABILITY])
-            availability.append({
-                DiscoveryKeys.TOPIC: self._alarm_availability_topic,
-                "payload_available": "online",
-                "payload_not_available": "offline",
-            })
-        return base
-
-    def _publish_state_availability(self, state: Any, mqtt_client: Any) -> None:
-        available = not self._is_invalid_alarm(self.latest_raw_state)
-        if not available and self._alarm_available is not False:
-            logger.warning(f"{self.log_identity} {self.alarm_type} alarm is unavailable (invalid alarm value {self.latest_raw_state})")
-        elif available and self._alarm_available is False:
-            logger.info(f"{self.log_identity} {self.alarm_type} alarm is available again")
-        self._alarm_available = available
-
-        if self._alarm_availability_topic is not None:
-            payload = "online" if available else "offline"
-            self._publish_message(mqtt_client, self._alarm_availability_topic, payload, qos=1, retain=True)
 
     def _normalize_alarm_code(self, value: float | str) -> int:
         """Normalize alarm value to integer code.
@@ -411,7 +385,6 @@ class AlarmCombinedSensor(ReadOnlySensor, HybridInverter, PVInverter):
             raise ValueError(f"{self.__class__.__name__}: Alarms must have contiguous address ranges (addresses: {[a.address for a in alarms]})")
 
         self.alarms = list(alarms)
-        self._combined_alarm_availability_topic: str | None = None
         self._has_invalid_alarm = False
         plant_index: int = kwargs.pop("plant_index", self.alarms[0].plant_index)
 
@@ -473,25 +446,11 @@ class AlarmCombinedSensor(ReadOnlySensor, HybridInverter, PVInverter):
         """
         base = super().configure_mqtt_topics(device_id)
 
-        if active_config.home_assistant.enabled:
-            self._combined_alarm_availability_topic = f"{base}/availability"
-            availability = cast(list[dict[str, Any]], self[DiscoveryKeys.AVAILABILITY])
-            availability.append({
-                DiscoveryKeys.TOPIC: self._combined_alarm_availability_topic,
-                "payload_available": "online",
-                "payload_not_available": "offline",
-            })
-
         # Configure topics for all alarm sensors
         for alarm in self.alarms:
             alarm.configure_mqtt_topics(device_id)
 
         return base
-
-    def _publish_state_availability(self, state: Any, mqtt_client: Any) -> None:
-        if self._combined_alarm_availability_topic is not None:
-            payload = "offline" if self._has_invalid_alarm else "online"
-            self._publish_message(mqtt_client, self._combined_alarm_availability_topic, payload, qos=1, retain=True)
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> Any:
         """Get combined alarm state from all alarm sensors.
@@ -504,59 +463,54 @@ class AlarmCombinedSensor(ReadOnlySensor, HybridInverter, PVInverter):
         Returns:
             Combined alarm string
         """
-        if republish and len(self._states) > 0:
-            state = self._states[-1][1]
-            # The cached combined text may predate a child becoming invalid.
-            # Child republish reads their cached raw values without polling Modbus.
-            self._has_invalid_alarm = False
-            for alarm in (a for a in self.alarms if a.publishable):
-                child_state = await alarm.get_state(raw=False, republish=True, max_length=sys.maxsize, **kwargs)
-                if child_state is None:
-                    self._has_invalid_alarm = True
-            if self._has_invalid_alarm:
-                return None
-            return self._apply_gain_and_precision(state, raw) if isinstance(state, (float, int)) else state
-
         no_alarm = _t("AlarmSensor.no_alarm", AlarmSensor.NO_ALARM, self.debug_logging)
-        result: str = no_alarm
-        has_invalid_alarm = False
+        combined_alarms: list[str] = []
+        unknown_count = 0
+        self._has_invalid_alarm = False
 
         # Collect alarms from all publishable sensors
         for alarm in (a for a in self.alarms if a.publishable):
-            state = await alarm.get_state(raw=False, republish=False, max_length=sys.maxsize, **kwargs)
+            state = await alarm.get_state(raw=False, republish=republish, max_length=sys.maxsize, **kwargs)
 
-            if state is None:
-                has_invalid_alarm = True
+            if state is None or state == "Unknown":
+                self._has_invalid_alarm = True
+                unknown_count += 1
                 continue
 
             if state != no_alarm:
-                result = state if result == no_alarm else f"{result}, {state}"
+                combined_alarms.append(state)
 
-                # Truncate if needed for Home Assistant
-                if len(result) > 255 and active_config.home_assistant.enabled:
-                    result = self._compress_alarm_string(result)
+        unknown_suffix = "Unknown" if unknown_count == 1 else f"Unknown ({unknown_count})" if unknown_count > 1 else None
+        alarm_text = ", ".join(combined_alarms)
 
-        if has_invalid_alarm:
-            self._has_invalid_alarm = True
-            return None
+        if unknown_suffix is not None:
+            if active_config.home_assistant.enabled:
+                available_length = max(0, 255 - len(unknown_suffix) - (2 if alarm_text else 0))
+                if len(alarm_text) > available_length:
+                    alarm_text = self._compress_alarm_string(alarm_text, available_length)
+            result = f"{alarm_text}, {unknown_suffix}" if alarm_text else unknown_suffix
+        else:
+            result = alarm_text or no_alarm
+            if len(result) > 255 and active_config.home_assistant.enabled:
+                result = self._compress_alarm_string(result)
 
-        self._has_invalid_alarm = False
-        self.set_state(result)
+        if not republish:
+            self.set_state(result)
         return result
 
-    def _compress_alarm_string(self, alarms: str) -> str:
+    def _compress_alarm_string(self, alarms: str, max_length: int = 255) -> str:
         """Compress alarm string to fit Home Assistant limit.
 
         Args:
             alarms: Combined alarm string
 
         Returns:
-            Compressed string under 255 characters
+            Compressed string within ``max_length`` characters
         """
         compressed = re.sub(r"\s+", " ", re.sub(r"[0-9:_]", "", alarms)).strip()
 
-        if len(compressed) > 255:
-            compressed = compressed[:252] + "..."
+        if len(compressed) > max_length:
+            compressed = compressed[: max(0, max_length - 3)] + ("..." if max_length > 3 else "")
 
         return compressed
 
