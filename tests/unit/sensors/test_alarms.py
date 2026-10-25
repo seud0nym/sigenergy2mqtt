@@ -207,6 +207,24 @@ async def test_combined_alarm_counts_none_and_unknown_as_one_invalid_group():
 
 
 @pytest.mark.asyncio
+async def test_combined_alarm_compresses_text_but_preserves_unknown_count():
+    children = [
+        DummyAlarmSensor(f"A{i}", f"sigen_a{i}", 0, 1, 30000 + i, ProtocolVersion.V2_5, "Inverter")
+        for i in range(4)
+    ]
+    children[0].get_state = AsyncMock(return_value="First active alarm description " * 8)
+    children[1].get_state = AsyncMock(return_value="Second active alarm description " * 8)
+    children[2].get_state = AsyncMock(return_value="Unknown")
+    children[3].get_state = AsyncMock(return_value=None)
+    combined = AlarmCombinedSensor("Combined", "sigen_combined", "sigen_combined", *children)
+
+    state = await combined.get_state()
+
+    assert len(state) <= 255
+    assert state.endswith("Unknown (2)")
+
+
+@pytest.mark.asyncio
 async def test_combined_alarm_republish_checks_cached_child_availability():
     first = DummyAlarmSensor("A1", "sigen_a1", 0, 1, 30000, ProtocolVersion.V2_5, "Inverter")
     second = DummyAlarmSensor("A2", "sigen_a2", 0, 1, 30001, ProtocolVersion.V2_5, "Inverter")

@@ -480,32 +480,37 @@ class AlarmCombinedSensor(ReadOnlySensor, HybridInverter, PVInverter):
             if state != no_alarm:
                 combined_alarms.append(state)
 
-        if unknown_count == 1:
-            combined_alarms.append("Unknown")
-        elif unknown_count > 1:
-            combined_alarms.append(f"Unknown ({unknown_count})")
+        unknown_suffix = "Unknown" if unknown_count == 1 else f"Unknown ({unknown_count})" if unknown_count > 1 else None
+        alarm_text = ", ".join(combined_alarms)
 
-        result = ", ".join(combined_alarms) if combined_alarms else no_alarm
-        if len(result) > 255 and active_config.home_assistant.enabled:
-            result = self._compress_alarm_string(result)
+        if unknown_suffix is not None:
+            if active_config.home_assistant.enabled:
+                available_length = max(0, 255 - len(unknown_suffix) - (2 if alarm_text else 0))
+                if len(alarm_text) > available_length:
+                    alarm_text = self._compress_alarm_string(alarm_text, available_length)
+            result = f"{alarm_text}, {unknown_suffix}" if alarm_text else unknown_suffix
+        else:
+            result = alarm_text or no_alarm
+            if len(result) > 255 and active_config.home_assistant.enabled:
+                result = self._compress_alarm_string(result)
 
         if not republish:
             self.set_state(result)
         return result
 
-    def _compress_alarm_string(self, alarms: str) -> str:
+    def _compress_alarm_string(self, alarms: str, max_length: int = 255) -> str:
         """Compress alarm string to fit Home Assistant limit.
 
         Args:
             alarms: Combined alarm string
 
         Returns:
-            Compressed string under 255 characters
+            Compressed string within ``max_length`` characters
         """
         compressed = re.sub(r"\s+", " ", re.sub(r"[0-9:_]", "", alarms)).strip()
 
-        if len(compressed) > 255:
-            compressed = compressed[:252] + "..."
+        if len(compressed) > max_length:
+            compressed = compressed[: max(0, max_length - 3)] + ("..." if max_length > 3 else "")
 
         return compressed
 
