@@ -412,6 +412,7 @@ class AlarmCombinedSensor(ReadOnlySensor, HybridInverter, PVInverter):
 
         self.alarms = list(alarms)
         self._combined_alarm_availability_topic: str | None = None
+        self._has_invalid_alarm = False
         plant_index: int = kwargs.pop("plant_index", self.alarms[0].plant_index)
 
         # Remove conflicting kwargs
@@ -489,7 +490,7 @@ class AlarmCombinedSensor(ReadOnlySensor, HybridInverter, PVInverter):
 
     def _publish_state_availability(self, state: Any, mqtt_client: Any) -> None:
         if self._combined_alarm_availability_topic is not None:
-            payload = "online" if state is not None else "offline"
+            payload = "offline" if self._has_invalid_alarm else "online"
             self._publish_message(mqtt_client, self._combined_alarm_availability_topic, payload, qos=1, retain=True)
 
     async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> Any:
@@ -505,6 +506,15 @@ class AlarmCombinedSensor(ReadOnlySensor, HybridInverter, PVInverter):
         """
         if republish and len(self._states) > 0:
             state = self._states[-1][1]
+            # The cached combined text may predate a child becoming invalid.
+            # Child republish reads their cached raw values without polling Modbus.
+            self._has_invalid_alarm = False
+            for alarm in (a for a in self.alarms if a.publishable):
+                child_state = await alarm.get_state(raw=False, republish=True, max_length=sys.maxsize, **kwargs)
+                if child_state is None:
+                    self._has_invalid_alarm = True
+            if self._has_invalid_alarm:
+                return None
             return self._apply_gain_and_precision(state, raw) if isinstance(state, (float, int)) else state
 
         no_alarm = _t("AlarmSensor.no_alarm", AlarmSensor.NO_ALARM, self.debug_logging)
@@ -527,8 +537,10 @@ class AlarmCombinedSensor(ReadOnlySensor, HybridInverter, PVInverter):
                     result = self._compress_alarm_string(result)
 
         if has_invalid_alarm:
+            self._has_invalid_alarm = True
             return None
 
+        self._has_invalid_alarm = False
         self.set_state(result)
         return result
 

@@ -201,6 +201,22 @@ async def test_combined_alarm_becomes_unavailable_if_any_child_is_invalid(first_
     combined._publish_state_availability(expected, mqtt)
     assert mqtt.publish.call_args.args == (availability["topic"], "offline")
 
+
+@pytest.mark.asyncio
+async def test_combined_alarm_republish_checks_cached_child_availability():
+    first = DummyAlarmSensor("A1", "sigen_a1", 0, 1, 30000, ProtocolVersion.V2_5, "Inverter")
+    second = DummyAlarmSensor("A2", "sigen_a2", 0, 1, 30001, ProtocolVersion.V2_5, "Inverter")
+    first.get_state = AsyncMock(return_value="No Alarm")
+    second.get_state = AsyncMock(return_value=None)
+    combined = AlarmCombinedSensor("Combined", "sigen_combined", "sigen_combined", first, second)
+    combined._states.append((0, "A previously active alarm"))
+    combined.configure_mqtt_topics("device")
+
+    assert await combined.get_state(republish=True) is None
+    mqtt = MagicMock()
+    combined._publish_state_availability(None, mqtt)
+    assert mqtt.publish.call_args.args == (combined["availability"][-1]["topic"], "offline")
+
 @pytest.mark.asyncio
 async def test_running_state_sensor_coverage():
     sensor = RunningStateSensor("Run", "sigen_run", 0, 1, 30000, ProtocolVersion.V2_5)
