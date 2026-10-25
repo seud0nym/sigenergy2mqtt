@@ -67,6 +67,8 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
             **kwargs,
         )
         self.alarm_type = alarm_type
+        self._alarm_availability_topic: str | None = None
+        self._alarm_available: bool | None = None
 
     @abc.abstractmethod
     def decode_alarm_bit(self, bit_position: int) -> str | None:
@@ -94,6 +96,9 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
 
         if raw:
             return value
+
+        if self._is_invalid_alarm(value):
+            return None
 
         # Treat None as no alarm
         if value is None:
@@ -123,13 +128,46 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
         Returns:
             True if no alarm
         """
-        if value is None or value == 0 or value == 65535:
+        if value is None or value == 0:
             return True
 
         if isinstance(value, list):
             return sum(cast(list[int], value)) == 0
 
         return False
+
+    def _is_invalid_alarm(self, value: Any) -> bool:
+        """Return whether 65535 is outside this alarm register's decoded range."""
+        if value != 65535:
+            return False
+        try:
+            return not all(self.decode_alarm_bit(bit) is not None for bit in range(16))
+        except TypeError:
+            return True
+
+    def configure_mqtt_topics(self, device_id: str) -> str:
+        base = super().configure_mqtt_topics(device_id)
+        if active_config.home_assistant.enabled:
+            self._alarm_availability_topic = f"{base}/availability"
+            availability = cast(list[dict[str, Any]], self[DiscoveryKeys.AVAILABILITY])
+            availability.append({
+                DiscoveryKeys.TOPIC: self._alarm_availability_topic,
+                "payload_available": "online",
+                "payload_not_available": "offline",
+            })
+        return base
+
+    def _publish_state_availability(self, state: Any, mqtt_client: Any) -> None:
+        available = not self._is_invalid_alarm(self.latest_raw_state)
+        if not available and self._alarm_available is not False:
+            logger.warning(f"{self.log_identity} {self.alarm_type} alarm is unavailable (invalid alarm value {self.latest_raw_state})")
+        elif available and self._alarm_available is False:
+            logger.info(f"{self.log_identity} {self.alarm_type} alarm is available again")
+        self._alarm_available = available
+
+        if self._alarm_availability_topic is not None:
+            payload = "online" if available else "offline"
+            self._publish_message(mqtt_client, self._alarm_availability_topic, payload, qos=1, retain=True)
 
     def _normalize_alarm_code(self, value: float | str) -> int:
         """Normalize alarm value to integer code.
