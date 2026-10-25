@@ -1,5 +1,5 @@
 import logging
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -176,6 +176,30 @@ async def test_alarm_combined_sensor_coverage():
         mock_super_get_state.return_value = 1 # bit 0
         state = await comb_long.get_state()
         assert len(state) <= 255
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("first_state", "second_state", "expected"),
+    [
+        ("No Alarm", None, None),
+        ("Active inverter alarm", None, None),
+    ],
+)
+async def test_combined_alarm_becomes_unavailable_if_any_child_is_invalid(first_state, second_state, expected):
+    first = DummyAlarmSensor("A1", "sigen_a1", 0, 1, 30000, ProtocolVersion.V2_5, "Inverter")
+    second = DummyAlarmSensor("A2", "sigen_a2", 0, 1, 30001, ProtocolVersion.V2_5, "Inverter")
+    first.get_state = AsyncMock(return_value=first_state)
+    second.get_state = AsyncMock(return_value=second_state)
+    combined = AlarmCombinedSensor("Combined", "sigen_combined", "sigen_combined", first, second)
+
+    assert await combined.get_state() is expected
+
+    combined.configure_mqtt_topics("device")
+    availability = combined["availability"][-1]
+    mqtt = MagicMock()
+    combined._publish_state_availability(expected, mqtt)
+    assert mqtt.publish.call_args.args == (availability["topic"], "offline")
 
 @pytest.mark.asyncio
 async def test_running_state_sensor_coverage():
