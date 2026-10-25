@@ -1,4 +1,3 @@
-import logging
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -79,10 +78,10 @@ async def test_alarm_sensor_coverage():
 
 
 @pytest.mark.asyncio
-async def test_65535_is_unavailable_when_decoder_does_not_cover_all_bits():
+async def test_65535_is_unknown_when_decoder_does_not_cover_all_bits():
     sensor = DummyAlarmSensor("Dummy", "sigen_dummy", 0, 1, 30000, ProtocolVersion.V2_5, "Dummy")
     with patch("sigenergy2mqtt.sensors.base.readable.ReadOnlySensor.get_state", return_value=65535):
-        assert await sensor.get_state() is None
+        assert await sensor.get_state() == "Unknown"
         assert await sensor.get_state(raw=True) == 65535
 
 
@@ -95,35 +94,10 @@ async def test_65535_decodes_when_decoder_covers_all_bits():
     assert sensor._is_no_alarm(65535) is False
 
 
-def test_alarm_availability_discovery_payloads_and_transition_logs(caplog):
-    caplog.set_level(logging.INFO)
+def test_alarm_has_no_additional_availability_topic():
     sensor = DummyAlarmSensor("Dummy", "sigen_dummy", 0, 1, 30000, ProtocolVersion.V2_5, "Dummy")
     sensor.configure_mqtt_topics("device")
-    availability = sensor["availability"][-1]
-    assert availability == {
-        "topic": "homeassistant/sensor/device/sigen_dummy/availability",
-        "payload_available": "online",
-        "payload_not_available": "offline",
-    }
-
-    mqtt = MagicMock()
-    sensor._states.append((0, 1))
-    sensor.latest_raw_state = 1
-    sensor._publish_state_availability("Alarm One", mqtt)
-    assert "is available again" not in caplog.text
-
-    sensor.latest_raw_state = 65535
-    sensor._publish_state_availability(None, mqtt)
-    assert "is unavailable" in caplog.text
-
-    caplog.clear()
-    sensor.latest_raw_state = 1
-    sensor._publish_state_availability("Alarm One", mqtt)
-    assert "is available again" in caplog.text
-
-    assert mqtt.publish.call_args_list[0].args == (availability["topic"], "online")
-    assert mqtt.publish.call_args_list[1].args == (availability["topic"], "offline")
-    assert mqtt.publish.call_args_list[2].args == (availability["topic"], "online")
+    assert len(sensor["availability"]) == 1
 
 @pytest.mark.asyncio
 async def test_alarm_combined_sensor_coverage():
@@ -182,40 +156,67 @@ async def test_alarm_combined_sensor_coverage():
 @pytest.mark.parametrize(
     ("first_state", "second_state", "expected"),
     [
-        ("No Alarm", None, None),
-        ("Active inverter alarm", None, None),
+        ("No Alarm", "Unknown", "Unknown"),
+        ("Active inverter alarm", "Unknown", "Active inverter alarm, Unknown"),
     ],
 )
-async def test_combined_alarm_becomes_unavailable_if_any_child_is_invalid(first_state, second_state, expected):
+async def test_combined_alarm_includes_unknown_for_invalid_child(first_state, second_state, expected):
     first = DummyAlarmSensor("A1", "sigen_a1", 0, 1, 30000, ProtocolVersion.V2_5, "Inverter")
     second = DummyAlarmSensor("A2", "sigen_a2", 0, 1, 30001, ProtocolVersion.V2_5, "Inverter")
     first.get_state = AsyncMock(return_value=first_state)
     second.get_state = AsyncMock(return_value=second_state)
     combined = AlarmCombinedSensor("Combined", "sigen_combined", "sigen_combined", first, second)
 
-    assert await combined.get_state() is expected
-
+    assert await combined.get_state() == expected
+    assert combined._has_invalid_alarm is True
     combined.configure_mqtt_topics("device")
-    availability = combined["availability"][-1]
-    mqtt = MagicMock()
-    combined._publish_state_availability(expected, mqtt)
-    assert mqtt.publish.call_args.args == (availability["topic"], "offline")
+    assert len(combined["availability"]) == 1
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("active_state", "expected"),
+    [
+        ("No Alarm", "Unknown (2)"),
+        ("Active inverter alarm", "Active inverter alarm, Unknown (2)"),
+    ],
+)
+async def test_combined_alarm_counts_multiple_invalid_children(active_state, expected):
+    first = DummyAlarmSensor("A1", "sigen_a1", 0, 1, 30000, ProtocolVersion.V2_5, "Inverter")
+    second = DummyAlarmSensor("A2", "sigen_a2", 0, 1, 30001, ProtocolVersion.V2_5, "Inverter")
+    third = DummyAlarmSensor("A3", "sigen_a3", 0, 1, 30002, ProtocolVersion.V2_5, "Inverter")
+    first.get_state = AsyncMock(return_value=active_state)
+    second.get_state = AsyncMock(return_value="Unknown")
+    third.get_state = AsyncMock(return_value="Unknown")
+    combined = AlarmCombinedSensor("Combined", "sigen_combined", "sigen_combined", first, second, third)
+
+    assert await combined.get_state() == expected
+
+
+@pytest.mark.asyncio
+async def test_combined_alarm_counts_none_and_unknown_as_one_invalid_group():
+    first = DummyAlarmSensor("A1", "sigen_a1", 0, 1, 30000, ProtocolVersion.V2_5, "Inverter")
+    second = DummyAlarmSensor("A2", "sigen_a2", 0, 1, 30001, ProtocolVersion.V2_5, "Inverter")
+    first.get_state = AsyncMock(return_value="Active inverter alarm")
+    second.get_state = AsyncMock(return_value=None)
+    third = DummyAlarmSensor("A3", "sigen_a3", 0, 1, 30002, ProtocolVersion.V2_5, "Inverter")
+    third.get_state = AsyncMock(return_value="Unknown")
+    combined = AlarmCombinedSensor("Combined", "sigen_combined", "sigen_combined", first, second, third)
+
+    assert await combined.get_state() == "Active inverter alarm, Unknown (2)"
 
 
 @pytest.mark.asyncio
 async def test_combined_alarm_republish_checks_cached_child_availability():
     first = DummyAlarmSensor("A1", "sigen_a1", 0, 1, 30000, ProtocolVersion.V2_5, "Inverter")
     second = DummyAlarmSensor("A2", "sigen_a2", 0, 1, 30001, ProtocolVersion.V2_5, "Inverter")
-    first.get_state = AsyncMock(return_value="No Alarm")
+    first.get_state = AsyncMock(return_value="A previously active alarm")
     second.get_state = AsyncMock(return_value=None)
     combined = AlarmCombinedSensor("Combined", "sigen_combined", "sigen_combined", first, second)
     combined._states.append((0, "A previously active alarm"))
     combined.configure_mqtt_topics("device")
 
-    assert await combined.get_state(republish=True) is None
-    mqtt = MagicMock()
-    combined._publish_state_availability(None, mqtt)
-    assert mqtt.publish.call_args.args == (combined["availability"][-1]["topic"], "offline")
+    assert await combined.get_state(republish=True) == "A previously active alarm, Unknown"
 
 @pytest.mark.asyncio
 async def test_running_state_sensor_coverage():

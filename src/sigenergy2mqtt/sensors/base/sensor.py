@@ -983,9 +983,6 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
             republish: If True, last known state is being republished
         """
 
-    def _publish_state_availability(self, state: Any, mqtt_client: mqtt.Client) -> None:
-        """Allow sensors to publish availability based on the acquired state."""
-
     async def _attempt_publish(self, mqtt_client: mqtt.Client, transport: Any, republish: bool) -> bool:
         from sigenergy2mqtt.metrics import Metrics
 
@@ -1003,8 +1000,6 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
             return False
 
         state = await self.get_state(modbus_client=transport, raw=False, republish=republish)
-
-        self._publish_state_availability(state, mqtt_client)
 
         if state is None:
             if self.debug_logging or self.force_publish:
