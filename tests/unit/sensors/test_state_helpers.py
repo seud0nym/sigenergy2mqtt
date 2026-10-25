@@ -187,7 +187,8 @@ class TestAlarmSensor:
             assert await sensor.get_state() == "No Alarm"
 
             mock_super.return_value = 65535
-            assert await sensor.get_state() == "No Alarm"
+            # This decoder only covers two bits, so 65535 is an invalid register value.
+            assert await sensor.get_state() is None
 
             # 2. Single bit set
             mock_super.return_value = 1  # Bit 0
