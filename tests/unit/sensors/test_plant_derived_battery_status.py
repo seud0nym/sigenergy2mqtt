@@ -221,6 +221,53 @@ class TestBatteryStatusUpdateFromSourceSensor:
             assert result is True
             assert sensor.latest_raw_state == "Idle"
 
+    @pytest.mark.parametrize("power", [-50, -2, 0, 2, 50])
+    def test_battery_power_within_deadband_is_idle(self, power):
+        """Power at or within ±50 W is treated as idle between SoC cutoffs."""
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            sensor, _, _, _, _, _ = _make_battery_status()
+            sensor._current_soc = 18.3
+            sensor._backup_soc = 5.0
+            sensor._charge_soc = 100.0
+            sensor._discharge_soc = 0.0
+
+            bp_source = MagicMock(spec=BatteryPower)
+            bp_source.latest_raw_state = power
+            result = sensor.update_from_source_sensor(bp_source)
+
+            assert result is True
+            assert sensor.latest_raw_state == "Idle"
+
+    @pytest.mark.parametrize("soc,expected", [(99.9, "Idle"), (100.0, "Full")])
+    def test_battery_power_deadband_uses_configured_charge_cutoff(self, soc, expected):
+        """Full starts at the configured charge cutoff, not an unconditional 100% check."""
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            sensor, _, _, _, _, _ = _make_battery_status()
+            sensor._current_soc = soc
+            sensor._backup_soc = 5.0
+            sensor._charge_soc = 100.0
+            sensor._discharge_soc = 0.0
+
+            bp_source = MagicMock(spec=BatteryPower)
+            bp_source.latest_raw_state = 0
+            result = sensor.update_from_source_sensor(bp_source)
+
+            assert result is True
+            assert sensor.latest_raw_state == expected
+
+    @pytest.mark.parametrize("power,expected", [(50.1, "Charging"), (-50.1, "Discharging")])
+    def test_battery_power_outside_deadband_reports_direction(self, power, expected):
+        """Power beyond the deadband still reports charge or discharge direction."""
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            sensor, _, _, _, _, _ = _make_battery_status()
+            bp_source = MagicMock(spec=BatteryPower)
+            bp_source.latest_raw_state = power
+
+            result = sensor.update_from_source_sensor(bp_source)
+
+            assert result is True
+            assert sensor.latest_raw_state == expected
+
     def test_plant_battery_soc_updates_current_soc_and_returns_false(self):
         """Lines 188-190: PlantBatterySoC case stores SoC and returns False."""
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):

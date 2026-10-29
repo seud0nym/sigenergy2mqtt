@@ -17,6 +17,7 @@
 - Fixed PVOutput upload verification logic for non-donators and error counting in diagnostics
 - Improved pymodbus 'Skipping' logging filter to catch the send:/recv: DEBUG level transport dump records before subsequent 'Repeating'  messages
 - Fixed handling of alarms that return invalid values
+- Implemented ±50 W power deadband logic in BatteryStatus to prevent flapping at extremes (#346)
 
 ### Changed
 - Updated aiohttp from 3.14.4 to 3.14.5

@@ -130,6 +130,7 @@ class BatteryDischargingPower(DerivedSensor, HybridInverter):
 
 
 class BatteryStatus(DerivedSensor, HybridInverter):
+    POWER_DEADBAND_W = 50.0
     FULL = 0
     CHARGING = 1
     DISCHARGING = 2
@@ -188,17 +189,17 @@ class BatteryStatus(DerivedSensor, HybridInverter):
                     return False
                 raw = float(sensor.latest_raw_state)
                 state: str | None = None
-                if raw > 0:
+                if raw > BatteryStatus.POWER_DEADBAND_W:
                     state = self._get_option(BatteryStatus.CHARGING)
-                elif raw < 0:
+                elif raw < -BatteryStatus.POWER_DEADBAND_W:
                     state = self._get_option(BatteryStatus.DISCHARGING)
                 elif self._current_soc is None or self._backup_soc is None or self._charge_soc is None or self._discharge_soc is None:
                     state = self._get_option(BatteryStatus.UNKNOWN)
-                elif self._current_soc >= 100.0:
+                elif self._current_soc >= self._charge_soc:
                     state = self._get_option(BatteryStatus.FULL)
                 elif self._current_soc <= 0.0:
                     state = self._get_option(BatteryStatus.EMPTY)
-                elif self._current_soc <= self._discharge_soc or self._current_soc <= self._backup_soc or self._current_soc >= self._charge_soc:
+                elif self._current_soc <= self._discharge_soc or self._current_soc <= self._backup_soc:
                     state = self._get_option(BatteryStatus.CUTOFF)
                 else:
                     state = self._get_option(BatteryStatus.IDLE)
