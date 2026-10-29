@@ -39,7 +39,10 @@ class _FramerSkipFilter(logging.Filter):
         msg = record.getMessage()
         is_skip = "request ask for " in msg and "Skipping." in msg
         is_repeat = "Repeating...." in msg
-        log_skipped = active_config.modbus and all(device.log_skipped for device in active_config.modbus)
+        try:
+            log_skipped = bool(active_config.modbus) and all(device.log_skipped for device in active_config.modbus)
+        except AttributeError:
+            log_skipped = False
 
         if is_skip:
             if log_skipped:
