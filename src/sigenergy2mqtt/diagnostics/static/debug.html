@@ -339,7 +339,10 @@
           const visibleRows = card.querySelectorAll('.control-row:not(.hidden-by-filter)');
           card.style.display = visibleRows.length === 0 ? 'none' : '';
         });
-        filterCount.textContent = q ? (visible + ' of ' + total + ' sensors') : (total > 0 ? total + ' sensors' : '');
+        const statusFilterActive = statusFilters.some(input => !input.checked);
+        filterCount.textContent = q || statusFilterActive
+          ? (visible + ' of ' + total + ' sensors')
+          : (total > 0 ? total + ' sensors' : '');
       }
 
       filterInput.addEventListener('input', applyFilter);
@@ -360,6 +363,8 @@
         row.dataset.sensorId = sensorId;
         row.dataset.label = ctrl.label || sensorId;
         row.dataset.statusCategory = ctrl.unpublishable_reason || 'publishable';
+        row.dataset.controlType = ctrl.type === 'status' || ctrl.publishable === false ? 'status' : 'switch';
+        row.dataset.status = ctrl.status || '';
 
         const labelEl = document.createElement('span');
         labelEl.className = 'ctrl-label';
@@ -367,7 +372,7 @@
         labelEl.title = sensorId;  // full unique_id as tooltip
         row.appendChild(labelEl);
 
-        if (ctrl.type === 'status' || ctrl.publishable === false) {
+        if (row.dataset.controlType === 'status') {
           const status = document.createElement('span');
           status.className = 'ctrl-status';
           status.textContent = ctrl.status || 'Disabled by configuration';
@@ -462,6 +467,22 @@
         Object.entries(sensors).forEach(function ([sensorId, ctrl]) {
           const row = card.querySelector('.control-row[data-sensor-id="' + CSS.escape(sensorId) + '"]');
           if (row) {
+            const controlType = ctrl.type === 'status' || ctrl.publishable === false ? 'status' : 'switch';
+            const status = ctrl.status || '';
+            const statusCategory = ctrl.unpublishable_reason || 'publishable';
+            if (row.dataset.controlType !== controlType || row.dataset.status !== status || row.dataset.statusCategory !== statusCategory) {
+              row.replaceWith(buildRow(sensorId, ctrl, revision));
+              return;
+            }
+
+            const label = ctrl.label || sensorId;
+            row.dataset.label = label;
+            const labelEl = row.querySelector('.ctrl-label');
+            if (labelEl) {
+              labelEl.textContent = label;
+              labelEl.title = sensorId;
+            }
+
             const checkbox = row.querySelector('input[type="checkbox"]');
             if (checkbox) {
               const newVal = Boolean(ctrl.value);
