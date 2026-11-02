@@ -8,6 +8,7 @@
 - Added additional individual battery sensors from Cloud API (Total Discharge Amount and Average Cell Voltage/Temperature)
 - Added battery export limitation control from Cloud API
 - Added Reset button to Diagnostics web page
+- Added visibility of unpublishable and unsupported sensors to Diagnostics sensor debug logging page
 
 ### Fixed
 
@@ -17,9 +18,10 @@
 - Fixed PVOutput upload verification logic for non-donators and error counting in diagnostics
 - Improved pymodbus 'Skipping' logging filter to catch the send:/recv: DEBUG level transport dump records before subsequent 'Repeating'  messages
 - Fixed handling of alarms that return invalid values
-- Implemented ±50 W power deadband logic in BatteryStatus to prevent flapping at extremes (#346)
+- Implemented ±50 W power dead band logic in BatteryStatus to prevent flapping at extremes (#346)
 
 ### Changed
+
 - Updated aiohttp from 3.14.4 to 3.14.5
 - Updated pycryptodome from 3.24.0 to 4.2.0
 - Updated pymodbus from 3.15.0 to 3.16.1
