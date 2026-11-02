@@ -3,8 +3,10 @@ from typing import Any, cast
 
 from sigenergy2mqtt.cloud.mysigen_adapter import MySigenCloudAdapter
 from sigenergy2mqtt.config import ConsumptionSource, active_config
+from sigenergy2mqtt.devices.base.registry import DeviceRegistry
 from sigenergy2mqtt.i18n import _t
 from sigenergy2mqtt.metrics.metrics import Metrics
+from sigenergy2mqtt.sensors.base import ReservedSensor
 from sigenergy2mqtt.sensors.base.constants import DiscoveryKeys
 from sigenergy2mqtt.sensors.base.writeable import (
     NumericSensorMixin,
@@ -12,6 +14,7 @@ from sigenergy2mqtt.sensors.base.writeable import (
     SwitchSensorMixin,
     WriteOnlySensorMixin,
 )
+from sigenergy2mqtt.sensors.settings import SettingsSensor
 
 from .registry import diagnostics_registry
 
@@ -121,9 +124,6 @@ class DiagnosticsCollectors:
     @classmethod
     async def _diagnostics_collect_sensor_debug(cls) -> dict[str, Any]:
         """Diagnostics provider callback: exposes all sensor debug_logging flags, grouped by device."""
-        from sigenergy2mqtt.devices.base.registry import DeviceRegistry
-        from sigenergy2mqtt.sensors.settings import SettingsSensor
-
         devices_data: dict[str, Any] = {}
 
         for plant_index, device_list in sorted(DeviceRegistry._devices.items()):
@@ -132,7 +132,7 @@ class DiagnosticsCollectors:
             for device in device_list:
                 sensors_data: dict[str, Any] = {}
                 for sensor in device.sensors.values():
-                    if isinstance(sensor, SettingsSensor):
+                    if isinstance(sensor, (ReservedSensor, SettingsSensor)):
                         continue
                     publishable = sensor.publishable
                     unsupported = not publishable and bool(getattr(sensor, "illegal_data_address", False))
