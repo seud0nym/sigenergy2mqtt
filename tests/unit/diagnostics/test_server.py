@@ -1,7 +1,7 @@
 import asyncio
 import json
 import time
-from unittest.mock import AsyncMock, PropertyMock, patch
+from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
 
 import pytest
 from aiohttp import web
@@ -29,6 +29,26 @@ async def test_handle_health_healthy(server: DiagnosticsServer) -> None:
         body = json.loads(response.body)
         assert body["status"] == "healthy"
         assert body["mqtt_connected"] is True
+
+
+@pytest.mark.asyncio
+async def test_debug_update_rejects_unpublishable_sensor(server: DiagnosticsServer, monkeypatch) -> None:
+    from types import SimpleNamespace
+
+    from sigenergy2mqtt.devices.base.registry import DeviceRegistry
+
+    sensor = SimpleNamespace(unique_id="unsupported-id", publishable=False, set_debug_logging=AsyncMock())
+    device = SimpleNamespace(sensors={"sensor": sensor})
+    monkeypatch.setattr(DeviceRegistry, "_devices", {0: [device]})
+    request = MagicMock()
+    request.match_info = {"sensor_id": "unsupported-id"}
+    request.json = AsyncMock(return_value={"value": True})
+
+    response = await server._handle_debug_update(request)
+
+    assert response.status == 409
+    assert json.loads(response.body)["ok"] is False
+    sensor.set_debug_logging.assert_not_awaited()
 
 
 @pytest.mark.asyncio

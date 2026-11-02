@@ -397,6 +397,9 @@ class DiagnosticsServer:
         if matched_sensor is None:
             return web.json_response({"ok": False, "error": f"Unknown sensor: {sensor_id!r}"}, status=404)
 
+        if not matched_sensor.publishable:
+            return web.json_response({"ok": False, "error": "Debug logging cannot be changed for an unpublishable sensor"}, status=409)
+
         coerced: float = 1.0 if raw_value else 0.0
         try:
             ok = await matched_sensor.set_debug_logging(None, None, coerced, "diagnostics", None)  # type: ignore[arg-type]

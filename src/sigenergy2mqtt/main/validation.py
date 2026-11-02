@@ -284,6 +284,7 @@ async def validate_publishable_sensors(modbus_client: ModbusClient, device: Devi
                 for sensor_unique_id in cached_illegal_sensor_unique_ids:
                     sensor = sensor_lookup.get(sensor_unique_id)
                     if sensor is not None:
+                        sensor.illegal_data_address = True
                         sensor.publishable = False
                         _log_illegal_data_address(sensor)
                 return
@@ -304,6 +305,7 @@ async def validate_publishable_sensors(modbus_client: ModbusClient, device: Devi
                 rr = await read_registers(modbus_client, s.address, s.count, s.device_address, s.input_type)
                 if rr and rr.isError() and rr.exception_code == 0x02:
                     _log_illegal_data_address(s)
+                    s.illegal_data_address = True
                     s.publishable = False
                     illegal_sensor_unique_ids.append(s.unique_id)
             except (ModbusException, TimeoutError, OSError, ConnectionError) as e:
@@ -311,6 +313,9 @@ async def validate_publishable_sensors(modbus_client: ModbusClient, device: Devi
                 # Log but don't suppress sensor on transient errors (only explicit 0x02)
                 if "0x02 ILLEGAL DATA ADDRESS" in str(e):
                     logger.debug(f"{s.log_identity}: Validation detected illegal address: {e}")
+                    s.illegal_data_address = True
+                    s.publishable = False
+                    illegal_sensor_unique_ids.append(s.unique_id)
                 else:
                     logger.debug(f"{s.log_identity}: Validation read failed: {e}")
 

@@ -165,3 +165,30 @@ async def test_collect_cloud_metrics(monkeypatch):
     degraded = await DiagnosticsCollectors._diagnostics_collect_cloud_metrics()
     assert degraded["status"] == "degraded"
     assert degraded["Connected"] is True
+
+
+@pytest.mark.asyncio
+async def test_collect_sensor_debug_includes_unpublishable_reasons(monkeypatch):
+    from types import SimpleNamespace
+
+    from sigenergy2mqtt.devices.base.registry import DeviceRegistry
+
+    sensors = {
+        "publishable-id": SimpleNamespace(unique_id="publishable-id", name="Publishable", debug_logging=True, publishable=True),
+        "config-id": SimpleNamespace(unique_id="config-id", name="Config disabled", debug_logging=False, publishable=False, illegal_data_address=False),
+        "unsupported-id": SimpleNamespace(unique_id="unsupported-id", name="Unsupported", debug_logging=True, publishable=False, illegal_data_address=True),
+    }
+    device = SimpleNamespace(unique_id="device-id", name="Test device", sensors=sensors)
+    monkeypatch.setattr(DeviceRegistry, "_devices", {0: [device]})
+
+    result = await DiagnosticsCollectors._diagnostics_collect_sensor_debug()
+    controls = result["device-id"]["sensors"]
+
+    assert controls["publishable-id"]["type"] == "switch"
+    assert controls["publishable-id"]["status"] == "Publishable"
+    assert controls["config-id"]["type"] == "status"
+    assert controls["config-id"]["status"] == "Disabled by configuration"
+    assert controls["config-id"]["unpublishable_reason"] == "configuration"
+    assert controls["unsupported-id"]["type"] == "status"
+    assert controls["unsupported-id"]["status"] == "Unsupported"
+    assert controls["unsupported-id"]["unpublishable_reason"] == "unsupported"
