@@ -1303,6 +1303,7 @@ async def test_coverage_gap_closers(clean_config, monkeypatch):
     monkeypatch.setattr("sigenergy2mqtt.main.validation.read_registers", AsyncMock(return_value=RR()))
     await validate_publishable_sensors(mock_client, device)
     assert sensor.publishable is False
+    assert sensor.illegal_data_address is True
 
 
 @pytest.mark.asyncio
@@ -1324,6 +1325,7 @@ async def test_validate_publishable_sensors_saves_illegal_address_cache(clean_co
     await main_mod.validate_publishable_sensors(mock_client, device, firmware_versions)
 
     assert sensor.publishable is False
+    assert sensor.illegal_data_address is True
     main_mod.read_registers.assert_awaited_once()  # type: ignore[union-attr]
     main_mod.state_store.save.assert_awaited_once()  # type: ignore[union-attr]
     assert main_mod.state_store.save.await_args is not None  # type: ignore[union-attr]
@@ -1354,6 +1356,7 @@ async def test_validate_publishable_sensors_uses_cache_without_scan(clean_config
         await validate_publishable_sensors(mock_client, device, firmware_versions)
 
     assert sensor.publishable is False
+    assert sensor.illegal_data_address is True
     read_registers.assert_not_awaited()
     save.assert_not_awaited()
     assert "not supported on this device/firmware: ILLEGAL DATA ADDRESS 30012" in caplog.text

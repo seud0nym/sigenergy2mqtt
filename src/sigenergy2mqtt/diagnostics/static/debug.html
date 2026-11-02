@@ -44,6 +44,26 @@
       white-space: nowrap;
     }
 
+    .status-filters {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text-dim);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .status-filters label { display: inline-flex; align-items: center; gap: 4px; }
+
+    .ctrl-status {
+      flex-shrink: 0;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 3px 8px;
+      font-size: 10px;
+      white-space: nowrap;
+    }
+
     /* Transient notice */
     .transient-notice {
       display: flex;
@@ -276,6 +296,11 @@
     <div class="filter-bar">
       <input class="filter-input" id="filterInput" type="search" placeholder="Filter sensors by name…"
         autocomplete="off">
+      <div class="status-filters" aria-label="Filter sensors by publishability">
+        <label><input type="checkbox" class="status-filter" value="publishable" checked> Publishable</label>
+        <label><input type="checkbox" class="status-filter" value="configuration" checked> Disabled</label>
+        <label><input type="checkbox" class="status-filter" value="unsupported" checked> Unsupported</label>
+      </div>
       <span class="filter-count" id="filterCount"></span>
     </div>
 
@@ -292,16 +317,20 @@
       const themeToggle = document.getElementById('themeToggle');
       const filterInput = document.getElementById('filterInput');
       const filterCount = document.getElementById('filterCount');
+      const statusFilters = Array.from(document.querySelectorAll('.status-filter'));
 
       initThemeToggle(themeToggle);
 
       // Filter — show/hide rows and update per-card active counts
       function applyFilter() {
         const q = filterInput.value.trim().toLowerCase();
+        const selectedStatuses = new Set(statusFilters.filter(input => input.checked).map(input => input.value));
         let visible = 0, total = 0;
         cardGrid.querySelectorAll('.control-row').forEach(row => {
           const label = (row.dataset.label || '').toLowerCase();
-          const show = !q || label.includes(q);
+          const nameMatches = !q || label.includes(q);
+          const categoryMatches = selectedStatuses.has(row.dataset.statusCategory);
+          const show = nameMatches && categoryMatches;
           row.classList.toggle('hidden-by-filter', !show);
           if (show) visible++;
           total++;
@@ -310,10 +339,14 @@
           const visibleRows = card.querySelectorAll('.control-row:not(.hidden-by-filter)');
           card.style.display = visibleRows.length === 0 ? 'none' : '';
         });
-        filterCount.textContent = q ? (visible + ' of ' + total + ' sensors') : (total > 0 ? total + ' sensors' : '');
+        const statusFilterActive = statusFilters.some(input => !input.checked);
+        filterCount.textContent = q || statusFilterActive
+          ? (visible + ' of ' + total + ' sensors')
+          : (total > 0 ? total + ' sensors' : '');
       }
 
       filterInput.addEventListener('input', applyFilter);
+      statusFilters.forEach(input => input.addEventListener('change', applyFilter));
 
       // POST a debug toggle to the server
       async function sendDebugUpdate(sensorId, value, slider, prevValue, revertCb) {
@@ -329,12 +362,24 @@
         row.className = 'control-row';
         row.dataset.sensorId = sensorId;
         row.dataset.label = ctrl.label || sensorId;
+        row.dataset.statusCategory = ctrl.unpublishable_reason || 'publishable';
+        row.dataset.controlType = ctrl.type === 'status' || ctrl.publishable === false ? 'status' : 'switch';
+        row.dataset.status = ctrl.status || '';
 
         const labelEl = document.createElement('span');
         labelEl.className = 'ctrl-label';
         labelEl.textContent = ctrl.label || sensorId;
         labelEl.title = sensorId;  // full unique_id as tooltip
         row.appendChild(labelEl);
+
+        if (row.dataset.controlType === 'status') {
+          const status = document.createElement('span');
+          status.className = 'ctrl-status';
+          status.textContent = ctrl.status || 'Disabled by configuration';
+          status.title = 'Debug logging cannot be changed for an unpublishable sensor';
+          row.appendChild(status);
+          return row;
+        }
 
         const switchLabel = document.createElement('label');
         switchLabel.className = 'ctrl-switch';
@@ -422,6 +467,22 @@
         Object.entries(sensors).forEach(function ([sensorId, ctrl]) {
           const row = card.querySelector('.control-row[data-sensor-id="' + CSS.escape(sensorId) + '"]');
           if (row) {
+            const controlType = ctrl.type === 'status' || ctrl.publishable === false ? 'status' : 'switch';
+            const status = ctrl.status || '';
+            const statusCategory = ctrl.unpublishable_reason || 'publishable';
+            if (row.dataset.controlType !== controlType || row.dataset.status !== status || row.dataset.statusCategory !== statusCategory) {
+              row.replaceWith(buildRow(sensorId, ctrl, revision));
+              return;
+            }
+
+            const label = ctrl.label || sensorId;
+            row.dataset.label = label;
+            const labelEl = row.querySelector('.ctrl-label');
+            if (labelEl) {
+              labelEl.textContent = label;
+              labelEl.title = sensorId;
+            }
+
             const checkbox = row.querySelector('input[type="checkbox"]');
             if (checkbox) {
               const newVal = Boolean(ctrl.value);

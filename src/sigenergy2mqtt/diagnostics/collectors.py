@@ -132,12 +132,17 @@ class DiagnosticsCollectors:
             for device in device_list:
                 sensors_data: dict[str, Any] = {}
                 for sensor in device.sensors.values():
-                    if isinstance(sensor, SettingsSensor) or not sensor.publishable:
+                    if isinstance(sensor, SettingsSensor):
                         continue
+                    publishable = sensor.publishable
+                    unsupported = not publishable and bool(getattr(sensor, "illegal_data_address", False))
                     sensors_data[sensor.unique_id] = {
                         "label": sensor.name,
-                        "type": "switch",
+                        "type": "switch" if publishable else "status",
                         "value": sensor.debug_logging,
+                        "publishable": publishable,
+                        "status": "Publishable" if publishable else ("Unsupported" if unsupported else "Disabled by configuration"),
+                        "unpublishable_reason": "unsupported" if unsupported else ("configuration" if not publishable else None),
                     }
                 if sensors_data:
                     devices_data[device.unique_id] = {

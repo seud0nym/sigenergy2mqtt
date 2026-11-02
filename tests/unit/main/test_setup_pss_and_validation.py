@@ -281,7 +281,9 @@ async def test_validate_publishable_sensors_read_exceptions(caplog):
     mock_sensor_1.device_address = 1
     mock_sensor_1.input_type = 4
     mock_sensor_1.publishable = True
+    mock_sensor_1.illegal_data_address = False
     mock_sensor_1.state_count = 0
+    mock_sensor_1.unique_id = "sensor-1"
     mock_sensor_1.log_identity = "Sensor1"
     mock_sensor_1.alarms = [mock_sensor_1]  # Pretend it's not combined for simplicity, wait no it checks isinstance(sensor, AlarmCombinedSensor)
     # mock_sensor_1 is not AlarmCombinedSensor
@@ -292,7 +294,9 @@ async def test_validate_publishable_sensors_read_exceptions(caplog):
     mock_sensor_2.device_address = 1
     mock_sensor_2.input_type = 4
     mock_sensor_2.publishable = True
+    mock_sensor_2.illegal_data_address = False
     mock_sensor_2.state_count = 0
+    mock_sensor_2.unique_id = "sensor-2"
     mock_sensor_2.log_identity = "Sensor2"
 
     mock_device = MagicMock()
@@ -314,6 +318,9 @@ async def test_validate_publishable_sensors_read_exceptions(caplog):
 
         await main_mod.validate_publishable_sensors(MagicMock(), mock_device)
 
+        assert mock_sensor_1.illegal_data_address is False
+        assert mock_sensor_2.illegal_data_address is True
+        assert mock_sensor_2.publishable is False
         assert "Validation read failed: Transient network error" in caplog.text
         assert "Validation detected illegal address: Modbus Error: 0x02 ILLEGAL DATA ADDRESS" in caplog.text
         assert "Validation scan not cached because one or more sensor reads failed" in caplog.text
