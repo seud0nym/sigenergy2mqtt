@@ -146,7 +146,9 @@ async def test_on_topic_update_known_and_unknown():
     assert ms.last_seen >= old_last_seen
 
 @pytest.mark.asyncio
-async def test_monitor_service_maintains_degraded_status_until_recovery():
+async def test_monitor_service_maintains_degraded_status_until_recovery(monkeypatch):
+    # This test checks overdue behavior against the sensor scan interval.
+    monkeypatch.setattr(active_config, "repeated_state_publish_interval", 0)
     svc = MonitorService([])
     svc._started = 0
     topic = "topic/1"
@@ -175,7 +177,9 @@ async def test_monitor_service_maintains_degraded_status_until_recovery():
 
 
 @pytest.mark.asyncio
-async def test_topic_health_ignores_sensor_while_dynamically_unmonitorable():
+async def test_topic_health_ignores_sensor_while_dynamically_unmonitorable(monkeypatch):
+    # This test checks overdue behavior against the sensor scan interval.
+    monkeypatch.setattr(active_config, "repeated_state_publish_interval", 0)
     svc = MonitorService([])
     svc._started = 0
     topic = "topic/cloud"
@@ -224,6 +228,8 @@ async def test_monitor_service_logs_degraded_only_on_transition(caplog: pytest.L
 @pytest.mark.asyncio
 async def test_monitor_marks_overdue_and_stops(monkeypatch):
     monkeypatch.setattr(active_config, "log_level", logging.DEBUG)
+    # This test checks overdue behavior against the sensor scan interval.
+    monkeypatch.setattr(active_config, "repeated_state_publish_interval", 0)
     # Track sleep calls to allow first 30s sleep, then mock subsequent 1s sleeps
     original_sleep = asyncio.sleep
     sleep_count = 0

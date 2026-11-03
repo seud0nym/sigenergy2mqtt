@@ -154,6 +154,10 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
 
         # State history - use deque for efficient bounded collection
         self._states: deque[tuple[float, Any]] = deque(maxlen=_DEFAULT_STATE_HISTORY_SIZE)
+        # State history accepted for MQTT publishing. `_states` also contains
+        # unchanged successful readings so derived sensors can integrate each
+        # acquired sample independently of repeat-publish suppression.
+        self._published_states: deque[tuple[float, Any]] = deque(maxlen=_DEFAULT_STATE_HISTORY_SIZE)
         self._last_successful_read_time: float | None = None
         self._previous_successful_read_time: float | None = None
         self._update_generation: int = 0
@@ -265,6 +269,11 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
     def last_successful_read_time(self) -> float | None:
         """Get the timestamp of the most recent successful source read."""
         return self._last_successful_read_time
+
+    @property
+    def previous_successful_read_time(self) -> float | None:
+        """Get the timestamp of the successful source read before the latest one."""
+        return self._previous_successful_read_time
 
     @property
     def successful_read_interval(self) -> float | None:
@@ -895,10 +904,11 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         """
         state: Any = None
 
-        if republish and len(self._states) > 0:
-            state = self._states[-1][1]
+        if republish and (self._published_states or self._states):
+            history = self._published_states or self._states
+            state = history[-1][1]
             if self.debug_logging:
-                timestamp = time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(self._states[-1][0]))
+                timestamp = time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(history[-1][0]))
                 logger.debug(f"{self.log_identity} Republishing previous state (state={state} retrieved={timestamp})")
         else:
             result = await self._update_internal_state(**kwargs)
@@ -1306,7 +1316,10 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
             True if state was updated and should be published, False if state was suppressed as a repeated
         """
         # Determine whether the incoming value is a repeat of the last recorded state.
-        previous_raw = self._states[-1][1] if self._states else None
+        # Compare against the last state accepted for publishing. Acquired
+        # samples are tracked separately in `_states` and may include repeats.
+        publish_history = self._published_states or self._states
+        previous_raw = publish_history[-1][1] if publish_history else None
         state_is_repeated = previous_raw is not None and state == previous_raw
 
         if not state_is_repeated:
@@ -1326,7 +1339,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
             else:
                 # Republish only when a full interval (or multiple thereof) has elapsed
                 # since the state was first recorded at this value.
-                elapsed = time.time() - self._states[-1][0]
+                elapsed = time.time() - publish_history[-1][0]
                 if elapsed >= interval:
                     if self.debug_logging:
                         logger.debug(f"{self.log_identity} Repeated state republished after {elapsed:.1f}s (repeated_state_publish_interval={interval}): {state=}")
@@ -1335,6 +1348,12 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
                     if self.debug_logging:
                         logger.debug(f"{self.log_identity} Repeated state suppressed ({elapsed:.1f}s < repeated_state_publish_interval={interval}): {state=}")
                     updated = False
+
+            if not updated:
+                # Suppression controls MQTT traffic only. Keep every sane
+                # acquired value and timestamp for history and derived sensors.
+                if state is not None and (not isinstance(state, (int, float)) or self.sanity_check.is_sane(state, list(self._states))):
+                    self._states.append((time.time(), state))
 
         # Propagate accepted state changes and successful repeated reads. A
         # suppressed callback without a new acquisition must not be consumed by
@@ -1412,7 +1431,9 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
             if self.debug_logging:
                 logger.debug(f"{self.log_identity} Acquired raw state={state}")
 
-            self._states.append((time.time(), state))
+            timestamp = time.time()
+            self._states.append((timestamp, state))
+            self._published_states.append((timestamp, state))
             return True
         return False
 

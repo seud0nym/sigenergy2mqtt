@@ -143,7 +143,10 @@ The interval in seconds at which repeated states are published. (Repeated states
 - If < 0, repeated states are never published.
 - If 0, repeated states are always published.
 - If > 0, repeated states are published at the specified interval.
-The default is 0 (always publish). Setting to a non-zero number can reduce network traffic and the load on the MQTT server.
+
+Setting to 0 publishes every repeated state, while a negative value disables repeated state publishing. A positive value publishes repeated states at the specified interval. Setting a non-zero number can reduce network traffic and the load on the MQTT server.
+
+The default is 60 seconds.
 
 <a id="opt_monitor_topic_updates"></a>
 ### Monitor Topic Updates

@@ -1,3 +1,4 @@
+import time
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -15,6 +16,47 @@ def mock_state_store():
 
 
 class TestAccumulationLogic:
+    @pytest.mark.asyncio
+    async def test_repeated_source_value_is_integrated_with_single_buffered_state(self):
+        source = MagicMock(spec=Sensor)
+        source.unique_id = "source_uid"
+        source.log_identity = "source"
+        source.latest_raw_state = 20.0
+        source.previous_raw_state = None
+        source.state_count = 1
+        source.update_generation = 1
+        source.successful_read_interval = None
+        source.latest_interval = None
+
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            sensor = ResettableAccumulationSensor(
+                name="Accumulator",
+                unique_id="sigen_accumulator_repeated_source",
+                object_id="sigen_accumulator_repeated_source",
+                source=source,
+                data_type=ModbusDataType.UINT32,
+                unit="kWh",
+                device_class=DeviceClass.ENERGY,
+                state_class=StateClass.TOTAL_INCREASING,
+                icon="mdi:battery",
+                gain=1.0,
+                precision=2,
+            )
+
+            with patch.object(sensor, "run_persistence_coroutine", side_effect=lambda coro: coro.close()):
+                # The first read establishes the source value but has no prior
+                # interval to integrate.
+                assert sensor.update_from_source_sensor(source) is True
+                assert sensor._current_total == 0.0
+
+                # The next identical read is suppressed from the source's
+                # state history, but its successful read interval still gives
+                # the accumulator a valid constant-power sample.
+                source.update_generation = 2
+                source.successful_read_interval = 3600.0
+                assert sensor.update_from_source_sensor(source) is True
+                assert sensor._current_total == 20.0
+
     @pytest.mark.asyncio
     async def test_repeated_successful_read_is_integrated_once_per_generation(self):
         source = MagicMock(spec=Sensor)
@@ -50,8 +92,12 @@ class TestAccumulationLogic:
 
                 source.update_generation = 2
                 source.successful_read_interval = 1800.0
+                source.previous_raw_state = 20.0
+                source.state_count = 3
                 assert sensor.update_from_source_sensor(source) is True
-                assert sensor._current_total == 22.5
+                # Repeated 20W samples must use 20W for both ends of the
+                # interval rather than averaging against the stale 10W value.
+                assert sensor._current_total == 25.0
 
     @pytest.mark.asyncio
     async def test_riemann_sum_accumulation(self):
@@ -386,6 +432,43 @@ class TestSimpleEnergyDailyAccumulationSensor:
                 # Resets, then accumulates new value
                 assert sensor._current_total == 15.0
 
+    def test_simple_daily_accumulation_detects_midnight_when_source_value_is_suppressed(self):
+        source = MagicMock(spec=Sensor)
+        source.unique_id = "source_uid"
+        source.latest_raw_state = 20.0
+        source.state_count = 1
+        source.latest_interval = None
+        source.successful_read_interval = None
+        source.previous_successful_read_time = 1.0
+        source.last_successful_read_time = 1.0
+
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            from sigenergy2mqtt.sensors.base.accumulation import SimpleEnergyDailyAccumulationSensor
+
+            sensor = SimpleEnergyDailyAccumulationSensor(
+                name="Daily Energy",
+                unique_id="sigen_daily_suppressed_uid",
+                object_id="sigen_daily_suppressed_oid",
+                source=source,
+            )
+            day_13 = time.struct_time((2026, 5, 13, 23, 59, 55, 2, 133, 0))
+            day_14 = time.struct_time((2026, 5, 14, 0, 0, 5, 3, 134, 0))
+
+            with patch("time.localtime", side_effect=lambda timestamp: day_13 if timestamp == 1.0 else day_14):
+                sensor.update_from_source_sensor(source)
+                assert sensor._last_day_tuple == (2026, 5, 13)
+
+                # The reading at the new date is identical and does not add a
+                # second item to source state history.
+                sensor._current_total = 5.0
+                source.previous_successful_read_time = 1.0
+                source.last_successful_read_time = 2.0
+                sensor.update_from_source_sensor(source)
+
+            assert source.state_count == 1
+            assert sensor._last_day_tuple == (2026, 5, 14)
+            assert sensor._current_total == 0.0
+
     def test_simple_energy_daily_accumulation_sensor_invalid_source(self, caplog):
         """Test ignoring invalid source updates."""
         source = MagicMock(spec=Sensor)
@@ -460,3 +543,37 @@ class TestEnergyDailyAccumulationSensor:
                 sensor.update_from_source_sensor(source)
                 assert sensor.latest_raw_state == 4.5
                 assert sensor._state_at_midnight == midnight
+
+    def test_energy_daily_uses_successful_read_times_when_source_history_is_suppressed(self):
+        source = MagicMock(spec=Sensor)
+        source.unique_id = "source_uid"
+        source.data_type = ModbusDataType.UINT32
+        source.unit = "kW"
+        source.device_class = DeviceClass.POWER
+        source.state_class = StateClass.MEASUREMENT
+        source.precision = 2
+        source.protocol_version = ProtocolVersion.V1_8
+        source.latest_raw_state = 20.0
+        source.state_count = 1
+        source.previous_successful_read_time = 1.0
+        source.last_successful_read_time = 2.0
+
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            from sigenergy2mqtt.sensors.base.accumulation import EnergyDailyAccumulationSensor
+
+            sensor = EnergyDailyAccumulationSensor(
+                name="Daily Energy",
+                unique_id="sigen_energy_daily_suppressed_uid",
+                object_id="sigen_energy_daily_suppressed_oid",
+                source=source,
+            )
+            sensor._state_at_midnight = 10.0
+            day_13 = time.struct_time((2026, 5, 13, 23, 59, 55, 2, 133, 0))
+            day_14 = time.struct_time((2026, 5, 14, 0, 0, 5, 3, 134, 0))
+
+            with patch("time.localtime", side_effect=lambda timestamp: day_13 if timestamp == 1.0 else day_14), patch.object(sensor, "run_persistence_coroutine", side_effect=lambda coro: coro.close()):
+                sensor.update_from_source_sensor(source)
+
+            assert source.state_count == 1
+            assert sensor._state_at_midnight == 20.0
+            assert sensor._current_total == 0.0

@@ -29,7 +29,7 @@ properties:
   repeated-state-publish-interval:
     description: "The interval in seconds at which repeated states are published."
     type: integer
-    default: 0
+    default: 60
   monitor-topic-updates:
     description: "Enable topic-overdue monitoring in the health monitor."
     type: boolean

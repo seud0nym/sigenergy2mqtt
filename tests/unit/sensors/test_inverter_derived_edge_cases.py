@@ -525,9 +525,9 @@ class TestInverterSelfConsumedPowerEdgeCases:
                 pv_power.update_from_source_sensor(v_source)
                 pv_power.update_from_source_sensor(c_source)
 
-                # pv_power's latest_time is still t0 (because 0W is repeated and <60s elapsed),
-                # but last_successful_read_time must be t1!
-                assert pv_power.latest_time == t0
+                # Repeated reads update sample history even though MQTT
+                # publication remains suppressed until the interval elapses.
+                assert pv_power.latest_time == t1
                 assert pv_power.last_successful_read_time == t1
 
                 ap.latest_raw_state = 0

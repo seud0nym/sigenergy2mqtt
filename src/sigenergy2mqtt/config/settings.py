@@ -166,7 +166,7 @@ class Settings(BaseSettings):
     log_fmt: str | None = Field(None, alias="log-fmt")
     language: str = Field("en", alias="language")
     consumption: ConsumptionMethod = Field(ConsumptionMethod.TOTAL, alias="consumption")
-    repeated_state_publish_interval: int = Field(0, alias="repeated-state-publish-interval")
+    repeated_state_publish_interval: int = Field(60, alias="repeated-state-publish-interval")
     monitor_topic_updates: bool = Field(True, alias="monitor-topic-updates")
     sanity_check_default_kw: float = Field(500.0, alias="sanity-check-default-kw", ge=0)
     sanity_check_failures_increment: bool = Field(False, alias="sanity-check-failures-increment")

@@ -131,7 +131,7 @@ class TestConfigDefaults:
 
     def test_default_repeated_state_publish_interval(self):
         """Test default repeated_state_publish_interval."""
-        assert active_config.repeated_state_publish_interval == 0
+        assert active_config.repeated_state_publish_interval == 60
 
 
 class TestConfigSettings:
