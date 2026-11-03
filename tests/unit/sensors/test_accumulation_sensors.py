@@ -16,6 +16,47 @@ def mock_state_store():
 
 class TestAccumulationLogic:
     @pytest.mark.asyncio
+    async def test_repeated_source_value_is_integrated_with_single_buffered_state(self):
+        source = MagicMock(spec=Sensor)
+        source.unique_id = "source_uid"
+        source.log_identity = "source"
+        source.latest_raw_state = 20.0
+        source.previous_raw_state = None
+        source.state_count = 1
+        source.update_generation = 1
+        source.successful_read_interval = None
+        source.latest_interval = None
+
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            sensor = ResettableAccumulationSensor(
+                name="Accumulator",
+                unique_id="sigen_accumulator_repeated_source",
+                object_id="sigen_accumulator_repeated_source",
+                source=source,
+                data_type=ModbusDataType.UINT32,
+                unit="kWh",
+                device_class=DeviceClass.ENERGY,
+                state_class=StateClass.TOTAL_INCREASING,
+                icon="mdi:battery",
+                gain=1.0,
+                precision=2,
+            )
+
+            with patch.object(sensor, "run_persistence_coroutine", side_effect=lambda coro: coro.close()):
+                # The first read establishes the source value but has no prior
+                # interval to integrate.
+                assert sensor.update_from_source_sensor(source) is True
+                assert sensor._current_total == 0.0
+
+                # The next identical read is suppressed from the source's
+                # state history, but its successful read interval still gives
+                # the accumulator a valid constant-power sample.
+                source.update_generation = 2
+                source.successful_read_interval = 3600.0
+                assert sensor.update_from_source_sensor(source) is True
+                assert sensor._current_total == 20.0
+
+    @pytest.mark.asyncio
     async def test_repeated_successful_read_is_integrated_once_per_generation(self):
         source = MagicMock(spec=Sensor)
         source.unique_id = "source_uid"

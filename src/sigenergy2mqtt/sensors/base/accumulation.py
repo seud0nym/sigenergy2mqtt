@@ -141,8 +141,8 @@ class AccumulationSensor(DerivedSensor):
             logger.warning(f"{self.log_identity} Attempt to call update_from_source_sensor from {sensor.log_identity}")
             return False
 
-        if sensor.latest_raw_state is None or sensor.state_count < 2:
-            return False  # Need at least two points
+        if sensor.latest_raw_state is None:
+            return False  # Need an initial source value
 
         source_generation = getattr(sensor, "update_generation", None)
         if isinstance(source_generation, int) and source_generation > 0:
@@ -164,8 +164,13 @@ class AccumulationSensor(DerivedSensor):
             return False
 
         # Convert negative power to zero
-        previous = max(0.0, float(sensor.previous_raw_state if sensor.previous_raw_state is not None else 0.0))
         current = max(0.0, float(sensor.latest_raw_state if sensor.latest_raw_state is not None else 0.0))
+        # Repeated source values may be suppressed from the source history, so
+        # the first value can remain its only buffered state. Once a successful
+        # read interval is available, integrate that constant value over the
+        # interval instead of waiting for the source value to change.
+        previous_state = sensor.previous_raw_state if sensor.state_count >= 2 else current
+        previous = max(0.0, float(previous_state if previous_state is not None else 0.0))
 
         # Calculate accumulation using trapezoidal rule: E = 0.5 * (P1 + P2) * Δt
         increase = 0.5 * (previous + current) * interval_hours
