@@ -19,7 +19,7 @@
 - Improved pymodbus 'Skipping' logging filter to catch the send:/recv: DEBUG level transport dump records before subsequent 'Repeating'  messages
 - Fixed handling of alarms that return invalid values
 - Implemented ±50 W power dead band logic in BatteryStatus to prevent flapping at extremes (#346)
-- Fixed daily accumulation sensors reset could be delayed if a source value stayed unchanged and its publish was suppressed across midnight
+- Fixed accumulation sensors using stale source samples when repeated publishes were suppressed; daily resets now follow successful read times across midnight
 
 ### Changed
 

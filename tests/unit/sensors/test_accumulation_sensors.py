@@ -92,8 +92,12 @@ class TestAccumulationLogic:
 
                 source.update_generation = 2
                 source.successful_read_interval = 1800.0
+                source.previous_raw_state = 20.0
+                source.state_count = 3
                 assert sensor.update_from_source_sensor(source) is True
-                assert sensor._current_total == 22.5
+                # Repeated 20W samples must use 20W for both ends of the
+                # interval rather than averaging against the stale 10W value.
+                assert sensor._current_total == 25.0
 
     @pytest.mark.asyncio
     async def test_riemann_sum_accumulation(self):

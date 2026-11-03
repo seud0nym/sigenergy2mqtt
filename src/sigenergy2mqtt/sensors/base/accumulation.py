@@ -165,10 +165,8 @@ class AccumulationSensor(DerivedSensor):
 
         # Convert negative power to zero
         current = max(0.0, float(sensor.latest_raw_state if sensor.latest_raw_state is not None else 0.0))
-        # Repeated source values may be suppressed from the source history, so
-        # the first value can remain its only buffered state. Once a successful
-        # read interval is available, integrate that constant value over the
-        # interval instead of waiting for the source value to change.
+        # On the first source sample there is no previous value yet, so use
+        # the current reading at both ends of the interval.
         previous_state = sensor.previous_raw_state if sensor.state_count >= 2 else current
         previous = max(0.0, float(previous_state if previous_state is not None else 0.0))
 

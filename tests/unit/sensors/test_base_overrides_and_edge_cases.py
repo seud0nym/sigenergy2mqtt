@@ -386,6 +386,22 @@ class TestSetLatestState:
         assert sensor.last_successful_read_time is not None
         assert sensor.successful_read_interval is not None
 
+    def test_suppressed_reads_update_sample_history_without_advancing_publish_history(self):
+        sensor = _make_sensor(uid_suffix="sls_sample_history")
+
+        with patch.object(active_config, "repeated_state_publish_interval", 60):
+            sensor.mark_successful_read()
+            assert sensor.set_latest_state(100.0) is True
+            sensor.mark_successful_read()
+            assert sensor.set_latest_state(200.0) is True
+            sensor.mark_successful_read()
+            assert sensor.set_latest_state(200.0) is False
+
+        assert sensor.latest_raw_state == 200.0
+        assert sensor.previous_raw_state == 200.0
+        assert sensor.state_count == 2  # Bounded history keeps the latest two acquired samples.
+        assert len(sensor._published_states) == 2
+
     def test_set_latest_state_propagates_to_derived(self):
         """set_latest_state calls update_from_source_sensor on derived sensors."""
         s = _make_sensor(uid_suffix="sls_derived")
