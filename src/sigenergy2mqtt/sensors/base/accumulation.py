@@ -519,11 +519,17 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
         val = sensor.latest_raw_state
         now_state = float(val) if val is not None else 0.0
 
-        # Check for day change
-        if sensor.state_count > 1:
-            was_time = time.localtime(sensor.previous_time)
-            now_time = time.localtime(sensor.latest_time)
+        # Check for day change using acquisition timestamps, which advance
+        # even when an unchanged source value is suppressed from state history.
+        previous_read_time = sensor.previous_successful_read_time
+        latest_read_time = sensor.last_successful_read_time
+        if not isinstance(previous_read_time, (int, float)) or not isinstance(latest_read_time, (int, float)):
+            previous_read_time = sensor.previous_time if sensor.state_count > 1 else None
+            latest_read_time = sensor.latest_time
 
+        if isinstance(previous_read_time, (int, float)) and isinstance(latest_read_time, (int, float)):
+            was_time = time.localtime(previous_read_time)
+            now_time = time.localtime(latest_read_time)
             if was_time.tm_year != now_time.tm_year or was_time.tm_mon != now_time.tm_mon or was_time.tm_mday != now_time.tm_mday:
                 # Day changed - reset midnight state
                 self._state_at_midnight = None
@@ -605,9 +611,13 @@ class SimpleEnergyDailyAccumulationSensor(AccumulationSensor):
         if sensor.latest_raw_state is None:
             return False
 
-        # Check for day change by comparing year, month, day
-        if sensor.state_count > 1:
-            now_time = time.localtime(sensor.latest_time)
+        # Read timestamps advance even when unchanged values are suppressed
+        # from state history, so use them to detect midnight reliably.
+        latest_read_time = sensor.last_successful_read_time
+        if not isinstance(latest_read_time, (int, float)):
+            latest_read_time = sensor.latest_time
+        if isinstance(latest_read_time, (int, float)):
+            now_time = time.localtime(latest_read_time)
             current_day = (now_time.tm_year, now_time.tm_mon, now_time.tm_mday)
 
             # Reset if this is a new day

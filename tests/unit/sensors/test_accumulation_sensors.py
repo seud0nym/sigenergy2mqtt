@@ -1,3 +1,4 @@
+import time
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -427,6 +428,43 @@ class TestSimpleEnergyDailyAccumulationSensor:
                 # Resets, then accumulates new value
                 assert sensor._current_total == 15.0
 
+    def test_simple_daily_accumulation_detects_midnight_when_source_value_is_suppressed(self):
+        source = MagicMock(spec=Sensor)
+        source.unique_id = "source_uid"
+        source.latest_raw_state = 20.0
+        source.state_count = 1
+        source.latest_interval = None
+        source.successful_read_interval = None
+        source.previous_successful_read_time = 1.0
+        source.last_successful_read_time = 1.0
+
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            from sigenergy2mqtt.sensors.base.accumulation import SimpleEnergyDailyAccumulationSensor
+
+            sensor = SimpleEnergyDailyAccumulationSensor(
+                name="Daily Energy",
+                unique_id="sigen_daily_suppressed_uid",
+                object_id="sigen_daily_suppressed_oid",
+                source=source,
+            )
+            day_13 = time.struct_time((2026, 5, 13, 23, 59, 55, 2, 133, 0))
+            day_14 = time.struct_time((2026, 5, 14, 0, 0, 5, 3, 134, 0))
+
+            with patch("time.localtime", side_effect=lambda timestamp: day_13 if timestamp == 1.0 else day_14):
+                sensor.update_from_source_sensor(source)
+                assert sensor._last_day_tuple == (2026, 5, 13)
+
+                # The reading at the new date is identical and does not add a
+                # second item to source state history.
+                sensor._current_total = 5.0
+                source.previous_successful_read_time = 1.0
+                source.last_successful_read_time = 2.0
+                sensor.update_from_source_sensor(source)
+
+            assert source.state_count == 1
+            assert sensor._last_day_tuple == (2026, 5, 14)
+            assert sensor._current_total == 0.0
+
     def test_simple_energy_daily_accumulation_sensor_invalid_source(self, caplog):
         """Test ignoring invalid source updates."""
         source = MagicMock(spec=Sensor)
@@ -501,3 +539,37 @@ class TestEnergyDailyAccumulationSensor:
                 sensor.update_from_source_sensor(source)
                 assert sensor.latest_raw_state == 4.5
                 assert sensor._state_at_midnight == midnight
+
+    def test_energy_daily_uses_successful_read_times_when_source_history_is_suppressed(self):
+        source = MagicMock(spec=Sensor)
+        source.unique_id = "source_uid"
+        source.data_type = ModbusDataType.UINT32
+        source.unit = "kW"
+        source.device_class = DeviceClass.POWER
+        source.state_class = StateClass.MEASUREMENT
+        source.precision = 2
+        source.protocol_version = ProtocolVersion.V1_8
+        source.latest_raw_state = 20.0
+        source.state_count = 1
+        source.previous_successful_read_time = 1.0
+        source.last_successful_read_time = 2.0
+
+        with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
+            from sigenergy2mqtt.sensors.base.accumulation import EnergyDailyAccumulationSensor
+
+            sensor = EnergyDailyAccumulationSensor(
+                name="Daily Energy",
+                unique_id="sigen_energy_daily_suppressed_uid",
+                object_id="sigen_energy_daily_suppressed_oid",
+                source=source,
+            )
+            sensor._state_at_midnight = 10.0
+            day_13 = time.struct_time((2026, 5, 13, 23, 59, 55, 2, 133, 0))
+            day_14 = time.struct_time((2026, 5, 14, 0, 0, 5, 3, 134, 0))
+
+            with patch("time.localtime", side_effect=lambda timestamp: day_13 if timestamp == 1.0 else day_14), patch.object(sensor, "run_persistence_coroutine", side_effect=lambda coro: coro.close()):
+                sensor.update_from_source_sensor(source)
+
+            assert source.state_count == 1
+            assert sensor._state_at_midnight == 20.0
+            assert sensor._current_total == 0.0

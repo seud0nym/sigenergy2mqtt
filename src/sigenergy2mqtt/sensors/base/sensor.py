@@ -267,6 +267,11 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         return self._last_successful_read_time
 
     @property
+    def previous_successful_read_time(self) -> float | None:
+        """Get the timestamp of the successful source read before the latest one."""
+        return self._previous_successful_read_time
+
+    @property
     def successful_read_interval(self) -> float | None:
         """Get the interval between the two most recent successful reads."""
         if self._last_successful_read_time is None or self._previous_successful_read_time is None:
