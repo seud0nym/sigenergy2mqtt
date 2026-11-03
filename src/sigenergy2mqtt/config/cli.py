@@ -104,7 +104,7 @@ def get_parser() -> argparse.ArgumentParser:
         dest=const.SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL,
         type=int,
         default=os.getenv(const.SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL, None),
-        help="The interval in seconds at which repeated states are published. If < 0, repeated states are never published. If 0, repeated states are always published. If > 0, repeated states are published at the specified interval. The default is 0 (always publish).",
+        help="The interval in seconds at which repeated states are published. If < 0, repeated states are never published. If 0, repeated states are always published. If > 0, repeated states are published at the specified interval. The default is 60 seconds.",
     )
     parser.add_argument(
         "--no-topic-update-monitoring",

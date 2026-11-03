@@ -22,6 +22,7 @@
 
 ### Changed
 
+- Unchanged states are now only published every 60 seconds to reduce network traffic and MQTT broker load
 - Updated aiohttp from 3.14.4 to 3.14.5
 - Updated pycryptodome from 3.24.0 to 4.2.0
 - Updated pymodbus from 3.15.0 to 3.16.1

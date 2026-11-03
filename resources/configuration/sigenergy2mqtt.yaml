@@ -33,14 +33,14 @@ language: en
 consumption: total
 # repeated-state-publish-interval
 #   added: 2026.2.19
-#   default: 0
+#   default: 60
 #   description:  The interval in seconds at which repeated states are published.
 #                 (Repeated states occur when the state that is acquired is
 #                 identical to the previous read.) If < 0, repeated states are
 #                 never published. If 0, repeated states are always published.
 #                 If > 0, repeated states are published at the specified
-#                 interval. The default is 0 (always publish).
-repeated-state-publish-interval: 0
+#                 interval. The default is 60 seconds.
+repeated-state-publish-interval: 60
 # monitor-topic-updates
 #   added: 2026.7.22
 #   default: true
