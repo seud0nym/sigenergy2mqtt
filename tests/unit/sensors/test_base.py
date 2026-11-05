@@ -94,7 +94,10 @@ class TestSensorBase:
             assert sensor["raw_state_topic"] == f"{base_topic}/raw"
             assert sensor["json_attributes_topic"] == f"{base_topic}/attributes"
             assert sensor["availability_mode"] == "all"
-            assert sensor["availability"] == [{"topic": "homeassistant/device/test_device/availability"}]
+            assert sensor["availability"] == [
+                {"topic": "homeassistant/device/test_device/availability"},
+                {"topic": f"{base_topic}/availability"},
+            ]
 
     def test_properties(self, sensor):
         # publishable

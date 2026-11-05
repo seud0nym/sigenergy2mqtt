@@ -402,6 +402,17 @@ class TestSetLatestState:
         assert sensor.state_count == 2  # Bounded history keeps the latest two acquired samples.
         assert len(sensor._published_states) == 2
 
+    def test_suppressed_read_is_kept_as_a_sample_for_history(self):
+        sensor = _make_sensor(uid_suffix="sls_sample_timestamp")
+        with patch.object(active_config, "repeated_state_publish_interval", -1), patch(
+            "sigenergy2mqtt.sensors.base.sensor.time.time", side_effect=[10.0, 11.0]
+        ):
+            assert sensor.set_latest_state(100.0) is True
+            assert sensor.set_latest_state(100.0) is False
+
+        assert list(sensor._states) == [(10.0, 100.0), (11.0, 100.0)]
+        assert list(sensor._published_states) == [(10.0, 100.0)]
+
     def test_set_latest_state_propagates_to_derived(self):
         """set_latest_state calls update_from_source_sensor on derived sensors."""
         s = _make_sensor(uid_suffix="sls_derived")

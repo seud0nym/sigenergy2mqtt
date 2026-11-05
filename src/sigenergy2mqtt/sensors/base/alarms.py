@@ -35,6 +35,7 @@ class AlarmSensor(ReadOnlySensor, metaclass=abc.ABCMeta):
     """
 
     NO_ALARM: Final = "No Alarm"
+    _individual_availability = False
 
     def __init__(
         self,
@@ -366,6 +367,8 @@ class AlarmCombinedSensor(ReadOnlySensor, HybridInverter, PVInverter):
 
     Reads all alarm registers and combines active alarms into one string.
     """
+
+    _individual_availability = False
 
     def __init__(self, name: str, unique_id: str, object_id: str, *alarms: AlarmSensor, **kwargs):
         # Validate alarm sensors

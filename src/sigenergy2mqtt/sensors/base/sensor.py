@@ -90,6 +90,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
     # Class-level tracking of used IDs (intentional shared state)
     _used_object_ids: ClassVar[dict[str, str]] = {}
     _used_unique_ids: ClassVar[dict[str, str]] = {}
+    _individual_availability: ClassVar[bool] = True
 
     def __init__(
         self,
@@ -174,6 +175,8 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         self._retain: bool = False
 
         # Public attributes
+        self.availability_state: str | bytes | None = None
+        self.availability_topic: str | None = None
         self.derived_sensors: dict[str, DerivedSensor] = {}
         self.force_publish: bool = False
         self.name: str = str(self[DiscoveryKeys.NAME])
@@ -716,8 +719,12 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC] = f"{base}/attributes"
 
         if active_config.home_assistant.enabled:
+            self.availability_topic = f"{base}/availability" if self._individual_availability else None
             self[DiscoveryKeys.AVAILABILITY_MODE] = "all"
-            self[DiscoveryKeys.AVAILABILITY] = [{"topic": f"{active_config.home_assistant.discovery_prefix}/device/{device_id}/availability"}]
+            availability: list[dict[str, str]] = [{"topic": f"{active_config.home_assistant.discovery_prefix}/device/{device_id}/availability"}]
+            if self.availability_topic:
+                availability.append({"topic": self.availability_topic})
+            self[DiscoveryKeys.AVAILABILITY] = availability
 
         self._log_configured_topics()
 
@@ -956,6 +963,8 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
 
         try:
             published = await self._attempt_publish(mqtt_client, transport, republish)
+            if published:
+                self.publish_availability(mqtt_client, "online")
             await self._publish_derived_sensors(mqtt_client, transport, republish)
             return published
         except (ModbusException, SanityCheckException) as e:
@@ -1197,12 +1206,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
             raise error
 
         if active_config.home_assistant.enabled:
-            self.publish_attributes(
-                mqtt_client,
-                clean=False,
-                failures=self._failures,
-                exception=f"{error!r}",
-            )
+            self.publish_availability(mqtt_client, "offline")
 
         if self._failures >= self._max_failures:
             self._log_publish_disabled()
@@ -1233,6 +1237,28 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         affected = [s.__class__.__name__ for s in self.derived_sensors.values()]
         logger.warning(f"{self.log_identity} Publishing DISABLED until {next_str} ({self._failures} failures >= {self._max_failures}) Affected derived sensors={','.join(affected)}")
 
+    def publish_availability(self, mqtt_client: mqtt.Client, payload: str | bytes) -> None:
+        """Publish sensor availability to MQTT.
+
+        Args:
+            mqtt_client: MQTT client for publishing
+            payload: The payload to publish
+        """
+        if (
+            self.availability_topic
+            and self.availability_state != payload
+            and self._publish_message(
+                mqtt_client,
+                self.availability_topic,
+                payload,
+                qos=1,
+                retain=True,
+            )
+        ):
+            self.availability_state = payload
+            if self.debug_logging:
+                logger.debug(f"{self.log_identity} Published availability '{payload}' to topic {self.availability_topic}")
+
     def publish_attributes(self, mqtt_client: mqtt.Client, clean: bool = False, **kwargs) -> None:
         """Publish sensor attributes to MQTT.
 
@@ -1243,7 +1269,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         """
         if not self._attributes_published or clean:
             if clean:
-                self._clean_attributes(mqtt_client)
+                self._clean_attributes_and_availability(mqtt_client)
             elif self.publishable:
                 self._publish_current_attributes(mqtt_client, **kwargs)
 
@@ -1251,14 +1277,14 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         for sensor in self.derived_sensors.values():
             sensor.publish_attributes(mqtt_client, clean=clean)
 
-    def _clean_attributes(self, mqtt_client: mqtt.Client) -> None:
+    def _clean_attributes_and_availability(self, mqtt_client: mqtt.Client) -> None:
         """Clear retained attribute messages.
 
         Args:
             mqtt_client: MQTT client for publishing
         """
         if self.debug_logging:
-            logger.debug(f"{self.log_identity} cleaning attributes")
+            logger.debug(f"{self.log_identity} cleaning attributes and availability retained messages")
 
         self._publish_message(
             mqtt_client,
@@ -1267,6 +1293,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
             qos=1,
             retain=True,
         )
+        self.publish_availability(mqtt_client, b"")
 
     def _publish_current_attributes(self, mqtt_client: mqtt.Client, **kwargs) -> None:
         """Publish current sensor attributes.
@@ -1349,11 +1376,10 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
                         logger.debug(f"{self.log_identity} Repeated state suppressed ({elapsed:.1f}s < repeated_state_publish_interval={interval}): {state=}")
                     updated = False
 
-            if not updated:
+            if not updated and state is not None and (not isinstance(state, (int, float)) or self.sanity_check.is_sane(state, list(self._states))):
                 # Suppression controls MQTT traffic only. Keep every sane
                 # acquired value and timestamp for history and derived sensors.
-                if state is not None and (not isinstance(state, (int, float)) or self.sanity_check.is_sane(state, list(self._states))):
-                    self._states.append((time.time(), state))
+                self._states.append((time.time(), state))
 
         # Propagate accepted state changes and successful repeated reads. A
         # suppressed callback without a new acquisition must not be consumed by
