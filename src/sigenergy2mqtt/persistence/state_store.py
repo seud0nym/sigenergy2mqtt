@@ -429,8 +429,15 @@ class StateStore:
         if not self._initialised or self._disk is None:
             return None
 
-        disk_keys = [key for key in self._disk.all_keys() if key != (Category._ROOT, "auto-discovery.yaml")]
         mqtt_keys = self._mqtt.all_known_keys() if self._mqtt_enabled else []
+        try:
+            disk_keys = [key for key in self._disk.all_keys() if key != (Category._ROOT, "auto-discovery.yaml")]
+        except OSError as exc:
+            logger.warning(f"DiskBackend.all_keys failed during persisted-state detection: {exc}")
+            # An unreadable directory makes the disk result inconclusive. MQTT
+            # can still prove prior state, but an empty cache cannot prove its absence.
+            return True if mqtt_keys else None
+
         if disk_keys or mqtt_keys:
             return True
         if self._mqtt_enabled and not self._mqtt_cache_warmed:
