@@ -222,6 +222,23 @@ class TestReadOnlySensorUpdateInternalState:
         assert result is False
 
     @pytest.mark.asyncio
+    async def test_publish_lock_timeout_marks_sensor_offline(self):
+        s = self._make_ro("ro_timeout_availability")
+        s["state_topic"] = "test/state"
+        s.availability_topic = "test/availability"
+        mqtt = MagicMock()
+        mqtt.publish.return_value.is_published.return_value = True
+        modbus = MagicMock()
+        modbus.read_holding_registers = AsyncMock(side_effect=TimeoutError())
+        cfg = Config()
+        cfg.home_assistant.enabled = True
+
+        with _swap_active_config(cfg):
+            assert await s.publish(mqtt, modbus) is False
+
+        mqtt.publish.assert_called_once_with("test/availability", "offline", qos=1, retain=True)
+
+    @pytest.mark.asyncio
     async def test_update_internal_state_input_registers(self):
         """INPUT type uses read_input_registers."""
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):

@@ -20,6 +20,7 @@ import paho.mqtt.client as mqtt
 from pymodbus.exceptions import ModbusException
 from pymodbus.pdu import ExceptionResponse
 
+from sigenergy2mqtt.cloud.exceptions import CloudControlUnavailableError
 from sigenergy2mqtt.common import DeviceClass, ProtocolVersion, StateClass
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.config.models import RegisterAccess
@@ -163,6 +164,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         self._previous_successful_read_time: float | None = None
         self._update_generation: int = 0
         self._last_propagated_generation: int = 0
+        self._read_failed: bool = False
 
         # Failure tracking
         self._failures: int = 0
@@ -296,6 +298,11 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         self._previous_successful_read_time = self._last_successful_read_time
         self._last_successful_read_time = now
         self._update_generation += 1
+        self._read_failed = False
+
+    def mark_read_failed(self) -> None:
+        """Record an unsuccessful read that did not raise an exception."""
+        self._read_failed = True
 
     @property
     def latest_raw_state(self) -> Any:
@@ -961,12 +968,25 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         if not self._should_attempt_publish():
             return False
 
+        if not republish:
+            self._read_failed = False
+        read_generation = self._update_generation
+
         try:
             published = await self._attempt_publish(mqtt_client, transport, republish)
-            if published:
-                self.publish_availability(mqtt_client, "online")
+            if published or self._update_generation > read_generation:
+                if republish:
+                    self.publish_availability(mqtt_client, "online", force=True)
+                else:
+                    self.publish_availability(mqtt_client, "online")
+            elif self._read_failed and not republish:
+                self.publish_availability(mqtt_client, "offline")
             await self._publish_derived_sensors(mqtt_client, transport, republish)
             return published
+        except CloudControlUnavailableError:
+            if active_config.home_assistant.enabled:
+                self.publish_availability(mqtt_client, "offline")
+            raise
         except (ModbusException, SanityCheckException) as e:
             await Metrics.mqtt_publish_attempt(physical_publish=False)
             await Metrics.mqtt_publish_failure()
@@ -1237,16 +1257,17 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         affected = [s.__class__.__name__ for s in self.derived_sensors.values()]
         logger.warning(f"{self.log_identity} Publishing DISABLED until {next_str} ({self._failures} failures >= {self._max_failures}) Affected derived sensors={','.join(affected)}")
 
-    def publish_availability(self, mqtt_client: mqtt.Client, payload: str | bytes) -> None:
+    def publish_availability(self, mqtt_client: mqtt.Client, payload: str | bytes, *, force: bool = False) -> None:
         """Publish sensor availability to MQTT.
 
         Args:
             mqtt_client: MQTT client for publishing
             payload: The payload to publish
+            force: Publish even when the cached availability matches
         """
         if (
             self.availability_topic
-            and self.availability_state != payload
+            and (force or self.availability_state != payload)
             and self._publish_message(
                 mqtt_client,
                 self.availability_topic,

@@ -9,11 +9,10 @@ from unittest.mock import MagicMock, patch
 import pytest
 from pymodbus import ModbusException
 
+from sigenergy2mqtt.cloud.exceptions import CloudControlUnavailableError
 from sigenergy2mqtt.common import DeviceClass, ProtocolVersion, StateClass, UnitOfPower
 from sigenergy2mqtt.config import Config, _swap_active_config
-from sigenergy2mqtt.sensors.base import (
-    Sensor,
-)
+from sigenergy2mqtt.sensors.base import Sensor, WriteOnlySensor
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Helpers / Fixtures
@@ -91,6 +90,21 @@ class TestPublishMethod:
             s.availability_topic,
         }
 
+    def test_write_only_sensor_uses_device_availability_only(self):
+        cfg = Config()
+        cfg.home_assistant.enabled = True
+
+        with (
+            _swap_active_config(cfg),
+            patch.dict(Sensor._used_unique_ids, clear=True),
+            patch.dict(Sensor._used_object_ids, clear=True),
+        ):
+            sensor = WriteOnlySensor("Button", "sigen_button_availability", 0, 1, 30001, ProtocolVersion.V2_4)
+            sensor.configure_mqtt_topics("device_1")
+
+        assert sensor.availability_topic is None
+        assert sensor["availability"] == [{"topic": "homeassistant/device/device_1/availability"}]
+
     def test_publish_availability_uses_retained_qos_one_message(self):
         s = self._sensor_with_topics("sensor_availability_publish")
         mqtt = _mqtt_mock()
@@ -141,6 +155,35 @@ class TestPublishMethod:
         assert published is True
         assert s._failures == 0
         mqtt.publish.assert_any_call("test/state/availability", "online", qos=1, retain=True)
+
+    @pytest.mark.asyncio
+    async def test_successful_suppressed_read_restores_online_availability(self):
+        s = self._sensor_with_topics("pub_suppressed_recovery")
+        s.set_state(42.0)
+        s.availability_topic = "test/availability"
+        mqtt = _mqtt_mock()
+        modbus = MagicMock()
+        modbus.connected = True
+
+        async def _failed_update(**kw):
+            raise ModbusException("read failed")
+
+        async def _unchanged_update(**kw):
+            s.mark_successful_read()
+            return s.set_latest_state(42.0)
+
+        cfg = Config()
+        cfg.home_assistant.enabled = True
+        cfg.repeated_state_publish_interval = -1
+        with _swap_active_config(cfg), patch.object(s, "_update_internal_state", side_effect=_failed_update):
+            assert await s.publish(mqtt, modbus) is False
+
+        with _swap_active_config(cfg), patch.object(s, "_update_internal_state", side_effect=_unchanged_update):
+            assert await s.publish(mqtt, modbus) is False
+
+        availability_payloads = [call.args[1] for call in mqtt.publish.call_args_list if call.args[0] == "test/availability"]
+        assert availability_payloads == ["offline", "online"]
+        assert all(call.args[0] != "test/state" for call in mqtt.publish.call_args_list)
 
     @pytest.mark.asyncio
     async def test_publish_with_publish_raw_enabled(self):
@@ -308,6 +351,37 @@ class TestPublishMethod:
             await s.publish(mqtt, modbus)
         mock_pub_attrs.assert_not_called()
         mqtt.publish.assert_any_call("test/availability", "offline", qos=1, retain=True)
+
+    @pytest.mark.asyncio
+    async def test_cloud_unavailable_marks_offline_and_propagates(self):
+        s = self._sensor_with_topics("pub_cloud_unavailable")
+        s.availability_topic = "test/availability"
+        mqtt = _mqtt_mock()
+        cfg = Config()
+        cfg.home_assistant.enabled = True
+
+        async def _cloud_failure(**kw):
+            raise CloudControlUnavailableError("cloud offline")
+
+        with _swap_active_config(cfg), patch.object(s, "_update_internal_state", side_effect=_cloud_failure), pytest.raises(CloudControlUnavailableError, match="cloud offline"):
+            await s.publish(mqtt, MagicMock())
+
+        mqtt.publish.assert_called_once_with("test/availability", "offline", qos=1, retain=True)
+
+    @pytest.mark.asyncio
+    async def test_republish_forces_online_availability(self):
+        s = self._sensor_with_topics("pub_force_availability")
+        s.set_state(42.0)
+        s.availability_topic = "test/availability"
+        s.availability_state = "online"
+        mqtt = _mqtt_mock()
+        cfg = Config()
+        cfg.home_assistant.enabled = True
+
+        with _swap_active_config(cfg):
+            assert await s.publish(mqtt, None, republish=True) is True
+
+        mqtt.publish.assert_any_call("test/availability", "online", qos=1, retain=True)
 
     @pytest.mark.asyncio
     async def test_publish_retry_interval_calculated(self):
