@@ -3,16 +3,16 @@ from __future__ import annotations
 import json
 import logging
 import time
+from typing import cast
 from unittest.mock import MagicMock, patch
 
 import pytest
 from pymodbus import ModbusException
 
+from sigenergy2mqtt.cloud.exceptions import CloudControlUnavailableError
 from sigenergy2mqtt.common import DeviceClass, ProtocolVersion, StateClass, UnitOfPower
 from sigenergy2mqtt.config import Config, _swap_active_config
-from sigenergy2mqtt.sensors.base import (
-    Sensor,
-)
+from sigenergy2mqtt.sensors.base import Sensor, WriteOnlySensor
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Helpers / Fixtures
@@ -73,6 +73,47 @@ class TestPublishMethod:
         s["json_attributes_topic"] = "test/attributes"
         return s
 
+    def test_configure_mqtt_topics_adds_sensor_availability_for_home_assistant(self):
+        s = self._sensor_with_topics("sensor_availability_discovery")
+        cfg = Config()
+        cfg.home_assistant.enabled = True
+        cfg.home_assistant.discovery_prefix = "homeassistant"
+
+        with _swap_active_config(cfg):
+            s.configure_mqtt_topics("device_1")
+
+        assert s.availability_topic is not None
+        assert s.availability_topic.endswith("/availability")
+        availability = cast(list[dict[str, str]], s["availability"])
+        assert {item["topic"] for item in availability} == {
+            "homeassistant/device/device_1/availability",
+            s.availability_topic,
+        }
+
+    def test_write_only_sensor_uses_device_availability_only(self):
+        cfg = Config()
+        cfg.home_assistant.enabled = True
+
+        with (
+            _swap_active_config(cfg),
+            patch.dict(Sensor._used_unique_ids, clear=True),
+            patch.dict(Sensor._used_object_ids, clear=True),
+        ):
+            sensor = WriteOnlySensor("Button", "sigen_button_availability", 0, 1, 30001, ProtocolVersion.V2_4)
+            sensor.configure_mqtt_topics("device_1")
+
+        assert sensor.availability_topic is None
+        assert sensor["availability"] == [{"topic": "homeassistant/device/device_1/availability"}]
+
+    def test_publish_availability_uses_retained_qos_one_message(self):
+        s = self._sensor_with_topics("sensor_availability_publish")
+        mqtt = _mqtt_mock()
+        s.availability_topic = "device_1/sensor/state/availability"
+
+        s.publish_availability(mqtt, "offline")
+
+        mqtt.publish.assert_called_once_with(s.availability_topic, "offline", qos=1, retain=True)
+
     @pytest.mark.asyncio
     async def test_publish_with_debug_skips_none_state(self):
         """Cover debug branch when state is None and force_publish is False."""
@@ -85,7 +126,7 @@ class TestPublishMethod:
 
     @pytest.mark.asyncio
     async def test_publish_skips_none_state_even_if_force_publish_true(self, caplog: pytest.LogCaptureFixture):
-        """Cover debug branch when state is None and force_publish is True. 
+        """Cover debug branch when state is None and force_publish is True.
         It should still skip publishing rather than warning about NoneType."""
         s = self._sensor_with_topics("pub_none_force", debug=False)
         s.force_publish = True
@@ -101,6 +142,7 @@ class TestPublishMethod:
     async def test_publish_resets_failures_on_success(self):
         """Cover failure reset branch."""
         s = self._sensor_with_topics("pub_reset")
+        s.availability_topic = "test/state/availability"
         s._failures = 5
         mqtt = _mqtt_mock()
 
@@ -112,6 +154,36 @@ class TestPublishMethod:
             published = await s.publish(mqtt, None)
         assert published is True
         assert s._failures == 0
+        mqtt.publish.assert_any_call("test/state/availability", "online", qos=1, retain=True)
+
+    @pytest.mark.asyncio
+    async def test_successful_suppressed_read_restores_online_availability(self):
+        s = self._sensor_with_topics("pub_suppressed_recovery")
+        s.set_state(42.0)
+        s.availability_topic = "test/availability"
+        mqtt = _mqtt_mock()
+        modbus = MagicMock()
+        modbus.connected = True
+
+        async def _failed_update(**kw):
+            raise ModbusException("read failed")
+
+        async def _unchanged_update(**kw):
+            s.mark_successful_read()
+            return s.set_latest_state(42.0)
+
+        cfg = Config()
+        cfg.home_assistant.enabled = True
+        cfg.repeated_state_publish_interval = -1
+        with _swap_active_config(cfg), patch.object(s, "_update_internal_state", side_effect=_failed_update):
+            assert await s.publish(mqtt, modbus) is False
+
+        with _swap_active_config(cfg), patch.object(s, "_update_internal_state", side_effect=_unchanged_update):
+            assert await s.publish(mqtt, modbus) is False
+
+        availability_payloads = [call.args[1] for call in mqtt.publish.call_args_list if call.args[0] == "test/availability"]
+        assert availability_payloads == ["offline", "online"]
+        assert all(call.args[0] != "test/state" for call in mqtt.publish.call_args_list)
 
     @pytest.mark.asyncio
     async def test_publish_with_publish_raw_enabled(self):
@@ -257,10 +329,11 @@ class TestPublishMethod:
         assert s._failures == 0  # reset on success
 
     @pytest.mark.asyncio
-    async def test_publish_failure_with_ha_enabled_publishes_attributes(self):
-        """publish_attributes is called on failure when HA enabled."""
+    async def test_publish_failure_with_ha_enabled_publishes_offline_availability(self):
+        """A publish failure marks the sensor offline without publishing exception attributes."""
         s = self._sensor_with_topics("pub_ha_attr")
         s["json_attributes_topic"] = "test/attributes"
+        s.availability_topic = "test/availability"
         mqtt = _mqtt_mock()
         modbus = MagicMock()
         modbus.connected = True
@@ -276,7 +349,39 @@ class TestPublishMethod:
             patch.object(s, "publish_attributes") as mock_pub_attrs,
         ):
             await s.publish(mqtt, modbus)
-        mock_pub_attrs.assert_called_once()
+        mock_pub_attrs.assert_not_called()
+        mqtt.publish.assert_any_call("test/availability", "offline", qos=1, retain=True)
+
+    @pytest.mark.asyncio
+    async def test_cloud_unavailable_marks_offline_and_propagates(self):
+        s = self._sensor_with_topics("pub_cloud_unavailable")
+        s.availability_topic = "test/availability"
+        mqtt = _mqtt_mock()
+        cfg = Config()
+        cfg.home_assistant.enabled = True
+
+        async def _cloud_failure(**kw):
+            raise CloudControlUnavailableError("cloud offline")
+
+        with _swap_active_config(cfg), patch.object(s, "_update_internal_state", side_effect=_cloud_failure), pytest.raises(CloudControlUnavailableError, match="cloud offline"):
+            await s.publish(mqtt, MagicMock())
+
+        mqtt.publish.assert_called_once_with("test/availability", "offline", qos=1, retain=True)
+
+    @pytest.mark.asyncio
+    async def test_republish_forces_online_availability(self):
+        s = self._sensor_with_topics("pub_force_availability")
+        s.set_state(42.0)
+        s.availability_topic = "test/availability"
+        s.availability_state = "online"
+        mqtt = _mqtt_mock()
+        cfg = Config()
+        cfg.home_assistant.enabled = True
+
+        with _swap_active_config(cfg):
+            assert await s.publish(mqtt, None, republish=True) is True
+
+        mqtt.publish.assert_any_call("test/availability", "online", qos=1, retain=True)
 
     @pytest.mark.asyncio
     async def test_publish_retry_interval_calculated(self):

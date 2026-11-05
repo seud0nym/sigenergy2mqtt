@@ -283,6 +283,8 @@ class WriteOnlySensorMixin(WriteableSensorMixin):
     subclass when the value is not backed by Modbus.
     """
 
+    _individual_availability = False
+
     def __init__(
         self,
         payload_off: str = "off",

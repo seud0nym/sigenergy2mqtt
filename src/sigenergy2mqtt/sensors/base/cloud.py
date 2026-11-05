@@ -78,6 +78,7 @@ class CloudSensor(ReadableSensorMixin, AvailabilityMixin):
             raise ValueError(f"{self.log_identity}: Required argument 'modbus_client' not supplied")
         port = cast(CloudControlPort | None, kwargs.pop("modbus_client"))
         if port is None:
+            self.mark_read_failed()
             return False
         port_id = id(port)
         sensor_id = id(self)
@@ -91,7 +92,7 @@ class CloudSensor(ReadableSensorMixin, AvailabilityMixin):
         except (ClientError, CloudControlError) as exc:
             exc_repr = repr(exc)
             port_outages = _port_outage.setdefault(port_id, {})
-            
+
             if not port_outages:
                 # First failure for this port - log at WARNING level
                 logger.warning(f"{self.log_identity} cloud read failed: {exc_repr}")
@@ -112,7 +113,7 @@ class CloudSensor(ReadableSensorMixin, AvailabilityMixin):
             # adapter's rate-limit path uses the same group-level behavior.
             self.pause_monitoring_for_cloud_outage()
             raise CloudControlUnavailableError(str(exc)) from exc
-            
+
         # Successful read: clear outage state for this sensor
         if port_id in _port_outage:
             port_outages = _port_outage[port_id]
@@ -127,7 +128,9 @@ class CloudSensor(ReadableSensorMixin, AvailabilityMixin):
                     logger.debug(f"{self.log_identity} cloud read recovered, but other sensors are still failing")
 
         if value is None:
+            self.mark_read_failed()
             return False
+        self.mark_successful_read()
         return self.set_latest_state(cast(Any, value))
 
     @abc.abstractmethod

@@ -92,13 +92,18 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
         if self.debug_logging:
             self._log_read_attempt()
 
+        read_generation = self._update_generation
         try:
-            return await self._perform_modbus_read(modbus_client, **kwargs)
+            result = await self._perform_modbus_read(modbus_client, **kwargs)
+            if not result and self._update_generation == read_generation:
+                self.mark_read_failed()
+            return result
         except asyncio.CancelledError:
             logger.warning(f"{self.log_identity} Modbus read interrupted")
             return False
         except TimeoutError:
             logger.warning(f"{self.log_identity} Modbus read failed to acquire lock within {self.scan_interval}s")
+            self.mark_read_failed()
             return False
         except (ModbusException, OSError):
             from sigenergy2mqtt.metrics import Metrics
