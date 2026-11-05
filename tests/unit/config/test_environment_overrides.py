@@ -16,6 +16,7 @@ class TestConfigEnvironmentOverrides:
         monkeypatch.setenv(const.SIGENERGY2MQTT_MQTT_BROKER, "mqtt.local")
         monkeypatch.setenv(const.SIGENERGY2MQTT_MQTT_USERNAME, "user")
         monkeypatch.setenv(const.SIGENERGY2MQTT_MQTT_PASSWORD, "pass")
+        monkeypatch.setenv(const.SIGENERGY2MQTT_HASS_CHILD_DEVICES, "true")
 
         with patch("sigenergy2mqtt.config.config.Config._perform_auto_discovery", return_value=None), _swap_active_config(Config()) as cfg:
             cfg.persistent_state_path = tmp_path
@@ -27,6 +28,7 @@ class TestConfigEnvironmentOverrides:
             assert cfg.mqtt.broker == "mqtt.local"
             assert cfg.mqtt.username == "user"
             assert cfg.mqtt.password == "pass"
+            assert cfg.home_assistant.child_devices is True
 
     def test_unknown_env_var(self, monkeypatch, tmp_path):
         monkeypatch.setenv("SIGENERGY2MQTT_UNKNOWN_VAR", "foo")

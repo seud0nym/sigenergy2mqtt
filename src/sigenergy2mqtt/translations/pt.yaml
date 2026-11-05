@@ -2998,6 +2998,8 @@ cli:
     help: 'A porta de escuta do servidor web de diagnóstico (padrão: 8502)'
   SIGENERGY2MQTT_DIAGNOSTICS_REFRESH_INTERVAL:
     help: 'O intervalo de atualização da página da Web de diagnóstico em segundos (padrão: 5,0)'
+  SIGENERGY2MQTT_HASS_CHILD_DEVICES:
+    help: Representar grupos lógicos de dispositivos como dispositivos secundários do Home Assistant (migração opcional; desativada por predefinição).
   SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX:
     help: 'Prefixo para nomes de entidade do Home Assistant'
   SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX:

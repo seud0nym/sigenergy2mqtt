@@ -19,6 +19,7 @@ class FakeSensor:
     def __init__(self, unique_id, comp=None):
         self.unique_id = unique_id
         self._comp = comp or {}
+        self.publishable = True
 
     def get_discovery(self, mqtt_client):
         return self._comp
@@ -82,3 +83,85 @@ def test_publish_discovery_populated_writes_file(tmp_path, monkeypatch):
         assert fpath.exists()
         data = json.loads(fpath.read_text())
         assert "cmps" in data
+
+
+def test_publish_discovery_child_devices(tmp_path):
+    from sigenergy2mqtt.config import _swap_active_config, active_config
+
+    mqtt = DummyMQTT()
+    cfg = Config()
+    cfg.persistent_state_path = tmp_path
+    cfg.home_assistant.child_devices = True
+
+    with _swap_active_config(cfg):
+        parent = Device("Parent", 0, "parent-id", "mf", "mdl", ProtocolVersion.N_A)
+        child = Device("Child", 0, "child-id", "mf", "mdl", ProtocolVersion.N_A)
+        parent_sensor = FakeSensor("parent-sensor", {"parent-component": {"p": "sensor", "uniq_id": "parent-sensor"}})
+        child_sensor = FakeSensor(
+            "child-sensor",
+            {
+                "child-component": {
+                    "p": "sensor",
+                    "uniq_id": "child-sensor",
+                    "avty": [{"topic": "homeassistant/device/child-id/availability"}],
+                }
+            },
+        )
+        parent.all_sensors = {parent_sensor.unique_id: parent_sensor}
+        child.all_sensors = {child_sensor.unique_id: child_sensor}
+        parent._add_child_device(child)
+
+        parent.publish_discovery(mqtt)
+
+        parent_topic = f"{active_config.home_assistant.discovery_prefix}/device/{parent.unique_id}/config"
+        child_topic = f"{active_config.home_assistant.discovery_prefix}/device/{child.unique_id}/config"
+        parent_payload = next(payload for topic, payload, _qos, _retain in mqtt.published if topic == parent_topic)
+        discovery = json.loads(parent_payload)
+
+        assert set(discovery["cmps"]) == {"parent-component"}
+        assert discovery["cdevs"] == [
+            {
+                "ids": "child-id",
+                "name": "Child",
+                "cmps": {
+                    "child-component": {
+                        "p": "sensor",
+                        "uniq_id": "child-sensor",
+                        "avty": [{"topic": "homeassistant/device/child-id/availability"}],
+                    }
+                },
+            }
+        ]
+        assert any(topic == child_topic and payload == b"" and retain for topic, payload, _qos, retain in mqtt.published)
+        clear_index = next(index for index, item in enumerate(mqtt.published) if item[0] == child_topic and item[1] == b"")
+        parent_index = next(index for index, item in enumerate(mqtt.published) if item[0] == parent_topic and item[1] != b"")
+        assert clear_index < parent_index
+
+        publish_count = len(mqtt.published)
+        child.publish_discovery(mqtt)
+        assert len([item for item in mqtt.published[publish_count:] if item[0] == parent_topic]) == 1
+        assert not any(item[0] == child_topic and item[1] != b"" for item in mqtt.published[publish_count:])
+
+
+def test_publish_discovery_legacy_child_devices_remains_default(tmp_path):
+    from sigenergy2mqtt.config import _swap_active_config, active_config
+
+    mqtt = DummyMQTT()
+    cfg = Config()
+    cfg.persistent_state_path = tmp_path
+    with _swap_active_config(cfg):
+        parent = Device("Legacy Parent", 0, "legacy-parent", "mf", "mdl", ProtocolVersion.N_A)
+        child = Device("Legacy Child", 0, "legacy-child", "mf", "mdl", ProtocolVersion.N_A)
+        parent.all_sensors = {"parent": FakeSensor("parent", {"parent-component": {"p": "sensor"}})}
+        child.all_sensors = {"child": FakeSensor("child", {"child-component": {"p": "sensor"}})}
+        parent._add_child_device(child)
+
+        parent.publish_discovery(mqtt)
+
+        parent_topic = f"{active_config.home_assistant.discovery_prefix}/device/{parent.unique_id}/config"
+        child_topic = f"{active_config.home_assistant.discovery_prefix}/device/{child.unique_id}/config"
+        parent_payload = json.loads(next(payload for topic, payload, _qos, _retain in mqtt.published if topic == parent_topic))
+        child_payload = json.loads(next(payload for topic, payload, _qos, _retain in mqtt.published if topic == child_topic and payload))
+
+        assert "cdevs" not in parent_payload
+        assert child_payload["dev"]["via_device"] == parent.unique_id

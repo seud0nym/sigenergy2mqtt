@@ -79,6 +79,7 @@ class Device(HaPublisherMixin, dict[str, str | list[str]]):
         self.registers: RegisterAccess | None = None if plant_index < 0 or plant_index >= len(active_config.modbus) else active_config.modbus[plant_index].registers
 
         self.children: list[Device] = []
+        self.parent_device: Device | None = None
 
         self.all_sensors: dict[str, Sensor] = {}
         self.group_sensors: dict[str, list[ReadableSensorMixin]] = {}
@@ -327,10 +328,10 @@ class Device(HaPublisherMixin, dict[str, str | list[str]]):
     def _add_child_device(self, device: Device) -> None:
         """Register another Device as a child of this device.
 
-        Child devices appear under this device in the Home Assistant device registry
-        via the via_device relationship. A device is only added as a child if it has
-        at least one publishable sensor; devices with no publishable sensors are
-        silently skipped with a debug log.
+        Depending on Home Assistant configuration, children are either represented
+        as MQTT child devices or as separate devices linked with ``via_device``.
+        A device is only added as a child if it has at least one publishable sensor;
+        devices with no publishable sensors are silently skipped with a debug log.
 
         Args:
             device: The device to register as a child.
@@ -343,6 +344,7 @@ class Device(HaPublisherMixin, dict[str, str | list[str]]):
         sensors = device.get_all_sensors(search_children=True)
         if any(s.publishable for s in sensors.values()):
             device.via_device = self.unique_id
+            device.parent_device = self
             self.children.append(device)
         else:
             logger.debug(f"{self.log_identity} cannot add child device {device.log_identity} - No publishable sensors defined")

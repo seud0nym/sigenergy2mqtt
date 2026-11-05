@@ -2998,6 +2998,8 @@ cli:
     help: 'The diagnostics web server listening port (default: 8502)'
   SIGENERGY2MQTT_DIAGNOSTICS_REFRESH_INTERVAL:
     help: 'The diagnostics web page refresh interval in seconds (default: 5.0)'
+  SIGENERGY2MQTT_HASS_CHILD_DEVICES:
+    help: Represent logical device groups as Home Assistant child devices (opt-in migration; disabled by default).
   SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX:
     help: "The prefix to use for Home Assistant entity names. Example: A prefix of 'prefix' will prepend 'prefix ' to names (default: '')"
   SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX:

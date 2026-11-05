@@ -131,6 +131,7 @@ class EnvSettingsSource(PydanticBaseSettingsSource):
         # ── Home Assistant ───────────────────────────────────────────────────
         hass: dict[str, Any] = {}
         _set(hass, "enabled", _bool(g(const.SIGENERGY2MQTT_HASS_ENABLED)))
+        _set(hass, "child_devices", _bool(g(const.SIGENERGY2MQTT_HASS_CHILD_DEVICES)))
         _set(hass, "device_name_prefix", g(const.SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX))
         _set(hass, "discovery_prefix", g(const.SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX))
         _set(hass, "entity_id_prefix", g(const.SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX))

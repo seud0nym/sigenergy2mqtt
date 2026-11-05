@@ -2998,6 +2998,8 @@ cli:
     help: 'La porta di ascolto del server Web di diagnostica (impostazione predefinita: 8502)'
   SIGENERGY2MQTT_DIAGNOSTICS_REFRESH_INTERVAL:
     help: 'L''intervallo di aggiornamento della pagina Web di diagnostica in secondi (impostazione predefinita: 5,0)'
+  SIGENERGY2MQTT_HASS_CHILD_DEVICES:
+    help: Rappresentare i gruppi logici di dispositivi come dispositivi secondari di Home Assistant (migrazione facoltativa; disabilitata per impostazione predefinita).
   SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX:
     help: "Il prefisso per i nomi delle entità di Home Assistant. Esempio: Un prefisso 'prefix' aggiungerà 'prefix ' ai nomi (predefinito: '')"
   SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX:

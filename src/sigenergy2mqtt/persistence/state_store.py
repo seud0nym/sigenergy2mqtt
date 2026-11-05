@@ -403,6 +403,7 @@ class StateStore:
         self._executor: ThreadPoolExecutor | None = None
         self._initialised: bool = False
         self._mqtt_enabled: bool = False
+        self._mqtt_cache_warmed: bool = False
         self._loop: asyncio.AbstractEventLoop | None = None
         self._loop_thread_id: int | None = None
         self._disk_primary: bool = False
@@ -417,6 +418,24 @@ class StateStore:
     def is_initialised(self) -> bool:
         """True once :meth:`initialise` has completed (sentinel received or timed out)."""
         return self._initialised
+
+    def has_persisted_entries(self) -> bool | None:
+        """Return whether prior state exists, or None if the MQTT cache is uncertain.
+
+        The auto-discovery YAML file is generated during configuration loading,
+        before this store is initialised, so it is excluded from installation
+        cohort detection.
+        """
+        if not self._initialised or self._disk is None:
+            return None
+
+        disk_keys = [key for key in self._disk.all_keys() if key != (Category._ROOT, "auto-discovery.yaml")]
+        mqtt_keys = self._mqtt.all_known_keys() if self._mqtt_enabled else []
+        if disk_keys or mqtt_keys:
+            return True
+        if self._mqtt_enabled and not self._mqtt_cache_warmed:
+            return None
+        return False
 
     # ------------------------------------------------------------------
     # Lifecycle
@@ -440,6 +459,7 @@ class StateStore:
         # Capture the version string here to avoid circular imports at module level.
         from sigenergy2mqtt.config import version as _ver
 
+        self._mqtt_cache_warmed = False
         self._version = _ver.__version__
 
         self._loop = asyncio.get_running_loop()
@@ -452,6 +472,7 @@ class StateStore:
 
         if not self._mqtt_enabled:
             logger.info("StateStore: MQTT redundancy disabled — disk only")
+            self._mqtt_cache_warmed = True
             self._initialised = True
             return
 
@@ -485,6 +506,7 @@ class StateStore:
 
         # Wait in a thread so as not to block the asyncio event loop.
         received = await self._loop.run_in_executor(None, lambda: self._mqtt.wait_for_sentinel(timeout))
+        self._mqtt_cache_warmed = received
 
         if received:
             logger.info(f"StateStore: cache warm-up complete ({len(self._mqtt.all_known_keys())} entries)")

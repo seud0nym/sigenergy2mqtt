@@ -38,6 +38,7 @@ class HaPublisherMixin(abc.ABC):
     # Plain attributes provided by the concrete class.
     name: str
     children: list[Device]
+    parent_device: Device | None
     _shutdown_event: asyncio.Event
 
     # Properties and methods that must be implemented by the concrete class.
@@ -172,9 +173,9 @@ class HaPublisherMixin(abc.ABC):
         If debug logging is enabled, the discovery JSON is also written to disk at
         active_config.persistent_state_path for inspection.
 
-        Calls publish_attributes() for this device (without propagating to children,
-        since children will publish their own attributes when their own discovery is
-        published). Recursively calls publish_discovery() on all child devices.
+        In legacy mode, publishes discovery separately for each child device. In
+        child-device mode, includes child components in this device's payload and
+        clears their former standalone discovery topics.
 
         Args:
             mqtt_client: The MQTT client used for publishing.
@@ -184,6 +185,9 @@ class HaPublisherMixin(abc.ABC):
         Returns:
             The MQTTMessageInfo from the final mqtt_client.publish() call, or None.
         """
+        if not clean and active_config.home_assistant.child_devices and self.parent_device is not None:
+            return self.parent_device.publish_discovery(mqtt_client, clean=False)
+
         topic = f"{active_config.home_assistant.discovery_prefix}/device/{self.unique_id}/config"
         if clean:
             self.publish_availability(mqtt_client, b"", qos=1)  # Availability is always retained
@@ -193,11 +197,50 @@ class HaPublisherMixin(abc.ABC):
             components: dict[str, Any] = {}
             for sensor in self.sensors.values():
                 components.update(sensor.get_discovery(mqtt_client))
-            if components:
+
+            child_devices: list[dict[str, Any]] = []
+            if active_config.home_assistant.child_devices:
+                component_ids = set(components)
+                device_ids = {self.unique_id}
+                for child in self.children:
+                    if child.children:
+                        raise ValueError(f"{self.log_identity} cannot publish nested child devices for {child.log_identity}")
+
+                    child_components: dict[str, Any] = {}
+                    for sensor in child.sensors.values():
+                        child_components.update(sensor.get_discovery(mqtt_client))
+                    if child_components:
+                        child_ids = child.unique_id
+                        child_identifier_ids = {child_ids}
+                        duplicate_device_ids = device_ids & child_identifier_ids
+                        if duplicate_device_ids:
+                            raise ValueError(f"{self.log_identity} has child device identifiers that are not unique: {sorted(duplicate_device_ids)}")
+                        duplicate_ids = component_ids & child_components.keys()
+                        if duplicate_ids:
+                            raise ValueError(f"{self.log_identity} has duplicate discovery component IDs across devices: {sorted(duplicate_ids)}")
+                        device_ids.update(child_identifier_ids)
+                        component_ids.update(child_components)
+                        child_devices.append({
+                            "ids": child_ids,
+                            "name": child.name,
+                            "cmps": child_components,
+                        })
+
+                    # Retire the child's former standalone discovery payload before
+                    # publishing it as part of the parent's device discovery.
+                    child_topic = f"{active_config.home_assistant.discovery_prefix}/device/{child.unique_id}/config"
+                    mqtt_client.publish(child_topic, b"", qos=1, retain=True)
+                    if not child_components:
+                        child.publish_availability(mqtt_client, b"", qos=1)
+
+            if components or child_devices:
                 discovery: dict[str, Any] = {}
                 discovery["dev"] = self
                 discovery["o"] = active_config.origin
-                discovery["cmps"] = components
+                if components:
+                    discovery["cmps"] = components
+                if child_devices:
+                    discovery["cdevs"] = child_devices
                 discovery_json = json.dumps(discovery, allow_nan=False, indent=2, sort_keys=False)
                 logger.debug(f"{self.log_identity} publishing discovery ({topic=})")
                 if active_config.log_level == logging.DEBUG:
@@ -211,9 +254,13 @@ class HaPublisherMixin(abc.ABC):
                 self.publish_availability(mqtt_client, b"", qos=1)
                 logger.debug(f"{self.log_identity} publishing empty discovery because no components found ({topic=})")
                 info = mqtt_client.publish(topic, b"", qos=1, retain=True)  # Clear retained messages
-        self.publish_attributes(mqtt_client, clean, propagate=False)  # Don't propagate to children because it will happen automatically when child discovery is published
-        for device in self.children:
-            device.publish_discovery(mqtt_client, clean=clean)
+        self.publish_attributes(mqtt_client, clean, propagate=active_config.home_assistant.child_devices)
+        if not active_config.home_assistant.child_devices:
+            for device in self.children:
+                device.publish_discovery(mqtt_client, clean=clean)
+        elif clean:
+            for device in self.children:
+                device.publish_discovery(mqtt_client, clean=True)
         return info
 
     async def republish_discovery(self, mqtt_client: mqtt.Client) -> None:

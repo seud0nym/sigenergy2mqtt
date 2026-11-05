@@ -21,6 +21,7 @@ class HomeAssistantConfig(BaseModel):
     use_simplified_topics: bool = Field(False, alias="use-simplified-topics")
     edit_percentage_with_box: bool = Field(False, alias="edit-pct-box")
     discovery_only: bool = Field(False, alias="discovery-only")
+    child_devices: bool = Field(False, alias="child-devices")
     republish_discovery_interval: int = Field(0, alias="republish-discovery-interval", ge=0)
     enabled_by_default: bool = Field(False, alias="sensors-enabled-by-default")
 

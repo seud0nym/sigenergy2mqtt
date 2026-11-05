@@ -71,6 +71,28 @@ from sigenergy2mqtt.sensors.inverter.read_only import InverterFirmwareVersion
 from sigenergy2mqtt.sensors.plant.read_only import SystemTimeZone
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("prior_state", "expected"),
+    [(True, "legacy"), (False, "fresh"), (None, None)],
+)
+async def test_ensure_installation_cohort(prior_state, expected, monkeypatch):
+    load = AsyncMock(return_value=None)
+    has_persisted_entries = MagicMock(return_value=prior_state)
+    save = AsyncMock()
+    monkeypatch.setattr(main_mod.state_store, "load", load)
+    monkeypatch.setattr(main_mod.state_store, "has_persisted_entries", has_persisted_entries)
+    monkeypatch.setattr(main_mod.state_store, "save", save)
+
+    cohort = await main_mod._ensure_installation_cohort()
+
+    assert cohort == expected
+    if expected is None:
+        save.assert_not_awaited()
+    else:
+        save.assert_awaited_once_with(main_mod.Category.CONFIG, "installation-cohort", expected)
+
+
 class FmtMock(MagicMock):
     def __format__(self, format_spec):
         return str(self)
@@ -349,7 +371,7 @@ async def test_cloud_control_close_failure_does_not_abort_startup(caplog):
 @pytest.mark.asyncio
 async def test_cloud_control_successful_setup_closes_once():
     from unittest.mock import call
-    
+
     cloud_port = MagicMock()
     cloud_port.gateway_info = AsyncMock(return_value=None)
     cloud_port.device_list = AsyncMock(return_value=[{"deviceType": "Inverter", "serialNumber": "SN-1"}])
@@ -373,13 +395,11 @@ async def test_cloud_control_successful_setup_closes_once():
         await _setup_cloud_control()
 
     # Verify close count and that it happened exactly once after discovery
-    manager.assert_has_calls(
-        [
-            call.device_list(),
-            call.modes(),
-            call.close(),
-        ]
-    )
+    manager.assert_has_calls([
+        call.device_list(),
+        call.modes(),
+        call.close(),
+    ])
     cloud_port.close.assert_awaited_once()
     mock_create_thread.assert_called_once()
 
@@ -601,28 +621,58 @@ class TestConfigureLogging:
             f = _FramerSkipFilter()
 
             skip_record = logging.LogRecord(
-                "pymodbus.logging", logging.ERROR, "base.py", 82,
-                "ERROR: request ask for id=1 but got id=2, Skipping.", None, None,
+                "pymodbus.logging",
+                logging.ERROR,
+                "base.py",
+                82,
+                "ERROR: request ask for id=1 but got id=2, Skipping.",
+                None,
+                None,
             )
             send_record = logging.LogRecord(
-                "pymodbus.logging", logging.DEBUG, "logging.py", 124,
-                "send: 0xe3 0xaa 0x00 0x00 0x00 0x06 0x01 0x04 0x79 0x18 0x00 0x05", None, None,
+                "pymodbus.logging",
+                logging.DEBUG,
+                "logging.py",
+                124,
+                "send: 0xe3 0xaa 0x00 0x00 0x00 0x06 0x01 0x04 0x79 0x18 0x00 0x05",
+                None,
+                None,
             )
             recv_record = logging.LogRecord(
-                "pymodbus.logging", logging.DEBUG, "logging.py", 124,
-                "recv: 0xe3 0xaa 0x00 0x00 0x00 0x0d 0x01 0x04 0x0a extra data: ", None, None,
+                "pymodbus.logging",
+                logging.DEBUG,
+                "logging.py",
+                124,
+                "recv: 0xe3 0xaa 0x00 0x00 0x00 0x0d 0x01 0x04 0x0a extra data: ",
+                None,
+                None,
             )
             extra_record = logging.LogRecord(
-                "pymodbus.logging", logging.DEBUG, "logging.py", 124,
-                "extra: 0x01 0x02 unexpected data: 0x03", None, None,
+                "pymodbus.logging",
+                logging.DEBUG,
+                "logging.py",
+                124,
+                "extra: 0x01 0x02 unexpected data: 0x03",
+                None,
+                None,
             )
             repeat_record = logging.LogRecord(
-                "pymodbus.logging", logging.ERROR, "base.py", 82,
-                "Repeating....", None, None,
+                "pymodbus.logging",
+                logging.ERROR,
+                "base.py",
+                82,
+                "Repeating....",
+                None,
+                None,
             )
             unrelated_record = logging.LogRecord(
-                "pymodbus.logging", logging.ERROR, "base.py", 99,
-                "Some completely different error", None, None,
+                "pymodbus.logging",
+                logging.ERROR,
+                "base.py",
+                99,
+                "Some completely different error",
+                None,
+                None,
             )
 
             # Skipping is suppressed → chain becomes active
@@ -658,12 +708,22 @@ class TestConfigureLogging:
             f = _FramerSkipFilter()
 
             send_record = logging.LogRecord(
-                "pymodbus.logging", logging.DEBUG, "logging.py", 124,
-                "send: 0xe3 0xaa 0x00 0x00", None, None,
+                "pymodbus.logging",
+                logging.DEBUG,
+                "logging.py",
+                124,
+                "send: 0xe3 0xaa 0x00 0x00",
+                None,
+                None,
             )
             repeat_record = logging.LogRecord(
-                "pymodbus.logging", logging.ERROR, "base.py", 82,
-                "Repeating....", None, None,
+                "pymodbus.logging",
+                logging.ERROR,
+                "base.py",
+                82,
+                "Repeating....",
+                None,
+                None,
             )
 
             # Transport record with no active chain: passes through, no chain started
@@ -673,7 +733,6 @@ class TestConfigureLogging:
             # Repeating.... with no active chain: passes through (not a Skipping repeat)
             assert f.filter(repeat_record) is True
             assert f._chain_active is False
-
 
 
 class TestGetState:

@@ -2998,6 +2998,8 @@ cli:
     help: '診断 Web サーバーのリスニング ポート (デフォルト: 8502)'
   SIGENERGY2MQTT_DIAGNOSTICS_REFRESH_INTERVAL:
     help: '診断 Web ページの更新間隔 (秒単位) (デフォルト: 5.0)'
+  SIGENERGY2MQTT_HASS_CHILD_DEVICES:
+    help: 論理デバイスグループを Home Assistant の子デバイスとして表現します（オプトイン方式の移行；デフォルトでは無効）。
   SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX:
     help: 'Home Assistantエンティティ名のプレフィックス'
   SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX:

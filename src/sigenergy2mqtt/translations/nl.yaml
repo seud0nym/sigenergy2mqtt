@@ -2998,6 +2998,8 @@ cli:
     help: 'De luisterpoort van de diagnostische webserver (standaard: 8502)'
   SIGENERGY2MQTT_DIAGNOSTICS_REFRESH_INTERVAL:
     help: 'Het vernieuwingsinterval van de diagnostische webpagina in seconden (standaard: 5.0)'
+  SIGENERGY2MQTT_HASS_CHILD_DEVICES:
+    help: Logische apparaatgroepen weergeven als onderliggende apparaten in Home Assistant (migratie op aanvraag; standaard uitgeschakeld).
   SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX:
     help: 'Het voorvoegsel voor Home Assistant entiteitsnamen'
   SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX:

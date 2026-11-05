@@ -529,6 +529,19 @@ When editing percentage sensors, use a numeric entry box to change the value (tr
 </table>
 If true, sigenergy2mqtt will publish auto-discovery messages for Home Assistant to automatically configure the devices and entities.
 
+<a id="opt_home_assistant_child_devices"></a>
+### Child Devices
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--hass-child-devices</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_HASS_CHILD_DEVICES</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>home-assistant.child-devices</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
+Represent logical subdevices as Home Assistant child devices instead of separate devices linked with `via_device`. This setting defaults to false. Enabling it clears the retained discovery config for each active logical child and republishes its entities under the parent device. Back up Home Assistant before enabling; entity IDs should normally remain stable because sensor unique IDs are unchanged, but verify device assignments and automations after migration. To roll back, set this option to false and restart the application; if Home Assistant does not restore the former device relationships, remove the affected MQTT devices and reload the MQTT integration.
+
+An installation-cohort marker is stored in the persistent state store so a future release can distinguish installations that predate child-device discovery. The marker is preserved by `--clean`; removing all persisted state also removes the marker.
+
 <a id="opt_home_assistant_entity_id_prefix"></a>
 ### Entity Id Prefix
 <table>

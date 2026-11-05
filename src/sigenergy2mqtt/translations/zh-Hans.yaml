@@ -2998,6 +2998,8 @@ cli:
     help: '诊断Web服务器监听端口（默认：8502）'
   SIGENERGY2MQTT_DIAGNOSTICS_REFRESH_INTERVAL:
     help: '诊断网页刷新间隔（以秒为单位）（默认值：5.0）'
+  SIGENERGY2MQTT_HASS_CHILD_DEVICES:
+    help: 将逻辑设备组表示为 Home Assistant 的子设备（可选迁移；默认禁用）。
   SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX:
     help: 'Home Assistant实体名称前缀'
   SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX:
