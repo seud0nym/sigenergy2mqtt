@@ -412,6 +412,21 @@ home-assistant:
   #                 to change the value (true) or use a slider to change the 
   #                 value (false).
   edit-pct-box: false
+  # child-devices
+  #   added: 2026.11.5
+  #   default: false
+  #   description:  If true, the logical parts of a device (for example the
+  #                 PV strings and ESS of an inverter, or the grid sensor and
+  #                 statistics of a plant) are published as Home Assistant
+  #                 child devices instead of separate devices linked with
+  #                 via_device. Requires Home Assistant 2026.11.0 or later.
+  #                 Existing devices are converted in place (entity history,
+  #                 entity IDs and device IDs are kept) after the MQTT
+  #                 integration is reloaded or Home Assistant restarts.
+  #                 Back up Home Assistant first: this can't simply be
+  #                 switched back. See the configuration README for the
+  #                 migration and rollback steps.
+  child-devices: false
 # persistence
 #   added: 2026.4.5
 #   description: Configuration for state persistence and MQTT redundancy.
