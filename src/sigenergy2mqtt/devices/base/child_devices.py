@@ -112,6 +112,10 @@ def parse_ha_version(version: str) -> tuple[int, int] | None:
     return (int(match.group(1)), int(match.group(2))) if match else None
 
 
+class HaVersionUnavailable(Exception):
+    """Running under the Supervisor, but the Home Assistant version could not be read."""
+
+
 def _fetch_ha_version_sync() -> str | None:
     import requests
 
@@ -121,18 +125,26 @@ def _fetch_ha_version_sync() -> str | None:
     base_url = os.getenv("SUPERVISOR_URL", "http://supervisor").rstrip("/")
     try:
         response = requests.get(f"{base_url}/core/api/config", headers={"Authorization": f"Bearer {token}"}, timeout=5)
-        if response.status_code != 200:
-            logger.warning(f"Unable to read the Home Assistant version via the Supervisor API: status_code={response.status_code}")
-            return None
+    except (OSError, requests.RequestException) as exc:
+        raise HaVersionUnavailable(str(exc)) from exc
+    if response.status_code != 200:
+        raise HaVersionUnavailable(f"status_code={response.status_code}")
+    try:
         version = response.json().get("version")
-        return version if isinstance(version, str) else None
-    except (OSError, ValueError, requests.RequestException) as exc:
-        logger.warning(f"Unable to read the Home Assistant version via the Supervisor API: {exc}")
-        return None
+    except (AttributeError, ValueError) as exc:
+        raise HaVersionUnavailable(f"invalid response: {exc}") from exc
+    if not isinstance(version, str):
+        raise HaVersionUnavailable(f"no version in response: {version!r}")
+    return version
 
 
 async def fetch_ha_version() -> str | None:
-    """Return the Home Assistant Core version when running as an add-on, else None."""
+    """Return the Home Assistant Core version when running as an add-on, or None for a standalone install.
+
+    Raises:
+        HaVersionUnavailable: running as an add-on, but the version could not be read
+            (for example because Home Assistant is still starting).
+    """
     return await asyncio.to_thread(_fetch_ha_version_sync)
 
 
@@ -181,17 +193,31 @@ class ChildDeviceMigration:
                 logger.error(f"Home Assistant child devices: {problem}")
             return self._refuse("the device hierarchy does not meet Home Assistant's child-device constraints")
 
-        version = await fetch_ha_version()
+        try:
+            version = await fetch_ha_version()
+        except HaVersionUnavailable as exc:
+            if stored not in (STAGE_PENDING_RELOAD, STAGE_CHILD_DEVICES):
+                return self._refuse(
+                    f"running as a Home Assistant add-on, but the Home Assistant version could not be read via the Supervisor API ({exc}); "
+                    "Home Assistant may still be starting. Restart sigenergy2mqtt once Home Assistant is running to retry"
+                )
+            # A previous run already published child-device discovery after a successful
+            # version check. Falling back now would replace it with via_device payloads that
+            # Home Assistant can't apply to converted child devices.
+            logger.warning(f"Unable to read the Home Assistant version via the Supervisor API ({exc}); keeping the child-device discovery already published")
+            version = None
+        else:
+            if version is None:
+                logger.info(
+                    f"Home Assistant child devices enabled; the Home Assistant version can't be checked outside the add-on, so make sure it is "
+                    f"{MIN_HA_VERSION[0]}.{MIN_HA_VERSION[1]}.0 or later (older releases reject child-device discovery and will not rediscover "
+                    "those entities after a restart)"
+                )
         if version is not None:
             parsed = parse_ha_version(version)
             if parsed is None or parsed < MIN_HA_VERSION:
                 return self._refuse(f"Home Assistant {version} does not support MQTT child devices (requires {MIN_HA_VERSION[0]}.{MIN_HA_VERSION[1]}.0 or later)")
             logger.debug(f"Home Assistant {version} supports MQTT child devices")
-        else:
-            logger.info(
-                f"Home Assistant child devices enabled; the Home Assistant version could not be checked, so make sure it is {MIN_HA_VERSION[0]}.{MIN_HA_VERSION[1]}.0 or "
-                "later (older releases reject child-device discovery and will not rediscover those entities after a restart)"
-            )
 
         if not any(publishes_as_ha_child(d) for d in devices):
             self.stage = stored or STAGE_LEGACY

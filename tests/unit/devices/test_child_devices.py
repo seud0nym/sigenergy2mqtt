@@ -249,7 +249,68 @@ def test_fetch_ha_version_supervisor_error(monkeypatch):
 
     monkeypatch.setenv("SUPERVISOR_TOKEN", "token")
     monkeypatch.setattr(requests, "get", MagicMock(side_effect=requests.ConnectionError("down")))
-    assert cd._fetch_ha_version_sync() is None
+    with pytest.raises(cd.HaVersionUnavailable, match="down"):
+        cd._fetch_ha_version_sync()
+
+
+@pytest.mark.parametrize(
+    ("status", "body", "match"),
+    [(502, {}, "status_code=502"), (200, {"message": "starting"}, "no version"), (200, ValueError("not json"), "invalid response")],
+)
+def test_fetch_ha_version_supervisor_bad_response(monkeypatch, status, body, match):
+    import requests
+
+    monkeypatch.setenv("SUPERVISOR_TOKEN", "token")
+    response = MagicMock(status_code=status)
+    if isinstance(body, Exception):
+        response.json.side_effect = body
+    else:
+        response.json.return_value = body
+    monkeypatch.setattr(requests, "get", MagicMock(return_value=response))
+    with pytest.raises(cd.HaVersionUnavailable, match=match):
+        cd._fetch_ha_version_sync()
+
+
+@pytest.mark.asyncio
+async def test_prepare_refuses_when_supervisor_version_check_fails(child_cfg, store, monkeypatch, caplog):
+    _, saved = store
+    monkeypatch.setattr(cd, "fetch_ha_version", AsyncMock(side_effect=cd.HaVersionUnavailable("status_code=502")))
+    parent = _device("Parent", "parent")
+    parent._add_child_device(_device("Child", "child"))
+
+    with caplog.at_level(logging.ERROR):
+        assert await cd.child_device_migration.prepare([parent, *parent.children]) is False
+
+    assert active_config.home_assistant.child_devices is False
+    assert cd.publishes_as_ha_child(parent.children[0]) is False
+    assert saved == {}
+    assert "version could not be read" in caplog.text and "status_code=502" in caplog.text
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("previous", [cd.STAGE_PENDING_RELOAD, cd.STAGE_CHILD_DEVICES])
+async def test_prepare_keeps_published_child_devices_when_supervisor_version_check_fails(child_cfg, store, monkeypatch, caplog, previous):
+    stored, _ = store
+    stored["value"] = previous
+    monkeypatch.setattr(cd, "fetch_ha_version", AsyncMock(side_effect=cd.HaVersionUnavailable("timed out")))
+    parent = _device("Parent", "parent")
+    parent._add_child_device(_device("Child", "child"))
+
+    with caplog.at_level(logging.WARNING):
+        assert await cd.child_device_migration.prepare([parent, *parent.children]) is True
+
+    assert active_config.home_assistant.child_devices is True
+    assert "keeping the child-device discovery already published" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_prepare_standalone_unchecked_opt_in(child_cfg, store, caplog):
+    # fetch_ha_version returns None (no SUPERVISOR_TOKEN): the explicit opt-in is accepted
+    parent = _device("Parent", "parent")
+    parent._add_child_device(_device("Child", "child"))
+    with caplog.at_level(logging.INFO):
+        assert await cd.child_device_migration.prepare([parent, *parent.children]) is True
+    assert "can't be checked outside the add-on" in caplog.text
 
 
 def test_validate_hierarchy_rejects_via_device_to_child_device(child_cfg):
