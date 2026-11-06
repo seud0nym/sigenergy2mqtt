@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from collections.abc import Awaitable
-from typing import Any, Literal, cast
+from typing import Any, ClassVar, Literal, cast
 
 import paho.mqtt.client as mqtt
 
@@ -54,6 +54,11 @@ class Device(HaPublisherMixin, dict[str, str | list[str]]):
     Subclasses are expected to register their sensors during ``__init__`` via
     the sensor registration helpers.
     """
+
+    ha_child_device_eligible: ClassVar[bool] = True
+    """Whether this device, when registered as a child, may be published as a Home
+    Assistant child device (a part of its parent's product). Separate physical
+    products keep their own device linked with ``via_device`` and set this False."""
 
     def __init__(self, name: str, plant_index: int, unique_id: str, manufacturer: str, model: str, protocol_version: ProtocolVersion, **kwargs):
         """Initialise the device and register it in the DeviceRegistry.
@@ -328,8 +333,9 @@ class Device(HaPublisherMixin, dict[str, str | list[str]]):
     def _add_child_device(self, device: Device) -> None:
         """Register another Device as a child of this device.
 
-        Depending on Home Assistant configuration, children are either represented
-        as MQTT child devices or as separate devices linked with ``via_device``.
+        With ``home-assistant.child-devices`` enabled, an eligible child (see
+        ``ha_child_device_eligible``) is published as a Home Assistant child device;
+        otherwise it is a separate device linked with ``via_device``.
         A device is only added as a child if it has at least one publishable sensor;
         devices with no publishable sensors are silently skipped with a debug log.
 

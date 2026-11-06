@@ -3,6 +3,7 @@ import logging
 from sigenergy2mqtt.common import service_health_registry
 from sigenergy2mqtt.config import active_config, initialize_async
 from sigenergy2mqtt.devices import DeviceRegistry as device_registry
+from sigenergy2mqtt.devices.base.child_devices import child_device_migration
 from sigenergy2mqtt.diagnostics import diagnostics_registry
 from sigenergy2mqtt.monitor import MonitorService
 from sigenergy2mqtt.mqtt import mqtt_health_registry, reset_mqtt_reconnection_interrupt
@@ -88,6 +89,10 @@ async def async_main() -> None:
         seen_serial_numbers: set[str] = set()
         configs, protocol_version = await setup_devices(seen_serial_numbers)
         configs = setup_services(configs, protocol_version)
+
+        # Must run before any discovery is published: a failed preflight falls back to
+        # the legacy via_device payloads without having changed anything.
+        await child_device_migration.prepare(device_registry.all())
 
         setup_signals(configs)
 
