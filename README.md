@@ -77,8 +77,8 @@ The topics that are published and subscribed to by `sigenergy2mqtt` can be found
 
 This project uses AI tools to assist development, under human direction and review:
 
-* **Code Generation & Scaffolding**: VS Code / Antigravity IDE AI assistants and Codex for unit tests, issue investigation/resolution and new features.
-* **Code Quality & Refinement**: Greptile for automated PR code reviews and Snyk for automated security reviews, plus Claude for single module code reviews.
+* **Code Generation & Scaffolding**: VS Code / Antigravity IDE AI assistants, Claude and Codex for unit tests, issue investigation/resolution and new features.
+* **Code Quality & Refinement**: Greptile for automated PR code reviews and Snyk for automated security reviews.
 
 All AI-assisted code and suggestions are reviewed, tested, and validated by maintainer prior to merging.
 
