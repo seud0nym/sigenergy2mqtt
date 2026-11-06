@@ -14,7 +14,7 @@ from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.mqtt import MqttHandler
 from sigenergy2mqtt.sensors.base import Sensor
 
-from .child_devices import child_device_migration, publishes_as_ha_child
+from .child_devices import publishes_as_ha_child
 
 if TYPE_CHECKING:
     from .device import Device
@@ -113,7 +113,6 @@ class HaPublisherMixin(abc.ABC):
             try:
                 await asyncio.sleep(seconds)  # https://www.home-assistant.io/integrations/mqtt/#birth-and-last-will-messages
                 await mqtt_handler.wait_for(2, self.name, self.publish_discovery, mqtt_client, clean=False)
-                await child_device_migration.note_ha_online()
                 for sensor in self.get_all_sensors(search_children=True).values():
                     await sensor.publish(mqtt_client, transport, republish=True)
                 return True

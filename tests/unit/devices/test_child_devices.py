@@ -118,8 +118,8 @@ async def test_prepare_first_run_records_pending_reload(child_cfg, store, caplog
     with caplog.at_level(logging.WARNING):
         assert await cd.child_device_migration.prepare([parent, *parent.children]) is True
 
-    assert saved == {cd.MIGRATION_STATE_KEY: cd.STAGE_PENDING_RELOAD}
-    assert cd.child_device_migration.stage == cd.STAGE_PENDING_RELOAD
+    assert saved == {cd.MIGRATION_STATE_KEY: cd.STAGE_PUBLISHED}
+    assert cd.child_device_migration.stage == cd.STAGE_PUBLISHED
     assert "Reload the MQTT integration" in caplog.text
     assert active_config.home_assistant.child_devices is True
 
@@ -163,24 +163,37 @@ async def test_prepare_refuses_invalid_hierarchy_before_publishing(child_cfg, st
 
 
 @pytest.mark.asyncio
-async def test_prepare_after_conversion_keeps_stage_quietly(child_cfg, store, caplog):
+async def test_prepare_later_start_repeats_reload_guidance(child_cfg, store, caplog):
+    # The conversion can't be detected, so a stored stage never suppresses the guidance
     stored, saved = store
-    stored["value"] = cd.STAGE_CHILD_DEVICES
+    stored["value"] = cd.STAGE_PUBLISHED
     parent = _device("Parent", "parent")
     parent._add_child_device(_device("Child", "child"))
 
-    with caplog.at_level(logging.WARNING):
+    with caplog.at_level(logging.INFO):
         assert await cd.child_device_migration.prepare([parent, *parent.children]) is True
 
     assert saved == {}
-    assert "Reload the MQTT integration" not in caplog.text
+    assert cd.child_device_migration.stage == cd.STAGE_PUBLISHED
+    reminders = [r for r in caplog.records if "Reload the MQTT integration" in r.getMessage()]
+    assert len(reminders) == 1 and reminders[0].levelno == logging.INFO
+    assert "not child devices yet" in reminders[0].getMessage()
+
+
+def test_ha_publisher_does_not_track_birth_messages():
+    # A broker reconnect sends the same birth message as an MQTT reload
+    import inspect
+
+    from sigenergy2mqtt.devices.base import ha_publisher
+
+    assert not hasattr(cd.ChildDeviceMigration, "note_ha_online")
+    assert "child_device_migration" not in inspect.getsource(ha_publisher)
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("previous", [cd.STAGE_PENDING_RELOAD, cd.STAGE_CHILD_DEVICES])
-async def test_prepare_disabled_after_migration_warns_about_rollback(child_cfg, store, caplog, previous):
+async def test_prepare_disabled_after_migration_warns_about_rollback(child_cfg, store, caplog):
     stored, saved = store
-    stored["value"] = previous
+    stored["value"] = cd.STAGE_PUBLISHED
     child_cfg.home_assistant.child_devices = False
 
     with caplog.at_level(logging.WARNING):
@@ -198,30 +211,6 @@ async def test_prepare_disabled_on_legacy_install_is_silent(child_cfg, store, ca
         assert await cd.child_device_migration.prepare([]) is False
     assert saved == {}
     assert caplog.text == ""
-
-
-@pytest.mark.asyncio
-async def test_note_ha_online_ignores_immediate_birth_then_records_reload(child_cfg, store, monkeypatch):
-    _, saved = store
-    parent = _device("Parent", "parent")
-    parent._add_child_device(_device("Child", "child"))
-    clock = {"now": 1000.0}
-    monkeypatch.setattr(cd.time, "monotonic", lambda: clock["now"])
-    await cd.child_device_migration.prepare([parent, *parent.children])
-    saved.clear()
-
-    clock["now"] += 1  # e.g. a retained birth message delivered on subscribe
-    await cd.child_device_migration.note_ha_online()
-    assert cd.child_device_migration.stage == cd.STAGE_PENDING_RELOAD
-
-    clock["now"] += 120
-    await cd.child_device_migration.note_ha_online()
-    assert cd.child_device_migration.stage == cd.STAGE_CHILD_DEVICES
-    assert saved == {cd.MIGRATION_STATE_KEY: cd.STAGE_CHILD_DEVICES}
-
-    saved.clear()
-    await cd.child_device_migration.note_ha_online()
-    assert saved == {}
 
 
 def test_fetch_ha_version_without_supervisor(monkeypatch):
@@ -288,10 +277,9 @@ async def test_prepare_refuses_when_supervisor_version_check_fails(child_cfg, st
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("previous", [cd.STAGE_PENDING_RELOAD, cd.STAGE_CHILD_DEVICES])
-async def test_prepare_keeps_published_child_devices_when_supervisor_version_check_fails(child_cfg, store, monkeypatch, caplog, previous):
+async def test_prepare_keeps_published_child_devices_when_supervisor_version_check_fails(child_cfg, store, monkeypatch, caplog):
     stored, _ = store
-    stored["value"] = previous
+    stored["value"] = cd.STAGE_PUBLISHED
     monkeypatch.setattr(cd, "fetch_ha_version", AsyncMock(side_effect=cd.HaVersionUnavailable("timed out")))
     parent = _device("Parent", "parent")
     parent._add_child_device(_device("Child", "child"))
