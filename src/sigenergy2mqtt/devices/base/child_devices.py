@@ -80,7 +80,14 @@ def validate_hierarchy(devices: Iterable[Device]) -> list[str]:
     Returns a list of problems; an empty list means the hierarchy can be published.
     Checked before anything is published, so a failure changes nothing.
     """
+    devices = list(devices)
     problems: list[str] = []
+    # Home Assistant only resolves via_device to a regular device, and converting a
+    # device to a child detaches every via_device link that pointed at it.
+    ha_child_ids = {d.unique_id: d for d in devices if publishes_as_ha_child(d)}
+    for device in devices:
+        if (target := ha_child_ids.get(device.via_device or "")) is not None:
+            problems.append(f"{device.log_identity} is linked with via_device to {target.log_identity}, which is published as a child device")
     for device in devices:
         children = _ha_children(device)
         if not children:

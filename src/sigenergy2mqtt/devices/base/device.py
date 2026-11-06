@@ -320,9 +320,18 @@ class Device(HaPublisherMixin, dict[str, str | list[str]]):
 
     @property
     def via_device(self) -> str | None:
-        """The unique_id of this device's parent device, if it is a child device.
+        """The unique_id of the device this one is linked to with Home Assistant's ``via_device``.
 
-        Returns None if this device has no parent (i.e. is a root device).
+        Set by ``_add_child_device`` and by the device factories (chargers, PID,
+        inverters and PSS are linked to the plant). Not the same as
+        ``parent_device``, which is only set by ``_add_child_device``. A device
+        published as a Home Assistant child device does not publish its own
+        device info, so its ``via_device`` is ignored in that mode, but it is kept
+        so that the ``via_device`` payload can be published again when child
+        devices are disabled or the preflight refuses them. Must never name a
+        device that is published as a Home Assistant child device.
+
+        Returns None if this device is not linked to another device.
         """
         return None if "via_device" not in self else cast(str, self["via_device"])
 
@@ -349,6 +358,7 @@ class Device(HaPublisherMixin, dict[str, str | list[str]]):
             raise ValueError("Cannot add self as a child device")
         sensors = device.get_all_sensors(search_children=True)
         if any(s.publishable for s in sensors.values()):
+            # Always set: child-device mode is only decided by the preflight at startup
             device.via_device = self.unique_id
             device.parent_device = self
             self.children.append(device)

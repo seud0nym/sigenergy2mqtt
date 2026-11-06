@@ -84,7 +84,8 @@ def test_validate_hierarchy_rejects_nesting(child_cfg):
     middle._add_child_device(_device("Leaf", "leaf"))
     root._add_child_device(middle)
     problems = cd.validate_hierarchy([root, middle, *middle.children])
-    assert len(problems) == 1 and "has child devices of its own" in problems[0]
+    assert any("has child devices of its own" in p for p in problems)
+    assert any("linked with via_device to" in p for p in problems)  # the leaf points at the middle child
 
 
 def test_validate_hierarchy_allows_nesting_below_ineligible_child(child_cfg):
@@ -249,3 +250,36 @@ def test_fetch_ha_version_supervisor_error(monkeypatch):
     monkeypatch.setenv("SUPERVISOR_TOKEN", "token")
     monkeypatch.setattr(requests, "get", MagicMock(side_effect=requests.ConnectionError("down")))
     assert cd._fetch_ha_version_sync() is None
+
+
+def test_validate_hierarchy_rejects_via_device_to_child_device(child_cfg):
+    # e.g. a charger linked to an inverter's ESS: HA can't resolve via_device to a child
+    inverter = _device("Inverter", "inverter")
+    ess = _device("ESS", "ess")
+    inverter._add_child_device(ess)
+    charger = _device("Charger", "charger")
+    charger.via_device = ess.unique_id
+    problems = cd.validate_hierarchy([inverter, ess, charger])
+    assert len(problems) == 1 and "linked with via_device to" in problems[0]
+
+
+def test_validate_hierarchy_allows_via_device_to_main_and_ineligible_devices(child_cfg):
+    plant = _device("Plant", "plant")
+    inverter = _device("Inverter", "inverter")
+    inverter.via_device = plant.unique_id  # as the device factories do
+    inverter._add_child_device(_device("ESS", "ess"))
+    product = _device("Gateway", "gateway", PhysicalProduct)
+    plant._add_child_device(product)
+    accessory = _device("Accessory", "accessory")
+    accessory.via_device = product.unique_id
+    assert cd.validate_hierarchy([plant, inverter, *inverter.children, product, accessory]) == []
+
+
+def test_validate_hierarchy_ignores_via_device_targets_when_disabled(child_cfg):
+    child_cfg.home_assistant.child_devices = False
+    inverter = _device("Inverter", "inverter")
+    ess = _device("ESS", "ess")
+    inverter._add_child_device(ess)
+    charger = _device("Charger", "charger")
+    charger.via_device = ess.unique_id
+    assert cd.validate_hierarchy([inverter, ess, charger]) == []
