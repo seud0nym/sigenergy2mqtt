@@ -14,7 +14,7 @@ from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.mqtt import MqttHandler
 from sigenergy2mqtt.sensors.base import Sensor
 
-from .child_devices import publishes_as_ha_child
+from .child_devices import ha_child_device_name, publishes_as_ha_child
 
 if TYPE_CHECKING:
     from .device import Device
@@ -207,7 +207,7 @@ class HaPublisherMixin(abc.ABC):
                 if parent is not None and publishes_as_ha_child(cast("Device", self)):
                     discovery["dev"] = parent
                     discovery["o"] = active_config.origin
-                    discovery["cdevs"] = [{"ids": [self.unique_id], "name": self.name, "cmps": components}]
+                    discovery["cdevs"] = [{"ids": [self.unique_id], "name": ha_child_device_name(cast("Device", self)), "cmps": components}]
                 else:
                     discovery["dev"] = self
                     discovery["o"] = active_config.origin

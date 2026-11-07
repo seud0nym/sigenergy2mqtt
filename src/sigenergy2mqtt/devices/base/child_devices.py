@@ -67,6 +67,32 @@ def publishes_as_ha_child(device: Device) -> bool:
     return active_config.home_assistant.child_devices and device.parent_device is not None and device.ha_child_device_eligible
 
 
+def ha_child_device_name(device: Device) -> str:
+    """Return the name to publish for *device* as a Home Assistant child device.
+
+    Home Assistant shows a child device as "Parent ▸ Child", so the parent's name is
+    removed from the child's: "SigenStor EC 12.0 TP CMU123 ESS" under "SigenStor EC
+    12.0 TP CMU123" becomes "ESS". The parent's words are removed from the start and
+    the end of the name (the plant number is a suffix: "Sigenergy Plant Grid Sensor 2"
+    under "Sigenergy Plant 2" becomes "Grid Sensor"). If the parent's name is not
+    fully accounted for that way (for example in a translation that orders the words
+    differently), or nothing would be left, the full name is kept.
+    """
+    parent = device.parent_device
+    if parent is None:
+        return device.name
+    parent_words, words = parent.name.split(), device.name.split()
+    head = 0
+    while head < min(len(parent_words), len(words)) and parent_words[head] == words[head]:
+        head += 1
+    tail = 0
+    while tail < min(len(parent_words), len(words)) - head and parent_words[-1 - tail] == words[-1 - tail]:
+        tail += 1
+    if head + tail != len(parent_words) or head + tail >= len(words):
+        return device.name
+    return " ".join(words[head : len(words) - tail])
+
+
 def _ha_children(device: Device) -> list[Device]:
     return [child for child in device.children if child.ha_child_device_eligible]
 

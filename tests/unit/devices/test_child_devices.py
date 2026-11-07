@@ -332,3 +332,32 @@ def test_validate_hierarchy_ignores_via_device_targets_when_disabled(child_cfg):
     charger = _device("Charger", "charger")
     charger.via_device = ess.unique_id
     assert cd.validate_hierarchy([inverter, ess, charger]) == []
+
+
+@pytest.mark.parametrize(
+    ("parent", "child", "expected"),
+    [
+        ("SigenStor EC 12.0 TP CMU123", "SigenStor EC 12.0 TP CMU123 ESS", "ESS"),
+        ("SigenStor EC 12.0 TP CMU123", "SigenStor EC 12.0 TP CMU123 PV String 1", "PV String 1"),
+        ("Sigenergy Plant", "Sigenergy Plant Grid Sensor", "Grid Sensor"),
+        # the plant number is a suffix of both names
+        ("Sigenergy Plant 2", "Sigenergy Plant Grid Sensor 2", "Grid Sensor"),
+        # device-name-prefix is applied to both
+        ("HA Sigenergy Plant", "HA Sigenergy Plant Statistics", "Statistics"),
+        # parent's name not fully accounted for: keep the full name
+        ("Sigenergy-Anlage", "Sigenergy Plant ESS Vorwärmung", "Sigenergy Plant ESS Vorwärmung"),
+        ("Sigenergy Plant", "Sigenergy Cloud Gateway", "Sigenergy Cloud Gateway"),
+        # nothing would be left: keep the full name
+        ("Sigenergy Plant", "Sigenergy Plant", "Sigenergy Plant"),
+    ],
+)
+def test_ha_child_device_name_removes_parent_name(child_cfg, parent, child, expected):
+    parent_device = Device(parent, 0, "parent", "mf", "mdl", ProtocolVersion.N_A, translate=False)
+    child_device = Device(child, 0, "child", "mf", "mdl", ProtocolVersion.N_A, translate=False)
+    child_device.parent_device = parent_device
+    assert cd.ha_child_device_name(child_device) == expected
+
+
+def test_ha_child_device_name_without_parent(child_cfg):
+    device = Device("Sigenergy Plant", 0, "plant", "mf", "mdl", ProtocolVersion.N_A, translate=False)
+    assert cd.ha_child_device_name(device) == "Sigenergy Plant"

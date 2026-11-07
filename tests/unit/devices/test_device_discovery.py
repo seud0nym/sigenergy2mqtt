@@ -204,3 +204,27 @@ def test_publish_discovery_legacy_child_devices_remains_default(tmp_path):
 
         assert "cdevs" not in parent_payload
         assert child_payload["dev"]["via_device"] == parent.unique_id
+
+
+def test_publish_discovery_child_device_name_drops_parent_name(tmp_path):
+    from sigenergy2mqtt.config import _swap_active_config, active_config
+
+    mqtt = DummyMQTT()
+    cfg = Config()
+    cfg.persistent_state_path = tmp_path
+    cfg.home_assistant.child_devices = True
+
+    with _swap_active_config(cfg):
+        parent = Device("SigenStor EC 12.0 TP CMU123", 0, "inverter-id", "mf", "mdl", ProtocolVersion.N_A, translate=False)
+        child = Device("SigenStor EC 12.0 TP CMU123 PV String 1", 0, "pv1-id", "mf", "mdl", ProtocolVersion.N_A, translate=False)
+        parent.all_sensors = {"p": FakeSensor("p", {"p": {"p": "sensor"}})}
+        child.all_sensors = {"c": FakeSensor("c", {"c": {"p": "sensor"}})}
+        parent._add_child_device(child)
+
+        parent.publish_discovery(mqtt)
+
+        topic = f"{active_config.home_assistant.discovery_prefix}/device/pv1-id/config"
+        payload = json.loads(next(p for t, p, _q, _r in mqtt.published if t == topic))
+        assert payload["cdevs"][0]["name"] == "PV String 1"
+        assert payload["dev"]["name"] == "SigenStor EC 12.0 TP CMU123"
+        assert child.name == "SigenStor EC 12.0 TP CMU123 PV String 1"  # unchanged for logs and legacy payloads
