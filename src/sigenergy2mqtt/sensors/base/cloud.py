@@ -18,7 +18,7 @@ from sigenergy2mqtt.mqtt import MqttHandler
 from .constants import DiscoveryKeys
 from .mixins import ReadableSensorMixin, WriteableSensorMixin
 from .sensor import AvailabilityMixin
-from .writeable import NumericSensorMixin
+from .writeable import NumericSensorMixin, WriteOnlySensorMixin
 
 logger = logging.getLogger(__name__)
 
@@ -150,27 +150,8 @@ class CloudSensor(ReadableSensorMixin, AvailabilityMixin):
         ...
 
 
-class CloudReadWriteSensor(WriteableSensorMixin, CloudSensor):
-    """Cloud read/write behaviour mixed with a writable entity mixin."""
-
-    def __init__(
-        self,
-        availability_control_sensor: AvailabilityMixin | None,
-        **kwargs,
-    ) -> None:
-        """Initialise the cloud read/write sensor.
-
-        Args:
-            availability_control_sensor: Optional sensor whose state is used as an
-                additional availability gate in the Home Assistant discovery payload.
-                Must be an :class:`AvailabilityMixin` instance when provided.
-            **kwargs: Forwarded to parent initialisers.
-
-        Raises:
-            ValueError: If *availability_control_sensor* is provided but is not an
-                :class:`AvailabilityMixin` instance.
-        """
-        super().__init__(availability_control_sensor=availability_control_sensor, **kwargs)
+class CloudWritableSensor(WriteableSensorMixin):
+    """Deliver validated MQTT commands through a :class:`CloudControlPort`."""
 
     async def _write_value(
         self,
@@ -230,6 +211,33 @@ class CloudReadWriteSensor(WriteableSensorMixin, CloudSensor):
             ``True`` if the cloud backend accepted the value, ``False`` otherwise.
         """
         ...
+
+
+class CloudReadWriteSensor(CloudWritableSensor, CloudSensor):
+    """Cloud read/write behaviour mixed with a writable entity mixin."""
+
+    def __init__(
+        self,
+        availability_control_sensor: AvailabilityMixin | None,
+        **kwargs,
+    ) -> None:
+        """Initialise the cloud read/write sensor.
+
+        Args:
+            availability_control_sensor: Optional sensor whose state is used as an
+                additional availability gate in the Home Assistant discovery payload.
+                Must be an :class:`AvailabilityMixin` instance when provided.
+            **kwargs: Forwarded to parent initialisers.
+
+        Raises:
+            ValueError: If *availability_control_sensor* is provided but is not an
+                :class:`AvailabilityMixin` instance.
+        """
+        super().__init__(availability_control_sensor=availability_control_sensor, **kwargs)
+
+
+class CloudWriteOnlySensor(WriteOnlySensorMixin, CloudWritableSensor):
+    """Home Assistant button(s) whose commands are sent to the cloud backend."""
 
 
 class CloudGridLimitSensor(NumericSensorMixin, CloudReadWriteSensor):

@@ -94,7 +94,8 @@ import string
 import sys
 import threading
 import time
-from contextlib import asynccontextmanager
+from collections.abc import Awaitable, Callable
+from contextlib import asynccontextmanager, suppress
 from pathlib import Path
 from typing import Any, ClassVar
 
@@ -187,6 +188,14 @@ SYNTHESIZED_INVERTER_VALUES = {
 
 class CloudApiTestServer:
     """Stateful facsimile of the cloud endpoints used by MySigenCloudAdapter."""
+
+    # Gateway transition times, from a mySigen app capture on real hardware
+    # (2026-11-07, app polling gateway-status every 2s): going off-grid reached
+    # onOffGridStatus 2 between 2.8s and 4.8s after the command, and returning
+    # reached onOffGridStatus 0 between 16.8s and 18.8s after it. The plant's
+    # Modbus GridStatus changed within one poll of the cloud status each time.
+    gateway_off_grid_seconds: ClassVar[float] = 4.0
+    gateway_on_grid_seconds: ClassVar[float] = 18.0
 
     @staticmethod
     def _device_parameters(sn: str, model: str, rating: str, unit: str) -> list[dict[str, str]]:
@@ -553,6 +562,21 @@ class CloudApiTestServer:
             "batteryMaxDischargingPower": "5.000",
         }
         self.solar_power_limit = {"powerLimit": "6.000"}
+        self.gateway_status = {
+            "onOffGridStatus": 0,
+            "manualOffGridStatus": 0,
+            "isSupportSignal": True,
+            "doorStatus": None,
+            "onOffGridControlMode": 0,
+            "showButton": True,
+        }
+        self._clock = time.monotonic
+        # Deadline, status fields and plant GridStatus applied when the transition in progress ends
+        self._gateway_transition: tuple[float, dict[str, int], int] | None = None
+        # Writes the plant's Modbus GridStatus register when both servers are running
+        self.plant_grid_status_writer: Callable[[int], Awaitable[None]] | None = None
+        # Completes a transition at its deadline, even when no cloud request arrives
+        self._gateway_transition_timer: asyncio.Task[None] | None = None
         self.battery_export_limitation = {
             "currentEnable": False,
             "ownerSetEnable": None,
@@ -570,6 +594,7 @@ class CloudApiTestServer:
         "available_modes_data": dict,
         "device_topology": dict,
         "gateway_info": dict,
+        "gateway_status": dict,
         "grid_export_limit": dict,
         "grid_import_limit": dict,
         "grid_connection_limit": dict,
@@ -605,6 +630,7 @@ class CloudApiTestServer:
 
     async def get_control_state(self, request: web.Request) -> web.Response:
         """Return every response value that can be changed through the UI."""
+        await self._settle_gateway_status()
         return web.json_response({name: getattr(self, name) for name in self._EDITABLE_STATE})
 
     async def set_control_state(self, request: web.Request) -> web.Response:
@@ -628,6 +654,8 @@ class CloudApiTestServer:
         if name == "internet_outage_status" and not 500 <= value <= 599:
             raise web.HTTPBadRequest(text="internet_outage_status must be between 500 and 599")
         setattr(self, name, value)
+        if name == "gateway_status":
+            self._gateway_transition = None  # the edit replaces any transition in progress
         return web.json_response({"name": name, "value": value})
 
     async def authenticate(self, request: web.Request) -> web.Response:
@@ -675,6 +703,79 @@ class CloudApiTestServer:
         if (response := await self.authorized(request)) is not None:
             return response
         return self._success(self.gateway_info)
+
+    async def _write_plant_grid_status(self, value: int) -> None:
+        if self.plant_grid_status_writer is not None:
+            await self.plant_grid_status_writer(value)
+
+    async def _settle_gateway_status(self) -> None:
+        """Apply the final status of a gateway transition once its deadline passes."""
+        if self._gateway_transition is not None and self._clock() >= self._gateway_transition[0]:
+            _, fields, plant_grid_status = self._gateway_transition
+            self.gateway_status.update(fields)
+            self._gateway_transition = None
+            await self._write_plant_grid_status(plant_grid_status)
+
+    def _start_gateway_transition_timer(self) -> None:
+        """Settle the transition in progress at its deadline, independent of polling.
+
+        Without this, the transition would only complete when a cloud request
+        arrives, so a client reading only Modbus would never see GridStatus change.
+        """
+        if self._gateway_transition_timer is None or self._gateway_transition_timer.done():
+            self._gateway_transition_timer = asyncio.get_running_loop().create_task(self._settle_gateway_status_when_due())
+
+    async def _settle_gateway_status_when_due(self) -> None:
+        while self._gateway_transition is not None:
+            # Recheck after each sleep: the deadline belongs to whichever
+            # transition is now in progress, and a fake clock may not have advanced.
+            await asyncio.sleep(max(0.01, self._gateway_transition[0] - self._clock()))
+            await self._settle_gateway_status()
+
+    async def _stop_gateway_transition_timer(self, _app: web.Application | None = None) -> None:
+        if (timer := self._gateway_transition_timer) is not None:
+            self._gateway_transition_timer = None
+            timer.cancel()
+            with suppress(asyncio.CancelledError):
+                await timer
+
+    async def get_gateway_status(self, request: web.Request) -> web.Response:
+        if (response := await self.authorized(request)) is not None:
+            return response
+        if request.query.get("stationId") != str(self.station_home_data["stationId"]):
+            return web.json_response({"code": 400, "msg": "Unknown stationId"}, status=400)
+        await self._settle_gateway_status()
+        return self._success(self.gateway_status)
+
+    async def update_gateway_on_grid_state(self, request: web.Request) -> web.Response:
+        """Start a manual transition: onGridState is 1 to go off-grid, 0 to go on-grid.
+
+        A request that matches the current state, or arrives during a transition,
+        succeeds without changing anything. The plant's GridStatus follows what was
+        recorded on real hardware: 2 "Off Grid (manual)" while off-grid, 1 "Off Grid
+        (auto)" during the return, then 0 "On Grid".
+        """
+        if (response := await self.authorized(request)) is not None:
+            return response
+        payload = await request.json()
+        if str(payload.get("stationId")) != str(self.station_home_data["stationId"]):
+            return web.json_response({"code": 400, "msg": "Unknown stationId"}, status=400)
+        on_grid_state = payload.get("onGridState")
+        if type(on_grid_state) is not int or on_grid_state not in (0, 1):
+            return web.json_response({"code": 400, "msg": "Invalid onGridState"}, status=400)
+        await self._settle_gateway_status()
+        if self._gateway_transition is None:
+            grid_status = self.gateway_status["onOffGridStatus"]
+            if on_grid_state == 1 and grid_status == 0:
+                self.gateway_status["manualOffGridStatus"] = 1
+                self._gateway_transition = (self._clock() + self.gateway_off_grid_seconds, {"onOffGridStatus": 2, "manualOffGridStatus": 2}, 2)
+                self._start_gateway_transition_timer()
+            elif on_grid_state == 0 and grid_status == 2:
+                self.gateway_status["onOffGridStatus"] = 1
+                self._gateway_transition = (self._clock() + self.gateway_on_grid_seconds, {"onOffGridStatus": 0}, 0)
+                self._start_gateway_transition_timer()
+                await self._write_plant_grid_status(1)
+        return self._success(0)
 
     async def get_device_info(self, request: web.Request) -> web.Response:
         if (response := await self.authorized(request)) is not None:
@@ -812,6 +913,7 @@ class CloudApiTestServer:
 
     def app(self) -> web.Application:
         app = web.Application(middlewares=[self.internet_outage_middleware])
+        app.on_cleanup.append(self._stop_gateway_transition_timer)
         app.add_routes([
             web.get("/cloud-api-test", self.control_dashboard),
             web.get("/cloud-api-test/", self.control_dashboard),
@@ -821,6 +923,9 @@ class CloudApiTestServer:
             web.post("/auth/oauth/token", self.authenticate),
             web.get("/device/owner/station/home", self.station_home),
             web.get("/device/devicetreepanel/topology", self.get_device_topology),
+            # Must precede the {station_id} route, which would otherwise match it.
+            web.get("/device/gateway/gateway-status", self.get_gateway_status),
+            web.post("/device/gateway/ongrid-state/update", self.update_gateway_on_grid_state),
             web.get("/device/gateway/{station_id}", self.get_gateway_info),
             web.get("/device/sigen/device/{kind}/info", self.get_device_info),
             web.get("/device/device/pack/queryPackMergeInfo", self.get_battery_pack_merge_info),
@@ -2038,6 +2143,13 @@ async def run_async_server(
             for idx in inverter_device_address:
                 tasks.append(simulate_firmware_version_upgrade(context[idx], wait_for_seconds=randint(30, 60)))
         async with run_cloud_api_test_server(host, cloud_port) as cloud_server:
+            if Constants.PLANT_DEVICE_ADDRESS in context:
+                plant_block = context[Constants.PLANT_DEVICE_ADDRESS]
+
+                async def write_plant_grid_status(value: int) -> None:
+                    await plant_block.force_set_registers(GridStatus.ADDRESS, [value])
+
+                cloud_server.plant_grid_status_writer = write_plant_grid_status
             if TestConfig.simulate_internet_outage:
                 tasks.append(
                     simulate_internet_outage(

@@ -109,6 +109,11 @@ class MySigenCloudAdapter:
                 # Recheck it before allowing the request through.
                 await asyncio.sleep(delay)
 
+    def _raise_if_rate_limited(self) -> None:
+        """Fail immediately, without waiting, while the shared cooldown is active."""
+        if (delay := self._rate_limit_until - time.monotonic()) > 0:
+            raise CloudControlRateLimitedError(f"mySigen Cloud rate limited for another {delay:.0f} seconds", retry_after=delay)
+
     def _record_rate_limit(self) -> float:
         """Extend a shared, exponentially increasing cooldown after HTTP 429."""
         self._rate_limit_streak += 1
@@ -136,15 +141,25 @@ class MySigenCloudAdapter:
     def connected(self) -> bool:
         return self._connected
 
-    async def connect(self) -> None:
-        async with self._connect_lock:
-            await self._connect_locked()
+    async def connect(self, *, wait_for_rate_limit: bool = True) -> None:
+        """Connect to the cloud API, if not already connected.
 
-    async def _connect_locked(self) -> None:
+        With ``wait_for_rate_limit=False``, an active cooldown raises
+        :class:`CloudControlRateLimitedError` instead of delaying the login.
+        """
+        if not wait_for_rate_limit and not self._connected:
+            self._raise_if_rate_limited()
+        async with self._connect_lock:
+            await self._connect_locked(wait_for_rate_limit=wait_for_rate_limit)
+
+    async def _connect_locked(self, *, wait_for_rate_limit: bool = True) -> None:
         """Connect while the caller holds ``_connect_lock``."""
         if self._connected:
             return
-        await self._wait_for_rate_limit()
+        if wait_for_rate_limit:
+            await self._wait_for_rate_limit()
+        else:
+            self._raise_if_rate_limited()
         started = time.monotonic()
         try:
             await self._client.connect()
@@ -168,8 +183,14 @@ class MySigenCloudAdapter:
         self._connection_generation += 1
         await Metrics.cloud_connection(connected=True)
 
-    async def _reconnect(self, failed_generation: int) -> None:
-        """Replace an invalid cloud login unless another task already did so."""
+    async def _reconnect(self, failed_generation: int, *, wait_for_rate_limit: bool = True) -> None:
+        """Replace an invalid cloud login unless another task already did so.
+
+        With ``wait_for_rate_limit=False``, an active cooldown raises
+        :class:`CloudControlRateLimitedError` instead of delaying the login.
+        """
+        if not wait_for_rate_limit:
+            self._raise_if_rate_limited()
         async with self._connect_lock:
             logger.debug(
                 f"Reconnecting to {self._client.base_url} unofficial mySigen Cloud API v{MySigenCloudAdapter.APP_VERSION} (_connection_generation={self._connection_generation}, failed_generation={failed_generation})",
@@ -178,7 +199,7 @@ class MySigenCloudAdapter:
                 return
             self._connected = False
             await Metrics.cloud_connection(connected=False, reconnect=True)
-            await self._connect_locked()
+            await self._connect_locked(wait_for_rate_limit=wait_for_rate_limit)
 
     async def _invalidate_connection(self, failed_generation: int) -> None:
         """Invalidate a failed login without overwriting a newer connection."""
@@ -227,6 +248,28 @@ class MySigenCloudAdapter:
     async def gateway_info(self) -> dict[str, Any]:
         """Return details and live grid-side values for the station gateway."""
         return await self._cloud_operation(self._client.gateway_info)
+
+    async def gateway_status(self, *, wait_for_rate_limit: bool = True) -> dict[str, Any]:
+        """Return the on/off-grid status of the station gateway.
+
+        With ``wait_for_rate_limit=False``, raise
+        :class:`CloudControlRateLimitedError` during a cooldown instead of waiting.
+        """
+        return await self._cloud_operation(self._client.gateway_status, wait_for_rate_limit=wait_for_rate_limit)
+
+    async def set_gateway_off_grid(self, off_grid: bool) -> dict[str, Any]:
+        """Manually take the plant off the grid, or return it to the grid.
+
+        A cooldown raises :class:`CloudControlRateLimitedError` rather than delaying
+        the command, because a late change to the grid connection could surprise
+        whoever requested it.
+        """
+        return await self._cloud_operation(
+            lambda: self._client.set_gateway_off_grid(off_grid),
+            reject_api_errors=True,
+            operation_name="set_gateway_off_grid",
+            wait_for_rate_limit=False,
+        )
 
     async def device_dynamic_info(self, device_type: int, sn_code: str) -> dict[str, Any]:
         return await self._cloud_operation(
@@ -299,18 +342,27 @@ class MySigenCloudAdapter:
         *,
         reject_api_errors: bool = False,
         operation_name: str | None = None,
+        wait_for_rate_limit: bool = True,
     ) -> _T:
         """Run an operation, renewing a cloud login invalidated by the server.
 
         Logging in to the app on another device can invalidate an otherwise
         healthy session. Retry exactly once after re-authentication; persistent
         authentication failures are still reported to the caller.
+
+        With ``wait_for_rate_limit=False``, an active cooldown raises
+        :class:`CloudControlRateLimitedError` instead of delaying the operation.
         """
-        await self.connect()
+        if not wait_for_rate_limit:
+            self._raise_if_rate_limited()
+        await self.connect(wait_for_rate_limit=wait_for_rate_limit)
         generation = self._connection_generation
         operation_label = self._operation_name(operation, operation_name=operation_name)
         for attempt in range(2):
-            await self._wait_for_rate_limit()
+            if wait_for_rate_limit:
+                await self._wait_for_rate_limit()
+            else:
+                self._raise_if_rate_limited()
             rate_limit_generation = self._rate_limit_generation
             started = time.monotonic()
             try:
@@ -335,7 +387,7 @@ class MySigenCloudAdapter:
             except SigenergyCloudAuthError as exc:
                 await Metrics.cloud_query_error(auth=True)
                 if attempt == 0:
-                    await self._reconnect(generation)
+                    await self._reconnect(generation, wait_for_rate_limit=wait_for_rate_limit)
                     generation = self._connection_generation
                     continue
                 await self._invalidate_connection(generation)

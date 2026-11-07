@@ -18,6 +18,8 @@ from sigenergy2mqtt.devices import (
 )
 from sigenergy2mqtt.devices.cloud import CloudDiscovery, discover_cloud, discover_operational_modes
 from sigenergy2mqtt.modbus import ModbusClient
+from sigenergy2mqtt.sensors.base import Sensor
+from sigenergy2mqtt.sensors.cloud.read_write import GatewayGridConnectionControl
 from sigenergy2mqtt.sensors.inverter.read_only import RatedActivePower
 from sigenergy2mqtt.sensors.plant.read_only import (
     GridStatus,
@@ -79,6 +81,14 @@ def _cloud_control_plant_index(device_list: list[dict[str, Any]]) -> int | None:
     return None
 
 
+def _plant_grid_status(plant_index: int) -> Sensor | None:
+    """Return the plant's published Modbus GridStatus sensor, if it has one."""
+    for device in DeviceRegistry.all():
+        if device.plant_index == plant_index and (sensor := device.get_sensor(GridStatus, search_children=True)) is not None and sensor.publishable:
+            return sensor
+    return None
+
+
 async def _setup_cloud_control() -> None:
     """Discover, match, and configure the optional cloud control device.
 
@@ -111,7 +121,11 @@ async def _setup_cloud_control() -> None:
 
     cloud_config = ThreadConfig.create(host=None, port=None, name="Cloud")
     cloud_config.transport_factory = cloud_control_registry.transport_factory
-    cloud_config.add_device(CloudControl(plant_index, cloud_port, discovery))
+    cloud_control = CloudControl(plant_index, cloud_port, discovery)
+    grid_connection_control = cloud_control.get_sensor(GatewayGridConnectionControl, search_children=True)
+    if isinstance(grid_connection_control, GatewayGridConnectionControl):
+        grid_connection_control.set_plant_grid_status(_plant_grid_status(plant_index))
+    cloud_config.add_device(cloud_control)
 
 
 async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfig], ProtocolVersion | None]:

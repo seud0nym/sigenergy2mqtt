@@ -6697,6 +6697,17 @@ Cloud Control and child device topics are only published when the Cloud API acce
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_gateway_firmware_version/state</td></tr>
 </td></tr>
 </table>
+<h5><a id='sigen_0_10000000000001_gateway_grid_connection_status'>Grid Connection Status</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>GatewayGridConnectionStatus</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_gateway_grid_connection_status</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_10000000000001_gateway/sigen_0_cloud_gateway_grid_connection_status/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_gateway_grid_connection_status/state</td></tr>
+</td></tr>
+<tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='0'>On Grid</li><li value='1'>Going Off Grid</li><li value='2'>Off Grid</li><li value='3'>Returning to Grid</li></ol></td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0  and 3  (0 ≦ raw value ≦ 3)</td></tr>
+</table>
 <h5><a id='sigen_0_10000000000001_gateway_grid_side_contactor_status'>Grid Side Contactor Status</a></h5>
 <table>
 <tr><td>Sensor&nbsp;Class</td><td>GatewayGridText</td></tr>
@@ -6890,6 +6901,15 @@ Cloud Control and child device topics are only published when the Cloud API acce
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_gateway_voltage_frequency/state</td></tr>
 </td></tr>
 <tr><td>Comment</td><td>Grid-Side state read from the Gateway via the Cloud API</td></tr>
+</table>
+
+#### Subscribed Topics
+<h5><a id='sigen_0_10000000000001_gateway_grid_connection_set'>Grid Connection
+</a></h5>
+<table>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/button/sigen_0_10000000000001_gateway/sigen_0_cloud_gateway_grid_connection/set</td></tr>
+<tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_gateway_grid_connection/set</td></tr>
+<tr><td>Comment</td><td>Valid values: go_off_grid, go_on_grid. Ignored unless the gateway allows the change.</td></tr>
 </table>
 
 ### Cloud Inverter
@@ -8568,6 +8588,7 @@ The attributes payload currently includes:
 <h6>Gateway</h6>
 <a href='#sigen_0_10000000000001_gateway_communication_status'>Communication Status</a><br>
 <a href='#sigen_0_10000000000001_gateway_firmware_version'>Firmware Version</a><br>
+<a href='#sigen_0_10000000000001_gateway_grid_connection_status'>Grid Connection Status</a><br>
 <a href='#sigen_0_10000000000001_gateway_grid_side_contactor_status'>Grid Side Contactor Status</a><br>
 <a href='#sigen_0_10000000000001_gateway_maximum_phase_a_voltage_in_the_past_minute'>Maximum Phase A voltage in the past minute</a><br>
 <a href='#sigen_0_10000000000001_gateway_maximum_phase_b_voltage_in_the_past_minute'>Maximum Phase B voltage in the past minute</a><br>
@@ -8761,6 +8782,9 @@ The attributes payload currently includes:
 <a href='#sigen_0_10000000000001_instant_control_mode_set'>Instant Manual Control Mode</a><br>
 <a href='#sigen_0_10000000000001_operational_mode_set'>Operational Mode</a><br>
 <a href='#sigen_0_10000000000001_solar_power_limit_set'>Solar Power Limit</a><br>
+
+<h6>Gateway</h6>
+<a href='#sigen_0_10000000000001_gateway_grid_connection_set'>Grid Connection</a><br>
 
 <h6>Metrics</h6>
 <a href='#sigen_metrics_reset_set'>Reset Metrics</a><br>

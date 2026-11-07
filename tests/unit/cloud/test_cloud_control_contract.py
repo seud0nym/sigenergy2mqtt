@@ -1,6 +1,7 @@
 """Contract tests for CloudControlPort implementations."""
 
 import asyncio
+import time
 from datetime import timedelta
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
@@ -90,6 +91,8 @@ def mysigen_adapter() -> MySigenCloudAdapter:
             }
         ),
         gateway_info=AsyncMock(return_value={"snCode": "GATEWAY"}),
+        gateway_status=AsyncMock(return_value={"onOffGridStatus": 0}),
+        set_gateway_off_grid=AsyncMock(return_value={"code": 0, "data": 0}),
         device_dynamic_info=AsyncMock(return_value={"realTimeInfo": []}),
         device_static_info=AsyncMock(return_value={"paramInfoVOList": []}),
         iter_topology_nodes=SigenergyCloudClient.iter_topology_nodes,
@@ -838,3 +841,95 @@ def test_official_adapter_is_explicitly_unavailable() -> None:
 
     with pytest.raises(NotImplementedError, match="not available"):
         OfficialCloudAdapter()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("off_grid", [True, False])
+async def test_gateway_grid_control_delegates_to_client(mysigen_adapter: MySigenCloudAdapter, off_grid: bool) -> None:
+    assert await mysigen_adapter.gateway_status() == {"onOffGridStatus": 0}
+    assert await mysigen_adapter.set_gateway_off_grid(off_grid) == {"code": 0, "data": 0}
+
+    mysigen_adapter._client.gateway_status.assert_awaited_once_with()  # type: ignore[reportPrivateUsage]
+    mysigen_adapter._client.set_gateway_off_grid.assert_awaited_once_with(off_grid)  # type: ignore[reportPrivateUsage]
+
+
+@pytest.mark.asyncio
+async def test_gateway_grid_control_command_rejection_is_normalized(mysigen_adapter: MySigenCloudAdapter) -> None:
+    mysigen_adapter._client.set_gateway_off_grid.side_effect = SigenergyCloudAPIError("refused", status_code=200, response_body='{"code":1}')  # type: ignore[reportPrivateUsage]
+
+    with pytest.raises(CloudControlRejectedError):
+        await mysigen_adapter.set_gateway_off_grid(True)
+
+
+@pytest.mark.asyncio
+async def test_gateway_command_is_dropped_not_delayed_during_cooldown(mysigen_adapter: MySigenCloudAdapter) -> None:
+    await mysigen_adapter.connect()
+    mysigen_adapter._rate_limit_until = time.monotonic() + 900.0  # type: ignore[reportPrivateUsage]
+
+    # The timeout turns an accidental wait for the cooldown into a test failure.
+    async with asyncio.timeout(1):
+        with pytest.raises(CloudControlRateLimitedError) as exc_info:
+            await mysigen_adapter.set_gateway_off_grid(True)
+
+    assert exc_info.value.retry_after is not None
+    assert 0 < exc_info.value.retry_after <= 900.0
+    mysigen_adapter._client.set_gateway_off_grid.assert_not_awaited()  # type: ignore[reportPrivateUsage]
+
+
+@pytest.mark.asyncio
+async def test_gateway_status_can_fail_fast_during_cooldown(mysigen_adapter: MySigenCloudAdapter) -> None:
+    await mysigen_adapter.connect()
+    mysigen_adapter._rate_limit_until = time.monotonic() + 900.0  # type: ignore[reportPrivateUsage]
+
+    async with asyncio.timeout(1):
+        with pytest.raises(CloudControlRateLimitedError):
+            await mysigen_adapter.gateway_status(wait_for_rate_limit=False)
+
+    mysigen_adapter._client.gateway_status.assert_not_awaited()  # type: ignore[reportPrivateUsage]
+
+
+@pytest.mark.asyncio
+async def test_polled_gateway_status_still_waits_out_the_cooldown(mysigen_adapter: MySigenCloudAdapter) -> None:
+    await mysigen_adapter.connect()
+    mysigen_adapter._rate_limit_until = time.monotonic() + 0.01  # type: ignore[reportPrivateUsage]
+
+    assert await mysigen_adapter.gateway_status() == {"onOffGridStatus": 0}
+
+
+@pytest.mark.asyncio
+async def test_gateway_command_proceeds_once_cooldown_has_passed(mysigen_adapter: MySigenCloudAdapter) -> None:
+    await mysigen_adapter.connect()
+    mysigen_adapter._rate_limit_until = time.monotonic() - 1.0  # type: ignore[reportPrivateUsage]
+
+    assert await mysigen_adapter.set_gateway_off_grid(False) == {"code": 0, "data": 0}
+
+
+@pytest.mark.asyncio
+async def test_gateway_command_reauthentication_fails_fast_during_cooldown(mysigen_adapter: MySigenCloudAdapter) -> None:
+    mysigen_adapter._connected = True  # type: ignore[reportPrivateUsage]
+    mysigen_adapter._connection_generation = 1  # type: ignore[reportPrivateUsage]
+
+    async def terminated_while_a_poll_is_rate_limited(_off_grid: bool) -> dict[str, int]:
+        # A concurrent poll records a 429 while this command is in flight.
+        mysigen_adapter._rate_limit_until = time.monotonic() + 900.0  # type: ignore[reportPrivateUsage]
+        raise SigenergyCloudAuthError("session terminated")
+
+    mysigen_adapter._client.set_gateway_off_grid.side_effect = terminated_while_a_poll_is_rate_limited  # type: ignore[reportPrivateUsage]
+
+    async with asyncio.timeout(1):
+        with pytest.raises(CloudControlRateLimitedError):
+            await mysigen_adapter.set_gateway_off_grid(True)
+
+    mysigen_adapter._client.connect.assert_not_awaited()  # type: ignore[reportPrivateUsage]
+    assert mysigen_adapter._client.set_gateway_off_grid.await_count == 1  # type: ignore[reportPrivateUsage]
+
+
+@pytest.mark.asyncio
+async def test_gateway_command_login_fails_fast_during_cooldown(mysigen_adapter: MySigenCloudAdapter) -> None:
+    mysigen_adapter._rate_limit_until = time.monotonic() + 900.0  # type: ignore[reportPrivateUsage]
+
+    async with asyncio.timeout(1):
+        with pytest.raises(CloudControlRateLimitedError):
+            await mysigen_adapter.connect(wait_for_rate_limit=False)
+
+    mysigen_adapter._client.connect.assert_not_awaited()  # type: ignore[reportPrivateUsage]

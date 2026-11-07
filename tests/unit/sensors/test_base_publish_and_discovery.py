@@ -186,6 +186,55 @@ class TestPublishMethod:
         assert all(call.args[0] != "test/state" for call in mqtt.publish.call_args_list)
 
     @pytest.mark.asyncio
+    async def test_successful_suppressed_read_is_current_after_a_failed_read(self):
+        s = self._sensor_with_topics("pub_suppressed_current")
+        mqtt = _mqtt_mock()
+        modbus = MagicMock()
+        modbus.connected = True
+
+        async def _failed_update(**kw):
+            raise ModbusException("read failed")
+
+        async def _unchanged_update(**kw):
+            s.mark_successful_read()
+            return s.set_latest_state(42.0)
+
+        cfg = Config()
+        cfg.repeated_state_publish_interval = -1
+        with _swap_active_config(cfg), patch.object(s, "_update_internal_state", side_effect=_unchanged_update):
+            await s.publish(mqtt, modbus)
+        assert s.is_read_current(60.0) is True
+
+        with _swap_active_config(cfg), patch.object(s, "_update_internal_state", side_effect=_failed_update):
+            assert await s.publish(mqtt, modbus) is False
+        assert s._failures == 1
+        assert s.is_read_current(60.0) is False
+
+        # The unchanged value is not published, so the failure count is not
+        # reset, but the read itself succeeded and the state is current again.
+        with _swap_active_config(cfg), patch.object(s, "_update_internal_state", side_effect=_unchanged_update):
+            assert await s.publish(mqtt, modbus) is False
+        assert s._failures == 1
+        assert s.is_read_current(60.0) is True
+
+    @pytest.mark.asyncio
+    async def test_sanity_check_failure_makes_read_not_current(self):
+        from sigenergy2mqtt.sensors.base import SanityCheckException
+
+        s = self._sensor_with_topics("pub_sanity_current")
+        mqtt = _mqtt_mock()
+        modbus = MagicMock()
+        modbus.connected = True
+
+        async def _insane_update(**kw):
+            s.mark_successful_read()  # registers were read before the value was rejected
+            raise SanityCheckException("out of range")
+
+        with patch.object(s, "_update_internal_state", side_effect=_insane_update):
+            assert await s.publish(mqtt, modbus) is False
+        assert s.is_read_current(60.0) is False
+
+    @pytest.mark.asyncio
     async def test_publish_with_publish_raw_enabled(self):
         """Cover the publish_raw branch."""
         s = self._sensor_with_topics("pub_raw_en")

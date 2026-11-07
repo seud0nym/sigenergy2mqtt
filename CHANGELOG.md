@@ -14,6 +14,7 @@
 
 - Added additional individual battery sensors from Cloud API (Total Discharge Amount and Average Cell Voltage/Temperature)
 - Added battery export limitation control from Cloud API
+- Added Go Off-Grid and Go On-Grid buttons and a Grid Connection Status sensor to the Cloud API Gateway device
 - Added Reset button to Diagnostics web page
 - Added visibility of unpublishable and unsupported sensors to Diagnostics sensor debug logging page
 - Added opt-in Home Assistant child-device discovery via `home-assistant.child-devices` (requires Home Assistant 2026.11.0+; legacy `via_device` hierarchy remains the default). Existing devices are converted in place after an MQTT integration reload, preserving entity history, device IDs and automations

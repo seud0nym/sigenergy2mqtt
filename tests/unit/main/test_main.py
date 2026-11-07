@@ -1836,3 +1836,61 @@ async def test_async_main_registers_signal_handlers(clean_config, monkeypatch):
     assert signal.SIGTERM in handlers
     assert signal.SIGHUP in handlers
     assert signal.SIGUSR1 in handlers
+
+
+def test_plant_grid_status_finds_the_published_sensor_for_the_plant() -> None:
+    from sigenergy2mqtt.main.device_setup import _plant_grid_status
+
+    wanted = MagicMock(publishable=True)
+    other_plant = MagicMock(plant_index=1)
+    no_sensor = MagicMock(plant_index=0)
+    no_sensor.get_sensor.return_value = None
+    matching = MagicMock(plant_index=0)
+    matching.get_sensor.return_value = wanted
+
+    with patch("sigenergy2mqtt.main.device_setup.DeviceRegistry.all", return_value=[other_plant, no_sensor, matching]):
+        assert _plant_grid_status(0) is wanted
+
+    other_plant.get_sensor.assert_not_called()
+
+
+def test_plant_grid_status_ignores_a_sensor_that_is_not_published() -> None:
+    from sigenergy2mqtt.main.device_setup import _plant_grid_status
+
+    device = MagicMock(plant_index=0)
+    device.get_sensor.return_value = MagicMock(publishable=False)
+
+    with patch("sigenergy2mqtt.main.device_setup.DeviceRegistry.all", return_value=[device]):
+        assert _plant_grid_status(0) is None
+
+
+@pytest.mark.asyncio
+async def test_cloud_setup_links_plant_grid_status_to_gateway_buttons() -> None:
+    from sigenergy2mqtt.sensors.cloud.read_write import GatewayGridConnectionControl
+
+    cloud_port = MagicMock()
+    cloud_port.station_id = "station-123"
+    cloud_port.model = "Test Cloud"
+    cloud_port.gateway_info = AsyncMock(return_value={"deviceModel": "Gateway", "snCode": "GW"})
+    cloud_port.device_list = AsyncMock(return_value=[{"deviceType": "Inverter", "serialNumber": "SN-1"}])
+    cloud_port.device_dynamic_info = AsyncMock(return_value={})
+    cloud_port.device_static_info = AsyncMock(return_value={})
+    cloud_port.available_operational_modes = AsyncMock(return_value={})
+    cloud_port.close = AsyncMock()
+    grid_status = MagicMock(publishable=True)
+
+    with (
+        patch("sigenergy2mqtt.main.device_setup.cloud_control_registry") as registry,
+        patch("sigenergy2mqtt.main.device_setup.ThreadConfig.create") as create_thread,
+        patch("sigenergy2mqtt.main.device_setup._plant_grid_status", return_value=grid_status) as find_grid_status,
+    ):
+        registry.configure = MagicMock()
+        registry.active = cloud_port
+        _registered_inverter(0, sn="SN-1")
+        await _setup_cloud_control()
+
+    find_grid_status.assert_called_once_with(0)
+    cloud_control = create_thread.return_value.add_device.call_args.args[0]
+    control = cloud_control.get_sensor(GatewayGridConnectionControl, search_children=True)
+    assert control is not None
+    assert control._plant_grid_status is grid_status

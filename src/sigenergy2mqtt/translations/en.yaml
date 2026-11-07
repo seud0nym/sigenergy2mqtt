@@ -659,6 +659,19 @@ class:
     name: Communication Status
   GatewayFirmwareVersion:
     name: Firmware Version
+  GatewayGridConnectionControl:
+    attributes:
+      comment: 'Valid values: go_off_grid, go_on_grid. Ignored unless the gateway allows the change.'
+    name: Grid Connection
+    name_off: Go Off-Grid
+    name_on: Go On-Grid
+  GatewayGridConnectionStatus:
+    name: Grid Connection Status
+    options:
+      '0': On Grid
+      '1': Going Off Grid
+      '2': Off Grid
+      '3': Returning to Grid
   GatewayGridCurrent:
     attributes:
       comment: Grid-Side state read from the Gateway via the Cloud API

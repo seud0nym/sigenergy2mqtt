@@ -70,6 +70,8 @@ class FakeCloudControlPort:
         self.set_solar_power_limit = AsyncMock()
         self.battery_export_limitation = AsyncMock()
         self.set_battery_export_limitation = AsyncMock()
+        self.gateway_status = AsyncMock()
+        self.set_gateway_off_grid = AsyncMock()
 
     async def connect(self) -> None: ...
 
