@@ -189,7 +189,12 @@ SYNTHESIZED_INVERTER_VALUES = {
 class CloudApiTestServer:
     """Stateful facsimile of the cloud endpoints used by MySigenCloudAdapter."""
 
-    gateway_off_grid_seconds: ClassVar[float] = 6.0
+    # Gateway transition times, from a mySigen app capture on real hardware
+    # (2026-11-07, app polling gateway-status every 2s): going off-grid reached
+    # onOffGridStatus 2 between 2.8s and 4.8s after the command, and returning
+    # reached onOffGridStatus 0 between 16.8s and 18.8s after it. The plant's
+    # Modbus GridStatus changed within one poll of the cloud status each time.
+    gateway_off_grid_seconds: ClassVar[float] = 4.0
     gateway_on_grid_seconds: ClassVar[float] = 18.0
 
     @staticmethod
