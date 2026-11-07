@@ -543,7 +543,7 @@ class:
       source_range: Registri Modbus {start}-{end}
     name: Stato di carica di interruzione scarica
   DistributionCabinet:
-    name: '{model_id} XPLACEholderx1X Armadio di distribuzione'
+    name: '{model_id} {serial} Armadio di distribuzione'
   EMSWorkMode:
     attributes:
       source: Registro Modbus {address}
@@ -583,7 +583,7 @@ class:
       source_range: Registri Modbus {start}-{end}
     name: Stato di carica di interruzione scarica
   ESSPreHeating:
-    name: Preriscaldamento ESS dell'impianto Sigenergy {plant_suffix}
+    name: Preriscaldamento ESS Impianto Sigenergy {plant_suffix}
   ESSPreHeatingAdvanceEnable:
     attributes:
       comment: '0: Disabilita, 1: Abilita. Ha effetto quando la modalità di preriscaldamento è manuale.'
@@ -1290,9 +1290,9 @@ class:
       source_range: Registri Modbus {start}-{end}
     name: Temperatura
   LA:
-    name: 'XPLACE SUPPORTO X0X XPLACE SUPPORTO X1X LA'
+    name: '{model_id} {serial} LA'  # verify:ignore
   LB:
-    name: 'XPLACE SUPPORTO X0X XPLACE SUPPORTO X1X LIBBRA'
+    name: '{model_id} {serial} LB'  # verify:ignore
   LineVoltage:
     attributes:
       source: Registro Modbus {address}
@@ -1326,7 +1326,7 @@ class:
   MQTTReconnections:
     name: Riconnessioni MQTT
   MV:
-    name: 'XPLACEholderx0X Xplaceholderx1X MV'
+    name: '{model_id} {serial} MV'  # verify:ignore
   MaxAbsorptionPower:
     attributes:
       source: Registro Modbus {address}
@@ -2963,7 +2963,7 @@ class:
       source: Potenza PV + Potenza PV di Terze Parti
     name: Potenza PV Totale
   Transformer:
-    name: '{model_id} XPLACEholderx1X Trasformatore'
+    name: '{model_id} {serial} Trasformatore'
   WriteOnlySensor:
     name_off: Spegnere
     name_on: Accendere

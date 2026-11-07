@@ -583,7 +583,7 @@ class:
       source_range: Modbus 레지스터 {start}-{end}
     name: 방전 차단율
   ESSPreHeating:
-    name: Sigenergy Plant ESS 예열 {plant_suffix}
+    name: Sigenergy 발전소 ESS 예열 {plant_suffix}
   ESSPreHeatingAdvanceEnable:
     attributes:
       comment: '0: 비활성화, 1: 활성화. 예열 모드가 수동일 때 적용됩니다.'

@@ -583,7 +583,7 @@ class:
       source_range: Modbus-registers {start}-{end}
     name: Ontlaad Afkap Laadtoestand
   ESSPreHeating:
-    name: Sigenergy Plant ESS voorverwarmen {plant_suffix}
+    name: Sigenergy-installatie ESS voorverwarmen {plant_suffix}
   ESSPreHeatingAdvanceEnable:
     attributes:
       comment: '0: Uitschakelen, 1: Inschakelen. Treedt in werking wanneer de voorverwarmingsmodus handmatig is.'

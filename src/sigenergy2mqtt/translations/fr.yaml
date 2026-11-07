@@ -583,7 +583,7 @@ class:
       source_range: Registres Modbus {start}-{end}
     name: État de charge de coupure de décharge
   ESSPreHeating:
-    name: Préchauffage ESS de l'usine Sigenergy {plant_suffix}
+    name: Préchauffage ESS Centrale Sigenergy {plant_suffix}
   ESSPreHeatingAdvanceEnable:
     attributes:
       comment: '0 : Désactiver, 1 : Activer. Prend effet lorsque le mode de préchauffage est manuel.'
@@ -787,7 +787,7 @@ class:
       '2': Inconnu
       '3': Inactif
   GridCode:
-    name: Code Réseau Installation Sigenergy {plant_suffix}
+    name: Code Réseau Centrale Sigenergy {plant_suffix}
   GridCodeHVRT:
     attributes:
       source: Registre Modbus {address}
@@ -957,7 +957,7 @@ class:
     name: Effacer l'alarme de verrouillage de perte de puissance du réseau
     name_on: Clair
   GridSensor:
-    name: Capteur Réseau Installation Sigenergy {plant_suffix}
+    name: Capteur Réseau Centrale Sigenergy {plant_suffix}
   GridSensorActivePower:
     attributes:
       comment: "Données collectées par le capteur réseau au point de contrôle réseau/système ; >0 achat au réseau ; <0 vente au réseau"
@@ -2578,7 +2578,7 @@ class:
       source: "Σ de InverterSelfConsumedPower sur tous les Onduleurs associés à l'Installation"
     name: Puissance Autoconsommée
   PlantStatistics:
-    name: Statistiques Installation Sigenergy {plant_suffix}
+    name: Statistiques Centrale Sigenergy {plant_suffix}
   PlantStatus:
     attributes:
       comment: 0:Arrêter 1:Démarrer
