@@ -158,7 +158,7 @@ async def test_collect_cloud_metrics(monkeypatch):
     assert metrics["config"] == {
         "region": "eu",
         "scan_interval_secs": 30,
-        "mySigen_app_version": "4.1.0",
+        "mySigen_app_version": "4.2.0",
     }
 
     monkeypatch.setattr(Metrics, "sigenergy2mqtt_cloud_available", False)
