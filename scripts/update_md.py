@@ -31,6 +31,7 @@ from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.sensors.base import (
     AlarmCombinedSensor,
     CloudSensor,
+    CloudWriteOnlySensor,
     ModbusSensorMixin,
     ReadableSensorMixin,
     ReservedSensor,
@@ -243,7 +244,7 @@ async def sensor_index() -> None:
         count = 0
         if any(
             "state_topic" in value
-            and not isinstance(value, (WriteOnlySensor, ReservedSensor))
+            and not isinstance(value, (WriteOnlySensor, CloudWriteOnlySensor, ReservedSensor))
             and getattr(value, "parent_device", None)
             and value.parent_device.__class__.__name__ == device
             and value.publishable
@@ -251,7 +252,7 @@ async def sensor_index() -> None:
         ):
             if not index_only:
                 f.write("\n#### Published Topics\n")
-            for key in [key for key, value in sorted(mqtt_sensors.items(), key=lambda x: x[1].name) if "state_topic" in value and not isinstance(value, (WriteOnlySensor, ReservedSensor))]:
+            for key in [key for key, value in sorted(mqtt_sensors.items(), key=lambda x: x[1].name) if "state_topic" in value and not isinstance(value, (WriteOnlySensor, CloudWriteOnlySensor, ReservedSensor))]:
                 sensor: Sensor = mqtt_sensors[key]
                 sensor_parent = None if not hasattr(sensor, "parent_device") else sensor.parent_device.__class__.__name__
                 if sensor_parent == device and sensor.publishable:
@@ -400,7 +401,7 @@ async def sensor_index() -> None:
                         elif isinstance(sensor, PVInverter):
                             f.write(" PV Inverter only")
                         f.write("</td></tr>\n")
-                    if not isinstance(sensor, (CloudSensor, MetricsSensor, ResetMetrics, SettingsSensor)):
+                    if not isinstance(sensor, (CloudSensor, CloudWriteOnlySensor, MetricsSensor, ResetMetrics, SettingsSensor)):
                         f.write(f"<tr><td>Since&nbsp;ProtocolVersion&nbsp;Version</td><td>{protocol}</td></tr>\n")
                     f.write("</table>\n")
         return count
@@ -436,6 +437,7 @@ async def sensor_index() -> None:
         subscribed_topics(f, "CloudControl")
         f.write("\n### Gateway\n")
         published_topics(f, "Gateway")
+        subscribed_topics(f, "Gateway")
         f.write("\n### Cloud Inverter\n")
         f.write("\nIn the following topics, the identifier `123A45BP678` is a placeholder for the inverter serial number as shown in the mySigen app.\n")
         published_topics(f, "CloudInverter")
@@ -505,6 +507,8 @@ async def sensor_index() -> None:
         subscribed += subscribed_topics(f, "DCCharger", index_only=True)
         f.write("\n<h6>Cloud Control</h6>\n")
         subscribed += subscribed_topics(f, "CloudControl", index_only=True)
+        f.write("\n<h6>Gateway</h6>\n")
+        subscribed += subscribed_topics(f, "Gateway", index_only=True)
         f.write("\n<h6>Metrics</h6>\n")
         subscribed += subscribed_topics(f, "MetricsService", index_only=True)
         f.write("\n<h6>Settings</h6>\n")

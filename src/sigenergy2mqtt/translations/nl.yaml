@@ -659,6 +659,19 @@ class:
     name: Communicatiestatus
   GatewayFirmwareVersion:
     name: Firmwareversie
+  GatewayGridConnectionControl:
+    attributes:
+      comment: 'Geldige waarden: go_off_grid, go_on_grid. Wordt genegeerd tenzij de gateway de wijziging toestaat.'
+    name: Netaansluiting
+    name_off: Loskoppelen van het net
+    name_on: Aansluiten op het net
+  GatewayGridConnectionStatus:
+    name: Status netaansluiting
+    options:
+      '0': Op het net
+      '1': Loskoppelen van het net
+      '2': Van het net
+      '3': Terugkeren naar het net
   GatewayGridCurrent:
     attributes:
       comment: Status aan de netzijde, uitgelezen via de gateway via de cloud-API

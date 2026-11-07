@@ -12,7 +12,7 @@ from typing import Any, cast
 from aiohttp import ClientError
 from paho.mqtt.client import Client
 
-from sigenergy2mqtt.cloud.exceptions import CloudControlError, CloudControlUnavailableError
+from sigenergy2mqtt.cloud.exceptions import CloudControlError, CloudControlRateLimitedError, CloudControlUnavailableError
 from sigenergy2mqtt.cloud.models import InstantControlMode as Mode
 from sigenergy2mqtt.cloud.models import InstantControlStatus, InstantOverrideCommand
 from sigenergy2mqtt.cloud.port import CloudControlPort
@@ -32,9 +32,12 @@ from sigenergy2mqtt.sensors.base import (
     AvailabilityMixin,
     CloudGridLimitSensor,
     CloudReadWriteSensor,
+    CloudSensor,
+    CloudWriteOnlySensor,
     DiscoveryKeys,
     NumericSensorMixin,
     SelectSensorMixin,
+    Sensor,
     SwitchSensorMixin,
 )
 from sigenergy2mqtt.sensors.cloud.functions import _identity
@@ -780,4 +783,183 @@ class BatteryExportLimitation(SwitchSensorMixin, CloudReadWriteSensor):
             logger.warning(f"{self.log_identity} cloud response indicates battery export limitation cannot be changed by the owner")
             return False
         await port.set_battery_export_limitation(bool(int(value)))
+        return True
+
+
+class GatewayGridConnectionStatus(CloudSensor):
+    """Grid connection state reported by the gateway.
+
+    Each poll also refreshes the availability of the Go Off-Grid and Go On-Grid
+    buttons, which have no polling cycle of their own.
+    """
+
+    _ON_GRID = 0
+    _GOING_OFF_GRID = 1
+    _OFF_GRID = 2
+    _RETURNING_TO_GRID = 3
+
+    def __init__(self, plant_index: int, station_id: str) -> None:
+        object_id, unique_id = _identity(plant_index, station_id, "gateway_grid_connection_status")
+        super().__init__(
+            name="Grid Connection Status",
+            object_id=object_id,
+            unique_id=unique_id,
+            scan_interval=active_config.cloud.scan_interval,
+            unit=None,
+            device_class=DeviceClass.ENUM,
+            state_class=None,
+            icon="mdi:transmission-tower",
+            gain=None,
+            precision=None,
+            protocol_version=ProtocolVersion.N_A,
+        )
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
+        self[DiscoveryKeys.OPTIONS] = [
+            "On Grid",  # 0
+            "Going Off Grid",  # 1
+            "Off Grid",  # 2
+            "Returning to Grid",  # 3
+        ]
+        self.sanity_check.min_raw = 0
+        self.sanity_check.max_raw = len(cast(list[str], self[DiscoveryKeys.OPTIONS])) - 1
+        self.gateway_status: dict[str, Any] | None = None  # None when the last read did not succeed
+        self._control: GatewayGridConnectionControl | None = None
+
+    async def _read_cloud_state(self, port: CloudControlPort) -> int | None:
+        self.gateway_status = None
+        payload = await port.gateway_status()
+        if not isinstance(payload, dict):
+            raise CloudControlUnavailableError("cloud response is not an object")
+        match payload.get("onOffGridStatus"):
+            case 0:
+                state = self._GOING_OFF_GRID if payload.get("manualOffGridStatus") == 1 else self._ON_GRID
+            case 1:
+                state = self._RETURNING_TO_GRID
+            case 2:
+                state = self._OFF_GRID
+            case unknown:
+                logger.warning(f"{self.log_identity} cloud response contains unknown onOffGridStatus: {unknown!r}")
+                return None
+        self.gateway_status = payload
+        return state
+
+    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> Any:
+        value = await super().get_state(raw=raw, republish=republish, **kwargs)
+        if raw or value is None:
+            return value
+        return self._get_option(int(value)) or f"Unknown Status: {value}"
+
+    async def publish(self, mqtt_client: Client, transport: Any, republish: bool = False) -> bool:
+        try:
+            return await super().publish(mqtt_client, transport, republish)
+        finally:
+            if self._control is not None:
+                self._control.publish_button_availability(mqtt_client)
+
+
+class GatewayGridConnectionControl(CloudWriteOnlySensor):
+    """"Go Off-Grid" and "Go On-Grid" buttons for the gateway.
+
+    Pressing a button physically changes the site's grid connection. Availability
+    in Home Assistant follows the polled gateway status and the plant's Modbus
+    GridStatus (when it is available). Because availability can lag and is not
+    enforced for direct MQTT commands, every press applies the same rule to a
+    fresh gateway status, and sends nothing if that read fails or the cloud is
+    in a rate-limit cooldown.
+    """
+
+    _PLANT_ON_GRID = 0  # GridStatus "On Grid"
+    _PLANT_OFF_GRID_MANUAL = 2  # GridStatus "Off Grid (manual)"; "Off Grid (auto)" means an outage or a return to the grid in progress
+
+    def __init__(self, plant_index: int, station_id: str, status_sensor: GatewayGridConnectionStatus) -> None:
+        object_id, unique_id = _identity(plant_index, station_id, "gateway_grid_connection")
+        super().__init__(
+            name="Grid Connection",
+            object_id=object_id,
+            unique_id=unique_id,
+            unit=None,
+            device_class=None,
+            state_class=None,
+            icon=None,
+            gain=None,
+            precision=None,
+            protocol_version=ProtocolVersion.N_A,
+            name_off="Go Off-Grid",
+            name_on="Go On-Grid",
+            icon_off="mdi:transmission-tower-off",
+            icon_on="mdi:transmission-tower",
+            payload_off="go_off_grid",
+            payload_on="go_on_grid",
+            value_off=1,  # the values match the API's onGridState
+            value_on=0,
+        )
+        self._status_sensor = status_sensor
+        status_sensor._control = self
+        self._plant_grid_status: Sensor | None = None
+        self._available_topics: dict[str, str] = {}
+
+    def set_plant_grid_status(self, sensor: Sensor | None) -> None:
+        """Also require the plant's Modbus GridStatus sensor to permit each button."""
+        self._plant_grid_status = sensor
+
+    def configure_mqtt_topics(self, device_id: str) -> str:
+        base = super().configure_mqtt_topics(device_id)
+        if active_config.home_assistant.enabled:
+            self._available_topics = {action: f"{base}/{self._payloads[action]}/available" for action in ("off", "on")}
+        return base
+
+    def get_discovery_components(self) -> dict[str, dict[str, Any]]:
+        components = super().get_discovery_components()
+        for action, topic in self._available_topics.items():
+            component = components[f"{self.unique_id}_{action}"]
+            component[DiscoveryKeys.AVAILABILITY] = [
+                *cast(list[dict[str, Any]], component[DiscoveryKeys.AVAILABILITY]),
+                {DiscoveryKeys.TOPIC: topic, DiscoveryKeys.PAYLOAD_AVAILABLE: "1", DiscoveryKeys.PAYLOAD_NOT_AVAILABLE: "0"},
+            ]
+        return components
+
+    def get_attributes(self) -> dict[str, float | int | str]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Valid values: go_off_grid, go_on_grid. Ignored unless the gateway allows the change."
+        return attributes
+
+    def _permits(self, off_grid: bool, status: dict[str, Any] | None) -> bool:
+        """Return whether a gateway status and the plant's GridStatus allow a button."""
+        if not isinstance(status, dict) or status.get("showButton") is not True:
+            return False
+        grid_status, manual = status.get("onOffGridStatus"), status.get("manualOffGridStatus")
+        if not (grid_status == 0 and manual != 1 if off_grid else grid_status == 2 and manual == 2):
+            return False
+        if self._plant_grid_status is None:
+            return True
+        return self._plant_grid_status.latest_raw_state == (self._PLANT_ON_GRID if off_grid else self._PLANT_OFF_GRID_MANUAL)
+
+    def publish_button_availability(self, mqtt_client: Client) -> None:
+        """Publish whether each button can currently be pressed."""
+        status = self._status_sensor.gateway_status
+        for action, topic in self._available_topics.items():
+            mqtt_client.publish(topic, "1" if self._permits(action == "off", status) else "0", qos=self._qos, retain=False)
+
+    async def _write_value(self, transport: Any, mqtt_client: Client, value: float | str, source: str, handler: Any) -> bool:
+        written = await super()._write_value(transport, mqtt_client, value, source, handler)
+        if written:
+            # Both buttons stay unavailable until the immediate re-poll reports the new state.
+            self._status_sensor.gateway_status = None
+            self._status_sensor.force_publish = True
+            self.publish_button_availability(mqtt_client)
+        return written
+
+    async def _write_cloud_value(self, port: CloudControlPort, value: float | str) -> bool:
+        off_grid = int(value) == self._values["off"]
+        payload = self._payloads["off" if off_grid else "on"]
+        try:
+            status = await port.gateway_status(wait_for_rate_limit=False)
+            if not self._permits(off_grid, status):
+                plant_grid_status = None if self._plant_grid_status is None else self._plant_grid_status.latest_raw_state
+                logger.warning(f"{self.log_identity} ignoring {payload}: gateway status is {status!r} and plant GridStatus is {plant_grid_status!r}")
+                return False
+            await port.set_gateway_off_grid(off_grid)
+        except CloudControlRateLimitedError as exc:
+            logger.warning(f"{self.log_identity} dropping {payload}: {exc}")
+            return False
         return True

@@ -37,6 +37,8 @@ from .cloud import (  # noqa: F401
     CloudGridLimitSensor,
     CloudReadWriteSensor,
     CloudSensor,
+    CloudWritableSensor,
+    CloudWriteOnlySensor,
 )
 
 # Constants and utilities

@@ -659,6 +659,19 @@ class:
     name: 通信状態
   GatewayFirmwareVersion:
     name: ファームウェアバージョン
+  GatewayGridConnectionControl:
+    attributes:
+      comment: '有効な値: go_off_grid、go_on_grid。ゲートウェイが変更を許可しない場合は無視されます。'
+    name: 系統連系
+    name_off: オフグリッドに切替
+    name_on: オングリッドに切替
+  GatewayGridConnectionStatus:
+    name: 系統連系状態
+    options:
+      '0': 系統連系中
+      '1': オフグリッドへ切替中
+      '2': オフグリッド
+      '3': 系統へ復帰中
   GatewayGridCurrent:
     attributes:
       comment: クラウドAPIを介してゲートウェイから読み取る系統連系側の状態

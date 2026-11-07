@@ -659,6 +659,19 @@ class:
     name: 통신 상태
   GatewayFirmwareVersion:
     name: 펌웨어 버전
+  GatewayGridConnectionControl:
+    attributes:
+      comment: '유효한 값: go_off_grid, go_on_grid. 게이트웨이가 변경을 허용하지 않으면 무시됩니다.'
+    name: 계통 연결
+    name_off: 오프그리드로 전환
+    name_on: 온그리드로 전환
+  GatewayGridConnectionStatus:
+    name: 계통 연결 상태
+    options:
+      '0': 온그리드
+      '1': 오프그리드 전환 중
+      '2': 오프그리드
+      '3': 계통 복귀 중
   GatewayGridCurrent:
     attributes:
       comment: 클라우드 API를 통해 게이트웨이에서 읽은 계통 연계 상태

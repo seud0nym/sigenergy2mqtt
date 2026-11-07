@@ -659,6 +659,19 @@ class:
     name: 通信状态
   GatewayFirmwareVersion:
     name: 固件版本
+  GatewayGridConnectionControl:
+    attributes:
+      comment: '有效值：go_off_grid、go_on_grid。除非网关允许更改，否则将被忽略。'
+    name: 电网连接
+    name_off: 切换至离网
+    name_on: 切换至并网
+  GatewayGridConnectionStatus:
+    name: 电网连接状态
+    options:
+      '0': 并网
+      '1': 正在离网
+      '2': 离网
+      '3': 正在恢复并网
   GatewayGridCurrent:
     attributes:
       comment: 通过云 API 从网关读取电网侧状态

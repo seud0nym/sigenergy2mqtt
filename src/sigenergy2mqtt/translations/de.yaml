@@ -659,6 +659,19 @@ class:
     name: Kommunikationsstatus
   GatewayFirmwareVersion:
     name: Firmware-Version
+  GatewayGridConnectionControl:
+    attributes:
+      comment: 'Gültige Werte: go_off_grid, go_on_grid. Wird ignoriert, sofern das Gateway die Änderung nicht zulässt.'
+    name: Netzanschluss
+    name_off: Vom Netz trennen
+    name_on: Mit dem Netz verbinden
+  GatewayGridConnectionStatus:
+    name: Netzanschlussstatus
+    options:
+      '0': Am Netz
+      '1': Netztrennung läuft
+      '2': Inselbetrieb
+      '3': Rückkehr ans Netz
   GatewayGridCurrent:
     attributes:
       comment: Auslesen des Netzzustands vom Gateway über die Cloud-API

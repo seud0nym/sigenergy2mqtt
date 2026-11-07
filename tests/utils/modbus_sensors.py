@@ -297,6 +297,12 @@ class DummyCloudControlPort(CloudControlPort):
     async def gateway_info(self) -> dict[str, Any]:
         return self._server.gateway_info
 
+    async def gateway_status(self, *, wait_for_rate_limit: bool = True) -> dict[str, Any]:
+        return self._server.gateway_status
+
+    async def set_gateway_off_grid(self, off_grid: bool) -> dict[str, Any]:
+        return {"code": 0, "msg": "success", "data": 0}
+
     async def device_dynamic_info(self, device_type: int, sn_code: str) -> dict[str, Any]:
         return self._server.device_dynamic_info.get(device_type, {})
 

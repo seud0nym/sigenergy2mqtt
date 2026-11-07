@@ -482,3 +482,239 @@ def test_cloud_topology_matches_synthesized_modbus_identity_registers() -> None:
         else:
             assert cloud_node["deviceCode"] == modbus_values["deviceCode"]
         assert cloud_node["ratedActivePower"] == modbus_values["ratedActivePower"]
+
+
+class _GatewayClient:
+    """Authenticated requests against a test server with a controllable clock."""
+
+    def __init__(self, api: CloudApiTestServer, client: TestClient) -> None:
+        self.api = api
+        self.client = client
+        self.now = 0.0
+        api._clock = lambda: self.now
+        api.access_token = "token"
+        self.headers = {"Authorization": "Bearer token"}
+        self.station_id = api.station_home_data["stationId"]
+
+    async def status(self) -> tuple[int, int]:
+        response = await self.client.get(
+            "/device/gateway/gateway-status",
+            headers=self.headers,
+            params={"stationId": str(self.station_id)},
+        )
+        assert response.status == 200
+        data = (await response.json())["data"]
+        return data["onOffGridStatus"], data["manualOffGridStatus"]
+
+    async def press(self, on_grid_state: int) -> None:
+        response = await self.client.post(
+            "/device/gateway/ongrid-state/update",
+            headers=self.headers,
+            json={"onGridState": on_grid_state, "stationId": int(self.station_id)},
+        )
+        assert response.status == 200
+        payload = await response.json()
+        assert payload["code"] == 0
+        assert payload["data"] == 0
+
+    async def timeline(self, samples: int) -> list[tuple[int, int]]:
+        """Sample the status every 2 seconds, as the recorded app responses were."""
+        statuses = []
+        for _ in range(samples):
+            statuses.append(await self.status())
+            self.now += 2.0
+        return statuses
+
+
+async def test_gateway_status_reports_full_payload_before_any_press() -> None:
+    api = CloudApiTestServer(None, None)
+    async with TestClient(TestServer(api.app())) as client:
+        gateway = _GatewayClient(api, client)
+        response = await client.get(
+            "/device/gateway/gateway-status",
+            headers=gateway.headers,
+            params={"stationId": str(gateway.station_id)},
+        )
+        assert (await response.json())["data"] == {
+            "onOffGridStatus": 0,
+            "manualOffGridStatus": 0,
+            "isSupportSignal": True,
+            "doorStatus": None,
+            "onOffGridControlMode": 0,
+            "showButton": True,
+        }
+
+
+async def test_gateway_status_route_does_not_shadow_gateway_info() -> None:
+    api = CloudApiTestServer(None, None)
+    async with TestClient(TestServer(api.app())) as client:
+        gateway = _GatewayClient(api, client)
+        response = await client.get(f"/device/gateway/{gateway.station_id}", headers=gateway.headers)
+        assert (await response.json())["data"] == api.gateway_info
+
+
+async def test_gateway_go_off_grid_matches_recorded_timeline() -> None:
+    api = CloudApiTestServer(None, None)
+    async with TestClient(TestServer(api.app())) as client:
+        gateway = _GatewayClient(api, client)
+        assert await gateway.status() == (0, 0)
+
+        await gateway.press(1)
+
+        assert await gateway.timeline(5) == [(0, 1), (0, 1), (0, 1), (2, 2), (2, 2)]
+
+
+async def test_gateway_go_on_grid_matches_recorded_timeline() -> None:
+    api = CloudApiTestServer(None, None)
+    async with TestClient(TestServer(api.app())) as client:
+        gateway = _GatewayClient(api, client)
+        await gateway.press(1)
+        gateway.now += api.gateway_off_grid_seconds
+        assert await gateway.status() == (2, 2)
+
+        await gateway.press(0)
+
+        assert await gateway.timeline(11) == [(1, 2)] * 9 + [(0, 2)] * 2
+
+
+async def test_gateway_can_go_off_grid_again_after_a_round_trip() -> None:
+    api = CloudApiTestServer(None, None)
+    async with TestClient(TestServer(api.app())) as client:
+        gateway = _GatewayClient(api, client)
+        await gateway.press(1)
+        gateway.now += api.gateway_off_grid_seconds
+        await gateway.status()
+        await gateway.press(0)
+        gateway.now += api.gateway_on_grid_seconds
+        assert await gateway.status() == (0, 2)
+
+        await gateway.press(1)
+
+        assert await gateway.status() == (0, 1)
+
+
+async def test_gateway_press_matching_current_state_changes_nothing() -> None:
+    api = CloudApiTestServer(None, None)
+    async with TestClient(TestServer(api.app())) as client:
+        gateway = _GatewayClient(api, client)
+
+        await gateway.press(0)
+        assert await gateway.status() == (0, 0)
+        assert api._gateway_transition is None
+
+        await gateway.press(1)
+        gateway.now += api.gateway_off_grid_seconds
+        await gateway.press(1)
+        assert await gateway.status() == (2, 2)
+        assert api._gateway_transition is None
+
+
+async def test_gateway_press_during_transition_changes_nothing() -> None:
+    api = CloudApiTestServer(None, None)
+    async with TestClient(TestServer(api.app())) as client:
+        gateway = _GatewayClient(api, client)
+        await gateway.press(1)
+        gateway.now += 2.0
+
+        await gateway.press(0)
+
+        assert await gateway.status() == (0, 1)
+        gateway.now += api.gateway_off_grid_seconds
+        assert await gateway.status() == (2, 2)
+
+
+async def test_gateway_endpoints_require_authorization() -> None:
+    api = CloudApiTestServer(None, None)
+    async with TestClient(TestServer(api.app())) as client:
+        station_id = api.station_home_data["stationId"]
+        response = await client.get("/device/gateway/gateway-status", params={"stationId": str(station_id)})
+        assert response.status == 401
+        response = await client.post("/device/gateway/ongrid-state/update", json={"onGridState": 1, "stationId": int(station_id)})
+        assert response.status == 401
+        assert api.gateway_status["manualOffGridStatus"] == 0
+
+
+@pytest.mark.parametrize("on_grid_state", [2, -1, "1", True, None])
+async def test_gateway_update_rejects_invalid_on_grid_state(on_grid_state: object) -> None:
+    api = CloudApiTestServer(None, None)
+    async with TestClient(TestServer(api.app())) as client:
+        gateway = _GatewayClient(api, client)
+        response = await client.post(
+            "/device/gateway/ongrid-state/update",
+            headers=gateway.headers,
+            json={"onGridState": on_grid_state, "stationId": int(gateway.station_id)},
+        )
+        assert response.status == 400
+        assert api._gateway_transition is None
+        assert await gateway.status() == (0, 0)
+
+
+async def test_gateway_endpoints_reject_unknown_station() -> None:
+    api = CloudApiTestServer(None, None)
+    async with TestClient(TestServer(api.app())) as client:
+        gateway = _GatewayClient(api, client)
+        response = await client.get("/device/gateway/gateway-status", headers=gateway.headers)
+        assert response.status == 400
+        response = await client.post(
+            "/device/gateway/ongrid-state/update",
+            headers=gateway.headers,
+            json={"onGridState": 1, "stationId": 1},
+        )
+        assert response.status == 400
+        assert api._gateway_transition is None
+
+
+async def test_gateway_status_is_editable_and_edit_replaces_transition() -> None:
+    api = CloudApiTestServer(None, None)
+    async with TestClient(TestServer(api.app())) as client:
+        gateway = _GatewayClient(api, client)
+        await gateway.press(1)
+
+        response = await client.get("/cloud-api-test/state")
+        assert (await response.json())["gateway_status"]["manualOffGridStatus"] == 1
+        gateway.now += api.gateway_off_grid_seconds
+        response = await client.get("/cloud-api-test/state")
+        assert (await response.json())["gateway_status"]["onOffGridStatus"] == 2
+
+        await gateway.press(0)
+        edited = {**api.gateway_status, "onOffGridStatus": 2, "showButton": False}
+        response = await client.put("/cloud-api-test/state/gateway_status", json={"value": edited})
+        assert response.status == 200
+        gateway.now += api.gateway_on_grid_seconds
+
+        assert await gateway.status() == (2, 2)
+        assert api.gateway_status["showButton"] is False
+
+
+async def test_gateway_round_trip_drives_plant_grid_status_as_recorded() -> None:
+    api = CloudApiTestServer(None, None)
+    api.plant_grid_status_writer = AsyncMock()
+    written = api.plant_grid_status_writer
+    async with TestClient(TestServer(api.app())) as client:
+        gateway = _GatewayClient(api, client)
+
+        await gateway.press(1)
+        assert await gateway.status() == (0, 1)
+        written.assert_not_awaited()
+
+        gateway.now += api.gateway_off_grid_seconds
+        assert await gateway.status() == (2, 2)
+        assert [call.args[0] for call in written.await_args_list] == [2]  # Off Grid (manual)
+
+        await gateway.press(0)
+        assert [call.args[0] for call in written.await_args_list] == [2, 1]  # Off Grid (auto) during the return
+
+        gateway.now += api.gateway_on_grid_seconds
+        assert await gateway.status() == (0, 2)
+        assert [call.args[0] for call in written.await_args_list] == [2, 1, 0]  # On Grid
+
+
+async def test_gateway_press_matching_current_state_does_not_write_plant_grid_status() -> None:
+    api = CloudApiTestServer(None, None)
+    api.plant_grid_status_writer = AsyncMock()
+    async with TestClient(TestServer(api.app())) as client:
+        gateway = _GatewayClient(api, client)
+
+        await gateway.press(0)
+
+        api.plant_grid_status_writer.assert_not_awaited()

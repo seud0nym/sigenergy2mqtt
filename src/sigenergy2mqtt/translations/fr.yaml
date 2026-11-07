@@ -659,6 +659,19 @@ class:
     name: État de la communication
   GatewayFirmwareVersion:
     name: Version du micrologiciel
+  GatewayGridConnectionControl:
+    attributes:
+      comment: 'Valeurs valides : go_off_grid, go_on_grid. Ignoré sauf si la passerelle autorise le changement.'
+    name: Raccordement au réseau
+    name_off: Se déconnecter du réseau
+    name_on: Se connecter au réseau
+  GatewayGridConnectionStatus:
+    name: État du raccordement au réseau
+    options:
+      '0': Connecté au réseau
+      '1': Déconnexion du réseau
+      '2': Hors réseau
+      '3': Retour au réseau
   GatewayGridCurrent:
     attributes:
       comment: État « Grid-Side » lu depuis la passerelle via l'API Cloud

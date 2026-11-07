@@ -14,6 +14,10 @@ from sigenergy2mqtt.sensors.cloud.read_only import (
     gateway_sensor_suffix,
     grid_sensor_details,
 )
+from sigenergy2mqtt.sensors.cloud.read_write import (
+    GatewayGridConnectionControl,
+    GatewayGridConnectionStatus,
+)
 
 from .discovery import CloudDiscovery
 
@@ -60,6 +64,9 @@ class Gateway(Device):
         self._add_sensor(GatewayFirmwareVersion(plant_index, station_id, snapshot))
         self._add_sensor(GatewayModel(plant_index, station_id, snapshot))
         self._add_sensor(GatewaySerialNumber(plant_index, station_id, snapshot))
+        grid_connection_status = GatewayGridConnectionStatus(plant_index, station_id)
+        self._add_sensor(grid_connection_status)
+        self._add_sensor(GatewayGridConnectionControl(plant_index, station_id, grid_connection_status))
         for entry in grid_side_info:
             param_key = entry.get("paramKey")
             if not isinstance(param_key, str) or not param_key:

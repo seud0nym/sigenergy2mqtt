@@ -6,12 +6,16 @@ from dataclasses import replace
 from datetime import timedelta
 
 import pytest
+from pymodbus.client import AsyncModbusTcpClient
 
 from sigenergy2mqtt.cloud.models import InstantControlMode, InstantOverrideCommand
 from sigenergy2mqtt.cloud.mysigen_adapter import MySigenCloudAdapter
+from sigenergy2mqtt.common import Constants
 from sigenergy2mqtt.config import Config, _swap_active_config
+from sigenergy2mqtt.sensors.plant.read_only import GridStatus
 from tests.utils.modbus_test_server import (
     CLOUD_TEST_GATEWAY_SERIAL,
+    CloudApiTestServer,
     run_async_server,
     wait_for_server_start,
 )
@@ -29,6 +33,8 @@ async def test_mysigen_cloud_adapter_against_test_server(
 ) -> None:
     modbus_port = _free_port()
     cloud_port = _free_port()
+    monkeypatch.setattr(CloudApiTestServer, "gateway_off_grid_seconds", 0.1)
+    monkeypatch.setattr(CloudApiTestServer, "gateway_on_grid_seconds", 0.1)
     monkeypatch.setenv("MODBUS_TEST_SERVER_CLOUD_USERNAME", "cloud-user")
     monkeypatch.setenv("MODBUS_TEST_SERVER_CLOUD_PASSWORD", "cloud-password")
     monkeypatch.setenv("SIGENERGY2MQTT_CLOUD_TESTING_URL", f"http://127.0.0.1:{cloud_port}/")
@@ -65,6 +71,31 @@ async def test_mysigen_cloud_adapter_against_test_server(
             assert refreshed_tokens is not None
             assert refreshed_tokens.access_token != initial_access_token
             assert status.enabled is False
+
+            # The real client must satisfy the test server's request validation.
+            gateway_status = await adapter.gateway_status()
+            assert gateway_status["onOffGridStatus"] == 0
+            assert gateway_status["manualOffGridStatus"] == 0
+            assert gateway_status["showButton"] is True
+            async with AsyncModbusTcpClient("127.0.0.1", port=modbus_port) as modbus:
+
+                async def plant_grid_status() -> int:
+                    response = await modbus.read_input_registers(GridStatus.ADDRESS, count=1, device_id=Constants.PLANT_DEVICE_ADDRESS)
+                    assert not response.isError()
+                    return response.registers[0]
+
+                assert (await adapter.set_gateway_off_grid(True))["data"] == 0
+                assert (await adapter.gateway_status())["manualOffGridStatus"] == 1
+                await asyncio.sleep(0.2)
+                assert (await adapter.gateway_status())["onOffGridStatus"] == 2
+                assert await plant_grid_status() == 2
+
+                assert (await adapter.set_gateway_off_grid(False))["data"] == 0
+                assert (await adapter.gateway_status())["onOffGridStatus"] == 1
+                assert await plant_grid_status() == 1
+                await asyncio.sleep(0.2)
+                assert (await adapter.gateway_status())["onOffGridStatus"] == 0
+                assert await plant_grid_status() == 0
 
             modes = await adapter.available_operational_modes()
             assert len(modes["defaultWorkingModes"]) == 5  # "Custom Operation Mode" (value == "9") should be filtered out

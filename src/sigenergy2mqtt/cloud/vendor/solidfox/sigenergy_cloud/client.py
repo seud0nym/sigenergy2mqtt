@@ -359,6 +359,28 @@ class SigenergyCloudClient:
         """
         return await self._station_data("GET", "device/gateway/{station_id}")
 
+    async def gateway_status(self) -> dict[str, Any]:
+        """Return the gateway's on/off-grid status.
+
+        Observed ``onOffGridStatus`` values: 0 on-grid, 1 returning to the grid,
+        2 off-grid. Observed ``manualOffGridStatus`` values: 0 no manual request
+        yet, 1 going off-grid, 2 last manual request completed (it stays 2 after
+        returning to the grid). Other keys: ``isSupportSignal``, ``doorStatus``,
+        ``onOffGridControlMode`` and ``showButton``.
+        """
+        return await self._station_data("GET", "device/gateway/gateway-status", station_query=True)
+
+    async def set_gateway_off_grid(self, off_grid: bool) -> dict[str, Any]:
+        """Manually take the plant off the grid, or return it to the grid.
+
+        The API's ``onGridState`` is 1 for "Go Off-Grid" and 0 for "Go On-Grid".
+        """
+        return await self._envelope(
+            "POST",
+            "device/gateway/ongrid-state/update",
+            json={"onGridState": int(off_grid), "stationId": self._station_id_int()},
+        )
+
     async def device_dynamic_info(self, device_type: int, sn_code: str) -> dict[str, Any]:
         """Return live information for one topology device."""
         data = await self._data(

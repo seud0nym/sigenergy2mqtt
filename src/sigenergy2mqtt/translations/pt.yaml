@@ -659,6 +659,19 @@ class:
     name: Estado da comunicação
   GatewayFirmwareVersion:
     name: Versão do firmware
+  GatewayGridConnectionControl:
+    attributes:
+      comment: 'Valores válidos: go_off_grid, go_on_grid. Ignorado, a menos que o gateway permita a alteração.'
+    name: Ligação à rede
+    name_off: Desligar da rede
+    name_on: Ligar à rede
+  GatewayGridConnectionStatus:
+    name: Estado da ligação à rede
+    options:
+      '0': Ligado à rede
+      '1': A desligar da rede
+      '2': Desligado da rede
+      '3': A regressar à rede
   GatewayGridCurrent:
     attributes:
       comment: Estado do lado da rede lido a partir do Gateway através da API na nuvem
