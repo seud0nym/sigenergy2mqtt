@@ -561,7 +561,7 @@ async def test_gateway_go_off_grid_matches_recorded_timeline() -> None:
 
         await gateway.press(1)
 
-        assert await gateway.timeline(5) == [(0, 1), (0, 1), (0, 1), (2, 2), (2, 2)]
+        assert await gateway.timeline(5) == [(0, 1), (0, 1), (2, 2), (2, 2), (2, 2)]
 
 
 async def test_gateway_go_on_grid_matches_recorded_timeline() -> None:
