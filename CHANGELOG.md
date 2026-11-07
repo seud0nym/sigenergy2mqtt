@@ -3,6 +3,13 @@
 
 ## [Unreleased]
 
+> [!IMPORTANT]
+> **New opt-in option: Home Assistant child devices** (`home-assistant.child-devices`, default `false`). When enabled, the logical parts of a device (for example PV strings, ESS and the plant grid sensor) appear as child devices of their parent in Home Assistant instead of as separate linked devices. Existing devices are converted in place, keeping entity history, entity IDs, device IDs and automations.
+>
+> **Requires Home Assistant 2026.11.0 or later.** sigenergy2mqtt can't check the version outside the add-on, so do not enable this option on older releases.
+>
+> **Action required if you enable it:** back up Home Assistant first. After restarting sigenergy2mqtt with the option enabled, reload the MQTT integration in Home Assistant (*Settings > Devices & services > MQTT > ⋮ > Reload*) or restart Home Assistant. Switching the option off again needs extra steps; see the [configuration README](https://github.com/seud0nym/sigenergy2mqtt/blob/main/resources/configuration/README.md#opt_home_assistant_child_devices).
+
 ## Added
 
 - Added additional individual battery sensors from Cloud API (Total Discharge Amount and Average Cell Voltage/Temperature)
