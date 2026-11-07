@@ -165,6 +165,10 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         self._update_generation: int = 0
         self._last_propagated_generation: int = 0
         self._read_failed: bool = False
+        # Whether the latest read failed. Unlike `_read_failed`, which each publish
+        # attempt resets, and `_failures`, which only a published state resets,
+        # this is cleared by the next successful read and nothing else.
+        self._read_error: bool = False
 
         # Failure tracking
         self._failures: int = 0
@@ -299,19 +303,22 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         self._last_successful_read_time = now
         self._update_generation += 1
         self._read_failed = False
+        self._read_error = False
 
     def mark_read_failed(self) -> None:
         """Record an unsuccessful read that did not raise an exception."""
         self._read_failed = True
+        self._read_error = True
 
     def is_read_current(self, max_age: float) -> bool:
         """Return whether the latest state comes from a healthy, recent read.
 
         The latest state is retained after a failed read, so it is only current
         when no read has failed since the last successful read, and that read
-        happened within ``max_age`` seconds.
+        happened within ``max_age`` seconds. This reflects read health only:
+        it does not depend on whether the state was published.
         """
-        if self._read_failed or self._failures > 0 or self._last_successful_read_time is None:
+        if self._read_error or self._last_successful_read_time is None:
             return False
         return time.time() - self._last_successful_read_time <= max_age
 
@@ -984,7 +991,14 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         read_generation = self._update_generation
 
         try:
-            published = await self._attempt_publish(mqtt_client, transport, republish)
+            try:
+                published = await self._attempt_publish(mqtt_client, transport, republish)
+            except Exception:
+                # The state could not be acquired (or was rejected, e.g. by the
+                # sanity check), so the retained state is no longer current.
+                if not republish:
+                    self._read_error = True
+                raise
             if published or self._update_generation > read_generation:
                 if republish:
                     self.publish_availability(mqtt_client, "online", force=True)

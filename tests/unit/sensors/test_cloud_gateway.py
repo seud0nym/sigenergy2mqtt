@@ -748,8 +748,10 @@ def test_sensor_read_is_current_only_after_a_recent_healthy_read(monkeypatch: py
     assert sensor.is_read_current(60.0) is False  # latest read failed
 
     sensor.mark_successful_read()
-    sensor._failures = 1
-    assert sensor.is_read_current(60.0) is False  # latest read raised
+    assert sensor.is_read_current(60.0) is True  # recovered
+
+    sensor._failures = 1  # publication failures do not affect read health
+    assert sensor.is_read_current(60.0) is True
 
 
 def test_button_availability_publishes_nothing_without_home_assistant() -> None:
