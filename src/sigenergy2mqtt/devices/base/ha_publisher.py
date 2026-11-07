@@ -6,13 +6,15 @@ import json
 import logging
 from pathlib import Path
 from random import uniform
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import paho.mqtt.client as mqtt
 
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.mqtt import MqttHandler
 from sigenergy2mqtt.sensors.base import Sensor
+
+from .child_devices import ha_child_device_name, publishes_as_ha_child
 
 if TYPE_CHECKING:
     from .device import Device
@@ -38,6 +40,7 @@ class HaPublisherMixin(abc.ABC):
     # Plain attributes provided by the concrete class.
     name: str
     children: list[Device]
+    parent_device: Device | None
     _shutdown_event: asyncio.Event
 
     # Properties and methods that must be implemented by the concrete class.
@@ -172,9 +175,14 @@ class HaPublisherMixin(abc.ABC):
         If debug logging is enabled, the discovery JSON is also written to disk at
         active_config.persistent_state_path for inspection.
 
-        Calls publish_attributes() for this device (without propagating to children,
-        since children will publish their own attributes when their own discovery is
-        published). Recursively calls publish_discovery() on all child devices.
+        Every device, including a child, publishes to its own discovery topic
+        (``{prefix}/device/{unique_id}/config``) with the same component IDs, so the
+        Home Assistant discovery hashes never change. When Home Assistant child
+        devices are enabled and this device is an eligible child, the payload's root
+        ``dev`` is the parent's device info and this device's components are nested
+        in a single ``cdevs`` entry. Nothing is cleared, so Home Assistant sees a
+        discovery update rather than a removal followed by a new discovery. Children
+        are always published recursively after this device.
 
         Args:
             mqtt_client: The MQTT client used for publishing.
@@ -195,9 +203,15 @@ class HaPublisherMixin(abc.ABC):
                 components.update(sensor.get_discovery(mqtt_client))
             if components:
                 discovery: dict[str, Any] = {}
-                discovery["dev"] = self
-                discovery["o"] = active_config.origin
-                discovery["cmps"] = components
+                parent = self.parent_device
+                if parent is not None and publishes_as_ha_child(cast("Device", self)):
+                    discovery["dev"] = parent
+                    discovery["o"] = active_config.origin
+                    discovery["cdevs"] = [{"ids": [self.unique_id], "name": ha_child_device_name(cast("Device", self)), "cmps": components}]
+                else:
+                    discovery["dev"] = self
+                    discovery["o"] = active_config.origin
+                    discovery["cmps"] = components
                 discovery_json = json.dumps(discovery, allow_nan=False, indent=2, sort_keys=False)
                 logger.debug(f"{self.log_identity} publishing discovery ({topic=})")
                 if active_config.log_level == logging.DEBUG:

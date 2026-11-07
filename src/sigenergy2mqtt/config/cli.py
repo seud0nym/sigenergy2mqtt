@@ -122,6 +122,12 @@ def get_parser() -> argparse.ArgumentParser:
         help="Enable auto-discovery in Home Assistant.",
     )
     parser.add_argument(
+        "--hass-child-devices",
+        action="store_true",
+        dest=const.SIGENERGY2MQTT_HASS_CHILD_DEVICES,
+        help="Represent logical device groups as Home Assistant child devices (opt-in migration; disabled by default).",
+    )
+    parser.add_argument(
         "--hass-discovery-prefix",
         nargs="?",
         action="store",

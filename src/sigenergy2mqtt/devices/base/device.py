@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from collections.abc import Awaitable
-from typing import Any, Literal, cast
+from typing import Any, ClassVar, Literal, cast
 
 import paho.mqtt.client as mqtt
 
@@ -55,6 +55,11 @@ class Device(HaPublisherMixin, dict[str, str | list[str]]):
     the sensor registration helpers.
     """
 
+    ha_child_device_eligible: ClassVar[bool] = True
+    """Whether this device, when registered as a child, may be published as a Home
+    Assistant child device (a part of its parent's product). Separate physical
+    products keep their own device linked with ``via_device`` and set this False."""
+
     def __init__(self, name: str, plant_index: int, unique_id: str, manufacturer: str, model: str, protocol_version: ProtocolVersion, **kwargs):
         """Initialise the device and register it in the DeviceRegistry.
 
@@ -79,6 +84,7 @@ class Device(HaPublisherMixin, dict[str, str | list[str]]):
         self.registers: RegisterAccess | None = None if plant_index < 0 or plant_index >= len(active_config.modbus) else active_config.modbus[plant_index].registers
 
         self.children: list[Device] = []
+        self.parent_device: Device | None = None
 
         self.all_sensors: dict[str, Sensor] = {}
         self.group_sensors: dict[str, list[ReadableSensorMixin]] = {}
@@ -314,9 +320,18 @@ class Device(HaPublisherMixin, dict[str, str | list[str]]):
 
     @property
     def via_device(self) -> str | None:
-        """The unique_id of this device's parent device, if it is a child device.
+        """The unique_id of the device this one is linked to with Home Assistant's ``via_device``.
 
-        Returns None if this device has no parent (i.e. is a root device).
+        Set by ``_add_child_device`` and by the device factories (chargers, PID,
+        inverters and PSS are linked to the plant). Not the same as
+        ``parent_device``, which is only set by ``_add_child_device``. A device
+        published as a Home Assistant child device does not publish its own
+        device info, so its ``via_device`` is ignored in that mode, but it is kept
+        so that the ``via_device`` payload can be published again when child
+        devices are disabled or the preflight refuses them. Must never name a
+        device that is published as a Home Assistant child device.
+
+        Returns None if this device is not linked to another device.
         """
         return None if "via_device" not in self else cast(str, self["via_device"])
 
@@ -327,10 +342,11 @@ class Device(HaPublisherMixin, dict[str, str | list[str]]):
     def _add_child_device(self, device: Device) -> None:
         """Register another Device as a child of this device.
 
-        Child devices appear under this device in the Home Assistant device registry
-        via the via_device relationship. A device is only added as a child if it has
-        at least one publishable sensor; devices with no publishable sensors are
-        silently skipped with a debug log.
+        With ``home-assistant.child-devices`` enabled, an eligible child (see
+        ``ha_child_device_eligible``) is published as a Home Assistant child device;
+        otherwise it is a separate device linked with ``via_device``.
+        A device is only added as a child if it has at least one publishable sensor;
+        devices with no publishable sensors are silently skipped with a debug log.
 
         Args:
             device: The device to register as a child.
@@ -342,7 +358,9 @@ class Device(HaPublisherMixin, dict[str, str | list[str]]):
             raise ValueError("Cannot add self as a child device")
         sensors = device.get_all_sensors(search_children=True)
         if any(s.publishable for s in sensors.values()):
+            # Always set: child-device mode is only decided by the preflight at startup
             device.via_device = self.unique_id
+            device.parent_device = self
             self.children.append(device)
         else:
             logger.debug(f"{self.log_identity} cannot add child device {device.log_identity} - No publishable sensors defined")

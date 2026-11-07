@@ -24,6 +24,9 @@ logger = logging.getLogger(__name__)
 
 
 class SigenCloudDevice(Device):
+    # A separate physical product: stays a regular device linked with via_device
+    ha_child_device_eligible = False
+
     device_type: int
 
     def __init__(

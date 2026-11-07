@@ -3,12 +3,21 @@
 
 ## [Unreleased]
 
+> [!IMPORTANT]
+> **New opt-in option: Home Assistant child devices** (`home-assistant.child-devices`, default `false`). When enabled, the logical parts of a device (for example PV strings, ESS and the plant grid sensor) appear as child devices of their parent in Home Assistant instead of as separate linked devices. Existing devices are converted in place, keeping entity history, entity IDs, device IDs and automations.
+>
+> **Requires Home Assistant 2026.11.0 or later.** sigenergy2mqtt can't check the version outside the add-on, so do not enable this option on older releases.
+>
+> **Action required if you enable it:** back up Home Assistant first. After restarting sigenergy2mqtt with the option enabled, reload the MQTT integration in Home Assistant (*Settings > Devices & services > MQTT > ⋮ > Reload*) or restart Home Assistant. Switching the option off again needs extra steps; see the [configuration README](https://github.com/seud0nym/sigenergy2mqtt/blob/main/resources/configuration/README.md#opt_home_assistant_child_devices).
+
 ## Added
 
 - Added additional individual battery sensors from Cloud API (Total Discharge Amount and Average Cell Voltage/Temperature)
 - Added battery export limitation control from Cloud API
 - Added Reset button to Diagnostics web page
 - Added visibility of unpublishable and unsupported sensors to Diagnostics sensor debug logging page
+- Added opt-in Home Assistant child-device discovery via `home-assistant.child-devices` (requires Home Assistant 2026.11.0+; legacy `via_device` hierarchy remains the default). Existing devices are converted in place after an MQTT integration reload, preserving entity history, device IDs and automations
+- Added a persistent installation-cohort marker to support a future safe child-device default change
 
 ### Fixed
 
@@ -26,9 +35,10 @@
 - Sensors now publish individual availability to Home Assistant, and will be marked unavailable if state publishing fails
 - Unchanged states are now only published every 60 seconds to reduce network traffic and MQTT broker load
 - Updated aiohttp from 3.14.4 to 3.14.5
-- Updated pycryptodome from 3.24.0 to 4.2.0
-- Updated pymodbus from 3.15.0 to 3.16.1
-- Updated pydantic-settings from 2.15.0 to 2.16.1
+- Updated paho-mqtt from 2.1.0 to 2.2.0
+- Updated pycryptodome from 3.24.0 to 4.3.0
+- Updated pymodbus from 3.15.0 to 3.16.2
+- Updated pydantic-settings from 2.15.0 to 2.16.2
 
 ---
 

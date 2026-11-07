@@ -3,10 +3,11 @@ import logging
 from sigenergy2mqtt.common import service_health_registry
 from sigenergy2mqtt.config import active_config, initialize_async
 from sigenergy2mqtt.devices import DeviceRegistry as device_registry
+from sigenergy2mqtt.devices.base.child_devices import child_device_migration
 from sigenergy2mqtt.diagnostics import diagnostics_registry
 from sigenergy2mqtt.monitor import MonitorService
 from sigenergy2mqtt.mqtt import mqtt_health_registry, reset_mqtt_reconnection_interrupt
-from sigenergy2mqtt.persistence import state_store
+from sigenergy2mqtt.persistence import Category, state_store
 
 from .device_setup import setup_devices
 from .device_thread import start
@@ -16,6 +17,26 @@ from .service_setup import setup_services, setup_signals
 from .thread_config import thread_config_registry
 
 logger = logging.getLogger(__name__)
+
+_INSTALLATION_COHORT_KEY = "installation-cohort"
+_INSTALLATION_COHORTS = {"legacy", "fresh"}
+
+
+async def _ensure_installation_cohort() -> str | None:
+    """Persist whether the existing state store predates child-device discovery."""
+    cohort = await state_store.load(Category.CONFIG, _INSTALLATION_COHORT_KEY)
+    if cohort in _INSTALLATION_COHORTS:
+        return cohort
+
+    has_prior_state = state_store.has_persisted_entries()
+    if has_prior_state is None:
+        logger.warning("Installation cohort could not be determined because persisted state is unavailable; leaving the marker unset")
+        return None
+
+    cohort = "legacy" if has_prior_state else "fresh"
+    await state_store.save(Category.CONFIG, _INSTALLATION_COHORT_KEY, cohort)
+    logger.info(f"Recorded installation cohort: {cohort}")
+    return cohort
 
 
 # ---------------------------------------------------------------------------
@@ -63,10 +84,15 @@ async def async_main() -> None:
             active_config.persistent_state_path,
             active_config.persistence,
         )
+        installation_cohort = await _ensure_installation_cohort()
 
         seen_serial_numbers: set[str] = set()
         configs, protocol_version = await setup_devices(seen_serial_numbers)
         configs = setup_services(configs, protocol_version)
+
+        # Must run before any discovery is published: a failed preflight falls back to
+        # the legacy via_device payloads without having changed anything.
+        await child_device_migration.prepare(device_registry.all())
 
         setup_signals(configs)
 
@@ -74,6 +100,8 @@ async def async_main() -> None:
 
         if active_config.clean:
             await state_store.clean()
+            if installation_cohort is not None:
+                await state_store.save(Category.CONFIG, _INSTALLATION_COHORT_KEY, installation_cohort)
             await MonitorService.clean()
 
         # Shutdown StateStore

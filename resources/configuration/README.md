@@ -529,6 +529,25 @@ When editing percentage sensors, use a numeric entry box to change the value (tr
 </table>
 If true, sigenergy2mqtt will publish auto-discovery messages for Home Assistant to automatically configure the devices and entities.
 
+<a id="opt_home_assistant_child_devices"></a>
+### Child Devices
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--hass-child-devices</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_HASS_CHILD_DEVICES</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>home-assistant.child-devices</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
+Represent the logical parts of a device (for example the PV strings and ESS of an inverter, or the grid sensor and statistics of a plant) as Home Assistant child devices instead of separate devices linked with `via_device`. Separate physical products (inverters, chargers, the cloud gateway and cloud inverters/batteries) remain devices linked with `via_device`. This setting defaults to false and requires **Home Assistant 2026.11.0 or later**.
+
+Migration keeps entity history, entity IDs, device IDs, areas, user-set names and device-based automations: each child keeps its discovery topic and component IDs, and only the payload changes, so Home Assistant converts the existing device to a child device in place. Nothing is deleted. Home Assistant only performs that conversion when the MQTT integration loads, so after the first start with this option enabled, **reload the MQTT integration** (Settings &gt; Devices &amp; services &gt; MQTT &gt; &#8942; &gt; Reload) or restart Home Assistant. Until then Home Assistant logs `Unable to register MQTT device` warnings and the entities keep working unchanged.
+
+Before publishing anything, sigenergy2mqtt checks that the device hierarchy meets Home Assistant's child-device rules and, when running as a Home Assistant add-on, that Home Assistant is new enough. If a check fails, or the add-on can't read the Home Assistant version (for example because Home Assistant is still starting), the option is ignored for that run, the reason is logged and the existing discovery is published unchanged; restart sigenergy2mqtt once Home Assistant is running to retry. Once child-device discovery has been published, a failed version read no longer reverts it, because Home Assistant can't apply the old payloads to converted child devices. Outside the add-on the version can't be checked: do not enable this option on older Home Assistant releases, which reject child-device discovery and stop discovering those entities after a restart (their history is kept, and disabling the option again restores them).
+
+Back up Home Assistant before enabling. Home Assistant can't convert a child device back to a regular device, so to roll back: set this option to false and restart sigenergy2mqtt, delete each sigenergy2mqtt child device in Home Assistant, then reload the MQTT integration. The devices return as regular devices with the same device IDs, entity IDs and history. Until the child devices are deleted, the affected entities stay on their child devices and become unavailable after a restart or reload.
+
+An installation-cohort marker is stored in the persistent state store so a future release can distinguish installations that predate child-device discovery. The marker is preserved by `--clean`; removing all persisted state also removes the marker.
+
 <a id="opt_home_assistant_entity_id_prefix"></a>
 ### Entity Id Prefix
 <table>

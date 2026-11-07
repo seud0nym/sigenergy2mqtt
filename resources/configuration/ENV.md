@@ -29,6 +29,7 @@ Environment variables override the configuration file, but *not* command line op
 | Name | Description | Since |
 |------|-------------|-------|
 | `SIGENERGY2MQTT_HASS_ENABLED` | Set to `true` to enable auto-discovery in Home Assistant. [<sup>(More…)</sup>](README.md#opt_home_assistant_enabled) | 2025.5.12 |
+| `SIGENERGY2MQTT_HASS_CHILD_DEVICES` | Set to `true` to represent logical subdevices as Home Assistant child devices. Defaults to `false`, retaining the legacy `via_device` hierarchy. [<sup>(More…)</sup>](README.md#opt_home_assistant_child_devices) | 2026.11.5 |
 | `SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX` | The Home Assistant MQTT Discovery topic prefix to use (default: `homeassistant`) [<sup>(More…)</sup>](README.md#opt_home_assistant_discovery_prefix) | 2025.5.12 |
 | `SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX` | The prefix to use for Home Assistant entity names. Example: A prefix of `prefix` will prepend 'prefix ' to names (default: '') [<sup>(More…)</sup>](README.md#opt_home_assistant_device_name_prefix) | 2025.5.12 |
 | `SIGENERGY2MQTT_HASS_ENTITY_ID_PREFIX` | The prefix to use for Home Assistant entity IDs. Example: A prefix of `prefix` will prepend 'prefix_' to entity IDs (default: `sigen`) [<sup>(More…)</sup>](README.md#opt_home_assistant_entity_id_prefix) | 2025.5.12 |

@@ -80,6 +80,7 @@ class CloudControl(Device):
             self._add_child_device(child)
             if isinstance(child, SigenCloudDevice) and child._pending_info and child not in self.children:
                 child.via_device = self.unique_id
+                child.parent_device = self
                 self.children.append(child)
 
     def schedule(self, transport, mqtt_client):

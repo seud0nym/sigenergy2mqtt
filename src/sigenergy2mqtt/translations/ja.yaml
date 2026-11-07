@@ -583,7 +583,7 @@ class:
       source_range: Modbusレジスタ {start}-{end}
     name: 放電カットオフ率
   ESSPreHeating:
-    name: Sigenergy Plant ESS 予熱 {plant_suffix}
+    name: Sigenergy システム ESS 予熱 {plant_suffix}
   ESSPreHeatingAdvanceEnable:
     attributes:
       comment: '0: 無効、1: 有効。予熱モードが手動の場合に有効になります。'
@@ -787,7 +787,7 @@ class:
       '2': 未知
       '3': アイドル状態
   GridCode:
-    name: Sigenergyシステム 系統規程 {plant_suffix}
+    name: Sigenergy システム 系統規程 {plant_suffix}
   GridCodeHVRT:
     attributes:
       source: Modbusレジスタ {address}
@@ -957,7 +957,7 @@ class:
     name: 系統電力損失ロックアウトアラームクリア
     name_on: クリア
   GridSensor:
-    name: Sigenergyシステム 系統センサー {plant_suffix}
+    name: Sigenergy システム 系統センサー {plant_suffix}
   GridSensorActivePower:
     attributes:
       comment: "系統センサーで系統からシステムへのチェックポイントで収集されたデータ；>0 系統から購入；<0 系統へ売電"
@@ -2578,7 +2578,7 @@ class:
       source: 発電所に関連付けられたすべてのインバーターのInverterSelfConsumedPowerの合計
     name: 自家消費電力
   PlantStatistics:
-    name: Sigenergyシステム 統計 {plant_suffix}
+    name: Sigenergy システム 統計 {plant_suffix}
   PlantStatus:
     attributes:
       comment: 0:停止 1:開始
@@ -2998,6 +2998,8 @@ cli:
     help: '診断 Web サーバーのリスニング ポート (デフォルト: 8502)'
   SIGENERGY2MQTT_DIAGNOSTICS_REFRESH_INTERVAL:
     help: '診断 Web ページの更新間隔 (秒単位) (デフォルト: 5.0)'
+  SIGENERGY2MQTT_HASS_CHILD_DEVICES:
+    help: 論理デバイスグループを Home Assistant の子デバイスとして表現します（オプトイン方式の移行；デフォルトでは無効）。
   SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX:
     help: 'Home Assistantエンティティ名のプレフィックス'
   SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX:

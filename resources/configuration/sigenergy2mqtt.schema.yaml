@@ -305,6 +305,9 @@ properties:
       discovery-only:
         type: boolean
         default: false
+      child-devices:
+        type: boolean
+        default: false
 
   sensor-debug-logging:
     type: boolean

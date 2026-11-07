@@ -23,6 +23,7 @@ class TestHomeAssistantConfig:
         assert config.entity_id_prefix == "sigen"
         assert config.unique_id_prefix == "sigen"
         assert config.sigenergy_local_modbus_naming is False
+        assert config.child_devices is False
 
     def test_enabled(self):
         config = HomeAssistantConfig(enabled=True)
@@ -40,6 +41,7 @@ class TestHomeAssistantConfig:
             unique_id_prefix="test_unique",
             use_simplified_topics=True,
             sigenergy_local_modbus_naming=True,
+            child_devices=True,
         )
         assert config.device_name_prefix == "MyHome"
         assert config.discovery_only is False
@@ -51,23 +53,23 @@ class TestHomeAssistantConfig:
         assert config.unique_id_prefix == "test_unique"
         assert config.use_simplified_topics is False
         assert config.sigenergy_local_modbus_naming is True
+        assert config.child_devices is True
 
     def test_alias_keys(self):
         """Fields can also be set via their YAML alias names."""
-        config = HomeAssistantConfig(
-            **{
-                "enabled": True,
-                "device-name-prefix": "MyHome",
-                "discovery-prefix": "ha",
-                "edit-pct-box": True,
-                "entity-id-prefix": "sigen",
-                "republish-discovery-interval": 300,
-                "sensors-enabled-by-default": True,
-                "unique-id-prefix": "test_unique",
-                "use-simplified-topics": True,
-                "sigenergy-local-modbus-naming": True,
-            }
-        )
+        config = HomeAssistantConfig(**{
+            "enabled": True,
+            "device-name-prefix": "MyHome",
+            "discovery-prefix": "ha",
+            "edit-pct-box": True,
+            "entity-id-prefix": "sigen",
+            "republish-discovery-interval": 300,
+            "sensors-enabled-by-default": True,
+            "unique-id-prefix": "test_unique",
+            "use-simplified-topics": True,
+            "sigenergy-local-modbus-naming": True,
+            "child-devices": True,
+        })
         assert config.device_name_prefix == "MyHome"
         assert config.discovery_prefix == "ha"
         assert config.edit_percentage_with_box is True
@@ -77,6 +79,7 @@ class TestHomeAssistantConfig:
         assert config.unique_id_prefix == "test_unique"
         assert config.use_simplified_topics is False
         assert config.sigenergy_local_modbus_naming is True
+        assert config.child_devices is True
 
     def test_sigenergy_local_modbus_naming_disables_simplified_topics(self, caplog):
         with caplog.at_level(logging.WARNING):
@@ -92,12 +95,14 @@ class TestHomeAssistantConfig:
             edit_percentage_with_box=False,
             enabled_by_default=False,
             use_simplified_topics=False,
+            child_devices=False,
         )
         assert config.enabled is True
         assert config.discovery_only is False
         assert config.edit_percentage_with_box is False
         assert config.enabled_by_default is False
         assert config.use_simplified_topics is False
+        assert config.child_devices is False
 
 
 class TestMqttConfig:

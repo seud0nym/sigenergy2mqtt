@@ -787,7 +787,7 @@ class:
       '2': Desconhecido
       '3': Parado
   GridCode:
-    name: Código de Rede Central Sigenergy {plant_suffix}
+    name: Código de Rede Planta Sigenergy {plant_suffix}
   GridCodeHVRT:
     attributes:
       source: Registo Modbus {address}
@@ -957,7 +957,7 @@ class:
     name: Alarme de bloqueio de perda de energia da rede apagado
     name_on: Claro
   GridSensor:
-    name: Sensor de Rede Central Sigenergy {plant_suffix}
+    name: Sensor de Rede Planta Sigenergy {plant_suffix}
   GridSensorActivePower:
     attributes:
       comment: "Dados recolhidos do sensor de rede no ponto de controlo rede/sistema; >0 compra da rede; <0 venda à rede"
@@ -2578,7 +2578,7 @@ class:
       source: "Σ de InverterSelfConsumedPower em todos os Inversores associados à Central"
     name: Potencia Autoconsumida
   PlantStatistics:
-    name: Estatísticas Central Sigenergy {plant_suffix}
+    name: Estatísticas Planta Sigenergy {plant_suffix}
   PlantStatus:
     attributes:
       comment: 0:Parar 1:Iniciar
@@ -2998,6 +2998,8 @@ cli:
     help: 'A porta de escuta do servidor web de diagnóstico (padrão: 8502)'
   SIGENERGY2MQTT_DIAGNOSTICS_REFRESH_INTERVAL:
     help: 'O intervalo de atualização da página da Web de diagnóstico em segundos (padrão: 5,0)'
+  SIGENERGY2MQTT_HASS_CHILD_DEVICES:
+    help: Representar grupos lógicos de dispositivos como dispositivos secundários do Home Assistant (migração opcional; desativada por predefinição).
   SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX:
     help: 'Prefixo para nomes de entidade do Home Assistant'
   SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX:

@@ -21,6 +21,9 @@ from .discovery import CloudDiscovery
 class Gateway(Device):
     """Gateway child device populated from its discovery response."""
 
+    # A separate physical product: stays a regular device linked with via_device
+    ha_child_device_eligible = False
+
     @classmethod
     def from_discovery(cls, plant_index: int, station_id: str, discovery: CloudDiscovery) -> "Gateway | None":
         if not discovery.gateway_info:

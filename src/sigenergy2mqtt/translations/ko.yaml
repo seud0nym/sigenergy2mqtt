@@ -583,7 +583,7 @@ class:
       source_range: Modbus 레지스터 {start}-{end}
     name: 방전 차단율
   ESSPreHeating:
-    name: Sigenergy Plant ESS 예열 {plant_suffix}
+    name: Sigenergy 발전소 ESS 예열 {plant_suffix}
   ESSPreHeatingAdvanceEnable:
     attributes:
       comment: '0: 비활성화, 1: 활성화. 예열 모드가 수동일 때 적용됩니다.'
@@ -2998,6 +2998,8 @@ cli:
     help: '진단 웹 서버 수신 포트(기본값: 8502)'
   SIGENERGY2MQTT_DIAGNOSTICS_REFRESH_INTERVAL:
     help: '진단 웹 페이지 새로 고침 간격(초)(기본값: 5.0)'
+  SIGENERGY2MQTT_HASS_CHILD_DEVICES:
+    help: 논리적 장치 그룹을 Home Assistant 하위 장치로 표현합니다(선택적 마이그레이션; 기본적으로 비활성화됨).
   SIGENERGY2MQTT_HASS_DEVICE_NAME_PREFIX:
     help: 'Home Assistant 엔티티 이름 접두사'
   SIGENERGY2MQTT_HASS_DISCOVERY_PREFIX:

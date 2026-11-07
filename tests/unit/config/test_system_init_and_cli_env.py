@@ -191,6 +191,15 @@ def test_explicit_cli_options_override_environment():
         assert os.environ[const.SIGENERGY2MQTT_DEBUG_SENSOR] == "OutputType"
 
 
+def test_hass_child_devices_cli_option_enables_child_discovery():
+    with patch.dict(os.environ, {}, clear=True):
+        args = cli.parse_args(["--hass-child-devices"])
+        _promote_cli_to_env(args)
+        settings = Settings()
+
+        assert settings.home_assistant.child_devices is True
+
+
 def test_debug_sensor_cli_option_enables_debug_configuration():
     """Verify the reported CLI combination reaches the resolved settings."""
     with patch.dict(os.environ, {const.SIGENERGY2MQTT_LOG_LEVEL: "INFO"}, clear=True):
@@ -249,6 +258,7 @@ def test_initialize_log_level_invalid_raises():
         import asyncio
 
         from sigenergy2mqtt.config import initialize_async
+
         with pytest.raises(ConfigurationError, match="invalid log level"):
             asyncio.run(initialize_async())
 
@@ -270,6 +280,7 @@ def test_initialize_validate_only_returns_false():
         import asyncio
 
         from sigenergy2mqtt.config import initialize_async
+
         with pytest.raises(ConfigurationError, match="At least one Modbus device must be configured"):
             asyncio.run(initialize_async())
 

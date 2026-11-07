@@ -295,6 +295,39 @@ async def test_all_keys(temp_state_dir, mock_persistence_config):
 
 
 @pytest.mark.asyncio
+async def test_has_persisted_entries(temp_state_dir, mock_persistence_config):
+    mock_persistence_config.mqtt_redundancy = False
+    store = StateStore()
+    await store.initialise(temp_state_dir, mock_persistence_config)
+
+    assert store.has_persisted_entries() is False
+    await store.save("config", "installation-cohort", "legacy")
+    assert store.has_persisted_entries() is True
+
+
+@pytest.mark.asyncio
+async def test_has_persisted_entries_excludes_generated_auto_discovery_cache(temp_state_dir, mock_persistence_config):
+    mock_persistence_config.mqtt_redundancy = False
+    store = StateStore()
+    await store.initialise(temp_state_dir, mock_persistence_config)
+    temp_state_dir.mkdir(parents=True, exist_ok=True)
+    (temp_state_dir / "auto-discovery.yaml").write_text("[]", encoding="utf-8")
+
+    assert store.has_persisted_entries() is False
+
+
+def test_has_persisted_entries_unknown_until_mqtt_cache_warms(temp_state_dir, mock_persistence_config):
+    store = StateStore()
+    store._disk = MagicMock()
+    store._disk.all_keys.return_value = []
+    store._initialised = True
+    store._mqtt_enabled = True
+    store._mqtt_cache_warmed = False
+
+    assert store.has_persisted_entries() is None
+
+
+@pytest.mark.asyncio
 async def test_disk_primary_false(temp_state_dir, mock_persistence_config):
     from unittest.mock import MagicMock, patch
 
