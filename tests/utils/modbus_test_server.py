@@ -95,7 +95,7 @@ import sys
 import threading
 import time
 from collections.abc import Awaitable, Callable
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 from pathlib import Path
 from typing import Any, ClassVar
 
@@ -570,6 +570,8 @@ class CloudApiTestServer:
         self._gateway_transition: tuple[float, dict[str, int], int] | None = None
         # Writes the plant's Modbus GridStatus register when both servers are running
         self.plant_grid_status_writer: Callable[[int], Awaitable[None]] | None = None
+        # Completes a transition at its deadline, even when no cloud request arrives
+        self._gateway_transition_timer: asyncio.Task[None] | None = None
         self.battery_export_limitation = {
             "currentEnable": False,
             "ownerSetEnable": None,
@@ -709,6 +711,29 @@ class CloudApiTestServer:
             self._gateway_transition = None
             await self._write_plant_grid_status(plant_grid_status)
 
+    def _start_gateway_transition_timer(self) -> None:
+        """Settle the transition in progress at its deadline, independent of polling.
+
+        Without this, the transition would only complete when a cloud request
+        arrives, so a client reading only Modbus would never see GridStatus change.
+        """
+        if self._gateway_transition_timer is None or self._gateway_transition_timer.done():
+            self._gateway_transition_timer = asyncio.get_running_loop().create_task(self._settle_gateway_status_when_due())
+
+    async def _settle_gateway_status_when_due(self) -> None:
+        while self._gateway_transition is not None:
+            # Recheck after each sleep: the deadline belongs to whichever
+            # transition is now in progress, and a fake clock may not have advanced.
+            await asyncio.sleep(max(0.01, self._gateway_transition[0] - self._clock()))
+            await self._settle_gateway_status()
+
+    async def _stop_gateway_transition_timer(self, _app: web.Application | None = None) -> None:
+        if (timer := self._gateway_transition_timer) is not None:
+            self._gateway_transition_timer = None
+            timer.cancel()
+            with suppress(asyncio.CancelledError):
+                await timer
+
     async def get_gateway_status(self, request: web.Request) -> web.Response:
         if (response := await self.authorized(request)) is not None:
             return response
@@ -739,9 +764,11 @@ class CloudApiTestServer:
             if on_grid_state == 1 and grid_status == 0:
                 self.gateway_status["manualOffGridStatus"] = 1
                 self._gateway_transition = (self._clock() + self.gateway_off_grid_seconds, {"onOffGridStatus": 2, "manualOffGridStatus": 2}, 2)
+                self._start_gateway_transition_timer()
             elif on_grid_state == 0 and grid_status == 2:
                 self.gateway_status["onOffGridStatus"] = 1
                 self._gateway_transition = (self._clock() + self.gateway_on_grid_seconds, {"onOffGridStatus": 0}, 0)
+                self._start_gateway_transition_timer()
                 await self._write_plant_grid_status(1)
         return self._success(0)
 
@@ -881,6 +908,7 @@ class CloudApiTestServer:
 
     def app(self) -> web.Application:
         app = web.Application(middlewares=[self.internet_outage_middleware])
+        app.on_cleanup.append(self._stop_gateway_transition_timer)
         app.add_routes([
             web.get("/cloud-api-test", self.control_dashboard),
             web.get("/cloud-api-test/", self.control_dashboard),

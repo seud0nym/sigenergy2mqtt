@@ -87,15 +87,16 @@ async def test_mysigen_cloud_adapter_against_test_server(
                 assert (await adapter.set_gateway_off_grid(True))["data"] == 0
                 assert (await adapter.gateway_status())["manualOffGridStatus"] == 1
                 await asyncio.sleep(0.2)
-                assert (await adapter.gateway_status())["onOffGridStatus"] == 2
+                # Read Modbus first: the transition must complete without a cloud request.
                 assert await plant_grid_status() == 2
+                assert (await adapter.gateway_status())["onOffGridStatus"] == 2
 
                 assert (await adapter.set_gateway_off_grid(False))["data"] == 0
-                assert (await adapter.gateway_status())["onOffGridStatus"] == 1
                 assert await plant_grid_status() == 1
+                assert (await adapter.gateway_status())["onOffGridStatus"] == 1
                 await asyncio.sleep(0.2)
-                assert (await adapter.gateway_status())["onOffGridStatus"] == 0
                 assert await plant_grid_status() == 0
+                assert (await adapter.gateway_status())["onOffGridStatus"] == 0
 
             modes = await adapter.available_operational_modes()
             assert len(modes["defaultWorkingModes"]) == 5  # "Custom Operation Mode" (value == "9") should be filtered out

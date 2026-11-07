@@ -141,15 +141,25 @@ class MySigenCloudAdapter:
     def connected(self) -> bool:
         return self._connected
 
-    async def connect(self) -> None:
-        async with self._connect_lock:
-            await self._connect_locked()
+    async def connect(self, *, wait_for_rate_limit: bool = True) -> None:
+        """Connect to the cloud API, if not already connected.
 
-    async def _connect_locked(self) -> None:
+        With ``wait_for_rate_limit=False``, an active cooldown raises
+        :class:`CloudControlRateLimitedError` instead of delaying the login.
+        """
+        if not wait_for_rate_limit and not self._connected:
+            self._raise_if_rate_limited()
+        async with self._connect_lock:
+            await self._connect_locked(wait_for_rate_limit=wait_for_rate_limit)
+
+    async def _connect_locked(self, *, wait_for_rate_limit: bool = True) -> None:
         """Connect while the caller holds ``_connect_lock``."""
         if self._connected:
             return
-        await self._wait_for_rate_limit()
+        if wait_for_rate_limit:
+            await self._wait_for_rate_limit()
+        else:
+            self._raise_if_rate_limited()
         started = time.monotonic()
         try:
             await self._client.connect()
@@ -173,8 +183,14 @@ class MySigenCloudAdapter:
         self._connection_generation += 1
         await Metrics.cloud_connection(connected=True)
 
-    async def _reconnect(self, failed_generation: int) -> None:
-        """Replace an invalid cloud login unless another task already did so."""
+    async def _reconnect(self, failed_generation: int, *, wait_for_rate_limit: bool = True) -> None:
+        """Replace an invalid cloud login unless another task already did so.
+
+        With ``wait_for_rate_limit=False``, an active cooldown raises
+        :class:`CloudControlRateLimitedError` instead of delaying the login.
+        """
+        if not wait_for_rate_limit:
+            self._raise_if_rate_limited()
         async with self._connect_lock:
             logger.debug(
                 f"Reconnecting to {self._client.base_url} unofficial mySigen Cloud API v{MySigenCloudAdapter.APP_VERSION} (_connection_generation={self._connection_generation}, failed_generation={failed_generation})",
@@ -183,7 +199,7 @@ class MySigenCloudAdapter:
                 return
             self._connected = False
             await Metrics.cloud_connection(connected=False, reconnect=True)
-            await self._connect_locked()
+            await self._connect_locked(wait_for_rate_limit=wait_for_rate_limit)
 
     async def _invalidate_connection(self, failed_generation: int) -> None:
         """Invalidate a failed login without overwriting a newer connection."""
@@ -339,7 +355,7 @@ class MySigenCloudAdapter:
         """
         if not wait_for_rate_limit:
             self._raise_if_rate_limited()
-        await self.connect()
+        await self.connect(wait_for_rate_limit=wait_for_rate_limit)
         generation = self._connection_generation
         operation_label = self._operation_name(operation, operation_name=operation_name)
         for attempt in range(2):
@@ -371,7 +387,7 @@ class MySigenCloudAdapter:
             except SigenergyCloudAuthError as exc:
                 await Metrics.cloud_query_error(auth=True)
                 if attempt == 0:
-                    await self._reconnect(generation)
+                    await self._reconnect(generation, wait_for_rate_limit=wait_for_rate_limit)
                     generation = self._connection_generation
                     continue
                 await self._invalidate_connection(generation)

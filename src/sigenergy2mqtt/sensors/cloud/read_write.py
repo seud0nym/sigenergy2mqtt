@@ -862,7 +862,8 @@ class GatewayGridConnectionControl(CloudWriteOnlySensor):
 
     Pressing a button physically changes the site's grid connection. Availability
     in Home Assistant follows the polled gateway status and the plant's Modbus
-    GridStatus (when it is available). Because availability can lag and is not
+    GridStatus (when it is available, which also requires its latest read to
+    have succeeded recently). Because availability can lag and is not
     enforced for direct MQTT commands, every press applies the same rule to a
     fresh gateway status, and sends nothing if that read fails or the cloud is
     in a rate-limit cooldown.
@@ -870,6 +871,7 @@ class GatewayGridConnectionControl(CloudWriteOnlySensor):
 
     _PLANT_ON_GRID = 0  # GridStatus "On Grid"
     _PLANT_OFF_GRID_MANUAL = 2  # GridStatus "Off Grid (manual)"; "Off Grid (auto)" means an outage or a return to the grid in progress
+    _PLANT_MIN_MAX_AGE = 60.0  # seconds; GridStatus older than the larger of this and 3 scan intervals cannot permit a change
 
     def __init__(self, plant_index: int, station_id: str, status_sensor: GatewayGridConnectionStatus) -> None:
         object_id, unique_id = _identity(plant_index, station_id, "gateway_grid_connection")
@@ -932,7 +934,16 @@ class GatewayGridConnectionControl(CloudWriteOnlySensor):
             return False
         if self._plant_grid_status is None:
             return True
+        if not self._plant_grid_status.is_read_current(self._plant_max_age()):
+            return False
         return self._plant_grid_status.latest_raw_state == (self._PLANT_ON_GRID if off_grid else self._PLANT_OFF_GRID_MANUAL)
+
+    def _plant_max_age(self) -> float:
+        """Return how old the plant's GridStatus may be and still permit a button."""
+        scan_interval = getattr(self._plant_grid_status, "scan_interval", None)
+        if not isinstance(scan_interval, (int, float)) or scan_interval <= 0:
+            return self._PLANT_MIN_MAX_AGE
+        return max(self._PLANT_MIN_MAX_AGE, 3.0 * scan_interval)
 
     def publish_button_availability(self, mqtt_client: Client) -> None:
         """Publish whether each button can currently be pressed."""
@@ -955,8 +966,10 @@ class GatewayGridConnectionControl(CloudWriteOnlySensor):
         try:
             status = await port.gateway_status(wait_for_rate_limit=False)
             if not self._permits(off_grid, status):
-                plant_grid_status = None if self._plant_grid_status is None else self._plant_grid_status.latest_raw_state
-                logger.warning(f"{self.log_identity} ignoring {payload}: gateway status is {status!r} and plant GridStatus is {plant_grid_status!r}")
+                plant = self._plant_grid_status
+                plant_grid_status = None if plant is None else plant.latest_raw_state
+                plant_current = None if plant is None else plant.is_read_current(self._plant_max_age())
+                logger.warning(f"{self.log_identity} ignoring {payload}: gateway status is {status!r} and plant GridStatus is {plant_grid_status!r} (current={plant_current})")
                 return False
             await port.set_gateway_off_grid(off_grid)
         except CloudControlRateLimitedError as exc:

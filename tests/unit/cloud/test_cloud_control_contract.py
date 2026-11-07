@@ -902,3 +902,34 @@ async def test_gateway_command_proceeds_once_cooldown_has_passed(mysigen_adapter
     mysigen_adapter._rate_limit_until = time.monotonic() - 1.0  # type: ignore[reportPrivateUsage]
 
     assert await mysigen_adapter.set_gateway_off_grid(False) == {"code": 0, "data": 0}
+
+
+@pytest.mark.asyncio
+async def test_gateway_command_reauthentication_fails_fast_during_cooldown(mysigen_adapter: MySigenCloudAdapter) -> None:
+    mysigen_adapter._connected = True  # type: ignore[reportPrivateUsage]
+    mysigen_adapter._connection_generation = 1  # type: ignore[reportPrivateUsage]
+
+    async def terminated_while_a_poll_is_rate_limited(_off_grid: bool) -> dict[str, int]:
+        # A concurrent poll records a 429 while this command is in flight.
+        mysigen_adapter._rate_limit_until = time.monotonic() + 900.0  # type: ignore[reportPrivateUsage]
+        raise SigenergyCloudAuthError("session terminated")
+
+    mysigen_adapter._client.set_gateway_off_grid.side_effect = terminated_while_a_poll_is_rate_limited  # type: ignore[reportPrivateUsage]
+
+    async with asyncio.timeout(1):
+        with pytest.raises(CloudControlRateLimitedError):
+            await mysigen_adapter.set_gateway_off_grid(True)
+
+    mysigen_adapter._client.connect.assert_not_awaited()  # type: ignore[reportPrivateUsage]
+    assert mysigen_adapter._client.set_gateway_off_grid.await_count == 1  # type: ignore[reportPrivateUsage]
+
+
+@pytest.mark.asyncio
+async def test_gateway_command_login_fails_fast_during_cooldown(mysigen_adapter: MySigenCloudAdapter) -> None:
+    mysigen_adapter._rate_limit_until = time.monotonic() + 900.0  # type: ignore[reportPrivateUsage]
+
+    async with asyncio.timeout(1):
+        with pytest.raises(CloudControlRateLimitedError):
+            await mysigen_adapter.connect(wait_for_rate_limit=False)
+
+    mysigen_adapter._client.connect.assert_not_awaited()  # type: ignore[reportPrivateUsage]

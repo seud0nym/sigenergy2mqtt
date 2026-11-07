@@ -411,13 +411,18 @@ def _gateway_status(on_off_grid: int = 0, manual: int = 0, show_button: object =
     }
 
 
+def _plant_sensor(state: int | None, *, current: bool = True) -> MagicMock:
+    """Return a stand-in for the plant's Modbus GridStatus sensor."""
+    return MagicMock(latest_raw_state=state, scan_interval=10, is_read_current=MagicMock(return_value=current))
+
+
 def _grid_control(plant_grid_status: int | None = None) -> GatewayGridConnectionControl:
     status_sensor = GatewayGridConnectionStatus(0, FakeCloudControlPort.station_id)
     status_sensor.configure_mqtt_topics("device")
     sensor = GatewayGridConnectionControl(0, FakeCloudControlPort.station_id, status_sensor)
     sensor.configure_mqtt_topics("device")
     if plant_grid_status is not None:
-        sensor.set_plant_grid_status(MagicMock(latest_raw_state=plant_grid_status))
+        sensor.set_plant_grid_status(_plant_sensor(plant_grid_status))
     return sensor
 
 
@@ -687,13 +692,64 @@ def test_button_availability_through_recorded_round_trip(home_assistant_enabled,
 
 def test_button_availability_is_unavailable_until_plant_grid_status_is_read(home_assistant_enabled) -> None:
     sensor = _grid_control()
-    sensor.set_plant_grid_status(MagicMock(latest_raw_state=None))
+    sensor.set_plant_grid_status(_plant_sensor(None))
     sensor._status_sensor.gateway_status = _gateway_status(0, 0)
     mqtt_client = MagicMock()
 
     sensor.publish_button_availability(mqtt_client)
 
     assert _published_availability(sensor, mqtt_client) == {"go_off_grid": "0", "go_on_grid": "0"}
+
+
+@pytest.mark.parametrize(
+    ("status", "plant_grid_status"),
+    [
+        pytest.param(_gateway_status(0, 0), 0, id="on-grid"),
+        pytest.param(_gateway_status(2, 2), 2, id="off-grid-manual"),
+    ],
+)
+def test_button_availability_is_unavailable_while_plant_grid_status_is_not_current(home_assistant_enabled, status, plant_grid_status: int) -> None:
+    sensor = _grid_control()
+    plant = _plant_sensor(plant_grid_status, current=False)
+    sensor.set_plant_grid_status(plant)
+    sensor._status_sensor.gateway_status = status
+    mqtt_client = MagicMock()
+
+    sensor.publish_button_availability(mqtt_client)
+
+    assert _published_availability(sensor, mqtt_client) == {"go_off_grid": "0", "go_on_grid": "0"}
+    plant.is_read_current.assert_called_with(60.0)
+
+
+def test_plant_grid_status_max_age_follows_its_scan_interval() -> None:
+    sensor = _grid_control()
+    sensor.set_plant_grid_status(MagicMock(scan_interval=5))
+    assert sensor._plant_max_age() == 60.0
+    sensor.set_plant_grid_status(MagicMock(scan_interval=30))
+    assert sensor._plant_max_age() == 90.0
+    sensor.set_plant_grid_status(MagicMock(scan_interval=None))
+    assert sensor._plant_max_age() == 60.0
+
+
+def test_sensor_read_is_current_only_after_a_recent_healthy_read(monkeypatch: pytest.MonkeyPatch) -> None:
+    sensor = GatewayGridConnectionStatus(0, FakeCloudControlPort.station_id)
+    assert sensor.is_read_current(60.0) is False  # never read
+
+    now = 1_000_000.0
+    monkeypatch.setattr("sigenergy2mqtt.sensors.base.sensor.time.time", lambda: now)
+    sensor.mark_successful_read()
+    assert sensor.is_read_current(60.0) is True
+
+    now += 61.0
+    assert sensor.is_read_current(60.0) is False  # too old
+
+    sensor.mark_successful_read()
+    sensor.mark_read_failed()
+    assert sensor.is_read_current(60.0) is False  # latest read failed
+
+    sensor.mark_successful_read()
+    sensor._failures = 1
+    assert sensor.is_read_current(60.0) is False  # latest read raised
 
 
 def test_button_availability_publishes_nothing_without_home_assistant() -> None:
@@ -796,7 +852,26 @@ async def test_refused_press_leaves_buttons_and_polling_unchanged(home_assistant
 )
 async def test_press_is_refused_when_plant_grid_status_disagrees(payload: str, status: dict[str, object], plant_grid_status: int | None) -> None:
     sensor = _grid_control()
-    sensor.set_plant_grid_status(MagicMock(latest_raw_state=plant_grid_status))
+    sensor.set_plant_grid_status(_plant_sensor(plant_grid_status))
+    port = FakeCloudControlPort()
+    port.gateway_status.return_value = status
+
+    assert await _press(sensor, port, payload) is False
+
+    port.set_gateway_off_grid.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("payload", "status", "plant_grid_status"),
+    [
+        pytest.param("go_off_grid", _gateway_status(0, 0), 0, id="go-off-grid"),
+        pytest.param("go_on_grid", _gateway_status(2, 2), 2, id="go-on-grid"),
+    ],
+)
+async def test_press_is_refused_when_plant_grid_status_is_not_current(payload: str, status: dict[str, object], plant_grid_status: int) -> None:
+    sensor = _grid_control()
+    sensor.set_plant_grid_status(_plant_sensor(plant_grid_status, current=False))
     port = FakeCloudControlPort()
     port.gateway_status.return_value = status
 

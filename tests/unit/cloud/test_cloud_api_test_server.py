@@ -718,3 +718,33 @@ async def test_gateway_press_matching_current_state_does_not_write_plant_grid_st
         await gateway.press(0)
 
         api.plant_grid_status_writer.assert_not_awaited()
+
+
+async def test_gateway_transition_completes_without_another_cloud_request(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(CloudApiTestServer, "gateway_off_grid_seconds", 0.05)
+    monkeypatch.setattr(CloudApiTestServer, "gateway_on_grid_seconds", 0.05)
+    api = CloudApiTestServer(None, None)
+    api.plant_grid_status_writer = AsyncMock()
+    written = api.plant_grid_status_writer
+    async with TestClient(TestServer(api.app())) as client:
+        api.access_token = "token"
+        headers = {"Authorization": "Bearer token"}
+        station_id = api.station_home_data["stationId"]
+
+        async def press(on_grid_state: int) -> None:
+            response = await client.post("/device/gateway/ongrid-state/update", json={"onGridState": on_grid_state, "stationId": int(station_id)}, headers=headers)
+            assert response.status == 200
+
+        await press(1)
+        async with asyncio.timeout(1):
+            while api._gateway_transition is not None:
+                await asyncio.sleep(0.01)
+        assert api.gateway_status["onOffGridStatus"] == 2
+        assert [call.args[0] for call in written.await_args_list] == [2]
+
+        await press(0)
+        async with asyncio.timeout(1):
+            while api._gateway_transition is not None:
+                await asyncio.sleep(0.01)
+        assert api.gateway_status["onOffGridStatus"] == 0
+        assert [call.args[0] for call in written.await_args_list] == [2, 1, 0]

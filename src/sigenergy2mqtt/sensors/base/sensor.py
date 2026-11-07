@@ -304,6 +304,17 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         """Record an unsuccessful read that did not raise an exception."""
         self._read_failed = True
 
+    def is_read_current(self, max_age: float) -> bool:
+        """Return whether the latest state comes from a healthy, recent read.
+
+        The latest state is retained after a failed read, so it is only current
+        when no read has failed since the last successful read, and that read
+        happened within ``max_age`` seconds.
+        """
+        if self._read_failed or self._failures > 0 or self._last_successful_read_time is None:
+            return False
+        return time.time() - self._last_successful_read_time <= max_age
+
     @property
     def latest_raw_state(self) -> Any:
         """Get the most recent raw state value."""
