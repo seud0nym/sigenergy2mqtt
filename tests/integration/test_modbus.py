@@ -3,6 +3,7 @@ import logging
 import socket
 
 import pytest
+import pytest_asyncio
 
 from sigenergy2mqtt.modbus.client import ModbusClient
 from tests.utils.modbus_test_server import CustomMqttHandler, run_async_server
@@ -26,14 +27,7 @@ def get_free_port():
         return s.getsockname()[1]
 
 
-@pytest.fixture(scope="module")
-def event_loop():
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
-
-
-@pytest.fixture(scope="module")
+@pytest_asyncio.fixture(scope="module", loop_scope="module")
 async def mock_modbus_server():
     # Start the server in a way that we can connect to it
     mqtt_client = MockMqttClient()

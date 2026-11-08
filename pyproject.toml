@@ -68,6 +68,7 @@ typeCheckingMode = "standard"
 
 [tool.pytest.ini_options]
 addopts = "--dist loadscope"
+asyncio_default_fixture_loop_scope = "function"
 asyncio_mode = "auto"
 markers = [
     "integration: mark a test as an integration test",

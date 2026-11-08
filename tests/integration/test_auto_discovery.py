@@ -4,6 +4,7 @@ import socket
 from unittest.mock import MagicMock, patch
 
 import pytest
+import pytest_asyncio
 
 from sigenergy2mqtt.config import auto_discovery
 from tests.utils.modbus_test_server import CustomMqttHandler, run_async_server
@@ -27,14 +28,7 @@ def get_free_port():
         return s.getsockname()[1]
 
 
-@pytest.fixture(scope="module")
-def event_loop():
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
-
-
-@pytest.fixture(scope="module")
+@pytest_asyncio.fixture(scope="module", loop_scope="module")
 async def mock_modbus_server():
     # Use a dynamic port to avoid binding conflicts if tests run close together
     # But Modbus defaults to 502, we need to tell auto_discovery to search this port.
