@@ -7,11 +7,12 @@ from dataclasses import dataclass
 from pymodbus import FramerType
 from pymodbus.client import AsyncModbusTcpClient
 from pymodbus.client.mixin import ModbusClientMixin
-from pymodbus.exceptions import ModbusException
+from pymodbus.exceptions import ConnectionException, ModbusException, ModbusIOException
 from pymodbus.logging import Log
 from pymodbus.pdu import ExceptionResponse, ModbusPDU
 
 from sigenergy2mqtt.common import InputType
+from sigenergy2mqtt.common.outage import OutageTracker, outage_tracker
 
 from .read_ahead import ReadAhead
 
@@ -45,6 +46,9 @@ class ModbusClient(AsyncModbusTcpClient, ModbusClientMixin):
     specific ranges when :meth:`bypass_read_ahead` is called.
     """
 
+    # Class-level default so instances created without __init__ (e.g. in tests) behave as untracked
+    _outage: OutageTracker | None = None
+
     def _trace_packet_handler(self, is_send: bool, data: bytes) -> bytes:
         """Format and emit raw packet debug logs when tracing is enabled.
 
@@ -69,7 +73,15 @@ class ModbusClient(AsyncModbusTcpClient, ModbusClientMixin):
         The constructor enforces socket framer mode and installs this instance's
         packet trace handler. It also initializes the read-ahead cache and cache
         counters used by :meth:`_read_registers`.
+
+        Pass ``track_outages=True`` for long-lived runtime clients: connectivity
+        failures and recoveries are then reported to the shared
+        :class:`~sigenergy2mqtt.common.outage.OutageTracker` for this host, so
+        that an outage is logged once when it starts and once when it ends.
+        Short-lived clients (validation, probing) leave it off so that expected
+        failures are not reported as outages.
         """
+        track_outages: bool = kwargs.pop("track_outages", False)
         kwargs["framer"] = FramerType.SOCKET
         kwargs["trace_packet"] = self._trace_packet_handler
         super().__init__(*args, **kwargs)
@@ -80,6 +92,12 @@ class ModbusClient(AsyncModbusTcpClient, ModbusClientMixin):
         # Health tracking
         self._health: ModbusClientHealth = ModbusClientHealth(f"modbus://{self.comm_params.host}:{self.comm_params.port}")
         self._health_lock = threading.RLock()
+        self._outage: OutageTracker | None = outage_tracker(self._health.client_id) if track_outages else None
+
+    @property
+    def outage(self) -> OutageTracker | None:
+        """The outage tracker for this client's host, or ``None`` if not tracked."""
+        return self._outage
 
     async def _read_registers(
         self, address: int, count: int = 1, device_id: int = 1, input_type: InputType = InputType.HOLDING, no_response_expected: bool = False, use_pre_read: bool = False, trace: bool = False
@@ -130,6 +148,9 @@ class ModbusClient(AsyncModbusTcpClient, ModbusClientMixin):
             elapsed = time.monotonic() - start
             with self._health_lock:
                 self._health.last_read_at = start
+            if self._outage is not None and rr is not None:
+                # Any response, even an exception response, proves the device is reachable.
+                self._outage.success()
             if rr is None:
                 rr = ExceptionResponse(function_code=0x3 if input_type == InputType.HOLDING else 0x04, exception_code=0x5, device_id=device_id)
             if rr.isError() or isinstance(rr, ExceptionResponse):
@@ -138,10 +159,14 @@ class ModbusClient(AsyncModbusTcpClient, ModbusClientMixin):
             else:
                 await Metrics.modbus_read(count, elapsed)
                 return rr
-        except ModbusException:
+        except ModbusException as e:
+            if self._outage is not None and isinstance(e, (ConnectionException, ModbusIOException)):
+                self._outage.failure(e)
             await Metrics.modbus_read_error()
             raise
-        except OSError:
+        except OSError as e:
+            if self._outage is not None:
+                self._outage.failure(e)
             raise
         finally:
             self._trace = False

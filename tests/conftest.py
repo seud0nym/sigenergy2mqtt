@@ -135,3 +135,13 @@ def reset_i18n():
     i18n.load("en")
     yield
     i18n.reset()
+
+
+@pytest.fixture(autouse=True)
+def reset_outage_trackers():
+    """Ensure outage state from one test never leaks into another."""
+    from sigenergy2mqtt.common.outage import clear_outage_trackers
+
+    clear_outage_trackers()
+    yield
+    clear_outage_trackers()

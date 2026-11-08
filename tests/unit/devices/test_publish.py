@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import time
 from pathlib import Path
 from typing import cast
@@ -606,3 +607,98 @@ async def test_poller_run_handles_generic_exception(monkeypatch, caplog):
     await asyncio.wait_for(coro, timeout=5)
 
     assert "encountered an error: RuntimeError('generic error message')" in caplog.text
+
+
+class _DisconnectedMqttClient:
+    """Stand-in for an MqttClient whose broker connection has been lost."""
+
+    def __init__(self):
+        from sigenergy2mqtt.common.outage import outage_tracker
+
+        self.client_id_str = "test_client"
+        self.outage = outage_tracker("mqtt://broker:1883")
+
+    def is_connected(self):
+        return False
+
+
+@pytest.mark.asyncio
+async def test_poller_mqtt_publish_failure_does_not_spin_or_flood(monkeypatch, caplog):
+    """A lost MQTT connection must not make the scan group retry every 0.1s, and is logged once as an outage."""
+    import sigenergy2mqtt.devices.base.poller as poller_module
+
+    dev = Device("devpub_mqtt", 0, "uidpub_mqtt", "mf", "mdl", ProtocolVersion.V1_8)
+    s1 = DummyModbusSensor("s1", address=10, count=2, device_address=7, scan_interval=60)
+    dev._add_sensor(s1)
+    s1.force_publish = True
+    dev._online = True
+
+    calls = []
+
+    async def _mock_publish(mqtt_client, modbus_client=None, republish=False):
+        if republish:
+            return False
+        calls.append(time.time())
+        s1.force_publish = False  # as Sensor.publish() does in its finally block
+        raise RuntimeError("Message publish failed: The client is not currently connected.")
+
+    monkeypatch.setattr(s1, "publish", _mock_publish)
+    monkeypatch.setattr("sigenergy2mqtt.modbus.lock_factory.ModbusLockFactory.get", lambda modbus: FakeLock())
+    monkeypatch.setattr(poller_module, "MqttClient", _DisconnectedMqttClient)
+    monkeypatch.setattr(poller_module, "uniform", lambda a, b: 0.2)  # first scheduled publish 0.2s after start
+
+    async def _stop_later():
+        await asyncio.sleep(1.5)
+        dev._online = False
+
+    poller = SensorGroupPoller(dev)
+    stopper = asyncio.create_task(_stop_later())
+    with caplog.at_level(logging.DEBUG):
+        await asyncio.wait_for(poller.run(cast(ModbusClient, FakeModbus()), cast(MqttClient, _DisconnectedMqttClient()), "grp", s1), timeout=5)
+    await stopper
+
+    # One forced publish at start and one at the scheduled time (+0.2s); after that the
+    # sensor backs off for its 60s scan interval. Before the fix it was retried every 0.1s.
+    assert len(calls) == 2
+    assert not [r for r in caplog.records if r.levelno >= logging.ERROR]
+    started = [r.getMessage() for r in caplog.records if "outage started" in r.getMessage()]
+    assert started == ["mqtt://broker:1883 outage started: RuntimeError('Message publish failed: The client is not currently connected.')"]
+
+
+@pytest.mark.asyncio
+async def test_poller_mqtt_publish_failure_during_known_outage_is_suppressed(monkeypatch, caplog):
+    import sigenergy2mqtt.devices.base.poller as poller_module
+
+    dev = Device("devpub_mqtt2", 0, "uidpub_mqtt2", "mf", "mdl", ProtocolVersion.V1_8)
+    s1 = DummyModbusSensor("s1", address=10, count=2, device_address=7, scan_interval=60)
+    dev._add_sensor(s1)
+    s1.force_publish = True
+    dev._online = True
+
+    async def _mock_publish(mqtt_client, modbus_client=None, republish=False):
+        if republish:
+            return False
+        dev._online = False
+        raise RuntimeError("Message publish failed: The client is not currently connected.")
+
+    monkeypatch.setattr(s1, "publish", _mock_publish)
+    monkeypatch.setattr("sigenergy2mqtt.modbus.lock_factory.ModbusLockFactory.get", lambda modbus: FakeLock())
+    monkeypatch.setattr(poller_module, "MqttClient", _DisconnectedMqttClient)
+
+    mqtt_client = _DisconnectedMqttClient()
+    mqtt_client.outage.failure("Unspecified error", member="test_client")
+    caplog.clear()
+    with caplog.at_level(logging.DEBUG):
+        await asyncio.wait_for(SensorGroupPoller(dev).run(cast(ModbusClient, FakeModbus()), cast(MqttClient, mqtt_client), "grp", s1), timeout=5)
+
+    assert not [r for r in caplog.records if r.levelno >= logging.WARNING]
+    assert any("encountered an error" in r.getMessage() and r.levelno == logging.DEBUG for r in caplog.records)
+    assert mqtt_client.outage.suppressed == 1
+
+
+def test_reschedule_unpublished_only_moves_overdue_sensors():
+    published = MagicMock(scan_interval=5)
+    failed = MagicMock(scan_interval=30)
+    next_times = {published: 105.0, failed: 90.0}
+    SensorGroupPoller._reschedule_unpublished([published, failed], next_times, 100.0)
+    assert next_times == {published: 105.0, failed: 130.0}

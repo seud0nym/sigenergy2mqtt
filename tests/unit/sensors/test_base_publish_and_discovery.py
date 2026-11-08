@@ -768,3 +768,84 @@ class TestGetDiscoveryComponents:
 # ─────────────────────────────────────────────────────────────────────────────
 # 21. gain property edge cases
 # ─────────────────────────────────────────────────────────────────────────────
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Outage-aware logging of read failures
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+class TestPublishDuringOutage:
+    def _sensor(self, suffix):
+        s = _make_sensor(uid_suffix=suffix)
+        s["state_topic"] = "test/state"
+        s["raw_state_topic"] = "test/raw"
+        s["json_attributes_topic"] = "test/attributes"
+        return s
+
+    def _modbus(self, tracker):
+        modbus = MagicMock()
+        modbus.connected = True
+        modbus.outage = tracker
+        return modbus
+
+    @pytest.mark.asyncio
+    async def test_failure_during_outage_is_demoted_and_recovery_is_quiet(self, caplog):
+        from sigenergy2mqtt.common.outage import OutageTracker
+
+        s = self._sensor("outage_quiet")
+        tracker = OutageTracker("modbus://h:502")
+        tracker.failure(ModbusException("No response received"))
+        modbus = self._modbus(tracker)
+        mqtt = _mqtt_mock()
+
+        async def _fail(**kw):
+            raise ModbusException("No response received")
+
+        async def _ok(**kw):
+            s._states.append((time.time(), 42.0))
+            return True
+
+        cfg = Config()
+        cfg.home_assistant.enabled = False
+        with _swap_active_config(cfg), caplog.at_level(logging.DEBUG):
+            with patch.object(s, "_update_internal_state", side_effect=_fail):
+                await s.publish(mqtt, modbus)
+            assert s._failures == 1
+            tracker.success()
+            with patch.object(s, "_update_internal_state", side_effect=_ok):
+                await s.publish(mqtt, modbus)
+        assert s._failures == 0
+
+        skipped = [r for r in caplog.records if "Publishing SKIPPED" in r.getMessage()]
+        reset = [r for r in caplog.records if "Resetting failure count" in r.getMessage()]
+        assert skipped and all(r.levelno == logging.DEBUG for r in skipped)
+        assert reset and all(r.levelno == logging.DEBUG for r in reset)
+
+    @pytest.mark.asyncio
+    async def test_failure_without_outage_still_warns(self, caplog):
+        from sigenergy2mqtt.common.outage import OutageTracker
+
+        s = self._sensor("outage_none")
+        modbus = self._modbus(OutageTracker("modbus://h:502"))
+        mqtt = _mqtt_mock()
+
+        async def _fail(**kw):
+            raise ModbusException("Illegal data address")
+
+        async def _ok(**kw):
+            s._states.append((time.time(), 42.0))
+            return True
+
+        cfg = Config()
+        cfg.home_assistant.enabled = False
+        with _swap_active_config(cfg), caplog.at_level(logging.DEBUG):
+            with patch.object(s, "_update_internal_state", side_effect=_fail):
+                await s.publish(mqtt, modbus)
+            with patch.object(s, "_update_internal_state", side_effect=_ok):
+                await s.publish(mqtt, modbus)
+
+        skipped = [r for r in caplog.records if "Publishing SKIPPED" in r.getMessage()]
+        reset = [r for r in caplog.records if "Resetting failure count" in r.getMessage()]
+        assert [r.levelno for r in skipped] == [logging.WARNING]
+        assert [r.levelno for r in reset] == [logging.INFO]

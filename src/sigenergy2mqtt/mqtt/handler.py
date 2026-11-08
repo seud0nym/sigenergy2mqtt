@@ -40,6 +40,7 @@ from typing import Any
 import paho.mqtt.client as mqtt
 from paho.mqtt.enums import MQTTErrorCode
 
+from sigenergy2mqtt.common.outage import OutageTracker
 from sigenergy2mqtt.config import active_config
 
 from .registry import MqttHealthRegistry
@@ -220,7 +221,9 @@ class MqttHandler:
                 return
             self.connected = True
             if self._topics:
-                logger.info(f"Reconnected to mqtt://{active_config.mqtt.broker}:{active_config.mqtt.port} (client_id={self.client_id})")
+                # When the client tracks outages, the recovery has already been reported once for the broker
+                level = logging.DEBUG if isinstance(getattr(client, "outage", None), OutageTracker) else logging.INFO
+                logger.log(level, f"Reconnected to mqtt://{active_config.mqtt.broker}:{active_config.mqtt.port} (client_id={self.client_id})")
                 for topic in self._topics:
                     result = client.unsubscribe(topic)
                     logger.debug(f"on_reconnect: unsubscribe('{topic}') -> {result} (client_id={self.client_id})")

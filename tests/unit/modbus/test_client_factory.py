@@ -44,7 +44,7 @@ class TestModbusClientFactory:
             client = await ModbusClientFactory.get_client("192.168.1.100", 502)
 
             # Verify ModbusClient was instantiated
-            mock_cls.assert_called_once_with("192.168.1.100", port=502, timeout=1.0, retries=3)
+            mock_cls.assert_called_once_with("192.168.1.100", port=502, timeout=1.0, retries=3, track_outages=True)
 
             # Verify connect was called
             mock_client.connect.assert_awaited_once()
@@ -134,7 +134,7 @@ class TestModbusClientFactory:
         with patch("sigenergy2mqtt.modbus.client_factory.ModbusClient", return_value=mock_client) as mock_cls:
             await ModbusClientFactory.get_client("192.168.1.100", 502, timeout=5.0, retries=10)
 
-            mock_cls.assert_called_once_with("192.168.1.100", port=502, timeout=5.0, retries=10)
+            mock_cls.assert_called_once_with("192.168.1.100", port=502, timeout=5.0, retries=10, track_outages=True)
 
     @pytest.mark.asyncio
     async def test_get_client_connection_failure(self):

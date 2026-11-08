@@ -476,7 +476,6 @@ def clean_config(monkeypatch):
     with _swap_active_config(cfg):
         # Mock validation and logging config to avoid side effects
         monkeypatch.setattr("sigenergy2mqtt.main.main.configure_logging", lambda: None)
-        monkeypatch.setattr("sigenergy2mqtt.main.logging_setup.pymodbus_apply_logging_config", lambda *a: None)
         yield cfg
 
 

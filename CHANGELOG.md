@@ -30,9 +30,13 @@
 - Fixed handling of alarms that return invalid values
 - Implemented ±50 W power dead band logic in BatteryStatus to prevent flapping at extremes (#346)
 - Fixed accumulation sensors using stale source samples when repeated publishes were suppressed; daily resets now follow successful read times across midnight
+- Fixed sensor scan groups retrying every 0.1 seconds (and logging an error each time) while the MQTT broker was unreachable; failed sensors now wait for their next scan interval
+- Fixed every pymodbus log message being written twice (once in pymodbus' own format)
+- Removed the hex frame dump that pymodbus appends to every error message (~20 extra log lines per Modbus timeout)
 
 ### Changed
 
+- MQTT broker and Modbus connectivity failures are now reported as a single "outage started" warning and a single "outage ended" message (with duration and count of suppressed messages), instead of one error per sensor, scan group and client. Repeated messages during an outage are logged at DEBUG level, a new kind of error is still reported once, and a reminder is logged every 5 minutes while the outage continues
 - Sensors now publish individual availability to Home Assistant, and will be marked unavailable if state publishing fails
 - Unchanged states are now only published every 60 seconds to reduce network traffic and MQTT broker load
 - Updated aiohttp from 3.14.4 to 3.14.5
