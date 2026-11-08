@@ -241,7 +241,7 @@ def test_run_modbus_event_loop_and_start_exception_handling(monkeypatch, caplog)
         threading.current_thread().name = orig_name
 
     # Now test start() handling when run_modbus_event_loop raises in worker
-    def bad_runner(cfg, loop):
+    def bad_runner(cfg, loop, stop_event=None):
         loop.close()
         raise ValueError("bad")
 

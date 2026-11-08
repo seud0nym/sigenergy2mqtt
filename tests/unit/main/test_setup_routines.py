@@ -245,7 +245,10 @@ def test_setup_signals_sighup_reload_exception():
 
             # Since it's a coroutine object, we can run it in a new event loop just for testing its logic
             loop = asyncio.new_event_loop()
-            loop.run_until_complete(task_coro)
+            try:
+                loop.run_until_complete(task_coro)
+            finally:
+                loop.close()
 
             # Exception should be caught and request should be called in finally
             mock_request.assert_called_once_with("signal SIGHUP")

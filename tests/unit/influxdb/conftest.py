@@ -1,6 +1,7 @@
 """Shared test doubles and fixtures for the InfluxDB test suites."""
 
 import asyncio
+import warnings
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -9,6 +10,24 @@ from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.influxdb.base import InfluxBase
 from sigenergy2mqtt.influxdb.hass_history_sync import HassHistorySync
 from sigenergy2mqtt.influxdb.service import InfluxService
+
+# Event loops created by ``_bring_online`` when called from a sync fixture.
+# They are closed when ``disabled_influx_config`` tears down.
+_fallback_loops: list[asyncio.AbstractEventLoop] = []
+
+
+def _close_fallback_loops() -> None:
+    while _fallback_loops:
+        loop = _fallback_loops.pop()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            try:
+                current = asyncio.get_event_loop()
+            except RuntimeError:
+                current = None
+        if current is loop:
+            asyncio.set_event_loop(None)
+        loop.close()
 
 
 def _bring_online(svc: InfluxBase) -> asyncio.Future:
@@ -24,6 +43,7 @@ def _bring_online(svc: InfluxBase) -> asyncio.Future:
     except RuntimeError:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
+        _fallback_loops.append(loop)
     future = loop.create_future()
     svc.online = future
     return future
@@ -60,6 +80,7 @@ def disabled_influx_config():
 
     with patch.object(active_config, "influxdb", config):
         yield config
+    _close_fallback_loops()
 
 
 @pytest.fixture
