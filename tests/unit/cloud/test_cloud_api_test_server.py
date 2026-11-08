@@ -709,6 +709,29 @@ async def test_gateway_round_trip_drives_plant_grid_status_as_recorded() -> None
         assert [call.args[0] for call in written.await_args_list] == [2, 1, 0]  # On Grid
 
 
+async def test_gateway_round_trip_opens_and_closes_grid_side_contactor() -> None:
+    api = CloudApiTestServer(None, None)
+    async with TestClient(TestServer(api.app())) as client:
+        gateway = _GatewayClient(api, client)
+
+        async def contactor() -> str:
+            response = await client.get(f"/device/gateway/{gateway.station_id}", headers=gateway.headers)
+            entries = (await response.json())["data"]["gridSideInfoList"]
+            return next(entry["paramValue"] for entry in entries if entry["paramKey"] == "Grid Side Contactor Status")
+
+        assert await contactor() == "Close"
+
+        await gateway.press(1)
+        assert await contactor() == "Open"  # Open as soon as off-grid is initiated
+        gateway.now += api.gateway_off_grid_seconds
+        assert await contactor() == "Open"
+
+        await gateway.press(0)
+        assert await contactor() == "Open"  # Still open during the return
+        gateway.now += api.gateway_on_grid_seconds
+        assert await contactor() == "Close"
+
+
 async def test_gateway_press_matching_current_state_does_not_write_plant_grid_status() -> None:
     api = CloudApiTestServer(None, None)
     api.plant_grid_status_writer = AsyncMock()

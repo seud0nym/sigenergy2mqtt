@@ -702,7 +702,14 @@ class CloudApiTestServer:
     async def get_gateway_info(self, request: web.Request) -> web.Response:
         if (response := await self.authorized(request)) is not None:
             return response
+        await self._settle_gateway_status()
         return self._success(self.gateway_info)
+
+    def _set_grid_side_contactor(self, closed: bool) -> None:
+        """Report the gateway's grid side contactor as closed (on-grid) or open (off-grid)."""
+        for entry in self.gateway_info.get("gridSideInfoList", []):
+            if isinstance(entry, dict) and entry.get("paramKey") == "Grid Side Contactor Status":
+                entry["paramValue"] = "Close" if closed else "Open"
 
     async def _write_plant_grid_status(self, value: int) -> None:
         if self.plant_grid_status_writer is not None:
@@ -714,6 +721,8 @@ class CloudApiTestServer:
             _, fields, plant_grid_status = self._gateway_transition
             self.gateway_status.update(fields)
             self._gateway_transition = None
+            if self.gateway_status["onOffGridStatus"] == 0:
+                self._set_grid_side_contactor(closed=True)
             await self._write_plant_grid_status(plant_grid_status)
 
     def _start_gateway_transition_timer(self) -> None:
@@ -753,7 +762,8 @@ class CloudApiTestServer:
         A request that matches the current state, or arrives during a transition,
         succeeds without changing anything. The plant's GridStatus follows what was
         recorded on real hardware: 2 "Off Grid (manual)" while off-grid, 1 "Off Grid
-        (auto)" during the return, then 0 "On Grid".
+        (auto)" during the return, then 0 "On Grid". The gateway's grid side
+        contactor reports "Open" from the off-grid press until back on-grid.
         """
         if (response := await self.authorized(request)) is not None:
             return response
@@ -768,6 +778,7 @@ class CloudApiTestServer:
             grid_status = self.gateway_status["onOffGridStatus"]
             if on_grid_state == 1 and grid_status == 0:
                 self.gateway_status["manualOffGridStatus"] = 1
+                self._set_grid_side_contactor(closed=False)
                 self._gateway_transition = (self._clock() + self.gateway_off_grid_seconds, {"onOffGridStatus": 2, "manualOffGridStatus": 2}, 2)
                 self._start_gateway_transition_timer()
             elif on_grid_state == 0 and grid_status == 2:
