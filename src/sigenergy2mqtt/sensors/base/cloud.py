@@ -12,6 +12,7 @@ from aiohttp import ClientError
 
 from sigenergy2mqtt.cloud.exceptions import CloudControlError, CloudControlRateLimitedError, CloudControlUnavailableError
 from sigenergy2mqtt.cloud.port import CloudControlPort
+from sigenergy2mqtt.common.outage import OutageTracker, outage_tracker
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.mqtt import MqttHandler
 
@@ -22,11 +23,25 @@ from .writeable import NumericSensorMixin, WriteOnlySensorMixin
 
 logger = logging.getLogger(__name__)
 
-# Track which cloud ports are currently experiencing an outage to suppress
-# per-sensor log noise. Key: port id() -> dict of sensor id() -> exc_repr
-_port_outage: dict[int, dict[int, str]] = {}
-# Track the latest error message for the port to deduplicate "error changed" warnings
-_port_latest_error: dict[int, str] = {}
+# Outage resource name per cloud port (keyed by id(), as ports need not be hashable)
+_port_resources: dict[int, str] = {}
+
+
+def cloud_outage_tracker(port: object) -> OutageTracker:
+    """Return the shared outage tracker for a cloud control *port*.
+
+    Each failing sensor is a member of the outage, so it ends only once every
+    sensor that failed has read successfully again.
+    """
+    resource = _port_resources.get(id(port))
+    if resource is None:
+        try:
+            station_id = getattr(port, "station_id", None)
+        except CloudControlError:  # station not yet discovered
+            station_id = None
+        key = station_id if isinstance(station_id, (str, int)) and station_id != "" else f"{id(port):x}"
+        resource = _port_resources[id(port)] = f"cloud://{key}"
+    return outage_tracker(resource, log=logger)
 
 
 class CloudSensor(ReadableSensorMixin, AvailabilityMixin):
@@ -80,8 +95,8 @@ class CloudSensor(ReadableSensorMixin, AvailabilityMixin):
         if port is None:
             self.mark_read_failed()
             return False
-        port_id = id(port)
-        sensor_id = id(self)
+        outage = cloud_outage_tracker(port)
+        member = str(id(self))
         try:
             value = await self._read_cloud_state(port)
         except CloudControlRateLimitedError:
@@ -90,42 +105,15 @@ class CloudSensor(ReadableSensorMixin, AvailabilityMixin):
             self.pause_monitoring_for_cloud_outage()
             raise
         except (ClientError, CloudControlError) as exc:
-            exc_repr = repr(exc)
-            port_outages = _port_outage.setdefault(port_id, {})
-
-            if not port_outages:
-                # First failure for this port - log at WARNING level
-                logger.warning(f"{self.log_identity} cloud read failed: {exc_repr}")
-                port_outages[sensor_id] = exc_repr
-                _port_latest_error[port_id] = exc_repr
-            elif sensor_id not in port_outages:
-                # Port already in outage, new sensor failing - check if error is new
-                port_outages[sensor_id] = exc_repr
-                logger.debug(f"{self.log_identity} cloud read failed (outage ongoing): {exc_repr}")
-            elif port_outages[sensor_id] != exc_repr:
-                # Error changed for this specific sensor - check if it's new for the port
-                port_outages[sensor_id] = exc_repr
-                logger.debug(f"{self.log_identity} cloud read failed (outage ongoing): {exc_repr}")
-            else:
-                # Same outage already reported for this sensor - suppress to debug
-                logger.debug(f"{self.log_identity} cloud read failed (outage ongoing): {exc_repr}")
+            # Reported once per outage; repeats from this and other sensors go to DEBUG
+            outage.failure(exc, member=member, detail=f"{self.log_identity} cloud read failed: {exc!r}")
             # Let the scan-group poller slow down the whole cloud group. The
             # adapter's rate-limit path uses the same group-level behavior.
             self.pause_monitoring_for_cloud_outage()
             raise CloudControlUnavailableError(str(exc)) from exc
 
-        # Successful read: clear outage state for this sensor
-        if port_id in _port_outage:
-            port_outages = _port_outage[port_id]
-            if sensor_id in port_outages:
-                was_exc = port_outages.pop(sensor_id)
-                if not port_outages:
-                    # Last failing sensor recovered
-                    logger.info(f"{self.log_identity} cloud read recovered for all sensors (was: {was_exc})")
-                    del _port_outage[port_id]
-                    _port_latest_error.pop(port_id, None)
-                else:
-                    logger.debug(f"{self.log_identity} cloud read recovered, but other sensors are still failing")
+        # Successful read: the outage ends once the last failing sensor recovers
+        outage.success(member=member)
 
         if value is None:
             self.mark_read_failed()

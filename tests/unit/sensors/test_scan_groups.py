@@ -769,6 +769,11 @@ async def test_unavailable_cloud_sensor_uses_exponential_backoff(
     assert [later - earlier for earlier, later in zip(request_times, request_times[1:])] == [30.0, 60.0]
     assert caplog.text.count("cloud unavailable; retrying") == 1
     assert "cloud outage continues" in caplog.text
+    # The sensor reports the outage once; the scan group's own message is demoted to DEBUG
+    warnings = [(r.levelno, r.getMessage()) for r in caplog.records if r.levelno >= logging.WARNING]
+    assert len(warnings) == 1
+    assert warnings[0][0] == logging.ERROR and "outage started: CloudControlUnavailableError('upstream unavailable')" in warnings[0][1]
+    assert all(r.levelno == logging.DEBUG for r in caplog.records if "cloud unavailable; retrying" in r.getMessage())
 
 
 def test_cloud_retry_delay_caps_large_failure_streak() -> None:

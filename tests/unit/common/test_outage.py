@@ -195,3 +195,20 @@ class TestRegistry:
         tracker = outage_tracker("mqtt://a:1")
         clear_outage_trackers()
         assert outage_tracker("mqtt://a:1") is not tracker
+
+
+def test_records_are_attributed_to_the_caller(caplog):
+    tracker = OutageTracker("r")
+    with caplog.at_level(logging.DEBUG, logger=LOGGER):
+        tracker.failure("x", detail="d")
+        tracker.success()
+    assert {r.filename for r in caplog.records} == {"test_outage.py"}
+
+
+def test_outage_tracker_uses_logger_given_on_creation(caplog):
+    custom = logging.getLogger("test.outage.registry")
+    tracker = outage_tracker("r2", log=custom)
+    assert outage_tracker("r2") is tracker
+    with caplog.at_level(logging.DEBUG, logger="test.outage.registry"):
+        tracker.failure("x")
+    assert [r.name for r in caplog.records] == ["test.outage.registry"]

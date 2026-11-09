@@ -12,6 +12,7 @@ from sigenergy2mqtt.common import Constants
 from sigenergy2mqtt.common.outage import OutageTracker
 from sigenergy2mqtt.modbus import ModbusClient, ModbusLock, ModbusLockFactory
 from sigenergy2mqtt.mqtt.client import MqttClient
+from sigenergy2mqtt.sensors.base.cloud import cloud_outage_tracker
 from sigenergy2mqtt.sensors.base import (
     EnergyDailyAccumulationSensor,
     ModbusSensorMixin,
@@ -456,13 +457,10 @@ class SensorGroupPoller:
                     for sensor in next_publish_times:
                         next_publish_times[sensor] = retry_at
                     if cloud_failure_streak == 1:
-                        logger.warning(
-                            "%s Sensor Scan Group [%s] cloud unavailable; retrying in %.0f seconds: %s",
-                            device.log_identity,
-                            name,
-                            delay,
-                            e,
-                        )
+                        message = f"{device.log_identity} Sensor Scan Group [{name}] cloud unavailable; retrying in {delay:.0f} seconds: {e}"
+                        if not cloud_outage_tracker(transport).suppress(message):
+                            # Only reached if the sensors did not report the outage themselves
+                            logger.warning(message)
                     else:
                         logger.debug(
                             "%s Sensor Scan Group [%s] cloud outage continues; retrying in %.0f seconds",

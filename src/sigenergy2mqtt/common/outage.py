@@ -135,22 +135,22 @@ class OutageTracker:
                 self._suppressed = 0
                 self._kinds = {kind}
                 self._first_error = description
-                self._logger.error(f"{self.resource} outage started: {description}")
+                self._logger.error(f"{self.resource} outage started: {description}", stacklevel=2)
                 if detail:
-                    self._logger.debug(detail)
+                    self._logger.debug(detail, stacklevel=2)
                 return True
             if kind not in self._kinds:
                 self._kinds.add(kind)
-                self._logger.error(f"{self.resource} outage continuing with a new error after {format_duration(now - self._started)}: {description}")
+                self._logger.error(f"{self.resource} outage continuing with a new error after {format_duration(now - self._started)}: {description}", stacklevel=2)
                 if detail:
-                    self._logger.debug(detail)
+                    self._logger.debug(detail, stacklevel=2)
                 return True
             self._suppressed += 1
             if detail:
-                self._logger.debug(detail)
+                self._logger.debug(detail, stacklevel=2)
             if self.reminder_interval > 0 and now - self._last_reminder >= self.reminder_interval:
                 self._last_reminder = now
-                self._logger.error(f"{self.resource} outage continuing for {format_duration(now - self._started)} ({self._suppressed} similar messages suppressed): {self._first_error}")
+                self._logger.error(f"{self.resource} outage continuing for {format_duration(now - self._started)} ({self._suppressed} similar messages suppressed): {self._first_error}", stacklevel=2)
             return False
 
     def suppress(self, detail: str | None = None) -> bool:
@@ -164,7 +164,7 @@ class OutageTracker:
                 return False
             self._suppressed += 1
             if detail:
-                self._logger.debug(detail)
+                self._logger.debug(detail, stacklevel=2)
             return True
 
     def success(self, *, member: str | None = None) -> bool:
@@ -190,7 +190,7 @@ class OutageTracker:
             self._kinds = set()
             self._suppressed = 0
             self._first_error = ""
-        self._logger.info(f"{self.resource} outage ended after {format_duration(duration)} ({suppressed} similar messages suppressed)")
+        self._logger.info(f"{self.resource} outage ended after {format_duration(duration)} ({suppressed} similar messages suppressed)", stacklevel=2)
         return True
 
     def __repr__(self) -> str:
@@ -201,12 +201,18 @@ _trackers: dict[str, OutageTracker] = {}
 _trackers_lock = threading.Lock()
 
 
-def outage_tracker(resource: str) -> OutageTracker:
-    """Return the shared :class:`OutageTracker` for *resource*, creating it on first use."""
+def outage_tracker(resource: str, log: logging.Logger | None = None) -> OutageTracker:
+    """Return the shared :class:`OutageTracker` for *resource*, creating it on first use.
+
+    Args:
+        resource: Resource name, also used as the log message prefix.
+        log: Logger for outage messages, so that a component's configured log
+            level applies (only used when the tracker is first created).
+    """
     with _trackers_lock:
         tracker = _trackers.get(resource)
         if tracker is None:
-            tracker = _trackers[resource] = OutageTracker(resource)
+            tracker = _trackers[resource] = OutageTracker(resource, log=log)
         return tracker
 
 
