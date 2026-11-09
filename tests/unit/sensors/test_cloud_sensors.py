@@ -394,7 +394,7 @@ async def test_cloud_sensor_suppresses_repeated_outage_warnings(caplog: pytest.L
             await sensor1._update_internal_state(modbus_client=port)
         assert errors() == []
 
-    # 4. Partial recovery: sensor2 succeeds, but sensor1 is still failing -> outage continues
+    # 4. Any successful read ends the outage (the API is reachable), with one INFO "outage ended"
     port.get_operational_mode.side_effect = None
     port.get_operational_mode.return_value = 1
     with caplog.at_level(logging.DEBUG), patch.object(sensor2, "set_latest_state", return_value=True):
@@ -402,18 +402,17 @@ async def test_cloud_sensor_suppresses_repeated_outage_warnings(caplog: pytest.L
         assert await sensor2._update_internal_state(modbus_client=port) is True
         sensor2.restore_monitoring_after_cloud_outage()
         assert sensor2.monitorable is True
-        assert [r for r in caplog.records if r.levelno == logging.INFO] == []
-        assert outage.active
+        ended = [r.getMessage() for r in caplog.records if r.levelno == logging.INFO]
+        assert ended == ["cloud://station-123 outage ended after 0s (2 similar messages suppressed)"]
+    assert not outage.active
 
-    # 5. Full recovery: sensor1 succeeds, the last failing sensor -> one INFO "outage ended"
+    # 5. Further successes are silent
     with caplog.at_level(logging.INFO), patch.object(sensor1, "set_latest_state", return_value=True):
         caplog.clear()
         assert await sensor1._update_internal_state(modbus_client=port) is True
         sensor1.restore_monitoring_after_cloud_outage()
         assert sensor1.monitorable is True
-        ended = [r.getMessage() for r in caplog.records if r.levelno == logging.INFO]
-        assert ended == ["cloud://station-123 outage ended after 0s (2 similar messages suppressed)"]
-    assert not outage.active
+        assert [r for r in caplog.records if r.levelno >= logging.INFO] == []
 
 
 def test_cloud_power_limit_sensors_expose_vendor_maximum() -> None:

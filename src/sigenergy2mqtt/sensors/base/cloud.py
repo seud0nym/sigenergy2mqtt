@@ -30,8 +30,10 @@ _port_resources: dict[int, str] = {}
 def cloud_outage_tracker(port: object) -> OutageTracker:
     """Return the shared outage tracker for a cloud control *port*.
 
-    Each failing sensor is a member of the outage, so it ends only once every
-    sensor that failed has read successfully again.
+    Any successful read ends the outage, since it shows the API is reachable.
+    Waiting for every sensor that failed to recover would keep the outage open
+    for as long as the slowest scan group's retry backoff (up to 15 minutes),
+    and indefinitely if the failing sensors were replaced by a restart.
     """
     resource = _port_resources.get(id(port))
     if resource is None:
@@ -96,7 +98,6 @@ class CloudSensor(ReadableSensorMixin, AvailabilityMixin):
             self.mark_read_failed()
             return False
         outage = cloud_outage_tracker(port)
-        member = str(id(self))
         try:
             value = await self._read_cloud_state(port)
         except CloudControlRateLimitedError:
@@ -106,14 +107,14 @@ class CloudSensor(ReadableSensorMixin, AvailabilityMixin):
             raise
         except (ClientError, CloudControlError) as exc:
             # Reported once per outage; repeats from this and other sensors go to DEBUG
-            outage.failure(exc, member=member, detail=f"{self.log_identity} cloud read failed: {exc!r}")
+            outage.failure(exc, detail=f"{self.log_identity} cloud read failed: {exc!r}")
             # Let the scan-group poller slow down the whole cloud group. The
             # adapter's rate-limit path uses the same group-level behavior.
             self.pause_monitoring_for_cloud_outage()
             raise CloudControlUnavailableError(str(exc)) from exc
 
-        # Successful read: the outage ends once the last failing sensor recovers
-        outage.success(member=member)
+        # Successful read: the API is reachable again
+        outage.success()
 
         if value is None:
             self.mark_read_failed()

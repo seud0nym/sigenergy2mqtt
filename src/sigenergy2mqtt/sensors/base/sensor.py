@@ -1236,7 +1236,11 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
             if self.debug_logging:
                 logger.debug(f"{self.log_identity} Published  state={payload} to topic {topic} ({qos=} {retain=}) result={message.rc}")
         else:
-            logger.warning(f"{self.log_identity} Failed to publish state={payload} to topic {topic} result={message.rc}")
+            failed = f"{self.log_identity} Failed to publish state={payload} to topic {topic} result={message.rc}"
+            outage = getattr(mqtt_client, "outage", None)
+            # While the broker's outage is being reported, individual publish failures are logged at DEBUG
+            if not (isinstance(outage, OutageTracker) and outage.suppress(failed)):
+                logger.warning(failed)
         return message.is_published()
 
     async def _publish_derived_sensors(self, mqtt_client: mqtt.Client, transport: Any, republish: bool) -> None:

@@ -111,7 +111,7 @@ class OutageTracker:
 
     # ---------------------------------------------------------------- updates
 
-    def failure(self, error: BaseException | str, *, member: str | None = None, detail: str | None = None) -> bool:
+    def failure(self, error: BaseException | str, *, member: str | None = None, detail: str | None = None, kind: str | None = None) -> bool:
         """Record a failure of the resource.
 
         Args:
@@ -119,12 +119,16 @@ class OutageTracker:
             member: Optional member that failed (e.g. an MQTT client id).
             detail: Optional caller-specific message; it is logged at DEBUG
                 whenever this failure does not produce an ERROR of its own.
+            kind: Optional key used to decide whether this is a new kind of
+                error; defaults to the exception class name (or the error
+                text). Callers can use one kind for errors that all mean the
+                same thing, such as the various ways a host can be unreachable.
 
         Returns:
             ``True`` if this failure was logged at ERROR (outage start or a
             new kind of error); ``False`` if it was suppressed to DEBUG.
         """
-        kind = _error_kind(error)
+        kind = kind or _error_kind(error)
         description = _describe(error)
         now = time.monotonic()
         with self._lock:

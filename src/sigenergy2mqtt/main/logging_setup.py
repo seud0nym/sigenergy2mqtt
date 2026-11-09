@@ -147,10 +147,12 @@ _PYMODBUS_OUTAGE_PATTERNS = (
     "Not connected, trying to connect",
     "Failed to connect",
     "Connection to (",
+    # pymodbus replaces an immediately repeated message with this marker
+    "Repeating....",
 )
 
 # Logged by paho's network loop while the socket is gone.
-_PAHO_OUTAGE_PATTERNS = ("Client is not connected",)
+_PAHO_OUTAGE_PATTERNS = ("Client is not connected", "failed to receive on socket", "failed to send on socket")
 
 
 def configure_logging() -> None:

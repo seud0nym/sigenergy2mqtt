@@ -18,6 +18,7 @@ from sigenergy2mqtt.devices import (
 )
 from sigenergy2mqtt.devices.cloud import CloudDiscovery, discover_cloud, discover_operational_modes
 from sigenergy2mqtt.modbus import ModbusClient
+from sigenergy2mqtt.modbus.client import CONNECTIVITY
 from sigenergy2mqtt.sensors.base import Sensor
 from sigenergy2mqtt.sensors.cloud.read_write import GatewayGridConnectionControl
 from sigenergy2mqtt.sensors.inverter.read_only import RatedActivePower
@@ -70,6 +71,7 @@ async def _wait_for_modbus(modbus: ModbusClient, host: str, port: int) -> None:
     while not modbus.connected:
         outage.failure(
             "unable to connect; retrying until it is available (check the configured host and port if this persists)",
+            kind=CONNECTIVITY,
             detail=f"Failed to connect to modbus://{host}:{port}; retrying in {delay:.0f}s",
         )
         await asyncio.sleep(delay)

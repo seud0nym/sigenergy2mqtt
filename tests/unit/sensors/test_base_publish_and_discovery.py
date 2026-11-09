@@ -849,3 +849,19 @@ class TestPublishDuringOutage:
         reset = [r for r in caplog.records if "Resetting failure count" in r.getMessage()]
         assert [r.levelno for r in skipped] == [logging.WARNING]
         assert [r.levelno for r in reset] == [logging.INFO]
+
+
+def test_publish_failure_during_mqtt_outage_is_debug(caplog):
+    from sigenergy2mqtt.common.outage import OutageTracker
+
+    s = _make_sensor(uid_suffix="mqtt_outage_publish")
+    mqtt = MagicMock()
+    mqtt.publish.return_value.is_published.return_value = False
+    mqtt.outage = OutageTracker("mqtt://broker:1883")
+
+    with caplog.at_level(logging.DEBUG):
+        assert s._publish_message(mqtt, "t/state", "1", timeout=-1) is False
+        mqtt.outage.failure("Unspecified error")
+        assert s._publish_message(mqtt, "t/state", "1", timeout=-1) is False
+    failed = [r.levelno for r in caplog.records if "Failed to publish" in r.getMessage()]
+    assert failed == [logging.WARNING, logging.DEBUG]

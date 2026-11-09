@@ -36,6 +36,7 @@
 - Fixed the process exiting when the Modbus host was unreachable at startup, including after an automatic restart triggered by health check failures; startup now waits and retries (5s doubling to 60s) until the host is reachable
 - Fixed health check failures caused by an unreachable Modbus host, MQTT broker or InfluxDB server triggering an automatic restart that could not fix the problem; the status is still reported as degraded, but failures only count towards a restart once the dependency is available again (or, for Modbus, after 5 minutes if the host accepts connections but the client has not recovered)
 - Fixed the Modbus "disconnected (Nx total)" health check message always reporting 0 when pymodbus closed the connection itself
+- Fixed a Cloud API outage not being reported as ended until every sensor that failed had read successfully again, which could take up to 15 minutes (the slowest scan group's retry backoff) or never happen after a restart
 
 ### Changed
 

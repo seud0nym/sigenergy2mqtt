@@ -212,3 +212,11 @@ def test_outage_tracker_uses_logger_given_on_creation(caplog):
     with caplog.at_level(logging.DEBUG, logger="test.outage.registry"):
         tracker.failure("x")
     assert [r.name for r in caplog.records] == ["test.outage.registry"]
+
+
+def test_custom_kind_groups_different_errors():
+    tracker = OutageTracker("modbus://h:502")
+    assert tracker.failure("connection lost", kind="connectivity") is True
+    assert tracker.failure(TimeoutError("no response"), kind="connectivity") is False
+    assert tracker.failure(ConnectionError("refused"), kind="connectivity") is False
+    assert tracker.failure(ValueError("other")) is True

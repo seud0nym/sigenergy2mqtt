@@ -98,3 +98,18 @@ async def test_trace_connect_counts_disconnects():
     assert health.disconnect_count == 2
     assert health.last_disconnected_at is not None
     assert health.close_count == 0
+
+
+async def test_connection_lost_starts_outage_immediately():
+    client = ModbusClient("127.0.0.1", port=15020, track_outages=True)
+    client._trace_connect_handler(False)
+    assert client.outage.active
+    # A subsequent timeout is the same kind of problem, so it is not reported as a new error
+    assert client.outage.failure(ModbusIOException("No response received"), kind="connectivity") is False
+
+
+async def test_application_close_is_not_an_outage():
+    client = ModbusClient("127.0.0.1", port=15020, track_outages=True)
+    client.close()
+    client._trace_connect_handler(False)  # pymodbus may report the disconnection after close() returns
+    assert not client.outage.active

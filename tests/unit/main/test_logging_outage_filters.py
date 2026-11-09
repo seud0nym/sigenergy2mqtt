@@ -172,3 +172,13 @@ class TestConfigureLoggingPymodbus:
         finally:
             mqtt_logger.removeHandler(handler)
         assert len([r for r in handler.records if r.levelno >= logging.WARNING]) == 1
+
+
+def test_pymodbus_repeating_marker_demoted_during_modbus_outage():
+    from sigenergy2mqtt.main.logging_setup import _PYMODBUS_OUTAGE_PATTERNS
+
+    f = _OutageDemotionFilter(PYMODBUS_LOGGER, "modbus://", _PYMODBUS_OUTAGE_PATTERNS)
+    assert f.filter(_record("Repeating....", level=logging.WARNING)) is True  # no outage: unchanged
+    outage_tracker("modbus://h:502").failure("down")
+    logging.getLogger(PYMODBUS_LOGGER).setLevel(logging.WARNING)
+    assert f.filter(_record("Repeating....", level=logging.WARNING)) is False
