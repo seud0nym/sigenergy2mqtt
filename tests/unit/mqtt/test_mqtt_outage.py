@@ -17,6 +17,18 @@ def _reason(name: str) -> ReasonCode:
     return ReasonCode(PacketTypes.DISCONNECT, name)
 
 
+@pytest.fixture(autouse=True)
+def debug_loggers():
+    """Other tests may leave these loggers at a higher level; capture everything here."""
+    names = ["sigenergy2mqtt.mqtt.client", "paho.mqtt", "sigenergy2mqtt.common.outage"]
+    saved = {n: logging.getLogger(n).level for n in names}
+    for n in names:
+        logging.getLogger(n).setLevel(logging.DEBUG)
+    yield
+    for n, level in saved.items():
+        logging.getLogger(n).setLevel(level)
+
+
 @pytest.fixture
 def loop():
     loop = asyncio.new_event_loop()

@@ -1,6 +1,7 @@
 import logging
 from unittest.mock import PropertyMock, patch
 
+import pytest
 from pymodbus.logging import Log
 
 from sigenergy2mqtt.common.outage import outage_tracker
@@ -12,6 +13,20 @@ from sigenergy2mqtt.main.logging_setup import (
     _OutageDemotionFilter,
     configure_logging,
 )
+
+
+@pytest.fixture(autouse=True)
+def restore_logging_state():
+    """configure_logging() mutates global logger state; restore it so later tests are unaffected."""
+    names = ["", "sigenergy2mqtt", "sigenergy2mqtt.cloud", "sigenergy2mqtt.diagnostics", "sigenergy2mqtt.influxdb", "sigenergy2mqtt.pvoutput", MQTT_CLIENT_LOGGER, "paho.mqtt", PYMODBUS_LOGGER]
+    saved = {n: (logging.getLogger(n).level, logging.getLogger(n).propagate, list(logging.getLogger(n).filters), list(logging.getLogger(n).handlers)) for n in names}
+    yield
+    for n, (level, propagate, filters, handlers) in saved.items():
+        lg = logging.getLogger(n)
+        lg.setLevel(level)
+        lg.propagate = propagate
+        lg.filters = filters
+        lg.handlers = handlers
 
 
 def _record(msg, level=logging.ERROR, name=PYMODBUS_LOGGER, args=None):
