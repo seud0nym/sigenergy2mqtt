@@ -1,6 +1,7 @@
 import logging
 
 from sigenergy2mqtt.common import service_health_registry
+from sigenergy2mqtt.common.outage import clear_outage_trackers
 from sigenergy2mqtt.config import active_config, initialize_async
 from sigenergy2mqtt.devices import DeviceRegistry as device_registry
 from sigenergy2mqtt.devices.base.child_devices import child_device_migration
@@ -62,6 +63,10 @@ async def async_main() -> None:
         thread_config_registry.clear()
         device_registry.clear()
         mqtt_health_registry.clear()
+        # Outages are tracked per runtime: a restart changes the MQTT client IDs (and a reload
+        # may change hosts), so members or resources of a previous runtime could otherwise keep
+        # an outage open forever, suppressing its logging and deferring every later restart.
+        clear_outage_trackers()
         service_health_registry.clear()
         diagnostics_registry.clear()
 

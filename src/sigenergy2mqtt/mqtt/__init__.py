@@ -15,7 +15,7 @@ from .client import MqttClient
 from .handler import MqttHandler
 from .registry import MqttHealthRegistry
 
-__all__ = ["MqttConnectAborted", "MqttHandler", "interrupt_mqtt_reconnection", "mqtt_health_registry", "mqtt_setup", "mqtt_teardown", "reset_mqtt_reconnection_interrupt"]
+__all__ = ["MqttConnectAborted", "MqttHandler", "interrupt_mqtt_reconnection", "mqtt_reconnection_interrupted", "mqtt_health_registry", "mqtt_setup", "mqtt_teardown", "reset_mqtt_reconnection_interrupt"]
 
 _MAX_CONNECT_ATTEMPTS: int = 3
 
@@ -47,6 +47,11 @@ def interrupt_mqtt_reconnection() -> None:
     """Interrupt the MQTT reconnection attempt."""
     global _interrupted
     _interrupted = True
+
+
+def mqtt_reconnection_interrupted() -> bool:
+    """Whether a shutdown signal has asked connection waits to stop."""
+    return _interrupted
 
 
 def reset_mqtt_reconnection_interrupt() -> None:

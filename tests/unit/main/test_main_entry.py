@@ -77,3 +77,21 @@ def test_main_validate_only_mode(monkeypatch):
         main_mod.main()
     assert exc.value.code == 0
     assert called.get("called")
+
+
+def test_early_signal_handler_stops_startup_waits():
+    """A first signal during startup must also stop the MQTT/Modbus startup waits, not only auto-discovery."""
+    import signal
+
+    import sigenergy2mqtt.mqtt as mqtt_module
+    from sigenergy2mqtt.__main__ import _make_early_signal_handler
+    from sigenergy2mqtt.config import auto_discovery
+
+    handler = _make_early_signal_handler()
+    try:
+        handler(signal.SIGTERM, None)
+        assert auto_discovery._interrupted is True
+        assert mqtt_module.mqtt_reconnection_interrupted() is True
+    finally:
+        auto_discovery._interrupted = False
+        mqtt_module.reset_mqtt_reconnection_interrupt()

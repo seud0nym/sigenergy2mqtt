@@ -118,3 +118,34 @@ async def test_threading_discovery_only_effect(monkeypatch):
 
     # Tasks should NOT be scheduled
     mock_device.schedule.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_each_runtime_starts_with_no_outages(monkeypatch):
+    """Outages from a previous runtime (whose MQTT client IDs and hosts may differ) must not carry over."""
+    from sigenergy2mqtt.common.outage import active_outages, outage_tracker
+
+    active_config.modbus.clear()
+    monkeypatch.setattr(active_config, "clean", False, raising=False)
+    monkeypatch.setattr(active_config, "metrics_enabled", False, raising=False)
+    monkeypatch.setattr(active_config, "validate", lambda: None, raising=False)
+    monkeypatch.setattr(active_config, "modbus_log_level", lambda: logging.INFO, raising=False)
+
+    # A broker outage held open by a client ID from the previous runtime
+    outage_tracker("mqtt://broker:1883").failure("Unspecified error", member="sigenergy2mqtt_OLD1_Monitor")
+    seen_during_setup: list = []
+
+    async def fake_setup_devices(_serials):
+        seen_during_setup.extend(active_outages())
+        return [], None
+
+    monkeypatch.setattr(main_mod, "start", AsyncMock())
+    monkeypatch.setattr(main_mod, "setup_devices", fake_setup_devices)
+    monkeypatch.setattr(main_mod, "setup_services", lambda c, p: c)
+    monkeypatch.setattr(main_mod, "initialize_async", AsyncMock())
+    monkeypatch.setattr(main_mod, "configure_logging", lambda: None)
+    monkeypatch.setattr(main_mod.state_store, "initialise", AsyncMock())
+
+    await main_mod.async_main()
+
+    assert seen_during_setup == []

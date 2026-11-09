@@ -98,6 +98,10 @@ wait_for() {   # wait_for <regex> <seconds>
   for _ in $(seq 1 "$2"); do grep -qE "$1" "$OUT/app.log" 2>/dev/null && return 0; sleep 1; done
   return 1
 }
+require_healthy() {   # require_healthy <seconds>: a timeout is a failed check, not just a log line
+  if wait_for "Status is HEALTHY" "$1"; then return 0; fi
+  log "!! app never became healthy"; echo "   FAIL  app became healthy within $1s"; FAILURES=$((FAILURES + 1)); return 1
+}
 wait_for_count() {   # wait_for_count <regex> <count> <seconds>
   for _ in $(seq 1 "$3"); do [ "$(grep -cE "$1" "$OUT/app.log" 2>/dev/null)" -ge "$2" ] && return 0; sleep 1; done
   return 1
@@ -127,7 +131,7 @@ common_checks() {
 
 scenario_outage() {
   start_server; sleep 8; start_app
-  wait_for "Status is HEALTHY" 90 || log "!! app never became healthy"
+  require_healthy 90
   sleep 5; block_ports "$MODBUS_PORT" "$CLOUD_PORT"
   sleep "$OUTAGE_SECS"
   unblock_ports "$MODBUS_PORT" "$CLOUD_PORT"; log "UNBLOCKED"
@@ -144,7 +148,7 @@ scenario_outage() {
 scenario_coldstart() {
   start_app
   sleep "$COLDSTART_SECS"; start_server
-  wait_for "Status is HEALTHY" 180 || log "!! app never became healthy"; sleep 5
+  require_healthy 180; sleep 5
   common_checks
   expect_count "startup wait reported once" "modbus://[^ ]+ outage started: unable to connect" 1
   expect_count "startup wait ended" "modbus://[^ ]+ outage ended" 1
@@ -153,7 +157,7 @@ scenario_coldstart() {
 
 scenario_mqtt() {
   start_server; sleep 8; start_app
-  wait_for "Status is HEALTHY" 90 || log "!! app never became healthy"
+  require_healthy 90
   sleep 5; block_ports "$MQTT_PORT"
   sleep "$MQTT_OUTAGE_SECS"
   unblock_ports "$MQTT_PORT"; log "UNBLOCKED"
@@ -169,8 +173,9 @@ scenario_mqttcold() {
   block_ports "$MQTT_PORT"; start_app
   sleep "$MQTTCOLD_SECS"
   unblock_ports "$MQTT_PORT"; log "UNBLOCKED"
-  wait_for "Status is HEALTHY" 180 || log "!! app never became healthy"; sleep 15
+  require_healthy 180; sleep 15
   common_checks
+  expect_at_least "became healthy" "Status is HEALTHY" 1
   expect_count "MQTT startup wait reported once" "mqtt://[^ ]+ outage started" 1
   expect_count "MQTT startup wait ended" "mqtt://[^ ]+ outage ended" 1
   expect_count "persistence kept MQTT redundancy" "disk only" 0

@@ -33,7 +33,8 @@ async def test_waits_with_backoff_and_reports_one_outage(caplog):
         await device_setup._wait_for_modbus(modbus, "10.10.10.60", 502)
 
     assert modbus.connected
-    assert delays == [5.0, 10.0, 20.0, 40.0, 60.0]
+    # Waits of 5, 10, 20, 40 and 60s, slept in 1s steps so a shutdown signal is noticed promptly
+    assert delays == [1] * (5 + 10 + 20 + 40 + 60)
     errors = [r.getMessage() for r in caplog.records if r.levelno >= logging.WARNING]
     assert len(errors) == 1
     assert errors[0].startswith("modbus://10.10.10.60:502 outage started: unable to connect")
@@ -64,4 +65,31 @@ async def test_already_connected_returns_immediately():
     modbus = FlakyModbus(succeed_on=0)
     modbus.connected = True
     await device_setup._wait_for_modbus(modbus, "h", 502)
+    assert modbus.attempts == 0
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("flag", ["mqtt", "auto_discovery"])
+async def test_shutdown_signal_interrupts_the_wait(flag, monkeypatch):
+    """The runtime signal handlers are not installed yet while devices are created, so the wait checks the startup flags."""
+    import sigenergy2mqtt.mqtt as mqtt_module
+    from sigenergy2mqtt.config import auto_discovery
+
+    modbus = FlakyModbus(succeed_on=1000)
+    sleeps = []
+
+    async def fake_sleep(delay):
+        sleeps.append(delay)
+        if len(sleeps) == 3:  # signal arrives part-way through the first backoff
+            if flag == "mqtt":
+                mqtt_module.interrupt_mqtt_reconnection()
+            else:
+                monkeypatch.setattr(auto_discovery, "_interrupted", True)
+
+    try:
+        with patch("sigenergy2mqtt.main.device_setup.asyncio.sleep", fake_sleep), pytest.raises(KeyboardInterrupt):
+            await device_setup._wait_for_modbus(modbus, "h", 502)
+    finally:
+        mqtt_module.reset_mqtt_reconnection_interrupt()
+    assert len(sleeps) == 3
     assert modbus.attempts == 0
