@@ -171,6 +171,14 @@ class OutageTracker:
                 self._logger.debug(detail, stacklevel=2)
             return True
 
+    def forget(self, member: str) -> None:
+        """Stop waiting for *member* to recover (e.g. a client that gave up retrying).
+
+        The outage itself continues; it ends at the next :meth:`success`.
+        """
+        with self._lock:
+            self._members.discard(member)
+
     def success(self, *, member: str | None = None) -> bool:
         """Record that the resource (or one *member* of it) is working again.
 

@@ -494,7 +494,9 @@ class StateStore:
 
         try:
             client_id = f"{active_config.mqtt.client_id_prefix}_persistence"
-            client, _ = await mqtt_setup(client_id, None, self._loop)
+            # Wait for the broker: nothing can be published until it is reachable anyway, and
+            # giving up would leave persistence without MQTT redundancy for the whole runtime
+            client, _ = await mqtt_setup(client_id, None, self._loop, max_attempts=None)
             client.on_message = self._mqtt.on_message
         except (MQTTException, ValueError, OSError, RuntimeError) as exc:
             logger.warning(f"StateStore: MQTT connection failed ({exc}) — disk only")

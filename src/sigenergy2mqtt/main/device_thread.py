@@ -22,7 +22,7 @@ from sigenergy2mqtt.cloud.exceptions import CloudControlError
 from sigenergy2mqtt.config import SettingsService, active_config
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.modbus import ModbusClientFactory
-from sigenergy2mqtt.mqtt import MqttHandler, mqtt_setup, mqtt_teardown
+from sigenergy2mqtt.mqtt import MqttConnectAborted, MqttHandler, mqtt_setup, mqtt_teardown
 
 from .thread_config import ThreadConfig
 
@@ -119,7 +119,18 @@ async def read_and_publish_device_sensors(
                 return
 
         mqtt_client_id = f"{active_config.mqtt.client_id_prefix}_{config.description}"
-        mqtt_client, mqtt_handler = await mqtt_setup(mqtt_client_id, transport, loop)
+        try:
+            # This thread cannot work without MQTT, so wait for the broker rather than crash
+            mqtt_client, mqtt_handler = await mqtt_setup(
+                mqtt_client_id,
+                transport,
+                loop,
+                max_attempts=None,
+                stopping=lambda: config.shutdown_requested or (stop_event is not None and stop_event.is_set()),
+            )
+        except MqttConnectAborted:
+            logger.info(f"{log_label} stopped while waiting for the MQTT broker")
+            return
 
         if not active_config.clean and active_config.home_assistant.enabled and not active_config.home_assistant.discovery_only:
             mqtt_handler.register(mqtt_client, f"{active_config.home_assistant.discovery_prefix}/status", log_ha_status)

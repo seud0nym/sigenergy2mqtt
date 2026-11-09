@@ -415,3 +415,33 @@ async def test_shutdown_after_login_closes_transport_without_mqtt(monkeypatch):
         await threading_mod.read_and_publish_device_sensors(cfg, asyncio.get_running_loop())
     transport.close.assert_awaited_once()
     setup.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_thread_waits_for_mqtt_and_exits_cleanly_when_stopped(monkeypatch, caplog):
+    import logging
+
+    from sigenergy2mqtt.mqtt import MqttConnectAborted
+
+    cfg_obj = Config()
+    cfg_obj.clean = False
+    transport = MagicMock()
+    transport.close = AsyncMock()
+
+    with _swap_active_config(cfg_obj):
+        cfg = ThreadConfig.create(name="Cloud MQTT wait", host=None, port=None)
+        cfg.transport_factory = AsyncMock(return_value=transport)
+        setup = AsyncMock(side_effect=MqttConnectAborted("stopped"))
+        monkeypatch.setattr(threading_mod, "mqtt_setup", setup)
+
+        with caplog.at_level(logging.INFO):
+            await threading_mod.read_and_publish_device_sensors(cfg, loop=asyncio.get_running_loop())
+
+    # Device threads wait indefinitely, and can be stopped by a shutdown/restart request
+    assert setup.call_args.kwargs["max_attempts"] is None
+    stopping = setup.call_args.kwargs["stopping"]
+    assert stopping() is False
+    cfg.offline()
+    assert stopping() is True
+    assert "stopped while waiting for the MQTT broker" in caplog.text
+    transport.close.assert_awaited_once()
