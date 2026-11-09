@@ -198,3 +198,16 @@ def test_disconnect_and_reconnect_clears_pending_publishes():
     assert entry._pending_publishes == {}
 
 
+
+
+def test_unregister_removes_client():
+    from sigenergy2mqtt.mqtt.registry import MqttHealthRegistry
+
+    registry = MqttHealthRegistry()
+    registry.register("a")
+    registry.register("b")
+    registry.unregister("a")
+    registry.unregister("missing")  # no error
+    assert list(registry.snapshot()) == ["b"]
+    registry.mark_disconnected("a")  # late callback for a removed client is ignored
+    assert list(registry.snapshot()) == ["b"]

@@ -180,7 +180,12 @@ async def mqtt_setup(
         logger.debug(f"MQTT Client ID {mqtt_client_id} connecting to {broker_url} with username {active_config.mqtt.username}")
         mqtt_client.username_pw_set(active_config.mqtt.username, active_config.mqtt.password)
 
-    await _connect_with_retry(mqtt_client, mqtt_client_id, max_attempts=max_attempts, stopping=stopping)
+    try:
+        await _connect_with_retry(mqtt_client, mqtt_client_id, max_attempts=max_attempts, stopping=stopping)
+    except BaseException:
+        # A client that never connected must not be reported as disconnected by health checks
+        mqtt_health_registry.unregister(mqtt_client_id)
+        raise
 
     return mqtt_client, mqtt_handler
 
@@ -199,6 +204,8 @@ async def mqtt_teardown(mqtt_client: MqttClient, mqtt_handler: MqttHandler) -> N
     mqtt_handler.deregister_all(mqtt_client)
 
     logger.info(f"Closing MQTT connection for Client ID {mqtt_client_id} to {broker_url}")
+    # A deliberately closed client is no longer expected to be connected
+    mqtt_health_registry.unregister(mqtt_client_id)
     mqtt_client.loop_stop()
     mqtt_client.disconnect()
 

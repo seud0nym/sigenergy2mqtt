@@ -116,3 +116,22 @@ async def test_mqtt_setup_defaults_to_bounded_attempts():
         connect.return_value = None
         await mqtt_module.mqtt_setup("cid", None, MagicMock())
     assert connect.call_args.kwargs == {"max_attempts": 3, "stopping": None}
+
+
+@pytest.mark.asyncio
+async def test_teardown_and_failed_setup_unregister_from_health_registry():
+    from unittest.mock import AsyncMock
+
+    from sigenergy2mqtt.mqtt import mqtt_health_registry, mqtt_setup, mqtt_teardown
+
+    with patch.object(mqtt_module, "_connect_with_retry", AsyncMock(side_effect=ConnectionRefusedError(111, "x"))):
+        with pytest.raises(ConnectionRefusedError):
+            await mqtt_setup("gave_up", None, MagicMock())
+    assert "gave_up" not in mqtt_health_registry.snapshot()
+
+    with patch.object(mqtt_module, "_connect_with_retry", AsyncMock()):
+        client, handler = await mqtt_setup("closed", None, MagicMock())
+    assert "closed" in mqtt_health_registry.snapshot()
+    with patch.object(client, "loop_stop"), patch.object(client, "disconnect"), patch.object(handler, "close", AsyncMock()):
+        await mqtt_teardown(client, handler)
+    assert "closed" not in mqtt_health_registry.snapshot()

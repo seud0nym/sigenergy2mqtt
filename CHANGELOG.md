@@ -33,6 +33,7 @@
 - Fixed sensor scan groups retrying every 0.1 seconds (and logging an error each time) while the MQTT broker was unreachable; failed sensors now wait for their next scan interval
 - Fixed every pymodbus log message being written twice (once in pymodbus' own format)
 - Removed the hex frame dump that pymodbus appends to every error message (~20 extra log lines per Modbus timeout)
+- Fixed a restart loop when a thread closed its MQTT connection deliberately (e.g. the Services thread with `diagnostics.enabled: false`): the closed client stayed in the MQTT health registry and was reported as disconnected, so health checks failed and triggered a restart every few intervals
 - Fixed the process exiting when the MQTT broker was unreachable at startup (each thread gave up after 3 attempts and crashed); the device threads and persistence now wait, retrying every `mqtt.retry_delay` seconds, and the wait is reported as a single broker outage
 - Fixed the process exiting when the Modbus host was unreachable at startup, including after an automatic restart triggered by health check failures; startup now waits and retries (5s doubling to 60s) until the host is reachable
 - Fixed health check failures caused by an unreachable Modbus host, MQTT broker or InfluxDB server triggering an automatic restart that could not fix the problem; the status is still reported as degraded, but failures only count towards a restart once the dependency is available again (or, for Modbus, after 5 minutes if the host accepts connections but the client has not recovered)
