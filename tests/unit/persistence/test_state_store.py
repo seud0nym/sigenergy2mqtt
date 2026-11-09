@@ -360,3 +360,16 @@ async def test_invalid_envelope_handling(temp_state_dir, mock_persistence_config
 
     loaded = await store.load("test", "key")
     assert loaded == "{invalid json"
+
+
+@pytest.mark.asyncio
+async def test_initialise_waits_for_mqtt_broker(temp_state_dir, mock_persistence_config):
+    """Persistence waits for the broker instead of falling back to disk-only on an unreachable broker."""
+    from unittest.mock import MagicMock, patch
+
+    mock_persistence_config.mqtt_redundancy = True
+    store = StateStore()
+    with patch("sigenergy2mqtt.mqtt.mqtt_setup", return_value=(MagicMock(), MagicMock())) as setup:
+        await store.initialise(temp_state_dir, mock_persistence_config)
+    assert setup.call_args.kwargs["max_attempts"] is None
+    store.shutdown()

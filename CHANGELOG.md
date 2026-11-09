@@ -30,9 +30,19 @@
 - Fixed handling of alarms that return invalid values
 - Implemented ±50 W power dead band logic in BatteryStatus to prevent flapping at extremes (#346)
 - Fixed accumulation sensors using stale source samples when repeated publishes were suppressed; daily resets now follow successful read times across midnight
+- Fixed sensor scan groups retrying every 0.1 seconds (and logging an error each time) while the MQTT broker was unreachable; failed sensors now wait for their next scan interval
+- Fixed every pymodbus log message being written twice (once in pymodbus' own format)
+- Removed the hex frame dump that pymodbus appends to every error message (~20 extra log lines per Modbus timeout)
+- Fixed a restart loop when a thread closed its MQTT connection deliberately (e.g. the Services thread with `diagnostics.enabled: false`): the closed client stayed in the MQTT health registry and was reported as disconnected, so health checks failed and triggered a restart every few intervals
+- Fixed the process exiting when the MQTT broker was unreachable at startup (each thread gave up after 3 attempts and crashed); the device threads and persistence now wait, retrying every `mqtt.retry_delay` seconds, and the wait is reported as a single broker outage
+- Fixed the process exiting when the Modbus host was unreachable at startup, including after an automatic restart triggered by health check failures; startup now waits and retries (5s doubling to 60s) until the host is reachable
+- Fixed health check failures caused by an unreachable Modbus host, MQTT broker or InfluxDB server triggering an automatic restart that could not fix the problem; the status is still reported as degraded, but failures only count towards a restart once the dependency is available again (or, for Modbus, after 5 minutes if the host accepts connections but the client has not recovered)
+- Fixed the Modbus "disconnected (Nx total)" health check message always reporting 0 when pymodbus closed the connection itself
+- Fixed a Cloud API outage not being reported as ended until every sensor that failed had read successfully again, which could take up to 15 minutes (the slowest scan group's retry backoff) or never happen after a restart
 
 ### Changed
 
+- MQTT broker, Modbus, InfluxDB and Cloud API connectivity failures are now reported as a single "outage started" error and a single "outage ended" message (with duration and count of suppressed messages), instead of one error per sensor, scan group and client. Repeated messages during an outage are logged at DEBUG level, a new kind of error is still reported once, and a reminder is logged at ERROR level every 5 minutes while the outage continues
 - Sensors now publish individual availability to Home Assistant, and will be marked unavailable if state publishing fails
 - Unchanged states are now only published every 60 seconds to reduce network traffic and MQTT broker load
 - Updated aiohttp from 3.14.4 to 3.14.5

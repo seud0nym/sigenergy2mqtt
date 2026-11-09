@@ -168,8 +168,8 @@ async def testwrite_line_http_fail(influx_config):
     with patch.object(svc._session, "post", side_effect=requests.RequestException("write error")), patch("sigenergy2mqtt.influxdb.base.logger.error") as mock_logger_error:
         await svc.write_line("test line")
         await svc.flush_buffer()  # Force flush to trigger write
-        # Log message contains exception detail and context
-        found = any("InfluxDB write failed: write error" in c.args[0] for c in mock_logger_error.call_args_list)
+        # Reported once as an outage of the InfluxDB server, including the exception detail
+        found = any("InfluxDB http://localhost:8086 outage started" in c.args[0] and "write error" in c.args[0] for c in mock_logger_error.call_args_list)
         assert found
 
 

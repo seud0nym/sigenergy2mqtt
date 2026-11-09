@@ -69,6 +69,15 @@ class MqttHealthRegistry:
             if client_id not in self._clients:
                 self._clients[client_id] = MqttClientHealth(client_id=client_id)
 
+    def unregister(self, client_id: str) -> None:
+        """Remove *client_id* from the registry.
+
+        Called when a client is deliberately closed (or gave up connecting) so
+        that health checks no longer report it as disconnected.
+        """
+        with self._lock:
+            self._clients.pop(client_id, None)
+
     # ------------------------------------------------------------------
     # Mutation helpers (called from MQTT callbacks)
     # ------------------------------------------------------------------

@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import sys
 from collections.abc import Mapping
 from typing import Any, cast
 
@@ -8,7 +7,8 @@ from pymodbus.exceptions import ModbusException
 
 from sigenergy2mqtt.cloud.registry import cloud_control_registry
 from sigenergy2mqtt.common import Constants, ProtocolVersion
-from sigenergy2mqtt.config import active_config
+from sigenergy2mqtt.common.outage import outage_tracker
+from sigenergy2mqtt.config import active_config, auto_discovery
 from sigenergy2mqtt.devices import (
     CloudControl,
     DeviceRegistry,
@@ -18,6 +18,8 @@ from sigenergy2mqtt.devices import (
 )
 from sigenergy2mqtt.devices.cloud import CloudDiscovery, discover_cloud, discover_operational_modes
 from sigenergy2mqtt.modbus import ModbusClient
+from sigenergy2mqtt.modbus.client import CONNECTIVITY
+from sigenergy2mqtt.mqtt import mqtt_reconnection_interrupted
 from sigenergy2mqtt.sensors.base import Sensor
 from sigenergy2mqtt.sensors.cloud.read_write import GatewayGridConnectionControl
 from sigenergy2mqtt.sensors.inverter.read_only import RatedActivePower
@@ -49,6 +51,40 @@ from .thread_config import ThreadConfig, thread_config_registry
 from .validation import validate_publishable_sensors
 
 logger = logging.getLogger(__name__)
+
+# Backoff between attempts to reach a Modbus host at startup
+STARTUP_CONNECT_INITIAL_DELAY = 5.0
+STARTUP_CONNECT_MAX_DELAY = 60.0
+
+
+async def _wait_for_modbus(modbus: ModbusClient, host: str, port: int) -> None:
+    """Wait until *modbus* is connected, retrying with backoff.
+
+    Devices can only be created by probing the inverter's registers, so startup
+    cannot continue without Modbus. Rather than exiting (which would kill the
+    process after an automatic restart, or crash-loop a container) the attempt
+    is retried until the host is reachable. The wait is reported as a single
+    outage of the host, and ends as soon as a connection is made. A shutdown
+    signal interrupts the wait (raising ``KeyboardInterrupt``, as the MQTT
+    startup wait does), because the runtime signal handlers are not yet
+    installed while devices are being created.
+    """
+    outage = outage_tracker(f"modbus://{host}:{port}")
+    delay = STARTUP_CONNECT_INITIAL_DELAY
+    while not modbus.connected:
+        outage.failure(
+            "unable to connect; retrying until it is available (check the configured host and port if this persists)",
+            kind=CONNECTIVITY,
+            detail=f"Failed to connect to modbus://{host}:{port}; retrying in {delay:.0f}s",
+        )
+        for _ in range(int(delay)):
+            if mqtt_reconnection_interrupted() or auto_discovery._interrupted:
+                logger.info(f"Waiting for modbus://{host}:{port} interrupted by signal")
+                raise KeyboardInterrupt("Modbus startup wait interrupted by signal")
+            await asyncio.sleep(1)
+        delay = min(delay * 2, STARTUP_CONNECT_MAX_DELAY)
+        await modbus.connect()
+    outage.success()
 
 _GRID_RESTORE_WATCH_TASKS: set[tuple[str, int, int]] = set()
 
@@ -161,8 +197,7 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
 
         async with modbus:
             if not modbus.connected:
-                logger.fatal(f"Failed to connect to modbus://{device.host}:{device.port}")
-                sys.exit(1)
+                await _wait_for_modbus(modbus, device.host, device.port)
 
             logger.debug(f"Connected to modbus://{device.host}:{device.port} for register probing")
 

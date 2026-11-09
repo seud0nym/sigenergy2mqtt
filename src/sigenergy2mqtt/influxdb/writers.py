@@ -16,6 +16,17 @@ from sigenergy2mqtt.config import active_config
 logger = logging.getLogger(__name__)
 
 
+class InfluxWriteError(Exception):
+    """Raised by a writer when InfluxDB rejects a write (non-2xx HTTP response)."""
+
+    def __init__(self, status_code: int, text: str, url: str) -> None:
+        message = f"HTTP {status_code}: {text} (url={url})"
+        super().__init__(message)
+        self.status_code = status_code
+        self.text = text
+        self.url = url
+
+
 class Writer(Protocol):
     """Small interface used by :class:`InfluxBase` for write transports."""
 
@@ -26,7 +37,11 @@ class Writer(Protocol):
         ...
 
     def write(self, session: requests.Session, data: bytes) -> bool:
-        """Write line-protocol data and return whether it was accepted."""
+        """Write line-protocol data, returning ``True`` once accepted.
+
+        Raises:
+            InfluxWriteError: If InfluxDB rejected the write.
+        """
         ...
 
 
@@ -94,8 +109,7 @@ class V2HttpWriter:
         )
         if response.status_code in (204, 200):
             return True
-        logger.error(f"InfluxDB v2 HTTP write failed: {response.status_code=} {response.text=} (url={self.url})")
-        return False
+        raise InfluxWriteError(response.status_code, response.text, self.url)
 
 
 class V1HttpWriter:
@@ -152,5 +166,4 @@ class V1HttpWriter:
         )
         if response.status_code in (204, 200):
             return True
-        logger.error(f"InfluxDB v1 HTTP write failed: {response.status_code=} {response.text=} (url={self.url})")
-        return False
+        raise InfluxWriteError(response.status_code, response.text, self.url)

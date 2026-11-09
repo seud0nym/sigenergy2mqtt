@@ -1,7 +1,6 @@
 import logging
 
-from pymodbus import pymodbus_apply_logging_config
-
+from sigenergy2mqtt.common.outage import active_outages
 from sigenergy2mqtt.config import active_config, configure_root_logger
 from sigenergy2mqtt.metrics import Metrics
 
@@ -11,6 +10,12 @@ logger = logging.getLogger(__name__)
 # object is reused on every call, and _add_filter_once() ensures it is never
 # attached to the same logger/handler more than once.
 _framer_skip_filter: "_FramerSkipFilter | None" = None
+_frame_dump_filter: "_FrameDumpFilter | None" = None
+_modbus_outage_filter: "_OutageDemotionFilter | None" = None
+_mqtt_outage_filter: "_OutageDemotionFilter | None" = None
+
+PYMODBUS_LOGGER = "pymodbus.logging"
+MQTT_CLIENT_LOGGER = "sigenergy2mqtt.mqtt.client"
 
 
 class _FramerSkipFilter(logging.Filter):
@@ -75,9 +80,84 @@ class _FramerSkipFilter(logging.Filter):
         return True
 
 
+class _FrameDumpFilter(logging.Filter):
+    """Strip the frame dump that pymodbus appends to ERROR/CRITICAL records.
+
+    When its logger is not enabled for DEBUG, pymodbus appends the last 20
+    send/recv frames to every error message, each on its own ``>>>>>`` line.
+    Log collectors (Docker, syslog) split those into separate records, turning
+    one timeout into ~20 lines of hex.  The dump is only useful when debugging
+    the protocol, and at DEBUG level pymodbus logs the frames as they happen,
+    so the appended copy is dropped here.
+    """
+
+    MARKER = "\n>>>>> "
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        msg = record.getMessage()
+        if self.MARKER in msg:
+            record.msg = msg.split(self.MARKER, 1)[0]
+            record.args = None
+        return True
+
+
+class _OutageDemotionFilter(logging.Filter):
+    """Demote third-party connectivity errors to DEBUG while an outage is active.
+
+    Libraries (pymodbus, paho) log their own error for every failed request.
+    Once an :class:`~sigenergy2mqtt.common.outage.OutageTracker` has reported
+    the outage, those records add nothing, so matching records are demoted to
+    DEBUG (or dropped if the logger is not enabled for DEBUG) and counted as
+    suppressed.
+
+    Args:
+        logger_name: The logger this filter is attached to.
+        resource_prefix: Prefix of the outage tracker resources to consult,
+            e.g. ``modbus://``.
+        patterns: Substrings identifying connectivity-related messages.
+    """
+
+    def __init__(self, logger_name: str, resource_prefix: str, patterns: tuple[str, ...]) -> None:
+        super().__init__()
+        self._logger_name = logger_name
+        self._prefix = resource_prefix
+        self._patterns = patterns
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if record.levelno <= logging.DEBUG:
+            return True
+        msg = record.getMessage()
+        if not any(p in msg for p in self._patterns):
+            return True
+        outages = active_outages(self._prefix)
+        if not outages:
+            return True
+        outages[0].suppress()
+        if not logging.getLogger(self._logger_name).isEnabledFor(logging.DEBUG):
+            return False
+        record.levelno = logging.DEBUG
+        record.levelname = logging.getLevelName(logging.DEBUG)
+        return True
+
+
+# Connectivity messages logged by pymodbus for each failed request.
+_PYMODBUS_OUTAGE_PATTERNS = (
+    "No response received",
+    "Cancel send, because not connected",
+    "Not connected, trying to connect",
+    "Failed to connect",
+    "Connection to (",
+    # pymodbus replaces an immediately repeated message with this marker
+    "Repeating....",
+)
+
+# Logged by paho's network loop while the socket is gone.
+_PAHO_OUTAGE_PATTERNS = ("Client is not connected", "failed to receive on socket", "failed to send on socket")
+
+
 def configure_logging() -> None:
     """Configure the runtime logging environment."""
-    global _framer_skip_filter
+    global _framer_skip_filter, _frame_dump_filter, _modbus_outage_filter, _mqtt_outage_filter
 
     # Configure root logger format/level via shared helper so logic is unified
     # with configure_root_logger() performed at import time.
@@ -92,9 +172,11 @@ def configure_logging() -> None:
 
     _configure_logger("paho.mqtt", active_config.mqtt.log_level)
 
-    # We have to configure root logging before pymodbus so basicConfig wins the handler race
-    modbus_log_level = active_config.modbus_log_level
-    pymodbus_apply_logging_config(modbus_log_level)
+    # Only the level of the pymodbus logger is set. pymodbus_apply_logging_config()
+    # is deliberately NOT used: it adds its own StreamHandler to the pymodbus
+    # logger, while records still propagate to the root handler, so every
+    # pymodbus message would be written twice (once in each format).
+    _configure_logger(PYMODBUS_LOGGER, active_config.modbus_log_level)
 
     logger.debug("Applying skipped error logging filter to pymodbus.logging logger (modbus.log_skipped evaluated at message time)")
     if _framer_skip_filter is None:
@@ -102,7 +184,7 @@ def configure_logging() -> None:
     # Attach to the exact logger pymodbus.Log uses, AND to each of its handlers.
     # The logger-level filter is the primary gate: it prevents callHandlers() from
     # ever being reached, so no handler — present or future — can emit the record.
-    _pymodbus_logging_logger = logging.getLogger("pymodbus.logging")
+    _pymodbus_logging_logger = logging.getLogger(PYMODBUS_LOGGER)
     _add_filter_once(_pymodbus_logging_logger, _framer_skip_filter)
     for handler in _pymodbus_logging_logger.handlers:
         _add_filter_once(handler, _framer_skip_filter)
@@ -110,6 +192,16 @@ def configure_logging() -> None:
     # before the logger-level filter takes effect on the first call.
     for handler in logging.getLogger().handlers:
         _add_filter_once(handler, _framer_skip_filter)
+
+    if _frame_dump_filter is None:
+        _frame_dump_filter = _FrameDumpFilter()
+    if _modbus_outage_filter is None:
+        _modbus_outage_filter = _OutageDemotionFilter(PYMODBUS_LOGGER, "modbus://", _PYMODBUS_OUTAGE_PATTERNS)
+    if _mqtt_outage_filter is None:
+        _mqtt_outage_filter = _OutageDemotionFilter(MQTT_CLIENT_LOGGER, "mqtt://", _PAHO_OUTAGE_PATTERNS)
+    _add_filter_once(_pymodbus_logging_logger, _frame_dump_filter)
+    _add_filter_once(_pymodbus_logging_logger, _modbus_outage_filter)
+    _add_filter_once(logging.getLogger(MQTT_CLIENT_LOGGER), _mqtt_outage_filter)
 
 
 def _add_filter_once(target: logging.Logger | logging.Handler, f: logging.Filter) -> None:

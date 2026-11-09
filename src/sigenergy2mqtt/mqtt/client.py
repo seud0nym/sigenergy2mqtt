@@ -14,6 +14,8 @@ from typing import Literal
 import paho.mqtt.client as mqtt
 from paho.mqtt.enums import CallbackAPIVersion, MQTTErrorCode
 
+from sigenergy2mqtt.common.outage import OutageTracker, outage_tracker
+
 from .handler import MqttHandler
 
 logger = logging.getLogger(__name__)
@@ -37,6 +39,9 @@ class MqttClient(mqtt.Client):
         When *True* (and *tls* is also *True*), hostname verification and
         certificate validation are disabled.  **Do not use in production.**
     """
+
+    # Class-level default so instances created without __init__ (e.g. in tests) behave as untracked
+    _outage: OutageTracker | None = None
 
     def __init__(
         self,
@@ -107,6 +112,17 @@ class MqttClient(mqtt.Client):
             handler.registry.record_publish(handler.client_id, mid=mid)
         return info
 
+    @property
+    def outage(self) -> OutageTracker:
+        """The outage tracker shared by every client connected to this broker.
+
+        Each client connection is a member of the outage, so it ends only once
+        every client that lost its connection has reconnected.
+        """
+        if self._outage is None:
+            self._outage = outage_tracker(f"mqtt://{self.host}:{self.port}")
+        return self._outage
+
     def _record_connection_result(self, success: bool) -> None:
         from sigenergy2mqtt.metrics import Metrics
 
@@ -122,6 +138,17 @@ class MqttClient(mqtt.Client):
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
+
+
+def _is_failure(reason_code) -> bool:
+    """Return ``True`` if a disconnect *reason_code* indicates an unexpected disconnection."""
+    is_failure = getattr(reason_code, "is_failure", None)
+    if isinstance(is_failure, bool):
+        return is_failure
+    try:
+        return int(reason_code) != 0
+    except (TypeError, ValueError):
+        return False
 
 
 def _ensure_subscriptions_are_fresh(client: mqtt.Client, userdata: MqttHandler) -> None:
@@ -172,6 +199,8 @@ def on_connect(client: mqtt.Client, userdata: MqttHandler, flags, reason_code, p
         client._record_connection_result(reason_code == 0)
     if reason_code == 0:
         logger.debug(f"Connected to mqtt://{client.host}:{client.port} (client_id={userdata.client_id})")
+        if isinstance(client, MqttClient):
+            client.outage.success(member=userdata.client_id)
         userdata.registry.mark_connected(userdata.client_id)
         userdata.on_reconnect(client)
     else:
@@ -205,7 +234,12 @@ def on_disconnect(client: mqtt.Client, userdata: MqttHandler, disconnect_flags, 
     if isinstance(client, MqttClient):
         client._record_connection_result(False)
     userdata.connected = False
-    logger.info(f"Disconnected from mqtt://{client.host}:{client.port} - {reason_code} (client_id={userdata.client_id})")
+    message = f"Disconnected from mqtt://{client.host}:{client.port} - {reason_code} (client_id={userdata.client_id})"
+    if isinstance(client, MqttClient) and _is_failure(reason_code):
+        # Unexpected disconnection: report once per broker outage rather than once per client
+        client.outage.failure(str(reason_code), member=userdata.client_id, detail=message)
+    else:
+        logger.info(message)
     userdata.registry.mark_disconnected(userdata.client_id)
 
 

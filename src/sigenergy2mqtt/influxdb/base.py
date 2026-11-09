@@ -9,9 +9,10 @@ from urllib3.exceptions import MaxRetryError
 from urllib3.util.retry import Retry
 
 from sigenergy2mqtt.common import ProtocolVersion, service_health_registry
+from sigenergy2mqtt.common.outage import OutageTracker, outage_tracker
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import Device
-from sigenergy2mqtt.influxdb.writers import V1HttpWriter, V2HttpWriter, Writer
+from sigenergy2mqtt.influxdb.writers import InfluxWriteError, V1HttpWriter, V2HttpWriter, Writer
 from sigenergy2mqtt.metrics import Metrics
 
 logger = logging.getLogger(__name__)
@@ -236,6 +237,11 @@ class InfluxBase(Device):
     # Configuration
     # ------------------------------------------------------------------
 
+    @property
+    def outage(self) -> OutageTracker:
+        """The outage tracker shared by every service writing to this InfluxDB server."""
+        return outage_tracker(f"InfluxDB {self.get_config_values()['base']}", log=logger)
+
     def get_config_values(self) -> InfluxConfigValues:
         """Resolve and return InfluxDB configuration values with backwards-compatibility handling.
 
@@ -401,8 +407,12 @@ class InfluxBase(Device):
             return False
         try:
             success = await asyncio.to_thread(writer.write, self._session, data)
-        except (OSError, requests.RequestException, TimeoutError) as e:
-            logger.error(f"InfluxDB write failed: {e} (type={self._writer_type})")
+        except (OSError, requests.RequestException, TimeoutError, InfluxWriteError) as e:
+            # Reported once per outage; repeated failures are logged at DEBUG
+            self.outage.failure(e, detail=f"InfluxDB write failed: {e} (type={self._writer_type})")
             success = False
+        else:
+            if success:
+                self.outage.success()
         service_health_registry.set_health(self.service_health_key, success)
         return success

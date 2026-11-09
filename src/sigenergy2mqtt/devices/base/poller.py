@@ -9,7 +9,10 @@ from pymodbus import ModbusException
 
 from sigenergy2mqtt.cloud.exceptions import CloudControlRateLimitedError, CloudControlUnavailableError
 from sigenergy2mqtt.common import Constants
+from sigenergy2mqtt.common.outage import OutageTracker
 from sigenergy2mqtt.modbus import ModbusClient, ModbusLock, ModbusLockFactory
+from sigenergy2mqtt.mqtt.client import MqttClient
+from sigenergy2mqtt.sensors.base.cloud import cloud_outage_tracker
 from sigenergy2mqtt.sensors.base import (
     EnergyDailyAccumulationSensor,
     ModbusSensorMixin,
@@ -223,9 +226,10 @@ class SensorGroupPoller:
                             reason = "0x04 SLAVE DEVICE FAILURE"
                         case _:
                             reason = f"UNKNOWN PROBLEM ({exception_code=})"
-                    logger.warning(
-                        f"{self._device.log_identity} Sensor Scan Group [{name}] failed to pre-read {modbus_sensors.first_address} to {modbus_sensors.last_address} ({modbus_sensors.register_count} registers) - {reason}"
-                    )
+                    message = f"{self._device.log_identity} Sensor Scan Group [{name}] failed to pre-read {modbus_sensors.first_address} to {modbus_sensors.last_address} ({modbus_sensors.register_count} registers) - {reason}"
+                    outage = getattr(modbus_client, "outage", None)
+                    if not (isinstance(outage, OutageTracker) and outage.suppress(message)):
+                        logger.warning(message)
         return read_ahead_enabled
 
     async def _reconnect_modbus_with_backoff(self, modbus_client: ModbusClient) -> bool:
@@ -250,7 +254,15 @@ class SensorGroupPoller:
         attempt = 0
         delay = INITIAL_RECONNECT_DELAY
 
-        logger.info(f"{self._device.log_identity} attempting to reconnect to Modbus...")
+        outage = getattr(modbus_client, "outage", None)
+        outage = outage if isinstance(outage, OutageTracker) else None
+
+        def log(level: int, message: str) -> None:
+            # While the host's outage is being reported, reconnection chatter is only logged at DEBUG
+            if outage is None or not outage.suppress(message):
+                logger.log(level, message)
+
+        log(logging.INFO, f"{self._device.log_identity} attempting to reconnect to Modbus...")
 
         while attempt < MAX_RECONNECTION_ATTEMPTS and self._device.online:
             attempt += 1
@@ -265,7 +277,7 @@ class SensorGroupPoller:
                 logger.debug(f"{self._device.log_identity} Modbus reconnection cancelled")
                 return False
             except ModbusException as e:
-                logger.warning(f"{self._device.log_identity} Modbus reconnection attempt {attempt} failed: {e!r}")
+                log(logging.WARNING, f"{self._device.log_identity} Modbus reconnection attempt {attempt} failed: {e!r}")
 
             # Exponential backoff with cap
             if attempt < MAX_RECONNECTION_ATTEMPTS and self._device.online:
@@ -279,8 +291,34 @@ class SensorGroupPoller:
                 delay *= RECONNECT_BACKOFF_MULTIPLIER
 
         if attempt >= MAX_RECONNECTION_ATTEMPTS:
-            logger.error(f"{self._device.log_identity} failed to reconnect to Modbus after {MAX_RECONNECTION_ATTEMPTS} attempts")
+            log(logging.ERROR, f"{self._device.log_identity} failed to reconnect to Modbus after {MAX_RECONNECTION_ATTEMPTS} attempts")
 
+        return False
+
+    @staticmethod
+    def _reschedule_unpublished(due_sensors: list[ReadableSensorMixin], next_publish_times: dict, now: float) -> None:
+        """Move any due sensor that was not published in this pass to its next scan interval."""
+        for sensor in due_sensors:
+            if next_publish_times.get(sensor, now) <= now:
+                next_publish_times[sensor] = now + sensor.scan_interval
+
+    @staticmethod
+    def _report_mqtt_outage(mqtt_client: mqtt.Client, error: Exception, message: str) -> bool:
+        """Report a publish failure caused by a lost MQTT connection to the broker's outage tracker.
+
+        Returns:
+            ``True`` if the failure was attributed to an MQTT outage (and so has
+            been logged by the tracker), ``False`` if the caller should log it.
+        """
+        if not isinstance(mqtt_client, MqttClient):
+            return False
+        outage = mqtt_client.outage
+        if outage.suppress(message):
+            return True
+        if not mqtt_client.is_connected():
+            # Publish failed before paho reported the disconnection
+            outage.failure(error, member=mqtt_client.client_id_str, detail=message)
+            return True
         return False
 
     async def run(self, transport: Any, mqtt_client: mqtt.Client, name: str, *sensors: Sensor) -> None:
@@ -397,7 +435,10 @@ class SensorGroupPoller:
                                 # Retain lock while attempting to reconnect to prevent multiple concurrent reconnection attempts from other tasks
                                 reconnected = await self._reconnect_modbus_with_backoff(transport)
                                 if not reconnected and device.online:
-                                    logger.error(f"{device.log_identity} failed to reconnect to Modbus, sensor updates paused")
+                                    message = f"{device.log_identity} failed to reconnect to Modbus; will keep retrying"
+                                    outage = getattr(transport, "outage", None)
+                                    if not (isinstance(outage, OutageTracker) and outage.suppress(message)):
+                                        logger.error(message)
                 except CloudControlRateLimitedError as e:
                     # Do not let a vendor 429 terminate this polling task. The
                     # adapter also applies a shared cooldown across scan groups;
@@ -427,13 +468,10 @@ class SensorGroupPoller:
                     for sensor in next_publish_times:
                         next_publish_times[sensor] = retry_at
                     if cloud_failure_streak == 1:
-                        logger.warning(
-                            "%s Sensor Scan Group [%s] cloud unavailable; retrying in %.0f seconds: %s",
-                            device.log_identity,
-                            name,
-                            delay,
-                            e,
-                        )
+                        message = f"{device.log_identity} Sensor Scan Group [{name}] cloud unavailable; retrying in {delay:.0f} seconds: {e}"
+                        if not cloud_outage_tracker(transport).suppress(message):
+                            # Only reached if the sensors did not report the outage themselves
+                            logger.warning(message)
                     else:
                         logger.debug(
                             "%s Sensor Scan Group [%s] cloud outage continues; retrying in %.0f seconds",
@@ -442,7 +480,12 @@ class SensorGroupPoller:
                             delay,
                         )
                 except RuntimeError as e:
-                    logger.error(f"{device.log_identity} Sensor Scan Group [{name}] encountered an error: {e!r}")
+                    # Sensors not yet published in this pass would otherwise stay overdue,
+                    # causing the group to retry (and log) every 0.1s until the error clears.
+                    self._reschedule_unpublished(due_sensors, next_publish_times, now)
+                    message = f"{device.log_identity} Sensor Scan Group [{name}] encountered an error: {e!r}"
+                    if not self._report_mqtt_outage(mqtt_client, e, message):
+                        logger.error(message)
 
             # Sleep until the next sensor is due (max 1 second to stay responsive to shutdown)
             if next_publish_times:

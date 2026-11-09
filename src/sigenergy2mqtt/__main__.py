@@ -19,6 +19,7 @@ from sigenergy2mqtt.config import (
     initialize_async,
 )
 from sigenergy2mqtt.main import async_main, validate_connections
+from sigenergy2mqtt.mqtt import interrupt_mqtt_reconnection
 from sigenergy2mqtt.metrics.metrics import Metrics
 
 logger = logging.getLogger(__name__)
@@ -29,10 +30,11 @@ def _make_early_signal_handler():
 
     The handler covers two scenarios:
 
-    * **First signal** — auto-discovery is still running.  Sets the shared
-      ``auto_discovery._interrupted`` flag so that the discovery loop can
-      exit cleanly, then returns to allow the normal shutdown path to
-      complete.
+    * **First signal** — auto-discovery or a startup wait for an unreachable
+      MQTT broker or Modbus host is still running.  Sets the shared
+      ``auto_discovery._interrupted`` and MQTT reconnection-interrupt flags
+      so that they exit cleanly, then returns to allow the normal shutdown
+      path to complete.
     * **Second signal** — the process is not responding quickly enough.
       Calls :func:`os._exit` immediately, bypassing any blocked threads or
       cleanup code that might otherwise prevent termination.
@@ -61,6 +63,7 @@ def _make_early_signal_handler():
             os._exit(130 if signum == signal.SIGINT else 143)
         interrupted = True
         auto_discovery._interrupted = True  # signal the discovery loop to stop cleanly
+        interrupt_mqtt_reconnection()  # and the startup waits for an unreachable MQTT broker or Modbus host
 
     return _handler
 

@@ -3,19 +3,25 @@ from __future__ import annotations
 import asyncio
 import logging
 from asyncio import sleep
+from collections.abc import Callable
 from typing import Any
 
 from paho.mqtt import MQTTException
 
+from sigenergy2mqtt.common.outage import outage_tracker
 from sigenergy2mqtt.config import active_config
 
 from .client import MqttClient
 from .handler import MqttHandler
 from .registry import MqttHealthRegistry
 
-__all__ = ["MqttHandler", "interrupt_mqtt_reconnection", "mqtt_health_registry", "mqtt_setup", "mqtt_teardown", "reset_mqtt_reconnection_interrupt"]
+__all__ = ["MqttConnectAborted", "MqttHandler", "interrupt_mqtt_reconnection", "mqtt_reconnection_interrupted", "mqtt_health_registry", "mqtt_setup", "mqtt_teardown", "reset_mqtt_reconnection_interrupt"]
 
 _MAX_CONNECT_ATTEMPTS: int = 3
+
+
+class MqttConnectAborted(RuntimeError):
+    """Raised when waiting for the MQTT broker is abandoned because the caller is stopping."""
 
 # ---------------------------------------------------------------------------
 # Interruption flag
@@ -43,6 +49,11 @@ def interrupt_mqtt_reconnection() -> None:
     _interrupted = True
 
 
+def mqtt_reconnection_interrupted() -> bool:
+    """Whether a shutdown signal has asked connection waits to stop."""
+    return _interrupted
+
+
 def reset_mqtt_reconnection_interrupt() -> None:
     """Reset the interruption flag to allow future reconnection attempts."""
     global _interrupted
@@ -57,21 +68,35 @@ def _build_broker_url() -> str:
     return f"mqtt://{active_config.mqtt.broker}:{active_config.mqtt.port}"
 
 
-async def _connect_with_retry(mqtt_client: MqttClient, client_id: str) -> None:
-    """Attempt to connect the given MQTT client to the broker, retrying up to
-    ``_MAX_CONNECT_ATTEMPTS`` times on failure.
+async def _connect_with_retry(mqtt_client: MqttClient, client_id: str, max_attempts: int | None = _MAX_CONNECT_ATTEMPTS, stopping: Callable[[], bool] | None = None) -> None:
+    """Connect the given MQTT client to the broker, retrying on failure.
+
+    Failures are reported through the broker's outage tracker, so however many
+    clients are waiting, an unreachable broker is logged once when the outage
+    starts and once when it ends.
 
     Args:
-        mqtt_client: The :class:`MqttClient` instance to connect.
-        client_id:   The MQTT client ID, used only for log messages.
+        mqtt_client:  The :class:`MqttClient` instance to connect.
+        client_id:    The MQTT client ID (also the client's outage member).
+        max_attempts: Give up after this many attempts, or ``None`` to retry
+            until the broker is reachable. Components that cannot work without
+            MQTT wait; those with a fallback (e.g. disk-only persistence) give up.
+        stopping:     Optional callable; when it returns ``True`` the wait is
+            abandoned by raising :class:`MqttConnectAborted`.
 
     Raises:
         Exception: Re-raises the last connection exception once
-            ``_MAX_CONNECT_ATTEMPTS`` is exhausted.
+            ``max_attempts`` is exhausted.
+        MqttConnectAborted: If ``stopping()`` returned ``True`` while waiting.
+        KeyboardInterrupt: If a pre-loop signal interrupted the wait.
     """
     broker_url = _build_broker_url()
+    outage = outage_tracker(broker_url)
+    delay = active_config.mqtt.retry_delay
 
-    for attempt in range(1, _MAX_CONNECT_ATTEMPTS + 1):
+    attempt = 0
+    while True:
+        attempt += 1
         try:
             mqtt_client.connect(
                 active_config.mqtt.broker,
@@ -80,19 +105,32 @@ async def _connect_with_retry(mqtt_client: MqttClient, client_id: str) -> None:
             )
             mqtt_client.loop_start()
             logger.info(f"Connected to {broker_url} as Client ID '{client_id}' (keepalive={active_config.mqtt.keepalive}s)")
+            outage.success(member=client_id)
             return
         except (MQTTException, OSError, RuntimeError) as e:
-            if attempt < _MAX_CONNECT_ATTEMPTS:
-                logger.warning(f"Error connecting to {broker_url} as Client ID '{client_id}': {e!r} (attempt {attempt}/{_MAX_CONNECT_ATTEMPTS}) - Retrying in {active_config.mqtt.retry_delay}s")
-                for _ in range(active_config.mqtt.retry_delay):
-                    _check_interrupted(broker_url, client_id)
-                    await sleep(1)
-            else:
-                logger.critical(f"Failed to connect to {broker_url} as Client ID '{client_id}' after {_MAX_CONNECT_ATTEMPTS} attempts: {e!r}")
+            limit = "" if max_attempts is None else f"/{max_attempts}"
+            if max_attempts is not None and attempt >= max_attempts:
+                # The caller has a fallback; it no longer counts towards the outage ending
+                outage.failure(e, member=client_id, detail=f"Failed to connect to {broker_url} as Client ID '{client_id}' after {attempt} attempts: {e!r}")
+                outage.forget(client_id)
                 raise
+            outage.failure(e, member=client_id, detail=f"Error connecting to {broker_url} as Client ID '{client_id}': {e!r} (attempt {attempt}{limit}) - Retrying in {delay}s")
+            for _ in range(delay):
+                if stopping is not None and stopping():
+                    outage.forget(client_id)
+                    raise MqttConnectAborted(f"Stopped waiting for {broker_url} (Client ID '{client_id}')") from e
+                _check_interrupted(broker_url, client_id)
+                await sleep(1)
 
 
-async def mqtt_setup(mqtt_client_id: str, transport: Any, loop: asyncio.AbstractEventLoop) -> tuple[MqttClient, MqttHandler]:
+async def mqtt_setup(
+    mqtt_client_id: str,
+    transport: Any,
+    loop: asyncio.AbstractEventLoop,
+    *,
+    max_attempts: int | None = _MAX_CONNECT_ATTEMPTS,
+    stopping: Callable[[], bool] | None = None,
+) -> tuple[MqttClient, MqttHandler]:
     """Create, configure, and connect an MQTT client/handler pair.
 
     Instantiates an :class:`MqttHandler` and :class:`MqttClient`, applies
@@ -107,6 +145,10 @@ async def mqtt_setup(mqtt_client_id: str, transport: Any, loop: asyncio.Abstract
             the :class:`MqttHandler` for transport read/write operations.
         loop:           The asyncio event loop the handler will schedule
             callbacks on.  Must not be ``None``.
+        max_attempts:   Connection attempts before giving up, or ``None`` to
+            wait until the broker is reachable.
+        stopping:       Optional callable that abandons the wait (raising
+            :class:`MqttConnectAborted`) when it returns ``True``.
 
     Returns:
         A ``(MqttClient, MqttHandler)`` tuple.  The client is already
@@ -116,6 +158,7 @@ async def mqtt_setup(mqtt_client_id: str, transport: Any, loop: asyncio.Abstract
         ValueError:  If ``mqtt_client_id`` is empty or whitespace-only.
         ValueError:  If ``loop`` is ``None``.
         Exception:   If the broker is unreachable after all retry attempts.
+        MqttConnectAborted: If ``stopping()`` returned ``True`` while waiting.
     """
     if not mqtt_client_id or mqtt_client_id.isspace():
         raise ValueError("mqtt_client_id must not be None or an empty string")
@@ -142,7 +185,12 @@ async def mqtt_setup(mqtt_client_id: str, transport: Any, loop: asyncio.Abstract
         logger.debug(f"MQTT Client ID {mqtt_client_id} connecting to {broker_url} with username {active_config.mqtt.username}")
         mqtt_client.username_pw_set(active_config.mqtt.username, active_config.mqtt.password)
 
-    await _connect_with_retry(mqtt_client, mqtt_client_id)
+    try:
+        await _connect_with_retry(mqtt_client, mqtt_client_id, max_attempts=max_attempts, stopping=stopping)
+    except BaseException:
+        # A client that never connected must not be reported as disconnected by health checks
+        mqtt_health_registry.unregister(mqtt_client_id)
+        raise
 
     return mqtt_client, mqtt_handler
 
@@ -161,6 +209,8 @@ async def mqtt_teardown(mqtt_client: MqttClient, mqtt_handler: MqttHandler) -> N
     mqtt_handler.deregister_all(mqtt_client)
 
     logger.info(f"Closing MQTT connection for Client ID {mqtt_client_id} to {broker_url}")
+    # A deliberately closed client is no longer expected to be connected
+    mqtt_health_registry.unregister(mqtt_client_id)
     mqtt_client.loop_stop()
     mqtt_client.disconnect()
 

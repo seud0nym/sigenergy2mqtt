@@ -22,6 +22,7 @@ from pymodbus.pdu import ExceptionResponse
 
 from sigenergy2mqtt.cloud.exceptions import CloudControlUnavailableError
 from sigenergy2mqtt.common import DeviceClass, ProtocolVersion, StateClass
+from sigenergy2mqtt.common.outage import OutageTracker
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.config.models import RegisterAccess
 from sigenergy2mqtt.i18n import _t
@@ -42,6 +43,14 @@ if TYPE_CHECKING:
     from .derived import DerivedSensor
 
 logger = logging.getLogger(__name__)
+
+
+def _transport_outage(transport: Any) -> OutageTracker | None:
+    """Return the outage tracker of *transport*, if it has one."""
+    outage = getattr(transport, "outage", None)
+    return outage if isinstance(outage, OutageTracker) else None
+
+
 # =============================================================================
 
 
@@ -92,6 +101,9 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
     _used_object_ids: ClassVar[dict[str, str]] = {}
     _used_unique_ids: ClassVar[dict[str, str]] = {}
     _individual_availability: ClassVar[bool] = True
+    # Set when the last failure was suppressed because its transport reported an
+    # outage, so that the recovery message is also demoted (instance-level once set).
+    _failed_during_outage: bool = False
 
     def __init__(
         self,
@@ -1078,8 +1090,14 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
 
         # Reset failure count on successful state acquisition
         if self._failures > 0:
-            logger.info(f"{self.log_identity} Resetting failure count from {self._failures} to 0 because valid state acquired (state={state})")
+            message = f"{self.log_identity} Resetting failure count from {self._failures} to 0 because valid state acquired (state={state})"
+            if self._failed_during_outage:
+                # Recovery is reported once by the outage tracker; per-sensor noise goes to DEBUG
+                logger.debug(message)
+            else:
+                logger.info(message)
             self._failures = 0
+            self._failed_during_outage = False
             self._next_retry = None
 
         # Pre-publish handling
@@ -1218,7 +1236,11 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
             if self.debug_logging:
                 logger.debug(f"{self.log_identity} Published  state={payload} to topic {topic} ({qos=} {retain=}) result={message.rc}")
         else:
-            logger.warning(f"{self.log_identity} Failed to publish state={payload} to topic {topic} result={message.rc}")
+            failed = f"{self.log_identity} Failed to publish state={payload} to topic {topic} result={message.rc}"
+            outage = getattr(mqtt_client, "outage", None)
+            # While the broker's outage is being reported, individual publish failures are logged at DEBUG
+            if not (isinstance(outage, OutageTracker) and outage.suppress(failed)):
+                logger.warning(failed)
         return message.is_published()
 
     async def _publish_derived_sensors(self, mqtt_client: mqtt.Client, transport: Any, republish: bool) -> None:
@@ -1243,7 +1265,12 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         Returns:
             False (publish failed)
         """
-        logger.warning(f"{self.log_identity} Publishing SKIPPED: Failed to get state ({error!r})")
+        message = f"{self.log_identity} Publishing SKIPPED: Failed to get state ({error!r})"
+        outage = None if isinstance(error, SanityCheckException) else _transport_outage(transport)
+        # If the transport has already reported an outage, log this sensor's failure at DEBUG only
+        self._failed_during_outage = outage is not None and outage.suppress(message)
+        if not self._failed_during_outage:
+            logger.warning(message)
 
         if transport and transport.connected:
             self._update_failure_count(error)

@@ -7,6 +7,7 @@ import time
 from collections.abc import Awaitable
 from dataclasses import replace
 from typing import Any
+from urllib.parse import urlsplit
 
 import paho.mqtt.client as mqtt
 from paho.mqtt import MQTTException
@@ -15,6 +16,7 @@ from sigenergy2mqtt.common import (
     ProtocolVersion,
     service_health_registry,
 )
+from sigenergy2mqtt.common.outage import OutageTracker, active_outages
 from sigenergy2mqtt.config import active_config, is_docker
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.diagnostics import diagnostics_registry
@@ -32,6 +34,30 @@ from sigenergy2mqtt.sensors.monitor import MonitoredSensor
 from .dashboard import extract_dashboard_state
 
 logger = logging.getLogger(__name__)
+
+# Outages of these external dependencies cannot be fixed by restarting, so health
+# check failures during them do not count towards an automatic restart.
+RESTART_BLOCKING_OUTAGES = ("modbus://", "mqtt://", "InfluxDB ")
+# Outages that make sensor topics overdue (InfluxDB does not affect topic updates).
+TOPIC_AFFECTING_OUTAGES = ("modbus://", "mqtt://")
+# After a Modbus outage has lasted this long, a host that accepts TCP connections
+# suggests the client itself is stuck, so a restart is allowed again.
+MODBUS_STUCK_AFTER = 300.0
+
+
+def _first_outage(prefixes: tuple[str, ...]) -> OutageTracker | None:
+    """Return the first active outage whose resource starts with one of *prefixes*."""
+    for prefix in prefixes:
+        outages = active_outages(prefix)
+        if outages:
+            return outages[0]
+    return None
+
+
+def _warn(message: str, outage: OutageTracker | None) -> None:
+    """Log *message* as a WARNING unless it is a symptom of an outage already reported."""
+    if outage is None or not outage.suppress(message):
+        logger.warning(message)
 
 
 class MonitorService(Device):
@@ -61,6 +87,8 @@ class MonitorService(Device):
         # of repeated-state payload cadence so Docker HEALTHCHECKs remain timely.
         self._health_publish_interval = active_config.health_check.interval
         self._health_check_failures = 0
+        self._restart_deferred_for: str | None = None
+        self._restart_allowed_for: str | None = None
         self._started = time.monotonic()
         self._last_published_at: float = 0.0  # 0 = never published; guaranteed stale until first _publish_health call
         self._no_alarm_i18n = _t("AlarmSensor.no_alarm")  # Can't use constant because it gets initialised before i18n is available
@@ -77,10 +105,12 @@ class MonitorService(Device):
         for client in clients:
             health = client.snapshot()
             cid = health.client_id
+            outage = getattr(client, "outage", None)
+            outage = outage if isinstance(outage, OutageTracker) else None
             if not client.connected:
-                logger.warning(f"{self.log_identity} Modbus connection {cid} disconnected ({health.close_count}x total)")
+                _warn(f"{self.log_identity} Modbus connection {cid} disconnected ({getattr(health, 'disconnect_count', 0)}x total)", outage)
             elif health.last_read_at and (now - health.last_read_at) > self._health_publish_interval:
-                logger.warning(f"{self.log_identity} Modbus connection {cid} connected but no reads for {self._health_publish_interval}s")
+                _warn(f"{self.log_identity} Modbus connection {cid} connected but no reads for {self._health_publish_interval}s", outage)
             else:
                 logger.debug(f"{self.log_identity} Modbus connection {cid} healthy (connected {health.connect_count}x)")
                 modbus_healthy_connections += 1
@@ -103,7 +133,7 @@ class MonitorService(Device):
                 last_ack = getattr(health, "last_publish_ack_at", None)
                 oldest_pending = last_pub if (last_pub and last_ack and last_ack < last_pub) else None
             if not health.connected:
-                logger.warning(f"{self.log_identity} MQTT Client ID {cid} disconnected ({health.disconnect_count}x total)")
+                _warn(f"{self.log_identity} MQTT Client ID {cid} disconnected ({health.disconnect_count}x total)", _first_outage(("mqtt://",)))
             elif is_monitor and (self._started + self._health_publish_interval) > now:
                 logger.debug(f"{self.log_identity} MQTT Client ID {cid} not checked (first interval)")
                 mqtt_healthy_connections += 1
@@ -175,9 +205,11 @@ class MonitorService(Device):
                 and (t not in self._topic_sensors or self._topic_sensors[t].monitorable) and s.notified
             }
         if any(overdue):
+            # While Modbus or MQTT is down every affected topic goes overdue; the outage has already been reported
+            outage = _first_outage(TOPIC_AFFECTING_OUTAGES)
             for topic, sensor in overdue.items():
                 sensor.notified = True
-                logger.warning(f"{self.log_identity} '{sensor.name}' has not been seen for {sensor.overdue}s (scan_interval={sensor.scan_interval}s {topic=})")
+                _warn(f"{self.log_identity} '{sensor.name}' has not been seen for {sensor.overdue}s (scan_interval={sensor.scan_interval}s {topic=})", outage)
         return len(overdue) + len(still_degraded)
 
     async def _collect_dashboard_states(self) -> dict[str, Any]:
@@ -313,8 +345,10 @@ class MonitorService(Device):
         if not is_docker():  # is_docker() is cached so safe to call repeatedly
             if status == "healthy":
                 self._health_check_failures = 0
+                self._restart_deferred_for = None
+                self._restart_allowed_for = None
             else:
-                if time.monotonic() - self._started > active_config.health_check.start_period:
+                if time.monotonic() - self._started > active_config.health_check.start_period and not await self._restart_deferred():
                     self._health_check_failures += 1
                     logger.warning(f"{self.log_identity} Health check failure count: {self._health_check_failures}/{active_config.health_check.retries}")
                     if self._health_check_failures >= active_config.health_check.retries:
@@ -324,6 +358,51 @@ class MonitorService(Device):
 
                         restart_controller.request("Health check failed repeatedly")
                         self._health_check_failures = 0  # reset to suppress repeat calls until restart completes
+
+    async def _restart_deferred(self) -> bool:
+        """Return ``True`` if health check failures should not count towards a restart.
+
+        A restart cannot fix an outage of an external dependency (an unreachable
+        Modbus host or MQTT broker, or InfluxDB being down), and the affected
+        clients already reconnect on their own. Restarting during one also risks
+        the restarted runtime being unable to start. The status is still reported
+        as degraded; only the restart is deferred.
+
+        The exception is a Modbus outage lasting :data:`MODBUS_STUCK_AFTER` seconds
+        while the host accepts TCP connections, which suggests the client itself
+        is stuck, so a restart is allowed.
+        """
+        for prefix in RESTART_BLOCKING_OUTAGES:
+            for outage in active_outages(prefix):
+                if prefix == "modbus://" and outage.duration >= MODBUS_STUCK_AFTER and await self._is_reachable(outage.resource):
+                    if self._restart_allowed_for != outage.resource:
+                        self._restart_allowed_for = outage.resource
+                        logger.warning(f"{self.log_identity} {outage.resource} accepts connections but has not recovered after {outage.duration:.0f}s; health check failures now count towards a restart")
+                    continue
+                if self._restart_deferred_for != outage.resource:
+                    self._restart_deferred_for = outage.resource
+                    logger.info(f"{self.log_identity} Health check failures will not trigger a restart while {outage.resource} is unavailable (a restart cannot fix it)")
+                self._health_check_failures = 0
+                return True
+        self._restart_deferred_for = None
+        return False
+
+    @staticmethod
+    async def _is_reachable(resource: str) -> bool:
+        """Return ``True`` if the ``scheme://host:port`` *resource* accepts a TCP connection."""
+        parts = urlsplit(resource)
+        if not parts.hostname or not parts.port:
+            return False
+        try:
+            _, writer = await asyncio.wait_for(asyncio.open_connection(parts.hostname, parts.port), timeout=active_config.health_check.timeout)
+        except (OSError, TimeoutError):
+            return False
+        writer.close()
+        try:
+            await writer.wait_closed()
+        except OSError:
+            pass
+        return True
 
     @classmethod
     async def clean(cls) -> None:

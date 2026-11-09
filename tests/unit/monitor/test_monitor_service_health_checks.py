@@ -240,3 +240,69 @@ async def test_clean_oserror_tmp_dir(monkeypatch, caplog):
     await MonitorService.clean()
 
     assert "Failed to clean topic" in caplog.text
+
+
+def test_check_modbus_disconnected_reports_observed_disconnects(monkeypatch, caplog):
+    from sigenergy2mqtt.modbus.client import ModbusClientHealth
+
+    fake_client = FakeModbusClient()
+    fake_client.connected = False
+    fake_client.snapshot = MagicMock(return_value=ModbusClientHealth("modbus://h:502", disconnect_count=2, close_count=0))
+    monkeypatch.setattr("sigenergy2mqtt.modbus.ModbusClientFactory._clients", {"c1": fake_client}, raising=False)
+
+    assert MonitorService([])._check_modbus()[0] is False
+    assert "disconnected (2x total)" in caplog.text
+
+
+def test_check_modbus_disconnected_during_outage_is_debug(monkeypatch, caplog):
+    import logging
+
+    from sigenergy2mqtt.common.outage import outage_tracker
+
+    fake_client = FakeModbusClient()
+    fake_client.connected = False
+    fake_client.outage = outage_tracker("modbus://h:502")
+    fake_client.outage.failure("unreachable")
+    monkeypatch.setattr("sigenergy2mqtt.modbus.ModbusClientFactory._clients", {"c1": fake_client}, raising=False)
+
+    svc = MonitorService([])
+    with caplog.at_level(logging.DEBUG):
+        assert svc._check_modbus()[0] is False
+    records = [r for r in caplog.records if "Modbus connection" in r.getMessage()]
+    assert records and all(r.levelno == logging.DEBUG for r in records)
+
+
+def test_check_mqtt_disconnected_during_outage_is_debug(monkeypatch, caplog):
+    import logging
+
+    from sigenergy2mqtt.common.outage import outage_tracker
+
+    outage_tracker("mqtt://broker:1883").failure("Keep alive timeout")
+    health = MqttClientHealth(client_id="test_client", connected=False, connect_count=1, disconnect_count=1)
+    monkeypatch.setattr("sigenergy2mqtt.mqtt.mqtt_health_registry.snapshot", lambda: {"test_client": health}, raising=False)
+
+    svc = MonitorService([])
+    with caplog.at_level(logging.DEBUG):
+        assert svc._check_mqtt(FakeMqttClient())[0] is False
+    records = [r for r in caplog.records if "disconnected (1x total)" in r.getMessage()]
+    assert records and all(r.levelno == logging.DEBUG for r in records)
+
+
+@pytest.mark.asyncio
+async def test_overdue_topics_during_outage_are_debug(caplog):
+    import logging
+
+    from sigenergy2mqtt.common.outage import outage_tracker
+
+    svc = MonitorService([])
+    svc._monitor_topic_updates = True
+    svc._started = time.monotonic() - 1000
+    sensor = MagicMock(is_overdue=True, notified=False, overdue=120, scan_interval=5)
+    sensor.name = "Plant Power"
+    svc._topics = {"t/1": sensor}
+
+    outage_tracker("modbus://h:502").failure("unreachable")
+    with caplog.at_level(logging.DEBUG):
+        assert await svc._check_topic_health() == 1
+    records = [r for r in caplog.records if "has not been seen" in r.getMessage()]
+    assert records and all(r.levelno == logging.DEBUG for r in records)

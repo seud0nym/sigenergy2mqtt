@@ -476,7 +476,6 @@ def clean_config(monkeypatch):
     with _swap_active_config(cfg):
         # Mock validation and logging config to avoid side effects
         monkeypatch.setattr("sigenergy2mqtt.main.main.configure_logging", lambda: None)
-        monkeypatch.setattr("sigenergy2mqtt.main.logging_setup.pymodbus_apply_logging_config", lambda *a: None)
         yield cfg
 
 
@@ -1293,8 +1292,12 @@ async def test_setup_devices_connection_failure(clean_config, monkeypatch):
     clean_config.modbus[0].host = "h"
     clean_config.modbus[0].port = 502
 
-    with pytest.raises(SystemExit):
+    # A failed connection no longer exits: setup waits for the host to become reachable
+    wait = AsyncMock(side_effect=asyncio.CancelledError)
+    monkeypatch.setattr("sigenergy2mqtt.main.device_setup._wait_for_modbus", wait)
+    with pytest.raises(asyncio.CancelledError):
         await setup_devices(set())
+    wait.assert_awaited_once_with(mock_client, "h", 502)
 
 
 @pytest.mark.asyncio

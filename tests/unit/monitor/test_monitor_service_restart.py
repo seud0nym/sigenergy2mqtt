@@ -286,3 +286,133 @@ async def test_publish_health_timeout_counts_as_failure(tmp_path):
         mock_hc.start_period = 0
         await svc._publish_health(mqtt_client)
         assert svc._health_check_failures == 1
+
+
+# ── Restart deferral during external outages ─────────────────────────────────
+
+
+def _failing_svc(tmp_path):
+    svc, mqtt_client = _make_svc(tmp_path)
+    svc._check_modbus = MagicMock(return_value=(False, 1))
+    svc._started = time.monotonic() - 1000
+    return svc, mqtt_client
+
+
+def _health_check(retries=3):
+    hc = MagicMock()
+    hc.enabled = True
+    hc.timeout = 5
+    hc.retries = retries
+    hc.start_period = 0
+    return hc
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("resource", ["modbus://10.10.10.60:502", "mqtt://10.10.20.14:1883", "InfluxDB http://10.10.2.120:8086"])
+async def test_no_restart_while_dependency_outage_is_active(tmp_path, caplog, resource):
+    """Reproduces a Modbus host going away for longer than retries x interval: no restart."""
+    import logging
+
+    from sigenergy2mqtt.common.outage import outage_tracker
+
+    svc, mqtt_client = _failing_svc(tmp_path)
+    outage_tracker(resource).failure("unreachable")
+
+    with (
+        patch("sigenergy2mqtt.main.restart.restart_controller") as mock_rc,
+        patch("sigenergy2mqtt.config.active_config.health_check", _health_check(retries=2)),
+        patch("sigenergy2mqtt.monitor.service.is_docker", return_value=False),
+        patch.object(MonitorService, "_is_reachable", AsyncMock(return_value=False)),
+        caplog.at_level(logging.INFO, logger="sigenergy2mqtt.monitor.service"),
+    ):
+        for _ in range(5):
+            await svc._publish_health(mqtt_client)
+        mock_rc.request.assert_not_called()
+
+    assert svc._current_status == "degraded"
+    assert svc._health_check_failures == 0
+    deferred = [r for r in caplog.records if "will not trigger a restart" in r.getMessage()]
+    assert len(deferred) == 1 and resource in deferred[0].getMessage()
+    assert not [r for r in caplog.records if "Health check failure count" in r.getMessage()]
+
+
+@pytest.mark.asyncio
+async def test_failures_count_again_after_outage_ends(tmp_path):
+    from sigenergy2mqtt.common.outage import outage_tracker
+
+    svc, mqtt_client = _failing_svc(tmp_path)
+    tracker = outage_tracker("modbus://10.10.10.60:502")
+    tracker.failure("unreachable")
+
+    with (
+        patch("sigenergy2mqtt.main.restart.restart_controller") as mock_rc,
+        patch("sigenergy2mqtt.config.active_config.health_check", _health_check(retries=2)),
+        patch("sigenergy2mqtt.monitor.service.is_docker", return_value=False),
+        patch.object(MonitorService, "_is_reachable", AsyncMock(return_value=False)),
+    ):
+        await svc._publish_health(mqtt_client)
+        await svc._publish_health(mqtt_client)
+        mock_rc.request.assert_not_called()
+        tracker.success()  # dependency back, but still unhealthy -> process may be stuck
+        await svc._publish_health(mqtt_client)
+        mock_rc.request.assert_not_called()
+        await svc._publish_health(mqtt_client)
+        mock_rc.request.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_restart_allowed_when_modbus_host_reachable_but_client_stuck(tmp_path, caplog, monkeypatch):
+    import logging
+
+    import sigenergy2mqtt.common.outage as outage_module
+    from sigenergy2mqtt.common.outage import outage_tracker
+
+    clock = [1000.0]
+    monkeypatch.setattr(outage_module.time, "monotonic", lambda: clock[0])
+    svc, mqtt_client = _failing_svc(tmp_path)
+    outage_tracker("modbus://10.10.10.60:502").failure("No response received")
+    clock[0] += 301  # beyond MODBUS_STUCK_AFTER
+    reachable = AsyncMock(return_value=True)
+
+    with (
+        patch("sigenergy2mqtt.main.restart.restart_controller") as mock_rc,
+        patch("sigenergy2mqtt.config.active_config.health_check", _health_check(retries=2)),
+        patch("sigenergy2mqtt.monitor.service.is_docker", return_value=False),
+        patch.object(MonitorService, "_is_reachable", reachable),
+        caplog.at_level(logging.WARNING, logger="sigenergy2mqtt.monitor.service"),
+    ):
+        await svc._publish_health(mqtt_client)
+        await svc._publish_health(mqtt_client)
+        mock_rc.request.assert_called_once()
+    reachable.assert_awaited_with("modbus://10.10.10.60:502")
+    assert len([r for r in caplog.records if "accepts connections but has not recovered" in r.getMessage()]) == 1
+
+
+@pytest.mark.asyncio
+async def test_short_modbus_outage_is_not_probed(tmp_path):
+    from sigenergy2mqtt.common.outage import outage_tracker
+
+    svc, mqtt_client = _failing_svc(tmp_path)
+    outage_tracker("modbus://10.10.10.60:502").failure("unreachable")
+    reachable = AsyncMock(return_value=True)
+    with (
+        patch("sigenergy2mqtt.main.restart.restart_controller"),
+        patch("sigenergy2mqtt.config.active_config.health_check", _health_check()),
+        patch("sigenergy2mqtt.monitor.service.is_docker", return_value=False),
+        patch.object(MonitorService, "_is_reachable", reachable),
+    ):
+        await svc._publish_health(mqtt_client)
+    reachable.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_is_reachable(unused_tcp_port_factory=None):
+    server = await asyncio.start_server(lambda r, w: w.close(), "127.0.0.1", 0)
+    port = server.sockets[0].getsockname()[1]
+    try:
+        assert await MonitorService._is_reachable(f"modbus://127.0.0.1:{port}") is True
+    finally:
+        server.close()
+        await server.wait_closed()
+    assert await MonitorService._is_reachable(f"modbus://127.0.0.1:{port}") is False
+    assert await MonitorService._is_reachable("InfluxDB http://host") is False

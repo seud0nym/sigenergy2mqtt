@@ -7,15 +7,20 @@ from dataclasses import dataclass
 from pymodbus import FramerType
 from pymodbus.client import AsyncModbusTcpClient
 from pymodbus.client.mixin import ModbusClientMixin
-from pymodbus.exceptions import ModbusException
+from pymodbus.exceptions import ConnectionException, ModbusException, ModbusIOException
 from pymodbus.logging import Log
 from pymodbus.pdu import ExceptionResponse, ModbusPDU
 
 from sigenergy2mqtt.common import InputType
+from sigenergy2mqtt.common.outage import OutageTracker, outage_tracker
 
 from .read_ahead import ReadAhead
 
 logger = logging.getLogger(__name__)
+
+# Outage error kind shared by every way a Modbus host can be unreachable
+# (connection lost or refused, no response), so they are reported as one error.
+CONNECTIVITY = "connectivity"
 
 
 @dataclass
@@ -28,6 +33,9 @@ class ModbusClientHealth:
     last_read_at: float | None = None
     connect_count: int = 0
     close_count: int = 0
+    disconnect_count: int = 0
+    """Connections lost for any reason (including closes initiated by pymodbus), as reported by pymodbus."""
+    last_disconnected_at: float | None = None
 
 
 class ModbusClient(AsyncModbusTcpClient, ModbusClientMixin):
@@ -44,6 +52,10 @@ class ModbusClient(AsyncModbusTcpClient, ModbusClientMixin):
     object per register address and device. Cache entries are invalidated for
     specific ranges when :meth:`bypass_read_ahead` is called.
     """
+
+    # Class-level defaults so instances created without __init__ (e.g. in tests) behave as untracked
+    _outage: OutageTracker | None = None
+    _closing: bool = False
 
     def _trace_packet_handler(self, is_send: bool, data: bytes) -> bytes:
         """Format and emit raw packet debug logs when tracing is enabled.
@@ -63,15 +75,39 @@ class ModbusClient(AsyncModbusTcpClient, ModbusClientMixin):
             logger.debug(log_text)
         return data
 
+    def _trace_connect_handler(self, connected: bool) -> None:
+        """Record connection losses reported by pymodbus.
+
+        ``close_count`` only counts closes made by this application; pymodbus
+        also drops the connection itself (e.g. after repeated timeouts), which
+        is only visible through this callback.
+        """
+        if not connected:
+            with self._health_lock:
+                self._health.disconnect_count += 1
+                self._health.last_disconnected_at = time.monotonic()
+            if self._outage is not None and not self._closing:
+                # Report the outage as soon as the connection drops, rather than when the next read times out
+                self._outage.failure("connection lost", kind=CONNECTIVITY)
+
     def __init__(self, *args, **kwargs):
         """Initialize the client with socket framing, tracing, and cache state.
 
         The constructor enforces socket framer mode and installs this instance's
         packet trace handler. It also initializes the read-ahead cache and cache
         counters used by :meth:`_read_registers`.
+
+        Pass ``track_outages=True`` for long-lived runtime clients: connectivity
+        failures and recoveries are then reported to the shared
+        :class:`~sigenergy2mqtt.common.outage.OutageTracker` for this host, so
+        that an outage is logged once when it starts and once when it ends.
+        Short-lived clients (validation, probing) leave it off so that expected
+        failures are not reported as outages.
         """
+        track_outages: bool = kwargs.pop("track_outages", False)
         kwargs["framer"] = FramerType.SOCKET
         kwargs["trace_packet"] = self._trace_packet_handler
+        kwargs["trace_connect"] = self._trace_connect_handler
         super().__init__(*args, **kwargs)
         self._read_ahead_pdu: dict[int, dict[int, ReadAhead | None]] = {}
         self._trace: bool = False
@@ -80,6 +116,12 @@ class ModbusClient(AsyncModbusTcpClient, ModbusClientMixin):
         # Health tracking
         self._health: ModbusClientHealth = ModbusClientHealth(f"modbus://{self.comm_params.host}:{self.comm_params.port}")
         self._health_lock = threading.RLock()
+        self._outage: OutageTracker | None = outage_tracker(self._health.client_id) if track_outages else None
+
+    @property
+    def outage(self) -> OutageTracker | None:
+        """The outage tracker for this client's host, or ``None`` if not tracked."""
+        return self._outage
 
     async def _read_registers(
         self, address: int, count: int = 1, device_id: int = 1, input_type: InputType = InputType.HOLDING, no_response_expected: bool = False, use_pre_read: bool = False, trace: bool = False
@@ -130,6 +172,9 @@ class ModbusClient(AsyncModbusTcpClient, ModbusClientMixin):
             elapsed = time.monotonic() - start
             with self._health_lock:
                 self._health.last_read_at = start
+            if self._outage is not None and rr is not None:
+                # Any response, even an exception response, proves the device is reachable.
+                self._outage.success()
             if rr is None:
                 rr = ExceptionResponse(function_code=0x3 if input_type == InputType.HOLDING else 0x04, exception_code=0x5, device_id=device_id)
             if rr.isError() or isinstance(rr, ExceptionResponse):
@@ -138,10 +183,14 @@ class ModbusClient(AsyncModbusTcpClient, ModbusClientMixin):
             else:
                 await Metrics.modbus_read(count, elapsed)
                 return rr
-        except ModbusException:
+        except ModbusException as e:
+            if self._outage is not None and isinstance(e, (ConnectionException, ModbusIOException)):
+                self._outage.failure(e, kind=CONNECTIVITY)
             await Metrics.modbus_read_error()
             raise
-        except OSError:
+        except OSError as e:
+            if self._outage is not None:
+                self._outage.failure(e, kind=CONNECTIVITY)
             raise
         finally:
             self._trace = False
@@ -161,6 +210,7 @@ class ModbusClient(AsyncModbusTcpClient, ModbusClientMixin):
             self._read_ahead_pdu[device_id].update({key: None for key in range(address, address + count)})
 
     async def connect(self) -> bool:
+        self._closing = False
         connected = await super().connect()
         if connected:
             with self._health_lock:
@@ -170,6 +220,9 @@ class ModbusClient(AsyncModbusTcpClient, ModbusClientMixin):
 
     def close(self) -> None:
         was_connected = self.connected
+        # A close requested by the application is not an outage. The flag stays set until
+        # the next connect() because pymodbus may report the disconnection asynchronously.
+        self._closing = True
         super().close()
         if was_connected:
             with self._health_lock:

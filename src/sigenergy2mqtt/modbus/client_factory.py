@@ -34,7 +34,7 @@ class ModbusClientFactory:
         key = (host, port)
         if key not in cls._clients:
             logger.debug(f"Creating Modbus client for {host}:{port} ({timeout=}s {retries=})")
-            modbus = ModbusClient(host, port=port, timeout=timeout, retries=retries)
+            modbus = ModbusClient(host, port=port, timeout=timeout, retries=retries, track_outages=True)
             cls._clients[key] = modbus
             cls._hosts[modbus] = f"{host}:{port}"
         client = cls._clients[key]
