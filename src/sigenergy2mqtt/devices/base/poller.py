@@ -254,7 +254,15 @@ class SensorGroupPoller:
         attempt = 0
         delay = INITIAL_RECONNECT_DELAY
 
-        logger.info(f"{self._device.log_identity} attempting to reconnect to Modbus...")
+        outage = getattr(modbus_client, "outage", None)
+        outage = outage if isinstance(outage, OutageTracker) else None
+
+        def log(level: int, message: str) -> None:
+            # While the host's outage is being reported, reconnection chatter is only logged at DEBUG
+            if outage is None or not outage.suppress(message):
+                logger.log(level, message)
+
+        log(logging.INFO, f"{self._device.log_identity} attempting to reconnect to Modbus...")
 
         while attempt < MAX_RECONNECTION_ATTEMPTS and self._device.online:
             attempt += 1
@@ -269,7 +277,7 @@ class SensorGroupPoller:
                 logger.debug(f"{self._device.log_identity} Modbus reconnection cancelled")
                 return False
             except ModbusException as e:
-                logger.warning(f"{self._device.log_identity} Modbus reconnection attempt {attempt} failed: {e!r}")
+                log(logging.WARNING, f"{self._device.log_identity} Modbus reconnection attempt {attempt} failed: {e!r}")
 
             # Exponential backoff with cap
             if attempt < MAX_RECONNECTION_ATTEMPTS and self._device.online:
@@ -283,7 +291,7 @@ class SensorGroupPoller:
                 delay *= RECONNECT_BACKOFF_MULTIPLIER
 
         if attempt >= MAX_RECONNECTION_ATTEMPTS:
-            logger.error(f"{self._device.log_identity} failed to reconnect to Modbus after {MAX_RECONNECTION_ATTEMPTS} attempts")
+            log(logging.ERROR, f"{self._device.log_identity} failed to reconnect to Modbus after {MAX_RECONNECTION_ATTEMPTS} attempts")
 
         return False
 
@@ -427,7 +435,10 @@ class SensorGroupPoller:
                                 # Retain lock while attempting to reconnect to prevent multiple concurrent reconnection attempts from other tasks
                                 reconnected = await self._reconnect_modbus_with_backoff(transport)
                                 if not reconnected and device.online:
-                                    logger.error(f"{device.log_identity} failed to reconnect to Modbus, sensor updates paused")
+                                    message = f"{device.log_identity} failed to reconnect to Modbus; will keep retrying"
+                                    outage = getattr(transport, "outage", None)
+                                    if not (isinstance(outage, OutageTracker) and outage.suppress(message)):
+                                        logger.error(message)
                 except CloudControlRateLimitedError as e:
                     # Do not let a vendor 429 terminate this polling task. The
                     # adapter also applies a shared cooldown across scan groups;

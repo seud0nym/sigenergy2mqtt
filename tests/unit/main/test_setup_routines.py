@@ -55,7 +55,8 @@ async def test_setup_devices_read_only_mode(caplog):
         mock_mc.return_value = mock_client
         mock_client.__aenter__.return_value = mock_client
 
-        with pytest.raises(SystemExit):
+        # Setup now waits for Modbus instead of exiting; stop the wait to end the test
+        with patch("sigenergy2mqtt.main.device_setup._wait_for_modbus", AsyncMock(side_effect=asyncio.CancelledError)), pytest.raises(asyncio.CancelledError):
             await setup_devices(set())
 
     assert "Read-only mode enabled: No write operations can be performed." in caplog.text

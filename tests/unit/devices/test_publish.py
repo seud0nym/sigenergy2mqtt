@@ -701,3 +701,35 @@ def test_reschedule_unpublished_only_moves_overdue_sensors():
     next_times = {published: 105.0, failed: 90.0}
     SensorGroupPoller._reschedule_unpublished([published, failed], next_times, 100.0)
     assert next_times == {published: 105.0, failed: 130.0}
+
+
+@pytest.mark.asyncio
+async def test_reconnect_chatter_is_debug_during_outage(monkeypatch, caplog):
+    import sigenergy2mqtt.devices.base.poller as poller_module
+    from sigenergy2mqtt.common.outage import outage_tracker
+
+    dev = Device("devreconnect", 0, "uidreconnect", "mf", "mdl", ProtocolVersion.V1_8)
+    dev._online = True
+
+    class DownModbus:
+        connected = False
+        outage = outage_tracker("modbus://h:502")
+
+        def close(self):
+            pass
+
+        async def connect(self):
+            raise ModbusException("Connection refused")
+
+    DownModbus.outage.failure("unreachable")
+    monkeypatch.setattr(poller_module, "MAX_RECONNECTION_ATTEMPTS", 3)
+
+    async def no_sleep(_):
+        pass
+
+    monkeypatch.setattr(poller_module.asyncio, "sleep", no_sleep)
+    caplog.clear()
+    with caplog.at_level(logging.DEBUG):
+        assert await SensorGroupPoller(dev)._reconnect_modbus_with_backoff(cast(ModbusClient, DownModbus())) is False
+    assert not [r for r in caplog.records if r.levelno >= logging.INFO]
+    assert any("attempting to reconnect" in r.getMessage() for r in caplog.records)

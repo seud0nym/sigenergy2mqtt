@@ -29,6 +29,9 @@ class ModbusClientHealth:
     last_read_at: float | None = None
     connect_count: int = 0
     close_count: int = 0
+    disconnect_count: int = 0
+    """Connections lost for any reason (including closes initiated by pymodbus), as reported by pymodbus."""
+    last_disconnected_at: float | None = None
 
 
 class ModbusClient(AsyncModbusTcpClient, ModbusClientMixin):
@@ -67,6 +70,18 @@ class ModbusClient(AsyncModbusTcpClient, ModbusClientMixin):
             logger.debug(log_text)
         return data
 
+    def _trace_connect_handler(self, connected: bool) -> None:
+        """Record connection losses reported by pymodbus.
+
+        ``close_count`` only counts closes made by this application; pymodbus
+        also drops the connection itself (e.g. after repeated timeouts), which
+        is only visible through this callback.
+        """
+        if not connected:
+            with self._health_lock:
+                self._health.disconnect_count += 1
+                self._health.last_disconnected_at = time.monotonic()
+
     def __init__(self, *args, **kwargs):
         """Initialize the client with socket framing, tracing, and cache state.
 
@@ -84,6 +99,7 @@ class ModbusClient(AsyncModbusTcpClient, ModbusClientMixin):
         track_outages: bool = kwargs.pop("track_outages", False)
         kwargs["framer"] = FramerType.SOCKET
         kwargs["trace_packet"] = self._trace_packet_handler
+        kwargs["trace_connect"] = self._trace_connect_handler
         super().__init__(*args, **kwargs)
         self._read_ahead_pdu: dict[int, dict[int, ReadAhead | None]] = {}
         self._trace: bool = False

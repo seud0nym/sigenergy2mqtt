@@ -87,3 +87,14 @@ async def test_untracked_client_ignores_outages(metrics):
         with pytest.raises(ModbusIOException):
             await client.read_holding_registers(1)
     assert not outage_tracker("modbus://127.0.0.1:15020").active
+
+
+async def test_trace_connect_counts_disconnects():
+    client = ModbusClient("127.0.0.1", port=15020)
+    client._trace_connect_handler(True)
+    client._trace_connect_handler(False)
+    client._trace_connect_handler(False)
+    health = client.snapshot()
+    assert health.disconnect_count == 2
+    assert health.last_disconnected_at is not None
+    assert health.close_count == 0
