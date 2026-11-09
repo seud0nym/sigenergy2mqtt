@@ -69,7 +69,7 @@ class TestMqttOutage:
             for client, handler in clients:
                 on_disconnect(client, handler, None, _reason("Unspecified error"), None)
         warnings = [r for r in caplog.records if r.levelno >= logging.WARNING]
-        assert [r.getMessage() for r in warnings] == ["mqtt://broker:1883 outage started: Unspecified error"]
+        assert [(r.levelno, r.getMessage()) for r in warnings] == [(logging.ERROR, "mqtt://broker:1883 outage started: Unspecified error")]
         assert not [r for r in caplog.records if r.levelno == logging.INFO and "Disconnected from" in r.getMessage()]
         assert all(not handler.connected for _, handler in clients)
 

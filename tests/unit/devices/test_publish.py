@@ -660,9 +660,8 @@ async def test_poller_mqtt_publish_failure_does_not_spin_or_flood(monkeypatch, c
     # One forced publish at start and one at the scheduled time (+0.2s); after that the
     # sensor backs off for its 60s scan interval. Before the fix it was retried every 0.1s.
     assert len(calls) == 2
-    assert not [r for r in caplog.records if r.levelno >= logging.ERROR]
-    started = [r.getMessage() for r in caplog.records if "outage started" in r.getMessage()]
-    assert started == ["mqtt://broker:1883 outage started: RuntimeError('Message publish failed: The client is not currently connected.')"]
+    errors = [r.getMessage() for r in caplog.records if r.levelno >= logging.ERROR]
+    assert errors == ["mqtt://broker:1883 outage started: RuntimeError('Message publish failed: The client is not currently connected.')"]
 
 
 @pytest.mark.asyncio

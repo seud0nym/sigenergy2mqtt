@@ -4,9 +4,9 @@ When a shared resource (the MQTT broker, a Modbus host, ...) becomes
 unavailable, every sensor and scan group that depends on it fails at once and
 logs its own error.  An :class:`OutageTracker` turns that flood into:
 
-* one ``WARNING`` when the outage starts,
-* one ``WARNING`` the first time a *different kind* of error is seen,
-* an optional periodic ``WARNING`` reminder while the outage continues, and
+* one ``ERROR`` when the outage starts,
+* one ``ERROR`` the first time a *different kind* of error is seen,
+* an optional periodic ``ERROR`` reminder while the outage continues, and
 * one ``INFO`` when the outage ends, reporting the duration and how many
   messages were suppressed.
 
@@ -118,10 +118,10 @@ class OutageTracker:
             error: The exception (or error text) that occurred.
             member: Optional member that failed (e.g. an MQTT client id).
             detail: Optional caller-specific message; it is logged at DEBUG
-                whenever this failure does not produce a WARNING of its own.
+                whenever this failure does not produce an ERROR of its own.
 
         Returns:
-            ``True`` if this failure was logged at WARNING (outage start or a
+            ``True`` if this failure was logged at ERROR (outage start or a
             new kind of error); ``False`` if it was suppressed to DEBUG.
         """
         kind = _error_kind(error)
@@ -135,13 +135,13 @@ class OutageTracker:
                 self._suppressed = 0
                 self._kinds = {kind}
                 self._first_error = description
-                self._logger.warning(f"{self.resource} outage started: {description}")
+                self._logger.error(f"{self.resource} outage started: {description}")
                 if detail:
                     self._logger.debug(detail)
                 return True
             if kind not in self._kinds:
                 self._kinds.add(kind)
-                self._logger.warning(f"{self.resource} outage continuing with a new error after {format_duration(now - self._started)}: {description}")
+                self._logger.error(f"{self.resource} outage continuing with a new error after {format_duration(now - self._started)}: {description}")
                 if detail:
                     self._logger.debug(detail)
                 return True
@@ -150,7 +150,7 @@ class OutageTracker:
                 self._logger.debug(detail)
             if self.reminder_interval > 0 and now - self._last_reminder >= self.reminder_interval:
                 self._last_reminder = now
-                self._logger.warning(f"{self.resource} outage continuing for {format_duration(now - self._started)} ({self._suppressed} similar messages suppressed): {self._first_error}")
+                self._logger.error(f"{self.resource} outage continuing for {format_duration(now - self._started)} ({self._suppressed} similar messages suppressed): {self._first_error}")
             return False
 
     def suppress(self, detail: str | None = None) -> bool:

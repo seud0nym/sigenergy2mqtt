@@ -23,12 +23,12 @@ class TestFormatDuration:
 
 
 class TestOutageTracker:
-    def test_first_failure_starts_outage_at_warning(self, caplog):
+    def test_first_failure_starts_outage_at_error(self, caplog):
         tracker = OutageTracker("modbus://h:502")
         with caplog.at_level(logging.DEBUG, logger=LOGGER):
             assert tracker.failure(TimeoutError("boom"), detail="sensor detail") is True
         assert tracker.active
-        warnings = _records(caplog, logging.WARNING)
+        warnings = _records(caplog, logging.ERROR)
         assert len(warnings) == 1
         assert warnings[0].getMessage() == "modbus://h:502 outage started: TimeoutError('boom')"
         assert any(r.getMessage() == "sensor detail" for r in _records(caplog, logging.DEBUG))
@@ -40,7 +40,7 @@ class TestOutageTracker:
         with caplog.at_level(logging.DEBUG, logger=LOGGER):
             for i in range(5):
                 assert tracker.failure(TimeoutError(f"different text {i}"), detail=f"detail {i}") is False
-        assert not _records(caplog, logging.WARNING)
+        assert not _records(caplog, logging.ERROR)
         assert [r.getMessage() for r in _records(caplog, logging.DEBUG)] == [f"detail {i}" for i in range(5)]
         assert tracker.suppressed == 5
 
@@ -51,7 +51,7 @@ class TestOutageTracker:
         with caplog.at_level(logging.DEBUG, logger=LOGGER):
             assert tracker.failure(ConnectionError("b")) is True
             assert tracker.failure(ConnectionError("c")) is False
-        warnings = _records(caplog, logging.WARNING)
+        warnings = _records(caplog, logging.ERROR)
         assert len(warnings) == 1
         assert "new error" in warnings[0].getMessage()
         assert "ConnectionError('b')" in warnings[0].getMessage()
@@ -123,7 +123,7 @@ class TestOutageTracker:
             tracker.failure(TimeoutError("a"))
             clock[0] = 90
             tracker.failure(TimeoutError("a"))
-        warnings = _records(caplog, logging.WARNING)
+        warnings = _records(caplog, logging.ERROR)
         assert len(warnings) == 1
         assert warnings[0].getMessage() == "modbus://h:502 outage continuing for 1m 1s (2 similar messages suppressed): TimeoutError('a')"
 
@@ -136,7 +136,7 @@ class TestOutageTracker:
         with caplog.at_level(logging.DEBUG, logger=LOGGER):
             clock[0] = 10_000
             tracker.failure(TimeoutError("a"))
-        assert not _records(caplog, logging.WARNING)
+        assert not _records(caplog, logging.ERROR)
 
     def test_new_outage_after_recovery_starts_fresh(self, caplog):
         tracker = OutageTracker("modbus://h:502")
@@ -146,7 +146,7 @@ class TestOutageTracker:
         caplog.clear()
         with caplog.at_level(logging.DEBUG, logger=LOGGER):
             assert tracker.failure(TimeoutError("a")) is True
-        assert "outage started" in _records(caplog, logging.WARNING)[0].getMessage()
+        assert "outage started" in _records(caplog, logging.ERROR)[0].getMessage()
         assert tracker.suppressed == 0
 
     def test_custom_logger(self, caplog):
