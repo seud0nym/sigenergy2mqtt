@@ -1055,6 +1055,8 @@ class:
     name: InfluxDB 写入
   InfluxService:
     name: Sigenergy InfluxDB 更新服务 (电站 {plant_index})
+  InfluxWriteError:
+    name: 'HTTP {status_code}：{text}（url={url}）'
   InstantControlDuration:
     name: 即时手动控制时长
   InstantControlMode:

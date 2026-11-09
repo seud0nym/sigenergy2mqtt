@@ -1055,6 +1055,8 @@ class:
     name: InfluxDB-schrijfacties
   InfluxService:
     name: Sigenergy InfluxDB Updater Service (Installatie {plant_index})
+  InfluxWriteError:
+    name: 'HTTP {status_code}: {text} (url={url})'  # verify:ignore
   InstantControlDuration:
     name: Duur van onmiddellijke handmatige bediening
   InstantControlMode:

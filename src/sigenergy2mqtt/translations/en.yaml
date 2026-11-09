@@ -1055,6 +1055,8 @@ class:
     name: InfluxDB Writes
   InfluxService:
     name: Sigenergy InfluxDB Updater Service (Plant {plant_index})
+  InfluxWriteError:
+    name: 'HTTP {status_code}: {text} (url={url})'
   InstantControlDuration:
     name: Instant Manual Control Duration
   InstantControlMode:

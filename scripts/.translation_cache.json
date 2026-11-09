@@ -3598,5 +3598,14 @@
   "KO:Represent logical device groups as Home Assistant child devices (opt-in migration; disabled by default).": "논리적 장치 그룹을 Home Assistant 하위 장치로 표현합니다(선택적 마이그레이션; 기본적으로 비활성화됨).",
   "NL:Represent logical device groups as Home Assistant child devices (opt-in migration; disabled by default).": "Logische apparaatgroepen weergeven als onderliggende apparaten in Home Assistant (migratie op aanvraag; standaard uitgeschakeld).",
   "PT-PT:Represent logical device groups as Home Assistant child devices (opt-in migration; disabled by default).": "Representar grupos lógicos de dispositivos como dispositivos secundários do Home Assistant (migração opcional; desativada por predefinição).",
-  "ZH:Represent logical device groups as Home Assistant child devices (opt-in migration; disabled by default).": "将逻辑设备组表示为 Home Assistant 的子设备（可选迁移；默认禁用）。"
+  "ZH:Represent logical device groups as Home Assistant child devices (opt-in migration; disabled by default).": "将逻辑设备组表示为 Home Assistant 的子设备（可选迁移；默认禁用）。",
+  "DE:HTTP {status_code}: {text} (url={url})": "HTTP {status_code}: {text} (url={url})",
+  "ES:HTTP {status_code}: {text} (url={url})": "HTTP {status_code}: {text} (url={url})",
+  "FR:HTTP {status_code}: {text} (url={url})": "HTTP {status_code} : {text} (url={url})",
+  "IT:HTTP {status_code}: {text} (url={url})": "HTTP {status_code}: {text} (url={url})",
+  "JA:HTTP {status_code}: {text} (url={url})": "HTTP {status_code}: {text} (url={url})",
+  "KO:HTTP {status_code}: {text} (url={url})": "HTTP {status_code}: {text} (url={url})",
+  "NL:HTTP {status_code}: {text} (url={url})": "HTTP {status_code}: {text} (url={url})",
+  "PT-PT:HTTP {status_code}: {text} (url={url})": "HTTP {status_code}: {text} (url={url})",
+  "ZH:HTTP {status_code}: {text} (url={url})": "HTTP {status_code}：{text}（url={url}）"
 }

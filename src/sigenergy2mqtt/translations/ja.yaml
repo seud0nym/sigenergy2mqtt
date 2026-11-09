@@ -1055,6 +1055,8 @@ class:
     name: InfluxDB 書き込み
   InfluxService:
     name: Sigenergy InfluxDB アップデーターサービス (発電所 {plant_index})
+  InfluxWriteError:
+    name: 'HTTP {status_code}: {text} (url={url})'  # verify:ignore
   InstantControlDuration:
     name: 即時手動制御の継続時間
   InstantControlMode:
