@@ -1,0 +1,46 @@
+# sigenergy2mqtt configuration used by run.sh (ports are substituted per run).
+log-level: INFO
+monitor-topic-updates: true
+cloud:
+  region: testing
+  testing-url: http://127.0.0.1:@CLOUD_PORT@/
+  username: test
+  password: test
+  accept-unofficial-api-risk: true
+  log-level: INFO
+modbus:
+  - host: 127.0.0.1
+    port: @MODBUS_PORT@
+    timeout: 1.0
+    retries: 3
+    inverters: [ 1 ]
+    ac-chargers: [ 2 ]
+    dc-chargers: [ 1 ]
+    log-level: WARNING
+mqtt:
+  broker: 127.0.0.1
+  port: @MQTT_PORT@
+  anonymous: true
+  log-level: WARNING
+home-assistant:
+  enabled: true
+pvoutput:
+  enabled: false
+influxdb:
+  enabled: false
+# Short intervals so that the old behaviour (restart after retries x interval) would show within the outage
+health-check:
+  enabled: true
+  interval: 10
+  timeout: 5
+  retries: 3
+  start-period: 20
+diagnostics:
+  enabled: false
+  log-level: INFO   # MonitorService messages (status changes, restart deferral)
+sensor-overrides:
+  InverterSelfConsumedPower:
+    # The simulator's random battery power (e.g. -374 kW) makes this sensor fail its
+    # 0-3000 W sanity check, so it never publishes; exclude it from topic health checks
+    # so they measure outage behaviour only
+    monitorable: false
