@@ -1,7 +1,7 @@
 <!-- git log [since tag]..HEAD --oneline -->
 # Changelog 
 
-## [Unreleased]
+## [2026.11.11] - 2026-11-11
 
 > [!IMPORTANT]
 > **New opt-in option: Home Assistant child devices** (`home-assistant.child-devices`, default `false`). When enabled, the logical parts of a device (for example PV strings, ESS and the plant grid sensor) appear as child devices of their parent in Home Assistant instead of as separate linked devices. Existing devices are converted in place, keeping entity history, entity IDs, device IDs and automations.
