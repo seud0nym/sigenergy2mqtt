@@ -18,12 +18,18 @@ docker run -it \
     -e SIGENERGY2MQTT_MQTT_BROKER=192.168.0.1 \
     -e SIGENERGY2MQTT_MQTT_USERNAME=user \
     -e SIGENERGY2MQTT_MQTT_PASSWORD=password \
+    -e SIGENERGY2MQTT_HASS_ENABLED=true \
+    -e SIGENERGY2MQTT_HASS_CHILD_DEVICES=true \
     -v /data:/data \
     seud0nym/sigenergy2mqtt:latest
 ```
 
 > [!IMPORTANT]
 > You must provide persistent storage via the `-v` option to preserve the state of some sensors across executions. You can also place your [configuration file](../configuration/FILE.md) in the root of this directory (i.e. `/data/sigenergy2mqtt.yaml`), rather than configuring via environment variables.
+
+> [!IMPORTANT]
+> For **new** installs that will be used by Home Assistant 2026.11.0 and later, you should ensure that you _enable_ child devices.
+> See the configuration [README.md](../configuration/README.md#child-devices) for more information.
 
 > [!TIP]
 > You must set the TZ variable to your local time zone, _especially_ if you are going to enable upload to PVOutput. (Thanks to @gyrex for this tip(https://github.com/seud0nym/sigenergy2mqtt/discussions/22).)

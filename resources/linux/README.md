@@ -43,6 +43,10 @@ Create your configuration file in `/etc/sigenergy2mqtt.yaml`. Use the [sample co
 
 If you use the complete sample file, make sure you edit it and update it with your own configuration. It is **sample** file _only_ and should _not_ be used as is.
 
+> [!IMPORTANT]
+> For **new** installs that will be used by Home Assistant 2026.11.0 and later, you should ensure that you _enable_ child devices.
+> See the configuration [README.md](../configuration/README.md#child-devices) for more information.
+
 ### Diagnostics and Solar Dashboard
 
 `sigenergy2mqtt` provides a simple diagnostics web server accessible on port 8502 where system metrics can be found. There is also a simple Solar & Battery dashboard available via the diagnostics Web UI. 

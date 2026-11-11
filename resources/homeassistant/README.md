@@ -32,6 +32,10 @@ Follow these steps to get the app repository installed on your Home Assistant sy
 1. Enter the configuration details on the Configuration tab, and save.
 1. Start the app from the Info tab.
 
+> [!IMPORTANT]
+> For **new** installs that will be used by Home Assistant 2026.11.0 and later, you should ensure that you _enable_ child devices in the Advanced Configuration section.
+> See the configuration [README.md](../configuration/README.md#child-devices) for more information.
+
 ## Post-Installation
 
 You can set the current values for daily accumulation sensors from the mySigen app through the MQTT device screen. The screen contains controls for inputting the values.
