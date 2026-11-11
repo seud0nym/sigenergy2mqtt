@@ -42,9 +42,9 @@
 
 ### Changed
 
-- MQTT broker, Modbus, InfluxDB and Cloud API connectivity failures are now reported as a single "outage started" error and a single "outage ended" message (with duration and count of suppressed messages), instead of one error per sensor, scan group and client. Repeated messages during an outage are logged at DEBUG level, a new kind of error is still reported once, and a reminder is logged at ERROR level every 5 minutes while the outage continues
 - Sensors now publish individual availability to Home Assistant, and will be marked unavailable if state publishing fails
 - Unchanged states are now only published every 60 seconds to reduce network traffic and MQTT broker load
+- MQTT broker, Modbus, InfluxDB and Cloud API connectivity failures are now reported as a single "outage started" error and a single "outage ended" message (with duration and count of suppressed messages), instead of one error per sensor, scan group and client. Repeated messages during an outage are logged at DEBUG level, a new kind of error is still reported once, and a reminder is logged at ERROR level every 5 minutes while the outage continues
 - Updated aiohttp from 3.14.4 to 3.14.5
 - Updated paho-mqtt from 2.1.0 to 2.2.0
 - Updated pycryptodome from 3.24.0 to 4.3.0
