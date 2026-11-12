@@ -1,6 +1,12 @@
 <!-- git log [since tag]..HEAD --oneline -->
 # Changelog 
 
+## [Unreleased]
+
+### Changes
+
+- Bumped Docker base python image from 3.14-alpine3.24 to 3.15-alpine3.24
+
 ## [2026.11.11] - 2026-11-11
 
 > [!IMPORTANT]
@@ -10,7 +16,7 @@
 >
 > **Action required if you enable it:** back up Home Assistant first. After restarting sigenergy2mqtt with the option enabled, reload the MQTT integration in Home Assistant (*Settings > Devices & services > MQTT > ⋮ > Reload*) or restart Home Assistant. Switching the option off again needs extra steps; see the [configuration README](https://github.com/seud0nym/sigenergy2mqtt/blob/main/resources/configuration/README.md#opt_home_assistant_child_devices).
 
-## Added
+### Added
 
 - Added additional individual battery sensors from Cloud API (Total Discharge Amount and Average Cell Voltage/Temperature)
 - Added battery export limitation control from Cloud API
