@@ -6,6 +6,9 @@
 ### Changes
 
 - Bumped Docker base python image from 3.14-alpine3.24 to 3.15-alpine3.24
+- Updated pycryptodome from 4.3.0 to 4.4.0
+
+---
 
 ## [2026.11.11] - 2026-11-11
 
