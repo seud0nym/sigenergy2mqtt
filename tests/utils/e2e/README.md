@@ -17,9 +17,13 @@ connection, reconnection, outage logging or health check/restart behaviour.
 - **Mosquitto**, found on `PATH` or at `/usr/sbin/mosquitto` (e.g. `apt-get install mosquitto`).
   The script starts its own instance on a private port; the system service is not used.
 - **`iptables`**, run either as root or through passwordless `sudo` (`sudo -n`). Outages are
-  simulated with `REJECT --reject-with tcp-reset` rules on the loopback interface. That gives the
-  same "connection refused/reset" seen when a host goes away, and the simulator keeps its state
-  (unlike stopping it, which regenerates random values and trips sanity checks on recovery).
+  simulated with rules on the loopback interface, so the simulator keeps its state (stopping it
+  instead would regenerate random values and trip sanity checks on recovery):
+  - `REJECT --reject-with tcp-reset` for most scenarios, giving the "connection refused/reset"
+    seen when a host goes away;
+  - `DROP` for `cloudhang`, so requests stall instead of failing, as with a hung server or
+    network path.
+
   Every rule is tagged with the comment `sigenergy2mqtt-e2e` and removed when the script exits,
   including on Ctrl-C.
 - **Free local ports** 15020 (Modbus), 18080 (Cloud API) and 18830 (MQTT). Override them with
@@ -45,12 +49,13 @@ tests/utils/e2e/run.sh outage mqtt
 | `coldstart` | Modbus and Cloud API absent for 40s when the app starts | Startup waits (reported once) instead of exiting, then becomes healthy |
 | `mqtt`      | MQTT broker unreachable for 60s while running | The broker outage is reported once and ends once; no restart is requested |
 | `mqttcold`  | MQTT broker unreachable for 100s when the app starts | Threads and persistence wait instead of crashing or falling back to disk-only; no restart is requested |
+| `cloudhang` | Cloud API requests stall for 240s while running: packets are dropped, so requests hang instead of failing | The stall is reported promptly as a cloud outage with a message; no overdue warnings for cloud topics; the outage ends; no restart is requested |
 
 Every scenario also checks that the app is still running, that no thread crashed and that nothing
 was logged at CRITICAL. The exit status is 0 if every check passed, and 1 otherwise.
 
-Durations can be changed with `E2E_OUTAGE_SECS`, `E2E_MQTT_OUTAGE_SECS`, `E2E_COLDSTART_SECS`
-and `E2E_MQTTCOLD_SECS`. Keep outages longer than the health check's `retries × interval`
+Durations can be changed with `E2E_OUTAGE_SECS`, `E2E_MQTT_OUTAGE_SECS`, `E2E_COLDSTART_SECS`,
+`E2E_MQTTCOLD_SECS` and `E2E_CLOUDHANG_SECS`. Keep outages longer than the health check's `retries × interval`
 (30s in `config.yaml.in`). Otherwise the restart deferral is not exercised.
 
 ## Output

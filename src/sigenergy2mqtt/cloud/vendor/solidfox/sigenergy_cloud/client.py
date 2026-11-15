@@ -63,6 +63,7 @@ class SigenergyCloudClient:
         *,
         region: str = "eu",
         session: aiohttp.ClientSession | None = None,
+        timeout: aiohttp.ClientTimeout | None = None,
     ) -> None:
         self.username = username
         self.region = region
@@ -70,6 +71,9 @@ class SigenergyCloudClient:
         self._encrypted_password = encrypt_password(password)
         self._owned_session: aiohttp.ClientSession | None = None
         self._session = session
+        # sigenergy2mqtt: timeout for the session this client creates. Without one,
+        # aiohttp waits up to 5 minutes for a stalled request.
+        self._timeout = timeout
         self._auth = OAuthSession(region)
         self._transport = CloudTransport(self.base_url, self._auth)
 
@@ -1255,7 +1259,7 @@ class SigenergyCloudClient:
         if self._session is not None:
             return self._session
         if self._owned_session is None or self._owned_session.closed:
-            self._owned_session = aiohttp.ClientSession()
+            self._owned_session = aiohttp.ClientSession(timeout=self._timeout) if self._timeout is not None else aiohttp.ClientSession()
         return self._owned_session
 
     def _station_id(self) -> str:

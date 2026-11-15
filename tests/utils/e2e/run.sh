@@ -9,6 +9,7 @@
 #   coldstart  Modbus + Cloud unavailable when the app starts
 #   mqtt       MQTT broker unreachable for 60s while running
 #   mqttcold   MQTT broker unreachable when the app starts
+#   cloudhang  Cloud API requests stall (packets dropped, no error) for 240s while running
 #
 # Exit status: 0 if every scenario passed its checks, 1 otherwise.
 set -u
@@ -24,6 +25,7 @@ OUTAGE_SECS=${E2E_OUTAGE_SECS:-100}        # Modbus/Cloud outage (> health check
 MQTT_OUTAGE_SECS=${E2E_MQTT_OUTAGE_SECS:-60}
 COLDSTART_SECS=${E2E_COLDSTART_SECS:-40}   # how long the simulator is absent at startup
 MQTTCOLD_SECS=${E2E_MQTTCOLD_SECS:-100}    # how long the broker is unreachable at startup
+CLOUDHANG_SECS=${E2E_CLOUDHANG_SECS:-240}  # longer than the 180s after which a 5s topic is overdue
 RULE_TAG="sigenergy2mqtt-e2e"
 
 if [ "$(id -u)" -eq 0 ]; then SUDO=""; else SUDO="sudo -n"; fi
@@ -51,9 +53,14 @@ block_ports() {   # connection refused / reset, as when a host goes away; the si
   for p in "$@"; do $SUDO iptables -I INPUT -i lo -p tcp --dport "$p" -m comment --comment "$RULE_TAG" -j REJECT --reject-with tcp-reset; done
   log "BLOCKED port(s) $*"
 }
+drop_ports() {   # silently drop packets, so requests stall instead of failing (a hung server or network path)
+  for p in "$@"; do $SUDO iptables -I INPUT -i lo -p tcp --dport "$p" -m comment --comment "$RULE_TAG" -j DROP; done
+  log "DROPPING packets to port(s) $*"
+}
 unblock_ports() {
   for p in "$@"; do
     while $SUDO iptables -D INPUT -i lo -p tcp --dport "$p" -m comment --comment "$RULE_TAG" -j REJECT --reject-with tcp-reset 2>/dev/null; do :; done
+    while $SUDO iptables -D INPUT -i lo -p tcp --dport "$p" -m comment --comment "$RULE_TAG" -j DROP 2>/dev/null; do :; done
   done
 }
 
@@ -182,10 +189,25 @@ scenario_mqttcold() {
   expect_count "no restart requested" "Restart requested" 0
 }
 
+scenario_cloudhang() {
+  start_server; sleep 8; start_app
+  require_healthy 90
+  sleep 5; drop_ports "$CLOUD_PORT"
+  sleep "$CLOUDHANG_SECS"
+  unblock_ports "$CLOUD_PORT"; log "UNBLOCKED"
+  wait_for "cloud://[^ ]+ outage ended" 300; sleep 15
+  common_checks
+  expect_count "Cloud outage reported once" "cloud://[^ ]+ outage started" 1
+  expect_count "outage reported with a message" "cloud://[^ ]+ outage started: CloudControlUnavailableError\\(''\\)" 0
+  expect_count "no overdue warnings for cloud topics" "WARNING .*CloudControl.* has not been seen" 0
+  expect_count "Cloud outage ended" "cloud://[^ ]+ outage ended" 1
+  expect_count "no restart requested" "Restart requested" 0
+}
+
 # ------------------------------------------------------------------------ main
 
-[ $# -ge 1 ] || { sed -n '7,13p' "$0" | sed 's/^# \{0,1\}//'; exit 2; }
-SCENARIOS=("$@"); [ "$1" = all ] && SCENARIOS=(outage coldstart mqtt mqttcold)
+[ $# -ge 1 ] || { sed -n '7,14p' "$0" | sed 's/^# \{0,1\}//'; exit 2; }
+SCENARIOS=("$@"); [ "$1" = all ] && SCENARIOS=(outage coldstart mqtt mqttcold cloudhang)
 for s in "${SCENARIOS[@]}"; do
   declare -F "scenario_$s" >/dev/null || { echo "unknown scenario: $s"; exit 2; }
 done

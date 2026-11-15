@@ -8,7 +8,7 @@ from collections.abc import Awaitable, Callable
 from datetime import timedelta
 from typing import Any, Final, TypeVar
 
-from aiohttp import ClientError
+from aiohttp import ClientError, ClientTimeout
 
 from sigenergy2mqtt.metrics.metrics import Metrics
 
@@ -80,13 +80,29 @@ def _api_error_indicates_availability(exc: SigenergyCloudAPIError) -> bool:
     return numeric_code is None or numeric_code < 500
 
 
+# Per-request limits for the cloud API. Without them aiohttp waits up to 5 minutes
+# for a stalled request, during which every cloud sensor in the scan group stops
+# updating without any error being reported.
+REQUEST_TIMEOUT: Final[ClientTimeout] = ClientTimeout(total=30, sock_connect=10)
+
+
+def _error_text(exc: BaseException) -> str:
+    """Describe *exc* for a CloudControl error; a request timeout has no message of its own."""
+    text = str(exc)
+    if text:
+        return text
+    if isinstance(exc, TimeoutError):
+        return f"no response within {REQUEST_TIMEOUT.total:.0f}s"
+    return type(exc).__name__
+
+
 class MySigenCloudAdapter:
     """Translate domain commands to the unofficial, vendored cloud client."""
 
     APP_VERSION: Final[str] = MYSIGEN_APP_VERSION
 
     def __init__(self, username: str, password: str, region: str) -> None:
-        self._client = SigenergyCloudClient(username, password, region=region)
+        self._client = SigenergyCloudClient(username, password, region=region, timeout=REQUEST_TIMEOUT)
         self._connected = False
         self._connection_generation = 0
         self._connect_lock = asyncio.Lock()
@@ -173,7 +189,7 @@ class MySigenCloudAdapter:
             raise CloudControlRateLimitedError(str(exc), retry_after=retry_after) from exc
         except (ClientError, SigenergyCloudError, OSError, TimeoutError) as exc:
             await Metrics.cloud_connection(connected=False, error=True)
-            raise CloudControlUnavailableError(str(exc)) from exc
+            raise CloudControlUnavailableError(_error_text(exc)) from exc
         except Exception:
             await Metrics.cloud_connection(connected=False, error=True)
             raise
@@ -413,7 +429,7 @@ class MySigenCloudAdapter:
                 # operation can retry without an avoidable password login and
                 # station discovery, while reporting degraded reachability.
                 await Metrics.cloud_availability(False)
-                raise CloudControlUnavailableError(str(exc)) from exc
+                raise CloudControlUnavailableError(_error_text(exc)) from exc
             except Exception:
                 # Malformed or otherwise unexpected vendor responses are still
                 # failed queries even when their exception is not normalized.
