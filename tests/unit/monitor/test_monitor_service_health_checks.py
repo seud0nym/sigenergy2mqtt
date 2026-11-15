@@ -306,3 +306,30 @@ async def test_overdue_topics_during_outage_are_debug(caplog):
         assert await svc._check_topic_health() == 1
     records = [r for r in caplog.records if "has not been seen" in r.getMessage()]
     assert records and all(r.levelno == logging.DEBUG for r in records)
+
+
+@pytest.mark.asyncio
+async def test_overdue_cloud_topics_during_cloud_outage_are_debug(caplog):
+    """A cloud outage explains overdue cloud topics, but not overdue Modbus topics."""
+    import logging
+
+    from sigenergy2mqtt.common.outage import outage_tracker
+    from sigenergy2mqtt.sensors.base.cloud import CloudSensor
+
+    svc = MonitorService([])
+    svc._monitor_topic_updates = True
+    svc._started = time.monotonic() - 1000
+
+    def overdue(name):
+        sensor = MagicMock(is_overdue=True, notified=False, overdue=200, scan_interval=5)
+        sensor.name = name
+        return sensor
+
+    svc._topics = {"cloud/t": overdue("Cloud Mode"), "modbus/t": overdue("Plant Power")}
+    svc._topic_sensors = {"cloud/t": MagicMock(spec=CloudSensor, monitorable=True), "modbus/t": MagicMock(monitorable=True)}
+
+    outage_tracker("cloud://1000").failure("no response within 30s")
+    with caplog.at_level(logging.DEBUG):
+        assert await svc._check_topic_health() == 2
+    levels = {r.getMessage().split("'")[1]: r.levelno for r in caplog.records if "has not been seen" in r.getMessage()}
+    assert levels == {"Cloud Mode": logging.DEBUG, "Plant Power": logging.WARNING}

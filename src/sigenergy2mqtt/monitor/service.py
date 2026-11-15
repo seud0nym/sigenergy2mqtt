@@ -29,6 +29,7 @@ from sigenergy2mqtt.mqtt import (
     mqtt_teardown,
 )
 from sigenergy2mqtt.sensors.base import DerivedSensor, ReadableSensorMixin, Sensor
+from sigenergy2mqtt.sensors.base.cloud import CloudSensor
 from sigenergy2mqtt.sensors.monitor import MonitoredSensor
 
 from .dashboard import extract_dashboard_state
@@ -205,11 +206,17 @@ class MonitorService(Device):
                 and (t not in self._topic_sensors or self._topic_sensors[t].monitorable) and s.notified
             }
         if any(overdue):
-            # While Modbus or MQTT is down every affected topic goes overdue; the outage has already been reported
+            # While Modbus or MQTT is down every affected topic goes overdue, as do cloud topics while
+            # the cloud API is down; the outage has already been reported
             outage = _first_outage(TOPIC_AFFECTING_OUTAGES)
+            cloud_outage = outage or _first_outage(("cloud://",))
             for topic, sensor in overdue.items():
                 sensor.notified = True
-                _warn(f"{self.log_identity} '{sensor.name}' has not been seen for {sensor.overdue}s (scan_interval={sensor.scan_interval}s {topic=})", outage)
+                source = self._topic_sensors.get(topic)
+                _warn(
+                    f"{self.log_identity} '{sensor.name}' has not been seen for {sensor.overdue}s (scan_interval={sensor.scan_interval}s {topic=})",
+                    cloud_outage if isinstance(source, CloudSensor) else outage,
+                )
         return len(overdue) + len(still_degraded)
 
     async def _collect_dashboard_states(self) -> dict[str, Any]:

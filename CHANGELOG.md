@@ -3,6 +3,11 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed a stalled Cloud API request blocking cloud sensor updates for up to 5 minutes without any error being reported, while every cloud topic was logged as overdue. Cloud API requests now time out after 30 seconds (10 seconds to connect), so the outage is reported promptly, and its message is no longer empty (`CloudControlUnavailableError('')`)
+- Overdue cloud topics are logged at DEBUG level while a Cloud API outage is being reported
+
 ### Changes
 
 - Bumped Docker base python image from 3.14-alpine3.24 to 3.15-alpine3.24
