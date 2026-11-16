@@ -8,7 +8,9 @@ the :class:`~.handler.MqttHandler` interface, and optionally configures TLS.
 import _thread
 import logging
 import ssl
+import threading
 import time
+from collections import deque
 from typing import Literal
 
 import paho.mqtt.client as mqtt
@@ -19,6 +21,34 @@ from sigenergy2mqtt.common.outage import OutageTracker, outage_tracker
 from .handler import MqttHandler
 
 logger = logging.getLogger(__name__)
+
+STATUS_ONLINE = "online"
+STATUS_OFFLINE = "offline"
+
+# Set when the broker refuses the very first connection of a client (e.g. bad
+# credentials). The process cannot work without MQTT, so it shuts down and the
+# entry point uses this flag to exit with a failure status.
+_connection_refused = threading.Event()
+
+
+def connection_refused() -> bool:
+    """Whether the broker refused a client's first connection during this process."""
+    return _connection_refused.is_set()
+
+
+def reset_connection_refused() -> None:
+    """Clear the refused-connection flag (intended for tests)."""
+    _connection_refused.clear()
+
+
+def status_topic_for(client_id: str) -> str:
+    """Return the retained connection status topic for *client_id*.
+
+    The broker publishes ``offline`` to this topic (the client's Last Will) if
+    the connection is lost without a clean disconnect, e.g. after a crash or a
+    power failure, and the client publishes ``online`` whenever it connects.
+    """
+    return f"sigenergy2mqtt/status/{client_id}"
 
 
 class MqttClient(mqtt.Client):
@@ -62,6 +92,13 @@ class MqttClient(mqtt.Client):
             transport=transport,
         )
         self.enable_logger(logger)
+
+        # Last Will: without it, retained availability stays "online" forever after an unclean exit
+        self.status_topic = status_topic_for(client_id)
+        self.will_set(self.status_topic, STATUS_OFFLINE, qos=1, retain=True)
+        # Unacknowledged QoS 1/2 publishes, so that teardown can wait for them
+        self._unacknowledged: deque[mqtt.MQTTMessageInfo] = deque()
+        self._unacknowledged_lock = threading.Lock()
 
         if tls:
             ssl_context = ssl.create_default_context()
@@ -110,7 +147,23 @@ class MqttClient(mqtt.Client):
         if handler is not None and hasattr(handler, "registry"):
             mid = getattr(info, "mid", None) if getattr(info, "rc", 0) == mqtt.MQTT_ERR_SUCCESS else None
             handler.registry.record_publish(handler.client_id, mid=mid)
+        if qos > 0 and getattr(info, "rc", None) == mqtt.MQTT_ERR_SUCCESS:
+            with self._unacknowledged_lock:
+                while self._unacknowledged and self._unacknowledged[0].is_published():
+                    self._unacknowledged.popleft()
+                self._unacknowledged.append(info)
         return info
+
+    def unacknowledged_publishes(self) -> int:
+        """Number of QoS 1/2 publishes the broker has not yet acknowledged."""
+        with self._unacknowledged_lock:
+            pending = [info for info in self._unacknowledged if not info.is_published()]
+            self._unacknowledged = deque(pending)
+            return len(pending)
+
+    def publish_status(self, status: str) -> mqtt.MQTTMessageInfo:
+        """Publish the retained connection status (``online``/``offline``, or empty to clear it)."""
+        return self.publish(self.status_topic, status, qos=1, retain=True)
 
     @property
     def outage(self) -> OutageTracker:
@@ -177,10 +230,13 @@ def on_connect(client: mqtt.Client, userdata: MqttHandler, flags, reason_code, p
     """Handle a completed connection attempt.
 
     On success, delegates to :meth:`MqttHandler.on_reconnect` so that topic
-    subscriptions are (re-)established.  On failure, interrupts the main
-    thread so the process can shut down cleanly — this is preferred over
-    ``os._exit`` because it allows ``atexit`` handlers and context managers
-    to run.
+    subscriptions are (re-)established.  If the broker refuses a client that
+    has never connected (e.g. bad credentials), the main thread is interrupted
+    so the process can shut down cleanly — this is preferred over ``os._exit``
+    because it allows ``atexit`` handlers and context managers to run — and
+    :func:`connection_refused` reports the failure to the entry point.  A
+    refusal after an earlier successful connection is treated as an outage and
+    retried.
 
     Parameters
     ----------
@@ -195,16 +251,26 @@ def on_connect(client: mqtt.Client, userdata: MqttHandler, flags, reason_code, p
     properties:
         MQTT v5 properties (unused for MQTTv311).
     """
+    previously_connected = isinstance(client, MqttClient) and client._has_connected
     if isinstance(client, MqttClient):
         client._record_connection_result(reason_code == 0)
     if reason_code == 0:
         logger.debug(f"Connected to mqtt://{client.host}:{client.port} (client_id={userdata.client_id})")
         if isinstance(client, MqttClient):
             client.outage.success(member=userdata.client_id)
+            # The Last Will may have been published while the connection was down
+            client.publish_status(STATUS_ONLINE)
         userdata.registry.mark_connected(userdata.client_id)
         userdata.on_reconnect(client)
+    elif previously_connected and isinstance(client, MqttClient):
+        # A broker that accepted this client before is most likely restarting or temporarily
+        # unavailable. Shutting down would turn a short outage into a permanent one, so report
+        # it as an outage and let paho keep retrying.
+        message = f"Connection to mqtt://{client.host}:{client.port} REFUSED - {reason_code} (client_id={userdata.client_id}); retrying"
+        client.outage.failure(f"connection refused: {reason_code}", member=userdata.client_id, detail=message)
     else:
         logger.critical(f"Connection to mqtt://{client.host}:{client.port} REFUSED - {reason_code} (client_id={userdata.client_id})")
+        _connection_refused.set()
         # Raise KeyboardInterrupt in the main thread so that atexit handlers,
         # context managers, and other cleanup code can still run — unlike
         # os._exit(), which terminates the process immediately.

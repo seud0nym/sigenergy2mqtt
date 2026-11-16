@@ -226,6 +226,10 @@ Given that the Modbus interface itself is unauthenticated, these add little atta
 None of these has been actioned. Each plan is independent; A and B are the ones that matter.
 
 ### Plan A — Runtime resilience and lifecycle (F02, F03, F04, F07, F10, F12, F13, F14)
+
+> **Status (2026-11-16): implemented** on branch `claude/trusting-ptolemy-xsyslh`, all nine steps, with 62 new unit tests; full suite 2979 passed.
+> Not done: the integration test for step 5 with a slow probe (covered by unit tests of `async_main` and the handlers only), and no part of the Last Will change (step 7) has been exercised against a real broker.
+> Design choices made during implementation: the Last Will topic is `sigenergy2mqtt/status/{client_id}`, appended to each entity's availability list at discovery time; it is left at `online` on a clean shutdown so that a controlled restart does not make entities flap (the per-device availability topics still carry the graceful `offline`). The interruption flags are no longer reset between cycles: a termination signal always ends the process, even if a restart was pending.
 **Suggested model: Claude Opus 5.5.** The changes cross threads, event loops and signal handling, and several need a judgement about what "safe" means on shutdown. Use Claude Fable 5.2 instead if F07 and F14 are to be redesigned rather than patched.
 
 1. **Poller safety net (F02).** In `SensorGroupPoller.run`, add a final `except Exception` that logs with traceback (rate-limited through the transport's `OutageTracker` where one exists), calls `_reschedule_unpublished`, and continues. Let `asyncio.CancelledError` propagate. In `Sensor._handle_publish_error`, do not re-raise `SanityCheckException` when there is no transport: count the failure and return `False`. Catch `OSError` alongside `ModbusException` in `Sensor.publish` and the poller's reconnect branch.

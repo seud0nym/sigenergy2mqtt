@@ -145,3 +145,25 @@ def reset_outage_trackers():
     clear_outage_trackers()
     yield
     clear_outage_trackers()
+
+
+@pytest.fixture(autouse=True)
+def reset_shutdown_flags():
+    """Clear the process-wide interruption flags around every test.
+
+    In production they are only ever set by a termination signal, after which
+    the process exits, so nothing resets them. Tests that exercise the signal
+    handlers would otherwise make every later ``async_main()`` exit at once.
+    """
+    from sigenergy2mqtt.config import auto_discovery
+    from sigenergy2mqtt.mqtt import reset_mqtt_reconnection_interrupt
+    from sigenergy2mqtt.mqtt.client import reset_connection_refused
+
+    def reset() -> None:
+        auto_discovery._interrupted = False
+        reset_mqtt_reconnection_interrupt()
+        reset_connection_refused()
+
+    reset()
+    yield
+    reset()

@@ -21,8 +21,13 @@ from pymodbus.exceptions import ModbusException
 from sigenergy2mqtt.cloud.exceptions import CloudControlError
 from sigenergy2mqtt.config import SettingsService, active_config
 from sigenergy2mqtt.devices import Device
-from sigenergy2mqtt.modbus import ModbusClientFactory
-from sigenergy2mqtt.mqtt import MqttConnectAborted, MqttHandler, mqtt_setup, mqtt_teardown
+from sigenergy2mqtt.modbus import ModbusClientFactory, ModbusConnectAborted
+from sigenergy2mqtt.mqtt import (
+    MqttConnectAborted,
+    MqttHandler,
+    mqtt_setup,
+    mqtt_teardown,
+)
 
 from .thread_config import ThreadConfig
 
@@ -82,19 +87,24 @@ async def read_and_publish_device_sensors(
     tasks: list[Awaitable[Any]] = []
     transport: Any = None
 
+    def stopping() -> bool:
+        return config.shutdown_requested is True or (stop_event is not None and stop_event.is_set())
+
     try:
         if config.host is not None and not active_config.clean:
-            transport = await ModbusClientFactory.get_client(
-                config.host,
-                config.port if config.port else 502,
-                config.timeout,
-                config.retries,
-            )
+            try:
+                # This thread cannot work without Modbus, so wait for the host rather than crash
+                transport = await ModbusClientFactory.get_client(
+                    config.host,
+                    config.port if config.port else 502,
+                    config.timeout,
+                    config.retries,
+                    stopping=stopping,
+                )
+            except ModbusConnectAborted:
+                logger.info(f"{log_label} stopped while waiting for the Modbus host")
+                return
         elif config.transport_factory is not None and not active_config.clean:
-
-            def stopping() -> bool:
-                return config.shutdown_requested or (stop_event is not None and stop_event.is_set())
-
             while not stopping():
                 try:
                     connection = asyncio.ensure_future(config.transport_factory())
@@ -126,7 +136,7 @@ async def read_and_publish_device_sensors(
                 transport,
                 loop,
                 max_attempts=None,
-                stopping=lambda: config.shutdown_requested or (stop_event is not None and stop_event.is_set()),
+                stopping=stopping,
             )
         except MqttConnectAborted:
             logger.info(f"{log_label} stopped while waiting for the MQTT broker")
@@ -156,11 +166,40 @@ async def read_and_publish_device_sensors(
                 logger.debug(f"{device.log_identity} scheduling tasks")
                 tasks.extend(device.schedule(transport, mqtt_client))
 
+        if tasks and stopping():
+            # A shutdown signal arrived while this thread was still starting. Bringing the
+            # devices online now would clear that request and the signal would be lost.
+            logger.info(f"{log_label} shutdown requested before scheduled tasks commenced")
+            for task in tasks:
+                close = getattr(task, "close", None)
+                if close is not None:
+                    close()  # Avoid "coroutine was never awaited" warnings
+            tasks = []
+            if active_config.home_assistant.enabled:
+                for device in config.devices:
+                    device.publish_availability(mqtt_client, "offline")
+
         if tasks:
             task_word = "task" if len(tasks) == 1 else "tasks"
             logger.info(f"{log_label} scheduled tasks commenced ({len(tasks)} asyncio {task_word} scheduled)")
 
-            gathered_tasks = asyncio.gather(*tasks, return_exceptions=True)
+            reported: set[asyncio.Future[Any]] = set()
+
+            def report_failure(done: asyncio.Future[Any]) -> None:
+                # gather(..., return_exceptions=True) only yields the exception once every task
+                # has finished, i.e. at shutdown. Report a task that died as soon as it happens.
+                if done.cancelled():
+                    return
+                error = done.exception()
+                if error is not None:
+                    reported.add(done)
+                    logger.error(f"{log_label} a scheduled task raised an exception", exc_info=error)
+
+            scheduled = [asyncio.ensure_future(task) for task in tasks]
+            for future in scheduled:
+                future.add_done_callback(report_failure)
+
+            gathered_tasks = asyncio.gather(*scheduled, return_exceptions=True)
             config.online(gathered_tasks)
 
             for device in config.devices:
@@ -176,10 +215,10 @@ async def read_and_publish_device_sensors(
                 results = []
 
             # asyncio.gather(..., return_exceptions=True) never raises; instead
-            # exceptions appear as result values.  Log each one explicitly so
-            # they are not silently discarded.
-            for result in results:
-                if isinstance(result, BaseException):
+            # exceptions appear as result values.  Log any that the done-callback
+            # has not already reported so they are not silently discarded.
+            for future, result in zip(scheduled, results):
+                if isinstance(result, BaseException) and not isinstance(result, asyncio.CancelledError) and future not in reported:
                     logger.exception(
                         f"{log_label} a scheduled task raised an exception",
                         exc_info=result,
@@ -264,7 +303,7 @@ def run_modbus_event_loop(
             loop.close()
 
 
-async def start(configs: list[ThreadConfig]) -> None:
+async def start(configs: list[ThreadConfig]) -> bool:
     """Launch one thread per :class:`ThreadConfig` and wait for all to finish.
 
     Each thread runs its own asyncio event loop via
@@ -282,8 +321,13 @@ async def start(configs: list[ThreadConfig]) -> None:
     Args:
         configs: One :class:`ThreadConfig` per Modbus host / device group to
                  poll concurrently.
+
+    Returns:
+        ``True`` if any thread crashed, so that the caller can end the process
+        with a failure status; ``False`` after an orderly shutdown.
     """
     stop_event = threading.Event()
+    crashed = False
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=len(configs)) as executor:
         executions: list[concurrent.futures.Future] = [executor.submit(run_modbus_event_loop, config, asyncio.new_event_loop(), stop_event) for config in configs]
@@ -295,6 +339,9 @@ async def start(configs: list[ThreadConfig]) -> None:
             while True:
                 done = {fut for fut in executions if fut.done()}
                 pending = {fut for fut in executions if not fut.done()}
+
+                if stop_event.is_set():
+                    crashed = True
 
                 if stop_event.is_set() and pending:
                     logger.warning("A thread crashed — cancelling remaining threads")
@@ -323,4 +370,8 @@ async def start(configs: list[ThreadConfig]) -> None:
             try:
                 fut.result()
             except (ValueError, TypeError, RuntimeError):
+                crashed = True
                 logger.exception("Unhandled exception in device thread")
+
+    # The last thread to finish may have crashed after the final poll above
+    return crashed or stop_event.is_set()

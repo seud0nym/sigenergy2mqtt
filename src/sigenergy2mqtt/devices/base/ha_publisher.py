@@ -13,6 +13,7 @@ import paho.mqtt.client as mqtt
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.mqtt import MqttHandler
 from sigenergy2mqtt.sensors.base import Sensor
+from sigenergy2mqtt.sensors.base.constants import DiscoveryKeys
 
 from .child_devices import ha_child_device_name, publishes_as_ha_child
 
@@ -201,6 +202,14 @@ class HaPublisherMixin(abc.ABC):
             components: dict[str, Any] = {}
             for sensor in self.sensors.values():
                 components.update(sensor.get_discovery(mqtt_client))
+            # The publishing client's Last Will marks every entity unavailable if this
+            # process dies without publishing "offline" itself (crash, kill, power loss)
+            status_topic = getattr(mqtt_client, "status_topic", None)
+            if isinstance(status_topic, str) and status_topic:
+                for component in components.values():
+                    availability = component.get(DiscoveryKeys.AVAILABILITY)
+                    if isinstance(availability, list) and availability:
+                        component[DiscoveryKeys.AVAILABILITY] = [*availability, {"topic": status_topic}]
             if components:
                 discovery: dict[str, Any] = {}
                 parent = self.parent_device

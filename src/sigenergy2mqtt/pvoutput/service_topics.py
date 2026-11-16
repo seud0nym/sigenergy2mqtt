@@ -25,6 +25,10 @@ from .topic import Topic
 
 logger = logging.getLogger(__name__)
 
+# The service holds its lock across the hourly request for PVOutput system information
+# (10s timeout). Waiting for less than that would drop every update that arrives meanwhile.
+UPDATE_LOCK_TIMEOUT = 15
+
 
 class Calculation(Flag):
     """Bitwise flags describing how topic values are aggregated."""
@@ -435,7 +439,7 @@ class ServiceTopics(dict[str, Topic]):
             if Calculation.PEAK not in self.calculation or (self[topic].state is not None and state > cast(float, self[topic].state)):
                 if active_config.pvoutput.update_debug_logging:
                     logger.debug(f"{self._service.log_identity} Updating {self._name} from topic {topic} {value=}")
-                async with self._service.lock(timeout=1):
+                async with self._service.lock(timeout=UPDATE_LOCK_TIMEOUT):
                     state_was = self[topic].state
                     self[topic].state = state
                     self[topic].timestamp = time.localtime()
