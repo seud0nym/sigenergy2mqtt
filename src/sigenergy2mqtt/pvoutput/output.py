@@ -224,6 +224,10 @@ class PVOutputOutputService(Service):
                 logger.error(f"{self.log_identity} Error Connecting: {exc}")
             except (OSError, TimeoutError) as exc:
                 logger.error(f"{self.log_identity} {exc}")
+            except (ValueError, LookupError) as exc:
+                # A response body that is not the expected comma-separated output record
+                matches = False
+                logger.error(f"{self.log_identity} Verification attempt #{validate} could not interpret the response: {exc!r}")
         if not matches and not active_config.pvoutput.testing:
             await Metrics.pvoutput_upload_error()
         return matches
@@ -322,6 +326,14 @@ class PVOutputOutputService(Service):
                 except RuntimeError as e:
                     logger.error(f"{self.log_identity}  Sleeping for 60s after exception: {e}")
                     await asyncio.sleep(60)
+                except Exception:  # Nothing else uploads output; an unexpected error must not end this loop
+                    # The tasks are gathered with return_exceptions=True, so an exception that
+                    # escaped would stop the uploads without a word until the next restart.
+                    logger.exception(f"{self.log_identity} Unexpected error; retrying in 60s")
+                    try:
+                        await asyncio.sleep(60)
+                    except asyncio.CancelledError:
+                        logger.info(f"{self.log_identity} Sleep interrupted")
             logger.info(f"{self.log_identity} Completed: Flagged as offline ({self.online=})")
 
         tasks: list[Awaitable[None]] = [publish_updates(transport, mqtt_client)]

@@ -1,11 +1,22 @@
+import asyncio
 import logging
+from collections.abc import Callable
 from typing import ClassVar
 
-from pymodbus.exceptions import ModbusException
+from pymodbus.exceptions import ConnectionException, ModbusException
 
-from .client import ModbusClient
+from .client import CONNECTIVITY, ModbusClient
 
 logger = logging.getLogger(__name__)
+
+# Backoff between attempts to reach a Modbus host that a worker thread needs
+CONNECT_INITIAL_DELAY = 5.0
+CONNECT_MAX_DELAY = 60.0
+CONNECT_POLL_INTERVAL = 0.5
+
+
+class ModbusConnectAborted(RuntimeError):
+    """Raised when waiting for a Modbus host is abandoned because the caller is stopping."""
 
 
 class ModbusClientFactory:
@@ -15,7 +26,7 @@ class ModbusClientFactory:
     _hosts: ClassVar[dict[ModbusClient, str]] = {}
 
     @classmethod
-    async def get_client(cls, host: str, port: int, timeout: float = 1.0, retries: int = 3) -> ModbusClient:
+    async def get_client(cls, host: str, port: int, timeout: float = 1.0, retries: int = 3, stopping: Callable[[], bool] | None = None) -> ModbusClient:
         """Get or create a connected Modbus client for ``host:port``.
 
         Args:
@@ -23,13 +34,19 @@ class ModbusClientFactory:
             port: Target TCP port.
             timeout: Per-request timeout passed to pymodbus.
             retries: Retry count passed to pymodbus.
+            stopping: Optional callable. When supplied, a failed connection is
+                retried with backoff until the host is reachable (reported as a
+                single outage of the host) or ``stopping()`` returns ``True``.
+                Without it, a single attempt is made.
 
         Returns:
             A connected :class:`ModbusClient` instance from the pool.
 
         Raises:
-            AssertionError: If connection attempt does not result in a connected
-                client instance.
+            ModbusConnectAborted: If ``stopping()`` returned ``True`` while
+                waiting for the host. The client is removed from the pool.
+            ConnectionException: If no ``stopping`` callable was supplied and
+                the connection attempt failed. The client is removed from the pool.
         """
         key = (host, port)
         if key not in cls._clients:
@@ -39,8 +56,32 @@ class ModbusClientFactory:
             cls._hosts[modbus] = f"{host}:{port}"
         client = cls._clients[key]
         if not client.connected:
-            await client.connect()
-            assert client.connected
+            delay = CONNECT_INITIAL_DELAY
+            while True:
+                try:
+                    await client.connect()
+                except (ModbusException, OSError) as e:
+                    logger.debug(f"Connecting to modbus://{host}:{port} raised {e!r}")
+                if client.connected:
+                    break
+                if stopping is None:
+                    cls.remove(client)
+                    raise ConnectionException(f"Failed to connect to modbus://{host}:{port}")
+                outage = client.outage
+                if outage is not None:
+                    outage.failure(
+                        "unable to connect; retrying until it is available",
+                        kind=CONNECTIVITY,
+                        detail=f"Failed to connect to modbus://{host}:{port}; retrying in {delay:.0f}s",
+                    )
+                waited = 0.0
+                while waited < delay:
+                    if stopping():
+                        cls.remove(client)
+                        raise ModbusConnectAborted(f"Stopped waiting for modbus://{host}:{port}")
+                    await asyncio.sleep(CONNECT_POLL_INTERVAL)
+                    waited += CONNECT_POLL_INTERVAL
+                delay = min(delay * 2, CONNECT_MAX_DELAY)
             logger.info(f"Connected to modbus://{host}:{port} ({timeout=}s {retries=})")
         return client
 

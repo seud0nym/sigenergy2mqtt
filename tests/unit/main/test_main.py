@@ -1614,23 +1614,13 @@ class TestSignals:
             mock_config.offline.assert_called_once()
 
     def test_reload_on_signal(self, clean_config):
-        """Test reload_on_signal signal handler."""
+        """SIGHUP requests a restart; the configuration is reloaded by async_main once the threads have stopped."""
         with patch("signal.signal") as mock_sig, patch.object(active_config, "reload") as mock_reload, patch.object(restart_controller, "request") as mock_request:
             setup_signals([MagicMock()])
             handler = next(call.args[1] for call in mock_sig.call_args_list if call.args[0] == signal.SIGHUP)
-            with patch("asyncio.get_running_loop") as mock_get_loop:
-                mock_loop = MagicMock()
-                mock_get_loop.return_value = mock_loop
-
-                def mock_create_task(coro):
-                    import asyncio
-
-                    asyncio.run(coro)
-
-                mock_loop.create_task.side_effect = mock_create_task
-                handler(signal.SIGHUP, None)
-            mock_reload.assert_called_once()
-            mock_request.assert_called_once()
+            handler(signal.SIGHUP, None)
+            mock_reload.assert_not_called()
+            mock_request.assert_called_once_with("signal SIGHUP")
 
 
 @pytest.mark.asyncio

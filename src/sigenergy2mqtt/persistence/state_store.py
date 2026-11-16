@@ -658,6 +658,14 @@ class StateStore:
 
         if self._client:
             try:
+                from sigenergy2mqtt.config import active_config
+
+                if active_config.clean and hasattr(self._client, "publish_status"):
+                    try:
+                        # Leave nothing retained behind
+                        self._client.publish_status("").wait_for_publish(timeout=2.0)  # type: ignore[attr-defined]
+                    except (RuntimeError, ValueError) as exc:
+                        logger.debug(f"StateStore: unable to clear the connection status topic: {exc}")
                 self._client.loop_stop()
                 self._client.disconnect()
             except RuntimeError as exc:

@@ -7,6 +7,15 @@
 
 - Fixed a stalled Cloud API request blocking cloud sensor updates for up to 5 minutes without any error being reported, while every cloud topic was logged as overdue. Cloud API requests now time out after 30 seconds (10 seconds to connect), so the outage is reported promptly, and its message is no longer empty (`CloudControlUnavailableError('')`)
 - Overdue cloud topics are logged at DEBUG level while a Cloud API outage is being reported
+- Fixed a sensor scan group silently and permanently stopping its updates when a sensor raised an error other than a Modbus exception. The error is now logged and the group retried
+- Fixed PVOutput uploads stopping until the next restart when PVOutput (or a proxy in front of it) returned a response without rate-limit headers or with an unexpected body
+- Fixed the process exiting with a success status when a worker thread crashed or the MQTT broker refused the connection, which stopped service managers using restart-on-failure (such as the supplied systemd unit) from restarting it. It now exits with status 1
+- Fixed a worker thread crashing if the Modbus host became unreachable between device discovery and the thread starting; it now waits for the host
+- Fixed a shutdown signal being ignored when it was received while devices were being created, or during a restart
+- Fixed a refused MQTT connection shutting down sigenergy2mqtt after it had previously connected successfully (for example while the broker is restarting); this is now treated as an outage and retried
+- Fixed errors raised while handling an MQTT command being discarded without being logged
+- Fixed a DC charger that failed to initialise preventing startup, rather than being skipped like other device types
+- Fixed `SIGHUP` reloading the configuration underneath the running threads before they had been stopped
 - Fixed the range of the Active/Reactive Power Fixed Adjustment Target Value controls (plant and per-phase), which was wrong by orders of magnitude. The active power targets are now limited to ± the total rated active power of the plant, and the reactive power targets to ±60% of it
 - Fixed values written to the inverter being truncated instead of rounded (for example, setting 2.01 kW wrote 2.009 kW)
 - Fixed the PVOutput `l/l-avg` voltage option, which reported the line to neutral average. It now reports the true line to line voltage calculated from the three phase voltages (a balanced 230V system reports approximately 398V), and omits the voltage from an upload if a phase voltage is unavailable
@@ -15,6 +24,8 @@
 
 ### Changes
 
+- Each MQTT client now registers a Last Will on the retained topic `sigenergy2mqtt/status/{unique_id_prefix}/{client}` (where `{client}` is the client ID without its prefix, so that the topic is the same on every start) (`offline` if the connection is lost without a clean disconnect, `online` on every connect). Home Assistant discovery includes this topic in the availability of every entity, so that entities become unavailable if sigenergy2mqtt crashes, is killed or loses power, instead of showing stale values indefinitely
+- A second `SIGINT`/`SIGTERM` during shutdown now forces an immediate exit
 - Bumped Docker base python image from 3.14-alpine3.24 to 3.15-alpine3.24
 - Updated pycryptodome from 4.3.0 to 4.4.0
 

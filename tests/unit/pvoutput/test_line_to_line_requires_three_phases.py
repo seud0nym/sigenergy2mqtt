@@ -92,18 +92,15 @@ def test_main_exits_1_without_traceback_on_runtime_configuration_error(monkeypat
     async def failing_async_main():
         raise ConfigurationError("pvoutput.voltage is 'l/l-avg' but the plant has 1 phase")
 
-    shutdown = MagicMock()
     monkeypatch.setattr(main_mod, "initialize", lambda: True)
     monkeypatch.setattr(main_mod, "active_config", SimpleNamespace(validate_only_mode=False, log_level=20))
     monkeypatch.setattr(main_mod, "async_main", failing_async_main)
-    monkeypatch.setattr(main_mod.state_store, "shutdown", shutdown)
     monkeypatch.setattr(main_mod.Metrics, "shutdown", MagicMock())
 
     with pytest.raises(SystemExit) as exc:
         main_mod.main()
 
     assert exc.value.code == 1
-    shutdown.assert_called_once()
     main_mod.Metrics.shutdown.assert_called_once()
     records = [r for r in caplog.records if "Configuration error" in r.message]
     assert len(records) == 1

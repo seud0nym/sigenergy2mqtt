@@ -19,9 +19,8 @@ from sigenergy2mqtt.config import (
     initialize_async,
 )
 from sigenergy2mqtt.main import async_main, validate_connections
-from sigenergy2mqtt.mqtt import interrupt_mqtt_reconnection
 from sigenergy2mqtt.metrics.metrics import Metrics
-from sigenergy2mqtt.persistence import state_store
+from sigenergy2mqtt.mqtt import connection_refused, interrupt_mqtt_reconnection
 
 logger = logging.getLogger(__name__)
 
@@ -102,9 +101,10 @@ def main():
 
     Exit codes:
         * ``0``  — clean exit or ``--help`` / dry-run path.
-        * ``1``  — configuration error, including one that can only be detected
-          once the devices have been probed (for example ``pvoutput.voltage``
-          set to ``l/l-avg`` on a system that is not three-phase).
+        * ``1``  — configuration error (including one that can only be detected
+          once the devices have been probed, for example ``pvoutput.voltage``
+          set to ``l/l-avg`` on a system that is not three-phase), a crashed
+          worker thread, or the MQTT broker refusing the connection.
         * ``130`` — interrupted by SIGINT during initialisation.
     """
     early_handler = _make_early_signal_handler()
@@ -134,12 +134,12 @@ def main():
     # but adds overhead so it is gated on the DEBUG log level.
     exit_code = 0
     try:
-        asyncio.run(async_main(), debug=active_config.log_level == logging.DEBUG)  # pyrefly: ignore
+        result = asyncio.run(async_main(), debug=active_config.log_level == logging.DEBUG)  # pyrefly: ignore
+        exit_code = result if isinstance(result, int) else 0
     except ConfigurationError as e:
-        # Raised after device probing, before any worker thread is started.
-        # async_main did not reach its own state store shutdown, so do it here.
+        # e.g. raised after device probing, before any worker thread is started.
+        # async_main shuts the state store down on its way out.
         logger.critical(f"Configuration error: {e}")
-        state_store.shutdown()
         exit_code = 1
     except KeyboardInterrupt:
         # Keep Ctrl-C shutdown quiet and deterministic: avoid interpreter-level
@@ -147,6 +147,10 @@ def main():
         logger.info("Keyboard interrupt received during runtime shutdown")
     finally:
         Metrics.shutdown(timeout=2.0)
+
+    if connection_refused():
+        # The broker rejected the connection (e.g. bad credentials): a failure, not a requested stop
+        exit_code = exit_code or 1
     if exit_code:
         sys.exit(exit_code)
 

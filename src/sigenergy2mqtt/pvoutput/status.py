@@ -224,6 +224,11 @@ class PVOutputStatusService(Service):
                     logger.error(f"{self.log_identity} {e}")
                     if wait <= 0:
                         wait = 60
+                except Exception:  # Nothing else uploads status; an unexpected error must not end this loop
+                    # The tasks are gathered with return_exceptions=True, so an exception that
+                    # escaped would stop the uploads without a word until the next restart.
+                    logger.exception(f"{self.log_identity} Unexpected error; retrying in 60s")
+                    wait = 60
             logger.info(f"{self.log_identity} Completed: Flagged as offline ({self.online=})")
 
         tasks: list[Awaitable[None]] = [publish_updates(transport, mqtt_client)]
