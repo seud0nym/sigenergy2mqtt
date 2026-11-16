@@ -413,3 +413,21 @@ class TestReadableSensorScanIntervalOverride:
                 protocol_version=ProtocolVersion.V2_4,
             )
         assert s.scan_interval == 99
+
+
+class TestHousekeepingFixes:
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("value, expected", [(0, False), (1, True), (0.0, False), (1.0, True), ("yes", True), ("no", False)])
+    async def test_set_debug_logging_accepts_integers(self, value, expected):
+        s = _make_sensor(uid_suffix=f"dbg_{value}", debug=not expected)
+        await s.set_debug_logging(None, _mqtt_mock(), value, "src", MagicMock())
+        assert s.debug_logging is expected
+
+    def test_derived_sensors_keyed_by_unique_id(self):
+        source = _make_sensor(uid_suffix="src")
+        first = MagicMock(unique_id="derived_a")
+        second = MagicMock(unique_id="derived_b")
+        type(first).__name__ = type(second).__name__ = "SameClass"
+        source.add_derived_sensor(first)
+        source.add_derived_sensor(second)
+        assert set(source.derived_sensors) == {"derived_a", "derived_b"}
