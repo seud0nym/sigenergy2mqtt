@@ -19,7 +19,7 @@ Confidence is my estimate that the finding is a real defect (not that it is freq
 | F02 | A scan-group poller dies permanently and silently on any unexpected exception | High | 90% (mechanism) | Yes |
 | F03 | PVOutput tasks die permanently when a response lacks rate-limit headers | High | 90% | Yes |
 | F04 | A crashed worker thread (or refused MQTT CONNACK) ends the process with exit status 0 | Medium-High | 85% | Partly |
-| F05 | Lifetime (`TOTAL_INCREASING`) energy sensors get no upper sanity limit | Medium | 75% unintended | Yes |
+| F05 | Lifetime (`TOTAL_INCREASING`) energy sensors get no upper sanity limit — **intended (maintainer, 2026-11-16)**; make explicit and document | Low | n/a | Yes |
 | F06 | State files are written non-atomically; a truncated file wins over the MQTT copy | Medium | 85% | Yes |
 | F07 | Shutdown signals received during (re)initialisation are lost | Medium | 70% | No |
 | F08 | Numeric writes truncate instead of rounding (2.01 kW is written as 2009 W) | Medium-Low | 95% | Yes |
@@ -32,7 +32,7 @@ Confidence is my estimate that the finding is a real defect (not that it is freq
 | F15 | Blocking calls on the event loop | Low | 85% | No |
 | F16 | `MqttHandler._seen_mids` is never purged; `wait_for` stops waiting after MIDs wrap | Low | 95% | Yes |
 | F17 | Modbus read/error metrics are double-counted | Low | 95% | Yes |
-| F18 | PVOutput `l/l-avg` produces the line-to-neutral value | Low | 60% | Yes |
+| F18 | PVOutput `l/l-avg` produces the line-to-neutral value | Low | 95% | Yes |
 | F19 | `--pvoutput-voltage pv` is documented but rejected by the CLI | Low | 100% | Yes |
 | F20 | Minor code defects (five items) | Low | 60–95% | No |
 | D1–D8 | Documentation and log-message errors | Low | 90%+ | Partly |
@@ -54,7 +54,9 @@ Reproduced with the real sensor classes and the same calls, for a 10 kW inverter
 
 Consequences: the Home Assistant number entities advertise meaningless ranges, and `value_is_valid()` and the sanity check — the only software guard on these writable registers — accept anything. The inverter presumably clamps, but the guard the code intends does not exist.
 
-The protocol text for register 40003 is "Range: [-60.00 * base value, 60.00 * base value]", which almost certainly means 60 % of rated power; the adjacent Q/S register is "[-60.00, 60.00] %". The intended reactive factor needs the maintainer's decision (0.6 × rated kW is my reading).
+The protocol text for register 40003 is "Range: [-60.00 * base value, 60.00 * base value]"; the adjacent Q/S register is "[-60.00, 60.00] %".
+
+**Maintainer decision (2026-11-16):** the reactive limit is 60 % of rated power, i.e. ±0.6 × total rated active power expressed in kvar.
 
 Not exercised: the full `setup_devices()` path against a Modbus server; only the two calls it makes.
 
@@ -104,7 +106,9 @@ For `StateClass.TOTAL_INCREASING` the constructor sets `self.min_raw = 0`, and t
 
 Reproduced: a kWh / `TOTAL_INCREASING` / `UINT64` check reports `min_raw=0, max_raw=None` and accepts a jump from 1000 to 10^15. The same sensor declared `TOTAL` gets ±500 000.
 
-The configuration reference says the default applies to "power and energy sensors". These are the sensors where one bad read permanently corrupts Home Assistant's energy statistics. The early return looks accidental (75 %), but it may be relied on; the maintainer should confirm before it changes, since applying a maximum delta could reject legitimate catch-up jumps after a long outage.
+The configuration reference says the default applies to "power and energy sensors".
+
+**Maintainer decision (2026-11-16):** this behaviour is wanted. Lifetime counters must not get a maximum delta, because a fixed limit would reject a legitimate catch-up jump after a long outage. The finding is therefore reduced to two follow-ups: the behaviour is currently a side effect of an early return whose comment describes something else, so it should be made explicit and pinned by a test; and the documentation (D1) should say that `TOTAL_INCREASING` sensors are only checked for a non-negative delta.
 
 ### F06 — Non-atomic state files
 `persistence/state_store.py:122-131, 771-789`, `sensors/base/accumulation.py:407-413`
@@ -185,7 +189,9 @@ Reproduced: one successful sensor read calls `Metrics.modbus_read` twice (client
 ### F18 — `l/l-avg`
 `pvoutput/service_topics.py:198-207`, `pvoutput/__init__.py:184-192`
 
-The inputs are phase (line-to-neutral) voltages and the formula is `sqrt(ΣV²)/sqrt(3)`. Reproduced: three phases at 230 V give 230.0, identical to `l/n-avg`; line-to-line would be about 398. With fewer than three topics the fixed √3 is also wrong. Intent is unclear, hence 60 %.
+The inputs are phase (line-to-neutral) voltages and the formula is `sqrt(ΣV²)/sqrt(3)`. Reproduced: three phases at 230 V give 230.0, identical to `l/n-avg`; line-to-line would be about 398. With fewer than three topics the fixed √3 is also wrong.
+
+**Maintainer decision (2026-11-16):** `l/l-avg` should report true line-to-line voltage, so this is a confirmed defect.
 
 ### F19 — `--pvoutput-voltage pv`
 `config/cli.py:545-547`. `choices` omits `pv` although the help text and docs list it and `VoltageSource.PV` exists. Reproduced: argparse exits 2 with "invalid choice: 'pv'".
@@ -235,20 +241,20 @@ None of these has been actioned. Each plan is independent; A and B are the ones 
 Tests: one unit test per item above (the reproductions described in each finding translate directly), plus an integration test for item 5 using the existing Modbus test server with an artificially slow probe.
 
 ### Plan B — Data correctness (F01, F05, F06, F08, F09, F18)
-**Suggested model: Claude Opus 5.5.** The edits are small, but F01, F05 and F18 need domain reasoning and a decision recorded in the change.
+**Suggested model: Claude Opus 5.5.** The edits are small, but F01, F06 and F18 need careful unit handling and edge-case reasoning.
 
-Decisions needed from the maintainer first:
-- F01: reactive limit = 0.6 × rated power (my reading) or another factor.
-- F05: whether lifetime counters should get a maximum delta, and if so whether it scales with elapsed time.
-- F18: whether `l/l-avg` should report true line-to-line voltage.
+Maintainer decisions (2026-11-16), all settled:
+- F01: reactive limit is 60 % of rated power.
+- F05: lifetime counters keep no maximum delta; make that explicit rather than change it.
+- F18: `l/l-avg` reports true line-to-line voltage.
 
 Steps:
-1. **F01.** In `setup_devices`, convert the summed raw value with the sensor's gain (or read with `raw=False`) before `apply_min_max`; apply the agreed reactive factor. Add a test that builds a plant with a known rated power and asserts min/max and sanity bounds in display units.
+1. **F01.** In `setup_devices`, convert the summed raw value to kW with the sensor's gain (or read with `raw=False`) before `apply_min_max`. Active limits: ±rated kW. Reactive limits: ±0.6 × rated kW. Also change the constructor defaults of `ReactivePowerFixedAdjustmentTargetValue` and `PhaseReactivePowerFixedAdjustmentTargetValue` (currently a literal ±60.0 kvar) so that a plant whose rated power cannot be read does not fall back to a misleading range; check the per-phase sensors against the protocol text for their own base value before applying the plant total to them. Add a test that builds a plant with a known rated power (10 kW → ±10.0 kW, ±6.0 kvar) and asserts min/max and raw sanity bounds.
 2. **F08.** Use `round()` in `NumericSensorMixin.set_value` / `_convert_value_to_registers` and in `Sensor.state2raw`. Parametrised test over values such as 2.01, 0.29, 4.35 with gains 100 and 1000.
-3. **F05.** Make the "already initialised via parameters" early return depend on the constructor arguments, not on `self.min_raw` after the `TOTAL_INCREASING` assignment. Regenerate `SENSORS.md` and check the diff of sanity descriptions before merging; expect many lines to change.
+3. **F05.** No behaviour change. In `SanityCheck.__init__`, replace the accidental path with an explicit one: when `delta` is defaulted and the state class is `TOTAL_INCREASING`, set `min_raw = 0`, leave `max_raw = None`, and return with a comment giving the reason (a maximum delta would reject a catch-up jump after an outage). Make the "already initialised via parameters" return test the constructor arguments. Add a unit test asserting `min_raw == 0` and `max_raw is None` for a `TOTAL_INCREASING` energy sensor and that a large positive jump is accepted while a decrease is rejected. `SENSORS.md` should not change; confirm with a regeneration diff.
 4. **F06.** Write to a temp file in the same directory, `fsync`, then `os.replace`. Treat an empty or unparseable file as absent so the other backend is consulted. Consider throttling accumulation persistence (for example at most once per minute per key, plus on shutdown).
 5. **F09.** Give `SimpleEnergyDailyAccumulationSensor` a same-local-day check on restore (the envelope `ts` is available; expose it from `StateStore.load` or add a `validator`). Replace the 24 h window in `EnergyDailyAccumulationSensor._load_midnight_state` with the same check.
-6. **F18.** Implement the agreed formula, or remove the option and document it.
+6. **F18.** Compute true line-to-line voltage from the phase (line-to-neutral) voltages. For phases 120° apart, each line voltage is `sqrt(Va² + Vb² + Va·Vb)`; with three phases, average the three pairs (AB, BC, CA). This reduces to `√3 × V` when balanced (230 V → 398.4 V). The topics carry no phase label today, so register them with their phase (`sensor.phase` is available in `pvoutput/__init__.py`) or otherwise guarantee a stable A/B/C order. When fewer than three phase voltages have current values (single-phase systems, or a phase not yet updated), line-to-line is undefined: omit `v6` for that upload and log once, rather than sending a wrong figure; consider rejecting `l/l-avg` at configuration validation for single-phase output types. Replace the existing `test_ll_avg_squared_root` expectation and add balanced, unbalanced and missing-phase cases. Update the option's description in `cli.py` and regenerate the configuration docs.
 
 ### Plan C — Housekeeping (F11, F15, F16, F17, F20, ruff)
 **Suggested model: Claude Sonnet 5.5.** Localised changes with clear expected behaviour.
@@ -267,4 +273,4 @@ Steps:
 2. Fix the `ms` calculation and the two "failed to acquire lock" messages.
 3. Move the misplaced docstrings above the imports in `modbus/client.py` and `sensors/base/sensor.py`.
 4. Correct the `config/config.py` module docstring, the `ModbusClient` class docstring (or wire up `bypass_read_ahead` after writes, which belongs in Plan C), the `ThreadConfig` docstring, `clear_outage_trackers`, and the watcher log text.
-5. Update the sanity-check paragraph in the configuration reference once Plan B step 3 is decided.
+5. Update the sanity-check paragraph in the configuration reference: the default kW limit applies to power sensors and to energy sensors that are not `TOTAL_INCREASING`; lifetime (`TOTAL_INCREASING`) counters are only required not to decrease, deliberately, so that a catch-up jump after an outage is accepted. This no longer depends on Plan B.
