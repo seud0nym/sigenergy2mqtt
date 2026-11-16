@@ -182,6 +182,31 @@ class TestPVOutputServiceTopics:
         assert st.add_to_payload(payload, 5, time.localtime(now_ts)) is True
         assert payload[StatusField.VOLTAGE.value] == 398.4
 
+    def test_ll_avg_keeps_a_quiet_phase_within_the_repeat_interval(self):
+        """An unchanged voltage is only re-published every repeated_state_publish_interval seconds."""
+        now_ts = time.time()
+        active_config.pvoutput.started = now_ts - 7200
+        st = make_service_topics(calc=Calculation.L_L_AVG, decimals=1, value_key=StatusField.VOLTAGE)
+        st.register(Topic("inv1/A", scan_interval=60, state=230.0, timestamp=time.localtime(now_ts - 10), phase="A"))
+        st.register(Topic("inv1/B", scan_interval=60, state=230.0, timestamp=time.localtime(now_ts - 10), phase="B"))
+        st.register(Topic("inv1/C", scan_interval=60, state=230.0, timestamp=time.localtime(now_ts - 600), phase="C"))
+
+        # Unchanged for 10 minutes with a 5 minute upload interval, but repeats are only due every 15 minutes
+        with patch.object(active_config, "repeated_state_publish_interval", 900):
+            payload = {}
+            assert st.add_to_payload(payload, 5, time.localtime(now_ts)) is True
+            assert payload[StatusField.VOLTAGE.value] == 398.4
+            # ...but not once it is overdue even allowing for that
+            st["inv1/C"].timestamp = time.localtime(now_ts - 1000)
+            assert st.add_to_payload({}, 5, time.localtime(now_ts)) is False
+
+        # Unchanged values never re-published: a quiet topic cannot be told from a failed one
+        st["inv1/C"].timestamp = time.localtime(now_ts - 36000)
+        with patch.object(active_config, "repeated_state_publish_interval", -1):
+            payload = {}
+            assert st.add_to_payload(payload, 5, time.localtime(now_ts)) is True
+            assert payload[StatusField.VOLTAGE.value] == 398.4
+
     def test_ll_avg_stale_inverter_is_ignored_when_another_reports_the_phase(self):
         now_ts = time.time()
         st = make_service_topics(calc=Calculation.L_L_AVG, decimals=1, value_key=StatusField.VOLTAGE)

@@ -3,6 +3,7 @@
 import asyncio
 import json
 import os
+import threading
 import time
 from unittest.mock import MagicMock, patch
 
@@ -216,6 +217,88 @@ async def test_flush_timer_is_cancelled_by_newer_save_delete_and_shutdown(state_
     store.shutdown()
     assert timer.finished.is_set() and store._flush_timers == {}
     assert json.loads((state_dir / "sensor" / "s.state").read_text())["v"] == "2.0"
+
+
+@pytest.mark.asyncio
+async def test_timer_write_cannot_overwrite_a_newer_reset(state_dir, persistence_config):
+    """A timer callback that has taken its value must not land after a reset that follows it."""
+    store = StateStore()
+    await store.initialise(state_dir, persistence_config)
+    path = state_dir / "sensor" / "k.state"
+    await store.save("sensor", "k.state", "1.0", min_interval=60)
+    await store.save("sensor", "k.state", "2.0", min_interval=60)
+    store._flush_timers[("sensor", "k.state")].cancel()
+
+    # Capture the write the timer queues instead of running it, then let a reset through first
+    queued = []
+    real_submit = store._executor.submit
+    with patch.object(store._executor, "submit", side_effect=lambda fn, *a: queued.append((fn, a))):
+        store._flush_deferred(("sensor", "k.state"))
+    assert len(queued) == 1
+    await store.save("sensor", "k.state", "0.0")  # reset
+    await store.delete("sensor", "other.state")
+    fn, args = queued[0]
+    real_submit(fn, *args).result()  # the overtaken timer write finally runs
+
+    assert json.loads(path.read_text())["v"] == "0.0"
+    store.shutdown()
+    assert json.loads(path.read_text())["v"] == "0.0"
+
+
+@pytest.mark.asyncio
+async def test_timer_write_cannot_resurrect_a_deleted_key(state_dir, persistence_config):
+    store = StateStore()
+    await store.initialise(state_dir, persistence_config)
+    path = state_dir / "sensor" / "k.state"
+    await store.save("sensor", "k.state", "1.0", min_interval=60)
+    await store.save("sensor", "k.state", "2.0", min_interval=60)
+    store._flush_timers[("sensor", "k.state")].cancel()
+    queued = []
+    real_submit = store._executor.submit
+    with patch.object(store._executor, "submit", side_effect=lambda fn, *a: queued.append((fn, a))):
+        store._flush_deferred(("sensor", "k.state"))
+    await store.delete("sensor", "k.state")
+    real_submit(queued[0][0], *queued[0][1]).result()
+    assert not path.exists()
+    store.shutdown()
+
+
+@pytest.mark.asyncio
+async def test_shutdown_waits_for_a_timer_callback_that_has_started(state_dir, persistence_config):
+    store = StateStore()
+    await store.initialise(state_dir, persistence_config)
+    path = state_dir / "sensor" / "k.state"
+    await store.save("sensor", "k.state", "1.0", min_interval=0.05)
+    await store.save("sensor", "k.state", "2.0", min_interval=0.05)
+
+    # Hold the timer callback inside the lock until shutdown is under way
+    started = threading.Event()
+    real_flush = store._flush_deferred
+
+    def slow_flush(k):
+        started.set()
+        time.sleep(0.3)
+        real_flush(k)
+
+    timer = store._flush_timers[("sensor", "k.state")]
+    timer.function = slow_flush
+    assert started.wait(2)
+    store.shutdown()
+    assert json.loads(path.read_text())["v"] == "2.0"
+
+
+@pytest.mark.asyncio
+async def test_flush_after_executor_stopped_leaves_value_for_shutdown(state_dir, persistence_config):
+    store = StateStore()
+    await store.initialise(state_dir, persistence_config)
+    await store.save("sensor", "k.state", "1.0", min_interval=60)
+    await store.save("sensor", "k.state", "2.0", min_interval=60)
+    store._flush_timers[("sensor", "k.state")].cancel()
+    with patch.object(store._executor, "submit", side_effect=RuntimeError("cannot schedule new futures after shutdown")):
+        store._flush_deferred(("sensor", "k.state"))
+    assert store._deferred[("sensor", "k.state")][0] == "2.0"
+    store.shutdown()
+    assert json.loads((state_dir / "sensor" / "k.state").read_text())["v"] == "2.0"
 
 
 @pytest.mark.asyncio

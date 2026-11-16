@@ -190,9 +190,14 @@ class ServiceTopics(dict[str, Topic]):
         If any of the three phases has no current value the field is omitted for
         this upload (and the omission logged once) rather than sending a wrong
         figure. A reading is current when it is positive and, if *interval_minutes*
-        is given, was updated within the upload interval (or the topic's scan
-        interval, if that is longer): a phase that has stopped updating must not
-        keep contributing its last voltage just because the others are fresh.
+        is given, was updated recently enough: a phase that has stopped updating
+        must not keep contributing its last voltage just because the others are
+        fresh. Topic timestamps only advance when MQTT delivers a message, and an
+        unchanged value is only re-published every
+        ``repeated_state_publish_interval`` seconds, so the allowed age is the
+        longest of the upload, scan and repeat intervals plus one scan of slack.
+        If unchanged values are never re-published (a negative repeat interval),
+        a quiet topic cannot be told from a failed one and age is not checked.
 
         Args:
             payload: Payload being assembled.
@@ -204,12 +209,15 @@ class ServiceTopics(dict[str, Topic]):
         readings: dict[str, list[float]] = {"A": [], "B": [], "C": []}
         at: str | None = None
         now_seconds = time.mktime(now) if now is not None else time.time()
+        repeat_interval = active_config.repeated_state_publish_interval
+        check_age = interval_minutes is not None and isinstance(repeat_interval, (int, float)) and repeat_interval >= 0
         if self.enabled:
             for topic in self.values():
                 if topic.phase in readings and topic.timestamp is not None and topic.state is not None and topic.state > 0.0:
-                    if interval_minutes is not None:
+                    if check_age:
                         updated = topic.timestamp if topic.restore_timestamp is None or topic.timestamp > topic.restore_timestamp else topic.restore_timestamp
-                        if now_seconds - time.mktime(updated) > max(topic.scan_interval or 0, interval_minutes * 60):
+                        scan_interval = topic.scan_interval or 0
+                        if now_seconds - time.mktime(updated) > max(scan_interval, cast(int, interval_minutes) * 60, repeat_interval) + scan_interval:
                             continue  # stale
                     readings[cast(str, topic.phase)].append(topic.state * topic.gain)
                     at = time.strftime("%H:%M", topic.timestamp)

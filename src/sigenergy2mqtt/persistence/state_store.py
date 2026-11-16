@@ -506,6 +506,8 @@ class StateStore:
         self._deferred: dict[tuple[str, str], tuple[str, int]] = {}
         self._last_write: dict[tuple[str, str], float] = {}
         self._flush_timers: dict[tuple[str, str], threading.Timer] = {}
+        # Bumped on every save/delete of a key, so a timer write that has been overtaken can tell
+        self._generation: dict[tuple[str, str], int] = {}
         self._deferred_lock = threading.Lock()
 
     # ------------------------------------------------------------------
@@ -626,6 +628,18 @@ class StateStore:
 
     def shutdown(self) -> None:
         """Flush pending writes, disconnect the persistence MQTT client, and stop the executor."""
+        # Stop the flush timers and wait for any callback that has already
+        # started: it has taken its value and is queuing the write, which the
+        # executor shutdown below must not miss.
+        with self._deferred_lock:
+            timers = list(self._flush_timers.values())
+            for timer in timers:
+                timer.cancel()
+            self._flush_timers.clear()
+        for timer in timers:
+            if timer.is_alive() and timer is not threading.current_thread():
+                timer.join(timeout=self._sync_timeout)
+
         if self._executor:
             self._executor.shutdown(wait=True, cancel_futures=False)
             self._executor = None
@@ -665,6 +679,7 @@ class StateStore:
         now = time.monotonic()
         with self._deferred_lock:
             last = self._last_write.get(k)
+            self._generation[k] = self._generation.get(k, 0) + 1
             if min_interval is not None and min_interval > 0 and last is not None and (now - last) < min_interval:
                 self._deferred[k] = (value, int(time.time()))
                 if k not in self._flush_timers:
@@ -691,31 +706,44 @@ class StateStore:
         self._flush_timers.clear()
         self._deferred.clear()
         self._last_write.clear()
+        for k in self._generation:
+            self._generation[k] += 1  # invalidate any timer write already queued
 
     def _flush_deferred(self, k: tuple[str, str]) -> None:
-        """Write the value held back for *k*; runs on a timer thread when its interval ends."""
+        """Write the value held back for *k*; runs on a timer thread when its interval ends.
+
+        The value is taken and its write queued while holding the lock that
+        every save and delete takes first, so a reset or deletion that arrives
+        later is always queued behind this write, never ahead of it.
+        """
         with self._deferred_lock:
             self._flush_timers.pop(k, None)
             entry = self._deferred.pop(k, None)
-            if entry is None:
+            if entry is None or self._disk is None:
                 return
             self._last_write[k] = time.monotonic()
-            executor = self._executor
-        if self._disk is None:
-            return
-        value, ts = entry
-        try:
-            if executor is None:
-                raise RuntimeError("executor stopped")
-            # Queue behind any write already submitted for this key
-            executor.submit(self._save_sync_impl, k[0], k[1], value, ts)
-        except RuntimeError:
-            # Shutting down: the executor has drained, so write directly
-            self._save_sync_impl(k[0], k[1], value, ts)
+            generation = self._generation.get(k, 0)
+            value, ts = entry
+            try:
+                if self._executor is None:
+                    raise RuntimeError("executor stopped")
+                self._executor.submit(self._write_flushed, k, value, ts, generation)
+                return
+            except RuntimeError:
+                # Shutting down: put the value back for shutdown() to write
+                self._deferred[k] = entry
+
+    def _write_flushed(self, k: tuple[str, str], value: str, ts: int, generation: int) -> None:
+        """Write a timer-flushed value unless a newer save or delete has overtaken it."""
+        with self._deferred_lock:
+            if self._generation.get(k, 0) != generation:
+                return
+        self._save_sync_impl(k[0], k[1], value, ts)
 
     def _discard_deferred(self, category: Category | str, key: str) -> None:
         k = (str(category), key)
         with self._deferred_lock:
+            self._generation[k] = self._generation.get(k, 0) + 1
             self._deferred.pop(k, None)
             self._last_write.pop(k, None)
             self._cancel_flush_timer_locked(k)
