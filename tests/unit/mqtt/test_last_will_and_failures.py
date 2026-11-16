@@ -56,6 +56,26 @@ class TestLastWill:
         assert client._will_retain is True
         assert client._will_qos == 1
 
+    def test_status_topic_is_stable_when_the_random_client_id_prefix_changes(self):
+        """The default client ID prefix is random, so it must not appear in a retained topic."""
+        with patch.object(active_config.home_assistant, "unique_id_prefix", "sigen"):
+            topics = set()
+            for prefix in ("sigenergy2mqtt_aB3x", "sigenergy2mqtt_Zz90"):
+                with patch.object(active_config.mqtt, "client_id_prefix", prefix):
+                    topics.add(mqtt_package._status_topic(f"{prefix}_Modbus@C0A80164"))
+        assert topics == {"sigenergy2mqtt/status/sigen/Modbus@C0A80164"}
+
+    def test_status_topic_separates_instances_sharing_a_broker(self):
+        with patch.object(active_config.mqtt, "client_id_prefix", "p"):
+            with patch.object(active_config.home_assistant, "unique_id_prefix", "house"):
+                house = mqtt_package._status_topic("p_Services")
+            with patch.object(active_config.home_assistant, "unique_id_prefix", "shed"):
+                shed = mqtt_package._status_topic("p_Services")
+        assert house != shed
+
+    def test_status_topic_levels_cannot_contain_separators_or_wildcards(self):
+        assert status_topic_for("a/b+c#d e", instance="x/y") == "sigenergy2mqtt/status/x_y/a_b_c_d_e"
+
     def test_online_status_is_published_on_every_successful_connect(self):
         client, handler = _client()
         with patch.object(mqtt.Client, "publish", return_value=_published(True)) as publish:

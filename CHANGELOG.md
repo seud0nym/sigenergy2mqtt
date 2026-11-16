@@ -19,7 +19,7 @@
 
 ### Changes
 
-- Each MQTT client now registers a Last Will on the retained topic `sigenergy2mqtt/status/{client_id}` (`offline` if the connection is lost without a clean disconnect, `online` on every connect). Home Assistant discovery includes this topic in the availability of every entity, so that entities become unavailable if sigenergy2mqtt crashes, is killed or loses power, instead of showing stale values indefinitely
+- Each MQTT client now registers a Last Will on the retained topic `sigenergy2mqtt/status/{unique_id_prefix}/{client}` (where `{client}` is the client ID without its prefix, so that the topic is the same on every start) (`offline` if the connection is lost without a clean disconnect, `online` on every connect). Home Assistant discovery includes this topic in the availability of every entity, so that entities become unavailable if sigenergy2mqtt crashes, is killed or loses power, instead of showing stale values indefinitely
 - A second `SIGINT`/`SIGTERM` during shutdown now forces an immediate exit
 - Bumped Docker base python image from 3.14-alpine3.24 to 3.15-alpine3.24
 - Updated pycryptodome from 4.3.0 to 4.4.0

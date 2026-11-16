@@ -53,6 +53,20 @@ class TestUploadPayload:
         assert sleep.await_count == 2, "there is nothing to wait for after the final attempt"
 
     @pytest.mark.asyncio
+    async def test_rate_limited_final_attempt_does_not_wait_for_the_reset(self):
+        svc = Service("s", "pv_up3", "m")
+        sleep = AsyncMock()
+        headers = {"X-Rate-Limit-Limit": "60", "X-Rate-Limit-Remaining": "0", "X-Rate-Limit-Reset": "4102444800"}
+        with (
+            patch.object(active_config.pvoutput, "testing", False),
+            patch("sigenergy2mqtt.pvoutput.service.requests.post", return_value=_response(503, headers)),
+            patch("sigenergy2mqtt.pvoutput.service.asyncio.sleep", sleep),
+        ):
+            assert await svc.upload_payload("https://pvoutput.org/service/r2/addstatus.jsp", {"d": "20260101"}) is False
+        assert sleep.await_count == 2, "the rate-limit wait only makes sense before a retry"
+        assert all(call.args[0] > 10 for call in sleep.await_args_list), "the waits before the retries last until the reset"
+
+    @pytest.mark.asyncio
     async def test_system_information_without_headers_falls_back_to_defaults(self):
         svc = Service("s", "pv_up2", "m")
         PVOutputSettings.interval_updated = None

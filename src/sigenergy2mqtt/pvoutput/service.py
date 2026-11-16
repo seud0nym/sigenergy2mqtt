@@ -246,6 +246,9 @@ class Service(Device):
                 await Metrics.pvoutput_upload_error()
                 logger.error(f"{self.log_identity} Attempt #{i} {exc!r}")
             limit, remaining, at, reset = self.get_response_headers(response) if hasattr(response, "headers") else (None, None, None, None)
+            if i >= MAX_UPLOAD_ATTEMPTS:
+                # No retry follows, so there is nothing to wait for: let the caller have the failure
+                continue
             if response.status_code is not None and response.status_code != 200 and remaining is not None and remaining < 10 and reset is not None:
                 logger.warning(f"{self.log_identity} Only {remaining} requests left, sleeping until {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))} ({reset}s)")
                 try:
@@ -253,7 +256,7 @@ class Service(Device):
                 except asyncio.CancelledError:
                     logger.debug(f"{self.log_identity} reset sleep interrupted")
                     break
-            elif i < MAX_UPLOAD_ATTEMPTS:
+            else:
                 logger.info(f"{self.log_identity} Retrying in 10 seconds")
                 try:
                     await asyncio.sleep(10)

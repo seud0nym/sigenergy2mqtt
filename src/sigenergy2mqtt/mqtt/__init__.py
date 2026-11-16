@@ -68,6 +68,18 @@ def _build_broker_url() -> str:
     return f"mqtt://{active_config.mqtt.broker}:{active_config.mqtt.port}"
 
 
+def _status_topic(mqtt_client_id: str) -> str:
+    """Return the connection status topic for *mqtt_client_id*, stable across restarts.
+
+    The client ID prefix is random unless configured, so it is removed, leaving
+    the part that names what the client is for. The Home Assistant unique ID
+    prefix identifies this instance among any others using the same broker.
+    """
+    prefix = f"{active_config.mqtt.client_id_prefix}_"
+    name = mqtt_client_id.removeprefix(prefix)
+    return status_topic_for(name or mqtt_client_id, instance=active_config.home_assistant.unique_id_prefix)
+
+
 async def _connect_with_retry(mqtt_client: MqttClient, client_id: str, max_attempts: int | None = _MAX_CONNECT_ATTEMPTS, stopping: Callable[[], bool] | None = None) -> None:
     """Connect the given MQTT client to the broker, retrying on failure.
 
@@ -176,6 +188,7 @@ async def mqtt_setup(
         transport=active_config.mqtt.transport,
         tls=active_config.mqtt.tls,
         tls_insecure=active_config.mqtt.tls_insecure,
+        status_topic=_status_topic(mqtt_client_id),
     )
     mqtt_health_registry.register(mqtt_client_id)
 

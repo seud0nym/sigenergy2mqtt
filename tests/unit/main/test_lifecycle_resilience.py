@@ -209,6 +209,27 @@ class TestInitSignals:
         stale.offline.assert_not_called()
 
 
+    def test_signal_during_initialisation_counts_towards_the_forced_exit_at_runtime(self):
+        """The first signal arrives during device setup, the second after setup_signals()."""
+        service_setup.setup_init_signals()
+        with patch.object(service_setup.os, "_exit") as force_exit:
+            signal.getsignal(signal.SIGTERM)(signal.SIGTERM, None)
+            config = MagicMock()
+            service_setup.setup_signals([config])
+            force_exit.assert_not_called()
+            signal.getsignal(signal.SIGTERM)(signal.SIGTERM, None)
+        force_exit.assert_called_once_with(128 + signal.SIGTERM)
+
+    def test_signal_at_runtime_counts_towards_the_forced_exit_during_a_restart(self):
+        config = MagicMock()
+        service_setup.setup_signals([config])
+        with patch.object(service_setup.os, "_exit") as force_exit:
+            signal.getsignal(signal.SIGINT)(signal.SIGINT, None)
+            service_setup.setup_init_signals()
+            signal.getsignal(signal.SIGINT)(signal.SIGINT, None)
+        force_exit.assert_called_once_with(128 + signal.SIGINT)
+
+
 class TestRuntimeSignals:
     def test_second_termination_signal_forces_exit(self):
         config = MagicMock()

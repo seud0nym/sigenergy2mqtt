@@ -67,6 +67,27 @@ def setup_services(configs: list[ThreadConfig], protocol_version: ProtocolVersio
     return configs
 
 
+# SIGINT/SIGTERM received by this process. It is shared by the initialisation and runtime
+# handlers so that the second signal forces an exit whichever of them received the first:
+# a signal during device setup is followed by setup_signals(), and if the shutdown then
+# blocks, the next signal must not be treated as the first.
+_terminations = 0
+
+
+def _count_termination(caught) -> int:
+    """Record a SIGINT/SIGTERM and return how many have been received so far."""
+    global _terminations
+    if caught in (signal.SIGINT, signal.SIGTERM):
+        _terminations += 1
+    return _terminations
+
+
+def reset_termination_count() -> None:
+    """Forget the termination signals received so far (intended for tests)."""
+    global _terminations
+    _terminations = 0
+
+
 def _exit_status(signum: int) -> int:
     """Conventional exit status for a process ended by *signum* (128 + signal number)."""
     return 128 + int(signum)
@@ -89,14 +110,11 @@ def setup_init_signals() -> None:
     - Installs handlers for ``SIGINT``, ``SIGTERM`` and ``SIGUSR1`` (shutdown)
       and ``SIGHUP`` (ignored: the configuration is being loaded anyway).
     """
-    signalled = False
 
     def stop_initialising(caught, frame):
-        nonlocal signalled
-        if signalled and caught in (signal.SIGINT, signal.SIGTERM):
+        if caught in (signal.SIGINT, signal.SIGTERM) and _count_termination(caught) > 1:
             # Not responding quickly enough: bypass any blocked threads
             os._exit(_exit_status(caught))
-        signalled = True
         auto_discovery._interrupted = True
         interrupt_mqtt_reconnection()
 
@@ -127,8 +145,6 @@ def setup_signals(configs: list[ThreadConfig]) -> None:
       ``SIGINT``/``SIGTERM`` forces an immediate exit.
     - On restart path, suppresses Home Assistant availability-offline publication.
     """
-    terminations = 0
-
     def configure_for_restart(caught, frame):
         """Handle SIGUSR1 by suppressing HA and initiating a graceful shutdown."""
         logger.info(f"Signal {caught} received - reconfiguring for restart")
@@ -145,9 +161,7 @@ def setup_signals(configs: list[ThreadConfig]) -> None:
 
     def exit_on_signal(caught, frame):
         """Handle termination signals by setting all active thread configs to offline."""
-        nonlocal terminations
-        terminations += 1
-        if terminations > 1:
+        if _count_termination(caught) > 1:
             # The graceful shutdown is not completing: bypass any blocked threads
             os._exit(_exit_status(caught))
         shutdown(caught)

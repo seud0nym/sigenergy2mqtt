@@ -7,6 +7,7 @@ the :class:`~.handler.MqttHandler` interface, and optionally configures TLS.
 
 import _thread
 import logging
+import re
 import ssl
 import threading
 import time
@@ -41,14 +42,27 @@ def reset_connection_refused() -> None:
     _connection_refused.clear()
 
 
-def status_topic_for(client_id: str) -> str:
-    """Return the retained connection status topic for *client_id*.
+def status_topic_for(name: str, instance: str | None = None) -> str:
+    """Return the retained connection status topic for the client called *name*.
 
     The broker publishes ``offline`` to this topic (the client's Last Will) if
     the connection is lost without a clean disconnect, e.g. after a crash or a
     power failure, and the client publishes ``online`` whenever it connects.
+
+    The topic must be the same on every start. The MQTT client ID is not
+    suitable, because its default prefix is random: every restart would leave
+    another set of retained topics behind. *name* is therefore the stable part
+    of the client's identity (what it is for), and *instance* tells apart
+    several sigenergy2mqtt processes sharing one broker.
     """
-    return f"sigenergy2mqtt/status/{client_id}"
+
+    def level(value: str) -> str:
+        # A topic level may not contain separators or wildcards
+        return re.sub(r"[/+#\s]", "_", value)
+
+    if instance:
+        return f"sigenergy2mqtt/status/{level(instance)}/{level(name)}"
+    return f"sigenergy2mqtt/status/{level(name)}"
 
 
 class MqttClient(mqtt.Client):
@@ -68,6 +82,10 @@ class MqttClient(mqtt.Client):
     tls_insecure:
         When *True* (and *tls* is also *True*), hostname verification and
         certificate validation are disabled.  **Do not use in production.**
+    status_topic:
+        Retained topic for this client's connection status and Last Will. It
+        must be stable across restarts (see :func:`status_topic_for`); defaults
+        to a topic derived from *client_id*.
     """
 
     # Class-level default so instances created without __init__ (e.g. in tests) behave as untracked
@@ -80,6 +98,7 @@ class MqttClient(mqtt.Client):
         transport: Literal["tcp", "websockets"] = "tcp",
         tls: bool = False,
         tls_insecure: bool = False,
+        status_topic: str | None = None,
     ):
         self._connection_started: float | None = None
         self._has_connected = False
@@ -94,7 +113,7 @@ class MqttClient(mqtt.Client):
         self.enable_logger(logger)
 
         # Last Will: without it, retained availability stays "online" forever after an unclean exit
-        self.status_topic = status_topic_for(client_id)
+        self.status_topic = status_topic or status_topic_for(client_id)
         self.will_set(self.status_topic, STATUS_OFFLINE, qos=1, retain=True)
         # Unacknowledged QoS 1/2 publishes, so that teardown can wait for them
         self._unacknowledged: deque[mqtt.MQTTMessageInfo] = deque()
