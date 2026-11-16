@@ -125,6 +125,8 @@ class InfluxBase(Device):
         self._write_buffer: list[str] = []
         self._batch_size: int = active_config.influxdb.batch_size
         self._batch_lock = asyncio.Lock()
+        # Serialises HTTP writes so unsent batches cannot pile up outside the bounded buffer.
+        self._send_lock = asyncio.Lock()
         self._last_flush: float = time.time()
         self._flush_interval: float = active_config.influxdb.flush_interval
         # Upper bound on buffered lines retained while InfluxDB is unreachable.
@@ -218,6 +220,7 @@ class InfluxBase(Device):
         if active_config.influxdb.enabled:
             try:
                 await asyncio.to_thread(self._init_connection)
+                service_health_registry.set_health(self.service_health_key, True)
                 return True
             except RuntimeError as e:
                 logger.error(f"{self.log_identity} Initialization failed: {e}")
@@ -375,7 +378,11 @@ class InfluxBase(Device):
         """
         if not batch:
             return True
+        async with self._send_lock:
+            return await self._send_batch_locked(batch, force)
 
+    async def _send_batch_locked(self, batch: list[str], force: bool) -> bool:
+        """Perform the write for :meth:`_send_batch`; the caller holds :attr:`_send_lock`."""
         batch_data = "\n".join(batch).encode("utf-8")
         batch_size = len(batch)
         start = time.time()
@@ -409,8 +416,13 @@ class InfluxBase(Device):
         """
         async with self._batch_lock:
             self._write_buffer.append(line)
+            excess = len(self._write_buffer) - self._max_buffer
+            if excess > 0:
+                del self._write_buffer[:excess]
+                logger.warning(f"{self.log_identity} Write buffer full ({self._max_buffer} lines) - discarded {excess} oldest lines")
             should_flush = len(self._write_buffer) >= self._batch_size or (time.time() - self._last_flush) >= self._flush_interval
-            batch = self._take_batch() if should_flush else []
+            # While a write is in flight, keep accumulating (bounded) instead of starting another.
+            batch = self._take_batch() if should_flush and not self._send_lock.locked() else []
         await self._send_batch(batch)
 
     async def flush_buffer(self, force: bool = False) -> None:

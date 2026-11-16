@@ -119,18 +119,23 @@ class InfluxService(InfluxBase):
                 break
             finally:
                 self.sleeper_task = None
-            await self.flush_if_due()
-
-        # Final flush of anything still buffered (bypasses the offline check).
-        try:
-            await self.flush_buffer(force=True)
-        except Exception as e:  # noqa: BLE001 - shutdown must continue
-            logger.warning(f"{self.log_identity} Final flush failed: {e}")
+            try:
+                await self.flush_if_due()
+            except asyncio.CancelledError:
+                break
+            except Exception as e:  # noqa: BLE001 - a failed periodic flush must not end the service
+                logger.warning(f"{self.log_identity} Periodic flush failed: {e}")
 
         for topic in self._topic_cache:
             mqtt_client.unsubscribe(topic)
         logger.info(f"{self.log_identity} Unsubscribed from {len(self._topic_cache)} topics")
         self._topic_cache.clear()
+
+        # Final flush once no more lines can arrive (bypasses the offline check).
+        try:
+            await self.flush_buffer(force=True)
+        except Exception as e:  # noqa: BLE001 - shutdown must continue
+            logger.warning(f"{self.log_identity} Final flush failed: {e}")
 
         if sync_task:
             if not sync_task.done():
