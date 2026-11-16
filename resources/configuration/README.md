@@ -1816,6 +1816,8 @@ The source of the voltage value to be sent to PVOutput. Valid values are:
 - `pv` (average across PV strings)
 If not specified, defaults to `l/n-avg`.
 
+`l/l-avg` requires a three-phase system. It is calculated from the three phase (line to neutral) voltages, so a balanced 230V system reports approximately 398V. If the plant is not three-phase, `l/l-avg` is rejected as a configuration error at startup (and by `--validate`), once the output type has been read from the inverter. If one of the phase voltages is unavailable when a status is uploaded, the voltage is omitted from that upload.
+
 
 <a id="opt_sensor_overrides"></a>
 ## Sensor Overrides

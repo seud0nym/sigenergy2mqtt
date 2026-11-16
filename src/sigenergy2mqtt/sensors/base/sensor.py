@@ -1686,9 +1686,9 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
             value *= self.gain
 
         # Preserve structured and other non-numeric state types. Numeric
-        # values retain the historical integer conversion used for Modbus
-        # writes.
-        return int(value) if isinstance(value, (float, int)) else value
+        # values are converted to the nearest integer for Modbus writes
+        # (rounded, not truncated: 0.29 * 100 is 28.999999999999996).
+        return round(value) if isinstance(value, (float, int)) else value
 
     def __eq__(self, other: object) -> bool:
         """Check equality based on unique_id."""

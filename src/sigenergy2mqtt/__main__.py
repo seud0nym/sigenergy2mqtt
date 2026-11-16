@@ -101,8 +101,10 @@ def main():
 
     Exit codes:
         * ``0``  — clean exit or ``--help`` / dry-run path.
-        * ``1``  — configuration error, a crashed worker thread, or the MQTT
-          broker refusing the connection.
+        * ``1``  — configuration error (including one that can only be detected
+          once the devices have been probed, for example ``pvoutput.voltage``
+          set to ``l/l-avg`` on a system that is not three-phase), a crashed
+          worker thread, or the MQTT broker refusing the connection.
         * ``130`` — interrupted by SIGINT during initialisation.
     """
     early_handler = _make_early_signal_handler()
@@ -135,6 +137,8 @@ def main():
         result = asyncio.run(async_main(), debug=active_config.log_level == logging.DEBUG)  # pyrefly: ignore
         exit_code = result if isinstance(result, int) else 0
     except ConfigurationError as e:
+        # e.g. raised after device probing, before any worker thread is started.
+        # async_main shuts the state store down on its way out.
         logger.critical(f"Configuration error: {e}")
         exit_code = 1
     except KeyboardInterrupt:

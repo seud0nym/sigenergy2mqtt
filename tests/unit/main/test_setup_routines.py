@@ -119,8 +119,8 @@ async def test_setup_devices_active_power_bounds(caplog):
         ):
             make_pi.return_value = (mock_inverter, mock_plant)
 
-            # Case 1: get_state returns a value
-            mock_get_state.return_value = 5000
+            # Case 1: get_state returns the rated power in display units (kW)
+            mock_get_state.return_value = 5.0
 
             config_mock = MagicMock()
             config_mock.devices = [mock_inverter]
@@ -128,11 +128,11 @@ async def test_setup_devices_active_power_bounds(caplog):
                 await main_mod.setup_devices(set())
 
             # Verify get_state was called for RatedActivePower
-            mock_get_state.assert_called_with("mock_sensor", mock_client, "inverter", raw=True)
+            mock_get_state.assert_called_with("mock_sensor", mock_client, "inverter")
 
-            # Verify apply_min_max was called on the mock sensors
-            active_power_sensor.apply_min_max.assert_called_once_with(-5000, 5000)
-            reactive_power_sensor.apply_min_max.assert_called_once_with(-300000, 300000)
+            # Verify apply_min_max was called on the mock sensors: ±rated kW and ±60% of rated kW
+            active_power_sensor.apply_min_max.assert_called_once_with(-5.0, 5.0)
+            reactive_power_sensor.apply_min_max.assert_called_once_with(-3.0, 3.0)
 
 
 @pytest.mark.asyncio

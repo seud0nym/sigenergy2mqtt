@@ -3202,7 +3202,7 @@ cli:
   SIGENERGY2MQTT_PVOUTPUT_UPLOAD_LOG_LEVEL:
     help: 'Legen Sie die Protokollebene für PVOutput-Upload-Protokollmeldungen fest. Gültige Werte sind: DEBUG, INFO, WARNING, ERROR oder CRITICAL. Der Standardwert ist INFO'
   SIGENERGY2MQTT_PVOUTPUT_VOLTAGE:
-    help: "Die Quelle des Spannungswerts für PVOutput. Gültige Werte sind: phase-a, phase-b, phase-c, l/n-avg (Leiter-Neutralleiter-Durchschnitt), l/l-avg (Leiter-Leiter-Durchschnitt) oder pv (Durchschnitt über PV-Strings). Standard ist 'l/n-avg'."
+    help: "Die Quelle des Spannungswerts für PVOutput. Gültige Werte sind: phase-a, phase-b, phase-c, l/n-avg (Leiter-Neutralleiter-Durchschnitt), l/l-avg (Leiter-Leiter-Durchschnitt; erfordert ein dreiphasiges System) oder pv (Durchschnitt über PV-Strings). Standard ist 'l/n-avg'."
   SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL:
     help: "Das Intervall in Sekunden, in dem wiederholte Zustände veröffentlicht werden. Bei einem Wert < 0 werden wiederholte Zustände nie veröffentlicht. Bei einem Wert von 0 werden wiederholte Zustände immer veröffentlicht. Bei einem Wert > 0 werden wiederholte Zustände im angegebenen Intervall veröffentlicht. Der Standardwert beträgt 60 Sekunden."
   SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW:

@@ -20,7 +20,7 @@ import os
 from typing import TYPE_CHECKING
 
 from sigenergy2mqtt.common import UnitOfEnergy, UnitOfPower
-from sigenergy2mqtt.config import active_config
+from sigenergy2mqtt.config import ConfigurationError, active_config
 from sigenergy2mqtt.modbus import ModbusDataType
 from sigenergy2mqtt.sensors.base import Sensor, TypedSensorMixin
 from sigenergy2mqtt.sensors.inverter.read_only import (
@@ -115,6 +115,29 @@ def _safe_status_field(value: str, logger: logging.Logger) -> StatusField | None
         return None
 
 
+def _require_three_phases_for_line_to_line(device: object) -> None:
+    """Reject ``pvoutput.voltage = l/l-avg`` for a plant that is not three-phase.
+
+    The phase count is not part of the configuration: it comes from the plant's
+    output type register, read while the devices are probed, so this cannot be
+    checked when the configuration is loaded.
+
+    Raises:
+        ConfigurationError: If *device* is a plant with fewer than three phases
+            and the line-to-line average voltage has been requested.
+    """
+    if active_config.pvoutput.voltage != VoltageSource.L_L_AVG:
+        return
+    phases = getattr(device, "power_phases", None)
+    if isinstance(phases, int) and not isinstance(phases, bool) and phases < 3:
+        name = getattr(device, "name", device.__class__.__name__)
+        plant_index = getattr(device, "plant_index", None)
+        raise ConfigurationError(
+            f"pvoutput.voltage is '{VoltageSource.L_L_AVG.value}' (line to line average), which requires a three-phase system, "
+            f"but {name} (plant index {plant_index}) has {phases} phase{'s' if phases != 1 else ''}. Use 'l/n-avg', 'phase-a' or 'pv' instead."
+        )
+
+
 def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusService | PVOutputOutputService]:
     """Build and configure PVOutput status/output service devices.
 
@@ -129,6 +152,10 @@ def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusSer
     Returns:
         A two-item list with status and output services, or an empty list when
         PVOutput support is disabled in configuration.
+
+    Raises:
+        ConfigurationError: If ``pvoutput.voltage`` is ``l/l-avg`` and a plant
+            has fewer than three phases.
     """
     if not active_config.pvoutput.enabled:
         return []
@@ -148,6 +175,7 @@ def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusSer
     output_topics: dict[OutputField, list[Topic]] = {field: [] for field in OutputField}
 
     for device in [device for config in configs for device in config.devices]:
+        _require_three_phases_for_line_to_line(device)
         for sensor in [sensor for sensor in device.get_all_sensors().values() if sensor.publishable and sensor.raw_state_topic is not None]:
             match sensor:
                 case DailyChargeEnergy():
@@ -189,7 +217,7 @@ def get_pvoutput_services(configs: list[ThreadConfig]) -> list[PVOutputStatusSer
                         or (active_config.pvoutput.voltage == VoltageSource.PHASE_B and sensor.phase == "B")
                         or (active_config.pvoutput.voltage == VoltageSource.PHASE_C and sensor.phase == "C")
                     ):
-                        status_topics[StatusField.VOLTAGE].append(Topic(sensor.state_topic, getattr(sensor, "scan_interval", None)))  # Need voltage, not raw
+                        status_topics[StatusField.VOLTAGE].append(Topic(sensor.state_topic, getattr(sensor, "scan_interval", None), phase=sensor.phase))  # Need voltage, not raw
                 case PlantBatterySoC():
                     status_topics[StatusField.BATTERY_SOC].append(Topic(sensor.state_topic, sensor.scan_interval))  # Need percentage, not raw
                 case PlantPVPower():
