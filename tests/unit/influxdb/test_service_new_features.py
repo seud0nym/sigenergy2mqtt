@@ -361,3 +361,23 @@ class TestInfluxBuffering:
 
         assert len(calls) == 2
         mock_exec.assert_awaited_once_with(b"pending", force=True)
+
+    @pytest.mark.asyncio
+    async def test_backlog_is_sent_in_batch_sized_chunks(self, service):
+        service._batch_size = 2
+        service._write_buffer = [f"l{i}" for i in range(5)]
+        with patch.object(service, "execute_write", new_callable=AsyncMock) as mock_exec:
+            mock_exec.return_value = True
+            await service.flush_buffer()
+        assert [c.args[0] for c in mock_exec.await_args_list] == [b"l0\nl1", b"l2\nl3", b"l4"]
+        assert service._write_buffer == []
+
+    @pytest.mark.asyncio
+    async def test_failed_chunk_stops_draining_and_keeps_order(self, service):
+        service._batch_size = 2
+        service._write_buffer = ["a", "b", "c", "d"]
+        with patch.object(service, "execute_write", new_callable=AsyncMock) as mock_exec:
+            mock_exec.return_value = False
+            await service.flush_buffer()
+        assert mock_exec.await_count == 1
+        assert service._write_buffer == ["a", "b", "c", "d"]

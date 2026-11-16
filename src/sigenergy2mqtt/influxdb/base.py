@@ -349,12 +349,14 @@ class InfluxBase(Device):
     # ------------------------------------------------------------------
 
     def _take_batch(self) -> list[str]:
-        """Remove and return everything in the write buffer.
+        """Remove and return at most :attr:`_batch_size` lines from the write buffer.
 
-        Must be called while holding :attr:`_batch_lock`.
+        Capping the batch keeps request bodies below the server's size limit even
+        after a long outage has left a large backlog; the remainder is sent by
+        later flushes.  Must be called while holding :attr:`_batch_lock`.
         """
-        batch = self._write_buffer
-        self._write_buffer = []
+        batch = self._write_buffer[: self._batch_size]
+        self._write_buffer = self._write_buffer[self._batch_size :]
         self._last_flush = time.time()
         return batch
 
@@ -439,9 +441,11 @@ class InfluxBase(Device):
             force: Write even if the service has been flagged offline (used for
                 the final flush at shutdown).
         """
-        async with self._batch_lock:
-            batch = self._take_batch()
-        await self._send_batch(batch, force=force)
+        while True:
+            async with self._batch_lock:
+                batch = self._take_batch()
+            if not batch or not await self._send_batch(batch, force=force):
+                break
 
     async def flush_if_due(self) -> None:
         """Flush the buffer if lines have been waiting longer than :attr:`_flush_interval`."""
