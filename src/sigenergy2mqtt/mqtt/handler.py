@@ -115,6 +115,8 @@ class MqttHandler:
         # MIDs that arrived *before* wait_for registered a handler (so wait_for
         # can detect the "already acknowledged" case).
         self._seen_mids: set[Any] = set()
+        # When each parked MID was recorded, so unclaimed entries can expire.
+        self._seen_mid_times: dict[Any, float] = {}
         # MIDs that wait_for is actively watching, mapped to their response record.
         self._pending_mids: dict[Any, MqttResponse] = {}
         # Protects: self._seen_mids, self._pending_mids.
@@ -188,7 +190,7 @@ class MqttHandler:
             logger.error(f"MQTT handler {label} failed: {error!r} (client_id={self.client_id})", exc_info=error)
 
     def _purge_expired_mids(self) -> None:
-        """Evict stale entries from ``_pending_mids``.
+        """Evict stale entries from ``_pending_mids`` and ``_seen_mids``.
 
         An entry is considered stale when it was inserted more than
         :data:`_MID_EXPIRY_SECONDS` seconds ago without ever being
@@ -201,6 +203,10 @@ class MqttHandler:
             method.
         """
         cutoff = time.time() - _MID_EXPIRY_SECONDS
+        stale_seen = [mid for mid, ts in self._seen_mid_times.items() if ts < cutoff]
+        for mid in stale_seen:
+            self._seen_mid_times.pop(mid, None)
+            self._seen_mids.discard(mid)
         stale = [mid for mid, rec in self._pending_mids.items() if rec.now < cutoff]
         for mid in stale:
             logger.debug(f"Removing expired MID={mid} (client_id={self.client_id})")
@@ -328,6 +334,7 @@ class MqttHandler:
                 # wait_for hasn't registered yet – park the MID so wait_for can
                 # detect the "already acknowledged" case.
                 self._seen_mids.add(mid)
+                self._seen_mid_times[mid] = time.time()
                 self._purge_expired_mids()
                 return
 
@@ -488,6 +495,7 @@ class MqttHandler:
             already_seen = info.mid in self._seen_mids
             if already_seen:
                 self._seen_mids.discard(info.mid)
+                self._seen_mid_times.pop(info.mid, None)
             else:
                 self._pending_mids[info.mid] = MqttResponse(time.time(), handle_response)
 

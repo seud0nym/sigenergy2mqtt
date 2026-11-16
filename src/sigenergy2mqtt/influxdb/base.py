@@ -12,7 +12,12 @@ from sigenergy2mqtt.common import ProtocolVersion, service_health_registry
 from sigenergy2mqtt.common.outage import OutageTracker, outage_tracker
 from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import Device
-from sigenergy2mqtt.influxdb.writers import InfluxWriteError, V1HttpWriter, V2HttpWriter, Writer
+from sigenergy2mqtt.influxdb.writers import (
+    InfluxWriteError,
+    V1HttpWriter,
+    V2HttpWriter,
+    Writer,
+)
 from sigenergy2mqtt.metrics import Metrics
 
 logger = logging.getLogger(__name__)
@@ -120,8 +125,12 @@ class InfluxBase(Device):
         self._write_buffer: list[str] = []
         self._batch_size: int = active_config.influxdb.batch_size
         self._batch_lock = asyncio.Lock()
+        # Serialises HTTP writes so unsent batches cannot pile up outside the bounded buffer.
+        self._send_lock = asyncio.Lock()
         self._last_flush: float = time.time()
         self._flush_interval: float = active_config.influxdb.flush_interval
+        # Upper bound on buffered lines retained while InfluxDB is unreachable.
+        self._max_buffer: int = max(self._batch_size * 100, 10000)
 
         # Writer selection is populated by _init_connection. Each writer owns
         # its endpoint-specific connection state.
@@ -211,8 +220,12 @@ class InfluxBase(Device):
         if active_config.influxdb.enabled:
             try:
                 await asyncio.to_thread(self._init_connection)
+                self.outage.success()
+                service_health_registry.set_health(self.service_health_key, True)
                 return True
             except RuntimeError as e:
+                # Open (or continue) the shared outage so the monitor defers restarts while we retry.
+                self.outage.failure(e, detail=f"{self.log_identity} Initialization failed: {e}")
                 logger.error(f"{self.log_identity} Initialization failed: {e}")
                 service_health_registry.set_health(self.service_health_key, False)
                 return False
@@ -335,26 +348,53 @@ class InfluxBase(Device):
     # Buffered writes
     # ------------------------------------------------------------------
 
-    async def _flush_buffer_internal(self) -> None:
-        """Flush the write buffer to InfluxDB in a single batched request.
+    def _take_batch(self) -> list[str]:
+        """Remove and return at most :attr:`_batch_size` lines from the write buffer.
 
-        Must be called while holding :attr:`_batch_lock`.  Clears the buffer
-        before issuing the network call so that new lines can be accepted
-        immediately even if the write fails.
+        Capping the batch keeps request bodies below the server's size limit even
+        after a long outage has left a large backlog; the remainder is sent by
+        later flushes.  Must be called while holding :attr:`_batch_lock`.
         """
-        if not self._write_buffer:
-            return
-
-        batch = self._write_buffer
-        self._write_buffer = []
+        batch = self._write_buffer[: self._batch_size]
+        self._write_buffer = self._write_buffer[self._batch_size :]
         self._last_flush = time.time()
+        return batch
 
+    async def _requeue_batch(self, batch: list[str]) -> None:
+        """Put a failed batch back at the front of the buffer, bounded by :attr:`_max_buffer`.
+
+        The oldest lines are discarded first when the bound is exceeded, so an
+        extended InfluxDB outage cannot grow memory without limit.
+        """
+        async with self._batch_lock:
+            self._write_buffer = batch + self._write_buffer
+            excess = len(self._write_buffer) - self._max_buffer
+            if excess > 0:
+                del self._write_buffer[:excess]
+                logger.warning(f"{self.log_identity} Write buffer full ({self._max_buffer} lines) - discarded {excess} oldest lines")
+
+    async def _send_batch(self, batch: list[str], force: bool = False) -> bool:
+        """Write *batch* to InfluxDB without holding :attr:`_batch_lock`.
+
+        A failed batch is re-queued (bounded) so it is retried with the next flush.
+
+        Returns:
+            ``True`` if the batch was accepted.
+        """
+        if not batch:
+            return True
+        async with self._send_lock:
+            return await self._send_batch_locked(batch, force)
+
+    async def _send_batch_locked(self, batch: list[str], force: bool) -> bool:
+        """Perform the write for :meth:`_send_batch`; the caller holds :attr:`_send_lock`."""
         batch_data = "\n".join(batch).encode("utf-8")
         batch_size = len(batch)
         start = time.time()
+        success = False
 
         try:
-            success = await self.execute_write(batch_data)
+            success = await self.execute_write(batch_data, force=force)
             elapsed = time.time() - start
             if success:
                 await Metrics.influxdb_write(batch_size, elapsed)
@@ -363,13 +403,21 @@ class InfluxBase(Device):
         except (ValueError, TypeError, RuntimeError) as e:
             logger.error(f"InfluxDB batch write failed: {e} (type={self._writer_type} batch_size={batch_size})")
             await Metrics.influxdb_write_error()
+        except asyncio.CancelledError:
+            # Keep ownership of the data: put it back so a final flush can still send it.
+            self._write_buffer = batch + self._write_buffer
+            raise
+
+        if not success:
+            await self._requeue_batch(batch)
+        return success
 
     async def write_line(self, line: str) -> None:
         """Append a line-protocol string to the write buffer.
 
         The buffer is flushed immediately if it has reached :attr:`_batch_size`
         or if more than :attr:`_flush_interval` seconds have elapsed since the
-        last flush.
+        last flush.  The lock is released before the network call.
 
         Args:
             line: A single line-protocol string as returned by
@@ -377,16 +425,34 @@ class InfluxBase(Device):
         """
         async with self._batch_lock:
             self._write_buffer.append(line)
+            excess = len(self._write_buffer) - self._max_buffer
+            if excess > 0:
+                del self._write_buffer[:excess]
+                logger.warning(f"{self.log_identity} Write buffer full ({self._max_buffer} lines) - discarded {excess} oldest lines")
             should_flush = len(self._write_buffer) >= self._batch_size or (time.time() - self._last_flush) >= self._flush_interval
-            if should_flush:
-                await self._flush_buffer_internal()
+            # While a write is in flight, keep accumulating (bounded) instead of starting another.
+            batch = self._take_batch() if should_flush and not self._send_lock.locked() else []
+        await self._send_batch(batch)
 
-    async def flush_buffer(self) -> None:
-        """Flush any pending buffered writes to InfluxDB immediately."""
-        async with self._batch_lock:
-            await self._flush_buffer_internal()
+    async def flush_buffer(self, force: bool = False) -> None:
+        """Flush any pending buffered writes to InfluxDB immediately.
 
-    async def execute_write(self, data: bytes) -> bool:
+        Args:
+            force: Write even if the service has been flagged offline (used for
+                the final flush at shutdown).
+        """
+        while True:
+            async with self._batch_lock:
+                batch = self._take_batch()
+            if not batch or not await self._send_batch(batch, force=force):
+                break
+
+    async def flush_if_due(self) -> None:
+        """Flush the buffer if lines have been waiting longer than :attr:`_flush_interval`."""
+        if self._write_buffer and (time.time() - self._last_flush) >= self._flush_interval:
+            await self.flush_buffer()
+
+    async def execute_write(self, data: bytes, force: bool = False) -> bool:
         """Send a pre-encoded line-protocol payload to InfluxDB over HTTP.
 
         Dispatches to either the v2 or v1 write endpoint depending on
@@ -395,11 +461,12 @@ class InfluxBase(Device):
 
         Args:
             data: UTF-8 encoded line-protocol payload (one or more lines).
+            force: Write even when the service is flagged offline (final flush at shutdown).
 
         Returns:
             ``True`` if InfluxDB accepted the payload (HTTP 200 or 204).
         """
-        if not self.online:
+        if not self.online and not force:
             return False
 
         writer = self._writers.get(self._writer_type or "")

@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import time
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 import requests
@@ -284,3 +284,100 @@ class TestInfluxChunking:
         assert len(results) == 3
         assert max_seen_concurrency == 2  # Limited by max_sync_workers
         assert hass_sync.copy_records_from_homeassistant.call_count == 3
+
+
+class TestInfluxBuffering:
+    @pytest.mark.asyncio
+    async def test_failed_batch_is_requeued(self, service):
+        with patch.object(service, "execute_write", new_callable=AsyncMock) as mock_exec:
+            mock_exec.return_value = False
+            service._write_buffer = ["a", "b"]
+            await service.flush_buffer()
+            assert service._write_buffer == ["a", "b"]
+
+            mock_exec.return_value = True
+            await service.flush_buffer()
+            assert service._write_buffer == []
+
+    @pytest.mark.asyncio
+    async def test_requeue_keeps_newest_when_over_limit(self, service):
+        service._max_buffer = 3
+        service._write_buffer = ["new"]
+        await service._requeue_batch(["a", "b", "c"])
+        assert service._write_buffer == ["b", "c", "new"]
+
+    @pytest.mark.asyncio
+    async def test_cancelled_write_keeps_batch(self, service):
+        with patch.object(service, "execute_write", new_callable=AsyncMock) as mock_exec:
+            mock_exec.side_effect = asyncio.CancelledError
+            service._write_buffer = ["a"]
+            with pytest.raises(asyncio.CancelledError):
+                await service.flush_buffer()
+            assert service._write_buffer == ["a"]
+
+    @pytest.mark.asyncio
+    async def test_flush_if_due_only_after_interval(self, service):
+        with patch.object(service, "execute_write", new_callable=AsyncMock) as mock_exec:
+            mock_exec.return_value = True
+            service._write_buffer = ["a"]
+            service._flush_interval = 1000.0
+            service._last_flush = time.time()
+            await service.flush_if_due()
+            mock_exec.assert_not_called()
+
+            service._last_flush = time.time() - 2000
+            await service.flush_if_due()
+            mock_exec.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_force_write_while_offline(self, service):
+        service.online = False
+        writer = service._writers["v2_http"]
+        with patch.object(writer, "write", return_value=True) as mock_write:
+            assert await service.execute_write(b"x") is False
+            assert await service.execute_write(b"x", force=True) is True
+            mock_write.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_keep_running_retries_init_then_flushes_at_shutdown(self, service):
+        calls = []
+
+        async def fake_init():
+            calls.append(1)
+            if len(calls) == 1:
+                return False
+            service._writer_type = None
+            service.online = False
+            return True
+
+        service._write_buffer = ["pending"]
+        with (
+            patch.object(service, "async_init", fake_init),
+            patch("sigenergy2mqtt.influxdb.service.asyncio.sleep", new_callable=AsyncMock),
+            patch.object(service, "execute_write", new_callable=AsyncMock) as mock_exec,
+        ):
+            mock_exec.return_value = True
+            await service._keep_running(None, MagicMock())
+
+        assert len(calls) == 2
+        mock_exec.assert_awaited_once_with(b"pending", force=True)
+
+    @pytest.mark.asyncio
+    async def test_backlog_is_sent_in_batch_sized_chunks(self, service):
+        service._batch_size = 2
+        service._write_buffer = [f"l{i}" for i in range(5)]
+        with patch.object(service, "execute_write", new_callable=AsyncMock) as mock_exec:
+            mock_exec.return_value = True
+            await service.flush_buffer()
+        assert [c.args[0] for c in mock_exec.await_args_list] == [b"l0\nl1", b"l2\nl3", b"l4"]
+        assert service._write_buffer == []
+
+    @pytest.mark.asyncio
+    async def test_failed_chunk_stops_draining_and_keeps_order(self, service):
+        service._batch_size = 2
+        service._write_buffer = ["a", "b", "c", "d"]
+        with patch.object(service, "execute_write", new_callable=AsyncMock) as mock_exec:
+            mock_exec.return_value = False
+            await service.flush_buffer()
+        assert mock_exec.await_count == 1
+        assert service._write_buffer == ["a", "b", "c", "d"]

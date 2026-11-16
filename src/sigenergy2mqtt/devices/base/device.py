@@ -480,10 +480,10 @@ class Device(HaPublisherMixin, dict[str, str | list[str]]):
 
         Search order:
         1. Direct lookup in self.all_sensors (by unique_id or isinstance).
-        2. If search_children, direct lookup in each child's sensors dict.
+        2. If search_children, a recursive lookup (sensors and alarm sub-sensors)
+        in every descendant device.
         3. Linear scan of AlarmCombinedSensor instances in self.all_sensors for
         a matching alarm sub-sensor.
-        4. If search_children, same alarm scan across each child's all_sensors.
 
         Args:
             target: Either the unique_id string of the sensor to find, or a
@@ -505,10 +505,10 @@ class Device(HaPublisherMixin, dict[str, str | list[str]]):
         if match:
             return match
 
-        # 2. Search children's direct sensors
+        # 2. Search children (recursively)
         if search_children:
             for child in self.children:
-                match = next((s for s in child.sensors.values() if _matches(s)), None)
+                match = child.get_sensor(target, search_children=True)
                 if match:
                     return match
 
@@ -517,14 +517,6 @@ class Device(HaPublisherMixin, dict[str, str | list[str]]):
             match = next((a for a in alarm.alarms if _matches(a)), None)
             if match:
                 return match
-
-        # 4. Search alarm sub-sensors in children
-        if search_children:
-            for child in self.children:
-                for alarm in (s for s in child.all_sensors.values() if isinstance(s, AlarmCombinedSensor)):
-                    match = next((a for a in alarm.alarms if _matches(a)), None)
-                    if match:
-                        return match
 
         return None
 

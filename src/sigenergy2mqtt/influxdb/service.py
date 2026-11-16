@@ -82,9 +82,22 @@ class InfluxService(InfluxBase):
                 for interface compatibility).
             mqtt_client: Active MQTT client used for unsubscription on shutdown.
         """
-        if not await self.async_init():
-            logger.error(f"{self.log_identity} Initialisation failed — service will not write to InfluxDB")
-            return
+        delay = 5.0
+        while not await self.async_init():
+            logger.error(f"{self.log_identity} Initialisation failed — retrying in {delay:.0f}s")
+            if not self.online:
+                return
+            task = asyncio.create_task(asyncio.sleep(delay))
+            self.sleeper_task = task
+            try:
+                await task
+            except asyncio.CancelledError:
+                return
+            finally:
+                self.sleeper_task = None
+            if not self.online:
+                return
+            delay = min(delay * 2, 60.0)
 
         sync_task: asyncio.Task | None = None
         if self._writer_type:
@@ -106,11 +119,23 @@ class InfluxService(InfluxBase):
                 break
             finally:
                 self.sleeper_task = None
+            try:
+                await self.flush_if_due()
+            except asyncio.CancelledError:
+                break
+            except Exception as e:  # noqa: BLE001 - a failed periodic flush must not end the service
+                logger.warning(f"{self.log_identity} Periodic flush failed: {e}")
 
         for topic in self._topic_cache:
             mqtt_client.unsubscribe(topic)
         logger.info(f"{self.log_identity} Unsubscribed from {len(self._topic_cache)} topics")
         self._topic_cache.clear()
+
+        # Final flush once no more lines can arrive (bypasses the offline check).
+        try:
+            await self.flush_buffer(force=True)
+        except Exception as e:  # noqa: BLE001 - shutdown must continue
+            logger.warning(f"{self.log_identity} Final flush failed: {e}")
 
         if sync_task:
             if not sync_task.done():

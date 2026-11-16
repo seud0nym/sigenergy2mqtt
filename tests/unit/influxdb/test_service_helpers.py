@@ -593,6 +593,7 @@ class TestInfluxServiceMissingCoverage:
     @pytest.mark.asyncio
     async def test_keep_running_init_fails(self, service, monkeypatch, caplog):
         async def fake_init():
+            service.online = False
             return False
 
         monkeypatch.setattr(service, "async_init", fake_init)

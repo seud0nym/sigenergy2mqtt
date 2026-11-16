@@ -110,7 +110,8 @@ async def _connect_with_retry(mqtt_client: MqttClient, client_id: str, max_attem
     while True:
         attempt += 1
         try:
-            mqtt_client.connect(
+            await asyncio.to_thread(
+                mqtt_client.connect,
                 active_config.mqtt.broker,
                 port=active_config.mqtt.port,
                 keepalive=active_config.mqtt.keepalive,

@@ -534,7 +534,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
             sensor: The derived sensor to add
         """
 
-        self.derived_sensors[sensor.__class__.__name__] = sensor
+        self.derived_sensors[sensor.unique_id or sensor.__class__.__name__] = sensor
 
     def apply_device_overrides(self, registers: RegisterAccess | None) -> None:
         """Apply device-level publishable overrides.
@@ -1233,6 +1233,13 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
             reason.
         """
         message = mqtt_client.publish(topic, payload, qos=qos, retain=retain)
+        # QoS 0 messages are fire-and-forget: a successful hand-off to the paho queue
+        # (rc == 0) is all that can be known, so do not stall the event loop waiting.
+        queued_only = qos == 0 and timeout == 0.5 and message.rc == mqtt.MQTT_ERR_SUCCESS
+        if queued_only:
+            if self.debug_logging:
+                logger.debug(f"{self.log_identity} Queued state={payload} to topic {topic} ({qos=} {retain=})")
+            return True
         if timeout is None or timeout >= 0:
             message.wait_for_publish(timeout=timeout)
         if message.is_published():
@@ -1503,7 +1510,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
             True if value was updated and should be published, False if value was suppressed as a repeated
         """
         state: bool | None = None
-        if isinstance(value, float) and value == 0 or value == 1:
+        if isinstance(value, (int, float)) and value in (0, 1):
             state = bool(value)
         elif isinstance(value, str):
             match value.lower():
