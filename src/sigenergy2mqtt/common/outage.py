@@ -236,6 +236,10 @@ def active_outages(prefix: str = "") -> list[OutageTracker]:
 
 
 def clear_outage_trackers() -> None:
-    """Forget all trackers (intended for tests)."""
+    """Forget all trackers.
+
+    Called at runtime when a new configuration cycle starts (see ``main.main``),
+    so that outage state from the previous cycle is not carried over, and by tests.
+    """
     with _trackers_lock:
         _trackers.clear()

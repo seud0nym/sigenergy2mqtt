@@ -983,8 +983,6 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         """
 
     async def publish(self, mqtt_client: mqtt.Client, transport: Any, republish: bool = False) -> bool:
-        from sigenergy2mqtt.metrics import Metrics
-
         """Publish the sensor state to MQTT.
 
         Args:
@@ -995,6 +993,8 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         Returns:
             True if successfully published, False otherwise
         """
+        from sigenergy2mqtt.metrics import Metrics
+
         if not self._should_attempt_publish():
             return False
 
@@ -1060,8 +1060,6 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         """
 
     async def _attempt_publish(self, mqtt_client: mqtt.Client, transport: Any, republish: bool) -> bool:
-        from sigenergy2mqtt.metrics import Metrics
-
         """Attempt to publish sensor state.
 
         Args:
@@ -1072,6 +1070,8 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         Returns:
             True if successfully published
         """
+        from sigenergy2mqtt.metrics import Metrics
+
         if not self.publishable:
             return False
 

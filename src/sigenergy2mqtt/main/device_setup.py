@@ -543,7 +543,7 @@ async def _watch_grid_restore_and_request_restart(host: str, port: int, timeout:
                 if modbus.connected:
                     is_outage = await _is_grid_outage(plant_index, modbus)
                     if is_outage is False:
-                        restart_controller.request(f"grid restored for AC charger setup on modbus://{host}:{port} plant {plant_index}")
+                        restart_controller.request(f"grid restored for deferred device setup (AC charger, PID or PSS) on modbus://{host}:{port} plant {plant_index}")
                         return
             await asyncio.sleep(10)
     finally:
@@ -555,5 +555,5 @@ def _schedule_restart_on_grid_restore(device, plant_index: int) -> None:
     if key in _GRID_RESTORE_WATCH_TASKS:
         return
     _GRID_RESTORE_WATCH_TASKS.add(key)
-    logger.info(f"Scheduling grid-restore watcher for modbus://{device.host}:{device.port} plant {plant_index} due to outage-time AC charger skip")
+    logger.info(f"Scheduling grid-restore watcher for modbus://{device.host}:{device.port} plant {plant_index} due to a device skipped during an outage (AC charger, PID or PSS)")
     asyncio.create_task(_watch_grid_restore_and_request_restart(device.host, device.port, device.timeout, device.retries, plant_index))

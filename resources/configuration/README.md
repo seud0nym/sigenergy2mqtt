@@ -174,7 +174,7 @@ The specified value is taken as the maximum in kW, and the minimum value is deri
 
 The value is applied per second, so the actual sanity check applied to a sensor is a multiple of the scan-interval.
 
-For energy sensors, the check is applied to the delta value. Readings outside of the range are ignored and reported as a warning log message.
+For energy sensors, the check is applied to the delta value. Lifetime (`TOTAL_INCREASING`) energy sensors are the exception: they are only required not to decrease, and have no maximum delta. This is deliberate, so that a catch-up jump after a long outage is accepted. Readings outside of the range are ignored and reported as a warning log message.
 
 <a id="opt_sanity_check_failures_increment"></a>
 ### Sanity Check Failures Increment

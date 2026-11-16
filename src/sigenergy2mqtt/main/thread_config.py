@@ -30,8 +30,10 @@ class ThreadConfig:
             Defaults to ``1.0``.
         retries: Number of retry attempts on failure passed to the Modbus
             client. Defaults to ``3``.
-        transport_factory: Optional async factory for a non-Modbus transport.
-            It is used only when ``host`` is ``None``.
+        transport_factory: Not a constructor argument of :meth:`create`; it is
+            a dataclass field, assigned by the caller after creation. It is an
+            optional async factory for a non-Modbus transport, used only when
+            ``host`` is ``None``.
 
     Raises:
         ValueError: If both ``name`` and ``host`` are absent or blank.
