@@ -246,6 +246,32 @@ async def test_timer_write_cannot_overwrite_a_newer_reset(state_dir, persistence
 
 
 @pytest.mark.asyncio
+async def test_queued_timer_write_survives_a_newer_held_back_save(state_dir, persistence_config):
+    """A later throttled save is only held in memory, so it must not cancel the queued write."""
+    store = StateStore()
+    await store.initialise(state_dir, persistence_config)
+    path = state_dir / "sensor" / "k.state"
+    await store.save("sensor", "k.state", "1.0", min_interval=60)
+    await store.save("sensor", "k.state", "2.0", min_interval=60)
+    store._flush_timers[("sensor", "k.state")].cancel()
+    queued = []
+    real_submit = store._executor.submit
+    with patch.object(store._executor, "submit", side_effect=lambda fn, *a: queued.append((fn, a))):
+        store._flush_deferred(("sensor", "k.state"))
+
+    # Another sensor update arrives while the timer write is still waiting in the queue
+    await store.save("sensor", "k.state", "3.0", min_interval=60)
+    assert json.loads(path.read_text())["v"] == "1.0"
+    real_submit(queued[0][0], *queued[0][1]).result()
+
+    assert json.loads(path.read_text())["v"] == "2.0"  # the queued total reached disk
+    assert await store.load("sensor", "k.state") == "3.0"  # and the newest is held with its own timer
+    assert ("sensor", "k.state") in store._flush_timers
+    store.shutdown()
+    assert json.loads(path.read_text())["v"] == "3.0"
+
+
+@pytest.mark.asyncio
 async def test_timer_write_cannot_resurrect_a_deleted_key(state_dir, persistence_config):
     store = StateStore()
     await store.initialise(state_dir, persistence_config)

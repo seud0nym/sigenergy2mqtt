@@ -506,7 +506,9 @@ class StateStore:
         self._deferred: dict[tuple[str, str], tuple[str, int]] = {}
         self._last_write: dict[tuple[str, str], float] = {}
         self._flush_timers: dict[tuple[str, str], threading.Timer] = {}
-        # Bumped on every save/delete of a key, so a timer write that has been overtaken can tell
+        # Bumped whenever a key is written immediately or deleted, so a queued timer write that
+        # has been overtaken can tell. A save that is merely held back does NOT bump it: its
+        # value is not written yet, so the queued (older) write must still go ahead.
         self._generation: dict[tuple[str, str], int] = {}
         self._deferred_lock = threading.Lock()
 
@@ -679,7 +681,6 @@ class StateStore:
         now = time.monotonic()
         with self._deferred_lock:
             last = self._last_write.get(k)
-            self._generation[k] = self._generation.get(k, 0) + 1
             if min_interval is not None and min_interval > 0 and last is not None and (now - last) < min_interval:
                 self._deferred[k] = (value, int(time.time()))
                 if k not in self._flush_timers:
@@ -691,6 +692,7 @@ class StateStore:
                     timer.start()
                 return True
             self._last_write[k] = now
+            self._generation[k] = self._generation.get(k, 0) + 1
             self._deferred.pop(k, None)
             self._cancel_flush_timer_locked(k)
             return False
