@@ -781,8 +781,12 @@ class StateStore:
             if active_config.persistence_debug:
                 logger.debug(f"StateStore.save deferred {category}/{key} ({min_interval=})")
             return
+        # Stamp the value with the time the save was requested, not the time the
+        # queued write happens to run: a total saved just before midnight must
+        # not be dated the next day.
+        ts = int(time.time())
         loop = asyncio.get_running_loop()
-        await loop.run_in_executor(self._executor, self._save_sync_impl, category, key, value)
+        await loop.run_in_executor(self._executor, self._save_sync_impl, category, key, value, ts)
 
     async def load(
         self,
@@ -875,7 +879,7 @@ class StateStore:
                 logger.warning(f"StateStore.save_sync failed for {category}/{key}: {exc!r}")
         else:
             self._defer_or_claim(category, key, value, None)
-            self._save_sync_impl(category, key, value)
+            self._save_sync_impl(category, key, value, int(time.time()))
 
     def load_sync(
         self,
@@ -971,8 +975,14 @@ class StateStore:
             pass
 
     def _save_sync_impl(self, category: Category | str, key: str, value: str, ts: int | None = None) -> None:
-        """Write to disk and MQTT; called from the ThreadPoolExecutor."""
+        """Write to disk and MQTT; called from the ThreadPoolExecutor.
+
+        *ts* is the time the value was produced. Both backends (and any MQTT
+        retry) carry the same timestamp.
+        """
         assert self._disk is not None
+        if ts is None:
+            ts = int(time.time())
         t0 = time.perf_counter()
         error = False
         try:
@@ -1029,7 +1039,7 @@ class StateStore:
                     if was_legacy or found_in_root:
                         if active_config.persistence_debug:
                             logger.debug(f"StateStore.load migrating legacy file {category}/{key}")
-                        self._save_sync_impl(category, key, value)
+                        self._save_sync_impl(category, key, value, ts)  # keep the original time
                         if found_in_root:
                             self._disk.delete_root_legacy(key)
 

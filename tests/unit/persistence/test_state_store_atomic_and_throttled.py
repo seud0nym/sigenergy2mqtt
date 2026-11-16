@@ -370,6 +370,42 @@ async def test_flushed_value_keeps_the_time_it_was_produced(state_dir, persisten
     assert json.loads((state_dir / "sensor" / "k.state").read_text()) == {"v": "2.0", "ts": 1_700_000_000, "ver": store._version}
 
 
+@pytest.mark.asyncio
+async def test_save_is_stamped_when_requested_not_when_written(state_dir, persistence_config):
+    """A save queued before midnight and written after it must keep yesterday's date."""
+    store = await _store_with_mqtt(state_dir, persistence_config)
+    requested = time.mktime((2026, 11, 15, 23, 59, 59, 0, 0, -1))
+    written = time.mktime((2026, 11, 16, 0, 0, 5, 0, 0, -1))
+
+    # Hold the executor so the write runs only after the clock has moved on
+    release = threading.Event()
+    store._executor.submit(release.wait)
+    with patch("sigenergy2mqtt.persistence.state_store.time.time", return_value=requested):
+        pending = asyncio.ensure_future(store.save("sensor", "k.state", "7777.0"))
+        await asyncio.sleep(0.05)
+    with patch("sigenergy2mqtt.persistence.state_store.time.time", return_value=written):
+        release.set()
+        await pending
+        on_disk = json.loads((state_dir / "sensor" / "k.state").read_text())
+        published = json.loads(store._client.publish.call_args.args[1])
+        assert on_disk["ts"] == published["ts"] == int(requested)
+        assert await store.load("sensor", "k.state", same_local_day=True) is None
+    store.shutdown()
+
+
+@pytest.mark.asyncio
+async def test_legacy_migration_keeps_the_original_time(state_dir, persistence_config):
+    store = StateStore()
+    await store.initialise(state_dir, persistence_config)
+    path = state_dir / "sensor" / "k.state"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("123.4")
+    os.utime(path, (1_700_000_000, 1_700_000_000))
+    assert await store.load("sensor", "k.state") == "123.4"
+    assert json.loads(path.read_text())["ts"] == 1_700_000_000
+    store.shutdown()
+
+
 # --------------------------------------------------------------------------- same local day
 
 
