@@ -5,6 +5,7 @@ from pymodbus.exceptions import ModbusException
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from pymodbus.exceptions import ConnectionException
 
 from sigenergy2mqtt.modbus.client_factory import ModbusClientFactory
 
@@ -138,16 +139,17 @@ class TestModbusClientFactory:
 
     @pytest.mark.asyncio
     async def test_get_client_connection_failure(self):
-        """Test that get_client raises AssertionError on connection failure."""
+        """Test that get_client raises ConnectionException on connection failure when not asked to wait."""
         mock_client = MagicMock()
         mock_client.connected = False
         mock_client.connect = AsyncMock()  # connect() doesn't set connected to True
 
         with (
             patch("sigenergy2mqtt.modbus.client_factory.ModbusClient", return_value=mock_client),
-            pytest.raises(AssertionError),
+            pytest.raises(ConnectionException),
         ):
             await ModbusClientFactory.get_client("192.168.1.100", 502)
+        assert ("192.168.1.100", 502) not in ModbusClientFactory._clients
 
     def test_get_host_returns_host_for_known_client(self):
         """Test that get_host returns host string for known client."""

@@ -16,7 +16,11 @@ from sigenergy2mqtt.devices import (
     PowerPlant,
     bind_cross_device_sensors,
 )
-from sigenergy2mqtt.devices.cloud import CloudDiscovery, discover_cloud, discover_operational_modes
+from sigenergy2mqtt.devices.cloud import (
+    CloudDiscovery,
+    discover_cloud,
+    discover_operational_modes,
+)
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.modbus.client import CONNECTIVITY
 from sigenergy2mqtt.mqtt import mqtt_reconnection_interrupted
@@ -86,7 +90,7 @@ async def _wait_for_modbus(modbus: ModbusClient, host: str, port: int) -> None:
         await modbus.connect()
     outage.success()
 
-_GRID_RESTORE_WATCH_TASKS: set[tuple[str, int, int]] = set()
+_GRID_RESTORE_WATCH_TASKS: dict[tuple[str, int, int], asyncio.Task] = {}
 
 
 def _cloud_control_plant_index(device_list: list[dict[str, Any]]) -> int | None:
@@ -255,7 +259,7 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
                     plant=plant,
                     modbus_client=modbus,
                     config=config,
-                    protocol_version=protocol_version,
+                    protocol_version=plant.protocol_version,
                     sequence_start=ac_charger_sequence,
                     total_count=total_ac_chargers,
                     inverter_firmware_versions=inverter_firmware_versions,
@@ -267,7 +271,7 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
                     seen_serial_numbers=seen_serial_numbers,
                     modbus_client=modbus,
                     config=config,
-                    protocol_version=protocol_version,
+                    protocol_version=plant.protocol_version,
                     sequence_start=pid_sequence,
                     total_count=len(device.pid) if device.pid else 0,
                     inverter_firmware_versions=inverter_firmware_versions,
@@ -279,7 +283,7 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
                     seen_serial_numbers=seen_serial_numbers,
                     modbus_client=modbus,
                     config=config,
-                    protocol_version=protocol_version,
+                    protocol_version=plant.protocol_version,
                     sequence_start=pss_sequence,
                     total_count=len(device.pss) if device.pss else 0,
                     inverter_firmware_versions=inverter_firmware_versions,
@@ -392,22 +396,35 @@ async def _setup_dc_chargers(
         return sequence_start
 
     sequence_number = sequence_start
+    skipped_due_to_outage = False
     for device_address in device.dc_chargers:  # type: ignore[reportGeneralTypeIssues]
         if device_address not in inverters:
             logger.warning(f"DC charger at address {device_address} has no associated inverter (inverter may have been skipped as a duplicate) - skipping DC charger")
             continue
         sequence_number += 1
-        charger = await make_dc_charger(
-            plant_index=plant_index,
-            device_address=device_address,
-            modbus_client=modbus_client,
-            plant=plant,
-            inverter_unique_id=inverters[device_address],
-            sequence_number=sequence_number,
-            total_count=total_count,
-        )
-        config.add_device(charger)
-        await validate_publishable_sensors(modbus_client, charger, inverter_firmware_versions)
+        try:
+            charger = await make_dc_charger(
+                plant_index=plant_index,
+                device_address=device_address,
+                modbus_client=modbus_client,
+                plant=plant,
+                inverter_unique_id=inverters[device_address],
+                sequence_number=sequence_number,
+                total_count=total_count,
+            )
+            config.add_device(charger)
+            await validate_publishable_sensors(modbus_client, charger, inverter_firmware_versions)
+        except (TimeoutError, ModbusException, ValueError, OSError, RuntimeError) as exc:
+            is_outage = await _is_grid_outage(plant_index, modbus_client)
+            if is_outage is True:
+                logger.warning(f"DC charger at address {device_address} initialization failed during grid outage; skipping this startup pass so other devices continue: {exc}")
+                skipped_due_to_outage = True
+                continue
+
+            logger.error(f"Failed to initialize DC charger at address {device_address}; skipping: {exc}")
+
+    if skipped_due_to_outage:
+        _schedule_restart_on_grid_restore(device, plant_index)
 
     return sequence_number
 
@@ -519,7 +536,9 @@ async def _is_grid_outage(plant_index: int, modbus_client: ModbusClient) -> bool
     grid_status = GridStatus(plant_index)
     try:
         raw_status = await grid_status.get_state(raw=True, modbus_client=modbus_client)
-    except (TimeoutError, ModbusException) as exc:
+    except (TimeoutError, ModbusException, OSError, ValueError, RuntimeError) as exc:
+        # Called while handling another failure, so no error here may escape (ValueError
+        # includes a reading rejected by the sanity check)
         logger.debug(f"Unable to probe GridStatus for outage detection: {exc}")
         return None
 
@@ -535,25 +554,46 @@ async def _is_grid_outage(plant_index: int, modbus_client: ModbusClient) -> bool
 
 async def _watch_grid_restore_and_request_restart(host: str, port: int, timeout: float, retries: int, plant_index: int) -> None:
     """Watch GridStatus and request runtime restart once grid returns on-line."""
-    key = (host, port, plant_index)
-    try:
-        while True:
+    while True:
+        try:
             modbus = ModbusClient(host, port=port, timeout=timeout, retries=retries)
             async with modbus:
                 if modbus.connected:
                     is_outage = await _is_grid_outage(plant_index, modbus)
                     if is_outage is False:
-                        restart_controller.request(f"grid restored for AC charger setup on modbus://{host}:{port} plant {plant_index}")
+                        restart_controller.request(f"grid restored for skipped device setup on modbus://{host}:{port} plant {plant_index}")
                         return
-            await asyncio.sleep(10)
-    finally:
-        _GRID_RESTORE_WATCH_TASKS.discard(key)
+        except (ModbusException, OSError, RuntimeError) as exc:
+            # The host is often unreachable during the outage being watched: keep watching
+            logger.debug(f"Grid-restore watcher for modbus://{host}:{port} plant {plant_index} failed to probe: {exc!r}")
+        await asyncio.sleep(10)
 
 
 def _schedule_restart_on_grid_restore(device, plant_index: int) -> None:
     key = (device.host, device.port, plant_index)
     if key in _GRID_RESTORE_WATCH_TASKS:
         return
-    _GRID_RESTORE_WATCH_TASKS.add(key)
-    logger.info(f"Scheduling grid-restore watcher for modbus://{device.host}:{device.port} plant {plant_index} due to outage-time AC charger skip")
-    asyncio.create_task(_watch_grid_restore_and_request_restart(device.host, device.port, device.timeout, device.retries, plant_index))
+    logger.info(f"Scheduling grid-restore watcher for modbus://{device.host}:{device.port} plant {plant_index} because device setup was skipped during a grid outage")
+    # The event loop only keeps a weak reference to a task, so hold one here
+    task = asyncio.create_task(_watch_grid_restore_and_request_restart(device.host, device.port, device.timeout, device.retries, plant_index))
+    _GRID_RESTORE_WATCH_TASKS[key] = task
+
+    def finished(done: asyncio.Task) -> None:
+        if _GRID_RESTORE_WATCH_TASKS.get(key) is done:
+            del _GRID_RESTORE_WATCH_TASKS[key]
+        if not done.cancelled() and (error := done.exception()) is not None:
+            logger.error(f"Grid-restore watcher for modbus://{key[0]}:{key[1]} plant {plant_index} failed; the skipped devices will not be set up until the next restart", exc_info=error)
+
+    task.add_done_callback(finished)
+
+
+def cancel_grid_restore_watchers() -> None:
+    """Cancel the grid-restore watchers of a previous runtime cycle.
+
+    A watcher left running across a restart would request another, redundant,
+    restart as soon as it saw the grid; the new cycle schedules its own if it
+    still needs one.
+    """
+    for task in list(_GRID_RESTORE_WATCH_TASKS.values()):
+        task.cancel()
+    _GRID_RESTORE_WATCH_TASKS.clear()

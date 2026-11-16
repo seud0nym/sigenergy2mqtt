@@ -168,10 +168,24 @@ class MqttHandler:
             future = asyncio.run_coroutine_threadsafe(method_result, self._loop)
             self._pending_tasks.add(future)
             future.add_done_callback(self._pending_tasks.discard)
+            future.add_done_callback(lambda done: self._log_handler_failure(done, label))
         except RuntimeError as e:
             logger.debug(f"Failed to schedule {label} – loop probably closed: {e}")
             if hasattr(method_result, "close"):
                 method_result.close()
+
+    def _log_handler_failure(self, future: concurrent.futures.Future[Any], label: str) -> None:
+        """Log an exception raised by a scheduled handler coroutine.
+
+        Nothing awaits these futures, so without this a failed command (a
+        malformed payload, a lock timeout, a rejected write) would vanish
+        without trace.
+        """
+        if future.cancelled():
+            return
+        error = future.exception()
+        if error is not None:
+            logger.error(f"MQTT handler {label} failed: {error!r} (client_id={self.client_id})", exc_info=error)
 
     def _purge_expired_mids(self) -> None:
         """Evict stale entries from ``_pending_mids``.
