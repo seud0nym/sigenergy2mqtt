@@ -220,9 +220,12 @@ class InfluxBase(Device):
         if active_config.influxdb.enabled:
             try:
                 await asyncio.to_thread(self._init_connection)
+                self.outage.success()
                 service_health_registry.set_health(self.service_health_key, True)
                 return True
             except RuntimeError as e:
+                # Open (or continue) the shared outage so the monitor defers restarts while we retry.
+                self.outage.failure(e, detail=f"{self.log_identity} Initialization failed: {e}")
                 logger.error(f"{self.log_identity} Initialization failed: {e}")
                 service_health_registry.set_health(self.service_health_key, False)
                 return False
@@ -398,6 +401,10 @@ class InfluxBase(Device):
         except (ValueError, TypeError, RuntimeError) as e:
             logger.error(f"InfluxDB batch write failed: {e} (type={self._writer_type} batch_size={batch_size})")
             await Metrics.influxdb_write_error()
+        except asyncio.CancelledError:
+            # Keep ownership of the data: put it back so a final flush can still send it.
+            self._write_buffer = batch + self._write_buffer
+            raise
 
         if not success:
             await self._requeue_batch(batch)
