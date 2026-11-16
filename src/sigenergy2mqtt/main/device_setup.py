@@ -16,7 +16,11 @@ from sigenergy2mqtt.devices import (
     PowerPlant,
     bind_cross_device_sensors,
 )
-from sigenergy2mqtt.devices.cloud import CloudDiscovery, discover_cloud, discover_operational_modes
+from sigenergy2mqtt.devices.cloud import (
+    CloudDiscovery,
+    discover_cloud,
+    discover_operational_modes,
+)
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.modbus.client import CONNECTIVITY
 from sigenergy2mqtt.mqtt import mqtt_reconnection_interrupted

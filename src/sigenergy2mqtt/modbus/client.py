@@ -191,6 +191,7 @@ class ModbusClient(AsyncModbusTcpClient, ModbusClientMixin):
         except OSError as e:
             if self._outage is not None:
                 self._outage.failure(e, kind=CONNECTIVITY)
+            await Metrics.modbus_read_error()
             raise
         finally:
             self._trace = False
@@ -258,8 +259,6 @@ class ModbusClient(AsyncModbusTcpClient, ModbusClientMixin):
             result = rr.exception_code
         if result == 0:
             await Metrics.modbus_cache_fill()
-        else:
-            await Metrics.modbus_read_error()
         return result
 
     async def read_holding_registers(self, address, *, count: int = 1, device_id: int = 1, no_response_expected: bool = False, trace: bool = False) -> ModbusPDU:

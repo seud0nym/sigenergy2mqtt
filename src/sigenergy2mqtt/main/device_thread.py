@@ -22,7 +22,12 @@ from sigenergy2mqtt.cloud.exceptions import CloudControlError
 from sigenergy2mqtt.config import SettingsService, active_config
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.modbus import ModbusClientFactory
-from sigenergy2mqtt.mqtt import MqttConnectAborted, MqttHandler, mqtt_setup, mqtt_teardown
+from sigenergy2mqtt.mqtt import (
+    MqttConnectAborted,
+    MqttHandler,
+    mqtt_setup,
+    mqtt_teardown,
+)
 
 from .thread_config import ThreadConfig
 

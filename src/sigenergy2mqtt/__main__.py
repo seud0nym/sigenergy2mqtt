@@ -19,8 +19,8 @@ from sigenergy2mqtt.config import (
     initialize_async,
 )
 from sigenergy2mqtt.main import async_main, validate_connections
-from sigenergy2mqtt.mqtt import interrupt_mqtt_reconnection
 from sigenergy2mqtt.metrics.metrics import Metrics
+from sigenergy2mqtt.mqtt import interrupt_mqtt_reconnection
 
 logger = logging.getLogger(__name__)
 

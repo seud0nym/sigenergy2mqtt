@@ -281,8 +281,8 @@ class TestReadOnlySensorUpdateInternalState:
         modbus.read_input_registers.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_update_internal_state_generic_exception_increments_metrics(self):
-        """Generic exception calls Metrics.modbus_read_error and re-raises."""
+    async def test_update_internal_state_generic_exception_not_double_counted(self):
+        """Generic exception is re-raised; the error metric is recorded once, by ModbusClient."""
         s = self._make_ro("ro_gen_exc")
         modbus = MagicMock()
         modbus.read_holding_registers = AsyncMock(side_effect=ModbusException("generic"))
@@ -294,7 +294,7 @@ class TestReadOnlySensorUpdateInternalState:
         with patch("sigenergy2mqtt.metrics.Metrics", mock_metrics), pytest.raises(Exception, match="generic"):
             await s._update_internal_state(modbus_client=modbus)
 
-        mock_metrics.modbus_read_error.assert_awaited_once()
+        mock_metrics.modbus_read_error.assert_not_awaited()
 
     @pytest.mark.asyncio
     async def test_update_internal_state_debug_logging(self):

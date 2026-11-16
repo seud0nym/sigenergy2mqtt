@@ -15,7 +15,7 @@ from .client import MqttClient
 from .handler import MqttHandler
 from .registry import MqttHealthRegistry
 
-__all__ = ["MqttConnectAborted", "MqttHandler", "interrupt_mqtt_reconnection", "mqtt_reconnection_interrupted", "mqtt_health_registry", "mqtt_setup", "mqtt_teardown", "reset_mqtt_reconnection_interrupt"]
+__all__ = ["MqttConnectAborted", "MqttHandler", "interrupt_mqtt_reconnection", "mqtt_health_registry", "mqtt_reconnection_interrupted", "mqtt_setup", "mqtt_teardown", "reset_mqtt_reconnection_interrupt"]
 
 _MAX_CONNECT_ATTEMPTS: int = 3
 
@@ -98,7 +98,8 @@ async def _connect_with_retry(mqtt_client: MqttClient, client_id: str, max_attem
     while True:
         attempt += 1
         try:
-            mqtt_client.connect(
+            await asyncio.to_thread(
+                mqtt_client.connect,
                 active_config.mqtt.broker,
                 port=active_config.mqtt.port,
                 keepalive=active_config.mqtt.keepalive,

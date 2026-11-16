@@ -7,18 +7,21 @@ from typing import TYPE_CHECKING, Any
 import paho.mqtt.client as mqtt
 from pymodbus import ModbusException
 
-from sigenergy2mqtt.cloud.exceptions import CloudControlRateLimitedError, CloudControlUnavailableError
+from sigenergy2mqtt.cloud.exceptions import (
+    CloudControlRateLimitedError,
+    CloudControlUnavailableError,
+)
 from sigenergy2mqtt.common import Constants
 from sigenergy2mqtt.common.outage import OutageTracker
 from sigenergy2mqtt.modbus import ModbusClient, ModbusLock, ModbusLockFactory
 from sigenergy2mqtt.mqtt.client import MqttClient
-from sigenergy2mqtt.sensors.base.cloud import cloud_outage_tracker
 from sigenergy2mqtt.sensors.base import (
     EnergyDailyAccumulationSensor,
     ModbusSensorMixin,
     ReadableSensorMixin,
     Sensor,
 )
+from sigenergy2mqtt.sensors.base.cloud import cloud_outage_tracker
 
 from .scan_groups import ReadableSensorGroup
 

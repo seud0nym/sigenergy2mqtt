@@ -6,6 +6,7 @@ from sigenergy2mqtt.config import active_config, initialize_async
 from sigenergy2mqtt.devices import DeviceRegistry as device_registry
 from sigenergy2mqtt.devices.base.child_devices import child_device_migration
 from sigenergy2mqtt.diagnostics import diagnostics_registry
+from sigenergy2mqtt.modbus.lock_factory import ModbusLockFactory
 from sigenergy2mqtt.monitor import MonitorService
 from sigenergy2mqtt.mqtt import mqtt_health_registry, reset_mqtt_reconnection_interrupt
 from sigenergy2mqtt.persistence import Category, state_store
@@ -67,6 +68,7 @@ async def async_main() -> None:
         # may change hosts), so members or resources of a previous runtime could otherwise keep
         # an outage open forever, suppressing its logging and deferring every later restart.
         clear_outage_trackers()
+        ModbusLockFactory.clear()
         service_health_registry.clear()
         diagnostics_registry.clear()
 

@@ -10,7 +10,11 @@ from typing import Any, cast
 import paho.mqtt.client as mqtt
 from aiohttp import ClientError
 
-from sigenergy2mqtt.cloud.exceptions import CloudControlError, CloudControlRateLimitedError, CloudControlUnavailableError
+from sigenergy2mqtt.cloud.exceptions import (
+    CloudControlError,
+    CloudControlRateLimitedError,
+    CloudControlUnavailableError,
+)
 from sigenergy2mqtt.cloud.port import CloudControlPort
 from sigenergy2mqtt.common.outage import OutageTracker, outage_tracker
 from sigenergy2mqtt.config import active_config
