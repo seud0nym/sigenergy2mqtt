@@ -67,7 +67,7 @@ def test_sync_wrappers_no_running_loop(temp_state_dir, mock_persistence_config):
 
     # Calling save_sync without async context
     store.save_sync("test", "key", "val")
-    store._disk.save.assert_called_with("test", "key", "val")
+    store._disk.save.assert_called_with("test", "key", "val", None)
 
     # Calling load_sync without async context
     val = store.load_sync("test", "key")

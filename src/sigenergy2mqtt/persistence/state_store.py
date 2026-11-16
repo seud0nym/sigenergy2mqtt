@@ -25,6 +25,25 @@ retained messages are received before the method returns:
 The ``cache_warmup_timeout`` setting is a safety limit for degraded broker
 conditions; under normal circumstances the sentinel arrives within milliseconds.
 
+Atomic disk writes
+------------------
+The ``DiskBackend`` never writes a state file in place.  The envelope is
+written to a temporary file in the same directory, flushed and ``fsync``-ed,
+and then moved over the target with :func:`os.replace`, so an interruption
+leaves either the previous content or the new content - never an empty or
+partial file.  A file that is nevertheless empty or holds a truncated envelope
+is treated as absent, so that the other backend is consulted.
+
+Throttled saves
+---------------
+Callers that persist very frequently (accumulation sensors persist on every
+source update) may pass ``min_interval`` to :meth:`StateStore.save`.  A save
+that arrives within ``min_interval`` seconds of the previous write for the
+same key is held in memory instead of being written; it is returned by
+:meth:`StateStore.load`, superseded by the next save, and flushed by
+:meth:`StateStore.shutdown`.  An unclean exit can therefore lose at most the
+last ``min_interval`` seconds of such a value.
+
 Legacy migration
 ----------------
 Disk files written by earlier versions of sigenergy2mqtt contain raw values
@@ -37,8 +56,10 @@ migrated envelope is written back to disk transparently.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import logging
+import os
 import threading
 import time
 from collections import deque
@@ -74,13 +95,23 @@ class Category(StrEnum):
     SENSOR = "sensor"
 
 
-def _make_envelope(value: str, version: str) -> str:
-    """Return a JSON-encoded persistence envelope for *value*."""
+def _make_envelope(value: str, version: str, ts: int | None = None) -> str:
+    """Return a JSON-encoded persistence envelope for *value*.
+
+    *ts* is the time the value was produced; it defaults to now.
+    """
     return json.dumps({
         _PAYLOAD_VALUE_KEY: value,
-        _PAYLOAD_TS_KEY: int(time.time()),
+        _PAYLOAD_TS_KEY: int(time.time()) if ts is None else int(ts),
         _PAYLOAD_VER_KEY: version,
     })
+
+
+def _is_same_local_day(ts: float, now: float | None = None) -> bool:
+    """Return True when *ts* falls on the same local calendar day as *now*."""
+    then = time.localtime(ts)
+    today = time.localtime(time.time() if now is None else now)
+    return (then.tm_year, then.tm_yday) == (today.tm_year, today.tm_yday)
 
 
 def _parse_envelope(raw: str, *, fallback_ts: int | None = None) -> tuple[str, int, bool] | None:
@@ -89,12 +120,24 @@ def _parse_envelope(raw: str, *, fallback_ts: int | None = None) -> tuple[str, i
     If *raw* is not valid JSON or lacks the expected keys it is treated as a
     legacy raw value and wrapped automatically.  ``fallback_ts`` is used as the
     timestamp when migrating legacy content (typically the file's ``st_mtime``).
+
+    ``None`` is returned for content that cannot be a value at all: an empty
+    (or whitespace/NUL-only) payload, as left behind by an interrupted write,
+    or a truncated JSON object.  Callers treat that as "absent".
     """
+    stripped = raw.strip().strip("\x00").strip()
+    if not stripped:
+        logger.debug("StateStore: empty payload detected, treating as absent")
+        return None
     try:
         obj = json.loads(raw)
         if isinstance(obj, dict) and _PAYLOAD_VALUE_KEY in obj and _PAYLOAD_TS_KEY in obj:
             return str(obj[_PAYLOAD_VALUE_KEY]), int(obj[_PAYLOAD_TS_KEY]), False
     except (json.JSONDecodeError, ValueError, TypeError):
+        if stripped.startswith("{"):
+            # Legacy values are plain numbers/strings; an undecodable JSON object is a truncated envelope
+            logger.debug("StateStore: truncated envelope detected, treating as absent")
+            return None
         logger.debug("StateStore: invalid envelope detected, treating as legacy value")
 
     # Legacy / raw value — treat the whole string as the value.
@@ -113,20 +156,45 @@ class _DiskBackend:
     def __init__(self, state_path: Path, version: str) -> None:
         self._state_path = state_path
         self._version = version
+        self._write_lock = threading.Lock()
+
+    @staticmethod
+    def _temp_path_for(path: Path) -> Path:
+        return path.with_name(f".{path.name}.tmp")
+
+    @staticmethod
+    def _is_temp_file(path: Path) -> bool:
+        return path.name.startswith(".") and path.name.endswith(".tmp")
 
     def _path_for(self, category: Category | str, key: str) -> Path:
         if ".." in str(category) or ".." in key:
             raise ValueError(f"Invalid category or key: {category}/{key}")
         return self._state_path / str(category) / key
 
-    def save(self, category: Category | str, key: str, value: str) -> None:
-        """Write *value* to disk under ``{state_path}/{category}/{key}``."""
+    def save(self, category: Category | str, key: str, value: str, ts: int | None = None) -> None:
+        """Atomically write *value* to disk under ``{state_path}/{category}/{key}``.
+
+        The envelope is written to a temporary file in the same directory,
+        synced, and then renamed over the target, so a crash or power loss
+        mid-write cannot leave an empty or partial state file.
+        """
         from sigenergy2mqtt.config import active_config
 
         path = self._path_for(category, key)
         path.parent.mkdir(parents=True, exist_ok=True)
-        envelope = _make_envelope(value, self._version)
-        path.write_text(envelope, encoding="utf-8")
+        envelope = _make_envelope(value, self._version, ts)
+        tmp = self._temp_path_for(path)
+        with self._write_lock:
+            try:
+                with open(tmp, "w", encoding="utf-8") as f:
+                    f.write(envelope)
+                    f.flush()
+                    os.fsync(f.fileno())
+                os.replace(tmp, path)
+            except BaseException:
+                with contextlib.suppress(OSError):
+                    tmp.unlink(missing_ok=True)
+                raise
         if active_config.persistence_debug:
             logger.debug(f"DiskBackend.save {category}/{key}")
 
@@ -136,6 +204,9 @@ class _DiskBackend:
         Legacy files containing raw (non-JSON-envelope) content are migrated
         automatically on first read.  Legacy files from the root state directory
         are also moved into their respective category subdirectories.
+
+        An empty or truncated file is reported as absent (``None``) so that the
+        caller falls back to the other backend.
         """
         path = self._path_for(category, key)
         found_in_root = False
@@ -154,11 +225,12 @@ class _DiskBackend:
             mtime = int(path.stat().st_mtime)
             result = _parse_envelope(raw, fallback_ts=mtime)
             if result is None:
+                logger.warning(f"DiskBackend.load ignored empty or corrupt state file for {category}/{key}")
                 return None
             value, ts, was_legacy = result
 
             return value, ts, was_legacy, found_in_root
-        except OSError as exc:
+        except (OSError, UnicodeDecodeError) as exc:
             logger.warning(f"DiskBackend.load failed for {category}/{key}: {exc}")
             return None
 
@@ -201,7 +273,7 @@ class _DiskBackend:
 
         # Include legacy root files
         for file in self._state_path.iterdir():
-            if file.is_file():
+            if file.is_file() and not self._is_temp_file(file):
                 results.append((Category._ROOT, file.name))
 
         for category_dir in self._state_path.iterdir():
@@ -212,7 +284,7 @@ class _DiskBackend:
                 except ValueError:
                     category = name
                 for file in category_dir.iterdir():
-                    if file.is_file():
+                    if file.is_file() and not self._is_temp_file(file):
                         results.append((category, file.name))
 
         return results
@@ -313,19 +385,19 @@ class _MqttBackend:
             if active_config.persistence_debug:
                 logger.debug(f"MqttBackend: cached {category}/{key} (ts={ts})")
 
-    def publish(self, client: mqtt.Client, category: Category | str, key: str, value: str, _attempt: int = 0) -> None:
+    def publish(self, client: mqtt.Client, category: Category | str, key: str, value: str, ts: int | None = None, _attempt: int = 0) -> None:
         """Publish a retained state message."""
         from sigenergy2mqtt.config import active_config
 
         self._drain_retries(client)
         topic = self._key_to_topic(category, key)
-        envelope = _make_envelope(value, self._version)
+        envelope = _make_envelope(value, self._version, ts)
         try:
             info = client.publish(topic, envelope, qos=2, retain=True)
             if info.rc != mqtt.MQTT_ERR_SUCCESS:
                 raise RuntimeError(info.rc)
         except RuntimeError:
-            self._schedule_retry(_attempt, self.publish, category, key, value)
+            self._schedule_retry(_attempt, self.publish, category, key, value, ts)
             return
         if active_config.persistence_debug:
             logger.debug(f"MqttBackend.publish {category}/{key}")
@@ -409,6 +481,10 @@ class StateStore:
         self._disk_primary: bool = False
         self._version: str = ""
         self._sync_timeout: float = 5.0
+        # Throttled saves: (category, key) -> (value, ts) held in memory until the next write or shutdown
+        self._deferred: dict[tuple[str, str], tuple[str, int]] = {}
+        self._last_write: dict[tuple[str, str], float] = {}
+        self._deferred_lock = threading.Lock()
 
     # ------------------------------------------------------------------
     # Properties
@@ -468,6 +544,9 @@ class StateStore:
 
         self._mqtt_cache_warmed = False
         self._version = _ver.__version__
+        with self._deferred_lock:
+            self._deferred.clear()
+            self._last_write.clear()
 
         self._loop = asyncio.get_running_loop()
         self._loop_thread_id = threading.get_ident()
@@ -530,6 +609,17 @@ class StateStore:
             self._executor.shutdown(wait=True, cancel_futures=False)
             self._executor = None
 
+        # Write out throttled saves only after the executor has drained, so
+        # that a queued older value cannot overwrite the newer deferred one.
+        with self._deferred_lock:
+            pending = list(self._deferred.items())
+            self._deferred.clear()
+            self._last_write.clear()
+        if pending and self._disk is not None:
+            for (category, key), (value, ts) in pending:
+                self._save_sync_impl(category, key, value, ts)
+            logger.debug(f"StateStore: flushed {len(pending)} deferred entries")
+
         if self._client:
             try:
                 self._client.loop_stop()
@@ -545,14 +635,41 @@ class StateStore:
     # Core async API
     # ------------------------------------------------------------------
 
-    async def save(self, category: Category | str, key: str, value: str, *, stale_after: timedelta | None = None) -> None:
+    def _defer_or_claim(self, category: Category | str, key: str, value: str, min_interval: float | None) -> bool:
+        """Return True if *value* was held back because the key was written less than *min_interval* seconds ago.
+
+        Otherwise the caller must write *value* now: the key's last-write time
+        is updated and any older deferred value is discarded.
+        """
+        k = (str(category), key)
+        now = time.monotonic()
+        with self._deferred_lock:
+            last = self._last_write.get(k)
+            if min_interval is not None and min_interval > 0 and last is not None and (now - last) < min_interval:
+                self._deferred[k] = (value, int(time.time()))
+                return True
+            self._last_write[k] = now
+            self._deferred.pop(k, None)
+            return False
+
+    def _discard_deferred(self, category: Category | str, key: str) -> None:
+        k = (str(category), key)
+        with self._deferred_lock:
+            self._deferred.pop(k, None)
+            self._last_write.pop(k, None)
+
+    async def save(self, category: Category | str, key: str, value: str, *, stale_after: timedelta | None = None, min_interval: float | None = None) -> None:
         """Persist *value* to both disk and MQTT (fire-and-forget via executor).
 
         Args:
-            category:    Logical grouping (e.g. ``"sensor"``, ``"pvoutput"``, ``"config"``).
-            key:         File/topic name within the category.
-            value:       String value to persist.
-            stale_after: Unused on save; present for API symmetry with :meth:`load`.
+            category:     Logical grouping (e.g. ``"sensor"``, ``"pvoutput"``, ``"config"``).
+            key:          File/topic name within the category.
+            value:        String value to persist.
+            stale_after:  Unused on save; present for API symmetry with :meth:`load`.
+            min_interval: If set, write this key at most once per this many seconds.
+                          A save inside the interval is held in memory (still visible
+                          to :meth:`load`) and written by a later save or by
+                          :meth:`shutdown`.
         """
         from sigenergy2mqtt.config import active_config
 
@@ -560,10 +677,22 @@ class StateStore:
             if active_config.persistence_debug:
                 logger.debug(f"StateStore.save called before initialise — skipping {category}/{key}")
             return
+        if self._defer_or_claim(category, key, value, min_interval):
+            if active_config.persistence_debug:
+                logger.debug(f"StateStore.save deferred {category}/{key} ({min_interval=})")
+            return
         loop = asyncio.get_running_loop()
         await loop.run_in_executor(self._executor, self._save_sync_impl, category, key, value)
 
-    async def load(self, category: Category | str, key: str, *, stale_after: timedelta | None = None, validator: Callable[[str], bool] | None = None) -> str | None:
+    async def load(
+        self,
+        category: Category | str,
+        key: str,
+        *,
+        stale_after: timedelta | None = None,
+        validator: Callable[[str], bool] | None = None,
+        same_local_day: bool = False,
+    ) -> str | None:
         """Load a persisted value, applying staleness check and optional validator.
 
         Tries disk first (if ``disk_primary`` is True),then falls back to
@@ -576,6 +705,8 @@ class StateStore:
             stale_after: If set, values older than this timedelta are discarded.
             validator:   Optional callable that asserts the loaded value is valid;
                          returns False to discard the value.
+            same_local_day: If True, values not written on the current local
+                         calendar day are discarded.
 
         Returns:
             The persisted value string, or ``None`` if absent/stale/invalid.
@@ -591,6 +722,7 @@ class StateStore:
             key,
             stale_after,
             validator,
+            same_local_day,
         )
 
     async def delete(self, category: Category | str, key: str) -> None:
@@ -601,6 +733,7 @@ class StateStore:
         """
         if not self._initialised or self._executor is None:
             return
+        self._discard_deferred(category, key)
         loop = asyncio.get_running_loop()
         await loop.run_in_executor(self._executor, self._delete_sync_impl, category, key)
 
@@ -613,6 +746,9 @@ class StateStore:
         """
         if not self._initialised or self._executor is None:
             return
+        with self._deferred_lock:
+            self._deferred.clear()
+            self._last_write.clear()
         loop = asyncio.get_running_loop()
         await loop.run_in_executor(self._executor, self._clean_all_sync_impl)
 
@@ -639,6 +775,7 @@ class StateStore:
                 future.cancel()
                 logger.warning(f"StateStore.save_sync failed for {category}/{key}: {exc!r}")
         else:
+            self._defer_or_claim(category, key, value, None)
             self._save_sync_impl(category, key, value)
 
     def load_sync(
@@ -648,6 +785,7 @@ class StateStore:
         *,
         stale_after: timedelta | None = None,
         validator: Callable[[str], bool] | None = None,
+        same_local_day: bool = False,
     ) -> str | None:
         """Synchronous wrapper for :meth:`load`.
 
@@ -658,7 +796,7 @@ class StateStore:
             return None
         loop = self._loop
         if loop is not None and loop.is_running() and threading.get_ident() != self._loop_thread_id:
-            future = asyncio.run_coroutine_threadsafe(self.load(category, key, stale_after=stale_after, validator=validator), loop)
+            future = asyncio.run_coroutine_threadsafe(self.load(category, key, stale_after=stale_after, validator=validator, same_local_day=same_local_day), loop)
             try:
                 return future.result(timeout=self._sync_timeout)
             except TimeoutError as exc:
@@ -666,7 +804,7 @@ class StateStore:
                 logger.warning(f"StateStore.load_sync failed for {category}/{key}: {exc!r}")
                 return None
         else:
-            return self._load_sync_impl(category, key, stale_after, validator)
+            return self._load_sync_impl(category, key, stale_after, validator, same_local_day)
 
     def delete_sync(self, category: Category | str, key: str) -> None:
         """Synchronous wrapper for :meth:`delete`."""
@@ -681,11 +819,16 @@ class StateStore:
                 future.cancel()
                 logger.warning(f"StateStore.delete_sync failed for {category}/{key}: {exc!r}")
         else:
+            self._discard_deferred(category, key)
             self._delete_sync_impl(category, key)
 
-    def _accept(self, value: str, ts: int, cutoff: int | None, validator: Callable[[str], bool] | None) -> bool:
+    def _accept(self, value: str, ts: int, cutoff: int | None, validator: Callable[[str], bool] | None, same_local_day: bool = False) -> bool:
         from sigenergy2mqtt.config import active_config
 
+        if same_local_day and not _is_same_local_day(ts):
+            if active_config.persistence_debug:
+                logger.debug(f"StateStore: discarding value from a previous day (ts={ts})")
+            return False
         if cutoff is not None and ts < cutoff:
             if active_config.persistence_debug:
                 logger.debug(f"StateStore: discarding stale value (ts={ts} cutoff={cutoff})")
@@ -728,20 +871,20 @@ class StateStore:
         except (AttributeError, RuntimeError):
             pass
 
-    def _save_sync_impl(self, category: Category | str, key: str, value: str) -> None:
+    def _save_sync_impl(self, category: Category | str, key: str, value: str, ts: int | None = None) -> None:
         """Write to disk and MQTT; called from the ThreadPoolExecutor."""
         assert self._disk is not None
         t0 = time.perf_counter()
         error = False
         try:
-            self._disk.save(category, key, value)
+            self._disk.save(category, key, value, ts)
         except (OSError, ValueError) as exc:
             error = True
             logger.warning(f"StateStore: disk save failed for {category}/{key}: {exc}")
 
         if self._mqtt_enabled and self._client is not None:
             try:
-                self._mqtt.publish(self._client, category, key, value)
+                self._mqtt.publish(self._client, category, key, value, ts)
             except (RuntimeError, ValueError) as exc:
                 error = True
                 logger.warning(f"StateStore: MQTT publish failed for {category}/{key}: {exc}")
@@ -758,6 +901,7 @@ class StateStore:
         key: str,
         stale_after: timedelta | None,
         validator: Callable[[str], bool] | None,
+        same_local_day: bool = False,
     ) -> str | None:
         """Read from backends in priority order; called from the ThreadPoolExecutor."""
         from sigenergy2mqtt.config import active_config
@@ -768,6 +912,13 @@ class StateStore:
         if stale_after is not None:
             cutoff = int(time.time() - stale_after.total_seconds())
 
+        # A throttled save that has not been written yet is newer than either backend.
+        with self._deferred_lock:
+            deferred = self._deferred.get((str(category), key))
+        if deferred is not None and self._accept(deferred[0], deferred[1], cutoff, validator, same_local_day):
+            self._fire_metric("state_store_load", True)
+            return deferred[0]
+
         # Determine backend order.
         backends_primary_first: list[str] = ["disk", "mqtt"] if not self._mqtt_enabled or self._disk_primary else ["mqtt", "disk"]
 
@@ -775,7 +926,7 @@ class StateStore:
             result = self._load_from_backend(backend, category, key)
             if result is not None:
                 value, ts, was_legacy, found_in_root = result
-                if self._accept(value, ts, cutoff, validator):
+                if self._accept(value, ts, cutoff, validator, same_local_day):
                     if was_legacy or found_in_root:
                         if active_config.persistence_debug:
                             logger.debug(f"StateStore.load migrating legacy file {category}/{key}")

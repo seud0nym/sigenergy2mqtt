@@ -61,8 +61,13 @@ class SanityCheck:
         self._state_class = state_class
         if delta is None:
             if state_class == StateClass.TOTAL_INCREASING:
+                # Lifetime counters are only required not to decrease. They
+                # deliberately get NO maximum delta (neither the data type range
+                # nor sanity-check-default-kw): any fixed limit would reject the
+                # legitimate catch-up jump that follows a long outage.
                 self.delta = True
                 self.min_raw = 0
+                return
             elif device_class == DeviceClass.ENERGY:
                 self.delta = True
             else:
@@ -70,8 +75,8 @@ class SanityCheck:
         else:
             self.delta = delta
 
-        if self.min_raw is not None or self.max_raw is not None:
-            # Already initialized via parameters
+        if min_raw is not None or max_raw is not None:
+            # Range explicitly supplied via the constructor arguments
             return
 
         match data_type:

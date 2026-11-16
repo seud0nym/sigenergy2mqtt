@@ -253,7 +253,7 @@ class TestEnergyDailyAccumulationSensorCoverageExtended:
         with caplog.at_level(logging.DEBUG):
             sensor = self._make_sensor()
             sensor.on_added_to_device()
-            assert "discarding stale value" in caplog.text
+            assert "discarding value from a previous day" in caplog.text
 
         # Negative value
         Sensor._used_unique_ids.clear()

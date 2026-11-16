@@ -91,17 +91,92 @@ class TestPVOutputServiceTopics:
         st.add_to_payload(payload, 5, time.localtime())
         assert pytest.approx(payload[OutputField.GENERATION.value], rel=1e-3) == 1.8
 
-    def test_ll_avg_squared_root(self):
-        st = make_service_topics(calc=Calculation.L_L_AVG, decimals=2)
-        t1 = Topic("t/1", gain=1.0, state=3.0, timestamp=time.localtime())
-        t2 = Topic("t/2", gain=1.0, state=4.0, timestamp=time.localtime())
-        st.register(t1)
-        st.register(t2)
+    @staticmethod
+    def _phase_topics(st, voltages: dict[str, float | None], prefix: str = "inv1") -> None:
+        for phase, volts in voltages.items():
+            if volts is None:
+                st.register(Topic(f"{prefix}/{phase}", phase=phase))  # registered but never updated
+            else:
+                st.register(Topic(f"{prefix}/{phase}", state=volts, timestamp=time.localtime(), phase=phase))
+
+    def test_ll_avg_balanced_is_sqrt3_times_phase_voltage(self):
+        st = make_service_topics(calc=Calculation.L_L_AVG, decimals=1, value_key=StatusField.VOLTAGE)
+        self._phase_topics(st, {"A": 230.0, "B": 230.0, "C": 230.0})
         payload = {}
-        st.add_to_payload(payload, 5, time.localtime())
-        total_sq = 3.0**2 + 4.0**2
-        expected = round((total_sq**0.5) / (3**0.5), 2)
-        assert payload[OutputField.GENERATION.value] == expected
+        assert st.add_to_payload(payload, 5, time.localtime()) is True
+        assert payload[StatusField.VOLTAGE.value] == 398.4
+        assert payload[StatusField.VOLTAGE.value] == round(230.0 * 3**0.5, 1)
+
+    def test_ll_avg_unbalanced_averages_the_three_line_voltages(self):
+        st = make_service_topics(calc=Calculation.L_L_AVG, decimals=1, value_key=StatusField.VOLTAGE)
+        va, vb, vc = 230.0, 240.0, 220.0
+        # Registration order must not matter
+        self._phase_topics(st, {"C": vc, "A": va, "B": vb})
+        payload = {}
+        assert st.add_to_payload(payload, 5, time.localtime()) is True
+        ab = (va**2 + vb**2 + va * vb) ** 0.5
+        bc = (vb**2 + vc**2 + vb * vc) ** 0.5
+        ca = (vc**2 + va**2 + vc * va) ** 0.5
+        assert payload[StatusField.VOLTAGE.value] == round((ab + bc + ca) / 3, 1)
+        assert payload[StatusField.VOLTAGE.value] == 398.4  # AB=407.06 BC=398.50 CA=389.74
+        # ...and it is not the old sqrt(sum of squares)/sqrt(3) figure, which is a line to neutral value
+        assert payload[StatusField.VOLTAGE.value] != round(((va**2 + vb**2 + vc**2) ** 0.5) / 3**0.5, 1)
+
+    def test_ll_avg_averages_each_phase_across_inverters(self):
+        st = make_service_topics(calc=Calculation.L_L_AVG, decimals=1, value_key=StatusField.VOLTAGE)
+        self._phase_topics(st, {"A": 228.0, "B": 230.0, "C": 232.0}, prefix="inv1")
+        self._phase_topics(st, {"A": 232.0, "B": 230.0, "C": 228.0}, prefix="inv2")
+        payload = {}
+        assert st.add_to_payload(payload, 5, time.localtime()) is True
+        assert payload[StatusField.VOLTAGE.value] == 398.4
+
+    @pytest.mark.parametrize(
+        "voltages",
+        [
+            {"A": 230.0, "B": 230.0, "C": None},  # never updated
+            {"A": 230.0, "B": 0.0, "C": 230.0},  # no usable reading
+            {"A": 230.0, "B": 230.0},  # not registered at all
+        ],
+    )
+    def test_ll_avg_missing_phase_omits_voltage_and_logs_once(self, voltages, caplog):
+        st = make_service_topics(calc=Calculation.L_L_AVG, decimals=1, value_key=StatusField.VOLTAGE)
+        self._phase_topics(st, voltages)
+        with caplog.at_level(logging.WARNING, logger="sigenergy2mqtt.pvoutput.service_topics"):
+            for _ in range(3):
+                payload = {StatusField.VOLTAGE.value: 230.0}
+                assert st.add_to_payload(payload, 5, time.localtime()) is False
+                assert StatusField.VOLTAGE.value not in payload
+        assert caplog.text.count("line to line average requires all three phases") == 1
+
+    def test_ll_avg_logs_again_after_recovering(self, caplog):
+        st = make_service_topics(calc=Calculation.L_L_AVG, decimals=1, value_key=StatusField.VOLTAGE)
+        self._phase_topics(st, {"A": 230.0, "B": 230.0, "C": None})
+        with caplog.at_level(logging.WARNING, logger="sigenergy2mqtt.pvoutput.service_topics"):
+            assert st.add_to_payload({}, 5, time.localtime()) is False
+            st["inv1/C"].state = 230.0
+            st["inv1/C"].timestamp = time.localtime()
+            payload = {}
+            assert st.add_to_payload(payload, 5, time.localtime()) is True
+            assert payload[StatusField.VOLTAGE.value] == 398.4
+            st["inv1/C"].state = 0.0
+            assert st.add_to_payload({}, 5, time.localtime()) is False
+        assert caplog.text.count("line to line average requires all three phases") == 2
+
+    def test_ll_avg_ignores_topics_without_a_phase(self):
+        st = make_service_topics(calc=Calculation.L_L_AVG, decimals=1, value_key=StatusField.VOLTAGE)
+        st.register(Topic("t/1", state=3.0, timestamp=time.localtime()))
+        st.register(Topic("t/2", state=4.0, timestamp=time.localtime()))
+        payload = {}
+        assert st.add_to_payload(payload, 5, time.localtime()) is False
+        assert payload == {}
+
+    def test_topic_phase_survives_json_round_trip(self):
+        topic = Topic("t/a", state=230.0, timestamp=time.localtime(), phase="A")
+        decoded = json.loads(json.dumps({"t/a": topic}, default=Topic.json_encoder), object_hook=Topic.json_decoder)
+        assert decoded["t/a"].phase == "A"
+        # State persisted before the phase field existed still decodes
+        legacy = Topic.json_decoder({"topic": "t/b", "gain": 1.0, "state": 1.0, "timestamp": list(time.localtime())})
+        assert legacy.phase is None
 
     def test_difference_and_convert_to_watts(self):
         now_ts = 1704110400.0

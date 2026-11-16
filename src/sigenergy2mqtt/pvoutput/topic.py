@@ -22,6 +22,7 @@ class Topic:
     previous_state: float | None = None
     previous_timestamp: time.struct_time | None = None
     restore_timestamp: time.struct_time | None = None
+    phase: str | None = None  # "A", "B" or "C" for phase voltage topics, otherwise None
 
     @staticmethod
     def json_decoder(obj):

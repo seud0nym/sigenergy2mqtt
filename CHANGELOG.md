@@ -7,6 +7,11 @@
 
 - Fixed a stalled Cloud API request blocking cloud sensor updates for up to 5 minutes without any error being reported, while every cloud topic was logged as overdue. Cloud API requests now time out after 30 seconds (10 seconds to connect), so the outage is reported promptly, and its message is no longer empty (`CloudControlUnavailableError('')`)
 - Overdue cloud topics are logged at DEBUG level while a Cloud API outage is being reported
+- Fixed the range of the Active/Reactive Power Fixed Adjustment Target Value controls (plant and per-phase), which was wrong by orders of magnitude. The active power targets are now limited to ± the total rated active power of the plant, and the reactive power targets to ±60% of it
+- Fixed values written to the inverter being truncated instead of rounded (for example, setting 2.01 kW wrote 2.009 kW)
+- Fixed the PVOutput `l/l-avg` voltage option, which reported the line to neutral average. It now reports the true line to line voltage calculated from the three phase voltages (a balanced 230V system reports approximately 398V), and omits the voltage from an upload if a phase voltage is unavailable
+- Fixed daily accumulation sensors (such as Daily Self-Consumed Energy) continuing from the previous day's total when restarted on a later day
+- Fixed persistent state files being left empty if a write was interrupted (for example, by power loss), which reset accumulated totals to zero. State files are now written atomically, and an empty or corrupt state file falls back to the copy stored on the MQTT broker
 
 ### Changes
 

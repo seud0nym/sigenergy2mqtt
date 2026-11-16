@@ -21,6 +21,7 @@ from sigenergy2mqtt.config import (
 from sigenergy2mqtt.main import async_main, validate_connections
 from sigenergy2mqtt.mqtt import interrupt_mqtt_reconnection
 from sigenergy2mqtt.metrics.metrics import Metrics
+from sigenergy2mqtt.persistence import state_store
 
 logger = logging.getLogger(__name__)
 
@@ -101,7 +102,9 @@ def main():
 
     Exit codes:
         * ``0``  — clean exit or ``--help`` / dry-run path.
-        * ``1``  — configuration error.
+        * ``1``  — configuration error, including one that can only be detected
+          once the devices have been probed (for example ``pvoutput.voltage``
+          set to ``l/l-avg`` on a system that is not three-phase).
         * ``130`` — interrupted by SIGINT during initialisation.
     """
     early_handler = _make_early_signal_handler()
@@ -129,14 +132,23 @@ def main():
     # debug=True enables asyncio's slow-callback detector, ResourceWarning
     # emission, and coroutine origin tracking — valuable during development,
     # but adds overhead so it is gated on the DEBUG log level.
+    exit_code = 0
     try:
         asyncio.run(async_main(), debug=active_config.log_level == logging.DEBUG)  # pyrefly: ignore
+    except ConfigurationError as e:
+        # Raised after device probing, before any worker thread is started.
+        # async_main did not reach its own state store shutdown, so do it here.
+        logger.critical(f"Configuration error: {e}")
+        state_store.shutdown()
+        exit_code = 1
     except KeyboardInterrupt:
         # Keep Ctrl-C shutdown quiet and deterministic: avoid interpreter-level
         # traceback noise while still allowing normal cleanup below.
         logger.info("Keyboard interrupt received during runtime shutdown")
     finally:
         Metrics.shutdown(timeout=2.0)
+    if exit_code:
+        sys.exit(exit_code)
 
 
 if __name__ == "__main__":

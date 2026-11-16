@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from collections.abc import Mapping
-from typing import Any, cast
+from typing import Any
 
 from pymodbus.exceptions import ModbusException
 
@@ -16,7 +16,11 @@ from sigenergy2mqtt.devices import (
     PowerPlant,
     bind_cross_device_sensors,
 )
-from sigenergy2mqtt.devices.cloud import CloudDiscovery, discover_cloud, discover_operational_modes
+from sigenergy2mqtt.devices.cloud import (
+    CloudDiscovery,
+    discover_cloud,
+    discover_operational_modes,
+)
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.modbus.client import CONNECTIVITY
 from sigenergy2mqtt.mqtt import mqtt_reconnection_interrupted
@@ -289,29 +293,53 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
                 bind_cross_device_sensors(plant_index)
 
                 # Set the min/max bounds for Active/Reactive Power Fixed Adjustment Target Value
-                total_rated_active_power: int = 0
-                for i in config.devices:
-                    if isinstance(i, Inverter) and i.plant_index == plant_index:
-                        sensor = i.get_sensor(RatedActivePower, search_children=True)
-                        if sensor is None:
-                            logger.warning(f"{i.log_identity} RatedActivePower sensor not found - cannot set bounds for Active/Reactive Power Fixed Adjustment Target Value sensors")
-                        else:
-                            rap = await get_state(sensor, modbus, "inverter", raw=True)
-                            if rap is not None:
-                                total_rated_active_power += cast(int, rap)
-                            else:
-                                logger.warning(f"{i.log_identity} Failed to acquire RatedActivePower")
-                if total_rated_active_power > 0:
-                    for sensor in [s for s in plant.sensors.values() if isinstance(s, (ActivePowerFixedAdjustmentTargetValue, PhaseActivePowerFixedAdjustmentTargetValue))]:
-                        sensor.apply_min_max(-total_rated_active_power, total_rated_active_power)
-                    for sensor in [s for s in plant.sensors.values() if isinstance(s, (ReactivePowerFixedAdjustmentTargetValue, PhaseReactivePowerFixedAdjustmentTargetValue))]:
-                        sensor.apply_min_max(-60 * total_rated_active_power, 60 * total_rated_active_power)
+                await _apply_power_adjustment_bounds(plant_index, plant, modbus, config)
 
             logger.debug(f"Disconnecting from modbus://{device.host}:{device.port} - register probing complete")
 
     await _setup_cloud_control()
 
     return thread_config_registry.get_all(), protocol_version
+
+
+# Protocol register 40003: "Range: [-60.00 * base value, 60.00 * base value]", where the
+# base value is the rated power and the multiplier is a percentage (maintainer decision 2026-11-16).
+REACTIVE_POWER_ADJUSTMENT_RATIO: float = 0.6
+
+
+async def _apply_power_adjustment_bounds(plant_index: int, plant: PowerPlant, modbus_client: ModbusClient, config: ThreadConfig) -> None:
+    """Bound the fixed power adjustment targets by the plant's total rated active power.
+
+    Active targets are limited to ±rated kW and reactive targets to ±60 % of
+    rated power (in kvar). ``apply_min_max`` takes display units and applies the
+    sensor gain itself, so the rated power is read as a display value (kW)
+    rather than as the raw register value (W).
+
+    The protocol gives no separate base value for the per-phase targets, so they
+    get the plant total as well: no single phase can exceed it.
+
+    When no rated power can be read the sensors keep their constructor ranges.
+    """
+    total_rated_active_power: float = 0.0
+    for i in config.devices:
+        if isinstance(i, Inverter) and i.plant_index == plant_index:
+            sensor = i.get_sensor(RatedActivePower, search_children=True)
+            if sensor is None:
+                logger.warning(f"{i.log_identity} RatedActivePower sensor not found - cannot set bounds for Active/Reactive Power Fixed Adjustment Target Value sensors")
+            else:
+                rap = await get_state(sensor, modbus_client, "inverter")
+                if isinstance(rap, (int, float)) and not isinstance(rap, bool):
+                    total_rated_active_power += float(rap)
+                else:
+                    logger.warning(f"{i.log_identity} Failed to acquire RatedActivePower")
+    if total_rated_active_power <= 0:
+        return
+    active_limit = round(total_rated_active_power, 3)
+    reactive_limit = round(total_rated_active_power * REACTIVE_POWER_ADJUSTMENT_RATIO, 3)
+    for sensor in [s for s in plant.sensors.values() if isinstance(s, (ActivePowerFixedAdjustmentTargetValue, PhaseActivePowerFixedAdjustmentTargetValue))]:
+        sensor.apply_min_max(-active_limit, active_limit)
+    for sensor in [s for s in plant.sensors.values() if isinstance(s, (ReactivePowerFixedAdjustmentTargetValue, PhaseReactivePowerFixedAdjustmentTargetValue))]:
+        sensor.apply_min_max(-reactive_limit, reactive_limit)
 
 
 async def _setup_ac_chargers(
