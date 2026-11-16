@@ -376,8 +376,9 @@ options:
                         The source of the voltage value to be sent to
                         PVOutput. Valid values are: phase-a, phase-b, phase-c,
                         l/n-avg (line to neutral average), l/l-avg (line to
-                        line average) or pv (average across PV strings). If
-                        not specified, defaults to 'l/n-avg'.
+                        line average; requires a three-phase system) or pv
+                        (average across PV strings). If not specified,
+                        defaults to 'l/n-avg'.
   --pvoutput-ext-v7 [SIGENERGY2MQTT_PVOUTPUT_EXT_V7]
                         A source used to populate the v7 extended field in
                         PVOutput. You can specify a sensor class name, an

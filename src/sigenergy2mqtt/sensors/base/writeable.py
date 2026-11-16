@@ -128,11 +128,11 @@ class NumericSensorMixin(WriteableSensorMixin):
         if DiscoveryKeys.MIN in self:
             minimum = cast(float | tuple[float, ...], self[DiscoveryKeys.MIN])
             minimum = min(minimum) if isinstance(minimum, tuple) else minimum
-            self.sanity_check.min_raw = int(minimum * gain) if gain else int(minimum)
+            self.sanity_check.min_raw = round(minimum * gain) if gain else int(minimum)
         if DiscoveryKeys.MAX in self:
             maximum = cast(float | tuple[float, ...], self[DiscoveryKeys.MAX])
             maximum = max(maximum) if isinstance(maximum, tuple) else maximum
-            self.sanity_check.max_raw = int(maximum * gain) if gain else int(maximum)
+            self.sanity_check.max_raw = round(maximum * gain) if gain else int(maximum)
 
     def apply_min_max(self, minimum, maximum) -> None:
         if minimum is None and maximum is None and self.unit == PERCENTAGE:
@@ -188,7 +188,8 @@ class NumericSensorMixin(WriteableSensorMixin):
         try:
             state = float(value)
             if self.gain != 1:
-                state *= self.gain
+                # Round, never truncate: 2.01 * 1000 is 2009.9999999999998 in binary floating point
+                state = float(round(state * self.gain))
         except (ValueError, TypeError, RuntimeError) as exc:
             logger.warning(f"{self.log_identity} Attempt to set value to '{value}' FAILED: {exc!r}")
             return False

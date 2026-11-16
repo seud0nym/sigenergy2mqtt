@@ -199,7 +199,7 @@ async def test_read_and_publish_device_sensors_with_modbus_and_tasks(monkeypatch
             def close(self):
                 self.closed = True
 
-        async def fake_get_client(host, port, timeout, retries):
+        async def fake_get_client(host, port, timeout, retries, stopping=None):
             return MockModbus()
 
         monkeypatch.setattr(threading_mod.ModbusClientFactory, "get_client", fake_get_client)

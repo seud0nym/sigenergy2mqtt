@@ -68,7 +68,7 @@ class TestEnergyDailyAccumulationSensor:
 
             sensor.on_added_to_device()
 
-            mock_state_store.load_sync.assert_any_call(Category.SENSOR, "sigen_test_source_uid.atmidnight", stale_after=timedelta(hours=24))
+            mock_state_store.load_sync.assert_any_call(Category.SENSOR, "sigen_test_source_uid.atmidnight", same_local_day=True)
             assert sensor._state_at_midnight == 100.5
 
     def test_load_midnight_state_invalid(self, source_sensor, mock_state_store):

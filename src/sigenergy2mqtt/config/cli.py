@@ -544,7 +544,7 @@ def get_parser() -> argparse.ArgumentParser:
         dest=const.SIGENERGY2MQTT_PVOUTPUT_VOLTAGE,
         choices=["phase-a", "phase-b", "phase-c", "l/n-avg", "l/l-avg"],
         default=os.getenv(const.SIGENERGY2MQTT_PVOUTPUT_VOLTAGE, None),
-        help="The source of the voltage value to be sent to PVOutput. Valid values are: phase-a, phase-b, phase-c, l/n-avg (line to neutral average), l/l-avg (line to line average) or pv (average across PV strings). If not specified, defaults to 'l/n-avg'.",
+        help="The source of the voltage value to be sent to PVOutput. Valid values are: phase-a, phase-b, phase-c, l/n-avg (line to neutral average), l/l-avg (line to line average; requires a three-phase system) or pv (average across PV strings). If not specified, defaults to 'l/n-avg'.",
     )
     parser.add_argument(
         "--pvoutput-ext-v7",

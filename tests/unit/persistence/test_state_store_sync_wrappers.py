@@ -1,6 +1,6 @@
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
-from unittest.mock import MagicMock, patch
+from unittest.mock import ANY, MagicMock, patch
 
 import pytest
 
@@ -67,7 +67,8 @@ def test_sync_wrappers_no_running_loop(temp_state_dir, mock_persistence_config):
 
     # Calling save_sync without async context
     store.save_sync("test", "key", "val")
-    store._disk.save.assert_called_with("test", "key", "val")
+    store._disk.save.assert_called_with("test", "key", "val", ANY)
+    assert isinstance(store._disk.save.call_args.args[3], int)
 
     # Calling load_sync without async context
     val = store.load_sync("test", "key")

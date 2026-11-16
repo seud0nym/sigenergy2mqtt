@@ -11,11 +11,11 @@ from paho.mqtt import MQTTException
 from sigenergy2mqtt.common.outage import outage_tracker
 from sigenergy2mqtt.config import active_config
 
-from .client import MqttClient
+from .client import MqttClient, connection_refused, status_topic_for
 from .handler import MqttHandler
 from .registry import MqttHealthRegistry
 
-__all__ = ["MqttConnectAborted", "MqttHandler", "interrupt_mqtt_reconnection", "mqtt_health_registry", "mqtt_reconnection_interrupted", "mqtt_setup", "mqtt_teardown", "reset_mqtt_reconnection_interrupt"]
+__all__ = ["MqttConnectAborted", "MqttHandler", "connection_refused", "interrupt_mqtt_reconnection", "mqtt_health_registry", "mqtt_reconnection_interrupted", "mqtt_setup", "mqtt_teardown", "reset_mqtt_reconnection_interrupt", "status_topic_for"]
 
 _MAX_CONNECT_ATTEMPTS: int = 3
 
@@ -66,6 +66,18 @@ mqtt_health_registry = MqttHealthRegistry()
 def _build_broker_url() -> str:
     """Construct the broker URL string from active config for use in log messages."""
     return f"mqtt://{active_config.mqtt.broker}:{active_config.mqtt.port}"
+
+
+def _status_topic(mqtt_client_id: str) -> str:
+    """Return the connection status topic for *mqtt_client_id*, stable across restarts.
+
+    The client ID prefix is random unless configured, so it is removed, leaving
+    the part that names what the client is for. The Home Assistant unique ID
+    prefix identifies this instance among any others using the same broker.
+    """
+    prefix = f"{active_config.mqtt.client_id_prefix}_"
+    name = mqtt_client_id.removeprefix(prefix)
+    return status_topic_for(name or mqtt_client_id, instance=active_config.home_assistant.unique_id_prefix)
 
 
 async def _connect_with_retry(mqtt_client: MqttClient, client_id: str, max_attempts: int | None = _MAX_CONNECT_ATTEMPTS, stopping: Callable[[], bool] | None = None) -> None:
@@ -177,6 +189,7 @@ async def mqtt_setup(
         transport=active_config.mqtt.transport,
         tls=active_config.mqtt.tls,
         tls_insecure=active_config.mqtt.tls_insecure,
+        status_topic=_status_topic(mqtt_client_id),
     )
     mqtt_health_registry.register(mqtt_client_id)
 
@@ -196,6 +209,26 @@ async def mqtt_setup(
     return mqtt_client, mqtt_handler
 
 
+_TEARDOWN_DRAIN_TIMEOUT: float = 2.0
+
+
+async def _drain_publishes(mqtt_client: MqttClient, timeout: float = _TEARDOWN_DRAIN_TIMEOUT) -> None:
+    """Wait for the broker to acknowledge outstanding QoS 1/2 publishes.
+
+    The final messages of a shutdown (the "offline" availability in particular)
+    are published immediately before the network loop is stopped; without this
+    wait their QoS handshake may never complete.
+    """
+    if not isinstance(mqtt_client, MqttClient) or not mqtt_client.is_connected():
+        return
+    deadline = asyncio.get_running_loop().time() + timeout
+    while (pending := mqtt_client.unacknowledged_publishes()) > 0:
+        if asyncio.get_running_loop().time() >= deadline:
+            logger.debug(f"{pending} MQTT publish(es) still unacknowledged after {timeout}s for Client ID {mqtt_client.client_id_str}")
+            return
+        await sleep(0.05)
+
+
 async def mqtt_teardown(mqtt_client: MqttClient, mqtt_handler: MqttHandler) -> None:
     """Clean up MQTT client and handler.
 
@@ -212,6 +245,10 @@ async def mqtt_teardown(mqtt_client: MqttClient, mqtt_handler: MqttHandler) -> N
     logger.info(f"Closing MQTT connection for Client ID {mqtt_client_id} to {broker_url}")
     # A deliberately closed client is no longer expected to be connected
     mqtt_health_registry.unregister(mqtt_client_id)
+    if active_config.clean and isinstance(mqtt_client, MqttClient):
+        # Leave nothing retained behind
+        mqtt_client.publish_status("")
+    await _drain_publishes(mqtt_client)
     mqtt_client.loop_stop()
     mqtt_client.disconnect()
 

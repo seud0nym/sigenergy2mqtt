@@ -3202,7 +3202,7 @@ cli:
   SIGENERGY2MQTT_PVOUTPUT_UPLOAD_LOG_LEVEL:
     help: 'Définissez le niveau de journalisation pour les messages du journal de téléchargement PVOutput. Les valeurs valides sont : DEBUG, INFO, AVERTISSEMENT, ERREUR ou CRITICAL. La valeur par défaut est INFO'
   SIGENERGY2MQTT_PVOUTPUT_VOLTAGE:
-    help: "La source de la valeur de tension à envoyer à PVOutput. Valeurs valides: phase-a, phase-b, phase-c, l/n-avg (moyenne ligne-neutre), l/l-avg (moyenne ligne-ligne) ou pv (moyenne sur les chaînes PV). Par défaut: 'l/n-avg'."
+    help: "La source de la valeur de tension à envoyer à PVOutput. Valeurs valides: phase-a, phase-b, phase-c, l/n-avg (moyenne ligne-neutre), l/l-avg (moyenne ligne-ligne ; nécessite un système triphasé) ou pv (moyenne sur les chaînes PV). Par défaut: 'l/n-avg'."
   SIGENERGY2MQTT_REPEATED_STATE_PUBLISH_INTERVAL:
     help: "Intervalle en secondes à l'issue duquel les états répétés sont publiés. Si < 0, les états répétés ne sont jamais publiés. Si 0, les états répétés sont toujours publiés. Si > 0, les états répétés sont publiés à l'intervalle spécifié. La valeur par défaut est de 60 secondes."
   SIGENERGY2MQTT_SANITY_CHECK_DEFAULT_KW:

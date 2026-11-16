@@ -50,6 +50,7 @@ class PowerPlant(ModbusDevice):
         self._consumption_source = ConsumptionMethod.CALCULATED if self.protocol_version < ProtocolVersion.V2_8 else active_config.consumption
         self._consumption_group = "Consumption" if self._consumption_source == ConsumptionMethod.CALCULATED else None  # No need to group sensors for scanning if not calculating consumption
         self._grid_sensor = None
+        self.power_phases: int | None = None  # Set from the output type register when the plant is created
 
     @classmethod
     async def create(
@@ -57,6 +58,7 @@ class PowerPlant(ModbusDevice):
     ) -> "PowerPlant":
         power_phases = OutputType.to_phases(output_type)
         plant = cls(plant_index, device_type, protocol_version)
+        plant.power_phases = power_phases
 
         rated_charging_power = ro.PlantRatedChargingPower(plant_index)
         rated_discharging_power = ro.PlantRatedDischargingPower(plant_index)

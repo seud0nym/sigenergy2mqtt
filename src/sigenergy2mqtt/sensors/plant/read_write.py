@@ -133,10 +133,10 @@ class ReactivePowerFixedAdjustmentTargetValue(NumericSensor, HybridInverter, PVI
             gain=1000,
             precision=2,
             protocol_version=ProtocolVersion.V1_8,
-            minimum=-60.0,
-            maximum=60.0,
         )
-        ## NOTE: Min/Max are set dynamically based on the total rated active power of the plant during main.setup_devices ##
+        ## NOTE: Min/Max are set dynamically to ±60% of the total rated active power of the plant during main.setup_devices.
+        ## No literal default is given here: the protocol range is relative to the rated power ("base value"), so a
+        ## fixed number would be a misleading range when the rated power cannot be read. ##
         self._remote_ems_mode: RemoteEMSControlMode = remote_ems_mode
 
     def configure_mqtt_topics(self, device_id: str) -> str:

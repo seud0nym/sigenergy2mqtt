@@ -34,6 +34,7 @@ INITIAL_RECONNECT_DELAY = 0.5
 MAX_RECONNECT_DELAY = 60.0
 RECONNECT_BACKOFF_MULTIPLIER = 2.0
 MAX_CLOUD_RETRY_DELAY = 900.0
+UNEXPECTED_ERROR_LOG_INTERVAL = 300.0
 
 
 def _cloud_retry_delay(failure_streak: int) -> float:
@@ -298,6 +299,38 @@ class SensorGroupPoller:
 
         return False
 
+    async def _recover_modbus(self, transport: Any, lock: ModbusLock, name: str, error: Exception) -> None:
+        """Reconnect a Modbus transport that dropped its connection.
+
+        The lock is held while reconnecting to prevent concurrent reconnection
+        attempts from sibling scan groups.
+        """
+        device = self._device
+        logger.debug(f"{device.log_identity} Sensor Scan Group [{name}] handling {error!s}: Acquiring lock before attempting to reconnect... ({lock.waiters=})")
+        async with lock.lock(timeout=None):
+            if not transport.connected and device.online:
+                reconnected = await self._reconnect_modbus_with_backoff(transport)
+                if not reconnected and device.online:
+                    message = f"{device.log_identity} failed to reconnect to Modbus; will keep retrying"
+                    outage = getattr(transport, "outage", None)
+                    if not (isinstance(outage, OutageTracker) and outage.suppress(message)):
+                        logger.error(message)
+
+    def _log_unexpected_error(self, name: str, error: Exception, last: tuple[type, float] | None) -> tuple[type, float]:
+        """Log an exception that no specific handler claimed, without flooding the log.
+
+        The first occurrence of each exception type is logged at ERROR with its
+        traceback; repeats of the same type are logged at DEBUG until
+        ``UNEXPECTED_ERROR_LOG_INTERVAL`` seconds have passed.
+        """
+        now = time.monotonic()
+        message = f"{self._device.log_identity} Sensor Scan Group [{name}] encountered an unexpected error and will retry: {error!r}"
+        if last is None or last[0] is not type(error) or now - last[1] >= UNEXPECTED_ERROR_LOG_INTERVAL:
+            logger.error(message, exc_info=error)
+            return type(error), now
+        logger.debug(message)
+        return last
+
     @staticmethod
     def _reschedule_unpublished(due_sensors: list[ReadableSensorMixin], next_publish_times: dict, now: float) -> None:
         """Move any due sensor that was not published in this pass to its next scan interval."""
@@ -339,7 +372,9 @@ class SensorGroupPoller:
         5. If rediscover is set on the device, republishes discovery.
         6. On ModbusException, acquires the Modbus lock and attempts reconnection
            via _reconnect_modbus_with_backoff (lock is held for the duration to
-           prevent concurrent reconnection attempts from sibling tasks).
+           prevent concurrent reconnection attempts from sibling tasks). Any
+           other exception is logged and the affected sensors are rescheduled,
+           so that no error can end the polling of this group.
         7. Sleeps until the next sensor is due, up to a maximum of 1 second to
            remain responsive to shutdown signals.
 
@@ -368,6 +403,7 @@ class SensorGroupPoller:
         last_day = time.localtime(time.time()).tm_yday
         cloud_failure_streak = 0
         cloud_retry_at: float | None = None
+        last_unexpected: tuple[type, float] | None = None
 
         def pause_cloud_monitoring() -> None:
             for sensor in sensors:
@@ -432,16 +468,7 @@ class SensorGroupPoller:
 
                 except ModbusException as e:
                     if transport:
-                        logger.debug(f"{device.log_identity} Sensor Scan Group [{name}] handling {e!s}: Acquiring lock before attempting to reconnect... ({lock.waiters=})")
-                        async with lock.lock(timeout=None):
-                            if not transport.connected and device.online:
-                                # Retain lock while attempting to reconnect to prevent multiple concurrent reconnection attempts from other tasks
-                                reconnected = await self._reconnect_modbus_with_backoff(transport)
-                                if not reconnected and device.online:
-                                    message = f"{device.log_identity} failed to reconnect to Modbus; will keep retrying"
-                                    outage = getattr(transport, "outage", None)
-                                    if not (isinstance(outage, OutageTracker) and outage.suppress(message)):
-                                        logger.error(message)
+                        await self._recover_modbus(transport, lock, name, e)
                 except CloudControlRateLimitedError as e:
                     # Do not let a vendor 429 terminate this polling task. The
                     # adapter also applies a shared cooldown across scan groups;
@@ -489,6 +516,21 @@ class SensorGroupPoller:
                     message = f"{device.log_identity} Sensor Scan Group [{name}] encountered an error: {e!r}"
                     if not self._report_mqtt_outage(mqtt_client, e, message):
                         logger.error(message)
+                except OSError as e:
+                    # A socket-level failure that the transport did not wrap. Treat it like a
+                    # Modbus failure, but reschedule so a persistent error cannot spin the loop.
+                    self._reschedule_unpublished(due_sensors, next_publish_times, now)
+                    message = f"{device.log_identity} Sensor Scan Group [{name}] encountered an I/O error: {e!r}"
+                    outage = getattr(transport, "outage", None)
+                    if not (isinstance(outage, OutageTracker) and outage.suppress(message)):
+                        logger.warning(message)
+                    if transport is not None and getattr(transport, "connected", None) is False and hasattr(transport, "connect"):
+                        await self._recover_modbus(transport, lock, name, e)
+                except Exception as e:  # noqa: BLE001 - this loop is the only thing polling the group; whatever a sensor raises must not end it
+                    # Without this, an unexpected exception ends the task silently (the tasks are
+                    # gathered with return_exceptions=True) and the group is never polled again.
+                    self._reschedule_unpublished(due_sensors, next_publish_times, now)
+                    last_unexpected = self._log_unexpected_error(name, e, last_unexpected)
 
             # Sleep until the next sensor is due (max 1 second to stay responsive to shutdown)
             if next_publish_times:

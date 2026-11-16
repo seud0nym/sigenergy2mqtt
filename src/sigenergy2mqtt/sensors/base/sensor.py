@@ -1024,7 +1024,10 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
             if active_config.home_assistant.enabled:
                 self.publish_availability(mqtt_client, "offline")
             raise
-        except (ModbusException, SanityCheckException) as e:
+        except TimeoutError:
+            # Not an I/O failure of the transport (e.g. a lock or service timeout): leave it to the caller
+            raise
+        except (ModbusException, SanityCheckException, OSError) as e:
             await Metrics.mqtt_publish_attempt(physical_publish=False)
             await Metrics.mqtt_publish_failure()
             return self._handle_publish_error(mqtt_client, transport, e)
@@ -1279,7 +1282,9 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         if not self._failed_during_outage:
             logger.warning(message)
 
-        if transport and transport.connected:
+        if isinstance(error, SanityCheckException) or (transport and transport.connected):
+            # A rejected value says nothing about the transport, so it is counted whether or
+            # not there is one; sensors polled without a transport would otherwise raise.
             self._update_failure_count(error)
         else:
             raise error
@@ -1688,9 +1693,9 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
             value *= self.gain
 
         # Preserve structured and other non-numeric state types. Numeric
-        # values retain the historical integer conversion used for Modbus
-        # writes.
-        return int(value) if isinstance(value, (float, int)) else value
+        # values are converted to the nearest integer for Modbus writes
+        # (rounded, not truncated: 0.29 * 100 is 28.999999999999996).
+        return round(value) if isinstance(value, (float, int)) else value
 
     def __eq__(self, other: object) -> bool:
         """Check equality based on unique_id."""

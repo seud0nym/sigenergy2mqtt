@@ -21,6 +21,8 @@ from .settings import PVOutputSettings
 
 logger = logging.getLogger(__name__)
 
+MAX_UPLOAD_ATTEMPTS = 3
+
 
 class Service(Device):
     """Common PVOutput device behaviour for API timing and uploads."""
@@ -95,16 +97,30 @@ class Service(Device):
 
     # endregion
 
-    def get_response_headers(self, response: requests.Response) -> tuple[int, int, float, float]:
+    def get_response_headers(self, response: requests.Response) -> tuple[int | None, int | None, float | None, float | None]:
         """Extract PVOutput rate-limit metadata from an HTTP response.
+
+        The headers are absent when the response did not come from the PVOutput
+        API itself (e.g. a 502/503 from a proxy in front of it), so every value
+        is ``None`` when it is missing or malformed rather than an error.
 
         Args:
             response: HTTP response returned by a PVOutput endpoint.
+
+        Returns:
+            ``(limit, remaining, reset_at, seconds_until_reset)``.
         """
-        limit = int(response.headers["X-Rate-Limit-Limit"])
-        remaining = int(response.headers["X-Rate-Limit-Remaining"])
-        at = float(response.headers["X-Rate-Limit-Reset"])
-        reset = round(at - time.time())
+
+        def header(name: str, convert: type) -> Any:
+            try:
+                return convert(response.headers[name])
+            except (KeyError, TypeError, ValueError):
+                return None
+
+        limit = header("X-Rate-Limit-Limit", int)
+        remaining = header("X-Rate-Limit-Remaining", int)
+        at = header("X-Rate-Limit-Reset", float)
+        reset = None if at is None else round(at - time.time())
         return limit, remaining, at, reset
 
     async def seconds_until_status_upload(self, rand_min: int = 1, rand_max: int = 15) -> tuple[float, int]:
@@ -149,7 +165,7 @@ class Service(Device):
                                 PVOutputSettings.donator = donations != 0
                         else:
                             logger.warning(f"{self.log_identity} FAILED to acquire System Information status_code={response.status_code} reason={response.reason}")
-                    except (OSError, requests.RequestException, TimeoutError, ValueError, AttributeError) as exc:
+                    except (OSError, requests.RequestException, TimeoutError, ValueError, AttributeError, LookupError) as exc:
                         PVOutputSettings.interval = 5  # Default interval in minutes if not set
                         PVOutputSettings.donator = False  # Default donator status if not set
                         logger.warning(
@@ -172,7 +188,7 @@ class Service(Device):
         uploaded: bool = False
         response: requests.Response = requests.Response()
         attempts: int = 0
-        for i in range(1, 4, 1):
+        for i in range(1, MAX_UPLOAD_ATTEMPTS + 1, 1):
             attempts = i
             attempt_start_time = time.monotonic()
             try:
@@ -225,20 +241,18 @@ class Service(Device):
                 self._set_health_status(False)
                 await Metrics.pvoutput_upload_error()
                 logger.error(f"{self.log_identity} Attempt #{i} Error Connecting: {exc}")
-            except (ValueError, OSError, AttributeError) as exc:
+            except (ValueError, OSError, AttributeError, LookupError) as exc:
                 self._set_health_status(False)
                 await Metrics.pvoutput_upload_error()
-                logger.error(f"{self.log_identity} {exc}")
-            if (
-                response.status_code is not None
-                and response.status_code != 200
-                and hasattr(response, "headers")
-                and "X-Rate-Limit-Remaining" in response.headers
-                and int(response.headers["X-Rate-Limit-Remaining"]) < 10
-            ):
-                logger.warning(f"{self.log_identity} Only {remaining} requests left, sleeping until {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))} ({reset}s)")  # pyright: ignore[reportPossiblyUnboundVariable] # pyrefly: ignore
+                logger.error(f"{self.log_identity} Attempt #{i} {exc!r}")
+            limit, remaining, at, reset = self.get_response_headers(response) if hasattr(response, "headers") else (None, None, None, None)
+            if i >= MAX_UPLOAD_ATTEMPTS:
+                # No retry follows, so there is nothing to wait for: let the caller have the failure
+                continue
+            if response.status_code is not None and response.status_code != 200 and remaining is not None and remaining < 10 and reset is not None:
+                logger.warning(f"{self.log_identity} Only {remaining} requests left, sleeping until {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(at))} ({reset}s)")
                 try:
-                    await asyncio.sleep(reset)  # pyright: ignore[reportPossiblyUnboundVariable]  # pyrefly: ignore
+                    await asyncio.sleep(max(reset, 0))
                 except asyncio.CancelledError:
                     logger.debug(f"{self.log_identity} reset sleep interrupted")
                     break

@@ -119,8 +119,8 @@ async def test_setup_devices_active_power_bounds(caplog):
         ):
             make_pi.return_value = (mock_inverter, mock_plant)
 
-            # Case 1: get_state returns a value
-            mock_get_state.return_value = 5000
+            # Case 1: get_state returns the rated power in display units (kW)
+            mock_get_state.return_value = 5.0
 
             config_mock = MagicMock()
             config_mock.devices = [mock_inverter]
@@ -128,11 +128,11 @@ async def test_setup_devices_active_power_bounds(caplog):
                 await main_mod.setup_devices(set())
 
             # Verify get_state was called for RatedActivePower
-            mock_get_state.assert_called_with("mock_sensor", mock_client, "inverter", raw=True)
+            mock_get_state.assert_called_with("mock_sensor", mock_client, "inverter")
 
-            # Verify apply_min_max was called on the mock sensors
-            active_power_sensor.apply_min_max.assert_called_once_with(-5000, 5000)
-            reactive_power_sensor.apply_min_max.assert_called_once_with(-300000, 300000)
+            # Verify apply_min_max was called on the mock sensors: ±rated kW and ±60% of rated kW
+            active_power_sensor.apply_min_max.assert_called_once_with(-5.0, 5.0)
+            reactive_power_sensor.apply_min_max.assert_called_once_with(-3.0, 3.0)
 
 
 @pytest.mark.asyncio
@@ -223,65 +223,44 @@ async def test_setup_dc_chargers_missing_inverter(caplog):
 # ---------------------------------------------------------------------------
 
 
-def test_setup_signals_sighup_reload_exception():
+def test_setup_signals_sighup_requests_restart_from_loop_handler():
+    """SIGHUP is dispatched through the event loop and only requests the restart.
+
+    The configuration is not reloaded by the handler: that would replace the
+    live settings underneath the running threads. async_main reloads once the
+    restart has taken them offline.
+    """
     configs = []
 
-    with patch("asyncio.get_running_loop") as mock_get_loop:
+    with patch("asyncio.get_running_loop") as mock_get_loop, patch("signal.signal"):
         mock_loop = MagicMock()
         mock_get_loop.return_value = mock_loop
 
         main_mod.setup_signals(configs)
 
-        # Manually invoke the registered signal handler for SIGHUP
         sighup_handler = mock_loop.add_signal_handler.call_args[0][1]
 
-        # Test 1: Active_config.reload throws Exception
         with patch("sigenergy2mqtt.config.active_config.reload", new_callable=AsyncMock) as mock_reload, patch("sigenergy2mqtt.main.main.restart_controller.request") as mock_request:
-            mock_reload.side_effect = RuntimeError("Reload failed")
-
             sighup_handler()
 
-            # The handler creates a task. We need to extract and await the task directly to test the async inner function
-            task_coro = mock_loop.create_task.call_args[0][0]
-
-            # Since it's a coroutine object, we can run it in a new event loop just for testing its logic
-            loop = asyncio.new_event_loop()
-            try:
-                loop.run_until_complete(task_coro)
-            finally:
-                loop.close()
-
-            # Exception should be caught and request should be called in finally
             mock_request.assert_called_once_with("signal SIGHUP")
+            mock_reload.assert_not_called()
+            mock_loop.create_task.assert_not_called()
 
 
-def test_setup_signals_no_event_loop_for_sighup_handler(caplog):
+def test_setup_signals_sighup_handler_works_without_event_loop():
+    """Without a running loop the handler registered with signal.signal still requests the restart."""
     configs = []
 
-    # Force get_running_loop to raise RuntimeError
-    with patch("asyncio.get_running_loop", side_effect=RuntimeError("No loop")):
+    with patch("signal.signal") as mock_signal, patch("asyncio.get_running_loop", side_effect=RuntimeError("No loop")):
         main_mod.setup_signals(configs)
 
-        # Even if we can't register with loop.add_signal_handler, signal.signal is registered.
-        # Let's get the sighup handler from the signal module mock
+        sighup_handler = next(call[0][1] for call in mock_signal.call_args_list if call[0][0] == signal.SIGHUP)
 
-    # We need to test the inner reload_on_signal catching RuntimeError from get_running_loop
-    # Let's mock signal.signal to capture the handler
-    with patch("signal.signal") as mock_signal, patch("asyncio.get_running_loop", return_value=MagicMock()):
-        main_mod.setup_signals(configs)
+        with patch("sigenergy2mqtt.main.main.restart_controller.request") as mock_request:
+            sighup_handler(signal.SIGHUP, None)
 
-        # Find the SIGHUP handler
-        sighup_handler = None
-        for call in mock_signal.call_args_list:
-            if call[0][0] == signal.SIGHUP:
-                sighup_handler = call[0][1]
-                break
-
-        # Now call it while get_running_loop raises RuntimeError
-        with patch("asyncio.get_running_loop", side_effect=RuntimeError("No loop")):
-            sighup_handler()
-
-        assert "No running event loop to handle SIGHUP reload" in caplog.text
+        mock_request.assert_called_once_with("signal SIGHUP")
 
 
 # ---------------------------------------------------------------------------

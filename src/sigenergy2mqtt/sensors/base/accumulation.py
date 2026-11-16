@@ -6,7 +6,6 @@ import asyncio
 import logging
 import sys
 import time
-from datetime import timedelta
 from typing import TYPE_CHECKING, Any, cast
 
 import paho.mqtt.client as mqtt
@@ -26,6 +25,11 @@ if TYPE_CHECKING:
     from sigenergy2mqtt.mqtt import MqttHandler
 
 logger = logging.getLogger(__name__)
+
+# Accumulated totals change on every source update. Each write is an fsync, so
+# routine updates are persisted at most this often per sensor; resets are always
+# written immediately and the state store flushes held-back values on shutdown.
+PERSIST_MIN_INTERVAL_SECONDS: float = 60.0
 # =============================================================================
 
 
@@ -41,6 +45,10 @@ class AccumulationSensor(DerivedSensor):
         def log_identity(self) -> str: ...
 
         def refresh_log_identity(self) -> None: ...
+
+    # When True, a persisted total is only restored if it was written on the
+    # current local day (daily accumulations must not survive midnight).
+    _restore_same_local_day_only: bool = False
 
     def __init__(
         self,
@@ -98,7 +106,7 @@ class AccumulationSensor(DerivedSensor):
     def _load_persisted_state(self) -> None:
         """Load accumulated value from persistent storage."""
         try:
-            content = state_store.load_sync(Category.SENSOR, self._state_persistence_key)
+            content = state_store.load_sync(Category.SENSOR, self._state_persistence_key, same_local_day=self._restore_same_local_day_only)
         except (OSError, ValueError, TypeError, RuntimeError) as e:
             if isinstance(e, (OSError, RuntimeError)):
                 logger.warning(f"{self.log_identity} Failed to read state for {self._state_persistence_key}: {e}")
@@ -114,15 +122,17 @@ class AccumulationSensor(DerivedSensor):
             except (ValueError, TypeError) as e:
                 logger.warning(f"{self.log_identity} Failed to parse persisted state for {self._state_persistence_key}: {e}")
 
-    async def _persist_current_total(self, new_total: float) -> None:
+    async def _persist_current_total(self, new_total: float, immediate: bool = True) -> None:
         """Persist accumulated value.
 
         Args:
             new_total: New total value to persist
+            immediate: Write now. When False the write may be held back so that
+                the key is written at most once per ``PERSIST_MIN_INTERVAL_SECONDS``.
         """
         async with self._current_total_lock:
             try:
-                await state_store.save(Category.SENSOR, self._state_persistence_key, str(new_total))
+                await state_store.save(Category.SENSOR, self._state_persistence_key, str(new_total), min_interval=None if immediate else PERSIST_MIN_INTERVAL_SECONDS)
             except PermissionError as e:
                 logger.warning(f"{self.log_identity} Failed to persist state for {self._state_persistence_key}: {e}")
             except (ValueError, TypeError, RuntimeError) as e:
@@ -181,7 +191,7 @@ class AccumulationSensor(DerivedSensor):
 
         # Update total
         if new_total != self._current_total:
-            self.run_persistence_coroutine(self._persist_current_total(new_total))
+            self.run_persistence_coroutine(self._persist_current_total(new_total, immediate=False))
 
         self._current_total = new_total
         self.set_latest_state(self._current_total)
@@ -398,9 +408,13 @@ class EnergyDailyAccumulationSensor(ResettableAccumulationSensor):
         self._load_midnight_state()
 
     def _load_midnight_state(self) -> None:
-        """Load state at midnight if entry is from today."""
+        """Load state at midnight if entry is from today.
+
+        "Today" is the local calendar day, not a 24 hour window: a baseline
+        written at 23:00 yesterday must not be restored at 22:40 today.
+        """
         try:
-            content = state_store.load_sync(Category.SENSOR, self._midnight_persistence_key, stale_after=timedelta(hours=24))
+            content = state_store.load_sync(Category.SENSOR, self._midnight_persistence_key, same_local_day=True)
         except (ValueError, TypeError, RuntimeError) as e:
             logger.warning(f"{self.log_identity} Failed to read midnight state for {self._midnight_persistence_key}: {e}")
             state_store.delete_sync(Category.SENSOR, self._midnight_persistence_key)
@@ -554,7 +568,12 @@ class SimpleEnergyDailyAccumulationSensor(AccumulationSensor):
 
     Unlike EnergyDailyAccumulationSensor, this doesn't track the source sensor's
     state at midnight - it simply accumulates and resets the total.
+
+    A persisted total is only restored if it was written today, so a restart on
+    a later day starts from zero rather than continuing the old day's total.
     """
+
+    _restore_same_local_day_only = True
 
     def __init__(
         self,
