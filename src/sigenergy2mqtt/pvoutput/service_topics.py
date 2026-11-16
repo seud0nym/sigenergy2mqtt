@@ -171,7 +171,14 @@ class ServiceTopics(dict[str, Topic]):
                 logger.info(f"{self._service.log_identity} Removed '{value_key.value}' from payload because {count=} and {total=} (allow_negative={self._allow_negative})")
             return False
 
-    def _line_to_line_into(self, payload: dict[str, float | int | str], value_key: OutputField | StatusField, datetime_key: str | None = None) -> bool:
+    def _line_to_line_into(
+        self,
+        payload: dict[str, float | int | str],
+        value_key: OutputField | StatusField,
+        datetime_key: str | None = None,
+        interval_minutes: int | None = None,
+        now: time.struct_time | None = None,
+    ) -> bool:
         """Write the average line-to-line voltage into *payload*.
 
         The registered topics carry phase (line-to-neutral) voltages. For phases
@@ -182,18 +189,28 @@ class ServiceTopics(dict[str, Topic]):
 
         If any of the three phases has no current value the field is omitted for
         this upload (and the omission logged once) rather than sending a wrong
-        figure.
+        figure. A reading is current when it is positive and, if *interval_minutes*
+        is given, was updated within the upload interval (or the topic's scan
+        interval, if that is longer): a phase that has stopped updating must not
+        keep contributing its last voltage just because the others are fresh.
 
         Args:
             payload: Payload being assembled.
             value_key: Target payload field for the numeric value.
             datetime_key: Optional payload field for the timestamp.
+            interval_minutes: Upload interval used to decide whether a reading is current.
+            now: Current time for that check (defaults to the present).
         """
         readings: dict[str, list[float]] = {"A": [], "B": [], "C": []}
         at: str | None = None
+        now_seconds = time.mktime(now) if now is not None else time.time()
         if self.enabled:
             for topic in self.values():
                 if topic.phase in readings and topic.timestamp is not None and topic.state is not None and topic.state > 0.0:
+                    if interval_minutes is not None:
+                        updated = topic.timestamp if topic.restore_timestamp is None or topic.timestamp > topic.restore_timestamp else topic.restore_timestamp
+                        if now_seconds - time.mktime(updated) > max(topic.scan_interval or 0, interval_minutes * 60):
+                            continue  # stale
                     readings[cast(str, topic.phase)].append(topic.state * topic.gain)
                     at = time.strftime("%H:%M", topic.timestamp)
         missing = [phase for phase, values in readings.items() if not values]
@@ -258,7 +275,7 @@ class ServiceTopics(dict[str, Topic]):
             if self.calculation & (Calculation.AVERAGE | Calculation.MEAN):
                 return self._average_into(payload, self._value_key, self._datetime_key, exclude_zero=(Calculation.AVERAGE in self.calculation))
             elif Calculation.L_L_AVG in self.calculation:
-                return self._line_to_line_into(payload, self._value_key, self._datetime_key)
+                return self._line_to_line_into(payload, self._value_key, self._datetime_key, interval_minutes, now)
             else:  # SUM
                 return self._sum_into(payload, self._value_key, self._datetime_key)
         else:

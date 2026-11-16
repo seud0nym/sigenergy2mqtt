@@ -318,20 +318,28 @@ async def _apply_power_adjustment_bounds(plant_index: int, plant: PowerPlant, mo
     The protocol gives no separate base value for the per-phase targets, so they
     get the plant total as well: no single phase can exceed it.
 
-    When no rated power can be read the sensors keep their constructor ranges.
+    The limits are only applied when the rated power of every inverter in the
+    plant is known. A partial total would under-state the plant's capability and
+    reject valid commands, so in that case the sensors keep their existing ranges.
     """
     total_rated_active_power: float = 0.0
+    complete = True
     for i in config.devices:
         if isinstance(i, Inverter) and i.plant_index == plant_index:
             sensor = i.get_sensor(RatedActivePower, search_children=True)
             if sensor is None:
                 logger.warning(f"{i.log_identity} RatedActivePower sensor not found - cannot set bounds for Active/Reactive Power Fixed Adjustment Target Value sensors")
+                complete = False
             else:
                 rap = await get_state(sensor, modbus_client, "inverter")
                 if isinstance(rap, (int, float)) and not isinstance(rap, bool):
                     total_rated_active_power += float(rap)
                 else:
                     logger.warning(f"{i.log_identity} Failed to acquire RatedActivePower")
+                    complete = False
+    if not complete:
+        logger.warning(f"Plant {plant_index} total rated active power is incomplete - leaving the Active/Reactive Power Fixed Adjustment Target Value bounds unchanged")
+        return
     if total_rated_active_power <= 0:
         return
     active_limit = round(total_rated_active_power, 3)

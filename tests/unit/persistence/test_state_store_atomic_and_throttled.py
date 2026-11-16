@@ -1,5 +1,6 @@
 """Atomic disk writes, corrupt-file fallback, throttled saves and same-day loads."""
 
+import asyncio
 import json
 import os
 import time
@@ -63,7 +64,16 @@ def test_disk_save_syncs_before_replacing(state_dir):
         patch("sigenergy2mqtt.persistence.state_store.os.replace", side_effect=lambda a, b: (events.append("replace"), real_replace(a, b))[1]),
     ):
         disk.save("sensor", "k.state", "1.0")
-    assert events == ["fsync", "replace"]
+    # file contents synced, renamed into place, then the directory entry synced
+    assert events == ["fsync", "replace", "fsync"]
+
+
+def test_disk_save_survives_a_directory_that_cannot_be_synced(state_dir):
+    disk = _DiskBackend(state_dir, "1.0.0")
+    with patch("sigenergy2mqtt.persistence.state_store.os.open", side_effect=OSError("not supported")):
+        disk.save("sensor", "k.state", "1.0")
+    loaded = disk.load("sensor", "k.state")
+    assert loaded is not None and loaded[0] == "1.0"
 
 
 def test_interrupted_write_keeps_previous_content(state_dir):
@@ -159,6 +169,53 @@ async def test_throttled_save_writes_once_interval_has_elapsed(state_dir, persis
     assert json.loads(path.read_text())["v"] == "3.0"
     assert store._deferred == {}
     store.shutdown()
+
+
+@pytest.mark.asyncio
+async def test_deferred_value_is_written_when_the_interval_ends_without_another_save(state_dir, persistence_config):
+    """e.g. power drops to zero after a held-back update: the final total must still reach disk."""
+    store = StateStore()
+    await store.initialise(state_dir, persistence_config)
+    path = state_dir / "sensor" / "k.state"
+    await store.save("sensor", "k.state", "1.0", min_interval=0.3)
+    await store.save("sensor", "k.state", "2.0", min_interval=0.3)
+    await store.save("sensor", "k.state", "3.0", min_interval=0.3)
+    assert json.loads(path.read_text())["v"] == "1.0"
+    assert len(store._flush_timers) == 1
+
+    for _ in range(40):
+        await asyncio.sleep(0.05)
+        if json.loads(path.read_text())["v"] == "3.0":
+            break
+    assert json.loads(path.read_text())["v"] == "3.0"
+    assert store._deferred == {} and store._flush_timers == {}
+    store.shutdown()
+
+
+@pytest.mark.asyncio
+async def test_flush_timer_is_cancelled_by_newer_save_delete_and_shutdown(state_dir, persistence_config):
+    store = StateStore()
+    await store.initialise(state_dir, persistence_config)
+    path = state_dir / "sensor" / "k.state"
+
+    async def defer(key: str):
+        await store.save("sensor", key, "1.0", min_interval=60)
+        await store.save("sensor", key, "2.0", min_interval=60)
+        return store._flush_timers[("sensor", key)]
+
+    timer = await defer("k.state")
+    await store.save("sensor", "k.state", "9.0")  # immediate save replaces it
+    assert timer.finished.is_set() and store._flush_timers == {}
+    assert json.loads(path.read_text())["v"] == "9.0"
+
+    timer = await defer("d.state")
+    await store.delete("sensor", "d.state")
+    assert timer.finished.is_set() and store._flush_timers == {}
+
+    timer = await defer("s.state")
+    store.shutdown()
+    assert timer.finished.is_set() and store._flush_timers == {}
+    assert json.loads((state_dir / "sensor" / "s.state").read_text())["v"] == "2.0"
 
 
 @pytest.mark.asyncio

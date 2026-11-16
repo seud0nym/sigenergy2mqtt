@@ -162,6 +162,35 @@ class TestPVOutputServiceTopics:
             assert st.add_to_payload({}, 5, time.localtime()) is False
         assert caplog.text.count("line to line average requires all three phases") == 2
 
+    def test_ll_avg_omits_voltage_when_one_phase_has_stopped_updating(self, caplog):
+        """A and B fresh, C last updated an hour ago: C's old voltage must not be used."""
+        now_ts = time.time()
+        active_config.pvoutput.started = now_ts - 7200
+        st = make_service_topics(calc=Calculation.L_L_AVG, decimals=1, value_key=StatusField.VOLTAGE)
+        st.register(Topic("inv1/A", scan_interval=60, state=230.0, timestamp=time.localtime(now_ts - 10), phase="A"))
+        st.register(Topic("inv1/B", scan_interval=60, state=230.0, timestamp=time.localtime(now_ts - 10), phase="B"))
+        st.register(Topic("inv1/C", scan_interval=60, state=230.0, timestamp=time.localtime(now_ts - 3600), phase="C"))
+        payload = {StatusField.VOLTAGE.value: 398.4}
+        with caplog.at_level(logging.WARNING, logger="sigenergy2mqtt.pvoutput.service_topics"):
+            assert st.add_to_payload(payload, 5, time.localtime(now_ts)) is False
+        assert StatusField.VOLTAGE.value not in payload
+        assert "phase C voltage has no current value" in caplog.text
+
+        # A reading within the upload interval is still current, even if older than its scan interval
+        st["inv1/C"].timestamp = time.localtime(now_ts - 240)
+        payload = {}
+        assert st.add_to_payload(payload, 5, time.localtime(now_ts)) is True
+        assert payload[StatusField.VOLTAGE.value] == 398.4
+
+    def test_ll_avg_stale_inverter_is_ignored_when_another_reports_the_phase(self):
+        now_ts = time.time()
+        st = make_service_topics(calc=Calculation.L_L_AVG, decimals=1, value_key=StatusField.VOLTAGE)
+        self._phase_topics(st, {"A": 230.0, "B": 230.0, "C": 230.0}, prefix="inv1")
+        st.register(Topic("inv2/C", state=100.0, timestamp=time.localtime(now_ts - 3600), phase="C"))
+        payload = {}
+        assert st.add_to_payload(payload, 5, time.localtime(now_ts)) is True
+        assert payload[StatusField.VOLTAGE.value] == 398.4
+
     def test_ll_avg_ignores_topics_without_a_phase(self):
         st = make_service_topics(calc=Calculation.L_L_AVG, decimals=1, value_key=StatusField.VOLTAGE)
         st.register(Topic("t/1", state=3.0, timestamp=time.localtime()))

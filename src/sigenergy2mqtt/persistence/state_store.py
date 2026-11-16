@@ -31,7 +31,8 @@ The ``DiskBackend`` never writes a state file in place.  The envelope is
 written to a temporary file in the same directory, flushed and ``fsync``-ed,
 and then moved over the target with :func:`os.replace`, so an interruption
 leaves either the previous content or the new content - never an empty or
-partial file.  A file that is nevertheless empty or holds a truncated envelope
+partial file.  The parent directory is then synced (best effort) so that the
+completed rename itself survives a power cut.  A file that is nevertheless empty or holds a truncated envelope
 is treated as absent, so that the other backend is consulted.
 
 Throttled saves
@@ -40,9 +41,10 @@ Callers that persist very frequently (accumulation sensors persist on every
 source update) may pass ``min_interval`` to :meth:`StateStore.save`.  A save
 that arrives within ``min_interval`` seconds of the previous write for the
 same key is held in memory instead of being written; it is returned by
-:meth:`StateStore.load`, superseded by the next save, and flushed by
-:meth:`StateStore.shutdown`.  An unclean exit can therefore lose at most the
-last ``min_interval`` seconds of such a value.
+:meth:`StateStore.load`, superseded by the next save, and written when the
+interval ends (a timer is armed for that) or by :meth:`StateStore.shutdown`,
+whichever comes first.  An unclean exit can therefore lose at most the last
+``min_interval`` seconds of such a value, even if no further save arrives.
 
 Legacy migration
 ----------------
@@ -163,6 +165,24 @@ class _DiskBackend:
         return path.with_name(f".{path.name}.tmp")
 
     @staticmethod
+    def _sync_directory(directory: Path) -> None:
+        """Best-effort ``fsync`` of *directory* so a completed rename is durable.
+
+        Not every platform or filesystem can open or sync a directory; the
+        write itself has already succeeded, so failures are ignored.
+        """
+        try:
+            fd = os.open(directory, os.O_RDONLY)
+        except OSError:
+            return
+        try:
+            os.fsync(fd)
+        except OSError:
+            pass
+        finally:
+            os.close(fd)
+
+    @staticmethod
     def _is_temp_file(path: Path) -> bool:
         return path.name.startswith(".") and path.name.endswith(".tmp")
 
@@ -191,6 +211,7 @@ class _DiskBackend:
                     f.flush()
                     os.fsync(f.fileno())
                 os.replace(tmp, path)
+                self._sync_directory(path.parent)
             except BaseException:
                 with contextlib.suppress(OSError):
                     tmp.unlink(missing_ok=True)
@@ -484,6 +505,7 @@ class StateStore:
         # Throttled saves: (category, key) -> (value, ts) held in memory until the next write or shutdown
         self._deferred: dict[tuple[str, str], tuple[str, int]] = {}
         self._last_write: dict[tuple[str, str], float] = {}
+        self._flush_timers: dict[tuple[str, str], threading.Timer] = {}
         self._deferred_lock = threading.Lock()
 
     # ------------------------------------------------------------------
@@ -545,8 +567,7 @@ class StateStore:
         self._mqtt_cache_warmed = False
         self._version = _ver.__version__
         with self._deferred_lock:
-            self._deferred.clear()
-            self._last_write.clear()
+            self._clear_deferred_locked()
 
         self._loop = asyncio.get_running_loop()
         self._loop_thread_id = threading.get_ident()
@@ -613,8 +634,7 @@ class StateStore:
         # that a queued older value cannot overwrite the newer deferred one.
         with self._deferred_lock:
             pending = list(self._deferred.items())
-            self._deferred.clear()
-            self._last_write.clear()
+            self._clear_deferred_locked()
         if pending and self._disk is not None:
             for (category, key), (value, ts) in pending:
                 self._save_sync_impl(category, key, value, ts)
@@ -647,16 +667,58 @@ class StateStore:
             last = self._last_write.get(k)
             if min_interval is not None and min_interval > 0 and last is not None and (now - last) < min_interval:
                 self._deferred[k] = (value, int(time.time()))
+                if k not in self._flush_timers:
+                    # Make sure the held-back value is written when the interval
+                    # ends, even if no further save arrives for this key.
+                    timer = threading.Timer(min_interval - (now - last), self._flush_deferred, args=(k,))
+                    timer.daemon = True
+                    self._flush_timers[k] = timer
+                    timer.start()
                 return True
             self._last_write[k] = now
             self._deferred.pop(k, None)
+            self._cancel_flush_timer_locked(k)
             return False
+
+    def _cancel_flush_timer_locked(self, k: tuple[str, str]) -> None:
+        timer = self._flush_timers.pop(k, None)
+        if timer is not None:
+            timer.cancel()
+
+    def _clear_deferred_locked(self) -> None:
+        for timer in self._flush_timers.values():
+            timer.cancel()
+        self._flush_timers.clear()
+        self._deferred.clear()
+        self._last_write.clear()
+
+    def _flush_deferred(self, k: tuple[str, str]) -> None:
+        """Write the value held back for *k*; runs on a timer thread when its interval ends."""
+        with self._deferred_lock:
+            self._flush_timers.pop(k, None)
+            entry = self._deferred.pop(k, None)
+            if entry is None:
+                return
+            self._last_write[k] = time.monotonic()
+            executor = self._executor
+        if self._disk is None:
+            return
+        value, ts = entry
+        try:
+            if executor is None:
+                raise RuntimeError("executor stopped")
+            # Queue behind any write already submitted for this key
+            executor.submit(self._save_sync_impl, k[0], k[1], value, ts)
+        except RuntimeError:
+            # Shutting down: the executor has drained, so write directly
+            self._save_sync_impl(k[0], k[1], value, ts)
 
     def _discard_deferred(self, category: Category | str, key: str) -> None:
         k = (str(category), key)
         with self._deferred_lock:
             self._deferred.pop(k, None)
             self._last_write.pop(k, None)
+            self._cancel_flush_timer_locked(k)
 
     async def save(self, category: Category | str, key: str, value: str, *, stale_after: timedelta | None = None, min_interval: float | None = None) -> None:
         """Persist *value* to both disk and MQTT (fire-and-forget via executor).
@@ -747,8 +809,7 @@ class StateStore:
         if not self._initialised or self._executor is None:
             return
         with self._deferred_lock:
-            self._deferred.clear()
-            self._last_write.clear()
+            self._clear_deferred_locked()
         loop = asyncio.get_running_loop()
         await loop.run_in_executor(self._executor, self._clean_all_sync_impl)
 

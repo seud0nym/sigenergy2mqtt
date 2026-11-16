@@ -140,3 +140,34 @@ async def test_unreadable_rated_power_leaves_no_misleading_range(mock_config, ca
     for sensor in plant.sensors.values():
         assert DiscoveryKeys.MIN not in sensor
         assert DiscoveryKeys.MAX not in sensor
+
+
+@pytest.mark.asyncio
+async def test_partial_rated_power_does_not_become_the_plant_limit(mock_config, caplog):
+    """Two 10 kW inverters, one unreadable: a 10 kW cap would reject valid 20 kW commands."""
+    plant = MagicMock()
+    plant.sensors = _plant_sensors()
+    config = MagicMock()
+    config.devices = [_inverter(10000, 1), _inverter(None, 2)]
+
+    await _apply_power_adjustment_bounds(0, plant, MagicMock(), config)
+
+    assert "total rated active power is incomplete" in caplog.text
+    for sensor in plant.sensors.values():
+        assert DiscoveryKeys.MIN not in sensor
+        assert DiscoveryKeys.MAX not in sensor
+
+
+@pytest.mark.asyncio
+async def test_missing_rated_power_sensor_does_not_become_the_plant_limit(mock_config):
+    plant = MagicMock()
+    plant.sensors = _plant_sensors()
+    without_sensor = _inverter(10000, 2)
+    without_sensor.get_sensor.return_value = None
+    config = MagicMock()
+    config.devices = [_inverter(10000, 1), without_sensor]
+
+    await _apply_power_adjustment_bounds(0, plant, MagicMock(), config)
+
+    for sensor in plant.sensors.values():
+        assert DiscoveryKeys.MIN not in sensor
