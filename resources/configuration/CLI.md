@@ -62,7 +62,7 @@ usage: python3 -m sigenergy2mqtt [-h] [-c [SIGENERGY2MQTT_CONFIG]]
                                  [--pvoutput-exports] [--pvoutput-imports]
                                  [--pvoutput-output-hour [SIGENERGY2MQTT_PVOUTPUT_OUTPUT_HOUR]]
                                  [--pvoutput-temp-topic [SIGENERGY2MQTT_PVOUTPUT_TEMP_TOPIC]]
-                                 [--pvoutput-voltage [{phase-a,phase-b,phase-c,l/n-avg,l/l-avg}]]
+                                 [--pvoutput-voltage [{phase-a,phase-b,phase-c,l/n-avg,l/l-avg,pv}]]
                                  [--pvoutput-ext-v7 [SIGENERGY2MQTT_PVOUTPUT_EXT_V7]]
                                  [--pvoutput-ext-v8 [SIGENERGY2MQTT_PVOUTPUT_EXT_V8]]
                                  [--pvoutput-ext-v9 [SIGENERGY2MQTT_PVOUTPUT_EXT_V9]]
@@ -372,7 +372,7 @@ options:
                         or a Home Assistant sensor entity id (sensor.<id> or
                         ha:sensor.<id>, app only). If not specified, the
                         temperature will not be sent to PVOutput.
-  --pvoutput-voltage [{phase-a,phase-b,phase-c,l/n-avg,l/l-avg}]
+  --pvoutput-voltage [{phase-a,phase-b,phase-c,l/n-avg,l/l-avg,pv}]
                         The source of the voltage value to be sent to
                         PVOutput. Valid values are: phase-a, phase-b, phase-c,
                         l/n-avg (line to neutral average), l/l-avg (line to

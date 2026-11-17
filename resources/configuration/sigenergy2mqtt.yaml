@@ -58,8 +58,11 @@ monitor-topic-updates: true
 #                 -500). The value is applied per second, so the actual
 #                 sanity check applied to a sensor is a multiple of the
 #                 scan-interval. For energy sensors, the check is applied
-#                 to the delta value. Readings outside of the range are
-#                 ignored.    
+#                 to the delta value. Lifetime (TOTAL_INCREASING) energy
+#                 sensors are the exception: they are only required not to
+#                 decrease, and have no maximum delta. This is deliberate, so
+#                 that a catch-up jump after a long outage is accepted.
+#                 Readings outside of the range are ignored.
 sanity-check-default-kw: 500.0
 # sanity-check-failures-increment
 #   added: 2026.1.21

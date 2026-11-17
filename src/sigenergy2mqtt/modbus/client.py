@@ -49,8 +49,9 @@ class ModbusClient(AsyncModbusTcpClient, ModbusClientMixin):
     * Metrics tracking for latency, read volume, cache fill/hit rates, and errors.
 
     The cache stores one :class:`~sigenergy2mqtt.modbus.read_ahead.ReadAhead`
-    object per register address and device. Cache entries are invalidated for
-    specific ranges when :meth:`bypass_read_ahead` is called.
+    object per register address and device. Cache entries for specific ranges
+    can be invalidated with :meth:`bypass_read_ahead`; the runtime does not
+    currently call it.
     """
 
     # Class-level defaults so instances created without __init__ (e.g. in tests) behave as untracked
@@ -126,8 +127,6 @@ class ModbusClient(AsyncModbusTcpClient, ModbusClientMixin):
     async def _read_registers(
         self, address: int, count: int = 1, device_id: int = 1, input_type: InputType = InputType.HOLDING, no_response_expected: bool = False, use_pre_read: bool = False, trace: bool = False
     ) -> ModbusPDU:
-        from sigenergy2mqtt.metrics import Metrics
-
         """Read Modbus registers, optionally serving from read-ahead cache first.
 
         Args:
@@ -147,6 +146,8 @@ class ModbusClient(AsyncModbusTcpClient, ModbusClientMixin):
             ModbusException: Re-raised after updating error metrics.
             TypeError: Invalid input type.
         """
+        from sigenergy2mqtt.metrics import Metrics
+
         if use_pre_read:
             self._read_count += 1
             if device_id in self._read_ahead_pdu and address in self._read_ahead_pdu[device_id]:
@@ -231,8 +232,6 @@ class ModbusClient(AsyncModbusTcpClient, ModbusClientMixin):
                 self._health.last_closed_at = time.monotonic()
 
     async def read_ahead_registers(self, address, count: int = 1, device_id: int = 1, input_type: InputType = InputType.INPUT, no_response_expected: bool = False, trace: bool = False) -> int:
-        from sigenergy2mqtt.metrics import Metrics
-
         """Pre-fetch a register range and populate the read-ahead cache.
 
         Args:
@@ -247,6 +246,8 @@ class ModbusClient(AsyncModbusTcpClient, ModbusClientMixin):
             Modbus exception code from the response. ``0`` indicates success,
             ``-1`` indicates no response object was available.
         """
+        from sigenergy2mqtt.metrics import Metrics
+
         result: int = -1
         rr = await self._read_registers(address, count=count, device_id=device_id, input_type=input_type, no_response_expected=no_response_expected, use_pre_read=False, trace=trace)
         if rr:

@@ -6,11 +6,13 @@ variables.  The single global instance :data:`active_config` is the authoritativ
 source of truth at runtime.  All other modules should read from this instance rather
 than constructing their own.
 
-Typical startup sequence::
+Typical startup sequence (see :mod:`sigenergy2mqtt.config`)::
 
-    found_path = active_config.system_initialize()
-    active_config.persistent_state_path = found_path
-    active_config.load(config_filename)
+    initialize()                    # phase 1: CLI/env parsing, persistent state path
+    await initialize_async()        # phase 2: load YAML, env and auto-discovery
+    await active_config.load(path)  # what phase 2 calls when a config file is found
+
+:meth:`Config.load` and :meth:`Config.reload` are both coroutines.
 
 For testing, use :func:`_swap_active_config` to temporarily replace the global::
 
