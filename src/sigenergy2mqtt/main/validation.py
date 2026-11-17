@@ -10,7 +10,8 @@ from paho.mqtt import MQTTException
 from paho.mqtt.enums import CallbackAPIVersion
 from pymodbus.exceptions import ModbusException
 
-from sigenergy2mqtt.config import active_config
+from sigenergy2mqtt.common import InputType, VoltageSource
+from sigenergy2mqtt.config import ConfigurationError, active_config
 from sigenergy2mqtt.devices import Device
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.persistence import Category, state_store
@@ -19,6 +20,7 @@ from sigenergy2mqtt.sensors.base import (
     ModbusSensorMixin,
     WriteOnlySensorMixin,
 )
+from sigenergy2mqtt.sensors.inverter.read_only import OutputType
 
 from .modbus_helpers import read_registers
 
@@ -30,7 +32,9 @@ async def _validate_modbus_connections() -> None:
 
     Opens a short-lived client for every configured host/port, attempts to
     connect, validates the connected state, logs success, and then closes the
-    socket. No register reads or writes are performed.
+    socket. No register writes are performed, and the only register read is the
+    output type, when ``pvoutput.voltage`` is ``l/l-avg`` (see
+    :func:`_validate_line_to_line_voltage`).
     """
     for index, modbus in enumerate(active_config.modbus):
         if not modbus.host:
@@ -42,8 +46,39 @@ async def _validate_modbus_connections() -> None:
                 if not client.connected:
                     raise ConnectionError(f"Unable to connect to modbus://{modbus.host}:{modbus.port}")
                 logger.info(f"Validated Modbus connection to modbus://{modbus.host}:{modbus.port} (device #{index})")
+                await _validate_line_to_line_voltage(client, index, modbus.host, modbus.port, modbus.inverters)
             finally:
                 client.close()
+
+
+async def _validate_line_to_line_voltage(client: ModbusClient, index: int, host: str, port: int, inverters: list[int]) -> None:
+    """Reject ``pvoutput.voltage = l/l-avg`` when the system is not three-phase.
+
+    The phase count is not in the configuration; it is derived from the output
+    type register of the first configured inverter, exactly as it is when the
+    plant is created at runtime. A register that cannot be read is reported and
+    skipped: only a positive reading of fewer than three phases is an error.
+
+    Raises:
+        ConfigurationError: If the output type has fewer than three phases.
+    """
+    if not active_config.pvoutput.enabled or active_config.pvoutput.voltage != VoltageSource.L_L_AVG or not inverters:
+        return
+    url = f"modbus://{host}:{port}"
+    try:
+        rr = await read_registers(client, OutputType.ADDRESS, 1, inverters[0], InputType.INPUT)
+        if rr is None or rr.isError() or not rr.registers:
+            raise ValueError(f"unexpected response {rr}")
+        phases = OutputType.to_phases(rr.registers[0])
+    except (ModbusException, TimeoutError, OSError, ValueError) as exc:
+        logger.warning(f"Unable to read the output type from {url} (device #{index}) to check that pvoutput.voltage '{VoltageSource.L_L_AVG.value}' is supported: {exc}")
+        return
+    if phases < 3:
+        raise ConfigurationError(
+            f"pvoutput.voltage is '{VoltageSource.L_L_AVG.value}' (line to line average), which requires a three-phase system, "
+            f"but the plant at {url} (device #{index}) has {phases} phase{'s' if phases != 1 else ''}. Use 'l/n-avg', 'phase-a' or 'pv' instead."
+        )
+    logger.info(f"Validated that {url} (device #{index}) is three-phase, as required by pvoutput.voltage '{VoltageSource.L_L_AVG.value}'")
 
 
 def _validate_mqtt_connection(show_credentials: bool) -> None:

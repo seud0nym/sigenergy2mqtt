@@ -389,7 +389,7 @@ class TestSelectSensorWriteable:
 
     @pytest.mark.asyncio
     async def test_numeric_set_value_decimal_string_precision_zero(self, mock_lock_factory, mock_modbus):
-        """NumericSensor should accept decimal strings and (with precision=0) write the integer part."""
+        """NumericSensor should accept decimal strings and write the nearest integer (rounded, not truncated)."""
         with patch.dict(Sensor._used_unique_ids, clear=True), patch.dict(Sensor._used_object_ids, clear=True):
             sensor = NumericSensor(
                 None, "Test", "sigen_num_decimal", InputType.HOLDING, 0, 1, 30104, 1, ModbusClient.DATATYPE.UINT16, 10, "W", None, "mdi:power", 1.0, 0, ProtocolVersion.V2_4, minimum=0, maximum=1000
@@ -402,8 +402,8 @@ class TestSelectSensorWriteable:
 
             result = await sensor.set_value(mock_modbus, MagicMock(), "3.9", cast(str, sensor["command_topic"]), MagicMock())
             assert result is True
-            # 3.9 should be converted to int(3.9) == 3 before writing
-            mock_modbus.write_register.assert_called_with(30104, 3.0, device_id=1, no_response_expected=False)
+            # 3.9 should be rounded to 4 before writing, not truncated to 3
+            mock_modbus.write_register.assert_called_with(30104, 4, device_id=1, no_response_expected=False)
 
 
 class TestSwitchSensorWriteable:

@@ -281,8 +281,8 @@ class TestReadOnlySensorUpdateInternalState:
         modbus.read_input_registers.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_update_internal_state_generic_exception_increments_metrics(self):
-        """Generic exception calls Metrics.modbus_read_error and re-raises."""
+    async def test_update_internal_state_generic_exception_not_double_counted(self):
+        """Generic exception is re-raised; the error metric is recorded once, by ModbusClient."""
         s = self._make_ro("ro_gen_exc")
         modbus = MagicMock()
         modbus.read_holding_registers = AsyncMock(side_effect=ModbusException("generic"))
@@ -294,7 +294,7 @@ class TestReadOnlySensorUpdateInternalState:
         with patch("sigenergy2mqtt.metrics.Metrics", mock_metrics), pytest.raises(Exception, match="generic"):
             await s._update_internal_state(modbus_client=modbus)
 
-        mock_metrics.modbus_read_error.assert_awaited_once()
+        mock_metrics.modbus_read_error.assert_not_awaited()
 
     @pytest.mark.asyncio
     async def test_update_internal_state_debug_logging(self):
@@ -413,3 +413,21 @@ class TestReadableSensorScanIntervalOverride:
                 protocol_version=ProtocolVersion.V2_4,
             )
         assert s.scan_interval == 99
+
+
+class TestHousekeepingFixes:
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("value, expected", [(0, False), (1, True), (0.0, False), (1.0, True), ("yes", True), ("no", False)])
+    async def test_set_debug_logging_accepts_integers(self, value, expected):
+        s = _make_sensor(uid_suffix=f"dbg_{value}", debug=not expected)
+        await s.set_debug_logging(None, _mqtt_mock(), value, "src", MagicMock())
+        assert s.debug_logging is expected
+
+    def test_derived_sensors_keyed_by_unique_id(self):
+        source = _make_sensor(uid_suffix="src")
+        first = MagicMock(unique_id="derived_a")
+        second = MagicMock(unique_id="derived_b")
+        type(first).__name__ = type(second).__name__ = "SameClass"
+        source.add_derived_sensor(first)
+        source.add_derived_sensor(second)
+        assert set(source.derived_sensors) == {"derived_a", "derived_b"}

@@ -25,6 +25,10 @@ from .topic import Topic
 
 logger = logging.getLogger(__name__)
 
+# The service holds its lock across the hourly request for PVOutput system information
+# (10s timeout). Waiting for less than that would drop every update that arrives meanwhile.
+UPDATE_LOCK_TIMEOUT = 15
+
 
 class Calculation(Flag):
     """Bitwise flags describing how topic values are aggregated."""
@@ -77,6 +81,7 @@ class ServiceTopics(dict[str, Topic]):
         self._decimals = decimals
         self._enabled = enabled
         self._last_update_warning: float | None = None
+        self._missing_phase_logged = False
         self._name = value_key.name
         self._persistence_key: str | None = None
         self.requires_donation = donation
@@ -170,33 +175,77 @@ class ServiceTopics(dict[str, Topic]):
                 logger.info(f"{self._service.log_identity} Removed '{value_key.value}' from payload because {count=} and {total=} (allow_negative={self._allow_negative})")
             return False
 
-    def _squared_root_into(self, payload: dict[str, float | int | str], value_key: OutputField | StatusField, datetime_key: str | None = None) -> bool:
-        """Write a line-to-line average voltage estimate into *payload*.
+    def _line_to_line_into(
+        self,
+        payload: dict[str, float | int | str],
+        value_key: OutputField | StatusField,
+        datetime_key: str | None = None,
+        interval_minutes: int | None = None,
+        now: time.struct_time | None = None,
+    ) -> bool:
+        """Write the average line-to-line voltage into *payload*.
+
+        The registered topics carry phase (line-to-neutral) voltages. For phases
+        120° apart, the voltage between two lines is ``sqrt(Va² + Vb² + Va·Vb)``;
+        the three pairs (AB, BC, CA) are averaged. For a balanced system this
+        reduces to ``√3 × V`` (230 V → 398.4 V). When several inverters report
+        the same phase, their readings are averaged first.
+
+        If any of the three phases has no current value the field is omitted for
+        this upload (and the omission logged once) rather than sending a wrong
+        figure. A reading is current when it is positive and, if *interval_minutes*
+        is given, was updated recently enough: a phase that has stopped updating
+        must not keep contributing its last voltage just because the others are
+        fresh. Topic timestamps only advance when MQTT delivers a message, and an
+        unchanged value is only re-published every
+        ``repeated_state_publish_interval`` seconds, so the allowed age is the
+        longest of the upload, scan and repeat intervals plus one scan of slack.
+        If unchanged values are never re-published (a negative repeat interval),
+        a quiet topic cannot be told from a failed one and age is not checked.
 
         Args:
             payload: Payload being assembled.
             value_key: Target payload field for the numeric value.
             datetime_key: Optional payload field for the timestamp.
+            interval_minutes: Upload interval used to decide whether a reading is current.
+            now: Current time for that check (defaults to the present).
         """
-        total, at, count = self.aggregate(exclude_zero=False, square=True)
-        if count > 0 and total is not None and (self._allow_negative or total >= 0.0):
-            payload[value_key.value] = round(math.sqrt(total) / math.sqrt(3), self.decimals if self.decimals > 0 else None)
-            if datetime_key is not None and at is not None:
-                payload[datetime_key] = at
-                if active_config.pvoutput.calc_debug_logging:
-                    logger.debug(
-                        f"{self._service.log_identity} L-L Averaged {self._name}: √{total} / √3 = {payload[value_key.value]} into {value_key.value=} ({datetime_key}={at}) {[(f'{v.state}^2', time.strftime('%H:%M', v.timestamp) if v.timestamp else None) for v in self.values()]}"
-                    )
-            elif active_config.pvoutput.calc_debug_logging:
-                logger.debug(
-                    f"{self._service.log_identity} L-L Averaged {self._name}: √{total} / √3 = {payload[value_key.value]} into {value_key.value=} {[(f'{v.state}^2', time.strftime('%H:%M', v.timestamp) if v.timestamp else None) for v in self.values()]}"
-                )
-            return True
-        else:
+        readings: dict[str, list[float]] = {"A": [], "B": [], "C": []}
+        at: str | None = None
+        now_seconds = time.mktime(now) if now is not None else time.time()
+        repeat_interval = active_config.repeated_state_publish_interval
+        check_age = interval_minutes is not None and isinstance(repeat_interval, (int, float)) and repeat_interval >= 0
+        if self.enabled:
+            for topic in self.values():
+                if topic.phase in readings and topic.timestamp is not None and topic.state is not None and topic.state > 0.0:
+                    if check_age:
+                        updated = topic.timestamp if topic.restore_timestamp is None or topic.timestamp > topic.restore_timestamp else topic.restore_timestamp
+                        scan_interval = topic.scan_interval or 0
+                        if now_seconds - time.mktime(updated) > max(scan_interval, cast(int, interval_minutes) * 60, repeat_interval) + scan_interval:
+                            continue  # stale
+                    readings[cast(str, topic.phase)].append(topic.state * topic.gain)
+                    at = time.strftime("%H:%M", topic.timestamp)
+        missing = [phase for phase, values in readings.items() if not values]
+        if missing:
             if value_key.value in payload:
                 del payload[value_key.value]
-                logger.info(f"{self._service.log_identity} Removed '{value_key.value}' from payload because {count=} and {total=} (allow_negative={self._allow_negative})")
+            if not self._missing_phase_logged:
+                logger.warning(f"{self._service.log_identity} Omitting {self._name} ('{value_key.value}') because phase {'/'.join(missing)} voltage has no current value - line to line average requires all three phases")
+                self._missing_phase_logged = True
             return False
+        self._missing_phase_logged = False
+        va, vb, vc = (sum(values) / len(values) for values in readings.values())
+        line_voltages = [math.sqrt(x * x + y * y + x * y) for x, y in ((va, vb), (vb, vc), (vc, va))]
+        payload[value_key.value] = round(sum(line_voltages) / 3, self.decimals if self.decimals > 0 else None)
+        at_desc = ""
+        if datetime_key is not None and at is not None:
+            payload[datetime_key] = at
+            at_desc = f" ({datetime_key}={at})"
+        if active_config.pvoutput.calc_debug_logging:
+            logger.debug(
+                f"{self._service.log_identity} L-L Averaged {self._name}: phases A={va} B={vb} C={vc} -> lines AB={line_voltages[0]} BC={line_voltages[1]} CA={line_voltages[2]} = {payload[value_key.value]} into {value_key.value=}{at_desc}"
+            )
+        return True
 
     def _sum_into(self, payload: dict[str, float | int | str], value_key: OutputField | StatusField, datetime_key: str | None = None) -> bool:
         """Write a summed or differential value into *payload*.
@@ -238,18 +287,17 @@ class ServiceTopics(dict[str, Topic]):
             if self.calculation & (Calculation.AVERAGE | Calculation.MEAN):
                 return self._average_into(payload, self._value_key, self._datetime_key, exclude_zero=(Calculation.AVERAGE in self.calculation))
             elif Calculation.L_L_AVG in self.calculation:
-                return self._squared_root_into(payload, self._value_key, self._datetime_key)
+                return self._line_to_line_into(payload, self._value_key, self._datetime_key, interval_minutes, now)
             else:  # SUM
                 return self._sum_into(payload, self._value_key, self._datetime_key)
         else:
             return False
 
-    def aggregate(self, exclude_zero: bool, square: bool = False, never_return_none: bool = False) -> tuple[float | None, str | None, int]:
+    def aggregate(self, exclude_zero: bool, never_return_none: bool = False) -> tuple[float | None, str | None, int]:
         """Aggregate topic states and return total, latest time, and count.
 
         Args:
             exclude_zero: Whether to ignore zero-valued states.
-            square: Whether to square each value before summing.
             never_return_none: Whether to return ``0.0`` instead of ``None``.
         """
         if not self.enabled:
@@ -286,10 +334,7 @@ class ServiceTopics(dict[str, Topic]):
                                 logger.warning(f"{self._service.log_identity} Skipped converting {self._name} energy to power: {hours:.3f} ({topic.topic}) ????")
                     else:
                         continue
-                if square:
-                    total += state**2 * topic.gain
-                else:
-                    total += state * topic.gain
+                total += state * topic.gain
                 if active_config.pvoutput.calc_debug_logging:
                     logger.debug(f"{self._service.log_identity} Applied gain to {self._name}: {state}*{topic.gain}={state * topic.gain} ({topic.topic}) and added to running {total=}")
                 at = time.strftime("%H:%M", topic.timestamp)
@@ -435,7 +480,7 @@ class ServiceTopics(dict[str, Topic]):
             if Calculation.PEAK not in self.calculation or (self[topic].state is not None and state > cast(float, self[topic].state)):
                 if active_config.pvoutput.update_debug_logging:
                     logger.debug(f"{self._service.log_identity} Updating {self._name} from topic {topic} {value=}")
-                async with self._service.lock(timeout=1):
+                async with self._service.lock(timeout=UPDATE_LOCK_TIMEOUT):
                     state_was = self[topic].state
                     self[topic].state = state
                     self[topic].timestamp = time.localtime()

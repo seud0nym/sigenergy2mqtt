@@ -353,13 +353,17 @@ async def test_invalid_envelope_handling(temp_state_dir, mock_persistence_config
     store = StateStore()
     await store.initialise(temp_state_dir, mock_persistence_config)
 
-    # Manually create invalid JSON
+    # A truncated envelope (as left by an interrupted write) is treated as absent
     path = temp_state_dir / "test" / "key"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("{invalid json", encoding="utf-8")
 
     loaded = await store.load("test", "key")
-    assert loaded == "{invalid json"
+    assert loaded is None
+
+    # A legacy raw (non-JSON) value is still accepted and migrated
+    path.write_text("123.45", encoding="utf-8")
+    assert await store.load("test", "key") == "123.45"
 
 
 @pytest.mark.asyncio

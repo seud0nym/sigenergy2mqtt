@@ -106,10 +106,7 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
             self.mark_read_failed()
             return False
         except (ModbusException, OSError):
-            from sigenergy2mqtt.metrics import Metrics
-
-            # Record error in metrics
-            await Metrics.modbus_read_error()
+            # Read and error metrics are recorded by ModbusClient._read_registers.
             raise
 
     def _log_read_attempt(self) -> None:
@@ -143,11 +140,6 @@ class ReadOnlySensor(TypedSensorMixin, ReadableSensorMixin, ModbusSensorMixin, S
             raise ValueError(f"{self.log_identity}: Unknown input type '{self.input_type}'")
 
         elapsed = time.monotonic() - start
-
-        # Record metrics
-        from sigenergy2mqtt.metrics import Metrics
-
-        await Metrics.modbus_read(self.count, elapsed)
 
         # Check response validity
         result = self._check_register_response(rr, f"read_{self.input_type}_registers", **kwargs)

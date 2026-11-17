@@ -487,8 +487,8 @@ class ModbusWriteableSensorMixin(TypedSensorMixin, ModbusSensorMixin, WriteableS
         if self.data_type == ModbusDataType.STRING:
             return modbus_client.convert_to_registers(str(raw_value), cast(Any, self.data_type))
 
-        # Numeric values
-        return modbus_client.convert_to_registers(int(raw_value), cast(Any, self.data_type))
+        # Numeric values are rounded to the nearest register value, never truncated
+        return modbus_client.convert_to_registers(raw_value if isinstance(raw_value, int) else round(float(raw_value)), cast(Any, self.data_type))
 
     async def _perform_modbus_write(self, modbus_client: ModbusClient, registers: list[int], device_id: int, no_response_expected: bool, method: str) -> bool:
         """Perform the actual Modbus write operation.

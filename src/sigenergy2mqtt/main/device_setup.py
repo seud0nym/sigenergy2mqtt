@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from collections.abc import Mapping
-from typing import Any, cast
+from typing import Any
 
 from pymodbus.exceptions import ModbusException
 
@@ -16,7 +16,11 @@ from sigenergy2mqtt.devices import (
     PowerPlant,
     bind_cross_device_sensors,
 )
-from sigenergy2mqtt.devices.cloud import CloudDiscovery, discover_cloud, discover_operational_modes
+from sigenergy2mqtt.devices.cloud import (
+    CloudDiscovery,
+    discover_cloud,
+    discover_operational_modes,
+)
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.modbus.client import CONNECTIVITY
 from sigenergy2mqtt.mqtt import mqtt_reconnection_interrupted
@@ -86,7 +90,7 @@ async def _wait_for_modbus(modbus: ModbusClient, host: str, port: int) -> None:
         await modbus.connect()
     outage.success()
 
-_GRID_RESTORE_WATCH_TASKS: set[tuple[str, int, int]] = set()
+_GRID_RESTORE_WATCH_TASKS: dict[tuple[str, int, int], asyncio.Task] = {}
 
 
 def _cloud_control_plant_index(device_list: list[dict[str, Any]]) -> int | None:
@@ -255,7 +259,7 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
                     plant=plant,
                     modbus_client=modbus,
                     config=config,
-                    protocol_version=protocol_version,
+                    protocol_version=plant.protocol_version,
                     sequence_start=ac_charger_sequence,
                     total_count=total_ac_chargers,
                     inverter_firmware_versions=inverter_firmware_versions,
@@ -267,7 +271,7 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
                     seen_serial_numbers=seen_serial_numbers,
                     modbus_client=modbus,
                     config=config,
-                    protocol_version=protocol_version,
+                    protocol_version=plant.protocol_version,
                     sequence_start=pid_sequence,
                     total_count=len(device.pid) if device.pid else 0,
                     inverter_firmware_versions=inverter_firmware_versions,
@@ -279,7 +283,7 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
                     seen_serial_numbers=seen_serial_numbers,
                     modbus_client=modbus,
                     config=config,
-                    protocol_version=protocol_version,
+                    protocol_version=plant.protocol_version,
                     sequence_start=pss_sequence,
                     total_count=len(device.pss) if device.pss else 0,
                     inverter_firmware_versions=inverter_firmware_versions,
@@ -289,29 +293,61 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
                 bind_cross_device_sensors(plant_index)
 
                 # Set the min/max bounds for Active/Reactive Power Fixed Adjustment Target Value
-                total_rated_active_power: int = 0
-                for i in config.devices:
-                    if isinstance(i, Inverter) and i.plant_index == plant_index:
-                        sensor = i.get_sensor(RatedActivePower, search_children=True)
-                        if sensor is None:
-                            logger.warning(f"{i.log_identity} RatedActivePower sensor not found - cannot set bounds for Active/Reactive Power Fixed Adjustment Target Value sensors")
-                        else:
-                            rap = await get_state(sensor, modbus, "inverter", raw=True)
-                            if rap is not None:
-                                total_rated_active_power += cast(int, rap)
-                            else:
-                                logger.warning(f"{i.log_identity} Failed to acquire RatedActivePower")
-                if total_rated_active_power > 0:
-                    for sensor in [s for s in plant.sensors.values() if isinstance(s, (ActivePowerFixedAdjustmentTargetValue, PhaseActivePowerFixedAdjustmentTargetValue))]:
-                        sensor.apply_min_max(-total_rated_active_power, total_rated_active_power)
-                    for sensor in [s for s in plant.sensors.values() if isinstance(s, (ReactivePowerFixedAdjustmentTargetValue, PhaseReactivePowerFixedAdjustmentTargetValue))]:
-                        sensor.apply_min_max(-60 * total_rated_active_power, 60 * total_rated_active_power)
+                await _apply_power_adjustment_bounds(plant_index, plant, modbus, config)
 
             logger.debug(f"Disconnecting from modbus://{device.host}:{device.port} - register probing complete")
 
     await _setup_cloud_control()
 
     return thread_config_registry.get_all(), protocol_version
+
+
+# Protocol register 40003: "Range: [-60.00 * base value, 60.00 * base value]", where the
+# base value is the rated power and the multiplier is a percentage (maintainer decision 2026-11-16).
+REACTIVE_POWER_ADJUSTMENT_RATIO: float = 0.6
+
+
+async def _apply_power_adjustment_bounds(plant_index: int, plant: PowerPlant, modbus_client: ModbusClient, config: ThreadConfig) -> None:
+    """Bound the fixed power adjustment targets by the plant's total rated active power.
+
+    Active targets are limited to ±rated kW and reactive targets to ±60 % of
+    rated power (in kvar). ``apply_min_max`` takes display units and applies the
+    sensor gain itself, so the rated power is read as a display value (kW)
+    rather than as the raw register value (W).
+
+    The protocol gives no separate base value for the per-phase targets, so they
+    get the plant total as well: no single phase can exceed it.
+
+    The limits are only applied when the rated power of every inverter in the
+    plant is known. A partial total would under-state the plant's capability and
+    reject valid commands, so in that case the sensors keep their existing ranges.
+    """
+    total_rated_active_power: float = 0.0
+    complete = True
+    for i in config.devices:
+        if isinstance(i, Inverter) and i.plant_index == plant_index:
+            sensor = i.get_sensor(RatedActivePower, search_children=True)
+            if sensor is None:
+                logger.warning(f"{i.log_identity} RatedActivePower sensor not found - cannot set bounds for Active/Reactive Power Fixed Adjustment Target Value sensors")
+                complete = False
+            else:
+                rap = await get_state(sensor, modbus_client, "inverter")
+                if isinstance(rap, (int, float)) and not isinstance(rap, bool):
+                    total_rated_active_power += float(rap)
+                else:
+                    logger.warning(f"{i.log_identity} Failed to acquire RatedActivePower")
+                    complete = False
+    if not complete:
+        logger.warning(f"Plant {plant_index} total rated active power is incomplete - leaving the Active/Reactive Power Fixed Adjustment Target Value bounds unchanged")
+        return
+    if total_rated_active_power <= 0:
+        return
+    active_limit = round(total_rated_active_power, 3)
+    reactive_limit = round(total_rated_active_power * REACTIVE_POWER_ADJUSTMENT_RATIO, 3)
+    for sensor in [s for s in plant.sensors.values() if isinstance(s, (ActivePowerFixedAdjustmentTargetValue, PhaseActivePowerFixedAdjustmentTargetValue))]:
+        sensor.apply_min_max(-active_limit, active_limit)
+    for sensor in [s for s in plant.sensors.values() if isinstance(s, (ReactivePowerFixedAdjustmentTargetValue, PhaseReactivePowerFixedAdjustmentTargetValue))]:
+        sensor.apply_min_max(-reactive_limit, reactive_limit)
 
 
 async def _setup_ac_chargers(
@@ -392,22 +428,35 @@ async def _setup_dc_chargers(
         return sequence_start
 
     sequence_number = sequence_start
+    skipped_due_to_outage = False
     for device_address in device.dc_chargers:  # type: ignore[reportGeneralTypeIssues]
         if device_address not in inverters:
             logger.warning(f"DC charger at address {device_address} has no associated inverter (inverter may have been skipped as a duplicate) - skipping DC charger")
             continue
         sequence_number += 1
-        charger = await make_dc_charger(
-            plant_index=plant_index,
-            device_address=device_address,
-            modbus_client=modbus_client,
-            plant=plant,
-            inverter_unique_id=inverters[device_address],
-            sequence_number=sequence_number,
-            total_count=total_count,
-        )
-        config.add_device(charger)
-        await validate_publishable_sensors(modbus_client, charger, inverter_firmware_versions)
+        try:
+            charger = await make_dc_charger(
+                plant_index=plant_index,
+                device_address=device_address,
+                modbus_client=modbus_client,
+                plant=plant,
+                inverter_unique_id=inverters[device_address],
+                sequence_number=sequence_number,
+                total_count=total_count,
+            )
+            config.add_device(charger)
+            await validate_publishable_sensors(modbus_client, charger, inverter_firmware_versions)
+        except (TimeoutError, ModbusException, ValueError, OSError, RuntimeError) as exc:
+            is_outage = await _is_grid_outage(plant_index, modbus_client)
+            if is_outage is True:
+                logger.warning(f"DC charger at address {device_address} initialization failed during grid outage; skipping this startup pass so other devices continue: {exc}")
+                skipped_due_to_outage = True
+                continue
+
+            logger.error(f"Failed to initialize DC charger at address {device_address}; skipping: {exc}")
+
+    if skipped_due_to_outage:
+        _schedule_restart_on_grid_restore(device, plant_index)
 
     return sequence_number
 
@@ -519,7 +568,9 @@ async def _is_grid_outage(plant_index: int, modbus_client: ModbusClient) -> bool
     grid_status = GridStatus(plant_index)
     try:
         raw_status = await grid_status.get_state(raw=True, modbus_client=modbus_client)
-    except (TimeoutError, ModbusException) as exc:
+    except (TimeoutError, ModbusException, OSError, ValueError, RuntimeError) as exc:
+        # Called while handling another failure, so no error here may escape (ValueError
+        # includes a reading rejected by the sanity check)
         logger.debug(f"Unable to probe GridStatus for outage detection: {exc}")
         return None
 
@@ -535,25 +586,46 @@ async def _is_grid_outage(plant_index: int, modbus_client: ModbusClient) -> bool
 
 async def _watch_grid_restore_and_request_restart(host: str, port: int, timeout: float, retries: int, plant_index: int) -> None:
     """Watch GridStatus and request runtime restart once grid returns on-line."""
-    key = (host, port, plant_index)
-    try:
-        while True:
+    while True:
+        try:
             modbus = ModbusClient(host, port=port, timeout=timeout, retries=retries)
             async with modbus:
                 if modbus.connected:
                     is_outage = await _is_grid_outage(plant_index, modbus)
                     if is_outage is False:
-                        restart_controller.request(f"grid restored for deferred device setup (AC charger, PID or PSS) on modbus://{host}:{port} plant {plant_index}")
+                        restart_controller.request(f"grid restored for skipped device setup on modbus://{host}:{port} plant {plant_index}")
                         return
-            await asyncio.sleep(10)
-    finally:
-        _GRID_RESTORE_WATCH_TASKS.discard(key)
+        except (ModbusException, OSError, RuntimeError) as exc:
+            # The host is often unreachable during the outage being watched: keep watching
+            logger.debug(f"Grid-restore watcher for modbus://{host}:{port} plant {plant_index} failed to probe: {exc!r}")
+        await asyncio.sleep(10)
 
 
 def _schedule_restart_on_grid_restore(device, plant_index: int) -> None:
     key = (device.host, device.port, plant_index)
     if key in _GRID_RESTORE_WATCH_TASKS:
         return
-    _GRID_RESTORE_WATCH_TASKS.add(key)
-    logger.info(f"Scheduling grid-restore watcher for modbus://{device.host}:{device.port} plant {plant_index} due to a device skipped during an outage (AC charger, PID or PSS)")
-    asyncio.create_task(_watch_grid_restore_and_request_restart(device.host, device.port, device.timeout, device.retries, plant_index))
+    logger.info(f"Scheduling grid-restore watcher for modbus://{device.host}:{device.port} plant {plant_index} because device setup was skipped during a grid outage")
+    # The event loop only keeps a weak reference to a task, so hold one here
+    task = asyncio.create_task(_watch_grid_restore_and_request_restart(device.host, device.port, device.timeout, device.retries, plant_index))
+    _GRID_RESTORE_WATCH_TASKS[key] = task
+
+    def finished(done: asyncio.Task) -> None:
+        if _GRID_RESTORE_WATCH_TASKS.get(key) is done:
+            del _GRID_RESTORE_WATCH_TASKS[key]
+        if not done.cancelled() and (error := done.exception()) is not None:
+            logger.error(f"Grid-restore watcher for modbus://{key[0]}:{key[1]} plant {plant_index} failed; the skipped devices will not be set up until the next restart", exc_info=error)
+
+    task.add_done_callback(finished)
+
+
+def cancel_grid_restore_watchers() -> None:
+    """Cancel the grid-restore watchers of a previous runtime cycle.
+
+    A watcher left running across a restart would request another, redundant,
+    restart as soon as it saw the grid; the new cycle schedules its own if it
+    still needs one.
+    """
+    for task in list(_GRID_RESTORE_WATCH_TASKS.values()):
+        task.cancel()
+    _GRID_RESTORE_WATCH_TASKS.clear()

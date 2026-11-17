@@ -344,3 +344,16 @@ def test_device_registry():
 
     l2 = DeviceRegistry.get(99)
     assert l2 == []
+
+
+def test_device_get_sensor_searches_grandchildren(device):
+    child = Device("Child", 0, "child_uid2", "mf", "model", ProtocolVersion.V1_8)
+    grandchild = Device("Grandchild", 0, "grandchild_uid", "mf", "model", ProtocolVersion.V1_8)
+    s_deep = DummyReadable("s_deep", publishable=True)
+    grandchild._add_sensor(s_deep)
+    child._add_child_device(grandchild)
+    device._add_child_device(child)
+
+    assert device.get_sensor("s_deep", search_children=True) == s_deep
+    assert device.get_sensor(DummyReadable, search_children=True) is s_deep
+    assert device.get_sensor("s_deep") is None

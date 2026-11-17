@@ -159,3 +159,45 @@ class TestSanityCheck:
         sc = SanityCheck(delta=True, max_raw=10)
         # Previous state is a string
         assert sc.is_sane(100, [(0, "unknown")]) is True
+
+
+class TestLifetimeCounterSanityCheck:
+    """TOTAL_INCREASING counters are only required not to decrease (no maximum delta)."""
+
+    @pytest.mark.parametrize("data_type", [ModbusClient.DATATYPE.UINT32, ModbusClient.DATATYPE.UINT64])
+    @pytest.mark.parametrize("unit", ["kWh", "Wh"])
+    def test_no_maximum_delta(self, data_type, unit):
+        from sigenergy2mqtt.common import DeviceClass
+
+        sc = SanityCheck(unit=unit, device_class=DeviceClass.ENERGY, state_class=StateClass.TOTAL_INCREASING, data_type=data_type, gain=1000)
+        assert sc.delta is True
+        assert sc.min_raw == 0
+        assert sc.max_raw is None
+        assert sc._default_kw_applied is False
+
+    def test_catch_up_jump_is_accepted_and_decrease_rejected(self):
+        from sigenergy2mqtt.common import DeviceClass
+
+        sc = SanityCheck(unit="kWh", device_class=DeviceClass.ENERGY, state_class=StateClass.TOTAL_INCREASING, data_type=ModbusClient.DATATYPE.UINT64, gain=1000)
+        # A large positive jump (catch-up after a long outage) is legitimate
+        assert sc.is_sane(10**15, [(0, 1000)]) is True
+        # A decrease is not
+        with pytest.raises(SanityCheckException):
+            sc.is_sane(999, [(0, 1000)])
+        # ...except a reset to zero
+        assert sc.is_sane(0, [(0, 1000)]) is True
+
+    def test_total_energy_sensor_keeps_default_kw_limit(self):
+        """The same sensor declared TOTAL (not TOTAL_INCREASING) is still limited."""
+        from sigenergy2mqtt.common import DeviceClass
+
+        sc = SanityCheck(unit="kWh", device_class=DeviceClass.ENERGY, state_class=StateClass.TOTAL, data_type=ModbusClient.DATATYPE.UINT64, gain=1000)
+        assert sc.delta is True
+        assert sc.max_raw == 500000
+        assert sc.min_raw == -500000
+
+    def test_explicit_range_is_kept(self):
+        sc = SanityCheck(unit="kW", data_type=ModbusClient.DATATYPE.INT32, min_raw=-5, max_raw=5)
+        assert (sc.min_raw, sc.max_raw) == (-5, 5)
+        sc = SanityCheck(unit="kW", data_type=ModbusClient.DATATYPE.INT32, max_raw=5)
+        assert (sc.min_raw, sc.max_raw) == (None, 5)

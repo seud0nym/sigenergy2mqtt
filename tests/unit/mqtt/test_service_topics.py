@@ -197,7 +197,9 @@ def test_aggregate_logging_no_dt(caplog):
         # L-L Avg
         caplog.clear()
         st = make_st(calc=Calc.L_L_AVG | Calc.PEAK)
-        st.register(Topic("t1", state=10.0, timestamp=time.localtime()))
+        st.register(Topic("a", state=10.0, timestamp=time.localtime(), phase="A"))
+        st.register(Topic("b", state=10.0, timestamp=time.localtime(), phase="B"))
+        st.register(Topic("c", state=10.0, timestamp=time.localtime(), phase="C"))
         payload = {}
         st.add_to_payload(payload, 5, time.localtime())
         assert "L-L Averaged" in caplog.text
@@ -221,6 +223,9 @@ def test_aggregate_logging_with_dt(caplog):
         assert "Summed" in caplog.text
         # Switch to L-L
         st.calculation = Calc.L_L_AVG | Calc.PEAK
+        st.register(Topic("a", state=10.0, timestamp=time.localtime(), phase="A"))
+        st.register(Topic("b", state=10.0, timestamp=time.localtime(), phase="B"))
+        st.register(Topic("c", state=10.0, timestamp=time.localtime(), phase="C"))
         st.add_to_payload({}, 5, time.localtime())
         assert "L-L Averaged" in caplog.text
 
@@ -244,7 +249,7 @@ def test_payload_deletion_and_remaining_gaps(caplog):
     assert "g" not in payload
     assert "Removed 'g' from payload" in caplog.text
 
-    # 123-126: _squared_root_into fails with key in payload
+    # _line_to_line_into fails (no phase voltages) with key in payload
     st = make_st(calc=Calc.L_L_AVG | Calc.PEAK, value_key=OutputField.GENERATION)
     payload = {"g": 123}
     assert st.add_to_payload(payload, 5, time.localtime()) is False
@@ -257,7 +262,9 @@ def test_payload_deletion_and_remaining_gaps(caplog):
     with _swap_active_config(cfg_obj):
         st = make_st(calc=Calc.L_L_AVG | Calc.PEAK, value_key=OutputField.GENERATION)
         st._datetime_key = "dt"
-        st.register(Topic("t1", state=10.0, timestamp=time.localtime()))
+        st.register(Topic("a", state=10.0, timestamp=time.localtime(), phase="A"))
+        st.register(Topic("b", state=10.0, timestamp=time.localtime(), phase="B"))
+        st.register(Topic("c", state=10.0, timestamp=time.localtime(), phase="C"))
         st.add_to_payload({}, 5, time.localtime())
         assert "L-L Averaged" in caplog.text
         assert "dt=" in caplog.text

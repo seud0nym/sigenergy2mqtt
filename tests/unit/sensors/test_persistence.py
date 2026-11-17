@@ -3,7 +3,7 @@ import json
 import logging
 import time
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -270,7 +270,7 @@ async def test_accumulation_sensor_optimization(mock_config, tmp_path):
     current_mtime = fpath.stat().st_mtime
     assert current_mtime == initial_mtime, f"File was rewritten despite no change! {initial_mtime} != {current_mtime}"
 
-    # 3. Third update: Change value -> Should persist
+    # 3. Third update: Change value within the throttle interval -> held in memory, not written
     # 1000W for 1 hour = 1000Wh increment
     # New total = 2000.0
     now = time.time()
@@ -280,9 +280,22 @@ async def test_accumulation_sensor_optimization(mock_config, tmp_path):
     await asyncio.sleep(0.5)
 
     assert sensor._current_total == 2000.0
-    assert json.loads(fpath.read_text())["v"] == "2000.0"
-    assert fpath.stat().st_mtime > initial_mtime
+    assert json.loads(fpath.read_text())["v"] == "1000.0"
+    assert fpath.stat().st_mtime == initial_mtime
+    # ...but the held-back value is what a load returns
+    assert await state_store.load("sensor", "sigen_accum_opt.state") == "2000.0"
 
-    assert sensor._current_total == 2000.0
-    assert json.loads(fpath.read_text())["v"] == "2000.0"
-    assert fpath.stat().st_mtime > initial_mtime
+    # 4. A reset is always written immediately
+    await sensor.notify(None, MagicMock(), 5000.0, sensor._reset_topic, MagicMock())
+    assert json.loads(fpath.read_text())["v"] == "5000.0"
+
+    # 5. A further throttled update is flushed to disk on shutdown
+    now = time.time()
+    source._states = [(now - 3600, 1000.0), (now, 1000.0)]
+    source.latest_raw_state = 1000.0
+    sensor.update_from_source_sensor(source)
+    await asyncio.sleep(0.5)
+    assert sensor._current_total == 6000.0
+    assert json.loads(fpath.read_text())["v"] == "5000.0"
+    state_store.shutdown()
+    assert json.loads(fpath.read_text())["v"] == "6000.0"

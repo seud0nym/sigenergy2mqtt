@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 
 def format_duration(seconds: float) -> str:
     """Format *seconds* as a compact human-readable duration (e.g. ``4m 12s``)."""
-    seconds = max(0, int(round(seconds)))
+    seconds = max(0, round(seconds))
     hours, remainder = divmod(seconds, 3600)
     minutes, secs = divmod(remainder, 60)
     if hours:

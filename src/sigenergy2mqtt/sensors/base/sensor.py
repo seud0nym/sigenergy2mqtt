@@ -534,7 +534,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
             sensor: The derived sensor to add
         """
 
-        self.derived_sensors[sensor.__class__.__name__] = sensor
+        self.derived_sensors[sensor.unique_id or sensor.__class__.__name__] = sensor
 
     def apply_device_overrides(self, registers: RegisterAccess | None) -> None:
         """Apply device-level publishable overrides.
@@ -1024,7 +1024,10 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
             if active_config.home_assistant.enabled:
                 self.publish_availability(mqtt_client, "offline")
             raise
-        except (ModbusException, SanityCheckException) as e:
+        except TimeoutError:
+            # Not an I/O failure of the transport (e.g. a lock or service timeout): leave it to the caller
+            raise
+        except (ModbusException, SanityCheckException, OSError) as e:
             await Metrics.mqtt_publish_attempt(physical_publish=False)
             await Metrics.mqtt_publish_failure()
             return self._handle_publish_error(mqtt_client, transport, e)
@@ -1230,6 +1233,13 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
             reason.
         """
         message = mqtt_client.publish(topic, payload, qos=qos, retain=retain)
+        # QoS 0 messages are fire-and-forget: a successful hand-off to the paho queue
+        # (rc == 0) is all that can be known, so do not stall the event loop waiting.
+        queued_only = qos == 0 and timeout == 0.5 and message.rc == mqtt.MQTT_ERR_SUCCESS
+        if queued_only:
+            if self.debug_logging:
+                logger.debug(f"{self.log_identity} Queued state={payload} to topic {topic} ({qos=} {retain=})")
+            return True
         if timeout is None or timeout >= 0:
             message.wait_for_publish(timeout=timeout)
         if message.is_published():
@@ -1272,7 +1282,9 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         if not self._failed_during_outage:
             logger.warning(message)
 
-        if transport and transport.connected:
+        if isinstance(error, SanityCheckException) or (transport and transport.connected):
+            # A rejected value says nothing about the transport, so it is counted whether or
+            # not there is one; sensors polled without a transport would otherwise raise.
             self._update_failure_count(error)
         else:
             raise error
@@ -1498,7 +1510,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
             True if value was updated and should be published, False if value was suppressed as a repeated
         """
         state: bool | None = None
-        if isinstance(value, float) and value == 0 or value == 1:
+        if isinstance(value, (int, float)) and value in (0, 1):
             state = bool(value)
         elif isinstance(value, str):
             match value.lower():
@@ -1681,9 +1693,9 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
             value *= self.gain
 
         # Preserve structured and other non-numeric state types. Numeric
-        # values retain the historical integer conversion used for Modbus
-        # writes.
-        return int(value) if isinstance(value, (float, int)) else value
+        # values are converted to the nearest integer for Modbus writes
+        # (rounded, not truncated: 0.29 * 100 is 28.999999999999996).
+        return round(value) if isinstance(value, (float, int)) else value
 
     def __eq__(self, other: object) -> bool:
         """Check equality based on unique_id."""

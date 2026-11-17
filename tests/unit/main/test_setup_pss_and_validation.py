@@ -167,14 +167,8 @@ async def test_watch_grid_restore_cancelled():
         with patch("sigenergy2mqtt.main.device_setup._is_grid_outage", new_callable=AsyncMock) as mock_outage, patch("asyncio.sleep", side_effect=asyncio.CancelledError):
             mock_outage.return_value = True  # Still in outage
 
-            # Pretend key was added to set
-            key = ("host", 502, 0)
-            _GRID_RESTORE_WATCH_TASKS.add(key)
-
             with pytest.raises(asyncio.CancelledError):
                 await _watch_grid_restore_and_request_restart("host", 502, 1.0, 1, 0)
-
-            assert key not in _GRID_RESTORE_WATCH_TASKS
 
 
 def test_schedule_restart_on_grid_restore_already_watched():
@@ -183,13 +177,14 @@ def test_schedule_restart_on_grid_restore_already_watched():
     mock_device.port = 502
 
     key = ("host2", 502, 0)
-    _GRID_RESTORE_WATCH_TASKS.add(key)
+    _GRID_RESTORE_WATCH_TASKS[key] = MagicMock()
 
-    with patch("asyncio.create_task") as mock_create:
-        _schedule_restart_on_grid_restore(mock_device, 0)
-        mock_create.assert_not_called()
-
-    _GRID_RESTORE_WATCH_TASKS.remove(key)
+    try:
+        with patch("asyncio.create_task") as mock_create:
+            _schedule_restart_on_grid_restore(mock_device, 0)
+            mock_create.assert_not_called()
+    finally:
+        del _GRID_RESTORE_WATCH_TASKS[key]
 
 
 # ---------------------------------------------------------------------------
