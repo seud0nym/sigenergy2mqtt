@@ -54,6 +54,9 @@ class DummyDevice:
     def publish_discovery(self, mqtt_client, clean: bool = False):
         return None
 
+    async def publish_discovery_async(self, mqtt_client, clean: bool = False):
+        return None
+
     def publish_attributes(self, mqtt_client, clean: bool = False):
         return None
 

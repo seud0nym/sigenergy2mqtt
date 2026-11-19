@@ -71,6 +71,10 @@ class SettingsService(Device):
         """Remove retained settings discovery whenever MQTT publishing is disabled."""
         return super().publish_discovery(mqtt_client, clean=clean or not active_config.runtime_config_enabled)
 
+    async def publish_discovery_async(self, mqtt_client: mqtt.Client, clean: bool = False) -> mqtt.MQTTMessageInfo | None:
+        """Async variant of :meth:`publish_discovery`."""
+        return await super().publish_discovery_async(mqtt_client, clean=clean or not active_config.runtime_config_enabled)
+
     def publish_availability(self, mqtt_client: mqtt.Client, ha_state: bytes | str, qos: int = 2) -> None:
         """Allow retained availability removal without advertising disabled settings."""
         if active_config.runtime_config_enabled or ha_state == b"":

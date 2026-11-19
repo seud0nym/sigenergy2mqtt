@@ -118,6 +118,7 @@ class TestAsyncMainExitStatus:
         with patches[0], patches[1], patches[2], patch.object(main_module, "setup_devices", setup_devices), patches[4], patches[5], patches[6], patches[7], patches[8], patches[9]:
             assert await main_module.async_main() == 0
         start.assert_not_awaited()
+        state_store.shutdown.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_signal_during_slow_device_probe_is_not_lost(self):
@@ -150,7 +151,6 @@ class TestAsyncMainExitStatus:
             assert await task == 0
 
         start.assert_not_awaited()
-        state_store.shutdown.assert_called_once()
         state_store.shutdown.assert_called_once()
 
     @pytest.mark.asyncio

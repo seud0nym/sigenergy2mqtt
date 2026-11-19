@@ -532,6 +532,10 @@ class MonitorService(Device):
             ``None`` because discovery is not published for this service.
         """
 
+    async def publish_discovery_async(self, mqtt_client: mqtt.Client, clean: bool = False) -> mqtt.MQTTMessageInfo | None:
+        """No-op: discovery is not published for this service."""
+        return None
+
     def schedule(self, transport: Any, mqtt_client: mqtt.Client) -> list[Awaitable[None]]:
         """Return the monitor coroutine(s) to schedule for this service.
 

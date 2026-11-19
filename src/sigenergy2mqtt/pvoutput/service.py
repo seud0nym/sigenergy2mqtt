@@ -95,6 +95,10 @@ class Service(Device):
             clean: Cleanup mode flag (unused).
         """
 
+    async def publish_discovery_async(self, mqtt_client: mqtt.Client, clean=False) -> mqtt.MQTTMessageInfo | None:
+        """No-op override: PVOutput services are not Home Assistant entities."""
+        return None
+
     # endregion
 
     def get_response_headers(self, response: requests.Response) -> tuple[int | None, int | None, float | None, float | None]:

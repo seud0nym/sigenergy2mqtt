@@ -5,6 +5,7 @@ broker must allow anonymous clients; ``SIGENERGY_TEST_MQTT_PORT`` defaults to
 1883.
 """
 
+import asyncio
 import os
 import socket
 import threading
@@ -13,6 +14,9 @@ import uuid
 
 import paho.mqtt.client as mqtt
 import pytest
+
+from sigenergy2mqtt.mqtt.client import STATUS_OFFLINE, STATUS_ONLINE, MqttClient
+from sigenergy2mqtt.mqtt.handler import MqttHandler
 
 
 @pytest.mark.integration
@@ -29,8 +33,10 @@ def test_broker_publishes_retained_will_after_ungraceful_disconnect():
     payloads: list[bytes] = []
 
     subscriber = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=f"se2m-sub-{suffix}")
-    publisher = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=f"se2m-pub-{suffix}")
-    publisher.will_set(topic, payload=b"offline", qos=1, retain=True)
+    # Use the application's own client so its Will configuration is what is under test
+    loop = asyncio.new_event_loop()
+    publisher_id = f"se2m-pub-{suffix}"
+    publisher = MqttClient(publisher_id, MqttHandler(publisher_id, None, loop), status_topic=topic)
 
     def on_subscriber_connect(client, userdata, flags, reason_code, properties):
         assert reason_code == 0
@@ -42,7 +48,7 @@ def test_broker_publishes_retained_will_after_ungraceful_disconnect():
 
     def on_message(client, userdata, message):
         payloads.append(message.payload)
-        if message.payload == b"offline":
+        if message.payload == STATUS_OFFLINE.encode():
             received_offline.set()
 
     def on_publisher_connect(client, userdata, flags, reason_code, properties):
@@ -63,11 +69,11 @@ def test_broker_publishes_retained_will_after_ungraceful_disconnect():
         publisher.connect(host, port, keepalive=10)
         publisher.loop_start()
         assert publisher_connected.wait(10), "publisher did not connect"
-        publisher.publish(topic, payload=b"online", qos=1, retain=True).wait_for_publish(timeout=5)
+        publisher.publish_status(STATUS_ONLINE).wait_for_publish(timeout=5)
         deadline = time.monotonic() + 5
-        while b"online" not in payloads and time.monotonic() < deadline:
+        while STATUS_ONLINE.encode() not in payloads and time.monotonic() < deadline:
             time.sleep(0.01)
-        assert b"online" in payloads
+        assert STATUS_ONLINE.encode() in payloads
 
         # Stop Paho's reconnect loop, then close the underlying TCP socket without
         # an MQTT DISCONNECT packet so the broker must publish the configured Will.
@@ -98,7 +104,7 @@ def test_broker_publishes_retained_will_after_ungraceful_disconnect():
         retained.loop_start()
         try:
             assert retained_message.wait(10), "broker did not retain the Last Will"
-            assert retained_payload == [b"offline"]
+            assert retained_payload == [STATUS_OFFLINE.encode()]
         finally:
             retained.loop_stop()
             retained.disconnect()
@@ -108,3 +114,4 @@ def test_broker_publishes_retained_will_after_ungraceful_disconnect():
             publisher.disconnect()
         subscriber.loop_stop()
         subscriber.disconnect()
+        loop.close()

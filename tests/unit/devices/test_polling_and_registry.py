@@ -1049,3 +1049,27 @@ def test_device_registry_returns_copy():
     lst = DeviceRegistry.get(0)
     lst.clear()
     assert d in DeviceRegistry.get(0)
+
+
+@pytest.mark.asyncio
+async def test_publish_discovery_async_tolerates_sensors_added_while_awaiting(device):
+    """A sensor added during an await (cloud recovery) must not break the discovery loop."""
+    from unittest.mock import MagicMock
+
+    class Slow:
+        def __init__(self, key, add=None):
+            self.key, self.add = key, add
+
+        async def get_discovery_async(self, mqtt_client):
+            if self.add:
+                device.sensors["late"] = Slow("late")
+            return {self.key: {}}
+
+        def publish_attributes(self, *args, **kwargs):
+            pass
+
+    device.sensors.clear()
+    device.sensors["a"] = Slow("a", add=True)
+    device.sensors["b"] = Slow("b")
+    mqtt = MagicMock()
+    await device.publish_discovery_async(mqtt, clean=False)

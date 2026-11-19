@@ -113,7 +113,7 @@ class HaPublisherMixin(abc.ABC):
             logger.debug(f"{self.log_identity} received online state from Home Assistant ({source=}): Republishing discovery and forcing republish of all sensors in {seconds:.1f}s")
             try:
                 await asyncio.sleep(seconds)  # https://www.home-assistant.io/integrations/mqtt/#birth-and-last-will-messages
-                await mqtt_handler.wait_for(2, self.name, self.publish_discovery, mqtt_client, clean=False)
+                await mqtt_handler.wait_for(2, self.name, self.publish_discovery_async, mqtt_client, clean=False)
                 for sensor in self.get_all_sensors(search_children=True).values():
                     await sensor.publish(mqtt_client, transport, republish=True)
                 return True
@@ -248,7 +248,8 @@ class HaPublisherMixin(abc.ABC):
             info = mqtt_client.publish(topic, b"", qos=1, retain=True)
         else:
             components: dict[str, Any] = {}
-            for sensor in self.sensors.values():
+            # Snapshot: awaiting below lets other tasks (e.g. cloud recovery) add sensors mid-iteration
+            for sensor in list(self.sensors.values()):
                 components.update(await sensor.get_discovery_async(mqtt_client))
 
             status_topic = getattr(mqtt_client, "status_topic", None)
@@ -273,8 +274,7 @@ class HaPublisherMixin(abc.ABC):
                 logger.debug(f"{self.log_identity} publishing discovery ({topic=})")
                 if active_config.log_level == logging.DEBUG:
                     discovery_dump = Path(active_config.persistent_state_path, f"{self.unique_id}.discovery.json")
-                    with discovery_dump.open("w") as f:
-                        f.write(discovery_json)
+                    await asyncio.to_thread(discovery_dump.write_text, discovery_json)
                     logger.debug(f"{self.log_identity} discovery JSON dumped to {discovery_dump.resolve()}")
                 info = mqtt_client.publish(topic, discovery_json, qos=2, retain=True)
             else:

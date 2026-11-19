@@ -150,7 +150,7 @@ async def read_and_publish_device_sensors(
             # disabled. SettingsService also removes stale discovery on startup
             # whenever runtime configuration publishing is disabled.
             discovery_required = active_config.home_assistant.enabled or active_config.clean or (isinstance(device, SettingsService) and not active_config.runtime_config_enabled)
-            method = device.publish_discovery if discovery_required else device.publish_attributes
+            method = device.publish_discovery_async if discovery_required else device.publish_attributes
 
             await mqtt_handler.wait_for(5, device.name, method, mqtt_client, clean=active_config.clean)
 
