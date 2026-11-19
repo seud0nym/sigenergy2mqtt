@@ -62,6 +62,8 @@ def restore_logging_state():
             lg.setLevel(logging.NOTSET)
             lg.propagate = True
             lg.disabled = False
+            lg.filters.clear()
+            lg.handlers.clear()
 
 
 @pytest.fixture(autouse=True)
