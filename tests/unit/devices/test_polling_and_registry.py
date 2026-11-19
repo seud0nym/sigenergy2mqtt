@@ -610,10 +610,10 @@ async def test_publish_updates_rediscover_triggers_discovery(device):
 
     discovery_called = []
 
-    def fake_discover(mqtt_client, clean=False):
+    async def fake_discover(mqtt_client, clean=False):
         discovery_called.append(True)
 
-    device.publish_discovery = fake_discover
+    device.publish_discovery_async = fake_discover
 
     async def fake_sleep(t):
         device._online = False
@@ -669,7 +669,10 @@ async def test_republish_discovery_runs_and_exits(device):
 
     with _swap_active_config(cfg):
         discovery_calls = []
-        device.publish_discovery = lambda *a, **kw: discovery_calls.append(True)
+        async def fake_discover(*args, **kwargs):
+            discovery_calls.append(True)
+
+        device.publish_discovery_async = fake_discover
 
         tick = 0
 

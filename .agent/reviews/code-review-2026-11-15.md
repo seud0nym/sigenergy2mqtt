@@ -2,6 +2,26 @@
 
 Reviewed at commit `881364a` (release `2026.11.15a1`). No source code was changed by this review.
 
+## Follow-up status (audited at `b47a3074`, updated 2026-11-19)
+
+The implementation plans below have since been applied on `main`:
+
+- **Plan A:** `346b683a`, with follow-up fixes in `80a35e63` (F02–F04, F07, F10, F12–F14).
+- **Plan B:** `4dd0d41a` and `a44fc968` (F01, F05, F06, F08, F09, F18).
+- **Plan C:** `cd71e149`, `9203c249`, `96d852ae`, `0c0068ac`, and `7d926b85` (F11, F16, F17, applicable F20 items, and InfluxDB follow-ups).
+- **Plan D:** `88038d35` (F19 and D1–D8).
+
+Code inspection confirms the changes are present in this checkout. Follow-up work for the previously open items is now in the working tree:
+
+- **F07:** Added a slow-probe regression test that delivers SIGTERM while initialization is suspended and verifies worker threads never start.
+- **F12:** Added an opt-in integration test (`SIGENERGY_TEST_MQTT_BROKER`) that checks the broker publishes and retains the offline Will after an ungraceful TCP disconnect. The test is skipped unless a broker is configured; this environment has no configured broker.
+- **F15:** Added async sensor and device discovery methods and moved runtime discovery call sites to them. The synchronous API remains for synchronous consumers, but the runtime polling, cloud recovery and rediscovery paths no longer wait on sync state-store wrappers.
+- **S1–S3:** Excluded from this follow-up per the user's instruction; they remain low-priority security notes.
+
+Validation after the follow-up: `pytest -n auto -q` → **3115 passed, 2 skipped**. The opt-in Last Will broker test was skipped because no broker was configured.
+
+Plan D also updated generated configuration documentation; `SENSORS.md` did not change for F05, as requested in Plan B.
+
 ## Scope and method
 
 - **Read in full:** `__main__`, `main/*`, `modbus/*`, `mqtt/*`, `persistence/state_store.py`, `devices/base/*` (device, poller, scan groups, registry), `sensors/base/*` (sensor, readable, mixins, writeable, derived, accumulation, sanity check), `common/outage.py`, `pvoutput/` (service, status, service topics, most of output), `influxdb/` (service, base), second half of `monitor/service.py`, `config/config.py` (reload path).
@@ -221,9 +241,9 @@ Given that the Modbus interface itself is unauthenticated, these add little atta
 
 ---
 
-## Implementation plans
+## Original implementation plans
 
-None of these has been actioned. Each plan is independent; A and B are the ones that matter.
+The plans below record the proposed work at the time of the review. Their implementation status is summarized above.
 
 ### Plan A — Runtime resilience and lifecycle (F02, F03, F04, F07, F10, F12, F13, F14)
 

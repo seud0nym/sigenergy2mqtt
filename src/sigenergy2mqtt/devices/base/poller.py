@@ -464,7 +464,7 @@ class SensorGroupPoller:
 
                     if device.rediscover:
                         device.rediscover = False
-                        device.publish_discovery(mqtt_client, clean=False)
+                        await device.publish_discovery_async(mqtt_client, clean=False)
 
                 except ModbusException as e:
                     if transport:

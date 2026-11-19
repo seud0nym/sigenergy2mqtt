@@ -4,7 +4,7 @@ import json
 import logging
 import time
 from typing import cast
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from pymodbus import ModbusException
@@ -694,6 +694,43 @@ class TestGetDiscovery:
         # Components should have minimal platform entry
         for v in components.values():
             assert "p" in v
+
+    @pytest.mark.asyncio
+    async def test_async_discovery_uses_async_state_store_for_publishable_sensor(self):
+        sensor = self._sensor_with_topics("gd_async_pub")
+        mqtt = _mqtt_mock()
+        cfg = Config()
+        cfg.clean = False
+        cfg.home_assistant.enabled = False
+        with _swap_active_config(cfg), patch("sigenergy2mqtt.sensors.base.sensor.state_store") as store:
+            store.delete = AsyncMock()
+            store.delete_sync.side_effect = AssertionError("sync state-store call")
+            components = await sensor.get_discovery_async(mqtt)
+
+        store.delete.assert_awaited_once()
+        store.delete_sync.assert_not_called()
+        assert components
+
+    @pytest.mark.asyncio
+    async def test_async_discovery_uses_async_state_store_for_unpublishable_sensor(self):
+        sensor = self._sensor_with_topics("gd_async_unpub")
+        sensor._publishable = False
+        mqtt = _mqtt_mock()
+        cfg = Config()
+        cfg.clean = False
+        cfg.home_assistant.enabled = False
+        with _swap_active_config(cfg), patch("sigenergy2mqtt.sensors.base.sensor.state_store") as store:
+            store.load = AsyncMock(return_value=None)
+            store.save = AsyncMock()
+            store.load_sync.side_effect = AssertionError("sync state-store call")
+            store.save_sync.side_effect = AssertionError("sync state-store call")
+            components = await sensor.get_discovery_async(mqtt)
+
+        store.load.assert_awaited_once()
+        store.save.assert_awaited_once()
+        store.load_sync.assert_not_called()
+        store.save_sync.assert_not_called()
+        assert all("p" in component for component in components.values())
 
 
 # ─────────────────────────────────────────────────────────────────────────────

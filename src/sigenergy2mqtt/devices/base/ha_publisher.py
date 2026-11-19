@@ -239,6 +239,55 @@ class HaPublisherMixin(abc.ABC):
             device.publish_discovery(mqtt_client, clean=clean)
         return info
 
+    async def publish_discovery_async(self, mqtt_client: mqtt.Client, clean: bool = False) -> mqtt.MQTTMessageInfo | None:
+        """Publish discovery using the asynchronous sensor persistence API."""
+        topic = f"{active_config.home_assistant.discovery_prefix}/device/{self.unique_id}/config"
+        if clean:
+            self.publish_availability(mqtt_client, b"", qos=1)
+            logger.debug(f"{self.log_identity} cleaning discovery ({topic=})")
+            info = mqtt_client.publish(topic, b"", qos=1, retain=True)
+        else:
+            components: dict[str, Any] = {}
+            for sensor in self.sensors.values():
+                components.update(await sensor.get_discovery_async(mqtt_client))
+
+            status_topic = getattr(mqtt_client, "status_topic", None)
+            if isinstance(status_topic, str) and status_topic:
+                for component in components.values():
+                    availability = component.get(DiscoveryKeys.AVAILABILITY)
+                    if isinstance(availability, list) and availability:
+                        component[DiscoveryKeys.AVAILABILITY] = [*availability, {"topic": status_topic}]
+
+            if components:
+                discovery: dict[str, Any] = {}
+                parent = self.parent_device
+                if parent is not None and publishes_as_ha_child(cast("Device", self)):
+                    discovery["dev"] = parent
+                    discovery["o"] = active_config.origin
+                    discovery["cdevs"] = [{"ids": [self.unique_id], "name": ha_child_device_name(cast("Device", self)), "cmps": components}]
+                else:
+                    discovery["dev"] = self
+                    discovery["o"] = active_config.origin
+                    discovery["cmps"] = components
+                discovery_json = json.dumps(discovery, allow_nan=False, indent=2, sort_keys=False)
+                logger.debug(f"{self.log_identity} publishing discovery ({topic=})")
+                if active_config.log_level == logging.DEBUG:
+                    discovery_dump = Path(active_config.persistent_state_path, f"{self.unique_id}.discovery.json")
+                    with discovery_dump.open("w") as f:
+                        f.write(discovery_json)
+                    logger.debug(f"{self.log_identity} discovery JSON dumped to {discovery_dump.resolve()}")
+                info = mqtt_client.publish(topic, discovery_json, qos=2, retain=True)
+            else:
+                logger.debug(f"{self.log_identity} publishing empty availability because no components found ({topic=})")
+                self.publish_availability(mqtt_client, b"", qos=1)
+                logger.debug(f"{self.log_identity} publishing empty discovery because no components found ({topic=})")
+                info = mqtt_client.publish(topic, b"", qos=1, retain=True)
+
+        self.publish_attributes(mqtt_client, clean, propagate=False)
+        for device in self.children:
+            await device.publish_discovery_async(mqtt_client, clean=clean)
+        return info
+
     async def republish_discovery(self, mqtt_client: mqtt.Client) -> None:
         """Periodically republish the HA discovery payload at the configured interval.
 
@@ -257,7 +306,7 @@ class HaPublisherMixin(abc.ABC):
                 wait -= 1
                 if wait <= 0:
                     logger.info(f"{self.log_identity} re-publishing discovery")
-                    self.publish_discovery(mqtt_client, clean=False)
+                    await self.publish_discovery_async(mqtt_client, clean=False)
                     wait = active_config.home_assistant.republish_discovery_interval
             except asyncio.CancelledError:
                 logger.debug(f"{self.log_identity} republish_discovery sleep interrupted")
