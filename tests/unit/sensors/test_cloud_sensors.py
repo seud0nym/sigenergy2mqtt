@@ -981,3 +981,23 @@ async def test_successive_duration_writes_are_each_published_without_repeat_supp
     assert payloads == ["122", "60"]
     # The poller's next read of the unchanged pending value is a genuine repeat
     assert await duration._update_internal_state(modbus_client=port) is False
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("failure", [False, RuntimeError("not connected")])
+async def test_failed_immediate_publish_is_retried_by_poller_without_repeat_suppression(failure) -> None:
+    _, duration, _ = _controls()
+    duration.configure_mqtt_topics("cloud-device")
+    send = MagicMock(side_effect=failure) if isinstance(failure, Exception) else MagicMock(return_value=failure)
+    duration._publish_message = send  # type: ignore[method-assign]
+    port = FakeCloudControlPort()
+    mqtt_client = MagicMock()
+
+    assert await duration.set_value(port, mqtt_client, "231", duration.command_topic, AsyncMock()) is True
+    assert duration.force_publish is True
+    assert not duration._published_states
+
+    # MQTT recovers; the poller's forced publish must send the pending value
+    duration._publish_message = MagicMock(return_value=True)  # type: ignore[method-assign]
+    assert await duration.publish(mqtt_client, port) is True
+    duration._publish_message.assert_any_call(mqtt_client, duration[DiscoveryKeys.STATE_TOPIC], "231", duration._qos, duration._retain)

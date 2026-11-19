@@ -243,10 +243,19 @@ class _InstantControlSetting(CloudReadWriteSensor):
             # for the scan group, which may be blocked on slow Cloud requests.
             # Home Assistant scripts can then confirm the value before enabling
             # the switch. Reading a pending value makes no Cloud request.
+            histories = (self._states, self._published_states)
+            last_entries = [history[-1] if history else None for history in histories]
             try:
-                await self.publish(mqtt_client, transport)
+                published = await self.publish(mqtt_client, transport)
             except Exception as exc:  # noqa: BLE001 - the write succeeded; the poller retries the publish
                 logger.warning(f"{self.log_identity} could not publish pending value immediately: {exc!r}")
+                published = False
+            if not published:
+                # A value recorded by this attempt but not sent would make the
+                # poller's retry look like a repeated state and be suppressed.
+                for history, last in zip(histories, last_entries):
+                    if history and history[-1] is not last:
+                        history.pop()
                 self.force_publish = True
         switch = self._control_switch
         if switch is not None:
