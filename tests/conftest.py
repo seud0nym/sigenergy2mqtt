@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 import sys
 from unittest.mock import patch
@@ -25,6 +26,42 @@ with patch.object(sys, "argv", ["sigenergy2mqtt"]):
         pass
     except Exception as e:  # noqa: BLE001
         print(f"Failed to load sigenergy2mqtt components during conftest setup: {e}")
+
+
+@pytest.fixture(autouse=True)
+def restore_logging_state():
+    """Undo logger level/propagation/filter changes made by a test.
+
+    Tests that exercise logging setup mutate process-global loggers; without this,
+    later caplog-based tests fail when run in a single process.
+    """
+    names = ("", "sigenergy2mqtt", "paho.mqtt", "pymodbus")
+
+    def snapshot():
+        mgr = logging.root.manager.loggerDict
+        out = {}
+        for name in names + tuple(n for n in mgr if n.startswith(("sigenergy2mqtt.", "paho.", "pymodbus."))):
+            lg = logging.getLogger(name)
+            out[name] = (lg.level, lg.propagate, lg.disabled, list(lg.filters), list(lg.handlers))
+        return out
+
+    saved = snapshot()
+    yield
+    for name, (level, propagate, disabled, filters, handlers) in saved.items():
+        lg = logging.getLogger(name)
+        lg.setLevel(level)
+        lg.propagate = propagate
+        lg.disabled = disabled
+        lg.filters[:] = filters
+        if name:
+            lg.handlers[:] = handlers
+    # Loggers created during the test: reset to defaults
+    for name in list(logging.root.manager.loggerDict):
+        if name not in saved and name.startswith(("sigenergy2mqtt.", "paho.", "pymodbus.")):
+            lg = logging.getLogger(name)
+            lg.setLevel(logging.NOTSET)
+            lg.propagate = True
+            lg.disabled = False
 
 
 @pytest.fixture(autouse=True)
