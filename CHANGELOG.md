@@ -7,6 +7,7 @@
 
 - Fixed a stalled Cloud API request blocking cloud sensor updates for up to 5 minutes without any error being reported, while every cloud topic was logged as overdue. Cloud API requests now time out after 30 seconds (10 seconds to connect), so the outage is reported promptly, and its message is no longer empty (`CloudControlUnavailableError('')`)
 - Overdue cloud topics are logged at DEBUG level while a Cloud API outage is being reported
+- Fixed a new Instant Manual Control Mode or Duration value taking about a minute (the `repeated-state-publish-interval`) to appear in Home Assistant, which caused scripts waiting for the value before turning on Instant Manual Control to time out. A value replaced within that minute was never published at all. New values are now published as soon as they are set, without waiting for the Cloud API (#362)
 - Fixed a sensor scan group silently and permanently stopping its updates when a sensor raised an error other than a Modbus exception. The error is now logged and the group retried
 - Fixed PVOutput uploads stopping until the next restart when PVOutput (or a proxy in front of it) returned a response without rate-limit headers or with an unexpected body
 - Fixed the process exiting with a success status when a worker thread crashed or the MQTT broker refused the connection, which stopped service managers using restart-on-failure (such as the supplied systemd unit) from restarting it. It now exits with status 1

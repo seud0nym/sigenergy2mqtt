@@ -929,3 +929,75 @@ def test_cloud_outage_tracker_naming() -> None:
 
     undiscovered = Undiscovered()
     assert cloud_outage_tracker(undiscovered).resource == f"cloud://{id(undiscovered):x}"
+
+
+@pytest.mark.asyncio
+async def test_pending_settings_are_published_immediately_without_cloud_read() -> None:
+    mode, duration, switch = _controls()
+    for sensor in (switch, mode, duration):
+        sensor.configure_mqtt_topics("cloud-device")
+        sensor._publish_message = MagicMock(return_value=True)  # type: ignore[method-assign]
+    port = FakeCloudControlPort()
+    # A stalled or failing Cloud API must not delay confirmation of a local pending value
+    port.instant_control_status = AsyncMock(side_effect=CloudControlUnavailableError("stalled"))
+    mqtt_client = MagicMock()
+
+    assert await mode.set_value(port, mqtt_client, "Charging", mode.command_topic, AsyncMock()) is True
+    assert await duration.set_value(port, mqtt_client, "231", duration.command_topic, AsyncMock()) is True
+
+    port.instant_control_status.assert_not_awaited()
+    mode._publish_message.assert_any_call(mqtt_client, mode[DiscoveryKeys.STATE_TOPIC], "Charging", mode._qos, mode._retain)
+    duration._publish_message.assert_any_call(mqtt_client, duration[DiscoveryKeys.STATE_TOPIC], "231", duration._qos, duration._retain)
+    assert mode.force_publish is False
+    assert duration.force_publish is False
+
+
+@pytest.mark.asyncio
+async def test_clearing_mode_selection_waits_for_poller_to_read_cloud_state() -> None:
+    mode, _, _ = _controls()
+    mode.configure_mqtt_topics("cloud-device")
+    mode._publish_message = MagicMock(return_value=True)  # type: ignore[method-assign]
+    port = FakeCloudControlPort()
+
+    assert await mode.set_value(port, MagicMock(), "Not Set", mode.command_topic, AsyncMock()) is True
+
+    mode._publish_message.assert_not_called()
+    assert mode.force_publish is True
+
+
+@pytest.mark.asyncio
+async def test_successive_duration_writes_are_each_published_without_repeat_suppression() -> None:
+    _, duration, _ = _controls()
+    duration.configure_mqtt_topics("cloud-device")
+    duration._publish_message = MagicMock(return_value=True)  # type: ignore[method-assign]
+    port = FakeCloudControlPort()
+    mqtt_client = MagicMock()
+    topic = duration[DiscoveryKeys.STATE_TOPIC]
+
+    for value in ("122", "60"):
+        assert await duration.set_value(port, mqtt_client, value, duration.command_topic, AsyncMock()) is True
+
+    payloads = [c.args[2] for c in duration._publish_message.call_args_list if c.args[1] == topic]
+    assert payloads == ["122", "60"]
+    # The poller's next read of the unchanged pending value is a genuine repeat
+    assert await duration._update_internal_state(modbus_client=port) is False
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("failure", [False, RuntimeError("not connected")])
+async def test_failed_immediate_publish_is_retried_by_poller_without_repeat_suppression(failure) -> None:
+    _, duration, _ = _controls()
+    duration.configure_mqtt_topics("cloud-device")
+    send = MagicMock(side_effect=failure) if isinstance(failure, Exception) else MagicMock(return_value=failure)
+    duration._publish_message = send  # type: ignore[method-assign]
+    port = FakeCloudControlPort()
+    mqtt_client = MagicMock()
+
+    assert await duration.set_value(port, mqtt_client, "231", duration.command_topic, AsyncMock()) is True
+    assert duration.force_publish is True
+    assert not duration._published_states
+
+    # MQTT recovers; the poller's forced publish must send the pending value
+    duration._publish_message = MagicMock(return_value=True)  # type: ignore[method-assign]
+    assert await duration.publish(mqtt_client, port) is True
+    duration._publish_message.assert_any_call(mqtt_client, duration[DiscoveryKeys.STATE_TOPIC], "231", duration._qos, duration._retain)

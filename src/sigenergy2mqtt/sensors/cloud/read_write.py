@@ -234,9 +234,29 @@ class _BatteryPowerLimitSnapshot:
 
 class _InstantControlSetting(CloudReadWriteSensor):
     _control_switch: InstantControlSwitch | None = None
+    _pending_value: Any = None
 
     async def _write_value(self, transport: Any, mqtt_client: Client, value: float | str, source: str, handler: Any) -> bool:
         result = await super()._write_value(transport, mqtt_client, value, source, handler)
+        if result and self._pending_value is not None:
+            # The pending value is local, so publish it now rather than waiting
+            # for the scan group, which may be blocked on slow Cloud requests.
+            # Home Assistant scripts can then confirm the value before enabling
+            # the switch. Reading a pending value makes no Cloud request.
+            histories = (self._states, self._published_states)
+            last_entries = [history[-1] if history else None for history in histories]
+            try:
+                published = await self.publish(mqtt_client, transport)
+            except Exception as exc:  # noqa: BLE001 - the write succeeded; the poller retries the publish
+                logger.warning(f"{self.log_identity} could not publish pending value immediately: {exc!r}")
+                published = False
+            if not published:
+                # A value recorded by this attempt but not sent would make the
+                # poller's retry look like a repeated state and be suppressed.
+                for history, last in zip(histories, last_entries):
+                    if history and history[-1] is not last:
+                        history.pop()
+                self.force_publish = True
         switch = self._control_switch
         if switch is not None:
             switch._publish_control_availability(mqtt_client)
@@ -293,12 +313,12 @@ class InstantControlMode(SelectSensorMixin, _InstantControlSetting):
                 return None
 
     async def _read_cloud_state(self, port: CloudControlPort) -> int:
-        status = await self._status_snapshot.read(port)
-        if status.mode is None and self._pending_value is None:
-            return 0
         if self._pending_value is not None:
             mode = self._pending_value
         else:
+            status = await self._status_snapshot.read(port)
+            if status.mode is None:
+                return 0
             mode = status.mode
         match mode:
             case Mode.CHARGE:
@@ -311,7 +331,7 @@ class InstantControlMode(SelectSensorMixin, _InstantControlSetting):
                 return 4
             case _:
                 self._pending_value = None
-                raise ValueError(f"Unknown Instant Control Mode '{status.mode}'")
+                raise ValueError(f"Unknown Instant Control Mode '{mode}'")
 
     async def _write_cloud_value(self, port: CloudControlPort, value: float | str) -> bool:
         state = int(value)
@@ -329,8 +349,10 @@ class InstantControlMode(SelectSensorMixin, _InstantControlSetting):
             case _:
                 self._pending_value = None
                 raise ValueError(f"Invalid Instant Control Mode '{state}'")
-        changed = self.set_latest_state(state)
-        return changed
+        # State is recorded when published (see _InstantControlSetting._write_value).
+        # Recording it here would mark it as already published, so the forced
+        # publish would be suppressed as a repeat for repeated_state_publish_interval.
+        return True
 
 
 class InstantControlDuration(NumericSensorMixin, _InstantControlSetting):
@@ -381,8 +403,8 @@ class InstantControlDuration(NumericSensorMixin, _InstantControlSetting):
 
     async def _write_cloud_value(self, port: CloudControlPort, value: float | str) -> bool:
         self._pending_value = int(value)
-        changed = self.set_latest_state(self._pending_value)
-        return changed
+        # State is recorded when published (see _InstantControlSetting._write_value).
+        return True
 
 
 class InstantControlSwitch(SwitchSensorMixin, CloudReadWriteSensor, AvailabilityMixin):
