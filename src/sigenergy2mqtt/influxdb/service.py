@@ -221,6 +221,10 @@ class InfluxService(InfluxBase):
     def publish_discovery(self, mqtt_client: mqtt.Client, clean: bool = False) -> mqtt.MQTTMessageInfo | None:
         """No-op: InfluxDB service does not publish Home Assistant discovery."""
 
+    async def publish_discovery_async(self, mqtt_client: mqtt.Client, clean: bool = False) -> mqtt.MQTTMessageInfo | None:
+        """No-op: InfluxDB service does not publish Home Assistant discovery."""
+        return None
+
     # ------------------------------------------------------------------
     # Scheduling and subscription
     # ------------------------------------------------------------------

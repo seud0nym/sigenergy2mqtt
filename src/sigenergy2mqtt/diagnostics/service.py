@@ -43,6 +43,10 @@ class DiagnosticsService(Device):
         """DiagnosticsService does not publish any discovery messages."""
         return None
 
+    async def publish_discovery_async(self, mqtt_client: mqtt.Client, clean: bool = False) -> mqtt.MQTTMessageInfo | None:
+        """DiagnosticsService does not publish any discovery messages."""
+        return None
+
     def schedule(self, transport: Any, mqtt_client: mqtt.Client) -> list[Awaitable[None]]:
         """Return the single long-running coroutine that owns the web server's lifecycle."""
         return [self._run_without_crashing_the_thread(mqtt_client)]

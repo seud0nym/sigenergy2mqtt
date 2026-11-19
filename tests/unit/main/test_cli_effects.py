@@ -74,7 +74,7 @@ async def test_threading_clean_effect(monkeypatch):
 
     # Discovery should be called with clean=True
     # wait_for(5, device.name, method, mqtt_client, clean=True)
-    mock_mqtt_handler.wait_for.assert_any_call(5, "TestDevice", mock_device.publish_discovery, mock_mqtt_client, clean=True)
+    mock_mqtt_handler.wait_for.assert_any_call(5, "TestDevice", mock_device.publish_discovery_async, mock_mqtt_client, clean=True)
 
     # Tasks should NOT be scheduled
     mock_device.schedule.assert_not_called()
@@ -114,7 +114,7 @@ async def test_threading_discovery_only_effect(monkeypatch):
     await threading_mod.read_and_publish_device_sensors(cfg, loop)
 
     # Discovery should be called with clean=False
-    mock_mqtt_handler.wait_for.assert_any_call(5, "TestDevice", mock_device.publish_discovery, mock_mqtt_client, clean=False)
+    mock_mqtt_handler.wait_for.assert_any_call(5, "TestDevice", mock_device.publish_discovery_async, mock_mqtt_client, clean=False)
 
     # Tasks should NOT be scheduled
     mock_device.schedule.assert_not_called()

@@ -77,7 +77,8 @@ async def test_settings_discovery_removed_via_device_thread(services, clean, pub
     mqtt_handler = MagicMock()
 
     async def wait_for(seconds, name, method, *args, **kwargs):
-        return method(*args, **kwargs)
+        result = method(*args, **kwargs)
+        return await result if asyncio.iscoroutine(result) else result
 
     mqtt_handler.wait_for = AsyncMock(side_effect=wait_for)
     with (

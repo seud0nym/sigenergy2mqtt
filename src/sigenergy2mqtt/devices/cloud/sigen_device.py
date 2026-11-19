@@ -146,7 +146,7 @@ class SigenCloudDevice(Device):
                     new = [sensor for sensor in added if sensor.publishable]
                     if new:
                         if active_config.home_assistant.enabled:
-                            self.publish_discovery(mqtt_client, clean=False)
+                            await self.publish_discovery_async(mqtt_client, clean=False)
                             self.publish_availability(mqtt_client, "online")
                         else:
                             self.publish_attributes(mqtt_client, clean=False)
@@ -169,7 +169,7 @@ class SigenCloudDevice(Device):
                         new = [sensor for sensor in added if sensor.publishable]
                         if new:
                             if active_config.home_assistant.enabled:
-                                self.publish_discovery(mqtt_client, clean=False)
+                                await self.publish_discovery_async(mqtt_client, clean=False)
                                 self.publish_availability(mqtt_client, "online")
                             else:
                                 self.publish_attributes(mqtt_client, clean=False)

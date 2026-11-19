@@ -855,15 +855,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         if self.debug_logging:
             logger.debug(f"{self.log_identity} Getting discovery")
 
-        components = self.get_discovery_components()
-
-        # Clean up discovery components
-        for config in components.values():
-            if DiscoveryKeys.OBJECT_ID in config:
-                config[DiscoveryKeys.DEFAULT_ENTITY_ID] = f"{config[DiscoveryKeys.PLATFORM]}.{config[DiscoveryKeys.OBJECT_ID]}"
-                del config[DiscoveryKeys.OBJECT_ID]
-            if DiscoveryKeys.RAW_STATE_TOPIC in config:
-                del config[DiscoveryKeys.RAW_STATE_TOPIC]
+        components = self._clean_discovery_components(self.get_discovery_components())
 
         # Handle unpublishable sensors
         if self.publishable and not active_config.clean:
@@ -872,6 +864,67 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
             components = self._handle_unpublishable_discovery(mqtt_client, components)
 
         return components
+
+    async def get_discovery_async(self, mqtt_client: mqtt.Client) -> dict[str, dict[str, Any]]:
+        """Build discovery configuration without blocking the device event loop."""
+        if DiscoveryKeys.STATE_TOPIC not in self:
+            raise RuntimeError(f"{self.log_identity} MQTT topics are not configured")
+
+        if self.debug_logging:
+            logger.debug(f"{self.log_identity} Getting discovery")
+
+        components = self._clean_discovery_components(self.get_discovery_components())
+        if self.publishable and not active_config.clean:
+            await state_store.delete(Category.SENSOR, self._publish_persistence_key)
+            if self.debug_logging:
+                logger.debug(f"{self.log_identity} Removed persistence for {self._publish_persistence_key} (publishable={self.publishable} clean={active_config.clean})")
+            return components
+
+        return await self._handle_unpublishable_discovery_async(mqtt_client, components)
+
+    @staticmethod
+    def _clean_discovery_components(components: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
+        """Remove internal keys and normalize component entity IDs."""
+        for config in components.values():
+            if DiscoveryKeys.OBJECT_ID in config:
+                config[DiscoveryKeys.DEFAULT_ENTITY_ID] = f"{config[DiscoveryKeys.PLATFORM]}.{config[DiscoveryKeys.OBJECT_ID]}"
+                del config[DiscoveryKeys.OBJECT_ID]
+            if DiscoveryKeys.RAW_STATE_TOPIC in config:
+                del config[DiscoveryKeys.RAW_STATE_TOPIC]
+        return components
+
+    async def _handle_unpublishable_discovery_async(self, mqtt_client: mqtt.Client, components: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
+        """Apply persistence cleanup for an unpublishable sensor asynchronously."""
+        self._clear_retained_attributes(mqtt_client)
+        persisted = await state_store.load(Category.SENSOR, self._publish_persistence_key)
+        components, save_marker = self._unpublishable_components(components, persisted)
+        if save_marker:
+            await state_store.save(Category.SENSOR, self._publish_persistence_key, "0")
+            self._log_unpublished_components(components)
+        return components
+
+    def _clear_retained_attributes(self, mqtt_client: mqtt.Client) -> None:
+        """Clear retained attributes of an unpublishable sensor."""
+        if DiscoveryKeys.JSON_ATTRIBUTES_TOPIC in self:
+            self._publish_message(mqtt_client, cast(str, self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC]), b"", qos=1, retain=True)
+            if self.debug_logging:
+                logger.debug(f"{self.log_identity} unpublished - removed any retained messages in topic {self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC]}")
+
+    def _unpublishable_components(self, components: dict[str, dict[str, Any]], persisted: Any) -> tuple[dict[str, dict[str, Any]], bool]:
+        """Decide the discovery components for an unpublishable sensor.
+
+        Returns the components to publish and whether the persistence marker must now be saved.
+        """
+        if persisted is not None or active_config.clean:
+            if self.debug_logging:
+                logger.debug(f"{self.log_identity} unpublished - removed all discovery (persisted={persisted is not None} clean={active_config.clean})")
+            return {}, False
+        # Create minimal discovery to remove entity
+        return {comp_id: {"p": self[DiscoveryKeys.PLATFORM]} for comp_id in components}, True
+
+    def _log_unpublished_components(self, components: dict[str, dict[str, Any]]) -> None:
+        if self.debug_logging:
+            logger.debug(f"{self.log_identity} unpublished - removed all discovery except {components} (persistence handling)")
 
     def _cleanup_persistent_state_file(self) -> None:
         """Remove persistent state if sensor is publishable and not in clean mode."""
@@ -890,34 +943,12 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         Returns:
             Updated discovery components (may be empty or minimal)
         """
-        # Clear retained attributes
-        if DiscoveryKeys.JSON_ATTRIBUTES_TOPIC in self:
-            self._publish_message(
-                mqtt_client,
-                cast(str, self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC]),
-                b"",
-                qos=1,
-                retain=True,
-            )
-            if self.debug_logging:
-                logger.debug(f"{self.log_identity} unpublished - removed any retained messages in topic {self[DiscoveryKeys.JSON_ATTRIBUTES_TOPIC]}")
-
-        # Check for persistent state
+        self._clear_retained_attributes(mqtt_client)
         persisted = state_store.load_sync(Category.SENSOR, self._publish_persistence_key)
-
-        if persisted is not None or active_config.clean:
-            components = {}
-            if self.debug_logging:
-                logger.debug(f"{self.log_identity} unpublished - removed all discovery (persisted={persisted is not None} clean={active_config.clean})")
-        else:
-            # Create minimal discovery to remove entity
-            for comp_id in components:
-                components[comp_id] = {"p": self[DiscoveryKeys.PLATFORM]}
-
+        components, save_marker = self._unpublishable_components(components, persisted)
+        if save_marker:
             state_store.save_sync(Category.SENSOR, self._publish_persistence_key, "0")
-            if self.debug_logging:
-                logger.debug(f"{self.log_identity} unpublished - removed all discovery except {components} (persistence handling)")
-
+            self._log_unpublished_components(components)
         return components
 
     def get_discovery_components(self) -> dict[str, dict[str, Any]]:

@@ -121,6 +121,39 @@ class TestAsyncMainExitStatus:
         state_store.shutdown.assert_called_once()
 
     @pytest.mark.asyncio
+    async def test_signal_during_slow_device_probe_is_not_lost(self):
+        """A signal received while setup_devices is suspended must stop before start()."""
+        patches, start, state_store, _ = _patched_async_main()
+        probe_entered = asyncio.Event()
+        finish_probe = asyncio.Event()
+
+        async def slow_probe(seen):
+            probe_entered.set()
+            await finish_probe.wait()
+            return [], None
+
+        with (
+            patches[0],
+            patches[1],
+            patches[2],
+            patch.object(main_module, "setup_devices", slow_probe),
+            patches[4],
+            patches[5],
+            patches[7],
+            patches[8],
+            patches[9],
+        ):
+            task = asyncio.create_task(main_module.async_main())
+            await probe_entered.wait()
+            # async_main installed the initialization handler before awaiting the probe.
+            signal.getsignal(signal.SIGTERM)(signal.SIGTERM, None)
+            finish_probe.set()
+            assert await task == 0
+
+        start.assert_not_awaited()
+        state_store.shutdown.assert_called_once()
+
+    @pytest.mark.asyncio
     async def test_signal_during_configuration_load_exits_before_the_state_store(self):
         patches, start, state_store, _ = _patched_async_main()
 

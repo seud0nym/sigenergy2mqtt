@@ -610,10 +610,10 @@ async def test_publish_updates_rediscover_triggers_discovery(device):
 
     discovery_called = []
 
-    def fake_discover(mqtt_client, clean=False):
+    async def fake_discover(mqtt_client, clean=False):
         discovery_called.append(True)
 
-    device.publish_discovery = fake_discover
+    device.publish_discovery_async = fake_discover
 
     async def fake_sleep(t):
         device._online = False
@@ -669,7 +669,10 @@ async def test_republish_discovery_runs_and_exits(device):
 
     with _swap_active_config(cfg):
         discovery_calls = []
-        device.publish_discovery = lambda *a, **kw: discovery_calls.append(True)
+        async def fake_discover(*args, **kwargs):
+            discovery_calls.append(True)
+
+        device.publish_discovery_async = fake_discover
 
         tick = 0
 
@@ -1046,3 +1049,27 @@ def test_device_registry_returns_copy():
     lst = DeviceRegistry.get(0)
     lst.clear()
     assert d in DeviceRegistry.get(0)
+
+
+@pytest.mark.asyncio
+async def test_publish_discovery_async_tolerates_sensors_added_while_awaiting(device):
+    """A sensor added during an await (cloud recovery) must not break the discovery loop."""
+    from unittest.mock import MagicMock
+
+    class Slow:
+        def __init__(self, key, add=None):
+            self.key, self.add = key, add
+
+        async def get_discovery_async(self, mqtt_client):
+            if self.add:
+                device.sensors["late"] = Slow("late")
+            return {self.key: {}}
+
+        def publish_attributes(self, *args, **kwargs):
+            pass
+
+    device.sensors.clear()
+    device.sensors["a"] = Slow("a", add=True)
+    device.sensors["b"] = Slow("b")
+    mqtt = MagicMock()
+    await device.publish_discovery_async(mqtt, clean=False)
