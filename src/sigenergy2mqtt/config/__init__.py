@@ -66,6 +66,11 @@ def _apply_cli_to_env(variable: str, value: str | list[str]) -> None:
     logger.debug(f"Environment variable '{variable}' set from CLI: value='{'[REDACTED]' if 'PASSWORD' in os.environ[variable] or 'API_KEY' in os.environ[variable] else os.environ[variable]}'")
 
 
+def _env_flag(variable: str) -> bool:
+    """Return True if the environment variable is set to a true value (1, true, yes, on, y)."""
+    return os.getenv(variable, "").strip().lower() in ("1", "true", "yes", "on", "y")
+
+
 def _is_arg_explicitly_set(value) -> bool:
     """
     Return True only when an argparse value was explicitly supplied on the
@@ -186,6 +191,10 @@ def initialize(args=None) -> bool:
     # 5. Early-exit flags
     if getattr(parsed_args, "clean", False):
         active_config.clean = True
+
+    # CLI and ENV only: deliberately not a YAML setting, because it is an action to take
+    # once rather than a persistent configuration. CLI values were promoted to ENV above.
+    active_config.clear_validation_cache = _env_flag(const.SIGENERGY2MQTT_CLEAR_VALIDATION_CACHE)
 
     validate_mode = getattr(parsed_args, "validate_only", None)
     active_config.validate_only_mode = validate_mode

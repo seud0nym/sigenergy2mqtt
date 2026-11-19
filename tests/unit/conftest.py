@@ -53,6 +53,12 @@ def mock_persistence_defaults(monkeypatch):
 
 
 @pytest.fixture(autouse=True)
+def no_illegal_address_retry_delay(monkeypatch):
+    """Do not really wait between ILLEGAL DATA ADDRESS validation retries."""
+    monkeypatch.setattr("sigenergy2mqtt.main.validation._ILLEGAL_ADDRESS_RETRY_DELAY", 0)
+
+
+@pytest.fixture(autouse=True)
 def reset_state_store():
     """Ensure StateStore is shut down after each test to prevent side effects."""
     yield

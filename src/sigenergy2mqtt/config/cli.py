@@ -43,6 +43,12 @@ def get_parser() -> argparse.ArgumentParser:
         help="Set the log format. The default depends on the runtime environment.",
     )
     parser.add_argument(
+        "--clear-validation-cache",
+        action="store_true",
+        dest=const.SIGENERGY2MQTT_CLEAR_VALIDATION_CACHE,
+        help="Delete the persisted sensor validation cache at startup, so that every sensor is probed again for ILLEGAL DATA ADDRESS (unsupported) responses. Remove the option once it has been used.",
+    )
+    parser.add_argument(
         "--language",
         action="store",
         dest=const.SIGENERGY2MQTT_LANGUAGE,

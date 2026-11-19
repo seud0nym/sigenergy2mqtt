@@ -103,3 +103,48 @@ def test_cli_parsing_cloud_discover_inverters(clean_argv):
     args = cli_mod.parse_args(["--cloud-discover-inverters"])
 
     assert getattr(args, const.SIGENERGY2MQTT_CLOUD_DISCOVER_INVERTERS) is True
+
+
+def _initialize_with(args):
+    import sigenergy2mqtt.config as config_mod
+
+    with (
+        patch("sys.exit"),
+        patch("pathlib.Path.mkdir"),
+        patch("pathlib.Path.is_dir", return_value=True),
+        patch("pathlib.Path.iterdir", return_value=[]),
+        patch("os.access", return_value=True),
+        patch("os.path.isdir", return_value=True),
+        patch.object(config_mod.active_config, "reload"),
+    ):
+        config_mod.initialize(args)
+
+
+def test_cli_parsing_clear_validation_cache(clean_argv, monkeypatch):
+    monkeypatch.delenv("SIGENERGY2MQTT_CLEAR_VALIDATION_CACHE", raising=False)
+    active_config.clear_validation_cache = False
+
+    _initialize_with(["--clear-validation-cache"])
+
+    assert active_config.clear_validation_cache is True
+    active_config.clear_validation_cache = False
+
+
+@pytest.mark.parametrize("value, expected", [("true", True), ("1", True), ("YES", True), ("false", False), ("", False), ("0", False)])
+def test_env_clear_validation_cache(clean_argv, monkeypatch, value, expected):
+    monkeypatch.setenv("SIGENERGY2MQTT_CLEAR_VALIDATION_CACHE", value)
+    active_config.clear_validation_cache = not expected
+
+    _initialize_with([])
+
+    assert active_config.clear_validation_cache is expected
+    active_config.clear_validation_cache = False
+
+
+def test_clear_validation_cache_defaults_to_off(clean_argv, monkeypatch):
+    monkeypatch.delenv("SIGENERGY2MQTT_CLEAR_VALIDATION_CACHE", raising=False)
+    active_config.clear_validation_cache = True
+
+    _initialize_with([])
+
+    assert active_config.clear_validation_cache is False

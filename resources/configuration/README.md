@@ -200,6 +200,21 @@ If sensor read failures pass the allowed threshold for errors, the sensor will b
 </table>
 When log-level is `DEBUG`, controls whether individual individual sensors debugging messages are displayed. If false, individual sensor debugging may be enabled through sensor-overrides.
 
+<a id="opt_clear_validation_cache"></a>
+### Clear Validation Cache
+<table>
+<tr><td><small>CLI</small></td><td><small><code>--clear-validation-cache</code></small></td></tr>
+<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_CLEAR_VALIDATION_CACHE</code></small></td></tr>
+<tr><td><small>YAML key</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
+<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
+</table>
+Delete the persisted sensor validation cache at startup, from both disk and the MQTT broker (one `publishable-sensor-validation.*` entry per device), so that every sensor is probed again.
+
+At startup each Modbus register is probed, and a register the device rejects with ILLEGAL DATA ADDRESS is marked as unsupported and not published. The result is cached per device, but sensors that were cached as unsupported are always probed again, and an ILLEGAL DATA ADDRESS is only accepted if it is repeated, so you should rarely need this option. Use it if a sensor is shown as *Unsupported* on the Diagnostics page but you believe your device supports it.
+
+This is an action to perform once, not a setting, so it is not available in the YAML configuration file. Remove it after use, otherwise the cache is deleted on every startup.
+
 <a id="opt_debug_sensor"></a>
 ### Debug Logging
 <table>

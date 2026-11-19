@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import json
 import logging
@@ -226,7 +227,16 @@ async def validate_connections(show_credentials: bool = False) -> None:
     _validate_pvoutput_connection(show_credentials)
 
 
-_PUBLISHABLE_SENSOR_VALIDATION_CACHE_VERSION = 1
+# Version 2 added ``validated_sensor_unique_ids``, which lets a later startup tell a sensor that was
+# probed and found supported from one that is new (for example, added by a software update).
+_PUBLISHABLE_SENSOR_VALIDATION_CACHE_VERSION = 2
+_VALIDATION_CACHE_KEY_PREFIX = "publishable-sensor-validation."
+
+# An ILLEGAL DATA ADDRESS response is only trusted when it is repeated: a device can answer 0x02
+# transiently (for example while a gateway or battery is still initialising), and a sensor
+# wrongly flagged as unsupported stays unpublishable until the cache is cleared.
+_ILLEGAL_ADDRESS_ATTEMPTS = 3
+_ILLEGAL_ADDRESS_RETRY_DELAY = 1.0  # seconds between attempts; applied once per pass over all suspect sensors
 
 
 def _validation_hash(value: Any) -> str:
@@ -243,7 +253,7 @@ def _inverter_firmware_payload(inverter_firmware_versions: Mapping[int, str] | N
 
 
 def _validation_cache_key(device: Device) -> str:
-    return f"publishable-sensor-validation.{_validation_hash(device.unique_id)}.json"
+    return f"{_VALIDATION_CACHE_KEY_PREFIX}{_validation_hash(device.unique_id)}.json"
 
 
 def _validation_sensor_lookup(device: Device) -> dict[str, Any]:
@@ -274,7 +284,74 @@ def _is_valid_validation_cache_payload(value: str) -> bool:
         and isinstance(payload.get("modbus_config_hash"), str)
         and isinstance(payload.get("illegal_sensor_unique_ids"), list)
         and all(isinstance(sensor_id, str) for sensor_id in payload["illegal_sensor_unique_ids"])
+        and isinstance(payload.get("validated_sensor_unique_ids"), list)
+        and all(isinstance(sensor_id, str) for sensor_id in payload["validated_sensor_unique_ids"])
     )
+
+
+async def clear_validation_cache() -> int:
+    """Delete every persisted sensor validation cache entry (disk and MQTT).
+
+    The next validation of each device then probes every sensor afresh. Returns the number
+    of entries removed.
+    """
+    removed = await state_store.delete_matching(Category.CONFIG, _VALIDATION_CACHE_KEY_PREFIX)
+    logger.info(f"Cleared {removed} sensor validation cache entr{'y' if removed == 1 else 'ies'}")
+    return removed
+
+
+def _mark_illegal(sensor: ModbusSensorMixin) -> None:
+    sensor.illegal_data_address = True
+    sensor.publishable = False
+
+
+async def _probe_sensors(modbus_client: ModbusClient, sensors: list[ModbusSensorMixin]) -> tuple[list[ModbusSensorMixin], list[ModbusSensorMixin], list[ModbusSensorMixin]]:
+    """Read each sensor's registers and classify it.
+
+    A sensor is *illegal* only if every one of up to ``_ILLEGAL_ADDRESS_ATTEMPTS`` reads returns
+    0x02 ILLEGAL DATA ADDRESS. After the first pass only the sensors that returned 0x02 are read
+    again, after a single delay, so the delay does not grow with the number of sensors.
+
+    Returns:
+        ``(illegal, supported, failed)``. *failed* sensors raised a connection/timeout error on
+        a read, so nothing is known about them.
+    """
+    illegal: list[ModbusSensorMixin] = []
+    supported: list[ModbusSensorMixin] = []
+    failed: list[ModbusSensorMixin] = []
+    suspects = list(sensors)
+
+    for attempt in range(1, _ILLEGAL_ADDRESS_ATTEMPTS + 1):
+        if attempt > 1:
+            if not suspects:
+                break
+            logger.debug(f"Re-reading {len(suspects)} sensor{'s' if len(suspects) != 1 else ''} that returned ILLEGAL DATA ADDRESS (attempt {attempt} of {_ILLEGAL_ADDRESS_ATTEMPTS})")
+            await asyncio.sleep(_ILLEGAL_ADDRESS_RETRY_DELAY)
+        still_suspect: list[ModbusSensorMixin] = []
+        for s in suspects:
+            try:
+                rr = await read_registers(modbus_client, s.address, s.count, s.device_address, s.input_type)
+            except (ModbusException, TimeoutError, OSError, ConnectionError) as e:
+                # Only an explicit 0x02 is evidence of an unsupported register, never a transient error
+                if "0x02 ILLEGAL DATA ADDRESS" in str(e):
+                    logger.debug(f"{s.log_identity}: Validation detected illegal address: {e}")
+                    illegal.append(s)
+                else:
+                    logger.debug(f"{s.log_identity}: Validation read failed: {e}")
+                    failed.append(s)
+                continue
+            if rr and rr.isError() and rr.exception_code == 0x02:
+                still_suspect.append(s)
+            else:
+                if attempt > 1:
+                    logger.debug(f"{s.log_identity}: ILLEGAL DATA ADDRESS was transient - address {s.address} is readable")
+                supported.append(s)
+        suspects = still_suspect
+
+    for s in suspects:
+        _log_illegal_data_address(s)
+    illegal.extend(suspects)
+    return illegal, supported, failed
 
 
 async def validate_publishable_sensors(modbus_client: ModbusClient, device: Device, inverter_firmware_versions: Mapping[int, str] | None = None) -> None:
@@ -283,11 +360,16 @@ async def validate_publishable_sensors(modbus_client: ModbusClient, device: Devi
     Scans all publishable ModbusSensorMixin sensors that are not WriteOnlySensors and
     have not been previously probed (state_count == 0), then marks those returning
     Modbus 0x02 ILLEGAL_DATA_ADDRESS as unpublishable before scan groups are created.
+    A 0x02 is only believed if it is repeated (see ``_ILLEGAL_ADDRESS_ATTEMPTS``).
 
-    Physical scan results are cached per device and reused on later startups while both
-    the active Modbus configuration and the full plant inverter firmware set are
-    unchanged. The firmware set is supplied by setup_devices from inverter ``hw``
-    attributes only; non-inverter device software/hardware attributes are ignored.
+    Results are cached per device and reused on later startups while both the active
+    Modbus configuration and the full plant inverter firmware set are unchanged. The
+    firmware set is supplied by setup_devices from inverter ``hw`` attributes only;
+    non-inverter device software/hardware attributes are ignored.
+
+    A cache hit does not skip probing entirely: sensors that were cached as illegal are
+    read again (so a wrong result cannot persist), as are sensors the cache has never
+    seen (for example, added by a software update). Everything else is trusted.
 
     Args:
         modbus_client: Modbus client for reads
@@ -301,68 +383,64 @@ async def validate_publishable_sensors(modbus_client: ModbusClient, device: Devi
     sensors_to_test = [s for s in device.get_all_sensors(search_children=True).values() if isinstance(s, ModbusSensorMixin) and not isinstance(s, WriteOnlySensorMixin) and s.publishable and s.state_count == 0]
     if not sensors_to_test:
         return
+    candidates: list[ModbusSensorMixin] = [s for sensor in sensors_to_test for s in (sensor.alarms if isinstance(sensor, AlarmCombinedSensor) else [sensor])]
 
     firmware_versions = _inverter_firmware_payload(inverter_firmware_versions)
     firmware_hash = _validation_hash(firmware_versions)
     modbus_config_hash = _current_modbus_config_hash()
     cache_key = _validation_cache_key(device)
     cached = await state_store.load(Category.CONFIG, cache_key, validator=_is_valid_validation_cache_payload)
+
+    cached_illegal: set[str] = set()
+    cached_validated: set[str] = set()
+    to_probe = candidates
     if cached is None:
         logger.debug(f"{device.log_identity} ILLEGAL DATA ADDRESS errors cache not found ({cache_key=})")
     else:
         payload = json.loads(cached)
-        if payload["inverter_firmware_hash"] == firmware_hash:
-            if payload["modbus_config_hash"] == modbus_config_hash:
-                cached_illegal_sensor_unique_ids = payload["illegal_sensor_unique_ids"]
-                logger.debug(f"{device.log_identity} Applying {len(cached_illegal_sensor_unique_ids)} sensor{'s' if len(cached_illegal_sensor_unique_ids) != 1 else ''} ILLEGAL DATA ADDRESS errors from cache")
-                sensor_lookup = _validation_sensor_lookup(device)
-                for sensor_unique_id in cached_illegal_sensor_unique_ids:
-                    sensor = sensor_lookup.get(sensor_unique_id)
-                    if sensor is not None:
-                        sensor.illegal_data_address = True
-                        sensor.publishable = False
-                        _log_illegal_data_address(sensor)
-                return
-            else:
-                logger.debug(f"{device.log_identity} ILLEGAL DATA ADDRESS errors cache modbus config hash mismatch (cached={payload['modbus_config_hash']} current={modbus_config_hash})")
-        else:
+        if payload["inverter_firmware_hash"] != firmware_hash:
             logger.debug(f"{device.log_identity} ILLEGAL DATA ADDRESS errors cache inverter firmware hash mismatch (cached={payload['inverter_firmware_hash']} current={firmware_hash})")
+        elif payload["modbus_config_hash"] != modbus_config_hash:
+            logger.debug(f"{device.log_identity} ILLEGAL DATA ADDRESS errors cache modbus config hash mismatch (cached={payload['modbus_config_hash']} current={modbus_config_hash})")
+        else:
+            cached_illegal = set(payload["illegal_sensor_unique_ids"])
+            cached_validated = set(payload["validated_sensor_unique_ids"])
+            to_probe = [s for s in candidates if s.unique_id in cached_illegal or s.unique_id not in cached_validated]
+            logger.debug(f"{device.log_identity} Applying ILLEGAL DATA ADDRESS errors cache: {len(cached_illegal)} cached illegal, {len(to_probe)} of {len(candidates)} sensors to probe")
 
-    logger.debug(f"{device.log_identity} Validating {len(sensors_to_test)} sensor{'s' if len(sensors_to_test) != 1 else ''} addresses")
+    if not to_probe:
+        return
 
-    illegal_sensor_unique_ids: list[str] = []
-    scan_completed = True
+    logger.debug(f"{device.log_identity} Validating {len(to_probe)} sensor{'s' if len(to_probe) != 1 else ''} addresses")
+    illegal, supported, failed = await _probe_sensors(modbus_client, to_probe)
 
-    # Test each sensor for illegal address exceptions
-    for sensor in sensors_to_test:
-        for s in sensor.alarms if isinstance(sensor, AlarmCombinedSensor) else [sensor]:
-            try:
-                rr = await read_registers(modbus_client, s.address, s.count, s.device_address, s.input_type)
-                if rr and rr.isError() and rr.exception_code == 0x02:
-                    _log_illegal_data_address(s)
-                    s.illegal_data_address = True
-                    s.publishable = False
-                    illegal_sensor_unique_ids.append(s.unique_id)
-            except (ModbusException, TimeoutError, OSError, ConnectionError) as e:
-                scan_completed = False
-                # Log but don't suppress sensor on transient errors (only explicit 0x02)
-                if "0x02 ILLEGAL DATA ADDRESS" in str(e):
-                    logger.debug(f"{s.log_identity}: Validation detected illegal address: {e}")
-                    s.illegal_data_address = True
-                    s.publishable = False
-                    illegal_sensor_unique_ids.append(s.unique_id)
-                else:
-                    logger.debug(f"{s.log_identity}: Validation read failed: {e}")
+    for s in illegal:
+        _mark_illegal(s)
+    for s in failed:
+        if s.unique_id in cached_illegal:
+            # Unreadable now, so there is no new evidence: keep the cached verdict for this run only
+            _log_illegal_data_address(s)
+            _mark_illegal(s)
+    for s in supported:
+        if s.unique_id in cached_illegal:
+            logger.info(f"{s.log_identity} no longer reports ILLEGAL DATA ADDRESS - sensor is now supported")
 
-    if not scan_completed:
+    if failed:
         logger.debug(f"{device.log_identity} Validation scan not cached because one or more sensor reads failed")
         return
+
+    probed_ids = {s.unique_id for s in to_probe}
+    illegal_ids = (cached_illegal - probed_ids) | {s.unique_id for s in illegal}
+    validated_ids = cached_validated | probed_ids
+    if cached is not None and illegal_ids == cached_illegal and validated_ids == cached_validated:
+        return  # Nothing changed, so the persisted entry is still exact
 
     payload = {
         "cache_version": _PUBLISHABLE_SENSOR_VALIDATION_CACHE_VERSION,
         "inverter_firmware_versions": firmware_versions,
         "inverter_firmware_hash": firmware_hash,
         "modbus_config_hash": modbus_config_hash,
-        "illegal_sensor_unique_ids": sorted(set(illegal_sensor_unique_ids)),
+        "illegal_sensor_unique_ids": sorted(illegal_ids),
+        "validated_sensor_unique_ids": sorted(validated_ids),
     }
     await state_store.save(Category.CONFIG, cache_key, json.dumps(payload, sort_keys=True))

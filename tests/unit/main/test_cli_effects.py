@@ -149,3 +149,68 @@ async def test_each_runtime_starts_with_no_outages(monkeypatch):
     await main_mod.async_main()
 
     assert seen_during_setup == []
+
+
+def _patch_async_main(monkeypatch, clean: bool):
+    active_config.modbus.clear()
+    monkeypatch.setattr(active_config, "clean", clean, raising=False)
+    monkeypatch.setattr(active_config, "metrics_enabled", False, raising=False)
+    monkeypatch.setattr(active_config, "validate", lambda: None, raising=False)
+    monkeypatch.setattr(active_config, "modbus_log_level", lambda: logging.INFO, raising=False)
+    monkeypatch.setattr(main_mod, "start", AsyncMock())
+    monkeypatch.setattr(main_mod, "setup_devices", AsyncMock(return_value=([], None)))
+    monkeypatch.setattr(main_mod, "setup_services", lambda c, p: c)
+    monkeypatch.setattr(main_mod, "initialize_async", AsyncMock())
+    monkeypatch.setattr(main_mod, "configure_logging", lambda: None)
+    monkeypatch.setattr(main_mod.state_store, "initialise", AsyncMock())
+    monkeypatch.setattr(main_mod.state_store, "clean", AsyncMock())
+    monkeypatch.setattr(main_mod.MonitorService, "clean", AsyncMock())
+
+
+@pytest.mark.asyncio
+async def test_main_clears_validation_cache_once_before_devices_are_set_up(monkeypatch):
+    _patch_async_main(monkeypatch, clean=False)
+    monkeypatch.setattr(active_config, "clear_validation_cache", True, raising=False)
+    order: list[str] = []
+
+    async def fake_clear():
+        order.append("clear")
+
+    async def fake_setup(seen):
+        order.append("setup")
+        return [], None
+
+    clear = AsyncMock(side_effect=fake_clear)
+    monkeypatch.setattr(main_mod, "clear_validation_cache", clear)
+    monkeypatch.setattr(main_mod, "setup_devices", fake_setup)
+
+    await main_mod.async_main()
+
+    clear.assert_awaited_once()
+    assert order == ["clear", "setup"]
+    assert active_config.clear_validation_cache is False  # not repeated on an in-process restart
+
+
+@pytest.mark.asyncio
+async def test_main_does_not_clear_validation_cache_by_default(monkeypatch):
+    _patch_async_main(monkeypatch, clean=False)
+    monkeypatch.setattr(active_config, "clear_validation_cache", False, raising=False)
+    clear = AsyncMock()
+    monkeypatch.setattr(main_mod, "clear_validation_cache", clear)
+
+    await main_mod.async_main()
+
+    clear.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_main_clean_already_removes_validation_cache(monkeypatch):
+    """--clean wipes all persisted state, so the dedicated clear would be redundant."""
+    _patch_async_main(monkeypatch, clean=True)
+    monkeypatch.setattr(active_config, "clear_validation_cache", True, raising=False)
+    clear = AsyncMock()
+    monkeypatch.setattr(main_mod, "clear_validation_cache", clear)
+
+    await main_mod.async_main()
+
+    clear.assert_not_awaited()
