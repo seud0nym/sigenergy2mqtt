@@ -2983,6 +2983,8 @@ class:
     name_off: 关机
     name_on: 开机
 cli:
+  SIGENERGY2MQTT_CLEAR_VALIDATION_CACHE:
+    help: 在启动时删除已持久化的传感器验证缓存，以便对每个传感器重新进行检测，以检查是否存在“非法数据地址”（不支持）的响应。该选项在使用后应予以移除。
   SIGENERGY2MQTT_CLOUD_ACCEPT_UNOFFICIAL_API_RISK:
     help: 请明确允许使用未发布的 mySigen API（建议使用委托账户）。
   SIGENERGY2MQTT_CLOUD_DISCOVER_INVERTERS:

@@ -2983,6 +2983,8 @@ class:
     name_off: 電源オフ
     name_on: 電源オン
 cli:
+  SIGENERGY2MQTT_CLEAR_VALIDATION_CACHE:
+    help: 起動時に永続化されたセンサー検証キャッシュを削除し、すべてのセンサーに対して「ILLEGAL DATA ADDRESS（未対応）」という応答がないか再度プローブを行うようにします。オプションが使用された後は、そのオプションを削除してください。
   SIGENERGY2MQTT_CLOUD_ACCEPT_UNOFFICIAL_API_RISK:
     help: 非公開のmySigen APIを明示的に許可してください（委任アカウントの使用を推奨します）。
   SIGENERGY2MQTT_CLOUD_DISCOVER_INVERTERS:
