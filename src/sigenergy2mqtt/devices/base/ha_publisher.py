@@ -161,6 +161,50 @@ class HaPublisherMixin(abc.ABC):
         for device in self.children:
             device.publish_availability(mqtt_client, ha_state)
 
+    def _discovery_topic(self) -> str:
+        return f"{active_config.home_assistant.discovery_prefix}/device/{self.unique_id}/config"
+
+    def _publish_clean_discovery(self, mqtt_client: mqtt.Client, topic: str) -> mqtt.MQTTMessageInfo:
+        self.publish_availability(mqtt_client, b"", qos=1)  # Availability is always retained
+        logger.debug(f"{self.log_identity} cleaning discovery ({topic=})")
+        return mqtt_client.publish(topic, b"", qos=1, retain=True)  # Clear retained messages
+
+    def _build_discovery_json(self, mqtt_client: mqtt.Client, components: dict[str, Any]) -> str | None:
+        """Assemble the device discovery JSON, or None when there are no components."""
+        # The publishing client's Last Will marks every entity unavailable if this
+        # process dies without publishing "offline" itself (crash, kill, power loss)
+        status_topic = getattr(mqtt_client, "status_topic", None)
+        if isinstance(status_topic, str) and status_topic:
+            for component in components.values():
+                availability = component.get(DiscoveryKeys.AVAILABILITY)
+                if isinstance(availability, list) and availability:
+                    component[DiscoveryKeys.AVAILABILITY] = [*availability, {"topic": status_topic}]
+        if not components:
+            return None
+        discovery: dict[str, Any] = {}
+        parent = self.parent_device
+        if parent is not None and publishes_as_ha_child(cast("Device", self)):
+            discovery["dev"] = parent
+            discovery["o"] = active_config.origin
+            discovery["cdevs"] = [{"ids": [self.unique_id], "name": ha_child_device_name(cast("Device", self)), "cmps": components}]
+        else:
+            discovery["dev"] = self
+            discovery["o"] = active_config.origin
+            discovery["cmps"] = components
+        return json.dumps(discovery, allow_nan=False, indent=2, sort_keys=False)
+
+    def _publish_discovery_json(self, mqtt_client: mqtt.Client, topic: str, discovery_json: str | None) -> mqtt.MQTTMessageInfo:
+        if discovery_json is None:
+            logger.debug(f"{self.log_identity} publishing empty availability because no components found ({topic=})")
+            self.publish_availability(mqtt_client, b"", qos=1)
+            logger.debug(f"{self.log_identity} publishing empty discovery because no components found ({topic=})")
+            return mqtt_client.publish(topic, b"", qos=1, retain=True)  # Clear retained messages
+        logger.debug(f"{self.log_identity} publishing discovery ({topic=})")
+        return mqtt_client.publish(topic, discovery_json, qos=2, retain=True)
+
+    def _dump_path(self) -> Path | None:
+        return Path(active_config.persistent_state_path, f"{self.unique_id}.discovery.json") if active_config.log_level == logging.DEBUG else None
+
     def publish_discovery(self, mqtt_client: mqtt.Client, clean: bool = False) -> mqtt.MQTTMessageInfo | None:
         """Publish or clear the Home Assistant MQTT discovery payload for this device.
 
@@ -193,47 +237,18 @@ class HaPublisherMixin(abc.ABC):
         Returns:
             The MQTTMessageInfo from the final mqtt_client.publish() call, or None.
         """
-        topic = f"{active_config.home_assistant.discovery_prefix}/device/{self.unique_id}/config"
+        topic = self._discovery_topic()
         if clean:
-            self.publish_availability(mqtt_client, b"", qos=1)  # Availability is always retained
-            logger.debug(f"{self.log_identity} cleaning discovery ({topic=})")
-            info = mqtt_client.publish(topic, b"", qos=1, retain=True)  # Clear retained messages
+            info = self._publish_clean_discovery(mqtt_client, topic)
         else:
             components: dict[str, Any] = {}
             for sensor in self.sensors.values():
                 components.update(sensor.get_discovery(mqtt_client))
-            # The publishing client's Last Will marks every entity unavailable if this
-            # process dies without publishing "offline" itself (crash, kill, power loss)
-            status_topic = getattr(mqtt_client, "status_topic", None)
-            if isinstance(status_topic, str) and status_topic:
-                for component in components.values():
-                    availability = component.get(DiscoveryKeys.AVAILABILITY)
-                    if isinstance(availability, list) and availability:
-                        component[DiscoveryKeys.AVAILABILITY] = [*availability, {"topic": status_topic}]
-            if components:
-                discovery: dict[str, Any] = {}
-                parent = self.parent_device
-                if parent is not None and publishes_as_ha_child(cast("Device", self)):
-                    discovery["dev"] = parent
-                    discovery["o"] = active_config.origin
-                    discovery["cdevs"] = [{"ids": [self.unique_id], "name": ha_child_device_name(cast("Device", self)), "cmps": components}]
-                else:
-                    discovery["dev"] = self
-                    discovery["o"] = active_config.origin
-                    discovery["cmps"] = components
-                discovery_json = json.dumps(discovery, allow_nan=False, indent=2, sort_keys=False)
-                logger.debug(f"{self.log_identity} publishing discovery ({topic=})")
-                if active_config.log_level == logging.DEBUG:
-                    discovery_dump = Path(active_config.persistent_state_path, f"{self.unique_id}.discovery.json")
-                    with discovery_dump.open("w") as f:
-                        f.write(discovery_json)
-                    logger.debug(f"{self.log_identity} discovery JSON dumped to {discovery_dump.resolve()}")
-                info = mqtt_client.publish(topic, discovery_json, qos=2, retain=True)
-            else:
-                logger.debug(f"{self.log_identity} publishing empty availability because no components found ({topic=})")
-                self.publish_availability(mqtt_client, b"", qos=1)
-                logger.debug(f"{self.log_identity} publishing empty discovery because no components found ({topic=})")
-                info = mqtt_client.publish(topic, b"", qos=1, retain=True)  # Clear retained messages
+            discovery_json = self._build_discovery_json(mqtt_client, components)
+            if discovery_json is not None and (dump := self._dump_path()) is not None:
+                dump.write_text(discovery_json)
+                logger.debug(f"{self.log_identity} discovery JSON dumped to {dump.resolve()}")
+            info = self._publish_discovery_json(mqtt_client, topic, discovery_json)
         self.publish_attributes(mqtt_client, clean, propagate=False)  # Don't propagate to children because it will happen automatically when child discovery is published
         for device in self.children:
             device.publish_discovery(mqtt_client, clean=clean)
@@ -241,48 +256,19 @@ class HaPublisherMixin(abc.ABC):
 
     async def publish_discovery_async(self, mqtt_client: mqtt.Client, clean: bool = False) -> mqtt.MQTTMessageInfo | None:
         """Publish discovery using the asynchronous sensor persistence API."""
-        topic = f"{active_config.home_assistant.discovery_prefix}/device/{self.unique_id}/config"
+        topic = self._discovery_topic()
         if clean:
-            self.publish_availability(mqtt_client, b"", qos=1)
-            logger.debug(f"{self.log_identity} cleaning discovery ({topic=})")
-            info = mqtt_client.publish(topic, b"", qos=1, retain=True)
+            info = self._publish_clean_discovery(mqtt_client, topic)
         else:
             components: dict[str, Any] = {}
             # Snapshot: awaiting below lets other tasks (e.g. cloud recovery) add sensors mid-iteration
             for sensor in list(self.sensors.values()):
                 components.update(await sensor.get_discovery_async(mqtt_client))
-
-            status_topic = getattr(mqtt_client, "status_topic", None)
-            if isinstance(status_topic, str) and status_topic:
-                for component in components.values():
-                    availability = component.get(DiscoveryKeys.AVAILABILITY)
-                    if isinstance(availability, list) and availability:
-                        component[DiscoveryKeys.AVAILABILITY] = [*availability, {"topic": status_topic}]
-
-            if components:
-                discovery: dict[str, Any] = {}
-                parent = self.parent_device
-                if parent is not None and publishes_as_ha_child(cast("Device", self)):
-                    discovery["dev"] = parent
-                    discovery["o"] = active_config.origin
-                    discovery["cdevs"] = [{"ids": [self.unique_id], "name": ha_child_device_name(cast("Device", self)), "cmps": components}]
-                else:
-                    discovery["dev"] = self
-                    discovery["o"] = active_config.origin
-                    discovery["cmps"] = components
-                discovery_json = json.dumps(discovery, allow_nan=False, indent=2, sort_keys=False)
-                logger.debug(f"{self.log_identity} publishing discovery ({topic=})")
-                if active_config.log_level == logging.DEBUG:
-                    discovery_dump = Path(active_config.persistent_state_path, f"{self.unique_id}.discovery.json")
-                    await asyncio.to_thread(discovery_dump.write_text, discovery_json)
-                    logger.debug(f"{self.log_identity} discovery JSON dumped to {discovery_dump.resolve()}")
-                info = mqtt_client.publish(topic, discovery_json, qos=2, retain=True)
-            else:
-                logger.debug(f"{self.log_identity} publishing empty availability because no components found ({topic=})")
-                self.publish_availability(mqtt_client, b"", qos=1)
-                logger.debug(f"{self.log_identity} publishing empty discovery because no components found ({topic=})")
-                info = mqtt_client.publish(topic, b"", qos=1, retain=True)
-
+            discovery_json = self._build_discovery_json(mqtt_client, components)
+            if discovery_json is not None and (dump := self._dump_path()) is not None:
+                await asyncio.to_thread(dump.write_text, discovery_json)
+                logger.debug(f"{self.log_identity} discovery JSON dumped to {dump.resolve()}")
+            info = self._publish_discovery_json(mqtt_client, topic, discovery_json)
         self.publish_attributes(mqtt_client, clean, propagate=False)
         for device in self.children:
             await device.publish_discovery_async(mqtt_client, clean=clean)

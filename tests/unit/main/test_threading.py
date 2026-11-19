@@ -1,4 +1,5 @@
 import asyncio
+import inspect
 import logging
 import threading
 from unittest.mock import AsyncMock, MagicMock
@@ -26,12 +27,15 @@ class DummyMQTTClient:
 class DummyMQTTHandler:
     async def wait_for(self, timeout, name, method, mqtt_client, **kwargs):
         # call the device method synchronously (it may be sync in tests)
+        # Like the real MqttHandler.wait_for, await coroutine results
         try:
             # method signature may be (mqtt_client, clean=...)
-            method(mqtt_client, **kwargs)
+            result = method(mqtt_client, **kwargs)
         except TypeError:
             # fallback: call without kwargs
-            method(mqtt_client)
+            result = method(mqtt_client)
+        if inspect.isawaitable(result):
+            await result
 
     async def close(self):
         pass
