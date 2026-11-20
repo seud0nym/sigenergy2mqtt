@@ -1533,7 +1533,7 @@ class PowerFactor(ReadOnlySensor, HybridInverter, PVInverter):
             device_address=device_address,
             address=self.ADDRESS,
             count=1,
-            data_type=ModbusDataType.UINT16,
+            data_type=ModbusDataType.INT16,
             scan_interval=ScanInterval.realtime(plant_index),
             unit=None,
             device_class=DeviceClass.POWER_FACTOR,

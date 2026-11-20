@@ -29,6 +29,7 @@
 - Fixed daily accumulation sensors (such as Daily Self-Consumed Energy) continuing from the previous day's total when restarted on a later day
 - Fixed persistent state files being left empty if a write was interrupted (for example, by power loss), which reset accumulated totals to zero. State files are now written atomically, and an empty or corrupt state file falls back to the copy stored on the MQTT broker
 - Fixed Home Assistant discovery blocking device event loops while waiting for persistent-state reads, writes, or deletes; runtime discovery now uses the asynchronous state-store API
+- Fixed Inverter Power Factor incorrectly read as an unsigned integer, when Protocol specifies as signed
 
 ### Changes
 
