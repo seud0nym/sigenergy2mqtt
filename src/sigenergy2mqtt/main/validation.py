@@ -256,16 +256,6 @@ def _validation_cache_key(device: Device) -> str:
     return f"{_VALIDATION_CACHE_KEY_PREFIX}{_validation_hash(device.unique_id)}.json"
 
 
-def _validation_sensor_lookup(device: Device) -> dict[str, Any]:
-    sensors: dict[str, Any] = {}
-    for sensor in device.get_all_sensors(search_children=True).values():
-        candidates = sensor.alarms if isinstance(sensor, AlarmCombinedSensor) else [sensor]
-        for candidate in candidates:
-            if isinstance(candidate, ModbusSensorMixin):
-                sensors[candidate.unique_id] = candidate
-    return sensors
-
-
 def _log_illegal_data_address(sensor: Any) -> None:
     logger.debug(f"{sensor.log_identity} not supported on this device/firmware: ILLEGAL DATA ADDRESS {sensor.address} (count={sensor.count} type={sensor.input_type} protocol=V{sensor.protocol_version.value})")
 
@@ -313,8 +303,8 @@ async def _probe_sensors(modbus_client: ModbusClient, sensors: list[ModbusSensor
     again, after a single delay, so the delay does not grow with the number of sensors.
 
     Returns:
-        ``(illegal, supported, failed)``. *failed* sensors raised a connection/timeout error on
-        a read, so nothing is known about them.
+        ``(illegal, supported, failed)``. *failed* sensors raised an exception on a read, so the
+        scan is incomplete and must not be cached.
     """
     illegal: list[ModbusSensorMixin] = []
     supported: list[ModbusSensorMixin] = []
@@ -334,8 +324,11 @@ async def _probe_sensors(modbus_client: ModbusClient, sensors: list[ModbusSensor
             except (ModbusException, TimeoutError, OSError, ConnectionError) as e:
                 # Only an explicit 0x02 is evidence of an unsupported register, never a transient error
                 if "0x02 ILLEGAL DATA ADDRESS" in str(e):
+                    # Disabled for this run but, as an exception rather than a response, also
+                    # counted as failed so that it is never persisted (as before retries existed)
                     logger.debug(f"{s.log_identity}: Validation detected illegal address: {e}")
                     illegal.append(s)
+                    failed.append(s)
                 else:
                     logger.debug(f"{s.log_identity}: Validation read failed: {e}")
                     failed.append(s)

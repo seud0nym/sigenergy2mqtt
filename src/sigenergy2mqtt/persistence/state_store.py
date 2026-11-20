@@ -853,6 +853,8 @@ class StateStore:
         """
         if not self._initialised or self._executor is None:
             return 0
+        if self._mqtt_enabled and not self._mqtt_cache_warmed:
+            logger.warning(f"StateStore: MQTT cache warm-up did not complete, so {category}/{key_prefix}* entries held only on the broker may not be deleted")
         with self._deferred_lock:
             pending = [key for pending_category, key in self._deferred if pending_category == str(category) and key.startswith(key_prefix)]
         for key in pending:

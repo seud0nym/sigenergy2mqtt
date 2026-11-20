@@ -2130,3 +2130,27 @@ async def test_cloud_setup_links_plant_grid_status_to_gateway_buttons() -> None:
     control = cloud_control.get_sensor(GatewayGridConnectionControl, search_children=True)
     assert control is not None
     assert control._plant_grid_status is grid_status
+
+
+@pytest.mark.asyncio
+async def test_validate_publishable_sensors_illegal_address_exception_disables_but_is_not_cached(clean_config, monkeypatch):
+    """A 0x02 raised as an exception (not returned as a response) is not retried or persisted."""
+    from pymodbus.exceptions import ModbusException
+
+    import sigenergy2mqtt.main.validation as main_mod
+
+    sensor = make_validation_sensor("raised_0x02", 30091)
+    device = make_validation_device(sensor, "sigen_validation_raised_device")
+    reads = _ScriptedReads({30091: [ModbusException("0x02 ILLEGAL DATA ADDRESS")]})
+    save = AsyncMock()
+    monkeypatch.setattr(main_mod.state_store, "load", AsyncMock(return_value=None))
+    monkeypatch.setattr(main_mod.state_store, "save", save)
+    monkeypatch.setattr(main_mod, "read_registers", reads)
+    monkeypatch.setattr(main_mod, "_current_modbus_config_hash", lambda: "modbus-a")
+
+    await main_mod.validate_publishable_sensors(AsyncMock(), device, {1: "fw"})
+
+    assert sensor.publishable is False
+    assert sensor.illegal_data_address is True
+    assert reads.calls == [30091]
+    save.assert_not_awaited()

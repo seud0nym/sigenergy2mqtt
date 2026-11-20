@@ -106,3 +106,67 @@ def test_extract_dashboard_state_invalid_device():
     result = extract_dashboard_state(state)
     assert result["plant"] == {"config": {}, "has_battery": False}
     assert result["inverters"] == {}
+
+
+def _battery_state(**extra):
+    state = {
+        "sigenergy2mqtt/sigen_0_plant_battery_soc/state": MonitoredSensor(
+            device_name="PowerPlant[plant=0,dev=1]", sensor_name="PlantBatterySoC", description="Battery SoC", scan_interval=5, unit="%", last_state=50.0
+        ),
+    }
+    state.update(extra)
+    return state
+
+
+def _cell_temp(topic: str, device: str, value, sensor_name: str = "AverageCellTemperature"):
+    return {topic: MonitoredSensor(device_name=device, sensor_name=sensor_name, description="Average Cell Temperature", scan_interval=10, unit="°C", last_state=value)}
+
+
+def test_average_cell_temperature_falls_back_to_inverter_mean_when_plant_sensor_absent():
+    """Issue #363: plant register 30286 unsupported, inverter register 30603 supported."""
+    state = _battery_state(
+        **_cell_temp("homeassistant/sensor/sigen_0_001_ess/sigen_0_inverter_1_average_cell_temperature/state", "Inverter[plant=0,dev=1]", 24.0),
+        **_cell_temp("homeassistant/sensor/sigen_0_002_ess/sigen_0_inverter_2_average_cell_temperature/state", "Inverter[plant=0,dev=2]", 25.5),
+    )
+
+    result = extract_dashboard_state(state)
+
+    assert result["plant"]["average_cell_temperature"] == {"label": "Average Cell Temperature", "value": 24.8, "unit": "°C"}
+    assert result["inverters"]["1"]["average_cell_temperature"]["value"] == 24.0
+
+
+def test_average_cell_temperature_fallback_ignores_inverters_without_a_number():
+    state = _battery_state(
+        **_cell_temp("sigenergy2mqtt/sigen_0_inverter_1_average_cell_temperature/state", "Inverter[plant=0,dev=1]", None),
+        **_cell_temp("sigenergy2mqtt/sigen_0_inverter_2_average_cell_temperature/state", "Inverter[plant=0,dev=2]", 30.0),
+    )
+
+    assert extract_dashboard_state(state)["plant"]["average_cell_temperature"]["value"] == 30.0
+
+
+def test_average_cell_temperature_plant_value_takes_precedence():
+    state = _battery_state(
+        **_cell_temp("sigenergy2mqtt/sigen_0_ess_average_cell_temperature/state", "PowerPlant[plant=0,dev=1]", 22.0, "ESSAverageCellTemperature"),
+        **_cell_temp("sigenergy2mqtt/sigen_0_inverter_1_average_cell_temperature/state", "Inverter[plant=0,dev=1]", 40.0),
+    )
+
+    assert extract_dashboard_state(state)["plant"]["average_cell_temperature"]["value"] == 22.0
+
+
+def test_average_cell_temperature_plant_none_falls_back_to_inverter():
+    state = _battery_state(
+        **_cell_temp("sigenergy2mqtt/sigen_0_ess_average_cell_temperature/state", "PowerPlant[plant=0,dev=1]", None, "ESSAverageCellTemperature"),
+        **_cell_temp("sigenergy2mqtt/sigen_0_inverter_1_average_cell_temperature/state", "Inverter[plant=0,dev=1]", 21.0),
+    )
+
+    assert extract_dashboard_state(state)["plant"]["average_cell_temperature"]["value"] == 21.0
+
+
+def test_average_cell_temperature_absent_everywhere_stays_absent():
+    assert "average_cell_temperature" not in extract_dashboard_state(_battery_state())["plant"]
+
+
+def test_average_cell_temperature_no_fallback_without_battery():
+    state = _cell_temp("sigenergy2mqtt/sigen_0_inverter_1_average_cell_temperature/state", "Inverter[plant=0,dev=1]", 21.0)
+
+    assert "average_cell_temperature" not in extract_dashboard_state(state)["plant"]

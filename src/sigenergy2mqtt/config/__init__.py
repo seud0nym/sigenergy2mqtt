@@ -11,6 +11,7 @@ from sigenergy2mqtt.common.status_field import StatusField
 from sigenergy2mqtt.common.voltage_source import VoltageSource
 
 from . import cli, const
+from .coerce import _bool
 from .config import (
     Config,
     ConfigurationError,
@@ -64,11 +65,6 @@ def _apply_cli_to_env(variable: str, value: str | list[str]) -> None:
     """
     os.environ[variable] = ",".join(x for x in value) if isinstance(value, list) else str(value)
     logger.debug(f"Environment variable '{variable}' set from CLI: value='{'[REDACTED]' if 'PASSWORD' in os.environ[variable] or 'API_KEY' in os.environ[variable] else os.environ[variable]}'")
-
-
-def _env_flag(variable: str) -> bool:
-    """Return True if the environment variable is set to a true value (1, true, yes, on, y)."""
-    return os.getenv(variable, "").strip().lower() in ("1", "true", "yes", "on", "y")
 
 
 def _is_arg_explicitly_set(value) -> bool:
@@ -194,7 +190,7 @@ def initialize(args=None) -> bool:
 
     # CLI and ENV only: deliberately not a YAML setting, because it is an action to take
     # once rather than a persistent configuration. CLI values were promoted to ENV above.
-    active_config.clear_validation_cache = _env_flag(const.SIGENERGY2MQTT_CLEAR_VALIDATION_CACHE)
+    active_config.clear_validation_cache = _bool(os.getenv(const.SIGENERGY2MQTT_CLEAR_VALIDATION_CACHE)) is True
 
     validate_mode = getattr(parsed_args, "validate_only", None)
     active_config.validate_only_mode = validate_mode
