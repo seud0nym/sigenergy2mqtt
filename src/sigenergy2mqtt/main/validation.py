@@ -303,8 +303,8 @@ async def _probe_sensors(modbus_client: ModbusClient, sensors: list[ModbusSensor
     again, after a single delay, so the delay does not grow with the number of sensors.
 
     Returns:
-        ``(illegal, supported, failed)``. *failed* sensors raised an exception on a read, so the
-        scan is incomplete and must not be cached.
+        ``(illegal, supported, failed)``. *failed* sensors raised an exception or returned an
+        error response other than 0x02 on a read, so the scan is incomplete and must not be cached.
     """
     illegal: list[ModbusSensorMixin] = []
     supported: list[ModbusSensorMixin] = []
@@ -335,6 +335,10 @@ async def _probe_sensors(modbus_client: ModbusClient, sensors: list[ModbusSensor
                 continue
             if rr and rr.isError() and rr.exception_code == 0x02:
                 still_suspect.append(s)
+            elif not rr or rr.isError():
+                # Any other error response (e.g. device failure) proves nothing either way
+                logger.debug(f"{s.log_identity}: Validation read failed: {rr}")
+                failed.append(s)
             else:
                 if attempt > 1:
                     logger.debug(f"{s.log_identity}: ILLEGAL DATA ADDRESS was transient - address {s.address} is readable")

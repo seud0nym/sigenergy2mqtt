@@ -2154,3 +2154,52 @@ async def test_validate_publishable_sensors_illegal_address_exception_disables_b
     assert sensor.illegal_data_address is True
     assert reads.calls == [30091]
     save.assert_not_awaited()
+
+
+class DeviceFailureResponse:
+    exception_code = 0x04
+
+    def isError(self):
+        return True
+
+
+@pytest.mark.asyncio
+async def test_validate_publishable_sensors_cached_illegal_sensor_error_response_keeps_verdict_without_resaving(clean_config, monkeypatch):
+    """A non-0x02 error response is not evidence the register is supported, so the cached verdict stands."""
+    import sigenergy2mqtt.main.validation as main_mod
+
+    sensor = make_validation_sensor("error_response", 30101)
+    device = make_validation_device(sensor, "sigen_validation_error_response_device")
+    firmware_versions = {1: "fw"}
+    save = AsyncMock()
+    monkeypatch.setattr(main_mod, "_current_modbus_config_hash", lambda: "modbus-a")
+    monkeypatch.setattr(main_mod.state_store, "load", AsyncMock(return_value=validation_payload(firmware_versions, "modbus-a", [sensor.unique_id])))
+    monkeypatch.setattr(main_mod.state_store, "save", save)
+    monkeypatch.setattr(main_mod, "read_registers", _ScriptedReads({30101: [DeviceFailureResponse()]}))
+
+    await main_mod.validate_publishable_sensors(AsyncMock(), device, firmware_versions)
+
+    assert sensor.publishable is False
+    assert sensor.illegal_data_address is True
+    save.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_validate_publishable_sensors_error_response_during_retry_leaves_sensor_publishable_and_uncached(clean_config, monkeypatch):
+    import sigenergy2mqtt.main.validation as main_mod
+
+    sensor = make_validation_sensor("retry_error_response", 30111)
+    device = make_validation_device(sensor, "sigen_validation_retry_error_response_device")
+    reads = _ScriptedReads({30111: [IllegalAddressResponse(), DeviceFailureResponse()]})
+    save = AsyncMock()
+    monkeypatch.setattr(main_mod.state_store, "load", AsyncMock(return_value=None))
+    monkeypatch.setattr(main_mod.state_store, "save", save)
+    monkeypatch.setattr(main_mod, "read_registers", reads)
+    monkeypatch.setattr(main_mod, "_current_modbus_config_hash", lambda: "modbus-a")
+
+    await main_mod.validate_publishable_sensors(AsyncMock(), device, {1: "fw"})
+
+    assert sensor.publishable is True
+    assert sensor.illegal_data_address is False
+    assert reads.calls == [30111, 30111]
+    save.assert_not_awaited()
