@@ -11,6 +11,7 @@ from sigenergy2mqtt.common.status_field import StatusField
 from sigenergy2mqtt.common.voltage_source import VoltageSource
 
 from . import cli, const
+from .coerce import _bool
 from .config import (
     Config,
     ConfigurationError,
@@ -186,6 +187,10 @@ def initialize(args=None) -> bool:
     # 5. Early-exit flags
     if getattr(parsed_args, "clean", False):
         active_config.clean = True
+
+    # CLI and ENV only: deliberately not a YAML setting, because it is an action to take
+    # once rather than a persistent configuration. CLI values were promoted to ENV above.
+    active_config.clear_validation_cache = _bool(os.getenv(const.SIGENERGY2MQTT_CLEAR_VALIDATION_CACHE)) is True
 
     validate_mode = getattr(parsed_args, "validate_only", None)
     active_config.validate_only_mode = validate_mode

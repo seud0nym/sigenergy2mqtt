@@ -73,6 +73,7 @@ class Config:
     """
 
     clean: bool = False
+    clear_validation_cache: bool = False
     origin: ClassVar[dict[str, str]] = {"name": "sigenergy2mqtt", "sw": version.__version__, "url": "https://github.com/seud0nym/sigenergy2mqtt"}
     persistent_state_path: Path
 
@@ -557,7 +558,7 @@ class Config:
             raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'") from None
 
     def __setattr__(self, name: str, value: Any) -> None:
-        if name.startswith("_") or name in ("persistent_state_path", "clean", "validate_only_mode", "validate_show_credentials"):
+        if name.startswith("_") or name in ("persistent_state_path", "clean", "clear_validation_cache", "validate_only_mode", "validate_show_credentials"):
             super().__setattr__(name, value)
             return
 
@@ -568,7 +569,7 @@ class Config:
             super().__setattr__(name, value)
 
     def __delattr__(self, name: str) -> None:
-        if name.startswith("_") or name in ("persistent_state_path", "clean", "validate_only_mode", "validate_show_credentials"):
+        if name.startswith("_") or name in ("persistent_state_path", "clean", "clear_validation_cache", "validate_only_mode", "validate_show_credentials"):
             super().__delattr__(name)
             return
 

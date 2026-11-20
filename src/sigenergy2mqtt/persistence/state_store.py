@@ -841,6 +841,27 @@ class StateStore:
         loop = asyncio.get_running_loop()
         await loop.run_in_executor(self._executor, self._delete_sync_impl, category, key)
 
+    async def delete_matching(self, category: Category | str, key_prefix: str) -> int:
+        """Remove every *category* entry whose key starts with *key_prefix* from both backends.
+
+        The keys are the union of those on disk and those held in the MQTT cache,
+        so an entry that exists in only one backend (for example, restored from
+        another host) is removed too.
+
+        Returns:
+            The number of distinct keys removed.
+        """
+        if not self._initialised or self._executor is None:
+            return 0
+        if self._mqtt_enabled and not self._mqtt_cache_warmed:
+            logger.warning(f"StateStore: MQTT cache warm-up did not complete, so {category}/{key_prefix}* entries held only on the broker may not be deleted")
+        with self._deferred_lock:
+            pending = [key for pending_category, key in self._deferred if pending_category == str(category) and key.startswith(key_prefix)]
+        for key in pending:
+            self._discard_deferred(category, key)
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(self._executor, self._delete_matching_sync_impl, category, key_prefix)
+
     async def clean(self) -> None:
         """Clear all persisted state from both backends.
 
@@ -1065,6 +1086,16 @@ class StateStore:
                 logger.warning(f"StateStore: MQTT delete failed for {category}/{key}: {exc}")
 
         self._fire_metric("state_store_delete_error" if error else "state_store_delete")
+
+    def _delete_matching_sync_impl(self, category: Category | str, key_prefix: str) -> int:
+        """Remove matching keys from disk and MQTT; called from the ThreadPoolExecutor."""
+        assert self._disk is not None
+        keys: set[str] = {key for key_category, key in self._disk.all_keys() if str(key_category) == str(category) and key.startswith(key_prefix)}
+        if self._mqtt_enabled:
+            keys.update(key for key_category, key in self._mqtt.all_known_keys() if str(key_category) == str(category) and key.startswith(key_prefix))
+        for key in sorted(keys):
+            self._delete_sync_impl(category, key)
+        return len(keys)
 
     def _clean_all_sync_impl(self) -> None:
         """Clear all state from both backends; called from the ThreadPoolExecutor."""

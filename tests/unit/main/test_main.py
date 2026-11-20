@@ -60,6 +60,7 @@ from sigenergy2mqtt.main.restart import restart_controller
 from sigenergy2mqtt.main.service_setup import setup_services, setup_signals
 from sigenergy2mqtt.main.thread_config import ThreadConfig
 from sigenergy2mqtt.main.validation import (
+    _ILLEGAL_ADDRESS_ATTEMPTS,
     _PUBLISHABLE_SENSOR_VALIDATION_CACHE_VERSION,
     _inverter_firmware_payload,
     _validation_hash,
@@ -437,7 +438,7 @@ def make_validation_device(sensor, unique_id: str = "sigen_validation_device"):
     return device
 
 
-def validation_payload(firmware_versions, modbus_hash, sensor_ids):
+def validation_payload(firmware_versions, modbus_hash, sensor_ids, validated_ids=None):
     firmware_payload = _inverter_firmware_payload(firmware_versions)
     return json.dumps(
         {
@@ -446,6 +447,7 @@ def validation_payload(firmware_versions, modbus_hash, sensor_ids):
             "inverter_firmware_hash": _validation_hash(firmware_payload),
             "modbus_config_hash": modbus_hash,
             "illegal_sensor_unique_ids": sensor_ids,
+            "validated_sensor_unique_ids": sensor_ids if validated_ids is None else validated_ids,
         },
         sort_keys=True,
     )
@@ -1388,17 +1390,18 @@ async def test_validate_publishable_sensors_saves_illegal_address_cache(clean_co
 
     assert sensor.publishable is False
     assert sensor.illegal_data_address is True
-    main_mod.read_registers.assert_awaited_once()  # type: ignore[union-attr]
+    assert main_mod.read_registers.await_count == main_mod._ILLEGAL_ADDRESS_ATTEMPTS  # type: ignore[union-attr]
     main_mod.state_store.save.assert_awaited_once()  # type: ignore[union-attr]
     assert main_mod.state_store.save.await_args is not None  # type: ignore[union-attr]
     saved_payload = json.loads(main_mod.state_store.save.await_args.args[2])  # type: ignore[union-attr]
     assert saved_payload["inverter_firmware_versions"] == {"1": firmware_versions[1], "2": firmware_versions[2]}
     assert saved_payload["modbus_config_hash"] == "modbus-a"
     assert saved_payload["illegal_sensor_unique_ids"] == [sensor.unique_id]
+    assert saved_payload["validated_sensor_unique_ids"] == [sensor.unique_id]
 
 
 @pytest.mark.asyncio
-async def test_validate_publishable_sensors_uses_cache_without_scan(clean_config, monkeypatch, caplog):
+async def test_validate_publishable_sensors_cache_hit_still_illegal_is_applied_without_resaving(clean_config, monkeypatch, caplog):
     sensor = make_validation_sensor("cache_hit", 30012)
     device = make_validation_device(sensor, "sigen_validation_cache_hit_device")
     firmware_versions = {1: "V100R001C00SPC112B107G"}
@@ -1419,8 +1422,8 @@ async def test_validate_publishable_sensors_uses_cache_without_scan(clean_config
 
     assert sensor.publishable is False
     assert sensor.illegal_data_address is True
-    read_registers.assert_not_awaited()
-    save.assert_not_awaited()
+    assert read_registers.await_count == _ILLEGAL_ADDRESS_ATTEMPTS  # a cached verdict is re-confirmed, never trusted blindly
+    save.assert_not_awaited()  # nothing changed, so the persisted entry is left alone
     assert "not supported on this device/firmware: ILLEGAL DATA ADDRESS 30012" in caplog.text
 
 
@@ -1444,7 +1447,7 @@ async def test_validate_publishable_sensors_rescans_when_any_inverter_firmware_c
 
     await validate_publishable_sensors(mock_client, device, current_firmware_versions)
 
-    read_registers.assert_awaited_once()
+    assert read_registers.await_count == _ILLEGAL_ADDRESS_ATTEMPTS
     save.assert_awaited_once()
 
 
@@ -1467,7 +1470,7 @@ async def test_validate_publishable_sensors_rescans_when_modbus_config_changes(c
 
     await validate_publishable_sensors(mock_client, device, firmware_versions)
 
-    read_registers.assert_awaited_once()
+    assert read_registers.await_count == _ILLEGAL_ADDRESS_ATTEMPTS
     save.assert_awaited_once()
 
 
@@ -1485,13 +1488,253 @@ async def test_validate_publishable_sensors_ignores_non_inverter_device_attribut
         "sigenergy2mqtt.main.validation.state_store.load",
         AsyncMock(return_value=validation_payload(firmware_versions, "modbus-a", [sensor.unique_id])),
     )
+    save = AsyncMock()
+    monkeypatch.setattr("sigenergy2mqtt.main.validation.state_store.save", save)
     read_registers = AsyncMock(return_value=IllegalAddressResponse())
     monkeypatch.setattr("sigenergy2mqtt.main.validation.read_registers", read_registers)
 
     await validate_publishable_sensors(mock_client, device, firmware_versions)
 
     assert sensor.publishable is False
-    read_registers.assert_not_awaited()
+    save.assert_not_awaited()  # the cache was a hit: device attributes are not part of the firmware hash
+
+
+class _ScriptedReads:
+    """read_registers stand-in answering each address from a script of responses, in order.
+
+    The last response is repeated once the script is used up.
+    """
+
+    def __init__(self, script: dict[int, list]):
+        self.script = {address: list(responses) for address, responses in script.items()}
+        self.calls: list[int] = []
+
+    async def __call__(self, client, address, count, device_id, input_type):
+        self.calls.append(address)
+        responses = self.script[address]
+        response = responses.pop(0) if len(responses) > 1 else responses[0]
+        if isinstance(response, BaseException):
+            raise response
+        return response
+
+
+class OkResponse:
+    exception_code = 0
+
+    def isError(self):
+        return False
+
+
+def _multi_sensor_device(*sensors, unique_id="sigen_validation_multi_device"):
+    device = MagicMock()
+    device.unique_id = unique_id
+    device.log_identity = f"Device[{unique_id}]"
+    device.get_all_sensors.return_value = {s.unique_id: s for s in sensors}
+    return device
+
+
+@pytest.mark.asyncio
+async def test_validate_publishable_sensors_transient_illegal_address_is_not_flagged_or_cached(clean_config, monkeypatch):
+    """A 0x02 that clears on a retry must neither disable the sensor nor be persisted."""
+    import sigenergy2mqtt.main.validation as main_mod
+
+    sensor = make_validation_sensor("transient", 30021)
+    device = make_validation_device(sensor, "sigen_validation_transient_device")
+    reads = _ScriptedReads({30021: [IllegalAddressResponse(), IllegalAddressResponse(), OkResponse()]})
+    save = AsyncMock()
+    monkeypatch.setattr(main_mod.state_store, "load", AsyncMock(return_value=None))
+    monkeypatch.setattr(main_mod.state_store, "save", save)
+    monkeypatch.setattr(main_mod, "read_registers", reads)
+    monkeypatch.setattr(main_mod, "_current_modbus_config_hash", lambda: "modbus-a")
+
+    await main_mod.validate_publishable_sensors(AsyncMock(), device, {1: "fw"})
+
+    assert sensor.publishable is True
+    assert sensor.illegal_data_address is False
+    assert reads.calls == [30021, 30021, 30021]
+    saved = json.loads(save.await_args.args[2])
+    assert saved["illegal_sensor_unique_ids"] == []
+    assert saved["validated_sensor_unique_ids"] == [sensor.unique_id]
+
+
+@pytest.mark.asyncio
+async def test_validate_publishable_sensors_retries_only_suspect_sensors_with_a_single_delay(clean_config, monkeypatch):
+    import sigenergy2mqtt.main.validation as main_mod
+
+    good = make_validation_sensor("retry_good", 30031)
+    bad_a = make_validation_sensor("retry_bad_a", 30032)
+    bad_b = make_validation_sensor("retry_bad_b", 30033)
+    device = _multi_sensor_device(good, bad_a, bad_b)
+    reads = _ScriptedReads({30031: [OkResponse()], 30032: [IllegalAddressResponse()], 30033: [IllegalAddressResponse()]})
+    sleeps: list[float] = []
+
+    async def fake_sleep(delay):
+        sleeps.append(delay)
+
+    monkeypatch.setattr(main_mod.asyncio, "sleep", fake_sleep)
+    monkeypatch.setattr(main_mod.state_store, "load", AsyncMock(return_value=None))
+    monkeypatch.setattr(main_mod.state_store, "save", AsyncMock())
+    monkeypatch.setattr(main_mod, "read_registers", reads)
+    monkeypatch.setattr(main_mod, "_current_modbus_config_hash", lambda: "modbus-a")
+
+    await main_mod.validate_publishable_sensors(AsyncMock(), device, {1: "fw"})
+
+    assert reads.calls.count(30031) == 1  # a readable sensor is never re-read
+    assert reads.calls.count(30032) == _ILLEGAL_ADDRESS_ATTEMPTS
+    assert reads.calls.count(30033) == _ILLEGAL_ADDRESS_ATTEMPTS
+    assert len(sleeps) == _ILLEGAL_ADDRESS_ATTEMPTS - 1  # one delay per retry pass, however many sensors are suspect
+    assert good.publishable is True
+    assert bad_a.publishable is False
+    assert bad_b.publishable is False
+
+
+@pytest.mark.asyncio
+async def test_validate_publishable_sensors_timeout_during_retry_leaves_sensor_publishable_and_uncached(clean_config, monkeypatch):
+    import sigenergy2mqtt.main.validation as main_mod
+
+    sensor = make_validation_sensor("retry_timeout", 30041)
+    device = make_validation_device(sensor, "sigen_validation_retry_timeout_device")
+    reads = _ScriptedReads({30041: [IllegalAddressResponse(), TimeoutError("timed out")]})
+    save = AsyncMock()
+    monkeypatch.setattr(main_mod.state_store, "load", AsyncMock(return_value=None))
+    monkeypatch.setattr(main_mod.state_store, "save", save)
+    monkeypatch.setattr(main_mod, "read_registers", reads)
+    monkeypatch.setattr(main_mod, "_current_modbus_config_hash", lambda: "modbus-a")
+
+    await main_mod.validate_publishable_sensors(AsyncMock(), device, {1: "fw"})
+
+    assert sensor.publishable is True
+    assert sensor.illegal_data_address is False
+    save.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_validate_publishable_sensors_cached_illegal_sensor_that_is_now_readable_recovers(clean_config, monkeypatch, caplog):
+    """A wrong cached verdict is corrected on the next startup and the cache rewritten."""
+    import sigenergy2mqtt.main.validation as main_mod
+
+    sensor = make_validation_sensor("recovers", 30051)
+    other = make_validation_sensor("recovers_other", 30052)
+    device = _multi_sensor_device(sensor, other)
+    firmware_versions = {1: "fw"}
+    reads = _ScriptedReads({30051: [OkResponse()], 30052: [OkResponse()]})
+    save = AsyncMock()
+    monkeypatch.setattr(main_mod, "_current_modbus_config_hash", lambda: "modbus-a")
+    monkeypatch.setattr(
+        main_mod.state_store,
+        "load",
+        AsyncMock(return_value=validation_payload(firmware_versions, "modbus-a", [sensor.unique_id], [sensor.unique_id, other.unique_id])),
+    )
+    monkeypatch.setattr(main_mod.state_store, "save", save)
+    monkeypatch.setattr(main_mod, "read_registers", reads)
+
+    with caplog.at_level(logging.INFO):
+        await main_mod.validate_publishable_sensors(AsyncMock(), device, firmware_versions)
+
+    assert sensor.publishable is True
+    assert sensor.illegal_data_address is False
+    assert reads.calls == [30051]  # only the cached-illegal sensor is probed; the validated one is trusted
+    saved = json.loads(save.await_args.args[2])
+    assert saved["illegal_sensor_unique_ids"] == []
+    assert sorted(saved["validated_sensor_unique_ids"]) == sorted([sensor.unique_id, other.unique_id])
+    assert "now supported" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_validate_publishable_sensors_cached_illegal_sensor_unreadable_keeps_verdict_without_resaving(clean_config, monkeypatch):
+    import sigenergy2mqtt.main.validation as main_mod
+
+    sensor = make_validation_sensor("unreadable", 30061)
+    device = make_validation_device(sensor, "sigen_validation_unreadable_device")
+    firmware_versions = {1: "fw"}
+    save = AsyncMock()
+    monkeypatch.setattr(main_mod, "_current_modbus_config_hash", lambda: "modbus-a")
+    monkeypatch.setattr(main_mod.state_store, "load", AsyncMock(return_value=validation_payload(firmware_versions, "modbus-a", [sensor.unique_id])))
+    monkeypatch.setattr(main_mod.state_store, "save", save)
+    monkeypatch.setattr(main_mod, "read_registers", _ScriptedReads({30061: [ConnectionError("down")]}))
+
+    await main_mod.validate_publishable_sensors(AsyncMock(), device, firmware_versions)
+
+    assert sensor.publishable is False  # no new evidence, so the cached verdict stands for this run
+    assert sensor.illegal_data_address is True
+    save.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_validate_publishable_sensors_cache_hit_probes_sensors_the_cache_has_not_seen(clean_config, monkeypatch):
+    """A sensor added by a software update on unchanged firmware is probed, not assumed supported."""
+    import sigenergy2mqtt.main.validation as main_mod
+
+    known = make_validation_sensor("known", 30071)
+    new = make_validation_sensor("brand_new", 30072)
+    device = _multi_sensor_device(known, new)
+    firmware_versions = {1: "fw"}
+    reads = _ScriptedReads({30072: [IllegalAddressResponse()]})
+    save = AsyncMock()
+    monkeypatch.setattr(main_mod, "_current_modbus_config_hash", lambda: "modbus-a")
+    monkeypatch.setattr(main_mod.state_store, "load", AsyncMock(return_value=validation_payload(firmware_versions, "modbus-a", [], [known.unique_id])))
+    monkeypatch.setattr(main_mod.state_store, "save", save)
+    monkeypatch.setattr(main_mod, "read_registers", reads)
+
+    await main_mod.validate_publishable_sensors(AsyncMock(), device, firmware_versions)
+
+    assert set(reads.calls) == {30072}
+    assert known.publishable is True
+    assert new.publishable is False
+    saved = json.loads(save.await_args.args[2])
+    assert saved["illegal_sensor_unique_ids"] == [new.unique_id]
+    assert sorted(saved["validated_sensor_unique_ids"]) == sorted([known.unique_id, new.unique_id])
+
+
+@pytest.mark.asyncio
+async def test_validate_publishable_sensors_cache_hit_with_nothing_to_probe_reads_nothing(clean_config, monkeypatch):
+    import sigenergy2mqtt.main.validation as main_mod
+
+    sensor = make_validation_sensor("all_good", 30081)
+    device = make_validation_device(sensor, "sigen_validation_all_good_device")
+    firmware_versions = {1: "fw"}
+    reads = AsyncMock()
+    save = AsyncMock()
+    monkeypatch.setattr(main_mod, "_current_modbus_config_hash", lambda: "modbus-a")
+    monkeypatch.setattr(main_mod.state_store, "load", AsyncMock(return_value=validation_payload(firmware_versions, "modbus-a", [], [sensor.unique_id])))
+    monkeypatch.setattr(main_mod.state_store, "save", save)
+    monkeypatch.setattr(main_mod, "read_registers", reads)
+
+    await main_mod.validate_publishable_sensors(AsyncMock(), device, firmware_versions)
+
+    assert sensor.publishable is True
+    reads.assert_not_awaited()
+    save.assert_not_awaited()
+
+
+def test_is_valid_validation_cache_payload_rejects_version_1_payload():
+    """Version 1 entries predate validated_sensor_unique_ids and are discarded, forcing one full rescan."""
+    from sigenergy2mqtt.main.validation import _is_valid_validation_cache_payload
+
+    v1 = {
+        "cache_version": 1,
+        "inverter_firmware_versions": {},
+        "inverter_firmware_hash": "h",
+        "modbus_config_hash": "m",
+        "illegal_sensor_unique_ids": [],
+    }
+    assert _is_valid_validation_cache_payload(json.dumps(v1)) is False
+    v2 = {**v1, "cache_version": _PUBLISHABLE_SENSOR_VALIDATION_CACHE_VERSION, "validated_sensor_unique_ids": []}
+    assert _is_valid_validation_cache_payload(json.dumps(v2)) is True
+    assert _is_valid_validation_cache_payload(json.dumps({**v2, "validated_sensor_unique_ids": [1]})) is False
+
+
+@pytest.mark.asyncio
+async def test_clear_validation_cache_deletes_all_validation_entries(monkeypatch):
+    import sigenergy2mqtt.main.validation as main_mod
+    from sigenergy2mqtt.persistence import Category
+
+    delete_matching = AsyncMock(return_value=2)
+    monkeypatch.setattr(main_mod.state_store, "delete_matching", delete_matching)
+
+    assert await main_mod.clear_validation_cache() == 2
+
+    delete_matching.assert_awaited_once_with(Category.CONFIG, "publishable-sensor-validation.")
 
 
 @pytest.mark.asyncio
@@ -1887,3 +2130,76 @@ async def test_cloud_setup_links_plant_grid_status_to_gateway_buttons() -> None:
     control = cloud_control.get_sensor(GatewayGridConnectionControl, search_children=True)
     assert control is not None
     assert control._plant_grid_status is grid_status
+
+
+@pytest.mark.asyncio
+async def test_validate_publishable_sensors_illegal_address_exception_disables_but_is_not_cached(clean_config, monkeypatch):
+    """A 0x02 raised as an exception (not returned as a response) is not retried or persisted."""
+    from pymodbus.exceptions import ModbusException
+
+    import sigenergy2mqtt.main.validation as main_mod
+
+    sensor = make_validation_sensor("raised_0x02", 30091)
+    device = make_validation_device(sensor, "sigen_validation_raised_device")
+    reads = _ScriptedReads({30091: [ModbusException("0x02 ILLEGAL DATA ADDRESS")]})
+    save = AsyncMock()
+    monkeypatch.setattr(main_mod.state_store, "load", AsyncMock(return_value=None))
+    monkeypatch.setattr(main_mod.state_store, "save", save)
+    monkeypatch.setattr(main_mod, "read_registers", reads)
+    monkeypatch.setattr(main_mod, "_current_modbus_config_hash", lambda: "modbus-a")
+
+    await main_mod.validate_publishable_sensors(AsyncMock(), device, {1: "fw"})
+
+    assert sensor.publishable is False
+    assert sensor.illegal_data_address is True
+    assert reads.calls == [30091]
+    save.assert_not_awaited()
+
+
+class DeviceFailureResponse:
+    exception_code = 0x04
+
+    def isError(self):
+        return True
+
+
+@pytest.mark.asyncio
+async def test_validate_publishable_sensors_cached_illegal_sensor_error_response_keeps_verdict_without_resaving(clean_config, monkeypatch):
+    """A non-0x02 error response is not evidence the register is supported, so the cached verdict stands."""
+    import sigenergy2mqtt.main.validation as main_mod
+
+    sensor = make_validation_sensor("error_response", 30101)
+    device = make_validation_device(sensor, "sigen_validation_error_response_device")
+    firmware_versions = {1: "fw"}
+    save = AsyncMock()
+    monkeypatch.setattr(main_mod, "_current_modbus_config_hash", lambda: "modbus-a")
+    monkeypatch.setattr(main_mod.state_store, "load", AsyncMock(return_value=validation_payload(firmware_versions, "modbus-a", [sensor.unique_id])))
+    monkeypatch.setattr(main_mod.state_store, "save", save)
+    monkeypatch.setattr(main_mod, "read_registers", _ScriptedReads({30101: [DeviceFailureResponse()]}))
+
+    await main_mod.validate_publishable_sensors(AsyncMock(), device, firmware_versions)
+
+    assert sensor.publishable is False
+    assert sensor.illegal_data_address is True
+    save.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_validate_publishable_sensors_error_response_during_retry_leaves_sensor_publishable_and_uncached(clean_config, monkeypatch):
+    import sigenergy2mqtt.main.validation as main_mod
+
+    sensor = make_validation_sensor("retry_error_response", 30111)
+    device = make_validation_device(sensor, "sigen_validation_retry_error_response_device")
+    reads = _ScriptedReads({30111: [IllegalAddressResponse(), DeviceFailureResponse()]})
+    save = AsyncMock()
+    monkeypatch.setattr(main_mod.state_store, "load", AsyncMock(return_value=None))
+    monkeypatch.setattr(main_mod.state_store, "save", save)
+    monkeypatch.setattr(main_mod, "read_registers", reads)
+    monkeypatch.setattr(main_mod, "_current_modbus_config_hash", lambda: "modbus-a")
+
+    await main_mod.validate_publishable_sensors(AsyncMock(), device, {1: "fw"})
+
+    assert sensor.publishable is True
+    assert sensor.illegal_data_address is False
+    assert reads.calls == [30111, 30111]
+    save.assert_not_awaited()

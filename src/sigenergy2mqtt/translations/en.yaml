@@ -2983,6 +2983,8 @@ class:
     name_off: Power Off
     name_on: Power On
 cli:
+  SIGENERGY2MQTT_CLEAR_VALIDATION_CACHE:
+    help: Delete the persisted sensor validation cache at startup, so that every sensor is probed again for ILLEGAL DATA ADDRESS (unsupported) responses. Remove the option once it has been used.
   SIGENERGY2MQTT_CLOUD_ACCEPT_UNOFFICIAL_API_RISK:
     help: Explicitly allow the unpublished mySigen API (a delegated account is recommended).
   SIGENERGY2MQTT_CLOUD_DISCOVER_INVERTERS:

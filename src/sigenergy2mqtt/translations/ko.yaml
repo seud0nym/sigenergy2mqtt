@@ -2983,6 +2983,8 @@ class:
     name_off: 전원 끄기
     name_on: 전원 켜기
 cli:
+  SIGENERGY2MQTT_CLEAR_VALIDATION_CACHE:
+    help: 시작 시 저장된 센서 유효성 검사 캐시를 삭제하여, 모든 센서에 대해 ‘ILLEGAL DATA ADDRESS(지원되지 않음)’ 응답이 있는지 다시 확인하도록 합니다. 해당 옵션이 사용된 후에는 제거하십시오.
   SIGENERGY2MQTT_CLOUD_ACCEPT_UNOFFICIAL_API_RISK:
     help: 비공개 mySigen API를 명시적으로 허용해야 합니다(위임 계정 사용을 권장합니다).
   SIGENERGY2MQTT_CLOUD_DISCOVER_INVERTERS:

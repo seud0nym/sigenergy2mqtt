@@ -377,3 +377,54 @@ async def test_initialise_waits_for_mqtt_broker(temp_state_dir, mock_persistence
         await store.initialise(temp_state_dir, mock_persistence_config)
     assert setup.call_args.kwargs["max_attempts"] is None
     store.shutdown()
+
+
+@pytest.mark.asyncio
+async def test_delete_matching_removes_only_prefixed_keys_in_category(temp_state_dir, mock_persistence_config):
+    mock_persistence_config.mqtt_redundancy = False
+    store = StateStore()
+    await store.initialise(temp_state_dir, mock_persistence_config)
+
+    await store.save("config", "publishable-sensor-validation.aaa.json", "1")
+    await store.save("config", "publishable-sensor-validation.bbb.json", "2")
+    await store.save("config", "installation-cohort", "legacy")
+    await store.save("sensor", "publishable-sensor-validation.ccc.json", "3")
+
+    removed = await store.delete_matching("config", "publishable-sensor-validation.")
+
+    assert removed == 2
+    assert not (temp_state_dir / "config" / "publishable-sensor-validation.aaa.json").exists()
+    assert not (temp_state_dir / "config" / "publishable-sensor-validation.bbb.json").exists()
+    assert (temp_state_dir / "config" / "installation-cohort").exists()
+    assert (temp_state_dir / "sensor" / "publishable-sensor-validation.ccc.json").exists()
+    assert await store.load("config", "publishable-sensor-validation.aaa.json") is None
+
+
+@pytest.mark.asyncio
+async def test_delete_matching_removes_entries_held_only_in_mqtt(temp_state_dir, mock_persistence_config):
+    """An entry restored from the broker (no disk file on this host) must be deleted too."""
+    from unittest.mock import patch
+
+    mock_persistence_config.mqtt_redundancy = True
+    store = StateStore()
+    mock_client = MagicMock()
+    mock_client.publish.return_value.rc = mqtt.MQTT_ERR_SUCCESS
+
+    with patch("sigenergy2mqtt.mqtt.mqtt_setup", return_value=(mock_client, MagicMock())):
+        await store.initialise(temp_state_dir, mock_persistence_config)
+
+    store._mqtt._cache[("config", "publishable-sensor-validation.mqttonly.json")] = ("v", 1)
+    store._mqtt._cache[("config", "other")] = ("v", 1)
+
+    removed = await store.delete_matching("config", "publishable-sensor-validation.")
+
+    assert removed == 1
+    deleted_topics = [call.args[0] for call in mock_client.publish.call_args_list if len(call.args) > 1 and call.args[1] == b""]
+    assert deleted_topics == [store._mqtt._key_to_topic("config", "publishable-sensor-validation.mqttonly.json")]
+    assert ("config", "other") in store._mqtt._cache
+    assert ("config", "publishable-sensor-validation.mqttonly.json") not in store._mqtt._cache
+
+
+@pytest.mark.asyncio
+async def test_delete_matching_before_initialise_is_a_no_op():
+    assert await StateStore().delete_matching("config", "x.") == 0

@@ -105,6 +105,12 @@ class ModbusSensorMixin(SensorDebuggingMixin):
 
         def refresh_log_identity(self) -> None: ...
 
+        @property
+        def publishable(self) -> bool: ...
+
+        @publishable.setter
+        def publishable(self, value: bool) -> None: ...
+
     def __init__(self, input_type: InputType, plant_index: int, device_address: int, address: int, count: int, unique_id_override: str | None = None, **kwargs):
         # Validate parameters
         if not (1 <= device_address <= Constants.PLANT_DEVICE_ADDRESS):

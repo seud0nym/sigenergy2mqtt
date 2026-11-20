@@ -2983,6 +2983,8 @@ class:
     name_off: Desligar
     name_on: Ligar
 cli:
+  SIGENERGY2MQTT_CLEAR_VALIDATION_CACHE:
+    help: Eliminar a cache de validação de sensores armazenada na inicialização, para que cada sensor seja novamente verificado quanto a respostas de «ILLEGAL DATA ADDRESS» (não suportadas). Remover a opção assim que tiver sido utilizada.
   SIGENERGY2MQTT_CLOUD_ACCEPT_UNOFFICIAL_API_RISK:
     help: Autorize explicitamente a API mySigen não publicada (recomenda-se uma conta delegada).
   SIGENERGY2MQTT_CLOUD_DISCOVER_INVERTERS:

@@ -99,6 +99,7 @@ INVERTER_LIVE_FIELDS = {
     "battery_soc": "battery_soc",
     "battery_soh": "battery_soh",
     "temperature": "temperature",
+    "average_cell_temperature": "average_cell_temperature",
     "min_battery_temperature": "min_battery_temperature",
     "max_battery_temperature": "max_battery_temperature",
     "daily_pv_energy": "daily_pv_energy",
@@ -167,6 +168,29 @@ def _extract(state: dict[str, Any], partial_key: str, fields: dict[str, str]) ->
     return result
 
 
+def _is_number(value: Any) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def _fallback_average_cell_temperature(plant: dict[str, Any], inverters: dict[str, dict[str, Any]]) -> None:
+    """Fill plant.average_cell_temperature from the inverters when the plant has no value.
+
+    The plant-level register (30286, protocol V2.9) is rejected with ILLEGAL DATA ADDRESS by
+    some firmware, which leaves the dashboard's Cell Temperature gauge empty even though each
+    inverter's ESS reports its own average cell temperature (register 30603). The plant value
+    is the mean of the inverters that report a number.
+    """
+    if _is_number(plant.get("average_cell_temperature", {}).get("value")):
+        return
+    readings = [field for inverter in inverters.values() if _is_number((field := inverter.get("average_cell_temperature", {})).get("value"))]
+    if readings:
+        plant["average_cell_temperature"] = {
+            "label": readings[0]["label"],
+            "value": round(sum(field["value"] for field in readings) / len(readings), 1),
+            "unit": readings[0]["unit"],
+        }
+
+
 def extract_dashboard_state(state: dict[str, Any]) -> dict[str, Any]:
     """Build a compact, dashboard-ready payload from the raw MonitoredSensor
     state dict. Devices absent from `state` simply produce empty dicts/lists
@@ -219,6 +243,9 @@ def extract_dashboard_state(state: dict[str, Any]) -> dict[str, Any]:
             entry = _extract(state, partial_key, AC_CHARGER_LIVE_FIELDS)
             entry["config"] = _extract(state, partial_key, AC_CHARGER_CONFIG_FIELDS)
             ac_chargers[dev] = entry
+
+    if plant["has_battery"]:
+        _fallback_average_cell_temperature(plant, inverters)
 
     return {
         "plant": plant,

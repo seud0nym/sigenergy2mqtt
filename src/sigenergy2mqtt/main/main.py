@@ -22,6 +22,7 @@ from .logging_setup import configure_logging
 from .restart import restart_controller
 from .service_setup import setup_init_signals, setup_services, setup_signals
 from .thread_config import thread_config_registry
+from .validation import clear_validation_cache
 
 logger = logging.getLogger(__name__)
 
@@ -118,6 +119,10 @@ async def async_main() -> int:
         )
         crashed = False
         try:
+            if active_config.clear_validation_cache and not active_config.clean:
+                await clear_validation_cache()
+                active_config.clear_validation_cache = False  # once only: not again on an in-process restart
+
             installation_cohort = await _ensure_installation_cohort()
 
             seen_serial_numbers: set[str] = set()
