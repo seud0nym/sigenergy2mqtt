@@ -6,6 +6,7 @@
 ### Added
 
 - Added the `--clear-validation-cache` command line option and `SIGENERGY2MQTT_CLEAR_VALIDATION_CACHE` environment variable (not available in the YAML configuration file) to delete the persisted sensor validation cache from both disk and the MQTT broker at startup, so that every sensor is probed again. Remove it once it has been used, otherwise the cache is deleted on every startup
+- Added a Cloud API DC Charger device for each DC charger, with the Charging Mode (Fast Charging, PV Surplus Charging or Sigen AI Mode), Battery Boost, Battery Boost Cut-off SOC and Surplus PV Priority (DC Charger First or Battery First) settings from the mySigen app, and the charger's weekly, monthly and lifetime charged energy, status code, OCPP link status and server URL, V2X discharge settings and primary vehicle (#355)
 
 ### Fixed
 

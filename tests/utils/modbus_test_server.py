@@ -583,6 +583,113 @@ class CloudApiTestServer:
             "installerSetEnable": None,
             "nearModify": None,
         }
+        # DC charger responses, from mySigen web app captures (issue #355)
+        self.dc_charge_mode_supported = True
+        self.dc_supported_charge_modes = ["0", "1", "3"]
+        self.dc_charge_mode_soc_range = {"socUpperLimit": 100.0, "socLowerLimit": 0.0}
+        self.dc_charge_mode = {
+            "chargeMode": 1,
+            "enableFromPack": False,
+            "cutoffSocFromPack": 5.0,
+            "allowsDischargePower": 12.5,
+            "vehicleDischargeCutoffSoc": 20,
+            "minimumDischargeCutoffSoc": 20,
+            "maximumDischargeCutoffSoc": 99,
+        }
+        self.dc_status = 0
+        self.dc_energy_totals = {"monthlyEnergy": 128.24, "weeklyEnergy": 41.63, "lifetimeEnergy": 781.68}
+        self.dc_ocpp_status = {
+            "ocppLinkStatus": 0,
+            "url": "",
+            "urlList": [
+                {"label": "", "sortOrder": 0, "remarks": "", "value": "wss://ocpp.example.net"},
+                {"label": "", "sortOrder": 1, "remarks": "", "value": "ws://192.0.2.1:9000"},
+            ],
+        }
+        self.v2x_discharge_settings = {"dischargeEnable": 0, "hasDisclaimer": False, "hasCar": True, "hasUsed": False}
+        self.dc_vehicles = [
+            {"id": 4100, "brand": "MG", "model": "MG4", "years": 2026, "batteryCapacity": 64.0, "chargingRatedPower": 0.0, "stationId": str(CLOUD_TEST_STATION_ID), "primaryCar": 1},
+            {"id": 5468, "brand": "zeekr", "model": "7x", "years": 2026, "batteryCapacity": 70.0, "chargingRatedPower": 0.0, "stationId": str(CLOUD_TEST_STATION_ID), "primaryCar": 0},
+        ]
+        unlimited = "4294967.295"
+        every_day = [{"whichDay": "1,2,3,4,5,6,7", "startTime": "00:00", "endTime": "24:00"}]
+
+        def pv_priority_entry(loads_type: int, sg_device_type: int | None, priority: int, status: int) -> dict[str, Any]:
+            return {
+                "loadsType": loads_type,
+                "sgDeviceType": sg_device_type,
+                "smartLoadsPath": None,
+                "smartLoadsName": "",
+                "smartLoadsKey": None,
+                "smartLoadsStatus": None,
+                "priority": priority,
+                "status": status,
+                "isGroup": False,
+                "priorityGroupList": [],
+            }
+
+        self.energy_profile_setting = {
+            "profileId": None,
+            "name": "remote ems",
+            "note": "default",
+            "batteryGlobalActive": False,
+            "batteryAutomationGroupVOList": [
+                {
+                    "name": "Battery Automation",
+                    "activeStatus": 1,
+                    "maxChargePower": unlimited,
+                    "maxDischargePower": unlimited,
+                    "g2BMaxChargePower": unlimited,
+                    "b2GMaxDischargePower": unlimited,
+                    "chargeCutOffSoc": "100.0",
+                    "dischargeCutOffSoc": "0.0",
+                    "priorityList": ["pv", "grid"],
+                    "winMode": 3,
+                    "itemVOList": copy.deepcopy(every_day),
+                }
+            ],
+            "gridGlobalActive": False,
+            "gridAutomationGroupVOList": [
+                {
+                    "name": "Grid Automation",
+                    "activeStatus": 1,
+                    "maxBuyPower": unlimited,
+                    "maxSellPower": unlimited,
+                    "priorityList": ["pv", "battery"],
+                    "winMode": 0,
+                    "itemVOList": copy.deepcopy(every_day),
+                }
+            ],
+            "activeStatus": 0,
+            # sgDeviceType 5 is the DC charger and 4 the battery: the higher priority is served first
+            "pvPriority": [
+                pv_priority_entry(4, None, 5, 2),
+                pv_priority_entry(3, None, 4, 2),
+                pv_priority_entry(1, 5, 2, 0),
+                pv_priority_entry(1, 4, 1, 0),
+            ],
+            "batteryDischargePriority": ["grid", "pv"],
+            "exportLimitation": True,
+            "importLimitation": False,
+            "maxExportLimitation": "1.500",
+            "maxImportLimitation": "",
+            "powerLimit": unlimited,
+            "chargeSOC": "100.0",
+            "dischargeSOC": "0.0",
+            "backupSOC": "0.0",
+            "batteryMaxChargingPower": unlimited,
+            "batteryMaxDischargingPower": unlimited,
+            "peakShavingVO": {"controlMode": 0, "shavingSOC": 0.0, "settingList": []},
+            "packPreheatingInfoVO": {
+                "packPreheatingVOList": [],
+                "packPreheatingSwitch": 0,
+                "preheatingMode": 1,
+                "preHeatingEnablesSwitch": None,
+                "isIndustry": False,
+                "isAutoModeValid": False,
+            },
+            "isIndustry": False,
+        }
 
     _EDITABLE_STATE: ClassVar[dict[str, type | tuple[type, ...]]] = {
         "internet_available": bool,
@@ -601,6 +708,16 @@ class CloudApiTestServer:
         "battery_power_limit": dict,
         "solar_power_limit": dict,
         "battery_export_limitation": dict,
+        "dc_charge_mode_supported": bool,
+        "dc_supported_charge_modes": list,
+        "dc_charge_mode_soc_range": dict,
+        "dc_charge_mode": dict,
+        "dc_status": int,
+        "dc_energy_totals": dict,
+        "dc_ocpp_status": dict,
+        "v2x_discharge_settings": dict,
+        "dc_vehicles": list,
+        "energy_profile_setting": dict,
     }
 
     @staticmethod
@@ -922,6 +1039,138 @@ class CloudApiTestServer:
         )
         return self._success()
 
+    @staticmethod
+    def _bad_request(message: str) -> web.Response:
+        return web.json_response({"code": 400, "msg": message}, status=400)
+
+    def _dc_request_error(self, station_id: object, sn: object) -> web.Response | None:
+        """Reject requests that name another station or an unknown DC charger."""
+        if str(station_id) != str(self.station_home_data["stationId"]):
+            return self._bad_request("Unknown stationId")
+        if sn not in self.station_home_data.get("dcSnList", []):
+            return self._bad_request("Unknown snCode")
+        return None
+
+    async def _dc_query_error(self, request: web.Request, *, device_type: bool = False) -> web.Response | None:
+        if (response := await self.authorized(request)) is not None:
+            return response
+        if device_type and request.query.get("deviceType") != "5":
+            return self._bad_request("Invalid deviceType")
+        return self._dc_request_error(request.query.get("stationId"), request.query.get("snCode"))
+
+    def _surplus_pv_charge_mode(self) -> int:
+        """1 while the DC charger is first for surplus PV, otherwise 2 (as observed)."""
+        devices = [entry for entry in self.energy_profile_setting.get("pvPriority", []) if entry.get("loadsType") == 1]
+        first = max(devices, key=lambda entry: entry.get("priority", 0), default={})
+        return 1 if first.get("sgDeviceType") == 5 else 2
+
+    async def get_dc_charge_mode_supported(self, request: web.Request) -> web.Response:
+        if (response := await self._dc_query_error(request, device_type=True)) is not None:
+            return response
+        return self._success(self.dc_charge_mode_supported)
+
+    async def get_dc_supported_charge_modes(self, request: web.Request) -> web.Response:
+        if (response := await self._dc_query_error(request, device_type=True)) is not None:
+            return response
+        return self._success(self.dc_supported_charge_modes)
+
+    async def get_dc_charge_mode_soc_range(self, request: web.Request) -> web.Response:
+        if (response := await self.authorized(request)) is not None:
+            return response
+        if request.query.get("stationId") != str(self.station_home_data["stationId"]):
+            return self._bad_request("Unknown stationId")
+        return self._success(self.dc_charge_mode_soc_range)
+
+    async def get_dc_charge_mode(self, request: web.Request) -> web.Response:
+        if (response := await self._dc_query_error(request)) is not None:
+            return response
+        return self._success(self.dc_charge_mode)
+
+    async def set_dc_charge_mode(self, request: web.Request) -> web.Response:
+        """Apply a charging-mode write in the shape the app sends."""
+        if (response := await self.authorized(request)) is not None:
+            return response
+        payload = await request.json()
+        if (response := self._dc_request_error(payload.get("stationId"), payload.get("snCode"))) is not None:
+            return response
+        mode, enabled, cutoff = payload.get("chargeMode"), payload.get("enableFromPack"), payload.get("cutoffSocFromPack")
+        if type(mode) is not int or str(mode) not in self.dc_supported_charge_modes:
+            return self._bad_request("Unsupported chargeMode")
+        if not isinstance(enabled, bool):
+            return self._bad_request("Invalid enableFromPack")
+        lower, upper = self.dc_charge_mode_soc_range["socLowerLimit"], self.dc_charge_mode_soc_range["socUpperLimit"]
+        if isinstance(cutoff, bool) or not isinstance(cutoff, (int, float)) or not lower <= cutoff <= upper:
+            return self._bad_request("Invalid cutoffSocFromPack")
+        self.dc_charge_mode.update(chargeMode=mode, enableFromPack=enabled, cutoffSocFromPack=float(cutoff))
+        return self._success(True)
+
+    async def get_dc_surplus_pv_charge_mode(self, request: web.Request) -> web.Response:
+        if (response := await self._dc_query_error(request)) is not None:
+            return response
+        return self._success({"chargeMode": self._surplus_pv_charge_mode(), "maxPowerFromPack": -0.001})
+
+    async def get_dc_status(self, request: web.Request) -> web.Response:
+        if (response := await self._dc_query_error(request)) is not None:
+            return response
+        return self._success(self.dc_status)
+
+    async def get_dc_energy_totals(self, request: web.Request) -> web.Response:
+        if (response := await self._dc_query_error(request)) is not None:
+            return response
+        return self._success(self.dc_energy_totals)
+
+    async def get_dc_ocpp_status(self, request: web.Request) -> web.Response:
+        if (response := await self._dc_query_error(request)) is not None:
+            return response
+        return self._success(self.dc_ocpp_status)
+
+    async def get_v2x_discharge_settings(self, request: web.Request) -> web.Response:
+        if (response := await self._dc_query_error(request)) is not None:
+            return response
+        return self._success(self.v2x_discharge_settings)
+
+    async def get_dc_vehicles(self, request: web.Request) -> web.Response:
+        if (response := await self._dc_query_error(request)) is not None:
+            return response
+        return self._success(self.dc_vehicles)
+
+    async def get_energy_profile_setting(self, request: web.Request) -> web.Response:
+        if (response := await self.authorized(request)) is not None:
+            return response
+        if request.match_info["station_id"] != str(self.station_home_data["stationId"]):
+            return self._bad_request("Unknown stationId")
+        return self._success(self.energy_profile_setting)
+
+    async def set_energy_profile_setting(self, request: web.Request) -> web.Response:
+        """Replace the energy profile, keeping pvPriority entries the request omits.
+
+        The app sends only the loadsType 1 entries of pvPriority; on real hardware
+        the other entries were still present afterwards.
+        """
+        if (response := await self.authorized(request)) is not None:
+            return response
+        payload = await request.json()
+        if str(payload.get("stationId")) != str(self.station_home_data["stationId"]):
+            return self._bad_request("Unknown stationId")
+        sent = payload.get("pvPriority")
+        if not isinstance(sent, list) or not all(isinstance(entry, dict) for entry in sent):
+            return self._bad_request("Invalid pvPriority")
+        current = {(entry.get("loadsType"), entry.get("sgDeviceType")): entry for entry in self.energy_profile_setting.get("pvPriority", [])}
+        if any((entry.get("loadsType"), entry.get("sgDeviceType")) not in current for entry in sent):
+            return self._bad_request("Unknown pvPriority device")
+        for entry in sent:
+            current[(entry.get("loadsType"), entry.get("sgDeviceType"))]["priority"] = entry.get("priority")
+        profile = copy.deepcopy(payload)
+        profile.pop("stationId", None)
+        profile["pvPriority"] = sorted(current.values(), key=lambda entry: (entry["loadsType"] == 1, -entry["priority"]))
+        preheating = profile.get("packPreheatingInfoVO")
+        previous_preheating = self.energy_profile_setting.get("packPreheatingInfoVO", {})
+        if isinstance(preheating, dict) and preheating.get("preheatingMode") is None:
+            preheating["preheatingMode"] = previous_preheating.get("preheatingMode")  # null leaves it unchanged
+        profile["isIndustry"] = self.energy_profile_setting.get("isIndustry", False)
+        self.energy_profile_setting = profile
+        return self._success(True)
+
     def app(self) -> web.Application:
         app = web.Application(middlewares=[self.internet_outage_middleware])
         app.on_cleanup.append(self._stop_gateway_transition_timer)
@@ -1001,6 +1250,19 @@ class CloudApiTestServer:
                 "/device/energy-profile/battery/export/limitation",
                 self.set_battery_export_limitation,
             ),
+            web.get("/device/energy-profile/setting/{station_id}", self.get_energy_profile_setting),
+            web.put("/device/energy-profile/setting", self.set_energy_profile_setting),
+            web.get("/device/charge/mode/support", self.get_dc_charge_mode_supported),
+            web.get("/device/charge/mode/support/mode", self.get_dc_supported_charge_modes),
+            web.get("/device/charge/mode/soc/range", self.get_dc_charge_mode_soc_range),
+            web.get("/device/charge/mode/dc", self.get_dc_charge_mode),
+            web.post("/device/charge/mode/dc", self.set_dc_charge_mode),
+            web.get("/device/dcevse/charge/mode", self.get_dc_surplus_pv_charge_mode),
+            web.get("/device/dcevse/status", self.get_dc_status),
+            web.get("/data-process/dcevse/energy", self.get_dc_energy_totals),
+            web.get("/device/dcevse/ocpp/status", self.get_dc_ocpp_status),
+            web.get("/device/station-v2x/select", self.get_v2x_discharge_settings),
+            web.get("/device/user-car-info/select", self.get_dc_vehicles),
         ])
         return app
 

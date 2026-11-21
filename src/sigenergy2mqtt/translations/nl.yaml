@@ -384,6 +384,8 @@ class:
     name: Succesvolle cloudverbindingen
   CloudControl:
     name: Sigenergy Cloud-{plant_suffix}
+  CloudDcCharger:
+    name: Sigenergy Cloud DC Charger {sequence_suffix}
   CloudGridLimitSensor:
     attributes:
       comment: Alleen beschikbaar wanneer de installateur een maximumlimiet heeft ingesteld.
@@ -531,6 +533,42 @@ class:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Dagelijkse Ontlaadenergie
+  DcChargerBatteryBoost:
+    attributes:
+      comment: Allows the home battery to charge the vehicle, down to the Battery Boost Cut-off SOC.
+    name: Battery Boost
+  DcChargerBatteryBoostCutoffSoc:
+    name: Battery Boost Cut-off SOC
+  DcChargerChargingMode:
+    name: Charging Mode
+  DcChargerLifetimeChargedEnergy:
+    name: Lifetime Charged Energy
+  DcChargerMonthlyChargedEnergy:
+    name: Monthly Charged Energy
+  DcChargerOcppLinkStatus:
+    attributes:
+      comment: Raw cloud OCPP link status. 0 was observed with no OCPP server configured.
+    name: OCPP Link Status
+  DcChargerOcppServerUrl:
+    name: OCPP Server URL
+  DcChargerPrimaryVehicle:
+    name: Primary Vehicle
+  DcChargerPrimaryVehicleBatteryCapacity:
+    name: Primary Vehicle Battery Capacity
+  DcChargerStatusCode:
+    attributes:
+      comment: Raw cloud charger status. 0 was observed while idle; other values are undocumented.
+    name: Status Code
+  DcChargerSurplusPvPriority:
+    name: Surplus PV Priority
+  DcChargerV2xDischargeCutoffSoc:
+    name: V2X Discharge Cut-off SOC
+  DcChargerV2xDischargeEnabled:
+    name: V2X Discharge Enabled
+  DcChargerV2xDischargePowerLimit:
+    name: V2X Discharge Power Limit
+  DcChargerWeeklyChargedEnergy:
+    name: Weekly Charged Energy
   DiagnosticsLogLevel:
     attributes:
       comment: Het logniveau van de sigenergy2mqtt-diagnosemodule

@@ -12,12 +12,23 @@ from sigenergy2mqtt.cloud.exceptions import (
     CloudControlUnavailableError,
 )
 from sigenergy2mqtt.cloud.port import CloudControlPort
+from sigenergy2mqtt.cloud.vendor.solidfox.sigenergy_cloud import SigenergyCloudClient
 from sigenergy2mqtt.config import active_config
 
 logger = logging.getLogger(__name__)
 
 _GATEWAY_DISCOVERY_ATTEMPTS = 3
 _GATEWAY_DISCOVERY_RETRY_DELAY = 1.0
+
+
+@dataclass(frozen=True)
+class DcChargerDiscovery:
+    """Static DC charger capabilities read once at startup."""
+
+    serial_number: str
+    charge_modes: tuple[int, ...] = ()
+    soc_range: tuple[float, float] = (0.0, 100.0)
+    surplus_pv_devices: tuple[int, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -29,6 +40,7 @@ class CloudDiscovery:
     operational_modes: dict[str, object] | None = None
     device_info: dict[str, tuple[dict[str, Any], dict[str, Any]]] | None = None
     battery_pack_info: dict[str, dict[str, Any]] | None = None
+    dc_chargers: tuple[DcChargerDiscovery, ...] = ()
 
     @property
     def has_battery(self) -> bool:
@@ -116,3 +128,50 @@ async def discover_operational_modes(cloud_port: CloudControlPort, discovery: Cl
     except (ClientError, CloudControlError) as exc:
         logger.warning("Cloud operational-mode discovery failed; sensor will be disabled: %s", exc)
     return replace(discovery, operational_modes=operational_modes)
+
+
+def _soc_range(payload: object) -> tuple[float, float]:
+    """Return the (lower, upper) SOC limits, defaulting to 0-100%."""
+    if isinstance(payload, dict):
+        try:
+            lower, upper = float(payload["socLowerLimit"]), float(payload["socUpperLimit"])
+            if 0.0 <= lower < upper <= 100.0:
+                return lower, upper
+        except (KeyError, TypeError, ValueError):
+            pass
+    return 0.0, 100.0
+
+
+async def discover_dc_chargers(cloud_port: CloudControlPort, discovery: CloudDiscovery) -> CloudDiscovery:
+    """Add DC charger capabilities after the cloud station has matched a local plant."""
+    serials = [
+        str(device["serialNumber"])
+        for device in discovery.device_list
+        if device.get("deviceType") == "DcCharger" and isinstance(device.get("serialNumber"), str) and device["serialNumber"]
+    ]
+    if not serials:
+        return discovery
+
+    surplus_pv_devices: tuple[int, ...] = ()
+    soc_range = (0.0, 100.0)
+    try:
+        surplus_pv_devices = tuple(SigenergyCloudClient.surplus_pv_priority_order(await cloud_port.energy_profile_setting()))
+    except (ClientError, CloudControlError) as exc:
+        logger.warning("Cloud Surplus PV Priority discovery failed; the sensor will be disabled: %s", exc)
+    try:
+        soc_range = _soc_range(await cloud_port.dc_charge_mode_soc_range())
+    except (ClientError, CloudControlError) as exc:
+        logger.warning("Cloud DC charger SOC range discovery failed; using 0-100%%: %s", exc)
+
+    chargers: list[DcChargerDiscovery] = []
+    for sn in serials:
+        charge_modes: tuple[int, ...] = ()
+        try:
+            if await cloud_port.dc_charge_mode_supported(sn):
+                charge_modes = tuple(await cloud_port.dc_supported_charge_modes(sn))
+            else:
+                logger.info("Cloud DC charger %s does not support charging modes; mode sensors will be disabled", sn)
+        except (ClientError, CloudControlError) as exc:
+            logger.warning("Cloud DC charger %s charging-mode discovery failed; mode sensors will be disabled: %s", sn, exc)
+        chargers.append(DcChargerDiscovery(sn, charge_modes=charge_modes, soc_range=soc_range, surplus_pv_devices=surplus_pv_devices))
+    return replace(discovery, dc_chargers=tuple(chargers))

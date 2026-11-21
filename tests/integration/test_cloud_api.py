@@ -137,6 +137,12 @@ async def test_mysigen_cloud_adapter_against_test_server(
             battery_pack = await adapter.battery_pack_merge_info("987B65BC1237")
             assert battery_pack["paramInfoVOList"][0]["paramKey"] == "Total Discharge Amount"
             assert gateway["snCode"] == CLOUD_TEST_GATEWAY_SERIAL
+            # DC charger settings (issue #355)
+            assert await adapter.dc_supported_charge_modes("DC-CHARGER-1") == [0, 1, 3]
+            await adapter.set_dc_charge_mode(0, dc_sn="DC-CHARGER-1", enable_from_pack=True, cutoff_soc_from_pack=10)
+            assert (await adapter.dc_charge_mode("DC-CHARGER-1"))["chargeMode"] == 0
+            await adapter.set_surplus_pv_priority(4)
+            assert [entry["sgDeviceType"] for entry in (await adapter.energy_profile_setting())["pvPriority"] if entry["loadsType"] == 1] == [4, 5]
             assert {item["paramKey"] for item in gateway["gridSideInfoList"]} >= {
                 "Phase A Voltage",
                 "Phase B Voltage",
