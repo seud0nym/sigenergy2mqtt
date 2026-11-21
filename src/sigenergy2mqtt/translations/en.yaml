@@ -385,7 +385,7 @@ class:
   CloudControl:
     name: Sigenergy Cloud {plant_suffix}
   CloudDcCharger:
-    name: Sigenergy Cloud DC Charger {sequence_suffix}
+    name: Sigenergy Cloud DC Charger {plant_suffix} {sequence_suffix}
   CloudGridLimitSensor:
     attributes:
       comment: Only available when the installer has configured a maximum limit.

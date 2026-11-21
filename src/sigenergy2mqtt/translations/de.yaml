@@ -385,7 +385,7 @@ class:
   CloudControl:
     name: Sigenergy Cloud {plant_suffix}  # verify:ignore
   CloudDcCharger:
-    name: Sigenergy Cloud DC Charger {sequence_suffix}
+    name: Sigenergy Cloud DC-Ladegerät {plant_suffix} {sequence_suffix}
   CloudGridLimitSensor:
     attributes:
       comment: Nur verfügbar, wenn der Installateur einen Höchstwert festgelegt hat.
@@ -535,40 +535,40 @@ class:
     name: Tägliche Entladeenergie
   DcChargerBatteryBoost:
     attributes:
-      comment: Allows the home battery to charge the vehicle, down to the Battery Boost Cut-off SOC.
-    name: Battery Boost
+      comment: Ermöglicht es, das Fahrzeug über die Hausbatterie bis zum „Battery Boost Cut-off SOC“ aufzuladen.
+    name: Batterie-Boost
   DcChargerBatteryBoostCutoffSoc:
-    name: Battery Boost Cut-off SOC
+    name: Batterie-Boost-Abschalt-Ladezustand (SOC)
   DcChargerChargingMode:
-    name: Charging Mode
+    name: Lademodus
   DcChargerLifetimeChargedEnergy:
-    name: Lifetime Charged Energy
+    name: Gesamte geladene Energie
   DcChargerMonthlyChargedEnergy:
-    name: Monthly Charged Energy
+    name: Monatlich geladene Energie
   DcChargerOcppLinkStatus:
     attributes:
-      comment: Raw cloud OCPP link status. 0 was observed with no OCPP server configured.
-    name: OCPP Link Status
+      comment: Rohdaten zum Status der OCPP-Verbindung zur Cloud. Der Wert 0 wurde festgestellt, da kein OCPP-Server konfiguriert war.
+    name: OCPP-Verbindungsstatus
   DcChargerOcppServerUrl:
-    name: OCPP Server URL
+    name: OCPP-Server-URL
   DcChargerPrimaryVehicle:
-    name: Primary Vehicle
+    name: Hauptfahrzeug
   DcChargerPrimaryVehicleBatteryCapacity:
-    name: Primary Vehicle Battery Capacity
+    name: Kapazität der Hauptfahrzeugbatterie
   DcChargerStatusCode:
     attributes:
-      comment: Raw cloud charger status. 0 was observed while idle; other values are undocumented.
-    name: Status Code
+      comment: Rohdaten zum Status des Cloud-Ladegeräts. Im Ruhezustand wurde der Wert 0 festgestellt; andere Werte sind nicht dokumentiert.
+    name: Statuscode
   DcChargerSurplusPvPriority:
-    name: Surplus PV Priority
+    name: Priorität für überschüssigen Solarstrom
   DcChargerV2xDischargeCutoffSoc:
-    name: V2X Discharge Cut-off SOC
+    name: V2X-Entladeabschaltung nach SOC
   DcChargerV2xDischargeEnabled:
-    name: V2X Discharge Enabled
+    name: V2X-Entladung aktiviert
   DcChargerV2xDischargePowerLimit:
-    name: V2X Discharge Power Limit
+    name: V2X-Entladeleistungsbegrenzung
   DcChargerWeeklyChargedEnergy:
-    name: Weekly Charged Energy
+    name: Wöchentlich geladene Energie
   DiagnosticsLogLevel:
     attributes:
       comment: Die Protokollierungsstufe des sigenergy2mqtt-Diagnosemoduls

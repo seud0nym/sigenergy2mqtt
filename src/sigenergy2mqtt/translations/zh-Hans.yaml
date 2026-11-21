@@ -385,7 +385,7 @@ class:
   CloudControl:
     name: Sigenergy 云平台 {plant_suffix}
   CloudDcCharger:
-    name: Sigenergy Cloud DC Charger {sequence_suffix}
+    name: Sigenergy Cloud 直流充电器 {plant_suffix} {sequence_suffix}
   CloudGridLimitSensor:
     attributes:
       comment: 仅在安装人员已配置最大限制时可用。
@@ -535,40 +535,40 @@ class:
     name: 日放电电量
   DcChargerBatteryBoost:
     attributes:
-      comment: Allows the home battery to charge the vehicle, down to the Battery Boost Cut-off SOC.
-    name: Battery Boost
+      comment: 允许家用电池为车辆充电，直至达到“电池增压截止”的SOC值。
+    name: 电池增压
   DcChargerBatteryBoostCutoffSoc:
-    name: Battery Boost Cut-off SOC
+    name: 电池增压截止 SOC
   DcChargerChargingMode:
-    name: Charging Mode
+    name: 充电模式
   DcChargerLifetimeChargedEnergy:
-    name: Lifetime Charged Energy
+    name: 累计充电能量
   DcChargerMonthlyChargedEnergy:
-    name: Monthly Charged Energy
+    name: 月充电量
   DcChargerOcppLinkStatus:
     attributes:
-      comment: Raw cloud OCPP link status. 0 was observed with no OCPP server configured.
-    name: OCPP Link Status
+      comment: 原始云端 OCPP 连接状态。未配置 OCPP 服务器时，观察到值为 0。
+    name: OCPP 连接状态
   DcChargerOcppServerUrl:
-    name: OCPP Server URL
+    name: OCPP 服务器 URL
   DcChargerPrimaryVehicle:
-    name: Primary Vehicle
+    name: 主要车辆
   DcChargerPrimaryVehicleBatteryCapacity:
-    name: Primary Vehicle Battery Capacity
+    name: 主车载电池容量
   DcChargerStatusCode:
     attributes:
-      comment: Raw cloud charger status. 0 was observed while idle; other values are undocumented.
-    name: Status Code
+      comment: 云充电器的原始状态。空闲时观察到值为 0；其他值未在文档中说明。
+    name: 状态代码
   DcChargerSurplusPvPriority:
-    name: Surplus PV Priority
+    name: 剩余光伏电能优先级
   DcChargerV2xDischargeCutoffSoc:
-    name: V2X Discharge Cut-off SOC
+    name: V2X 放电截止 SOC
   DcChargerV2xDischargeEnabled:
-    name: V2X Discharge Enabled
+    name: 已启用 V2X 放电功能
   DcChargerV2xDischargePowerLimit:
-    name: V2X Discharge Power Limit
+    name: V2X 放电功率限制
   DcChargerWeeklyChargedEnergy:
-    name: Weekly Charged Energy
+    name: 每周充电量
   DiagnosticsLogLevel:
     attributes:
       comment: sigenergy2mqtt 诊断模块的日志级别

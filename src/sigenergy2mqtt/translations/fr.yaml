@@ -385,7 +385,7 @@ class:
   CloudControl:
     name: '{plant_suffix} au cloud Sigenergy'
   CloudDcCharger:
-    name: Sigenergy Cloud DC Charger {sequence_suffix}
+    name: Chargeur CC Sigenergy Cloud {plant_suffix} {sequence_suffix}
   CloudGridLimitSensor:
     attributes:
       comment: Disponible uniquement lorsque l'installateur a défini une limite maximale.
@@ -535,40 +535,40 @@ class:
     name: Énergie de Décharge Quotidienne
   DcChargerBatteryBoost:
     attributes:
-      comment: Allows the home battery to charge the vehicle, down to the Battery Boost Cut-off SOC.
-    name: Battery Boost
+      comment: Permet à la batterie domestique de recharger le véhicule, jusqu'au niveau SOC de coupure de la fonction « Battery Boost ».
+    name: Battery Boost  # verify:ignore
   DcChargerBatteryBoostCutoffSoc:
-    name: Battery Boost Cut-off SOC
+    name: Niveau de charge (SOC) de coupure de la fonction « Battery Boost »
   DcChargerChargingMode:
-    name: Charging Mode
+    name: Mode de charge
   DcChargerLifetimeChargedEnergy:
-    name: Lifetime Charged Energy
+    name: Énergie chargée sur toute la durée de vie
   DcChargerMonthlyChargedEnergy:
-    name: Monthly Charged Energy
+    name: Énergie chargée mensuelle
   DcChargerOcppLinkStatus:
     attributes:
-      comment: Raw cloud OCPP link status. 0 was observed with no OCPP server configured.
-    name: OCPP Link Status
+      comment: État brut de la connexion OCPP au cloud. La valeur 0 a été observée en l'absence de serveur OCPP configuré.
+    name: État de la connexion OCPP
   DcChargerOcppServerUrl:
-    name: OCPP Server URL
+    name: URL du serveur OCPP
   DcChargerPrimaryVehicle:
-    name: Primary Vehicle
+    name: Véhicule principal
   DcChargerPrimaryVehicleBatteryCapacity:
-    name: Primary Vehicle Battery Capacity
+    name: Capacité de la batterie principale du véhicule
   DcChargerStatusCode:
     attributes:
-      comment: Raw cloud charger status. 0 was observed while idle; other values are undocumented.
-    name: Status Code
+      comment: État brut du chargeur Cloud. La valeur 0 a été observée en mode veille ; les autres valeurs ne sont pas documentées.
+    name: Code d'état
   DcChargerSurplusPvPriority:
-    name: Surplus PV Priority
+    name: Priorité au surplus photovoltaïque
   DcChargerV2xDischargeCutoffSoc:
-    name: V2X Discharge Cut-off SOC
+    name: 'V2X : coupure de décharge en fonction du niveau de charge (SOC)'
   DcChargerV2xDischargeEnabled:
-    name: V2X Discharge Enabled
+    name: Décharge V2X activée
   DcChargerV2xDischargePowerLimit:
-    name: V2X Discharge Power Limit
+    name: Limite de puissance de décharge V2X
   DcChargerWeeklyChargedEnergy:
-    name: Weekly Charged Energy
+    name: Énergie chargée hebdomadaire
   DiagnosticsLogLevel:
     attributes:
       comment: Niveau de journalisation du module de diagnostic sigenergy2mqtt
