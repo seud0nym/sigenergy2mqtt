@@ -314,3 +314,11 @@ async def test_discovery_degrades_when_capability_reads_fail() -> None:
 
     assert result.dc_chargers == (DcChargerDiscovery("DC-1"), DcChargerDiscovery("DC-2"))
     port.dc_supported_charge_modes.assert_not_awaited()
+
+
+def test_device_names_have_no_extra_spaces_from_empty_suffixes() -> None:
+    discovery = CloudDiscovery(device_list=[], dc_chargers=(DcChargerDiscovery("DC-F", (1,), (0.0, 100.0), (5, 4)),))
+    (only,) = CloudDcCharger.from_discovery(0, STATION, discovery)
+    assert only.name == "Sigenergy Cloud DC Charger"
+    (other_plant,) = CloudDcCharger.from_discovery(1, STATION, discovery)
+    assert other_plant.name == "Sigenergy Cloud DC Charger 2"

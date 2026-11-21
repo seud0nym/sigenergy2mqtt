@@ -98,7 +98,8 @@ class Device(HaPublisherMixin, dict[str, str | list[str]]):
 
         translate = kwargs.pop("translate", True)
         if translate:
-            name = _t(f"{self.__class__.__name__}.name", name, plant_index=plant_index, **kwargs).rstrip()
+            # An empty placeholder (e.g. plant_suffix for the first plant) leaves extra spaces
+            name = " ".join(_t(f"{self.__class__.__name__}.name", name, plant_index=plant_index, **kwargs).split())
         else:
             name = name.rstrip()
         self["name"] = self.name = name if active_config.home_assistant.device_name_prefix == "" else f"{active_config.home_assistant.device_name_prefix} {name}"
