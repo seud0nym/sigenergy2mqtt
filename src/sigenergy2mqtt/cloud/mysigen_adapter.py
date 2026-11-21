@@ -110,6 +110,7 @@ class MySigenCloudAdapter:
         self._rate_limit_streak = 0
         self._rate_limit_generation = 0
         self._rate_limit_lock = asyncio.Lock()
+        # Serialises writes to settings held in the energy profile; see set_surplus_pv_priority
         self._energy_profile_lock = asyncio.Lock()
 
     async def _wait_for_rate_limit(self) -> None:
@@ -455,19 +456,21 @@ class MySigenCloudAdapter:
         return await self._cloud_operation(self._client.grid_export_limit)
 
     async def set_grid_export_limit(self, limit_kw: float, *, enabled: bool = True) -> dict[str, Any]:
-        return await self._cloud_operation(
-            lambda: self._client.set_grid_export_limit(limit_kw, enabled=enabled),
-            operation_name="set_grid_export_limit",
-        )
+        async with self._energy_profile_lock:
+            return await self._cloud_operation(
+                lambda: self._client.set_grid_export_limit(limit_kw, enabled=enabled),
+                operation_name="set_grid_export_limit",
+            )
 
     async def grid_import_limit(self) -> dict[str, Any]:
         return await self._cloud_operation(self._client.grid_import_limit)
 
     async def set_grid_import_limit(self, limit_kw: float, *, enabled: bool = True) -> dict[str, Any]:
-        return await self._cloud_operation(
-            lambda: self._client.set_grid_import_limit(limit_kw, enabled=enabled),
-            operation_name="set_grid_import_limit",
-        )
+        async with self._energy_profile_lock:
+            return await self._cloud_operation(
+                lambda: self._client.set_grid_import_limit(limit_kw, enabled=enabled),
+                operation_name="set_grid_import_limit",
+            )
 
     async def grid_connection_limit(self) -> dict[str, Any]:
         return await self._cloud_operation(self._client.grid_connection_limit)
@@ -482,22 +485,24 @@ class MySigenCloudAdapter:
         return await self._cloud_operation(self._client.battery_power_limit)
 
     async def set_battery_power_limit(self, *, max_charge_kw: float | None, max_discharge_kw: float | None) -> dict[str, Any]:
-        return await self._cloud_operation(
-            lambda: self._client.set_battery_power_limit(
-                max_charge_kw=max_charge_kw,
-                max_discharge_kw=max_discharge_kw,
-            ),
-            operation_name="set_battery_power_limit",
-        )
+        async with self._energy_profile_lock:
+            return await self._cloud_operation(
+                lambda: self._client.set_battery_power_limit(
+                    max_charge_kw=max_charge_kw,
+                    max_discharge_kw=max_discharge_kw,
+                ),
+                operation_name="set_battery_power_limit",
+            )
 
     async def solar_power_limit(self) -> dict[str, Any]:
         return await self._cloud_operation(self._client.solar_power_limit)
 
     async def set_solar_power_limit(self, limit_kw: float | None) -> dict[str, Any]:
-        return await self._cloud_operation(
-            lambda: self._client.set_solar_power_limit(limit_kw),
-            operation_name="set_solar_power_limit",
-        )
+        async with self._energy_profile_lock:
+            return await self._cloud_operation(
+                lambda: self._client.set_solar_power_limit(limit_kw),
+                operation_name="set_solar_power_limit",
+            )
 
     async def battery_export_limitation(self) -> dict[str, Any]:
         return await self._cloud_operation(self._client.battery_export_limitation)
@@ -552,8 +557,10 @@ class MySigenCloudAdapter:
         return await self._cloud_operation(self._client.energy_profile_setting)
 
     async def set_surplus_pv_priority(self, first_sg_device_type: int) -> dict[str, Any]:
-        # The write replaces the whole energy profile from a fresh read, so
-        # serialise it to stop two writes interleaving their read and write.
+        # The write replaces the whole energy profile from a fresh read. Settings
+        # stored in that profile (grid export/import, battery and solar limits)
+        # take the same lock, so none can change between the read and the write
+        # and then be reverted by it.
         async with self._energy_profile_lock:
             return await self._cloud_operation(
                 lambda: self._client.set_surplus_pv_priority(first_sg_device_type),

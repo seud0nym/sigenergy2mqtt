@@ -990,3 +990,50 @@ async def test_rejected_dc_charger_writes_raise_rejected_error() -> None:
         await adapter.set_dc_charge_mode(9, dc_sn="DC1", enable_from_pack=False, cutoff_soc_from_pack=5)
     with pytest.raises(CloudControlRejectedError):
         await adapter.set_surplus_pv_priority(6)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("method_name", "call"),
+    [
+        ("set_grid_export_limit", lambda adapter: adapter.set_grid_export_limit(5.0)),
+        ("set_grid_import_limit", lambda adapter: adapter.set_grid_import_limit(5.0)),
+        ("set_battery_power_limit", lambda adapter: adapter.set_battery_power_limit(max_charge_kw=3.0, max_discharge_kw=None)),
+        ("set_solar_power_limit", lambda adapter: adapter.set_solar_power_limit(4.0)),
+    ],
+)
+async def test_energy_profile_limit_writes_wait_for_surplus_pv_priority_write(method_name, call) -> None:
+    """A limit written during a priority write's profile read/PUT window would be reverted by the PUT."""
+    adapter = MySigenCloudAdapter("delegated@example.com", "secret", "eu")
+    priority_started = asyncio.Event()
+    release_priority = asyncio.Event()
+    order: list[str] = []
+
+    async def set_surplus_pv_priority(first_sg_device_type: int) -> dict:
+        order.append("priority read")
+        priority_started.set()
+        await release_priority.wait()
+        order.append("priority write")
+        return {"code": 0}
+
+    async def set_limit(*args, **kwargs) -> dict:
+        order.append("limit")
+        return {"code": 0}
+
+    adapter._client = SimpleNamespace(  # type: ignore[reportPrivateUsage]
+        base_url="https://api.sigenergy.cloud/",
+        region="testing",
+        connect=AsyncMock(),
+        set_surplus_pv_priority=set_surplus_pv_priority,
+        **{method_name: set_limit},
+    )
+
+    priority = asyncio.create_task(adapter.set_surplus_pv_priority(4))
+    await priority_started.wait()
+    limit = asyncio.create_task(call(adapter))
+    await asyncio.sleep(0.01)
+    assert order == ["priority read"]  # the limit write is held back
+
+    release_priority.set()
+    await asyncio.gather(priority, limit)
+    assert order == ["priority read", "priority write", "limit"]
