@@ -384,6 +384,8 @@ class:
     name: クラウドへの接続成功数
   CloudControl:
     name: Sigenergy Cloud {plant_suffix}  # verify:ignore
+  CloudDcCharger:
+    name: Sigenergy Cloud DC充電器 {plant_suffix} {sequence_suffix}
   CloudGridLimitSensor:
     attributes:
       comment: これは、設置業者が上限値を設定している場合にのみ利用可能です。
@@ -531,6 +533,42 @@ class:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: 日次放電電力量
+  DcChargerBatteryBoost:
+    attributes:
+      comment: 家庭用バッテリーから車両への充電が可能で、バッテリーブーストのカットオフSOCまで充電できます。
+    name: バッテリーブースト
+  DcChargerBatteryBoostCutoffSoc:
+    name: バッテリーブーストのカットオフSOC
+  DcChargerChargingMode:
+    name: 充電モード
+  DcChargerLifetimeChargedEnergy:
+    name: 累積充電エネルギー量
+  DcChargerMonthlyChargedEnergy:
+    name: 月間充電エネルギー量
+  DcChargerOcppLinkStatus:
+    attributes:
+      comment: クラウドのOCPPリンクの生のステータス。OCPPサーバーが設定されていない状態で、0が観測された。
+    name: OCPPリンクの状態
+  DcChargerOcppServerUrl:
+    name: OCPPサーバーのURL
+  DcChargerPrimaryVehicle:
+    name: メインの車両
+  DcChargerPrimaryVehicleBatteryCapacity:
+    name: 主車両用バッテリー容量
+  DcChargerStatusCode:
+    attributes:
+      comment: クラウドチャージャーの生のステータス。アイドル状態では「0」が観測されたが、その他の値については未記載である。
+    name: ステータスコード
+  DcChargerSurplusPvPriority:
+    name: 余剰太陽光発電の優先順位
+  DcChargerV2xDischargeCutoffSoc:
+    name: V2X 放電遮断 SOC
+  DcChargerV2xDischargeEnabled:
+    name: V2X 放電有効
+  DcChargerV2xDischargePowerLimit:
+    name: V2X 放電電力制限
+  DcChargerWeeklyChargedEnergy:
+    name: 週間充電エネルギー量
   DiagnosticsLogLevel:
     attributes:
       comment: sigenergy2mqtt 診断モジュールのロギングレベル

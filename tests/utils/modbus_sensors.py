@@ -18,6 +18,7 @@ import asyncio
 import logging
 import os
 import sys
+from dataclasses import replace
 from datetime import timedelta, timezone
 from typing import Any, cast
 
@@ -27,7 +28,12 @@ from sigenergy2mqtt.cloud.models import (
     InstantOverrideCommand,
 )
 from sigenergy2mqtt.cloud.port import CloudControlPort
-from sigenergy2mqtt.devices.cloud import CloudControl, CloudDiscovery
+from sigenergy2mqtt.cloud.vendor.solidfox.sigenergy_cloud import SigenergyCloudClient
+from sigenergy2mqtt.devices.cloud import (
+    CloudControl,
+    CloudDiscovery,
+    DcChargerDiscovery,
+)
 
 # Need to set a Modbus host otherwise configuration initialisation will launch auto-discovery
 os.environ["SIGENERGY2MQTT_MODBUS_HOST"] = "127.0.0.1"
@@ -370,6 +376,42 @@ class DummyCloudControlPort(CloudControlPort):
     async def set_battery_export_limitation(self, enabled: bool) -> dict[str, Any]:
         return {"code": 0}
 
+    async def dc_charge_mode_supported(self, dc_sn: str) -> bool:
+        return self._server.dc_charge_mode_supported
+
+    async def dc_supported_charge_modes(self, dc_sn: str) -> list[int]:
+        return [int(mode) for mode in self._server.dc_supported_charge_modes]
+
+    async def dc_charge_mode_soc_range(self) -> dict[str, Any]:
+        return self._server.dc_charge_mode_soc_range
+
+    async def dc_charge_mode(self, dc_sn: str) -> dict[str, Any]:
+        return self._server.dc_charge_mode
+
+    async def set_dc_charge_mode(self, charge_mode: int, *, dc_sn: str, enable_from_pack: bool, cutoff_soc_from_pack: float) -> dict[str, Any]:
+        return {"code": 0}
+
+    async def energy_profile_setting(self) -> dict[str, Any]:
+        return self._server.energy_profile_setting
+
+    async def set_surplus_pv_priority(self, first_sg_device_type: int) -> dict[str, Any]:
+        return {"code": 0}
+
+    async def dc_status(self, dc_sn: str) -> Any:
+        return self._server.dc_status
+
+    async def dc_energy_totals(self, dc_sn: str) -> dict[str, Any]:
+        return self._server.dc_energy_totals
+
+    async def dc_ocpp_status(self, dc_sn: str) -> dict[str, Any]:
+        return self._server.dc_ocpp_status
+
+    async def v2x_discharge_settings(self, dc_sn: str) -> dict[str, Any]:
+        return self._server.v2x_discharge_settings
+
+    async def dc_vehicles(self, dc_sn: str) -> list[dict[str, Any]]:
+        return self._server.dc_vehicles
+
 
 async def get_sensor_instances(
     home_assistant_enabled: bool = False,
@@ -510,6 +552,16 @@ async def get_sensor_instances(
                 cloud_server.device_static_info[4],
             ),
         },
+    )
+    cloud_discovery = replace(
+        cloud_discovery,
+        dc_chargers=(
+            DcChargerDiscovery(
+                DC_CHARGER_SERIAL,
+                charge_modes=tuple(int(mode) for mode in cloud_server.dc_supported_charge_modes),
+                surplus_pv_devices=tuple(SigenergyCloudClient.surplus_pv_priority_order(cloud_server.energy_profile_setting)),
+            ),
+        ),
     )
     cloud_control = CloudControl(plant_index, cloud_port, cloud_discovery)
 

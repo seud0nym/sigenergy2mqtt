@@ -933,3 +933,107 @@ async def test_gateway_command_login_fails_fast_during_cooldown(mysigen_adapter:
             await mysigen_adapter.connect(wait_for_rate_limit=False)
 
     mysigen_adapter._client.connect.assert_not_awaited()  # type: ignore[reportPrivateUsage]
+
+
+@pytest.mark.asyncio
+async def test_dc_charger_operations_delegate_to_cloud_client() -> None:
+    adapter = MySigenCloudAdapter("delegated@example.com", "secret", "eu")
+    adapter._client = SimpleNamespace(  # type: ignore[reportPrivateUsage]
+        base_url="https://api.sigenergy.cloud/",
+        region="testing",
+        connect=AsyncMock(),
+        close=AsyncMock(),
+        dc_charge_mode_supported=AsyncMock(return_value=True),
+        dc_supported_charge_modes=AsyncMock(return_value=[0, 1, 3]),
+        dc_charge_mode_soc_range=AsyncMock(return_value={"socUpperLimit": 100.0}),
+        dc_charge_mode=AsyncMock(return_value={"chargeMode": 1}),
+        set_dc_charge_mode=AsyncMock(return_value={"code": 0}),
+        energy_profile_setting=AsyncMock(return_value={"pvPriority": []}),
+        set_surplus_pv_priority=AsyncMock(return_value={"code": 0}),
+        dc_status=AsyncMock(return_value=0),
+        dc_energy_totals=AsyncMock(return_value={"lifetimeEnergy": 1.0}),
+        dc_ocpp_status=AsyncMock(return_value={"ocppLinkStatus": 0}),
+        v2x_discharge_settings=AsyncMock(return_value={"dischargeEnable": 0}),
+        dc_vehicles=AsyncMock(return_value=[]),
+    )
+    client = adapter._client  # type: ignore[reportPrivateUsage]
+
+    assert await adapter.dc_charge_mode_supported("DC1") is True
+    assert await adapter.dc_supported_charge_modes("DC1") == [0, 1, 3]
+    assert await adapter.dc_charge_mode_soc_range() == {"socUpperLimit": 100.0}
+    assert await adapter.dc_charge_mode("DC1") == {"chargeMode": 1}
+    await adapter.set_dc_charge_mode(1, dc_sn="DC1", enable_from_pack=True, cutoff_soc_from_pack=5)
+    client.set_dc_charge_mode.assert_awaited_once_with(1, dc_sn="DC1", enable_from_pack=True, cutoff_soc_from_pack=5)
+    assert await adapter.energy_profile_setting() == {"pvPriority": []}
+    await adapter.set_surplus_pv_priority(4)
+    client.set_surplus_pv_priority.assert_awaited_once_with(4)
+    assert await adapter.dc_status("DC1") == 0
+    assert await adapter.dc_energy_totals("DC1") == {"lifetimeEnergy": 1.0}
+    assert await adapter.dc_ocpp_status("DC1") == {"ocppLinkStatus": 0}
+    assert await adapter.v2x_discharge_settings("DC1") == {"dischargeEnable": 0}
+    assert await adapter.dc_vehicles("DC1") == []
+    for name in ("dc_charge_mode_supported", "dc_supported_charge_modes", "dc_charge_mode", "dc_status", "dc_energy_totals", "dc_ocpp_status", "v2x_discharge_settings", "dc_vehicles"):
+        getattr(client, name).assert_awaited_once_with("DC1")
+
+
+@pytest.mark.asyncio
+async def test_rejected_dc_charger_writes_raise_rejected_error() -> None:
+    adapter = MySigenCloudAdapter("delegated@example.com", "secret", "eu")
+    adapter._client = SimpleNamespace(  # type: ignore[reportPrivateUsage]
+        base_url="https://api.sigenergy.cloud/",
+        region="testing",
+        connect=AsyncMock(),
+        set_dc_charge_mode=AsyncMock(side_effect=SigenergyCloudAPIError("rejected", status_code=200, response_body='{"code": 1}')),
+        set_surplus_pv_priority=AsyncMock(side_effect=ValueError("sgDeviceType 6 is not in the list")),
+    )
+    with pytest.raises(CloudControlRejectedError):
+        await adapter.set_dc_charge_mode(9, dc_sn="DC1", enable_from_pack=False, cutoff_soc_from_pack=5)
+    with pytest.raises(CloudControlRejectedError):
+        await adapter.set_surplus_pv_priority(6)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("method_name", "call"),
+    [
+        ("set_grid_export_limit", lambda adapter: adapter.set_grid_export_limit(5.0)),
+        ("set_grid_import_limit", lambda adapter: adapter.set_grid_import_limit(5.0)),
+        ("set_battery_power_limit", lambda adapter: adapter.set_battery_power_limit(max_charge_kw=3.0, max_discharge_kw=None)),
+        ("set_solar_power_limit", lambda adapter: adapter.set_solar_power_limit(4.0)),
+    ],
+)
+async def test_energy_profile_limit_writes_wait_for_surplus_pv_priority_write(method_name, call) -> None:
+    """A limit written during a priority write's profile read/PUT window would be reverted by the PUT."""
+    adapter = MySigenCloudAdapter("delegated@example.com", "secret", "eu")
+    priority_started = asyncio.Event()
+    release_priority = asyncio.Event()
+    order: list[str] = []
+
+    async def set_surplus_pv_priority(first_sg_device_type: int) -> dict:
+        order.append("priority read")
+        priority_started.set()
+        await release_priority.wait()
+        order.append("priority write")
+        return {"code": 0}
+
+    async def set_limit(*args, **kwargs) -> dict:
+        order.append("limit")
+        return {"code": 0}
+
+    adapter._client = SimpleNamespace(  # type: ignore[reportPrivateUsage]
+        base_url="https://api.sigenergy.cloud/",
+        region="testing",
+        connect=AsyncMock(),
+        set_surplus_pv_priority=set_surplus_pv_priority,
+        **{method_name: set_limit},
+    )
+
+    priority = asyncio.create_task(adapter.set_surplus_pv_priority(4))
+    await priority_started.wait()
+    limit = asyncio.create_task(call(adapter))
+    await asyncio.sleep(0.01)
+    assert order == ["priority read"]  # the limit write is held back
+
+    release_priority.set()
+    await asyncio.gather(priority, limit)
+    assert order == ["priority read", "priority write", "limit"]

@@ -21,6 +21,7 @@ from sigenergy2mqtt.sensors.cloud.read_write import (
     SolarPowerLimit,
 )
 
+from .dc_charger import CloudDcCharger
 from .discovery import CloudDiscovery
 from .gateway import Gateway
 from .sigen_device import SigenCloudDevice, build_sigen_devices
@@ -76,6 +77,8 @@ class CloudControl(Device):
         for build_child in _CHILD_BUILDERS:
             if (child := build_child(plant_index, station_id, discovery)) is not None:
                 self._add_child_device(child)
+        for dc_charger in CloudDcCharger.from_discovery(plant_index, station_id, discovery):
+            self._add_child_device(dc_charger)
         for child in build_sigen_devices(plant_index, station_id, discovery):
             self._add_child_device(child)
             if isinstance(child, SigenCloudDevice) and child._pending_info and child not in self.children:

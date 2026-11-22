@@ -384,6 +384,8 @@ class:
     name: Connexions réussies au cloud
   CloudControl:
     name: '{plant_suffix} au cloud Sigenergy'
+  CloudDcCharger:
+    name: Chargeur CC Sigenergy Cloud {plant_suffix} {sequence_suffix}
   CloudGridLimitSensor:
     attributes:
       comment: Disponible uniquement lorsque l'installateur a défini une limite maximale.
@@ -531,6 +533,42 @@ class:
       source: Registre Modbus {address}
       source_range: Registres Modbus {start}-{end}
     name: Énergie de Décharge Quotidienne
+  DcChargerBatteryBoost:
+    attributes:
+      comment: Permet à la batterie domestique de recharger le véhicule, jusqu'au niveau SOC de coupure de la fonction « Battery Boost ».
+    name: Battery Boost  # verify:ignore
+  DcChargerBatteryBoostCutoffSoc:
+    name: Niveau de charge (SOC) de coupure de la fonction « Battery Boost »
+  DcChargerChargingMode:
+    name: Mode de charge
+  DcChargerLifetimeChargedEnergy:
+    name: Énergie chargée sur toute la durée de vie
+  DcChargerMonthlyChargedEnergy:
+    name: Énergie chargée mensuelle
+  DcChargerOcppLinkStatus:
+    attributes:
+      comment: État brut de la connexion OCPP au cloud. La valeur 0 a été observée en l'absence de serveur OCPP configuré.
+    name: État de la connexion OCPP
+  DcChargerOcppServerUrl:
+    name: URL du serveur OCPP
+  DcChargerPrimaryVehicle:
+    name: Véhicule principal
+  DcChargerPrimaryVehicleBatteryCapacity:
+    name: Capacité de la batterie principale du véhicule
+  DcChargerStatusCode:
+    attributes:
+      comment: État brut du chargeur Cloud. La valeur 0 a été observée en mode veille ; les autres valeurs ne sont pas documentées.
+    name: Code d'état
+  DcChargerSurplusPvPriority:
+    name: Priorité au surplus photovoltaïque
+  DcChargerV2xDischargeCutoffSoc:
+    name: 'V2X : coupure de décharge en fonction du niveau de charge (SOC)'
+  DcChargerV2xDischargeEnabled:
+    name: Décharge V2X activée
+  DcChargerV2xDischargePowerLimit:
+    name: Limite de puissance de décharge V2X
+  DcChargerWeeklyChargedEnergy:
+    name: Énergie chargée hebdomadaire
   DiagnosticsLogLevel:
     attributes:
       comment: Niveau de journalisation du module de diagnostic sigenergy2mqtt

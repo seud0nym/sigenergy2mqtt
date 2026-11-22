@@ -384,6 +384,8 @@ class:
     name: Ligações bem-sucedidas à nuvem
   CloudControl:
     name: Sigenergy Cloud {plant_suffix}  # verify:ignore
+  CloudDcCharger:
+    name: Carregador CC Sigenergy Cloud {plant_suffix} {sequence_suffix}
   CloudGridLimitSensor:
     attributes:
       comment: Disponível apenas quando o instalador tiver definido um limite máximo.
@@ -531,6 +533,42 @@ class:
       source: Registo Modbus {address}
       source_range: Registos Modbus {start}-{end}
     name: Energia de Descarga Diária
+  DcChargerBatteryBoost:
+    attributes:
+      comment: Permite que a bateria doméstica carregue o veículo, até ao nível de SOC de corte do Battery Boost.
+    name: Reforço da bateria
+  DcChargerBatteryBoostCutoffSoc:
+    name: SOC de corte do reforço da bateria
+  DcChargerChargingMode:
+    name: Modo de carregamento
+  DcChargerLifetimeChargedEnergy:
+    name: Energia carregada ao longo da vida útil
+  DcChargerMonthlyChargedEnergy:
+    name: Energia carregada mensalmente
+  DcChargerOcppLinkStatus:
+    attributes:
+      comment: Estado do link OCPP bruto na nuvem. Foi observado o valor 0, sem qualquer servidor OCPP configurado.
+    name: Estado da ligação OCPP
+  DcChargerOcppServerUrl:
+    name: URL do servidor OCPP
+  DcChargerPrimaryVehicle:
+    name: Veículo principal
+  DcChargerPrimaryVehicleBatteryCapacity:
+    name: Capacidade da bateria principal do veículo
+  DcChargerStatusCode:
+    attributes:
+      comment: Estado bruto do carregador na nuvem. Observou-se o valor 0 em modo de inatividade; os outros valores não estão documentados.
+    name: Código de estado
+  DcChargerSurplusPvPriority:
+    name: Prioridade de excedentes fotovoltaicos
+  DcChargerV2xDischargeCutoffSoc:
+    name: SOC de corte de descarga V2X
+  DcChargerV2xDischargeEnabled:
+    name: Descarga V2X ativada
+  DcChargerV2xDischargePowerLimit:
+    name: Limite de potência de descarga V2X
+  DcChargerWeeklyChargedEnergy:
+    name: Energia carregada semanalmente
   DiagnosticsLogLevel:
     attributes:
       comment: O nível de registo do módulo de diagnóstico sigenergy2mqtt

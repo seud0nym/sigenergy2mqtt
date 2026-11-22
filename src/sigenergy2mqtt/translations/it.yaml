@@ -384,6 +384,8 @@ class:
     name: Connessioni al cloud riuscite
   CloudControl:
     name: Sigenergy Cloud {plant_suffix}  # verify:ignore
+  CloudDcCharger:
+    name: Caricabatterie CC Sigenergy Cloud {plant_suffix} {sequence_suffix}
   CloudGridLimitSensor:
     attributes:
       comment: Disponibile solo se l’installatore ha configurato un limite massimo.
@@ -531,6 +533,42 @@ class:
       source: Registro Modbus {address}
       source_range: Registri Modbus {start}-{end}
     name: Energia di Scarica Giornaliera
+  DcChargerBatteryBoost:
+    attributes:
+      comment: Consente alla batteria domestica di ricaricare il veicolo fino al livello SOC di interruzione della funzione Battery Boost.
+    name: Battery Boost  # verify:ignore
+  DcChargerBatteryBoostCutoffSoc:
+    name: SOC di interruzione della funzione Battery Boost
+  DcChargerChargingMode:
+    name: Modalità di ricarica
+  DcChargerLifetimeChargedEnergy:
+    name: Energia caricata nel corso della vita utile
+  DcChargerMonthlyChargedEnergy:
+    name: Energia caricata mensilmente
+  DcChargerOcppLinkStatus:
+    attributes:
+      comment: Stato del collegamento OCPP al cloud non elaborato. È stato rilevato un valore pari a 0 in assenza di un server OCPP configurato.
+    name: Stato del collegamento OCPP
+  DcChargerOcppServerUrl:
+    name: URL del server OCPP
+  DcChargerPrimaryVehicle:
+    name: Veicolo principale
+  DcChargerPrimaryVehicleBatteryCapacity:
+    name: Capacità della batteria principale del veicolo
+  DcChargerStatusCode:
+    attributes:
+      comment: Stato grezzo del caricabatterie cloud. È stato rilevato il valore 0 in stato di inattività; gli altri valori non sono documentati.
+    name: Codice di stato
+  DcChargerSurplusPvPriority:
+    name: Priorità dell'energia fotovoltaica in eccesso
+  DcChargerV2xDischargeCutoffSoc:
+    name: SOC di interruzione della scarica V2X
+  DcChargerV2xDischargeEnabled:
+    name: Scarica V2X abilitata
+  DcChargerV2xDischargePowerLimit:
+    name: Limite di potenza di scarica V2X
+  DcChargerWeeklyChargedEnergy:
+    name: Energia caricata settimanalmente
   DiagnosticsLogLevel:
     attributes:
       comment: Livello di registrazione del modulo diagnostico sigenergy2mqtt

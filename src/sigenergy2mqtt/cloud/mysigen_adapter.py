@@ -110,6 +110,8 @@ class MySigenCloudAdapter:
         self._rate_limit_streak = 0
         self._rate_limit_generation = 0
         self._rate_limit_lock = asyncio.Lock()
+        # Serialises writes to settings held in the energy profile; see set_surplus_pv_priority
+        self._energy_profile_lock = asyncio.Lock()
 
     async def _wait_for_rate_limit(self) -> None:
         """Wait for the shared cloud cooldown before issuing another request."""
@@ -454,19 +456,21 @@ class MySigenCloudAdapter:
         return await self._cloud_operation(self._client.grid_export_limit)
 
     async def set_grid_export_limit(self, limit_kw: float, *, enabled: bool = True) -> dict[str, Any]:
-        return await self._cloud_operation(
-            lambda: self._client.set_grid_export_limit(limit_kw, enabled=enabled),
-            operation_name="set_grid_export_limit",
-        )
+        async with self._energy_profile_lock:
+            return await self._cloud_operation(
+                lambda: self._client.set_grid_export_limit(limit_kw, enabled=enabled),
+                operation_name="set_grid_export_limit",
+            )
 
     async def grid_import_limit(self) -> dict[str, Any]:
         return await self._cloud_operation(self._client.grid_import_limit)
 
     async def set_grid_import_limit(self, limit_kw: float, *, enabled: bool = True) -> dict[str, Any]:
-        return await self._cloud_operation(
-            lambda: self._client.set_grid_import_limit(limit_kw, enabled=enabled),
-            operation_name="set_grid_import_limit",
-        )
+        async with self._energy_profile_lock:
+            return await self._cloud_operation(
+                lambda: self._client.set_grid_import_limit(limit_kw, enabled=enabled),
+                operation_name="set_grid_import_limit",
+            )
 
     async def grid_connection_limit(self) -> dict[str, Any]:
         return await self._cloud_operation(self._client.grid_connection_limit)
@@ -481,22 +485,24 @@ class MySigenCloudAdapter:
         return await self._cloud_operation(self._client.battery_power_limit)
 
     async def set_battery_power_limit(self, *, max_charge_kw: float | None, max_discharge_kw: float | None) -> dict[str, Any]:
-        return await self._cloud_operation(
-            lambda: self._client.set_battery_power_limit(
-                max_charge_kw=max_charge_kw,
-                max_discharge_kw=max_discharge_kw,
-            ),
-            operation_name="set_battery_power_limit",
-        )
+        async with self._energy_profile_lock:
+            return await self._cloud_operation(
+                lambda: self._client.set_battery_power_limit(
+                    max_charge_kw=max_charge_kw,
+                    max_discharge_kw=max_discharge_kw,
+                ),
+                operation_name="set_battery_power_limit",
+            )
 
     async def solar_power_limit(self) -> dict[str, Any]:
         return await self._cloud_operation(self._client.solar_power_limit)
 
     async def set_solar_power_limit(self, limit_kw: float | None) -> dict[str, Any]:
-        return await self._cloud_operation(
-            lambda: self._client.set_solar_power_limit(limit_kw),
-            operation_name="set_solar_power_limit",
-        )
+        async with self._energy_profile_lock:
+            return await self._cloud_operation(
+                lambda: self._client.set_solar_power_limit(limit_kw),
+                operation_name="set_solar_power_limit",
+            )
 
     async def battery_export_limitation(self) -> dict[str, Any]:
         return await self._cloud_operation(self._client.battery_export_limitation)
@@ -506,3 +512,76 @@ class MySigenCloudAdapter:
             lambda: self._client.set_battery_export_limitation(enabled),
             operation_name="set_battery_export_limitation",
         )
+
+    async def dc_charge_mode_supported(self, dc_sn: str) -> bool:
+        return await self._cloud_operation(
+            lambda: self._client.dc_charge_mode_supported(dc_sn),
+            operation_name="dc_charge_mode_supported",
+        )
+
+    async def dc_supported_charge_modes(self, dc_sn: str) -> list[int]:
+        return await self._cloud_operation(
+            lambda: self._client.dc_supported_charge_modes(dc_sn),
+            operation_name="dc_supported_charge_modes",
+        )
+
+    async def dc_charge_mode_soc_range(self) -> dict[str, Any]:
+        return await self._cloud_operation(self._client.dc_charge_mode_soc_range)
+
+    async def dc_charge_mode(self, dc_sn: str) -> dict[str, Any]:
+        return await self._cloud_operation(
+            lambda: self._client.dc_charge_mode(dc_sn),
+            operation_name="dc_charge_mode",
+        )
+
+    async def set_dc_charge_mode(
+        self,
+        charge_mode: int,
+        *,
+        dc_sn: str,
+        enable_from_pack: bool,
+        cutoff_soc_from_pack: float,
+    ) -> dict[str, Any]:
+        return await self._cloud_operation(
+            lambda: self._client.set_dc_charge_mode(
+                charge_mode,
+                dc_sn=dc_sn,
+                enable_from_pack=enable_from_pack,
+                cutoff_soc_from_pack=cutoff_soc_from_pack,
+            ),
+            reject_api_errors=True,
+            operation_name="set_dc_charge_mode",
+        )
+
+    async def energy_profile_setting(self) -> dict[str, Any]:
+        return await self._cloud_operation(self._client.energy_profile_setting)
+
+    async def set_surplus_pv_priority(self, first_sg_device_type: int) -> dict[str, Any]:
+        # The write replaces the whole energy profile from a fresh read. Settings
+        # stored in that profile (grid export/import, battery and solar limits)
+        # take the same lock, so none can change between the read and the write
+        # and then be reverted by it.
+        async with self._energy_profile_lock:
+            return await self._cloud_operation(
+                lambda: self._client.set_surplus_pv_priority(first_sg_device_type),
+                reject_api_errors=True,
+                operation_name="set_surplus_pv_priority",
+            )
+
+    async def dc_status(self, dc_sn: str) -> Any:
+        return await self._cloud_operation(lambda: self._client.dc_status(dc_sn), operation_name="dc_status")
+
+    async def dc_energy_totals(self, dc_sn: str) -> dict[str, Any]:
+        return await self._cloud_operation(lambda: self._client.dc_energy_totals(dc_sn), operation_name="dc_energy_totals")
+
+    async def dc_ocpp_status(self, dc_sn: str) -> dict[str, Any]:
+        return await self._cloud_operation(lambda: self._client.dc_ocpp_status(dc_sn), operation_name="dc_ocpp_status")
+
+    async def v2x_discharge_settings(self, dc_sn: str) -> dict[str, Any]:
+        return await self._cloud_operation(
+            lambda: self._client.v2x_discharge_settings(dc_sn),
+            operation_name="v2x_discharge_settings",
+        )
+
+    async def dc_vehicles(self, dc_sn: str) -> list[dict[str, Any]]:
+        return await self._cloud_operation(lambda: self._client.dc_vehicles(dc_sn), operation_name="dc_vehicles")

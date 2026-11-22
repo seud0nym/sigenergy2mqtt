@@ -384,6 +384,8 @@ class:
     name: Succesvolle cloudverbindingen
   CloudControl:
     name: Sigenergy Cloud-{plant_suffix}
+  CloudDcCharger:
+    name: Sigenergy Cloud DC-lader {plant_suffix} {sequence_suffix}
   CloudGridLimitSensor:
     attributes:
       comment: Alleen beschikbaar wanneer de installateur een maximumlimiet heeft ingesteld.
@@ -531,6 +533,42 @@ class:
       source: Modbus-register {address}
       source_range: Modbus-registers {start}-{end}
     name: Dagelijkse Ontlaadenergie
+  DcChargerBatteryBoost:
+    attributes:
+      comment: Hiermee kan de thuisaccu het voertuig opladen tot aan de Battery Boost Cut-off SOC.
+    name: Batterijboost
+  DcChargerBatteryBoostCutoffSoc:
+    name: Accu-boost-uitschakeling SOC
+  DcChargerChargingMode:
+    name: Oplaadmodus
+  DcChargerLifetimeChargedEnergy:
+    name: Totale opgeladen energie
+  DcChargerMonthlyChargedEnergy:
+    name: Maandelijks opgeladen energie
+  DcChargerOcppLinkStatus:
+    attributes:
+      comment: Status van de ruwe OCPP-verbinding met de cloud. Er werd een waarde van 0 waargenomen omdat er geen OCPP-server was geconfigureerd.
+    name: OCPP-verbindingsstatus
+  DcChargerOcppServerUrl:
+    name: URL van de OCPP-server
+  DcChargerPrimaryVehicle:
+    name: Hoofdvoertuig
+  DcChargerPrimaryVehicleBatteryCapacity:
+    name: Capaciteit van de primaire voertuigaccu
+  DcChargerStatusCode:
+    attributes:
+      comment: Ruwe status van de cloudlader. Waarde 0 werd waargenomen in ruststand; andere waarden zijn niet gedocumenteerd.
+    name: Statuscode
+  DcChargerSurplusPvPriority:
+    name: Prioriteit voor overtollige PV-stroom
+  DcChargerV2xDischargeCutoffSoc:
+    name: V2X-ontladingsbeperking SOC
+  DcChargerV2xDischargeEnabled:
+    name: V2X-ontlading ingeschakeld
+  DcChargerV2xDischargePowerLimit:
+    name: V2X-ontladingsvermogenslimiet
+  DcChargerWeeklyChargedEnergy:
+    name: Wekelijkse opgeladen energie
   DiagnosticsLogLevel:
     attributes:
       comment: Het logniveau van de sigenergy2mqtt-diagnosemodule

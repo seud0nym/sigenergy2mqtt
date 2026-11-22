@@ -19,6 +19,7 @@ from sigenergy2mqtt.devices import (
 from sigenergy2mqtt.devices.cloud import (
     CloudDiscovery,
     discover_cloud,
+    discover_dc_chargers,
     discover_operational_modes,
 )
 from sigenergy2mqtt.modbus import ModbusClient
@@ -149,6 +150,7 @@ async def _setup_cloud_control() -> None:
             plant_index = _cloud_control_plant_index(discovery.device_list)
             if plant_index is not None:
                 discovery = await discover_operational_modes(cloud_port, discovery)
+                discovery = await discover_dc_chargers(cloud_port, discovery)
     finally:
         try:
             await cloud_port.close()

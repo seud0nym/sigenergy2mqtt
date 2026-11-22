@@ -384,6 +384,8 @@ class:
     name: Erfolgreiche Cloud-Verbindungen
   CloudControl:
     name: Sigenergy Cloud {plant_suffix}  # verify:ignore
+  CloudDcCharger:
+    name: Sigenergy Cloud DC-Ladegerät {plant_suffix} {sequence_suffix}
   CloudGridLimitSensor:
     attributes:
       comment: Nur verfügbar, wenn der Installateur einen Höchstwert festgelegt hat.
@@ -531,6 +533,42 @@ class:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
     name: Tägliche Entladeenergie
+  DcChargerBatteryBoost:
+    attributes:
+      comment: Ermöglicht es, das Fahrzeug über die Hausbatterie bis zum „Battery Boost Cut-off SOC“ aufzuladen.
+    name: Batterie-Boost
+  DcChargerBatteryBoostCutoffSoc:
+    name: Batterie-Boost-Abschalt-Ladezustand (SOC)
+  DcChargerChargingMode:
+    name: Lademodus
+  DcChargerLifetimeChargedEnergy:
+    name: Gesamte geladene Energie
+  DcChargerMonthlyChargedEnergy:
+    name: Monatlich geladene Energie
+  DcChargerOcppLinkStatus:
+    attributes:
+      comment: Rohdaten zum Status der OCPP-Verbindung zur Cloud. Der Wert 0 wurde festgestellt, da kein OCPP-Server konfiguriert war.
+    name: OCPP-Verbindungsstatus
+  DcChargerOcppServerUrl:
+    name: OCPP-Server-URL
+  DcChargerPrimaryVehicle:
+    name: Hauptfahrzeug
+  DcChargerPrimaryVehicleBatteryCapacity:
+    name: Kapazität der Hauptfahrzeugbatterie
+  DcChargerStatusCode:
+    attributes:
+      comment: Rohdaten zum Status des Cloud-Ladegeräts. Im Ruhezustand wurde der Wert 0 festgestellt; andere Werte sind nicht dokumentiert.
+    name: Statuscode
+  DcChargerSurplusPvPriority:
+    name: Priorität für überschüssigen Solarstrom
+  DcChargerV2xDischargeCutoffSoc:
+    name: V2X-Entladeabschaltung nach SOC
+  DcChargerV2xDischargeEnabled:
+    name: V2X-Entladung aktiviert
+  DcChargerV2xDischargePowerLimit:
+    name: V2X-Entladeleistungsbegrenzung
+  DcChargerWeeklyChargedEnergy:
+    name: Wöchentlich geladene Energie
   DiagnosticsLogLevel:
     attributes:
       comment: Die Protokollierungsstufe des sigenergy2mqtt-Diagnosemoduls

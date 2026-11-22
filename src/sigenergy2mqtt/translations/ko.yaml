@@ -384,6 +384,8 @@ class:
     name: 클라우드 연결 성공
   CloudControl:
     name: Sigenergy Cloud {plant_suffix}  # verify:ignore
+  CloudDcCharger:
+    name: Sigenergy Cloud DC 충전기 {plant_suffix} {sequence_suffix}
   CloudGridLimitSensor:
     attributes:
       comment: 설치자가 최대 한도를 설정한 경우에만 사용할 수 있습니다.
@@ -531,6 +533,42 @@ class:
       source: Modbus 레지스터 {address}
       source_range: Modbus 레지스터 {start}-{end}
     name: 일일 방전 에너지
+  DcChargerBatteryBoost:
+    attributes:
+      comment: 가정용 배터리가 ‘배터리 부스트 차단 SOC’ 수준까지 차량을 충전할 수 있도록 지원합니다.
+    name: 배터리 부스트
+  DcChargerBatteryBoostCutoffSoc:
+    name: 배터리 부스트 차단 SOC
+  DcChargerChargingMode:
+    name: 충전 모드
+  DcChargerLifetimeChargedEnergy:
+    name: 누적 충전 에너지
+  DcChargerMonthlyChargedEnergy:
+    name: 월별 충전 에너지
+  DcChargerOcppLinkStatus:
+    attributes:
+      comment: 클라우드 OCPP 링크의 원시 상태. OCPP 서버가 구성되지 않은 상태에서 0이 관측되었습니다.
+    name: OCPP 링크 상태
+  DcChargerOcppServerUrl:
+    name: OCPP 서버 URL
+  DcChargerPrimaryVehicle:
+    name: 주 차량
+  DcChargerPrimaryVehicleBatteryCapacity:
+    name: 주 차량 배터리 용량
+  DcChargerStatusCode:
+    attributes:
+      comment: 클라우드 충전기의 원시 상태. 유휴 상태에서는 0이 관측되었으며, 그 외의 값에 대해서는 문서화되어 있지 않습니다.
+    name: 상태 코드
+  DcChargerSurplusPvPriority:
+    name: 잉여 태양광 우선순위
+  DcChargerV2xDischargeCutoffSoc:
+    name: V2X 방전 차단 SOC
+  DcChargerV2xDischargeEnabled:
+    name: V2X 방전 활성화
+  DcChargerV2xDischargePowerLimit:
+    name: V2X 방전 전력 제한
+  DcChargerWeeklyChargedEnergy:
+    name: 주간 충전 에너지
   DiagnosticsLogLevel:
     attributes:
       comment: sigenergy2mqtt 진단 모듈의 로깅 수준

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import logging
 from datetime import date
 from typing import Any
@@ -558,6 +559,117 @@ class SigenergyCloudClient:
         payload.update({key: value for key, value in optional_fields.items() if value is not None})
         return await self._envelope("POST", "device/charge/mode/dc", json=payload)
 
+    # sigenergy2mqtt: the following DC charger endpoints were observed in mySigen
+    # web app captures (https://github.com/seud0nym/sigenergy2mqtt/issues/355).
+
+    async def dc_charge_mode_supported(self, dc_sn: str | None = None) -> bool:
+        """Return whether the DC charger supports charging-mode settings."""
+        data = await self._dc_data(
+            "GET",
+            "device/charge/mode/support",
+            dc_sn,
+            params={"deviceType": self.TOPO_DEVICE_TYPE_DC_CHARGER},
+        )
+        return bool(data)
+
+    async def dc_supported_charge_modes(self, dc_sn: str | None = None) -> list[int]:
+        """Return the ``chargeMode`` codes the DC charger accepts.
+
+        The app labels 0 "Fast Charging", 1 "PV Surplus Charging" and 3
+        "Sigen AI Mode"; the endpoint returns the codes as strings.
+        """
+        data = await self._dc_data(
+            "GET",
+            "device/charge/mode/support/mode",
+            dc_sn,
+            params={"deviceType": self.TOPO_DEVICE_TYPE_DC_CHARGER},
+        )
+        modes: list[int] = []
+        for value in data if isinstance(data, list) else ():
+            try:
+                modes.append(int(value))
+            except (TypeError, ValueError):
+                continue
+        return modes
+
+    async def dc_surplus_pv_charge_mode(self, dc_sn: str | None = None) -> dict[str, Any]:
+        """Return ``{chargeMode, maxPowerFromPack}`` from ``device/dcevse/charge/mode``.
+
+        Unlike ``dc_charge_mode``, this ``chargeMode`` follows the Surplus PV
+        Priority: 1 while the DC charger is first and 2 while the battery is.
+        """
+        return await self._dc_data("GET", "device/dcevse/charge/mode", dc_sn)
+
+    async def dc_vehicles(self, dc_sn: str | None = None) -> list[dict[str, Any]]:
+        """Return the vehicles registered against the DC charger."""
+        data = await self._dc_data("GET", "device/user-car-info/select", dc_sn)
+        return [item for item in data if isinstance(item, dict)] if isinstance(data, list) else []
+
+    async def energy_profile_setting(self) -> dict[str, Any]:
+        """Return the station energy profile, including the Surplus PV ``pvPriority`` list."""
+        return await self._station_data("GET", "device/energy-profile/setting/{station_id}")
+
+    async def set_energy_profile_setting(self, profile: dict[str, Any]) -> dict[str, Any]:
+        """Replace the station energy profile with *profile* (a complete document)."""
+        return await self._envelope("PUT", "device/energy-profile/setting", json=profile)
+
+    @staticmethod
+    def surplus_pv_priority_order(profile: dict[str, Any]) -> list[int]:
+        """Return the ``sgDeviceType`` values in Surplus PV priority order, first to last.
+
+        Only ``loadsType`` 1 entries (Sigenergy devices) take part; a higher
+        ``priority`` is served first.
+        """
+        entries = profile.get("pvPriority") if isinstance(profile, dict) else None
+        devices: list[tuple[float, int]] = []
+        for entry in entries if isinstance(entries, list) else ():
+            if not isinstance(entry, dict) or entry.get("loadsType") != 1:
+                continue
+            try:
+                devices.append((float(entry["priority"]), int(entry["sgDeviceType"])))
+            except (KeyError, TypeError, ValueError):
+                continue
+        return [device for _, device in sorted(devices, key=lambda item: item[0], reverse=True)]
+
+    async def set_surplus_pv_priority(self, first_sg_device_type: int) -> dict[str, Any]:
+        """Serve surplus PV to *first_sg_device_type* first (5 = DC charger, 4 = battery).
+
+        The endpoint replaces the whole energy profile, so the current profile
+        is read immediately before writing and sent back in the shape the app
+        uses: ``pvPriority`` holds only the ``loadsType`` 1 entries (the cloud
+        keeps the others), ``isIndustry`` is dropped and ``preheatingMode`` is
+        sent as null.
+        """
+        profile = await self.energy_profile_setting()
+        if not isinstance(profile, dict):
+            raise SigenergyCloudAPIError("energy profile response is not an object")
+        order = self.surplus_pv_priority_order(profile)
+        if first_sg_device_type not in order:
+            raise ValueError(f"sgDeviceType {first_sg_device_type} is not in the Surplus PV priority list")
+        order.remove(first_sg_device_type)
+        order.insert(0, first_sg_device_type)
+        smart_loads_paths = {
+            entry.get("sgDeviceType"): entry.get("smartLoadsPath")
+            for entry in profile.get("pvPriority") or ()
+            if isinstance(entry, dict) and entry.get("loadsType") == 1
+        }
+        payload = copy.deepcopy(profile)
+        payload.pop("isIndustry", None)
+        payload["stationId"] = self._station_id_int()
+        payload["pvPriority"] = [
+            {
+                "loadsType": 1,
+                "sgDeviceType": device_type,
+                "smartLoadsPath": smart_loads_paths.get(device_type),
+                "priority": len(order) - index,
+            }
+            for index, device_type in enumerate(order)
+        ]
+        preheating = payload.get("packPreheatingInfoVO")
+        if isinstance(preheating, dict):
+            preheating["preheatingMode"] = None
+        return await self.set_energy_profile_setting(payload)
+
     async def dc_charge_setting(self, dc_sn: str | None = None) -> dict[str, Any]:
         """Return DC charger charge-power and stop-SOC settings."""
         return await self._dc_data("GET", "device/dcevse/charge/setting", dc_sn)
@@ -601,8 +713,12 @@ class SigenergyCloudClient:
         data = await self._station_data("POST", "device/charge/check/charge", station_query=True)
         return bool(data)
 
-    async def dc_status(self, dc_sn: str | None = None) -> dict[str, Any]:
-        """Return the overall DC charger status."""
+    async def dc_status(self, dc_sn: str | None = None) -> Any:
+        """Return the overall DC charger status.
+
+        sigenergy2mqtt: the mySigen web app receives a bare integer (e.g. ``0``),
+        not an object.
+        """
         return await self._dc_data("GET", "device/dcevse/status", dc_sn)
 
     async def dc_plug_status(self, dc_sn: str | None = None) -> bool | None:
