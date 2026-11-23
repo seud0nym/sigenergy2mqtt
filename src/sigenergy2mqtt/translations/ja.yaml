@@ -542,7 +542,7 @@ class:
   DcChargerChargingMode:
     name: 充電モード
   DcChargerChargingPower:
-    name: Charging Power
+    name: 充電電力
   DcChargerLifetimeChargedEnergy:
     name: 累積充電エネルギー量
   DcChargerMonthlyChargedEnergy:
@@ -550,9 +550,9 @@ class:
   DcChargerOcppLinkStatus:
     name: OCPPリンクの状態
     options:
-      '0': Disconnected
-      '1': Connected
-      '2': Connecting
+      '0': 接続解除中
+      '1': 接続済み
+      '2': 接続
   DcChargerOcppServerUrl:
     name: OCPPサーバーのURL
   DcChargerPrimaryVehicle:
@@ -560,13 +560,13 @@ class:
   DcChargerPrimaryVehicleBatteryCapacity:
     name: 主車両用バッテリー容量
   DcChargerSeccRunState:
-    name: SECC Run State
+    name: SECC 稼働状態
   DcChargerSessionChargedEnergy:
-    name: Session Charged Energy
+    name: セッション充電エネルギー
   DcChargerStatusCode:
     attributes:
-      comment: Assumed to use the same codes as the Modbus DC charger Running State; only 0-3 have been corroborated.
-    name: Status
+      comment: Modbus DC充電器の「Running State」と同じコードを使用していると想定されていますが、確認されているのは0～3のみです。
+    name: ステータス
   DcChargerSurplusPvPriority:
     name: 余剰太陽光発電の優先順位
   DcChargerV2xDischargeCutoffSoc:
@@ -577,8 +577,8 @@ class:
     name: V2X 放電電力制限
   DcChargerVehicleSoc:
     attributes:
-      comment: Only meaningful while a vehicle is connected.
-    name: Vehicle SOC
+      comment: 車両が接続されている間のみ有効です。
+    name: 車両のSOC
   DcChargerWeeklyChargedEnergy:
     name: 週間充電エネルギー量
   DiagnosticsLogLevel:

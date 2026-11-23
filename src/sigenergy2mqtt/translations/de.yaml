@@ -542,7 +542,7 @@ class:
   DcChargerChargingMode:
     name: Lademodus
   DcChargerChargingPower:
-    name: Charging Power
+    name: Ladeleistung
   DcChargerLifetimeChargedEnergy:
     name: Gesamte geladene Energie
   DcChargerMonthlyChargedEnergy:
@@ -550,9 +550,9 @@ class:
   DcChargerOcppLinkStatus:
     name: OCPP-Verbindungsstatus
     options:
-      '0': Disconnected
-      '1': Connected
-      '2': Connecting
+      '0': Nicht verbunden
+      '1': Verbunden
+      '2': Anschluss
   DcChargerOcppServerUrl:
     name: OCPP-Server-URL
   DcChargerPrimaryVehicle:
@@ -560,13 +560,13 @@ class:
   DcChargerPrimaryVehicleBatteryCapacity:
     name: Kapazität der Hauptfahrzeugbatterie
   DcChargerSeccRunState:
-    name: SECC Run State
+    name: SECC-Betriebszustand
   DcChargerSessionChargedEnergy:
-    name: Session Charged Energy
+    name: Ladesitzung – geladene Energie
   DcChargerStatusCode:
     attributes:
-      comment: Assumed to use the same codes as the Modbus DC charger Running State; only 0-3 have been corroborated.
-    name: Status
+      comment: Es wird davon ausgegangen, dass dieselben Codes wie beim Modbus-DC-Ladegerät im Betriebsstatus verwendet werden; bisher wurden nur die Werte 0–3 bestätigt.
+    name: Status  # verify:ignore
   DcChargerSurplusPvPriority:
     name: Priorität für überschüssigen Solarstrom
   DcChargerV2xDischargeCutoffSoc:
@@ -577,8 +577,8 @@ class:
     name: V2X-Entladeleistungsbegrenzung
   DcChargerVehicleSoc:
     attributes:
-      comment: Only meaningful while a vehicle is connected.
-    name: Vehicle SOC
+      comment: Nur relevant, solange ein Fahrzeug angeschlossen ist.
+    name: Ladezustand des Fahrzeugs (SOC)
   DcChargerWeeklyChargedEnergy:
     name: Wöchentlich geladene Energie
   DiagnosticsLogLevel:

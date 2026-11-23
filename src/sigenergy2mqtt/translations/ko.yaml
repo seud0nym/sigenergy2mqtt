@@ -542,7 +542,7 @@ class:
   DcChargerChargingMode:
     name: 충전 모드
   DcChargerChargingPower:
-    name: Charging Power
+    name: 충전 전력
   DcChargerLifetimeChargedEnergy:
     name: 누적 충전 에너지
   DcChargerMonthlyChargedEnergy:
@@ -550,9 +550,9 @@ class:
   DcChargerOcppLinkStatus:
     name: OCPP 링크 상태
     options:
-      '0': Disconnected
-      '1': Connected
-      '2': Connecting
+      '0': 연결 해제됨
+      '1': 연동됨
+      '2': 연결
   DcChargerOcppServerUrl:
     name: OCPP 서버 URL
   DcChargerPrimaryVehicle:
@@ -560,13 +560,13 @@ class:
   DcChargerPrimaryVehicleBatteryCapacity:
     name: 주 차량 배터리 용량
   DcChargerSeccRunState:
-    name: SECC Run State
+    name: SECC 작동 상태
   DcChargerSessionChargedEnergy:
-    name: Session Charged Energy
+    name: 세션 충전 에너지
   DcChargerStatusCode:
     attributes:
-      comment: Assumed to use the same codes as the Modbus DC charger Running State; only 0-3 have been corroborated.
-    name: Status
+      comment: Modbus DC 충전기의 ‘Running State’와 동일한 코드를 사용하는 것으로 가정하며, 0~3번만 확인되었습니다.
+    name: 상태
   DcChargerSurplusPvPriority:
     name: 잉여 태양광 우선순위
   DcChargerV2xDischargeCutoffSoc:
@@ -577,8 +577,8 @@ class:
     name: V2X 방전 전력 제한
   DcChargerVehicleSoc:
     attributes:
-      comment: Only meaningful while a vehicle is connected.
-    name: Vehicle SOC
+      comment: 차량이 연결되어 있을 때만 의미가 있습니다.
+    name: 차량 SOC
   DcChargerWeeklyChargedEnergy:
     name: 주간 충전 에너지
   DiagnosticsLogLevel:

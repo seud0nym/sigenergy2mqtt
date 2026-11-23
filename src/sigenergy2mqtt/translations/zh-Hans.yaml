@@ -542,7 +542,7 @@ class:
   DcChargerChargingMode:
     name: 充电模式
   DcChargerChargingPower:
-    name: Charging Power
+    name: 充电功率
   DcChargerLifetimeChargedEnergy:
     name: 累计充电能量
   DcChargerMonthlyChargedEnergy:
@@ -550,9 +550,9 @@ class:
   DcChargerOcppLinkStatus:
     name: OCPP 连接状态
     options:
-      '0': Disconnected
-      '1': Connected
-      '2': Connecting
+      '0': 已断开连接
+      '1': 已连接
+      '2': 连接
   DcChargerOcppServerUrl:
     name: OCPP 服务器 URL
   DcChargerPrimaryVehicle:
@@ -560,13 +560,13 @@ class:
   DcChargerPrimaryVehicleBatteryCapacity:
     name: 主车载电池容量
   DcChargerSeccRunState:
-    name: SECC Run State
+    name: SECC 运行状态
   DcChargerSessionChargedEnergy:
-    name: Session Charged Energy
+    name: 单次充电能量
   DcChargerStatusCode:
     attributes:
-      comment: Assumed to use the same codes as the Modbus DC charger Running State; only 0-3 have been corroborated.
-    name: Status
+      comment: 假设使用与 Modbus 直流充电器运行状态相同的代码；目前仅确认了 0-3 这几个状态。
+    name: 状态
   DcChargerSurplusPvPriority:
     name: 剩余光伏电能优先级
   DcChargerV2xDischargeCutoffSoc:
@@ -577,8 +577,8 @@ class:
     name: V2X 放电功率限制
   DcChargerVehicleSoc:
     attributes:
-      comment: Only meaningful while a vehicle is connected.
-    name: Vehicle SOC
+      comment: 仅在车辆连接时有效。
+    name: 车辆电量 (SOC)
   DcChargerWeeklyChargedEnergy:
     name: 每周充电量
   DiagnosticsLogLevel:
