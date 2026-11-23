@@ -952,6 +952,7 @@ async def test_dc_charger_operations_delegate_to_cloud_client() -> None:
         set_surplus_pv_priority=AsyncMock(return_value={"code": 0}),
         dc_status=AsyncMock(return_value=0),
         dc_energy_totals=AsyncMock(return_value={"lifetimeEnergy": 1.0}),
+        dc_charge_realtime=AsyncMock(return_value={"seccRunState": 0}),
         dc_ocpp_status=AsyncMock(return_value={"ocppLinkStatus": 0}),
         v2x_discharge_settings=AsyncMock(return_value={"dischargeEnable": 0}),
         dc_vehicles=AsyncMock(return_value=[]),
@@ -970,9 +971,10 @@ async def test_dc_charger_operations_delegate_to_cloud_client() -> None:
     assert await adapter.dc_status("DC1") == 0
     assert await adapter.dc_energy_totals("DC1") == {"lifetimeEnergy": 1.0}
     assert await adapter.dc_ocpp_status("DC1") == {"ocppLinkStatus": 0}
+    assert await adapter.dc_charge_realtime("DC1") == {"seccRunState": 0}
     assert await adapter.v2x_discharge_settings("DC1") == {"dischargeEnable": 0}
     assert await adapter.dc_vehicles("DC1") == []
-    for name in ("dc_charge_mode_supported", "dc_supported_charge_modes", "dc_charge_mode", "dc_status", "dc_energy_totals", "dc_ocpp_status", "v2x_discharge_settings", "dc_vehicles"):
+    for name in ("dc_charge_mode_supported", "dc_supported_charge_modes", "dc_charge_mode", "dc_status", "dc_energy_totals", "dc_charge_realtime", "dc_ocpp_status", "v2x_discharge_settings", "dc_vehicles"):
         getattr(client, name).assert_awaited_once_with("DC1")
 
 

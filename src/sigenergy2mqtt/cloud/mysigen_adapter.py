@@ -574,6 +574,9 @@ class MySigenCloudAdapter:
     async def dc_energy_totals(self, dc_sn: str) -> dict[str, Any]:
         return await self._cloud_operation(lambda: self._client.dc_energy_totals(dc_sn), operation_name="dc_energy_totals")
 
+    async def dc_charge_realtime(self, dc_sn: str) -> dict[str, Any]:
+        return await self._cloud_operation(lambda: self._client.dc_charge_realtime(dc_sn), operation_name="dc_charge_realtime")
+
     async def dc_ocpp_status(self, dc_sn: str) -> dict[str, Any]:
         return await self._cloud_operation(lambda: self._client.dc_ocpp_status(dc_sn), operation_name="dc_ocpp_status")
 

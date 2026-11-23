@@ -66,6 +66,7 @@ async def test_dc_charger_reads_match_captured_responses() -> None:
         assert await adapter.dc_charge_mode_soc_range() == {"socUpperLimit": 100.0, "socLowerLimit": 0.0}
         assert (await adapter.dc_charge_mode(DC_CHARGER_SERIAL))["chargeMode"] == 1
         assert await adapter.dc_status(DC_CHARGER_SERIAL) == 0
+        assert (await adapter.dc_charge_realtime(DC_CHARGER_SERIAL))["seccRunState"] == 0
         assert (await adapter.dc_energy_totals(DC_CHARGER_SERIAL))["lifetimeEnergy"] == 781.68
         assert (await adapter.dc_ocpp_status(DC_CHARGER_SERIAL))["ocppLinkStatus"] == 0
         assert (await adapter.v2x_discharge_settings(DC_CHARGER_SERIAL))["dischargeEnable"] == 0
@@ -119,7 +120,7 @@ async def test_surplus_pv_priority_write_matches_recorded_behaviour() -> None:
 async def test_dc_charger_endpoints_reject_unknown_charger_station_and_token() -> None:
     api = _api()
     async with TestClient(TestServer(api.app())) as client:
-        for path in ("/device/charge/mode/dc", "/device/dcevse/status", "/data-process/dcevse/energy", "/device/user-car-info/select"):
+        for path in ("/device/charge/mode/dc", "/device/dcevse/status", "/device/dcevse/charge/realtime", "/data-process/dcevse/energy", "/device/user-car-info/select"):
             response = await client.get(path, params={"stationId": STATION, "snCode": "OTHER"}, headers=HEADERS)
             assert response.status == 400, path
             response = await client.get(path, params={"stationId": "1", "snCode": DC_CHARGER_SERIAL}, headers=HEADERS)
