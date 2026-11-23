@@ -180,8 +180,12 @@ class _DcChargerSensorMixin:
         rejected value is not remembered, so a reset that polling misses (an outage,
         or charging across the reset) would freeze the sensor until the new count
         passed the old one. Home Assistant treats a decrease as a reset itself.
+
+        This runs after Sensor.__init__ has applied the user's sensor overrides, so
+        they are applied again to keep a configured sanity-check minimum.
         """
         self.sanity_check.min_raw = None  # type: ignore[attr-defined]
+        self.apply_sensor_overrides()  # type: ignore[attr-defined]
 
     def _dc_init(self, sn: str, snapshot: CloudResponseSnapshot) -> None:
         self._sn = sn

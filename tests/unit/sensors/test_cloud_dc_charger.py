@@ -448,3 +448,15 @@ async def test_small_negative_power_keeps_its_sign() -> None:
     port = SimpleNamespace(dc_charge_realtime=AsyncMock(return_value={"seccRunState": 3, "pileOutputPower": -0.02}))
     sensor = DcChargerChargingPower(0, STATION, "DC-P", 0, CloudResponseSnapshot(lambda p: p.dc_charge_realtime(SN)))
     assert await sensor._read_cloud_state(port) == -0.02
+
+
+def test_resetting_counter_keeps_a_configured_minimum() -> None:
+    from sigenergy2mqtt.config import Config, _swap_active_config
+    from sigenergy2mqtt.sensors.cloud.dc_charger import DcChargerSessionChargedEnergy
+
+    config = Config()
+    config.sensor_overrides = {"DcChargerSessionChargedEnergy": {"sanity-check-delta": False, "sanity-check-min-value": 0}}
+    with _swap_active_config(config):
+        sensor = DcChargerSessionChargedEnergy(0, STATION, "DC-O", 0, CloudResponseSnapshot(lambda p: p.dc_charge_realtime(SN)))
+    assert sensor.sanity_check.delta is False
+    assert sensor.sanity_check.min_raw == 0
