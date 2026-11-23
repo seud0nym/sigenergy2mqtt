@@ -1,7 +1,7 @@
 <!-- git log [since tag]..HEAD --oneline -->
 # Changelog 
 
-## [Unreleased]
+## [2026.11.23b1] - 2026-11-23
 
 ### Added
 
