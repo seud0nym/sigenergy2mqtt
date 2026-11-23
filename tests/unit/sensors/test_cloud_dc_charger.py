@@ -417,3 +417,34 @@ def test_shared_option_translations_are_used(monkeypatch) -> None:
     options = next(iter(status.get_discovery_components().values()))[DiscoveryKeys.OPTIONS]
     assert options[0] == "<Idle>"
     assert lookups[-1] == "DCChargerRunningState.options.10"
+
+
+@pytest.mark.parametrize("sensor_type", ["session", "weekly", "monthly"])
+def test_resetting_energy_counters_accept_a_missed_reset(sensor_type) -> None:
+    from sigenergy2mqtt.sensors.cloud.dc_charger import DcChargerSessionChargedEnergy
+
+    snapshot = CloudResponseSnapshot(lambda p: p.dc_energy_totals(SN))
+    sensor = {
+        "session": lambda: DcChargerSessionChargedEnergy(0, STATION, f"DC-R-{sensor_type}", 0, snapshot),
+        "weekly": lambda: DcChargerWeeklyChargedEnergy(0, STATION, f"DC-R-{sensor_type}", 0, snapshot),
+        "monthly": lambda: DcChargerMonthlyChargedEnergy(0, STATION, f"DC-R-{sensor_type}", 0, snapshot),
+    }[sensor_type]()
+    assert sensor["state_class"] == "total_increasing"
+    # 20 kWh, then the next poll lands after a reset that was never seen as 0
+    assert sensor.sanity_check.is_sane(0.5, [(0.0, 20.0)]) is True
+
+
+def test_lifetime_energy_still_rejects_decreases() -> None:
+    from sigenergy2mqtt.sensors.base.sanity_check import SanityCheckException
+
+    sensor = DcChargerLifetimeChargedEnergy(0, STATION, "DC-L", 0, CloudResponseSnapshot(lambda p: p.dc_energy_totals(SN)))
+    with pytest.raises(SanityCheckException):
+        sensor.sanity_check.is_sane(0.5, [(0.0, 20.0)])
+
+
+async def test_small_negative_power_keeps_its_sign() -> None:
+    from sigenergy2mqtt.sensors.cloud.dc_charger import DcChargerChargingPower
+
+    port = SimpleNamespace(dc_charge_realtime=AsyncMock(return_value={"seccRunState": 3, "pileOutputPower": -0.02}))
+    sensor = DcChargerChargingPower(0, STATION, "DC-P", 0, CloudResponseSnapshot(lambda p: p.dc_charge_realtime(SN)))
+    assert await sensor._read_cloud_state(port) == -0.02

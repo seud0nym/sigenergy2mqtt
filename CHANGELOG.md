@@ -12,6 +12,10 @@
 - The Cloud API DC Charger Status Code sensor is now named Status and shows the state (Idle, Charging, etc.) using the same codes as the Modbus DC charger Running State, instead of the raw number. Only codes 0-3 have been corroborated for the cloud value (#355)
 - The Cloud API DC Charger OCPP Link Status sensor now shows Disconnected, Connected or Connecting instead of the raw number (#355)
 
+### Fixed
+
+- Fixed the Cloud API DC Charger Weekly and Monthly Charged Energy sensors stopping updating after the week or month rolled over, if the first reading after the reset was not exactly zero (for example, when charging across the reset or after a Cloud API outage). They stayed stuck until the new total passed the previous one (#355)
+
 ## [2026.11.23b1] - 2026-11-23
 
 ### Added

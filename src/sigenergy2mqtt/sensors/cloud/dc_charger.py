@@ -173,6 +173,16 @@ class _EnumStateMixin:
 class _DcChargerSensorMixin:
     """Identity and polling-snapshot wiring shared by all DC charger sensors."""
 
+    def _allow_counter_resets(self) -> None:
+        """Accept any decrease of a counter that resets (per session, week or month).
+
+        TOTAL_INCREASING normally rejects a decrease other than to exactly 0, and a
+        rejected value is not remembered, so a reset that polling misses (an outage,
+        or charging across the reset) would freeze the sensor until the new count
+        passed the old one. Home Assistant treats a decrease as a reset itself.
+        """
+        self.sanity_check.min_raw = None  # type: ignore[attr-defined]
+
     def _dc_init(self, sn: str, snapshot: CloudResponseSnapshot) -> None:
         self._sn = sn
         self._snapshot = snapshot
@@ -470,7 +480,7 @@ class DcChargerStatusCode(_EnumStateMixin, _DcChargerSensorMixin, CloudSensor):
 
 
 class _DcChargerEnergy(_DcChargerSensorMixin, CloudSensor):
-    def __init__(self, plant_index: int, station_id: str, sn: str, index: int, snapshot: CloudResponseSnapshot, *, key: str, suffix: str, name: str) -> None:
+    def __init__(self, plant_index: int, station_id: str, sn: str, index: int, snapshot: CloudResponseSnapshot, *, key: str, suffix: str, name: str, resets: bool) -> None:
         self._key = key
         object_id, unique_id = dc_charger_identity(plant_index, station_id, sn, index, suffix)
         super().__init__(
@@ -487,6 +497,8 @@ class _DcChargerEnergy(_DcChargerSensorMixin, CloudSensor):
             protocol_version=ProtocolVersion.N_A,
         )
         self._dc_init(sn, snapshot)
+        if resets:
+            self._allow_counter_resets()
         self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
     async def _read_cloud_state(self, port: CloudControlPort) -> float | None:
@@ -495,17 +507,17 @@ class _DcChargerEnergy(_DcChargerSensorMixin, CloudSensor):
 
 class DcChargerWeeklyChargedEnergy(_DcChargerEnergy):
     def __init__(self, plant_index: int, station_id: str, sn: str, index: int, snapshot: CloudResponseSnapshot) -> None:
-        super().__init__(plant_index, station_id, sn, index, snapshot, key="weeklyEnergy", suffix="weekly_charged_energy", name="Weekly Charged Energy")
+        super().__init__(plant_index, station_id, sn, index, snapshot, key="weeklyEnergy", suffix="weekly_charged_energy", name="Weekly Charged Energy", resets=True)
 
 
 class DcChargerMonthlyChargedEnergy(_DcChargerEnergy):
     def __init__(self, plant_index: int, station_id: str, sn: str, index: int, snapshot: CloudResponseSnapshot) -> None:
-        super().__init__(plant_index, station_id, sn, index, snapshot, key="monthlyEnergy", suffix="monthly_charged_energy", name="Monthly Charged Energy")
+        super().__init__(plant_index, station_id, sn, index, snapshot, key="monthlyEnergy", suffix="monthly_charged_energy", name="Monthly Charged Energy", resets=True)
 
 
 class DcChargerLifetimeChargedEnergy(_DcChargerEnergy):
     def __init__(self, plant_index: int, station_id: str, sn: str, index: int, snapshot: CloudResponseSnapshot) -> None:
-        super().__init__(plant_index, station_id, sn, index, snapshot, key="lifetimeEnergy", suffix="lifetime_charged_energy", name="Lifetime Charged Energy")
+        super().__init__(plant_index, station_id, sn, index, snapshot, key="lifetimeEnergy", suffix="lifetime_charged_energy", name="Lifetime Charged Energy", resets=False)
 
 
 class DcChargerOcppLinkStatus(_EnumStateMixin, _DcChargerSensorMixin, CloudSensor):
@@ -710,7 +722,7 @@ class DcChargerChargingPower(_DcChargerSensorMixin, CloudSensor):
         if power is None:
             return None
         # The cloud may report discharge power unsigned; the run state says which way it flows.
-        if power < -0.05 or _int_code(payload.get("seccRunState")) == self._DISCHARGING:
+        if power < 0 or _int_code(payload.get("seccRunState")) == self._DISCHARGING:
             return -abs(power)
         return abs(power)
 
@@ -764,6 +776,7 @@ class DcChargerSessionChargedEnergy(_DcChargerSensorMixin, CloudSensor):
             protocol_version=ProtocolVersion.N_A,
         )
         self._dc_init(sn, snapshot)
+        self._allow_counter_resets()
         self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
     async def _read_cloud_state(self, port: CloudControlPort) -> float | None:
