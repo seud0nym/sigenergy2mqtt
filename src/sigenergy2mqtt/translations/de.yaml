@@ -541,24 +541,32 @@ class:
     name: Batterie-Boost-Abschalt-Ladezustand (SOC)
   DcChargerChargingMode:
     name: Lademodus
+  DcChargerChargingPower:
+    name: Ladeleistung
   DcChargerLifetimeChargedEnergy:
     name: Gesamte geladene Energie
   DcChargerMonthlyChargedEnergy:
     name: Monatlich geladene Energie
   DcChargerOcppLinkStatus:
-    attributes:
-      comment: Rohdaten zum Status der OCPP-Verbindung zur Cloud. Der Wert 0 wurde festgestellt, da kein OCPP-Server konfiguriert war.
     name: OCPP-Verbindungsstatus
+    options:
+      '0': Nicht verbunden
+      '1': Verbunden
+      '2': Anschluss
   DcChargerOcppServerUrl:
     name: OCPP-Server-URL
   DcChargerPrimaryVehicle:
     name: Hauptfahrzeug
   DcChargerPrimaryVehicleBatteryCapacity:
     name: Kapazität der Hauptfahrzeugbatterie
+  DcChargerSeccRunState:
+    name: SECC-Betriebszustand
+  DcChargerSessionChargedEnergy:
+    name: Ladesitzung – geladene Energie
   DcChargerStatusCode:
     attributes:
-      comment: Rohdaten zum Status des Cloud-Ladegeräts. Im Ruhezustand wurde der Wert 0 festgestellt; andere Werte sind nicht dokumentiert.
-    name: Statuscode
+      comment: Es wird davon ausgegangen, dass dieselben Codes wie beim Modbus-DC-Ladegerät im Betriebsstatus verwendet werden; bisher wurden nur die Werte 0–3 bestätigt.
+    name: Status  # verify:ignore
   DcChargerSurplusPvPriority:
     name: Priorität für überschüssigen Solarstrom
   DcChargerV2xDischargeCutoffSoc:
@@ -567,6 +575,10 @@ class:
     name: V2X-Entladung aktiviert
   DcChargerV2xDischargePowerLimit:
     name: V2X-Entladeleistungsbegrenzung
+  DcChargerVehicleSoc:
+    attributes:
+      comment: Nur relevant, solange ein Fahrzeug angeschlossen ist.
+    name: Ladezustand des Fahrzeugs (SOC)
   DcChargerWeeklyChargedEnergy:
     name: Wöchentlich geladene Energie
   DiagnosticsLogLevel:

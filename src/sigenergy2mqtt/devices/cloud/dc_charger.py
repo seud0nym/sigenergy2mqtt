@@ -10,17 +10,21 @@ from sigenergy2mqtt.sensors.cloud.dc_charger import (
     DcChargerBatteryBoost,
     DcChargerBatteryBoostCutoffSoc,
     DcChargerChargingMode,
+    DcChargerChargingPower,
     DcChargerLifetimeChargedEnergy,
     DcChargerMonthlyChargedEnergy,
     DcChargerOcppLinkStatus,
     DcChargerOcppServerUrl,
     DcChargerPrimaryVehicle,
     DcChargerPrimaryVehicleBatteryCapacity,
+    DcChargerSeccRunState,
+    DcChargerSessionChargedEnergy,
     DcChargerStatusCode,
     DcChargerSurplusPvPriority,
     DcChargerV2xDischargeCutoffSoc,
     DcChargerV2xDischargeEnabled,
     DcChargerV2xDischargePowerLimit,
+    DcChargerVehicleSoc,
     DcChargerWeeklyChargedEnergy,
 )
 
@@ -74,6 +78,11 @@ class CloudDcCharger(Device):
                 logger.warning("Cloud Surplus PV Priority sensor disabled: %s", exc)
 
         self._add_sensor(DcChargerStatusCode(*ids))
+        realtime = CloudResponseSnapshot(lambda port: port.dc_charge_realtime(sn))
+        self._add_sensor(DcChargerSeccRunState(*ids, realtime))
+        self._add_sensor(DcChargerChargingPower(*ids, realtime))
+        self._add_sensor(DcChargerVehicleSoc(*ids, realtime))
+        self._add_sensor(DcChargerSessionChargedEnergy(*ids, realtime))
         energy = CloudResponseSnapshot(lambda port: port.dc_energy_totals(sn))
         self._add_sensor(DcChargerWeeklyChargedEnergy(*ids, energy))
         self._add_sensor(DcChargerMonthlyChargedEnergy(*ids, energy))

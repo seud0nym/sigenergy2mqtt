@@ -541,24 +541,32 @@ class:
     name: バッテリーブーストのカットオフSOC
   DcChargerChargingMode:
     name: 充電モード
+  DcChargerChargingPower:
+    name: 充電電力
   DcChargerLifetimeChargedEnergy:
     name: 累積充電エネルギー量
   DcChargerMonthlyChargedEnergy:
     name: 月間充電エネルギー量
   DcChargerOcppLinkStatus:
-    attributes:
-      comment: クラウドのOCPPリンクの生のステータス。OCPPサーバーが設定されていない状態で、0が観測された。
     name: OCPPリンクの状態
+    options:
+      '0': 接続解除中
+      '1': 接続済み
+      '2': 接続
   DcChargerOcppServerUrl:
     name: OCPPサーバーのURL
   DcChargerPrimaryVehicle:
     name: メインの車両
   DcChargerPrimaryVehicleBatteryCapacity:
     name: 主車両用バッテリー容量
+  DcChargerSeccRunState:
+    name: SECC 稼働状態
+  DcChargerSessionChargedEnergy:
+    name: セッション充電エネルギー
   DcChargerStatusCode:
     attributes:
-      comment: クラウドチャージャーの生のステータス。アイドル状態では「0」が観測されたが、その他の値については未記載である。
-    name: ステータスコード
+      comment: Modbus DC充電器の「Running State」と同じコードを使用していると想定されていますが、確認されているのは0～3のみです。
+    name: ステータス
   DcChargerSurplusPvPriority:
     name: 余剰太陽光発電の優先順位
   DcChargerV2xDischargeCutoffSoc:
@@ -567,6 +575,10 @@ class:
     name: V2X 放電有効
   DcChargerV2xDischargePowerLimit:
     name: V2X 放電電力制限
+  DcChargerVehicleSoc:
+    attributes:
+      comment: 車両が接続されている間のみ有効です。
+    name: 車両のSOC
   DcChargerWeeklyChargedEnergy:
     name: 週間充電エネルギー量
   DiagnosticsLogLevel:

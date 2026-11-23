@@ -97,6 +97,14 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
 
     """
 
+    #: The class whose translations supply this sensor's ``options`` labels, when
+    #: it shares another sensor's options (e.g. the same enum read from the cloud).
+    options_translation_class: ClassVar[str | None] = None
+
+    @property
+    def _options_translation_prefix(self) -> str:
+        return f"{self.options_translation_class or self.__class__.__name__}.options"
+
     # Class-level tracking of used IDs (intentional shared state)
     _used_object_ids: ClassVar[dict[str, str]] = {}
     _used_unique_ids: ClassVar[dict[str, str]] = {}
@@ -961,7 +969,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
 
         if DiscoveryKeys.OPTIONS in self:
             components[DiscoveryKeys.OPTIONS] = [
-                _t(f"{self.__class__.__name__}.options.{i}", x, self.debug_logging) for i, x in enumerate(cast(list[str], self[DiscoveryKeys.OPTIONS])) if x is not None and x != ""
+                _t(f"{self._options_translation_prefix}.{i}", x, self.debug_logging) for i, x in enumerate(cast(list[str], self[DiscoveryKeys.OPTIONS])) if x is not None and x != ""
             ]
 
         return {self.unique_id: dict(components)}
@@ -1641,7 +1649,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         if option is None or option == "":
             return ""  # in-range but undocumented: return empty string, not None
 
-        return _t(f"{self.__class__.__name__}.options.{index}", option, self.debug_logging)
+        return _t(f"{self._options_translation_prefix}.{index}", option, self.debug_logging)
 
     def _get_option_index(self, value: str | float) -> int:
         """Get option index by value or translated value.
@@ -1675,7 +1683,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
                     option != ""
                     and option is not None
                     and _t(
-                        f"{self.__class__.__name__}.options.{i}",
+                        f"{self._options_translation_prefix}.{i}",
                         option,
                         self.debug_logging,
                     )

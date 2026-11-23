@@ -597,6 +597,17 @@ class CloudApiTestServer:
             "maximumDischargeCutoffSoc": 99,
         }
         self.dc_status = 0
+        # Not captured yet: field names follow solidfox/homeassistant-sigenergy-cloud,
+        # and the values describe an idle charger consistent with the other responses.
+        self.dc_charge_realtime = {
+            "seccRunState": 0,
+            "vehicleSoc": 0,
+            "pileOutputPower": 0.0,
+            "chargingOutputCurrent": 0.0,
+            "chargingStartTime": 0,
+            "singleChargePower": 0.0,
+            "totalChargeEnergy": 781.68,
+        }
         self.dc_energy_totals = {"monthlyEnergy": 128.24, "weeklyEnergy": 41.63, "lifetimeEnergy": 781.68}
         self.dc_ocpp_status = {
             "ocppLinkStatus": 0,
@@ -713,6 +724,7 @@ class CloudApiTestServer:
         "dc_charge_mode_soc_range": dict,
         "dc_charge_mode": dict,
         "dc_status": int,
+        "dc_charge_realtime": dict,
         "dc_energy_totals": dict,
         "dc_ocpp_status": dict,
         "v2x_discharge_settings": dict,
@@ -1114,6 +1126,11 @@ class CloudApiTestServer:
             return response
         return self._success(self.dc_status)
 
+    async def get_dc_charge_realtime(self, request: web.Request) -> web.Response:
+        if (response := await self._dc_query_error(request)) is not None:
+            return response
+        return self._success(self.dc_charge_realtime)
+
     async def get_dc_energy_totals(self, request: web.Request) -> web.Response:
         if (response := await self._dc_query_error(request)) is not None:
             return response
@@ -1259,6 +1276,7 @@ class CloudApiTestServer:
             web.post("/device/charge/mode/dc", self.set_dc_charge_mode),
             web.get("/device/dcevse/charge/mode", self.get_dc_surplus_pv_charge_mode),
             web.get("/device/dcevse/status", self.get_dc_status),
+            web.get("/device/dcevse/charge/realtime", self.get_dc_charge_realtime),
             web.get("/data-process/dcevse/energy", self.get_dc_energy_totals),
             web.get("/device/dcevse/ocpp/status", self.get_dc_ocpp_status),
             web.get("/device/station-v2x/select", self.get_v2x_discharge_settings),

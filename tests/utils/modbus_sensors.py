@@ -403,6 +403,9 @@ class DummyCloudControlPort(CloudControlPort):
     async def dc_energy_totals(self, dc_sn: str) -> dict[str, Any]:
         return self._server.dc_energy_totals
 
+    async def dc_charge_realtime(self, dc_sn: str) -> dict[str, Any]:
+        return self._server.dc_charge_realtime
+
     async def dc_ocpp_status(self, dc_sn: str) -> dict[str, Any]:
         return self._server.dc_ocpp_status
 

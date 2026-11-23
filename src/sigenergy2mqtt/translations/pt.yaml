@@ -541,24 +541,32 @@ class:
     name: SOC de corte do reforço da bateria
   DcChargerChargingMode:
     name: Modo de carregamento
+  DcChargerChargingPower:
+    name: Potência de carregamento
   DcChargerLifetimeChargedEnergy:
     name: Energia carregada ao longo da vida útil
   DcChargerMonthlyChargedEnergy:
     name: Energia carregada mensalmente
   DcChargerOcppLinkStatus:
-    attributes:
-      comment: Estado do link OCPP bruto na nuvem. Foi observado o valor 0, sem qualquer servidor OCPP configurado.
     name: Estado da ligação OCPP
+    options:
+      '0': Desligado
+      '1': Conectado
+      '2': Ligação
   DcChargerOcppServerUrl:
     name: URL do servidor OCPP
   DcChargerPrimaryVehicle:
     name: Veículo principal
   DcChargerPrimaryVehicleBatteryCapacity:
     name: Capacidade da bateria principal do veículo
+  DcChargerSeccRunState:
+    name: Estado de funcionamento do SECC
+  DcChargerSessionChargedEnergy:
+    name: Energia carregada por sessão
   DcChargerStatusCode:
     attributes:
-      comment: Estado bruto do carregador na nuvem. Observou-se o valor 0 em modo de inatividade; os outros valores não estão documentados.
-    name: Código de estado
+      comment: Presume-se que sejam utilizados os mesmos códigos que os do estado de funcionamento do carregador Modbus DC; apenas os valores 0 a 3 foram confirmados.
+    name: Estado
   DcChargerSurplusPvPriority:
     name: Prioridade de excedentes fotovoltaicos
   DcChargerV2xDischargeCutoffSoc:
@@ -567,6 +575,10 @@ class:
     name: Descarga V2X ativada
   DcChargerV2xDischargePowerLimit:
     name: Limite de potência de descarga V2X
+  DcChargerVehicleSoc:
+    attributes:
+      comment: Apenas aplicável enquanto um veículo estiver ligado.
+    name: SOC do veículo
   DcChargerWeeklyChargedEnergy:
     name: Energia carregada semanalmente
   DiagnosticsLogLevel:

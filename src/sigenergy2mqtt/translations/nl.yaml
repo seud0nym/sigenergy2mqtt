@@ -541,24 +541,32 @@ class:
     name: Accu-boost-uitschakeling SOC
   DcChargerChargingMode:
     name: Oplaadmodus
+  DcChargerChargingPower:
+    name: Laadvermogen
   DcChargerLifetimeChargedEnergy:
     name: Totale opgeladen energie
   DcChargerMonthlyChargedEnergy:
     name: Maandelijks opgeladen energie
   DcChargerOcppLinkStatus:
-    attributes:
-      comment: Status van de ruwe OCPP-verbinding met de cloud. Er werd een waarde van 0 waargenomen omdat er geen OCPP-server was geconfigureerd.
     name: OCPP-verbindingsstatus
+    options:
+      '0': Verbinding verbroken
+      '1': Verbonden
+      '2': Aansluiten
   DcChargerOcppServerUrl:
     name: URL van de OCPP-server
   DcChargerPrimaryVehicle:
     name: Hoofdvoertuig
   DcChargerPrimaryVehicleBatteryCapacity:
     name: Capaciteit van de primaire voertuigaccu
+  DcChargerSeccRunState:
+    name: SECC-bedrijfstoestand
+  DcChargerSessionChargedEnergy:
+    name: Tijdens de sessie opgeslagen energie
   DcChargerStatusCode:
     attributes:
-      comment: Ruwe status van de cloudlader. Waarde 0 werd waargenomen in ruststand; andere waarden zijn niet gedocumenteerd.
-    name: Statuscode
+      comment: Er wordt aangenomen dat dezelfde codes worden gebruikt als bij de Modbus DC-lader Running State; alleen 0-3 zijn bevestigd.
+    name: Status  # verify:ignore
   DcChargerSurplusPvPriority:
     name: Prioriteit voor overtollige PV-stroom
   DcChargerV2xDischargeCutoffSoc:
@@ -567,6 +575,10 @@ class:
     name: V2X-ontlading ingeschakeld
   DcChargerV2xDischargePowerLimit:
     name: V2X-ontladingsvermogenslimiet
+  DcChargerVehicleSoc:
+    attributes:
+      comment: Alleen van betekenis wanneer er een voertuig is aangesloten.
+    name: SOC van het voertuig
   DcChargerWeeklyChargedEnergy:
     name: Wekelijkse opgeladen energie
   DiagnosticsLogLevel:

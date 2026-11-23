@@ -322,3 +322,141 @@ def test_device_names_have_no_extra_spaces_from_empty_suffixes() -> None:
     assert only.name == "Sigenergy Cloud DC Charger"
     (other_plant,) = CloudDcCharger.from_discovery(1, STATION, discovery)
     assert other_plant.name == "Sigenergy Cloud DC Charger 2"
+
+
+async def test_status_and_ocpp_codes_are_published_as_labels() -> None:
+    from sigenergy2mqtt.sensors.cloud.dc_charger import DC_CHARGER_RUNNING_STATES
+    from sigenergy2mqtt.sensors.inverter.read_only import DCChargerRunningState
+
+    # Shares the Modbus sensor's labels and their translations
+    assert list(DC_CHARGER_RUNNING_STATES) == DCChargerRunningState(0, 1)[DiscoveryKeys.OPTIONS]
+    assert DcChargerStatusCode.options_translation_class == "DCChargerRunningState"
+
+    port = _port()
+    status = DcChargerStatusCode(0, STATION, SN, 0)
+    ocpp = DcChargerOcppLinkStatus(0, STATION, SN, 0, CloudResponseSnapshot(lambda p: p.dc_ocpp_status(SN)))
+    assert status[DiscoveryKeys.OPTIONS] == list(DC_CHARGER_RUNNING_STATES)
+    assert status["device_class"] == "enum"
+    assert ocpp[DiscoveryKeys.OPTIONS] == ["Disconnected", "Connected", "Connecting"]
+
+    async def state(sensor, value):
+        sensor._snapshot.begin_refresh()
+        return await sensor.get_state(modbus_client=port)
+
+    for code, label in ((0, "Idle"), (1, "Occupied (Charging Gun plugged in but not detected)"), (3, "Charging"), ("2", "Preparing (Establishing communication)")):
+        port.dc_status.return_value = code
+        assert await state(status, code) == label
+    port.dc_status.return_value = 42
+    assert await state(status, 42) == "Unknown State code: 42"
+    assert await status.get_state(raw=True, republish=True) == 42
+
+    port.dc_ocpp_status.return_value = {"ocppLinkStatus": 1}
+    assert await state(ocpp, 1) == "Connected"
+    port.dc_ocpp_status.return_value = {"ocppLinkStatus": 9}
+    assert await state(ocpp, 9) == "Unknown State code: 9"
+
+
+async def test_realtime_sensors_share_one_read_and_sign_discharge_power() -> None:
+    from sigenergy2mqtt.sensors.cloud.dc_charger import (
+        DcChargerChargingPower,
+        DcChargerSeccRunState,
+        DcChargerSessionChargedEnergy,
+        DcChargerVehicleSoc,
+    )
+
+    port = SimpleNamespace(dc_charge_realtime=AsyncMock(return_value={"seccRunState": 3, "pileOutputPower": 7.25, "vehicleSoc": 64, "singleChargePower": 4.5}))
+    snapshot = CloudResponseSnapshot(lambda p: p.dc_charge_realtime(SN))
+    secc = DcChargerSeccRunState(0, STATION, SN, 0, snapshot)
+    power = DcChargerChargingPower(0, STATION, SN, 0, snapshot)
+    soc = DcChargerVehicleSoc(0, STATION, SN, 0, snapshot)
+    session = DcChargerSessionChargedEnergy(0, STATION, SN, 0, snapshot)
+
+    assert await secc._read_cloud_state(port) == 3
+    assert await power._read_cloud_state(port) == 7.25
+    assert await soc._read_cloud_state(port) == 64
+    assert await session._read_cloud_state(port) == 4.5
+    port.dc_charge_realtime.assert_awaited_once_with(SN)
+
+    # Discharging (V2X) is negative, whether or not the cloud signs the value
+    for payload in ({"seccRunState": 8, "pileOutputPower": 6.0}, {"seccRunState": 3, "pileOutputPower": -6.0}):
+        snapshot.begin_refresh()
+        port.dc_charge_realtime.return_value = payload
+        assert await power._read_cloud_state(port) == -6.0
+
+    snapshot.begin_refresh()
+    port.dc_charge_realtime.return_value = {"seccRunState": True, "pileOutputPower": "n/a"}
+    assert await secc._read_cloud_state(port) is None
+    assert await power._read_cloud_state(port) is None
+    assert await soc._read_cloud_state(port) is None
+
+
+def test_device_adds_realtime_sensors() -> None:
+    from sigenergy2mqtt.sensors.cloud.dc_charger import (
+        DcChargerChargingPower,
+        DcChargerSeccRunState,
+    )
+
+    device = CloudDcCharger(0, STATION, DcChargerDiscovery("DC-G", (), (0.0, 100.0), ()))
+    assert device.get_sensor(DcChargerSeccRunState) is not None
+    assert device.get_sensor(DcChargerChargingPower) is not None
+
+
+def test_shared_option_translations_are_used(monkeypatch) -> None:
+    import sigenergy2mqtt.sensors.base.sensor as sensor_module
+
+    lookups: list[str] = []
+
+    def fake_t(key, default, *args, **kwargs):
+        lookups.append(key)
+        return f"<{default}>"
+
+    monkeypatch.setattr(sensor_module, "_t", fake_t)
+    status = DcChargerStatusCode(0, STATION, "DC-T", 0)
+    assert status._get_option(3) == "<Charging>"
+    assert lookups[-1] == "DCChargerRunningState.options.3"
+    options = next(iter(status.get_discovery_components().values()))[DiscoveryKeys.OPTIONS]
+    assert options[0] == "<Idle>"
+    assert lookups[-1] == "DCChargerRunningState.options.10"
+
+
+@pytest.mark.parametrize("sensor_type", ["session", "weekly", "monthly"])
+def test_resetting_energy_counters_accept_a_missed_reset(sensor_type) -> None:
+    from sigenergy2mqtt.sensors.cloud.dc_charger import DcChargerSessionChargedEnergy
+
+    snapshot = CloudResponseSnapshot(lambda p: p.dc_energy_totals(SN))
+    sensor = {
+        "session": lambda: DcChargerSessionChargedEnergy(0, STATION, f"DC-R-{sensor_type}", 0, snapshot),
+        "weekly": lambda: DcChargerWeeklyChargedEnergy(0, STATION, f"DC-R-{sensor_type}", 0, snapshot),
+        "monthly": lambda: DcChargerMonthlyChargedEnergy(0, STATION, f"DC-R-{sensor_type}", 0, snapshot),
+    }[sensor_type]()
+    assert sensor["state_class"] == "total_increasing"
+    # 20 kWh, then the next poll lands after a reset that was never seen as 0
+    assert sensor.sanity_check.is_sane(0.5, [(0.0, 20.0)]) is True
+
+
+def test_lifetime_energy_still_rejects_decreases() -> None:
+    from sigenergy2mqtt.sensors.base.sanity_check import SanityCheckException
+
+    sensor = DcChargerLifetimeChargedEnergy(0, STATION, "DC-L", 0, CloudResponseSnapshot(lambda p: p.dc_energy_totals(SN)))
+    with pytest.raises(SanityCheckException):
+        sensor.sanity_check.is_sane(0.5, [(0.0, 20.0)])
+
+
+async def test_small_negative_power_keeps_its_sign() -> None:
+    from sigenergy2mqtt.sensors.cloud.dc_charger import DcChargerChargingPower
+
+    port = SimpleNamespace(dc_charge_realtime=AsyncMock(return_value={"seccRunState": 3, "pileOutputPower": -0.02}))
+    sensor = DcChargerChargingPower(0, STATION, "DC-P", 0, CloudResponseSnapshot(lambda p: p.dc_charge_realtime(SN)))
+    assert await sensor._read_cloud_state(port) == -0.02
+
+
+def test_resetting_counter_keeps_a_configured_minimum() -> None:
+    from sigenergy2mqtt.config import Config, _swap_active_config
+    from sigenergy2mqtt.sensors.cloud.dc_charger import DcChargerSessionChargedEnergy
+
+    config = Config()
+    config.sensor_overrides = {"DcChargerSessionChargedEnergy": {"sanity-check-delta": False, "sanity-check-min-value": 0}}
+    with _swap_active_config(config):
+        sensor = DcChargerSessionChargedEnergy(0, STATION, "DC-O", 0, CloudResponseSnapshot(lambda p: p.dc_charge_realtime(SN)))
+    assert sensor.sanity_check.delta is False
+    assert sensor.sanity_check.min_raw == 0

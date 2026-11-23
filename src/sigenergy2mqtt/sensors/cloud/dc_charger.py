@@ -120,8 +120,72 @@ def _number(payload: dict[str, Any], key: str) -> float | None:
     return number if math.isfinite(number) else None
 
 
+#: The Modbus DCChargerRunningState labels (register 31513). The cloud charger status
+#: and SECC run state appear to use the same codes, so the sensors using these labels
+#: share that class's translations (see ``options_translation_class``).
+DC_CHARGER_RUNNING_STATES: tuple[str, ...] = (
+    "Idle",  # 0
+    "Occupied (Charging Gun plugged in but not detected)",  # 1
+    "Preparing (Establishing communication)",  # 2
+    "Charging",  # 3
+    "Fault",  # 4
+    "Scheduled",  # 5
+    "Ended",  # 6
+    "Unavailable (Under maintenance)",  # 7
+    "Discharging",  # 8
+    "Alarm",  # 9
+    "Preparing (Insulation detection in progress)",  # 10
+)
+
+
+def _int_code(value: Any) -> int | None:
+    """Return an integer status code, or None for anything else (including booleans)."""
+    if isinstance(value, bool) or not isinstance(value, (int, float, str)):
+        return None
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return int(number) if math.isfinite(number) and number.is_integer() else None
+
+
+class _EnumStateMixin:
+    """Publish a raw status code as its (translated) option label.
+
+    Codes without a label are published as ``Unknown State code: N``, as the
+    Modbus DC charger Running State does.
+    """
+
+    def _accept_unknown_codes(self) -> None:
+        # Unknown codes are published as such rather than rejected
+        self.sanity_check.min_raw = 0  # type: ignore[attr-defined]
+        self.sanity_check.max_raw = None  # type: ignore[attr-defined]
+
+    async def get_state(self, raw: bool = False, republish: bool = False, **kwargs) -> Any:
+        value = await super().get_state(raw=raw, republish=republish, **kwargs)  # type: ignore[misc]
+        if raw or value is None:
+            return value
+        if isinstance(value, (float, int)) and (option := self._get_option(int(value))):  # type: ignore[attr-defined]
+            return option
+        return f"Unknown State code: {value}"
+
+
 class _DcChargerSensorMixin:
     """Identity and polling-snapshot wiring shared by all DC charger sensors."""
+
+    def _allow_counter_resets(self) -> None:
+        """Accept any decrease of a counter that resets (per session, week or month).
+
+        TOTAL_INCREASING normally rejects a decrease other than to exactly 0, and a
+        rejected value is not remembered, so a reset that polling misses (an outage,
+        or charging across the reset) would freeze the sensor until the new count
+        passed the old one. Home Assistant treats a decrease as a reset itself.
+
+        This runs after Sensor.__init__ has applied the user's sensor overrides, so
+        they are applied again to keep a configured sanity-check minimum.
+        """
+        self.sanity_check.min_raw = None  # type: ignore[attr-defined]
+        self.apply_sensor_overrides()  # type: ignore[attr-defined]
 
     def _dc_init(self, sn: str, snapshot: CloudResponseSnapshot) -> None:
         self._sn = sn
@@ -380,18 +444,25 @@ class DcChargerSurplusPvPriority(SelectSensorMixin, _DcChargerSensorMixin, Cloud
 # --- Read-only charger values -------------------------------------------------------
 
 
-class DcChargerStatusCode(_DcChargerSensorMixin, CloudSensor):
-    """The raw value of device/dcevse/status (meanings other than 0 are not yet known)."""
+class DcChargerStatusCode(_EnumStateMixin, _DcChargerSensorMixin, CloudSensor):
+    """device/dcevse/status, labelled with the Modbus DC charger Running State codes.
+
+    0 (Idle) was captured from an idle charger. solidfox/homeassistant-sigenergy-cloud
+    treats 1 as plugged in and ready, 2 as preparing and 3 as charging, which agree
+    with the Modbus codes; the other codes are assumed to match.
+    """
+
+    options_translation_class = "DCChargerRunningState"
 
     def __init__(self, plant_index: int, station_id: str, sn: str, index: int) -> None:
         object_id, unique_id = dc_charger_identity(plant_index, station_id, sn, index, "status_code")
         super().__init__(
-            name="Status Code",
+            name="Status",
             object_id=object_id,
             unique_id=unique_id,
             scan_interval=active_config.cloud.scan_interval,
             unit=None,
-            device_class=None,
+            device_class=DeviceClass.ENUM,
             state_class=None,
             icon="mdi:ev-plug-ccs2",
             gain=None,
@@ -399,25 +470,21 @@ class DcChargerStatusCode(_DcChargerSensorMixin, CloudSensor):
             protocol_version=ProtocolVersion.N_A,
         )
         self._dc_init(sn, CloudResponseSnapshot(lambda port: port.dc_status(sn)))
-        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
+        self[DiscoveryKeys.OPTIONS] = list(DC_CHARGER_RUNNING_STATES)
+        self._accept_unknown_codes()
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
-        attributes["comment"] = "Raw cloud charger status. 0 was observed while idle; other values are undocumented."
+        attributes["comment"] = "Assumed to use the same codes as the Modbus DC charger Running State; only 0-3 have been corroborated."
         return attributes
 
     async def _read_cloud_state(self, port: CloudControlPort) -> int | None:
-        status = await self._snapshot.read(port)
-        if isinstance(status, bool) or not isinstance(status, (int, float, str)):
-            return None
-        try:
-            return int(status)
-        except (TypeError, ValueError):
-            return None
+        return _int_code(await self._snapshot.read(port))
 
 
 class _DcChargerEnergy(_DcChargerSensorMixin, CloudSensor):
-    def __init__(self, plant_index: int, station_id: str, sn: str, index: int, snapshot: CloudResponseSnapshot, *, key: str, suffix: str, name: str) -> None:
+    def __init__(self, plant_index: int, station_id: str, sn: str, index: int, snapshot: CloudResponseSnapshot, *, key: str, suffix: str, name: str, resets: bool) -> None:
         self._key = key
         object_id, unique_id = dc_charger_identity(plant_index, station_id, sn, index, suffix)
         super().__init__(
@@ -434,6 +501,8 @@ class _DcChargerEnergy(_DcChargerSensorMixin, CloudSensor):
             protocol_version=ProtocolVersion.N_A,
         )
         self._dc_init(sn, snapshot)
+        if resets:
+            self._allow_counter_resets()
         self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
 
     async def _read_cloud_state(self, port: CloudControlPort) -> float | None:
@@ -442,21 +511,21 @@ class _DcChargerEnergy(_DcChargerSensorMixin, CloudSensor):
 
 class DcChargerWeeklyChargedEnergy(_DcChargerEnergy):
     def __init__(self, plant_index: int, station_id: str, sn: str, index: int, snapshot: CloudResponseSnapshot) -> None:
-        super().__init__(plant_index, station_id, sn, index, snapshot, key="weeklyEnergy", suffix="weekly_charged_energy", name="Weekly Charged Energy")
+        super().__init__(plant_index, station_id, sn, index, snapshot, key="weeklyEnergy", suffix="weekly_charged_energy", name="Weekly Charged Energy", resets=True)
 
 
 class DcChargerMonthlyChargedEnergy(_DcChargerEnergy):
     def __init__(self, plant_index: int, station_id: str, sn: str, index: int, snapshot: CloudResponseSnapshot) -> None:
-        super().__init__(plant_index, station_id, sn, index, snapshot, key="monthlyEnergy", suffix="monthly_charged_energy", name="Monthly Charged Energy")
+        super().__init__(plant_index, station_id, sn, index, snapshot, key="monthlyEnergy", suffix="monthly_charged_energy", name="Monthly Charged Energy", resets=True)
 
 
 class DcChargerLifetimeChargedEnergy(_DcChargerEnergy):
     def __init__(self, plant_index: int, station_id: str, sn: str, index: int, snapshot: CloudResponseSnapshot) -> None:
-        super().__init__(plant_index, station_id, sn, index, snapshot, key="lifetimeEnergy", suffix="lifetime_charged_energy", name="Lifetime Charged Energy")
+        super().__init__(plant_index, station_id, sn, index, snapshot, key="lifetimeEnergy", suffix="lifetime_charged_energy", name="Lifetime Charged Energy", resets=False)
 
 
-class DcChargerOcppLinkStatus(_DcChargerSensorMixin, CloudSensor):
-    """The raw OCPP link status and the configured OCPP server URL."""
+class DcChargerOcppLinkStatus(_EnumStateMixin, _DcChargerSensorMixin, CloudSensor):
+    """The OCPP link status (labels as used by solidfox/homeassistant-sigenergy-cloud)."""
 
     def __init__(self, plant_index: int, station_id: str, sn: str, index: int, snapshot: CloudResponseSnapshot) -> None:
         object_id, unique_id = dc_charger_identity(plant_index, station_id, sn, index, "ocpp_link_status")
@@ -466,7 +535,7 @@ class DcChargerOcppLinkStatus(_DcChargerSensorMixin, CloudSensor):
             unique_id=unique_id,
             scan_interval=ScanIntervalDefault.MEDIUM,
             unit=None,
-            device_class=None,
+            device_class=DeviceClass.ENUM,
             state_class=None,
             icon="mdi:lan-connect",
             gain=None,
@@ -474,16 +543,13 @@ class DcChargerOcppLinkStatus(_DcChargerSensorMixin, CloudSensor):
             protocol_version=ProtocolVersion.N_A,
         )
         self._dc_init(sn, snapshot)
+        # Labels as used by solidfox/homeassistant-sigenergy-cloud
+        self[DiscoveryKeys.OPTIONS] = ["Disconnected", "Connected", "Connecting"]
+        self._accept_unknown_codes()
         self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
 
-    def get_attributes(self) -> dict[str, float | int | str]:
-        attributes = super().get_attributes()
-        attributes["comment"] = "Raw cloud OCPP link status. 0 was observed with no OCPP server configured."
-        return attributes
-
     async def _read_cloud_state(self, port: CloudControlPort) -> int | None:
-        status = (await self._snapshot.read_object(port)).get("ocppLinkStatus")
-        return status if isinstance(status, int) and not isinstance(status, bool) else None
+        return _int_code((await self._snapshot.read_object(port)).get("ocppLinkStatus"))
 
 
 class DcChargerOcppServerUrl(_DcChargerSensorMixin, CloudSensor):
@@ -595,3 +661,127 @@ class DcChargerPrimaryVehicleBatteryCapacity(_DcChargerVehicle):
     async def _read_cloud_state(self, port: CloudControlPort) -> float | None:
         vehicle = self.primary_vehicle(await self._snapshot.read(port))
         return None if vehicle is None else _number(cast(dict[str, Any], vehicle), "batteryCapacity")
+
+
+# --- Live charging values (device/dcevse/charge/realtime) ---------------------------
+# Field meanings follow solidfox/homeassistant-sigenergy-cloud. No capture of this
+# endpoint during a charging session has been seen yet, so they are unverified.
+
+
+class DcChargerSeccRunState(_EnumStateMixin, _DcChargerSensorMixin, CloudSensor):
+    """``seccRunState``: the charging controller state, apparently in Running State codes."""
+
+    options_translation_class = "DCChargerRunningState"
+
+    def __init__(self, plant_index: int, station_id: str, sn: str, index: int, snapshot: CloudResponseSnapshot) -> None:
+        object_id, unique_id = dc_charger_identity(plant_index, station_id, sn, index, "secc_run_state")
+        super().__init__(
+            name="SECC Run State",
+            object_id=object_id,
+            unique_id=unique_id,
+            scan_interval=active_config.cloud.scan_interval,
+            unit=None,
+            device_class=DeviceClass.ENUM,
+            state_class=None,
+            icon="mdi:chip",
+            gain=None,
+            precision=None,
+            protocol_version=ProtocolVersion.N_A,
+        )
+        self._dc_init(sn, snapshot)
+        self[DiscoveryKeys.OPTIONS] = list(DC_CHARGER_RUNNING_STATES)
+        self._accept_unknown_codes()
+        self[DiscoveryKeys.ENTITY_CATEGORY] = "diagnostic"
+
+    async def _read_cloud_state(self, port: CloudControlPort) -> int | None:
+        return _int_code((await self._snapshot.read_object(port)).get("seccRunState"))
+
+
+class DcChargerChargingPower(_DcChargerSensorMixin, CloudSensor):
+    """``pileOutputPower``: positive while charging the vehicle, negative while discharging it (V2X)."""
+
+    _DISCHARGING = 8
+
+    def __init__(self, plant_index: int, station_id: str, sn: str, index: int, snapshot: CloudResponseSnapshot) -> None:
+        object_id, unique_id = dc_charger_identity(plant_index, station_id, sn, index, "charging_power")
+        super().__init__(
+            name="Charging Power",
+            object_id=object_id,
+            unique_id=unique_id,
+            scan_interval=active_config.cloud.scan_interval,
+            unit=UnitOfPower.KILO_WATT,
+            device_class=DeviceClass.POWER,
+            state_class=StateClass.MEASUREMENT,
+            icon="mdi:ev-station",
+            gain=None,
+            precision=3,
+            protocol_version=ProtocolVersion.N_A,
+        )
+        self._dc_init(sn, snapshot)
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
+
+    async def _read_cloud_state(self, port: CloudControlPort) -> float | None:
+        payload = await self._snapshot.read_object(port)
+        power = _number(payload, "pileOutputPower")
+        if power is None:
+            return None
+        # The cloud may report discharge power unsigned; the run state says which way it flows.
+        if power < 0 or _int_code(payload.get("seccRunState")) == self._DISCHARGING:
+            return -abs(power)
+        return abs(power)
+
+
+class DcChargerVehicleSoc(_DcChargerSensorMixin, CloudSensor):
+    """``vehicleSoc``: the connected vehicle's state of charge."""
+
+    def __init__(self, plant_index: int, station_id: str, sn: str, index: int, snapshot: CloudResponseSnapshot) -> None:
+        object_id, unique_id = dc_charger_identity(plant_index, station_id, sn, index, "vehicle_soc")
+        super().__init__(
+            name="Vehicle SOC",
+            object_id=object_id,
+            unique_id=unique_id,
+            scan_interval=active_config.cloud.scan_interval,
+            unit=PERCENTAGE,
+            device_class=DeviceClass.BATTERY,
+            state_class=StateClass.MEASUREMENT,
+            icon="mdi:car-electric",
+            gain=None,
+            precision=0,
+            protocol_version=ProtocolVersion.N_A,
+        )
+        self._dc_init(sn, snapshot)
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
+
+    def get_attributes(self) -> dict[str, float | int | str]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Only meaningful while a vehicle is connected."
+        return attributes
+
+    async def _read_cloud_state(self, port: CloudControlPort) -> float | None:
+        return _number(await self._snapshot.read_object(port), "vehicleSoc")
+
+
+class DcChargerSessionChargedEnergy(_DcChargerSensorMixin, CloudSensor):
+    """``singleChargePower``: energy delivered in the current session (despite its name, in kWh)."""
+
+    def __init__(self, plant_index: int, station_id: str, sn: str, index: int, snapshot: CloudResponseSnapshot) -> None:
+        object_id, unique_id = dc_charger_identity(plant_index, station_id, sn, index, "session_charged_energy")
+        super().__init__(
+            name="Session Charged Energy",
+            object_id=object_id,
+            unique_id=unique_id,
+            scan_interval=active_config.cloud.scan_interval,
+            unit=UnitOfEnergy.KILO_WATT_HOUR,
+            device_class=DeviceClass.ENERGY,
+            state_class=StateClass.TOTAL_INCREASING,
+            icon="mdi:battery-charging-high",
+            gain=None,
+            precision=2,
+            protocol_version=ProtocolVersion.N_A,
+        )
+        self._dc_init(sn, snapshot)
+        self._allow_counter_resets()
+        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
+
+    async def _read_cloud_state(self, port: CloudControlPort) -> float | None:
+        return _number(await self._snapshot.read_object(port), "singleChargePower")
