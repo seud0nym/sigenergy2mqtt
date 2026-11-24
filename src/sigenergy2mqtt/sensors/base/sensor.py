@@ -422,9 +422,8 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
         if isinstance(protocol_version, ProtocolVersion):
             self._protocol_version = protocol_version
         elif isinstance(protocol_version, float):
-            if protocol_version not in [p.value for p in ProtocolVersion]:
-                raise AssertionError(f"{self.log_identity}: Invalid protocol_version '{protocol_version}'")
-            protocol = {p.value: p for p in ProtocolVersion}.get(protocol_version)
+            # Floats cannot distinguish e.g. 2.1 from 2.10; no V2.1 exists, so the mapping is unambiguous
+            protocol = {float(p.value): p for p in ProtocolVersion}.get(protocol_version)
             if protocol is None:
                 raise AssertionError(f"{self.log_identity}: Invalid protocol_version '{protocol_version}'")
             self._protocol_version = protocol
@@ -555,7 +554,7 @@ class Sensor(SensorDebuggingMixin, dict[str, SensorAttribute], abc.ABC):
                 logger.debug(f"{self.log_identity} Device overrides not applied (publishable={self.publishable})")
         elif registers:
             # Check for remote EMS override
-            if registers.no_remote_ems and (getattr(self, "_remote_ems", None) is not None or getattr(self, "address", None) == 40029):
+            if registers.no_remote_ems and (getattr(self, "_remote_ems", None) is not None or getattr(self, "address", None) in (40029, 40162)):  # Remote EMS (40029), Remote EMS power limit global enable (40162)
                 if self.debug_logging:
                     logger.debug(f"{self.log_identity} Applying device 'no-remote-ems' override ({registers.no_remote_ems})")
                 self.publishable = False

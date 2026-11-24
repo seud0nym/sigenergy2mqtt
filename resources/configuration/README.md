@@ -982,9 +982,9 @@ Device IDs found during auto-discovery are **cumulative** with any manually conf
 <tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
 <tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
 </table>
-A comma-delimited list of Device class names to be excluded from auto-discovery. Valid class names are "ACCharger", "DCCharger", "PID", and "PSS". You cannot exclude Plant or Inverter.
+A comma-delimited list of Device class names to be excluded from auto-discovery. Valid class names are "ACCharger" and "DCCharger". You cannot exclude Plant or Inverter.
 
-The default is "PID,PSS".
+By default, no devices are excluded.
 
 <a id="opt_modbus_auto_discovery_networks"></a>
 ### Modbus Auto Discovery Networks
@@ -1089,28 +1089,6 @@ The Sigenergy AC Charger Modbus Device ID(s).
 <tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
 </table>
 The Sigenergy DC Charger Modbus Device ID(s).
-
-<a id="opt_modbus_pid_device_id"></a>
-### PID Device Id
-<table>
-<tr><td><small>CLI</small></td><td><small><code>--modbus-pid-device-id</code></small></td></tr>
-<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_MODBUS_PID_DEVICE_ID</code></small></td></tr>
-<tr><td><small>YAML key</small></td><td><small><code>modbus[].pid</code></small></td></tr>
-<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
-<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
-</table>
-The Sigenergy PID Modbus Device ID(s).
-
-<a id="opt_modbus_pss_device_id"></a>
-### PSS Device Id
-<table>
-<tr><td><small>CLI</small></td><td><small><code>--modbus-pss-device-id</code></small></td></tr>
-<tr><td><small>ENV</small></td><td><small><code>SIGENERGY2MQTT_MODBUS_PSS_DEVICE_ID</code></small></td></tr>
-<tr><td><small>YAML key</small></td><td><small><code>modbus[].pss</code></small></td></tr>
-<tr><td><small>MQTT</small></td><td><small><code>n/a</code></small></td></tr>
-<tr><td><small>HA</small></td><td><small><code>n/a</code></small></td></tr>
-</table>
-The Sigenergy PSS Modbus Device ID(s).
 
 <a id="opt_modbus_disable_chunking"></a>
 ### Disable Chunking

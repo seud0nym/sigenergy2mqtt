@@ -46,9 +46,7 @@ from sigenergy2mqtt.sensors.plant.read_write import (
 from .device_factories import (
     make_ac_charger,
     make_dc_charger,
-    make_pid,
     make_plant_and_inverter,
-    make_pss,
 )
 from .modbus_helpers import get_state
 from .restart import restart_controller
@@ -178,8 +176,6 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
     total_dc_chargers = sum(len(d.dc_chargers) if d.dc_chargers else 0 for d in devices)  # type: ignore[reportGeneralTypeIssues]
     ac_charger_sequence = 0
     dc_charger_sequence = 0
-    pid_sequence = 0
-    pss_sequence = 0
 
     if devices and devices[0].registers.read_only is True and devices[0].registers.read_write is False and devices[0].registers.write_only is False:
         # registers is a single entity that is propagated to all devices (sigenergy2mqtt.config.merge.propagate_to_all_devices), so we only need to check the first device
@@ -189,14 +185,7 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
         if not (device.registers.read_only or device.registers.read_write or device.registers.write_only):
             logger.info(f"Ignored modbus://{device.host}:{device.port} (Plant Index = {plant_index}): All registers are disabled (read-only=false read-write=false write-only=false)")
             continue
-        if device.pss or device.pid:
-            logger.info(
-                f"Creating devices from modbus://{device.host}:{device.port} (Plant: {plant_index}, Device IDs: Inverter={device.inverters} AC Charger={device.ac_chargers} DC Charger={device.dc_chargers} PSS={device.pss} PID={device.pid})"
-            )
-        else:
-            logger.info(
-                f"Creating devices from modbus://{device.host}:{device.port} (Plant: {plant_index}, Device IDs: Inverter={device.inverters} AC Charger={device.ac_chargers} DC Charger={device.dc_chargers})"
-            )
+        logger.info(f"Creating devices from modbus://{device.host}:{device.port} (Plant: {plant_index}, Device IDs: Inverter={device.inverters} AC Charger={device.ac_chargers} DC Charger={device.dc_chargers})")
 
         config: ThreadConfig = ThreadConfig.create(device.host, device.port, device.timeout, device.retries)
         modbus = ModbusClient(device.host, port=device.port, timeout=device.timeout, retries=device.retries)
@@ -266,31 +255,6 @@ async def setup_devices(seen_serial_numbers: set[str]) -> tuple[list[ThreadConfi
                     total_count=total_ac_chargers,
                     inverter_firmware_versions=inverter_firmware_versions,
                 )
-                pid_sequence = await _setup_pid(
-                    plant_index=plant_index,
-                    device=device,
-                    plant=plant,
-                    seen_serial_numbers=seen_serial_numbers,
-                    modbus_client=modbus,
-                    config=config,
-                    protocol_version=plant.protocol_version,
-                    sequence_start=pid_sequence,
-                    total_count=len(device.pid) if device.pid else 0,
-                    inverter_firmware_versions=inverter_firmware_versions,
-                )
-                pss_sequence = await _setup_pss(
-                    plant_index=plant_index,
-                    device=device,
-                    plant=plant,
-                    seen_serial_numbers=seen_serial_numbers,
-                    modbus_client=modbus,
-                    config=config,
-                    protocol_version=plant.protocol_version,
-                    sequence_start=pss_sequence,
-                    total_count=len(device.pss) if device.pss else 0,
-                    inverter_firmware_versions=inverter_firmware_versions,
-                )
-
                 # Finalise cross-device sensor bindings now that all inverters and chargers are registered
                 bind_cross_device_sensors(plant_index)
 
@@ -456,108 +420,6 @@ async def _setup_dc_chargers(
                 continue
 
             logger.error(f"Failed to initialize DC charger at address {device_address}; skipping: {exc}")
-
-    if skipped_due_to_outage:
-        _schedule_restart_on_grid_restore(device, plant_index)
-
-    return sequence_number
-
-
-async def _setup_pid(
-    plant_index: int,
-    device,
-    plant: PowerPlant,
-    seen_serial_numbers: set[str],
-    modbus_client: ModbusClient,
-    config: ThreadConfig,
-    protocol_version: ProtocolVersion | None,
-    sequence_start: int,
-    total_count: int,
-    inverter_firmware_versions: Mapping[int, str] | None = None,
-) -> int:
-    if not device.pid:
-        return sequence_start
-
-    if protocol_version is not None and protocol_version < ProtocolVersion.V2_9:
-        logger.warning(f"PID devices are not supported on Sigenergy Modbus ProtocolVersion V{protocol_version.value} - skipping PID device creation for modbus://{device.host}:{device.port}")
-        return sequence_start
-
-    sequence_number = sequence_start
-    skipped_due_to_outage = False
-    for device_address in device.pid:  # type: ignore[reportGeneralTypeIssues]
-        sequence_number += 1
-        try:
-            pid = await make_pid(
-                plant_index=plant_index,
-                modbus_client=modbus_client,
-                device_address=device_address,
-                plant=plant,
-                seen_serial_numbers=seen_serial_numbers,
-                sequence_number=sequence_number,
-                total_count=total_count,
-            )
-            if pid is not None:
-                config.add_device(pid)
-                await validate_publishable_sensors(modbus_client, pid, inverter_firmware_versions)
-        except (TimeoutError, ModbusException, ValueError, OSError, RuntimeError) as exc:
-            is_outage = await _is_grid_outage(plant_index, modbus_client)
-            if is_outage is True:
-                logger.warning(f"PID device at address {device_address} initialization failed during grid outage; skipping this startup pass so other devices continue: {exc}")
-                skipped_due_to_outage = True
-                continue
-
-            logger.error(f"Failed to initialize PID device at address {device_address}; skipping: {exc}")
-
-    if skipped_due_to_outage:
-        _schedule_restart_on_grid_restore(device, plant_index)
-
-    return sequence_number
-
-
-async def _setup_pss(
-    plant_index: int,
-    device,
-    plant: PowerPlant,
-    seen_serial_numbers: set[str],
-    modbus_client: ModbusClient,
-    config: ThreadConfig,
-    protocol_version: ProtocolVersion | None,
-    sequence_start: int,
-    total_count: int,
-    inverter_firmware_versions: Mapping[int, str] | None = None,
-) -> int:
-    if not device.pss:
-        return sequence_start
-
-    if protocol_version is not None and protocol_version < ProtocolVersion.V2_9:
-        logger.warning(f"PSS devices are not supported on Sigenergy Modbus ProtocolVersion V{protocol_version.value} - skipping PSS device creation for modbus://{device.host}:{device.port}")
-        return sequence_start
-
-    sequence_number = sequence_start
-    skipped_due_to_outage = False
-    for device_address in device.pss:  # type: ignore[reportGeneralTypeIssues]
-        sequence_number += 1
-        try:
-            pss = await make_pss(
-                plant_index=plant_index,
-                device_address=device_address,
-                modbus_client=modbus_client,
-                plant=plant,
-                seen_serial_numbers=seen_serial_numbers,
-                sequence_number=sequence_number,
-                total_count=total_count,
-            )
-            if pss is not None:
-                config.add_device(pss)
-                await validate_publishable_sensors(modbus_client, pss, inverter_firmware_versions)
-        except (TimeoutError, ModbusException, ValueError, OSError, RuntimeError) as exc:
-            is_outage = await _is_grid_outage(plant_index, modbus_client)
-            if is_outage is True:
-                logger.warning(f"PSS device at address {device_address} initialization failed during grid outage; skipping this startup pass so other devices continue: {exc}")
-                skipped_due_to_outage = True
-                continue
-
-            logger.error(f"Failed to initialize PSS device at address {device_address}; skipping: {exc}")
 
     if skipped_due_to_outage:
         _schedule_restart_on_grid_restore(device, plant_index)

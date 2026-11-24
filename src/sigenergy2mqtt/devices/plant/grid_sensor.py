@@ -40,6 +40,17 @@ class GridSensor(ModbusDevice):
             self._add_sensor(ro.GridPhaseActivePower(self.plant_index, "C"))
             self._add_sensor(ro.GridPhaseReactivePower(self.plant_index, "C"))
 
+        # V2.10 grid sensor phase current/voltage (30292~30302): only SigenStor and Sigen Hybrid support
+        # (protocol version and device type filtering is applied by _add_sensor)
+        self._add_sensor(ro.GridPhaseCurrent(self.plant_index, "A"))
+        self._add_sensor(ro.GridPhaseVoltage(self.plant_index, "A"))
+        if power_phases > 1:
+            self._add_sensor(ro.GridPhaseCurrent(self.plant_index, "B"))
+            self._add_sensor(ro.GridPhaseVoltage(self.plant_index, "B"))
+        if power_phases > 2:
+            self._add_sensor(ro.GridPhaseCurrent(self.plant_index, "C"))
+            self._add_sensor(ro.GridPhaseVoltage(self.plant_index, "C"))
+
         import_energy = ro.PlantTotalImportedEnergy(self.plant_index)
         export_energy = ro.PlantTotalExportedEnergy(self.plant_index)
         self._add_sensor(import_energy)

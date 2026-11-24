@@ -82,7 +82,7 @@ DEVICE_BASE_CLASSES: frozenset[str] = CLASSES_WITH_TYPE_ARG | {"Device"}
 
 #: Classes that should NEVER have automatic suffixes appended because they are
 #: already uniquely identified by their hardware IDs.
-SKIP_SUFFIX_CLASSES: frozenset[str] = frozenset({"Inverter", "ESS", "PVString", "PID", "PSS"})
+SKIP_SUFFIX_CLASSES: frozenset[str] = frozenset({"Inverter", "ESS", "PVString"})
 
 #: Classes that are infrastructure/base devices – their ``name`` field is
 #: typically dynamic and should not be emitted as a static translation.

@@ -205,20 +205,6 @@ modbus:
     #                 device id. If do not have an DC Charger, 
     #                 use [ ].
     dc-chargers: [ ]
-    # pss
-    #   default: [ ]
-    #   added: 2026.6.4
-    #   description:  The array of device ids to access the PSS 
-    #                 registers. This is normally the same as the inverter
-    #                 device id. If do not have a PSS device, use [ ].
-    pss: [ ] 
-    # pid
-    #   default: [ ]
-    #   added: 2026.6.4
-    #   description:  The array of device ids to access the PID 
-    #                 registers. This is normally the same as the inverter
-    #                 device id. If do not have a PID device, use [ ].
-    pid: [ ]
     # log-level
     #   default: WARNING
     #   description:  The Modbus interface logging level. Must be one of:

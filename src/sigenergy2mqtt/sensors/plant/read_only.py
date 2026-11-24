@@ -11,6 +11,7 @@ from sigenergy2mqtt.common import (
     PVInverter,
     StateClass,
     UnitOfApparentPower,
+    UnitOfElectricCurrent,
     UnitOfElectricPotential,
     UnitOfEnergy,
     UnitOfFrequency,
@@ -927,6 +928,112 @@ class GridPhaseReactivePower(ReadOnlySensor, HybridInverter, PVInverter):
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Data collected from grid sensor at grid to system checkpoint"
+        return attributes
+
+
+class Reserved30287(ReservedSensor, HybridInverter):
+    ADDRESS = 30287
+
+    def __init__(self, plant_index: int):
+        super().__init__(
+            name="Reserved",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_reserved_30287",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
+            address=self.ADDRESS,
+            count=5,
+            data_type=ModbusDataType.STRING,
+            scan_interval=ScanInterval.low(plant_index),
+            unit=None,
+            device_class=None,
+            state_class=None,
+            icon="mdi:comment-question",
+            gain=None,
+            precision=None,
+            protocol_version=ProtocolVersion.V2_10,
+        )
+
+
+class GridPhaseCurrent(ReadOnlySensor, HybridInverter):
+    PHASE_A_ADDRESS = 30292
+    PHASE_B_ADDRESS = 30294
+    PHASE_C_ADDRESS = 30296
+
+    def __init__(self, plant_index: int, phase: str):
+        match phase:
+            case "A":
+                address = GridPhaseCurrent.PHASE_A_ADDRESS
+            case "B":
+                address = GridPhaseCurrent.PHASE_B_ADDRESS
+            case "C":
+                address = GridPhaseCurrent.PHASE_C_ADDRESS
+            case _:
+                raise ValueError("Phase must be 'A', 'B', or 'C'")
+        super().__init__(
+            name=f"Phase {phase} Current",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_grid_phase_{phase.lower()}_current",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
+            address=address,
+            count=2,
+            data_type=ModbusDataType.INT32,
+            scan_interval=ScanInterval.medium(plant_index),
+            unit=UnitOfElectricCurrent.AMPERE,
+            device_class=DeviceClass.CURRENT,
+            state_class=StateClass.MEASUREMENT,
+            icon="mdi:current-ac",
+            gain=100,
+            precision=2,
+            protocol_version=ProtocolVersion.V2_10,
+            phase=phase,
+        )
+
+    def get_attributes(self) -> dict[str, float | int | str]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Data collected from grid sensor at grid to system checkpoint. Only SigenStor and Sigen Hybrid support"
+        return attributes
+
+
+class GridPhaseVoltage(ReadOnlySensor, HybridInverter):
+    PHASE_A_ADDRESS = 30298
+    PHASE_B_ADDRESS = 30300
+    PHASE_C_ADDRESS = 30302
+
+    def __init__(self, plant_index: int, phase: str):
+        match phase:
+            case "A":
+                address = GridPhaseVoltage.PHASE_A_ADDRESS
+            case "B":
+                address = GridPhaseVoltage.PHASE_B_ADDRESS
+            case "C":
+                address = GridPhaseVoltage.PHASE_C_ADDRESS
+            case _:
+                raise ValueError("Phase must be 'A', 'B', or 'C'")
+        super().__init__(
+            name=f"Phase {phase} Voltage",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_grid_phase_{phase.lower()}_voltage",
+            input_type=InputType.INPUT,
+            plant_index=plant_index,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
+            address=address,
+            count=2,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=ScanInterval.medium(plant_index),
+            unit=UnitOfElectricPotential.VOLT,
+            device_class=DeviceClass.VOLTAGE,
+            state_class=StateClass.MEASUREMENT,
+            icon="mdi:flash",
+            gain=100,
+            precision=1,
+            protocol_version=ProtocolVersion.V2_10,
+            phase=phase,
+        )
+
+    def get_attributes(self) -> dict[str, float | int | str]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Data collected from grid sensor at grid to system checkpoint. Only SigenStor and Sigen Hybrid support"
         return attributes
 
 

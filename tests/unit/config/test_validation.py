@@ -144,7 +144,8 @@ class TestConfigValidation:
             Settings.validate_networks(["invalid_network"])
 
     def test_settings_validate_excludes_str_and_invalid(self):
-        assert Settings.validate_excludes("PID, PSS") == ["PID", "PSS"]
+        assert Settings.validate_excludes("ACCharger, DCCharger") == ["ACCharger", "DCCharger"]
+        assert Settings.validate_excludes(None) == []
         with pytest.raises(ValueError, match="Invalid Device class name"):
             Settings.validate_excludes(["InvalidClass"])
 

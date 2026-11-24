@@ -10,6 +10,8 @@ from sigenergy2mqtt.common import ScanIntervalDefault
 from sigenergy2mqtt.config.models._base import _SUB
 from sigenergy2mqtt.config.validators import validate_log_level
 
+logger = logging.getLogger(__name__)
+
 
 class RegisterAccess(BaseModel):
     model_config = _SUB
@@ -40,8 +42,6 @@ class ModbusConfig(BaseModel):
     inverters: list[int] = Field(default_factory=list, alias="inverters")
     ac_chargers: list[int] = Field(default_factory=list, alias="ac-chargers")
     dc_chargers: list[int] = Field(default_factory=list, alias="dc-chargers")
-    pss: list[int] = Field(default_factory=list, alias="pss")
-    pid: list[int] = Field(default_factory=list, alias="pid")
     log_level: int = Field(logging.WARNING, alias="log-level")
     log_skipped: bool = Field(False, alias="log-skipped")
     _validate_log_level = field_validator("log_level", mode="before")(validate_log_level)
@@ -57,6 +57,12 @@ class ModbusConfig(BaseModel):
         if not isinstance(data, dict):
             return data
         data = dict(data)
+
+        # ── Removed device types (Sigenergy Modbus Protocol V2.10) ───────────
+        for removed in ("pss", "pid"):
+            if removed in data:
+                data.pop(removed)
+                logger.warning("Ignoring modbus '%s' configuration: %s devices are no longer supported (removed from Sigenergy Modbus Protocol V2.10)", removed, removed.upper())
 
         # ── Register access fields ───────────────────────────────────────────
         raw_reg = data.get("registers")
@@ -109,6 +115,6 @@ class ModbusConfig(BaseModel):
     @model_validator(mode="after")
     def default_inverters(self) -> ModbusConfig:
         """Default to inverter device ID 1 when nothing is specified."""
-        if self.host and not self.inverters and not self.ac_chargers and not self.dc_chargers and not self.pid and not self.pss:
+        if self.host and not self.inverters and not self.ac_chargers and not self.dc_chargers:
             self.inverters = [1]
         return self

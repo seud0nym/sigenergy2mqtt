@@ -44,8 +44,6 @@ usage: python3 -m sigenergy2mqtt [-h] [-c [SIGENERGY2MQTT_CONFIG]]
                                  [--modbus-inverter-device-id [SIGENERGY2MQTT_MODBUS_INVERTER_DEVICE_ID ...]]
                                  [--modbus-accharger-device-id [SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID ...]]
                                  [--modbus-dccharger-device-id [SIGENERGY2MQTT_MODBUS_DCCHARGER_DEVICE_ID ...]]
-                                 [--modbus-pss-device-id [SIGENERGY2MQTT_MODBUS_PSS_DEVICE_ID ...]]
-                                 [--modbus-pid-device-id [SIGENERGY2MQTT_MODBUS_PID_DEVICE_ID ...]]
                                  [--modbus-readonly] [--modbus-no-remote-ems]
                                  [--modbus-timeout [SIGENERGY2MQTT_MODBUS_TIMEOUT]]
                                  [--modbus-retries [SIGENERGY2MQTT_MODBUS_RETRIES]]
@@ -283,8 +281,8 @@ options:
                         The default is 0.
   --modbus-auto-discovery-exclude [SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_EXCLUDE]
                         A comma-separated list of Device class names to be
-                        excluded from auto-discovery. The defaults is
-                        'PID,PSS'.
+                        excluded from auto-discovery. By default, no devices
+                        are excluded.
   --modbus-auto-discovery-networks [SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_NETWORKS]
                         A comma-separated list of IPv4 networks in CIDR
                         notation to scan during auto-discovery (e.g.
@@ -309,12 +307,6 @@ options:
   --modbus-dccharger-device-id [SIGENERGY2MQTT_MODBUS_DCCHARGER_DEVICE_ID ...]
                         The Sigenergy DC Charger Modbus Device ID. Multiple
                         device IDS may be specified, separated by commas.
-  --modbus-pss-device-id [SIGENERGY2MQTT_MODBUS_PSS_DEVICE_ID ...]
-                        The Sigenergy PSS Modbus Device ID. Multiple device
-                        IDS may be specified, separated by commas.
-  --modbus-pid-device-id [SIGENERGY2MQTT_MODBUS_PID_DEVICE_ID ...]
-                        The Sigenergy PID Modbus Device ID. Multiple device
-                        IDS may be specified, separated by commas.
   --modbus-readonly     Only publish read-only sensors to MQTT. Neither read-
                         write or write-only sensors will be published if
                         specified.

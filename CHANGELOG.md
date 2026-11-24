@@ -1,6 +1,24 @@
 <!-- git log [since tag]..HEAD --oneline -->
 # Changelog 
 
+## [Unreleased]
+
+### Added
+
+- Added support for Sigenergy Modbus Protocol V2.10 (2026-11-03), which is detected automatically
+- Added Phase A/B/C Current and Phase A/B/C Voltage sensors to the Grid Sensor device, measured at the grid sensor (registers 30292-30302). Only SigenStor and Sigen Hybrid systems support these, so they are not published for PV inverter plants
+- Added the Reactive Power Regulation Gradient setting (register 40160), the percentage of rated power adjusted per second for reactive power
+- Added the Remote EMS Power Limit Global Enable switch (register 40162, hybrid inverter plants only). It is hidden when `no-remote-ems` is set, like the Remote EMS switch
+
+### Changed
+
+- On Modbus Protocol V2.10 systems, Max Charging Limit, Max Discharging Limit and PV Max Power Limit are now always available and writable, whatever the Remote EMS settings. Sigenergy applies them when Remote EMS Power Limit Global Enable is on, or when the EMS Work Mode is Remote EMS; otherwise the values are kept but not applied. On earlier protocol versions they are still only available when Remote EMS is enabled and in the matching Remote EMS control mode (firmware before SPC113)
+- The `modbus-auto-discovery-exclude` option now excludes nothing by default. `PID` and `PSS` are no longer valid values; they are ignored with a warning
+
+### Removed
+
+- Removed the PSS and PID devices, which Sigenergy has removed from Modbus Protocol V2.10. These were commercial products. The `--modbus-pss-device-id` and `--modbus-pid-device-id` command line options have been removed (using them is now an error), and the `SIGENERGY2MQTT_MODBUS_PSS_DEVICE_ID`/`SIGENERGY2MQTT_MODBUS_PID_DEVICE_ID` environment variables and the `pss`/`pid` YAML keys are ignored with a warning. Auto-discovery no longer probes for PSS or PID devices
+
 ## [2026.11.23b2] - 2026-11-23
 
 ### Added

@@ -61,8 +61,6 @@ from sigenergy2mqtt.config import (
 )
 from sigenergy2mqtt.config.models import ModbusConfig
 from sigenergy2mqtt.devices import (
-    PID,
-    PSS,
     ACCharger,
     DCCharger,
     Device,
@@ -107,12 +105,6 @@ from sigenergy2mqtt.sensors.inverter.read_write import (
     ReservedInverterRemoteEMSDispatch,
 )
 from sigenergy2mqtt.sensors.metrics import Started
-from sigenergy2mqtt.sensors.pid.read_only import (
-    PIDMachineFirmwareVersion,
-    PIDModelType,
-    PIDSerialNumber,
-)
-from sigenergy2mqtt.sensors.pid.read_write import PIDStartStop
 from sigenergy2mqtt.sensors.plant.ess_preheating_read_write import (
     ESSPreHeatingEnable,
     ESSPreHeatingTOUTime,
@@ -133,8 +125,6 @@ from sigenergy2mqtt.sensors.plant.read_write import (
     PlantStatus,
     ReactivePowerFixedAdjustmentTargetValue,
 )
-from sigenergy2mqtt.sensors.pss.read_only import PSSModelType, PSSSerialNumber
-from sigenergy2mqtt.sensors.pss.read_write import PSSMVCabinetG3CircuitBreakerSwitchOn
 
 logger = logging.getLogger(__name__)
 
@@ -244,30 +234,6 @@ class DummyInverterModbusClient(DummyModbusClient):
             rated_current.address: self.convert_to_registers(rated_current.state2raw(RATED_CURRENT), rated_current.data_type),
             dc_charger_rated_charging_power.address: self.convert_to_registers(dc_charger_rated_charging_power.state2raw(DC_RATED_CHARGING_POWER), dc_charger_rated_charging_power.data_type),
             dc_charger_rated_discharging_power.address: self.convert_to_registers(dc_charger_rated_discharging_power.state2raw(DC_RATED_DISCHARGING_POWER), dc_charger_rated_discharging_power.data_type),
-        })
-
-
-class DummyPIDModbusClient(DummyModbusClient):
-    def __init__(self, model_id: str, serial_number: str, firmware_version: str):
-        model = PIDModelType(0, 1)
-        serial = PIDSerialNumber(0, 1)
-        fw = PIDMachineFirmwareVersion(0, 1)
-
-        super().__init__({  # convert_to_registers will create the correct number of registers based on data_type, so we can ignore the count parameter in the read methods
-            model.address: self.convert_to_registers(model_id, model.data_type),
-            serial.address: self.convert_to_registers(serial_number, serial.data_type),
-            fw.address: self.convert_to_registers(firmware_version, serial.data_type),
-        })
-
-
-class DummyPSSModbusClient(DummyModbusClient):
-    def __init__(self, model_id: str, serial_number: str):
-        model = PSSModelType(0, 1)
-        serial = PSSSerialNumber(0, 1)
-
-        super().__init__({  # convert_to_registers will create the correct number of registers based on data_type, so we can ignore the count parameter in the read methods
-            model.address: self.convert_to_registers(model_id, model.data_type),
-            serial.address: self.convert_to_registers(serial_number, serial.data_type),
         })
 
 
@@ -515,13 +481,6 @@ async def get_sensor_instances(
     dc_charger = await DCCharger.create(plant_index, dc_charger_device_address, protocol_version, hi_modbus_client)
     ac_charger = await ACCharger.create(plant_index, ac_charger_device_address, protocol_version, hi_modbus_client)
 
-    if protocol_version >= ProtocolVersion.V2_9:
-        pid = await PID.create(plant_index, 241, protocol_version, DummyPIDModbusClient("Sigen PID 1.0", "PID123A45BP678", "V100R001C00SPC113"))
-        pss = await PSS.create(plant_index, 242, protocol_version, DummyPSSModbusClient("Sigen PSS 1.0", "PSS123A45BP678"))
-    else:
-        pid = None
-        pss = None
-
     from tests.utils.modbus_test_server import CloudApiTestServer
 
     cloud_server = CloudApiTestServer(None, None)
@@ -642,7 +601,7 @@ async def get_sensor_instances(
                 add_sensor_instance(alarm)
 
     find_concrete_classes(Sensor)
-    for parent in [MetricsService(plant.protocol_version), SettingsService(), plant, hybrid_inverter, dc_charger, ac_charger, pv_inverter, pid, pss, cloud_control]:
+    for parent in [MetricsService(plant.protocol_version), SettingsService(), plant, hybrid_inverter, dc_charger, ac_charger, pv_inverter, cloud_control]:
         if parent is None:
             continue
         devices: list[Device] = [parent]
@@ -665,15 +624,11 @@ async def get_sensor_instances(
                         RatedGridVoltage.ADDRESS,  # 31500
                         DCChargerVehicleBatteryVoltage.ADDRESS,  # 32000
                         ACChargerRunningState.ADDRESS,  # 32000
-                        PSSModelType.ADDRESS,  # 32500
-                        PIDModelType.ADDRESS,  # 33000
                         PlantStatus.ADDRESS,  # 40000
                         InverterStatus.ADDRESS,  # 40500
                         DCChargerStatus.ADDRESS,  # 41000
                         ReservedInverterRemoteEMSDispatch.ADDRESS,  # 41500
                         ACChargerStatus.ADDRESS,  # 42000
-                        PSSMVCabinetG3CircuitBreakerSwitchOn.ADDRESS,  # 42500
-                        PIDStartStop.ADDRESS,  # 43000
                         ESSPreHeatingEnable.ADDRESS,  # 50000
                     )
                     and last_address + last_count < address
