@@ -2470,7 +2470,7 @@ cli:
   SIGENERGY2MQTT_MQTT_USERNAME:
     help: Een geldige gebruikersnaam voor de MQTT-broker
   SIGENERGY2MQTT_NO_EMS_MODE_CHECK:
-    help: 'Schakel validatie uit die ESS Max Laden/Ontladen en PV Max Vermogen limieten uitschakelt wanneer de Externe EMS Regelmodus niet op Commando Laden/Ontladen staat.'
+    help: 'Schakel de validatie uit die de limieten voor ESS Max Charging/Discharging en PV Max Power uitschakelt wanneer de Remote EMS-besturingsmodus niet op Command Charging/Discharging staat. Deze optie wordt genegeerd wanneer deze limieten niet afhankelijk zijn van Remote EMS: bij firmwareversies SPC113 tot en met SPC115, of wanneer de firmware ‘Remote EMS Power Limit Global Enable’ (Modbus-protocol V2.10) ondersteunt.'
   SIGENERGY2MQTT_NO_METRICS:
     help: 'Verouderd: het publiceren van meetwaarden is standaard uitgeschakeld. Gebruik --publish-metrics om dit in te schakelen.'
   SIGENERGY2MQTT_PERSISTENCE_CACHE_WARMUP_TIMEOUT:
