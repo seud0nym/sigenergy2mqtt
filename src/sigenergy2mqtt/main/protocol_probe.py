@@ -5,13 +5,17 @@ from pymodbus.exceptions import ModbusException
 from sigenergy2mqtt.common import Constants, InputType, ProtocolVersion
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.sensors.plant.read_only import (
+    GridPhaseCurrent,
     PlantBatterySoH,
     PlantPVTotalGenerationToday,
     ThirdPartyPVPower,
     TotalLoadDailyConsumption,
     TotalLoadPower,
 )
-from sigenergy2mqtt.sensors.plant.read_write import ReactivePowerRegulationGradient
+from sigenergy2mqtt.sensors.plant.read_write import (
+    ReactivePowerRegulationGradient,
+    RemoteEMSPowerLimitGlobalEnable,
+)
 
 from .modbus_helpers import get_modbus_url, read_registers
 
@@ -26,10 +30,14 @@ async def probe_protocol(modbus_client: ModbusClient) -> ProtocolVersion:
     """
     # Tuples of (register, count, input_type, protocol_version) — registers
     # unique to each version, listed from newest to oldest.
-    # V2.10 is probed with a holding register because its new input registers
-    # (grid sensor phase current/voltage) are only supported by hybrid inverters.
+    # A version may have several candidates; any one succeeding selects it.
+    # V2.10 registers may be rolled out by firmware independently, so any of the
+    # new registers is accepted. The grid sensor phase current (30292) is only
+    # supported by hybrid inverters, so the holding registers are probed first.
     candidates = [
         (ReactivePowerRegulationGradient.ADDRESS, 2, InputType.HOLDING, ProtocolVersion.V2_10),
+        (RemoteEMSPowerLimitGlobalEnable.ADDRESS, 1, InputType.HOLDING, ProtocolVersion.V2_10),
+        (GridPhaseCurrent.PHASE_A_ADDRESS, 2, InputType.INPUT, ProtocolVersion.V2_10),
         (PlantPVTotalGenerationToday.ADDRESS, 2, InputType.INPUT, ProtocolVersion.V2_9),
         (TotalLoadPower.ADDRESS, 2, InputType.INPUT, ProtocolVersion.V2_8),
         (ThirdPartyPVPower.ADDRESS, 2, InputType.INPUT, ProtocolVersion.V2_7),

@@ -101,11 +101,34 @@ async def test_probe_protocol_detects_v2_10_with_holding_register(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_probe_protocol_falls_back_to_v2_9(monkeypatch):
+    v2_10_registers = {ReactivePowerRegulationGradient.ADDRESS, RemoteEMSPowerLimitGlobalEnable.ADDRESS, GridPhaseCurrent.PHASE_A_ADDRESS}
+    calls = []
+
     async def fake_read(_client, register, count, device_id, input_type):
-        return _RR(error=register == ReactivePowerRegulationGradient.ADDRESS)
+        calls.append(register)
+        return _RR(error=register in v2_10_registers)
 
     monkeypatch.setattr("sigenergy2mqtt.main.protocol_probe.read_registers", fake_read)
     assert await probe_protocol(AsyncMock()) is ProtocolVersion.V2_9
+    assert set(calls[:3]) == v2_10_registers
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("supported", "input_type"),
+    [(RemoteEMSPowerLimitGlobalEnable.ADDRESS, InputType.HOLDING), (GridPhaseCurrent.PHASE_A_ADDRESS, InputType.INPUT)],
+)
+async def test_probe_protocol_detects_v2_10_without_40160(monkeypatch, supported, input_type):
+    """Firmware may serve only some of the V2.10 registers."""
+    seen = {}
+
+    async def fake_read(_client, register, count, device_id, input_type):
+        seen[register] = input_type
+        return _RR(error=register != supported)
+
+    monkeypatch.setattr("sigenergy2mqtt.main.protocol_probe.read_registers", fake_read)
+    assert await probe_protocol(AsyncMock()) is ProtocolVersion.V2_10
+    assert seen[supported] == input_type
 
 
 # ---------------------------------------------------------------------------
