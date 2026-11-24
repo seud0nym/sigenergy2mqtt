@@ -28,6 +28,7 @@ from sigenergy2mqtt.sensors.plant.read_only import SystemTimeZone
 from sigenergy2mqtt.sensors.plant.read_write import (
     GridCodeLVRT,
     IndependentPhasePowerControl,
+    RemoteEMSPowerLimitGlobalEnable,
 )
 
 from .modbus_helpers import get_modbus_url, get_state
@@ -99,6 +100,7 @@ async def make_plant_and_inverter(plant_index: int, modbus_client: ModbusClient,
 
     device_type.has_independent_phase_power_control_interface = await probe_optional_interface(modbus_client, IndependentPhasePowerControl.ADDRESS, "Independent Phase Control Interface")
     device_type.has_grid_code_interface = await probe_optional_interface(modbus_client, GridCodeLVRT.ADDRESS, "Grid Code Interface")
+    device_type.has_remote_ems_power_limit_global_enable = await probe_optional_interface(modbus_client, RemoteEMSPowerLimitGlobalEnable.ADDRESS, "Remote EMS Power Limit Global Enable")
 
     try:
         sys_tz_offset = await get_state(SystemTimeZone(plant_index), modbus_client, "plant", raw=True)

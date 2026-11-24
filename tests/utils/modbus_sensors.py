@@ -466,7 +466,7 @@ async def get_sensor_instances(
     active_config.cloud.accept_unofficial_api_risk = True
     active_config.cloud.discover_inverters = True
 
-    hi_device_type = HybridInverter(has_grid_code_interface=True, has_independent_phase_power_control_interface=True)
+    hi_device_type = HybridInverter(has_grid_code_interface=True, has_independent_phase_power_control_interface=True, has_remote_ems_power_limit_global_enable=True)
     hi_modbus_client = DummyInverterModbusClient(HYBRID_INVERTER_MODEL, HYBRID_INVERTER_SERIAL)
     pv_device_type = PVInverter(has_grid_code_interface=True, has_independent_phase_power_control_interface=True)
     pv_modbus_client = DummyInverterModbusClient(PV_INVERTER_MODEL, PV_INVERTER_SERIAL)

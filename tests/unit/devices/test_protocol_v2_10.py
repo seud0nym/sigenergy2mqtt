@@ -322,3 +322,26 @@ def test_simulator_grid_outage_zeroes_and_restores_grid_sensor_registers():
         ]
 
     asyncio.run(_run())
+
+
+@pytest.mark.asyncio
+async def test_power_limits_use_v2_9_rules_when_v2_10_firmware_lacks_global_enable(monkeypatch):
+    """V2.10 can be detected from other registers; without 40162 the V2.9 gating still applies."""
+    from sigenergy2mqtt.common import HybridInverter
+    from tests.utils import modbus_sensors
+
+    def hybrid_without_global_enable(**kwargs):
+        kwargs["has_remote_ems_power_limit_global_enable"] = False
+        return HybridInverter(**kwargs)
+
+    monkeypatch.setattr(modbus_sensors, "HybridInverter", hybrid_without_global_enable)
+    with _swap_active_config(Config()):
+        sensors = await get_sensor_instances(protocol_version=ProtocolVersion.V2_10)
+        assert _by_class(sensors, RemoteEMSPowerLimitGlobalEnable) == []
+        assert len(_by_class(sensors, GridPhaseCurrent)) == 3  # Other V2.10 sensors are unaffected
+        for cls in (MaxChargingLimit, MaxDischargingLimit, PVMaxPowerLimit):
+            (limit,) = _by_class(sensors, cls)
+            assert isinstance(limit._availability_control_sensor, RemoteEMS), cls.__name__
+            assert limit._remote_ems_mode is not None, cls.__name__
+            assert limit._global_enable is None, cls.__name__
+            assert "40162" not in limit.get_attributes()["comment"], cls.__name__

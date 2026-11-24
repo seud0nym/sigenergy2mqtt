@@ -7,6 +7,9 @@ class DeviceType:
         self.has_independent_phase_power_control_interface: bool = kwargs.pop("has_independent_phase_power_control_interface", False)
         """Grid code interface (registers 40051~40068), only SigenStor, Sigen Hybrid support"""
         self.has_grid_code_interface: bool = kwargs.pop("has_grid_code_interface", False)
+        """Remote EMS power limit global enable (register 40162, protocol V2.10). When present, the ESS max charging/discharging
+        limits and PV max power limit (40032~40036) take effect if it is enabled or the EMS work mode is Remote EMS."""
+        self.has_remote_ems_power_limit_global_enable: bool = kwargs.pop("has_remote_ems_power_limit_global_enable", False)
         super().__init__(**kwargs)
 
 

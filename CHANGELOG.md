@@ -5,14 +5,14 @@
 
 ### Added
 
-- Added support for Sigenergy Modbus Protocol V2.10 (2026-11-03), which is detected automatically
+- Added support for Sigenergy Modbus Protocol V2.10 (2026-11-03), which is detected automatically from any of its new registers, as firmware may not support them all (for example, register 40160)
 - Added Phase A/B/C Current and Phase A/B/C Voltage sensors to the Grid Sensor device, measured at the grid sensor (registers 30292-30302). Only SigenStor and Sigen Hybrid systems support these, so they are not published for PV inverter plants
 - Added the Reactive Power Regulation Gradient setting (register 40160), the percentage of rated power adjusted per second for reactive power
 - Added the Remote EMS Power Limit Global Enable switch (register 40162, hybrid inverter plants only). It is hidden when `no-remote-ems` is set, like the Remote EMS switch
 
 ### Changed
 
-- On Modbus Protocol V2.10 systems, Max Charging Limit, Max Discharging Limit and PV Max Power Limit are now always available and writable, whatever the Remote EMS settings. Sigenergy applies them when Remote EMS Power Limit Global Enable is on, or when the EMS Work Mode is Remote EMS; otherwise the values are kept but not applied. On earlier protocol versions they are still only available when Remote EMS is enabled and in the matching Remote EMS control mode (firmware before SPC113)
+- On Modbus Protocol V2.10 systems whose firmware supports the Remote EMS Power Limit Global Enable register, Max Charging Limit, Max Discharging Limit and PV Max Power Limit are now always available and writable, whatever the Remote EMS settings. Sigenergy applies them when Remote EMS Power Limit Global Enable is on, or when the EMS Work Mode is Remote EMS; otherwise the values are kept but not applied. On earlier protocol versions, or when the firmware does not support that register, they are still only available when Remote EMS is enabled and in the matching Remote EMS control mode (firmware before SPC113)
 - The `modbus-auto-discovery-exclude` option now excludes nothing by default. `PID` and `PSS` are no longer valid values; they are ignored with a warning
 
 ### Removed
