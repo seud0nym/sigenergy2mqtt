@@ -717,7 +717,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_max_charging_limit/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_max_charging_limit/state</td></tr>
 <tr><td>Source</td><td>Modbus Registers 40032-40033</td></tr>
-<tr><td>Comment</td><td>The maximum charging power of the ESS in the plant must not exceed the value configured in this sensor. Range: [0, Rated ESS charging power]. Takes effect when Remote EMS control mode (40031) is set to Command Charging.<br><i>NOTE: For Firmware SPC113 and later, available globally and not restricted by Remote EMS Control Mode.</i></td></tr>
+<tr><td>Comment</td><td>The maximum charging power of the ESS in the plant must not exceed the value configured in this sensor. Range: [0, Rated ESS charging power]. Takes effect when Remote EMS Power Limit Global Enable (40162) is enabled, or when the EMS Work Mode (30003) is Remote EMS.<br><i>NOTE: For Firmware SPC113 and later, available globally and not restricted by Remote EMS Control Mode.</i></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 <tr><td>Sanity&nbsp;Check</td><td>The value must be between 0.0 kW and 4294967.29 kW (0 ≦ raw value ≦ 4294967295)</td></tr>
 </table>
@@ -731,7 +731,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_max_discharging_limit/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_max_discharging_limit/state</td></tr>
 <tr><td>Source</td><td>Modbus Registers 40034-40035</td></tr>
-<tr><td>Comment</td><td>The maximum discharging power of the ESS in the plant must not exceed the value configured in this sensor. Range: [0, Rated ESS discharging power]. Takes effect when Remote EMS control mode (40031) is set to Command Discharging.<br><i>NOTE: For Firmware SPC113 and later, available globally and not restricted by Remote EMS Control Mode.</i></td></tr>
+<tr><td>Comment</td><td>The maximum discharging power of the ESS in the plant must not exceed the value configured in this sensor. Range: [0, Rated ESS discharging power]. Takes effect when Remote EMS Power Limit Global Enable (40162) is enabled, or when the EMS Work Mode (30003) is Remote EMS.<br><i>NOTE: For Firmware SPC113 and later, available globally and not restricted by Remote EMS Control Mode.</i></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 <tr><td>Sanity&nbsp;Check</td><td>The value must be between 0.0 kW and 4294967.29 kW (0 ≦ raw value ≦ 4294967295)</td></tr>
 </table>
@@ -784,7 +784,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_pv_max_power_limit/state</td></tr>
 <tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_pv_max_power_limit/state</td></tr>
 <tr><td>Source</td><td>Modbus Registers 40036-40037</td></tr>
-<tr><td>Comment</td><td>The maximum output power of the PV strings in the plant must not exceed the value configured in this sensor. Takes effect when Remote EMS control mode (40031) is set to Command Charging.<br><i>NOTE: For Firmware SPC113 and later, available globally and not restricted by Remote EMS Control Mode.</i></td></tr>
+<tr><td>Comment</td><td>The maximum output power of the PV strings in the plant must not exceed the value configured in this sensor. Takes effect when Remote EMS Power Limit Global Enable (40162) is enabled, or when the EMS Work Mode (30003) is Remote EMS.<br><i>NOTE: For Firmware SPC113 and later, available globally and not restricted by Remote EMS Control Mode.</i></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 <tr><td>Sanity&nbsp;Check</td><td>The value must be between 0.0 kW and 4294967.29 kW (0 ≦ raw value ≦ 4294967295)</td></tr>
 </table>
@@ -1175,6 +1175,20 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 <tr><td>Sanity&nbsp;Check</td><td>The value must be between -1020.0 kvar and 1020.0 kvar (-1020000 ≦ raw value ≦ 1020000)</td></tr>
 </table>
+<h5><a id='sigen_0_247_40160'>Reactive Power Regulation Gradient</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>ReactivePowerRegulationGradient</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>60s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>%/s</td></tr>
+<tr><td>Gain</td><td>1000</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_plant_reactive_power_regulation_gradient</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_reactive_power_regulation_gradient/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_reactive_power_regulation_gradient/state</td></tr>
+<tr><td>Source</td><td>Modbus Registers 40160-40161</td></tr>
+<tr><td>Comment</td><td>Range:[0,5000]。Percentage of rated power adjusted per second</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.10</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0.0 %/s and 5000.0 %/s (0 ≦ raw value ≦ 5000000)</td></tr>
+</table>
 <h5><a id='sigen_0_247_40029'>Remote EMS</a></h5>
 <table>
 <tr><td>Sensor&nbsp;Class</td><td>RemoteEMS</td></tr>
@@ -1198,6 +1212,18 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='0'>PCS remote control</li><li value='1'>Standby</li><li value='2'>Maximum Self-consumption (Default)</li><li value='3'>Command Charging (Consume power from the grid first)</li><li value='4'>Command Charging (Consume power from the PV first)</li><li value='5'>Command Discharging (Output power from PV first)</li><li value='6'>Command Discharging (Output power from the battery first)</li><li value='8'>V2G (Vehicle to Grid)</li></ol></td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 <tr><td>Sanity&nbsp;Check</td><td>The value must be between 0  and 8  (0 ≦ raw value ≦ 8)</td></tr>
+</table>
+<h5><a id='sigen_0_247_40162'>Remote EMS Power Limit Global Enable</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>RemoteEMSPowerLimitGlobalEnable</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>60s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_plant_remote_ems_power_limit_global_enable</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/switch/sigen_0_247_powerplant/sigen_0_plant_remote_ems_power_limit_global_enable/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_remote_ems_power_limit_global_enable/state</td></tr>
+<tr><td>Source</td><td>Modbus Register 40162</td></tr>
+<tr><td>Comment</td><td>When enabled, Max Charging Limit (40032), Max Discharging Limit (40034) and PV Max Power Limit (40036) take effect regardless of the EMS Work Mode. When disabled, they only take effect when the EMS Work Mode (30003) is Remote EMS. Default: disabled</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.10</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0  and 1  (0 ≦ raw value ≦ 1)</td></tr>
 </table>
 <h5><a id='sigen_0_247_30051'>Running State</a></h5>
 <table>
@@ -1995,7 +2021,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <table>
 <tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_max_charging_limit/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_max_charging_limit/set</td></tr>
-<tr><td>Comment</td><td>The maximum charging power of the ESS in the plant must not exceed the value configured in this sensor. Range: [0, Rated ESS charging power]. Takes effect when Remote EMS control mode (40031) is set to Command Charging.</td></tr>
+<tr><td>Comment</td><td>The maximum charging power of the ESS in the plant must not exceed the value configured in this sensor. Range: [0, Rated ESS charging power]. Takes effect when Remote EMS Power Limit Global Enable (40162) is enabled, or when the EMS Work Mode (30003) is Remote EMS.</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>12.6</td></tr>
 <tr><td>Since&nbsp;ProtocolVersion&nbsp;Version</td><td>1.8</td></tr>
 </table>
@@ -2004,7 +2030,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <table>
 <tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_max_discharging_limit/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_max_discharging_limit/set</td></tr>
-<tr><td>Comment</td><td>The maximum discharging power of the ESS in the plant must not exceed the value configured in this sensor. Range: [0, Rated ESS discharging power]. Takes effect when Remote EMS control mode (40031) is set to Command Discharging.</td></tr>
+<tr><td>Comment</td><td>The maximum discharging power of the ESS in the plant must not exceed the value configured in this sensor. Range: [0, Rated ESS discharging power]. Takes effect when Remote EMS Power Limit Global Enable (40162) is enabled, or when the EMS Work Mode (30003) is Remote EMS.</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>13.68</td></tr>
 <tr><td>Since&nbsp;ProtocolVersion&nbsp;Version</td><td>1.8</td></tr>
 </table>
@@ -2031,7 +2057,7 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <table>
 <tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_pv_max_power_limit/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_pv_max_power_limit/set</td></tr>
-<tr><td>Comment</td><td>The maximum output power of the PV strings in the plant must not exceed the value configured in this sensor. Takes effect when Remote EMS control mode (40031) is set to Command Charging.</td></tr>
+<tr><td>Comment</td><td>The maximum output power of the PV strings in the plant must not exceed the value configured in this sensor. Takes effect when Remote EMS Power Limit Global Enable (40162) is enabled, or when the EMS Work Mode (30003) is Remote EMS.</td></tr>
 <tr><td>Maximum&nbsp;Value</td><td>4294967.295</td></tr>
 <tr><td>Since&nbsp;ProtocolVersion&nbsp;Version</td><td>1.8</td></tr>
 </table>
@@ -2193,6 +2219,15 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Maximum&nbsp;Value</td><td>60.00 * base value</td></tr>
 <tr><td>Since&nbsp;ProtocolVersion&nbsp;Version</td><td>1.8</td></tr>
 </table>
+<h5><a id='sigen_0_247_40160_set'>Reactive Power Regulation Gradient
+</a></h5>
+<table>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/number/sigen_0_247_powerplant/sigen_0_plant_reactive_power_regulation_gradient/set</td></tr>
+<tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_reactive_power_regulation_gradient/set</td></tr>
+<tr><td>Comment</td><td>Range:[0,5000]。Percentage of rated power adjusted per second</td></tr>
+<tr><td>Maximum&nbsp;Value</td><td>5000.0</td></tr>
+<tr><td>Since&nbsp;ProtocolVersion&nbsp;Version</td><td>2.10</td></tr>
+</table>
 <h5><a id='sigen_0_247_40029_set'>Remote EMS
 </a></h5>
 <table>
@@ -2208,6 +2243,14 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_remote_ems_control_mode/set</td></tr>
 <tr><td>Valid&nbsp;Values</td><td><ul><li value='0'>"PCS remote control"</li><li value='1'>"Standby"</li><li value='2'>"Maximum Self-consumption (Default)"</li><li value='3'>"Command Charging (Consume power from the grid first)"</li><li value='4'>"Command Charging (Consume power from the PV first)"</li><li value='5'>"Command Discharging (Output power from PV first)"</li><li value='6'>"Command Discharging (Output power from the battery first)"</li><li value='8'>"V2G (Vehicle to Grid)"</li></ol></td></tr>
 <tr><td>Since&nbsp;ProtocolVersion&nbsp;Version</td><td>1.8</td></tr>
+</table>
+<h5><a id='sigen_0_247_40162_set'>Remote EMS Power Limit Global Enable
+</a></h5>
+<table>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/switch/sigen_0_247_powerplant/sigen_0_plant_remote_ems_power_limit_global_enable/set</td></tr>
+<tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_remote_ems_power_limit_global_enable/set</td></tr>
+<tr><td>Comment</td><td>When enabled, Max Charging Limit (40032), Max Discharging Limit (40034) and PV Max Power Limit (40036) take effect regardless of the EMS Work Mode. When disabled, they only take effect when the EMS Work Mode (30003) is Remote EMS. Default: disabled</td></tr>
+<tr><td>Since&nbsp;ProtocolVersion&nbsp;Version</td><td>2.10</td></tr>
 </table>
 
 ### Grid Sensor
@@ -2374,6 +2417,20 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 <tr><td>Sanity&nbsp;Check</td><td>The value must be between -500.0 kW and 500.0 kW (-500000 ≦ raw value ≦ 500000)</td></tr>
 </table>
+<h5><a id='sigen_0_247_30292'>Phase A Current</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>GridPhaseCurrent</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>60s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_plant_grid_phase_a_current</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_plant_grid_phase_a_current/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_phase_a_current/state</td></tr>
+<tr><td>Source</td><td>Modbus Registers 30292-30293</td></tr>
+<tr><td>Comment</td><td>Data collected from grid sensor at grid to system checkpoint. Only SigenStor and Sigen Hybrid support</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.10</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between -21474836.47 A and 21474836.47 A (-2147483647 ≦ raw value ≦ 2147483647)</td></tr>
+</table>
 <h5><a id='sigen_0_247_30058'>Phase A Reactive Power</a></h5>
 <table>
 <tr><td>Sensor&nbsp;Class</td><td>GridPhaseReactivePower</td></tr>
@@ -2387,6 +2444,20 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Comment</td><td>Data collected from grid sensor at grid to system checkpoint</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 <tr><td>Sanity&nbsp;Check</td><td>The value must be between -2147483.65 kvar and 2147483.65 kvar (-2147483647 ≦ raw value ≦ 2147483647)</td></tr>
+</table>
+<h5><a id='sigen_0_247_30298'>Phase A Voltage</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>GridPhaseVoltage</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>60s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_plant_grid_phase_a_voltage</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_plant_grid_phase_a_voltage/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_phase_a_voltage/state</td></tr>
+<tr><td>Source</td><td>Modbus Registers 30298-30299</td></tr>
+<tr><td>Comment</td><td>Data collected from grid sensor at grid to system checkpoint. Only SigenStor and Sigen Hybrid support</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.10</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0.0 V and 42949673.0 V (0 ≦ raw value ≦ 4294967295)</td></tr>
 </table>
 <h5><a id='sigen_0_247_30054'>Phase B Active Power</a></h5>
 <table>
@@ -2402,6 +2473,20 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 <tr><td>Sanity&nbsp;Check</td><td>The value must be between -500.0 kW and 500.0 kW (-500000 ≦ raw value ≦ 500000)</td></tr>
 </table>
+<h5><a id='sigen_0_247_30294'>Phase B Current</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>GridPhaseCurrent</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>60s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_plant_grid_phase_b_current</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_plant_grid_phase_b_current/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_phase_b_current/state</td></tr>
+<tr><td>Source</td><td>Modbus Registers 30294-30295</td></tr>
+<tr><td>Comment</td><td>Data collected from grid sensor at grid to system checkpoint. Only SigenStor and Sigen Hybrid support</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.10</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between -21474836.47 A and 21474836.47 A (-2147483647 ≦ raw value ≦ 2147483647)</td></tr>
+</table>
 <h5><a id='sigen_0_247_30060'>Phase B Reactive Power</a></h5>
 <table>
 <tr><td>Sensor&nbsp;Class</td><td>GridPhaseReactivePower</td></tr>
@@ -2415,6 +2500,20 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Comment</td><td>Data collected from grid sensor at grid to system checkpoint</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 <tr><td>Sanity&nbsp;Check</td><td>The value must be between -2147483.65 kvar and 2147483.65 kvar (-2147483647 ≦ raw value ≦ 2147483647)</td></tr>
+</table>
+<h5><a id='sigen_0_247_30300'>Phase B Voltage</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>GridPhaseVoltage</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>60s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_plant_grid_phase_b_voltage</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_plant_grid_phase_b_voltage/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_phase_b_voltage/state</td></tr>
+<tr><td>Source</td><td>Modbus Registers 30300-30301</td></tr>
+<tr><td>Comment</td><td>Data collected from grid sensor at grid to system checkpoint. Only SigenStor and Sigen Hybrid support</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.10</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0.0 V and 42949673.0 V (0 ≦ raw value ≦ 4294967295)</td></tr>
 </table>
 <h5><a id='sigen_0_247_30056'>Phase C Active Power</a></h5>
 <table>
@@ -2430,6 +2529,20 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 <tr><td>Sanity&nbsp;Check</td><td>The value must be between -500.0 kW and 500.0 kW (-500000 ≦ raw value ≦ 500000)</td></tr>
 </table>
+<h5><a id='sigen_0_247_30296'>Phase C Current</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>GridPhaseCurrent</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>60s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>A</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_plant_grid_phase_c_current</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_plant_grid_phase_c_current/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_phase_c_current/state</td></tr>
+<tr><td>Source</td><td>Modbus Registers 30296-30297</td></tr>
+<tr><td>Comment</td><td>Data collected from grid sensor at grid to system checkpoint. Only SigenStor and Sigen Hybrid support</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.10</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between -21474836.47 A and 21474836.47 A (-2147483647 ≦ raw value ≦ 2147483647)</td></tr>
+</table>
 <h5><a id='sigen_0_247_30062'>Phase C Reactive Power</a></h5>
 <table>
 <tr><td>Sensor&nbsp;Class</td><td>GridPhaseReactivePower</td></tr>
@@ -2443,6 +2556,20 @@ Default Scan Intervals are shown in seconds, but may be overridden via configura
 <tr><td>Comment</td><td>Data collected from grid sensor at grid to system checkpoint</td></tr>
 <tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>1.8</td></tr>
 <tr><td>Sanity&nbsp;Check</td><td>The value must be between -2147483.65 kvar and 2147483.65 kvar (-2147483647 ≦ raw value ≦ 2147483647)</td></tr>
+</table>
+<h5><a id='sigen_0_247_30302'>Phase C Voltage</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>GridPhaseVoltage</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>60s</td></tr>
+<tr><td>Unit&nbsp;of&nbsp;Measurement</td><td>V</td></tr>
+<tr><td>Gain</td><td>100</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_plant_grid_phase_c_voltage</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/sensor/sigen_0_247_gridsensor/sigen_0_plant_grid_phase_c_voltage/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_plant_grid_phase_c_voltage/state</td></tr>
+<tr><td>Source</td><td>Modbus Registers 30302-30303</td></tr>
+<tr><td>Comment</td><td>Data collected from grid sensor at grid to system checkpoint. Only SigenStor and Sigen Hybrid support</td></tr>
+<tr><td>Since&nbsp;Protocol&nbsp;Version</td><td>2.10</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0.0 V and 42949673.0 V (0 ≦ raw value ≦ 4294967295)</td></tr>
 </table>
 <h5><a id='sigen_0_247_30007'>Reactive Power</a></h5>
 <table>
@@ -8190,8 +8317,10 @@ The attributes payload currently includes:
 <a href='#sigen_0_247_30083'>Rated Energy Capacity</a><br>
 <a href='#sigen_0_247_30033'>Reactive Power</a><br>
 <a href='#sigen_0_247_40003'>Reactive Power Fixed Adjustment Target Value</a><br>
+<a href='#sigen_0_247_40160'>Reactive Power Regulation Gradient</a><br>
 <a href='#sigen_0_247_40029'>Remote EMS</a><br>
 <a href='#sigen_0_247_40031'>Remote EMS Control Mode</a><br>
+<a href='#sigen_0_247_40162'>Remote EMS Power Limit Global Enable</a><br>
 <a href='#sigen_0_247_30051'>Running State</a><br>
 <a href='#sigen_0_self_consumed_power'>Self-Consumed Power</a><br>
 <a href='#sigen_0_247_30146'>Smart Load 01 Power</a><br>
@@ -8262,11 +8391,17 @@ The attributes payload currently includes:
 <a href='#sigen_0_247_40158'>PCC Power Factor Adjustment Target Value (Grid Export)</a><br>
 <a href='#sigen_0_247_40157'>PCC Power Factor Adjustment Target Value (Grid Import)</a><br>
 <a href='#sigen_0_247_30052'>Phase A Active Power</a><br>
+<a href='#sigen_0_247_30292'>Phase A Current</a><br>
 <a href='#sigen_0_247_30058'>Phase A Reactive Power</a><br>
+<a href='#sigen_0_247_30298'>Phase A Voltage</a><br>
 <a href='#sigen_0_247_30054'>Phase B Active Power</a><br>
+<a href='#sigen_0_247_30294'>Phase B Current</a><br>
 <a href='#sigen_0_247_30060'>Phase B Reactive Power</a><br>
+<a href='#sigen_0_247_30300'>Phase B Voltage</a><br>
 <a href='#sigen_0_247_30056'>Phase C Active Power</a><br>
+<a href='#sigen_0_247_30296'>Phase C Current</a><br>
 <a href='#sigen_0_247_30062'>Phase C Reactive Power</a><br>
+<a href='#sigen_0_247_30302'>Phase C Voltage</a><br>
 <a href='#sigen_0_247_30007'>Reactive Power</a><br>
 
 <h6>Statistics</h6>
@@ -8750,8 +8885,10 @@ The attributes payload currently includes:
 <a href='#sigen_0_247_40007_set'>Power Factor Adjustment Target Value</a><br>
 <a href='#sigen_0_247_40006_set'>Q/S Adjustment Target Value</a><br>
 <a href='#sigen_0_247_40003_set'>Reactive Power Fixed Adjustment Target Value</a><br>
+<a href='#sigen_0_247_40160_set'>Reactive Power Regulation Gradient</a><br>
 <a href='#sigen_0_247_40029_set'>Remote EMS</a><br>
 <a href='#sigen_0_247_40031_set'>Remote EMS Control Mode</a><br>
+<a href='#sigen_0_247_40162_set'>Remote EMS Power Limit Global Enable</a><br>
 
 <h6>Inverter</h6>
 <a href='#sigen_0_001_41501_set'>Active Power Fixed Value Adjustment</a><br>
@@ -8803,5 +8940,5 @@ The attributes payload currently includes:
 <a href='#sigenergy2mqtt_config_persistence_debug_set'>Persistence Debugging</a><br>
 <a href='#sigenergy2mqtt_config_repeated_state_publish_interval_set'>Repeated State Publish Interval</a><br>
 <a href='#sigenergy2mqtt_config_sanity_check_failures_increment_set'>Sanity Check Failures Increment</a><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></td></tr>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></td></tr>
 </table>
