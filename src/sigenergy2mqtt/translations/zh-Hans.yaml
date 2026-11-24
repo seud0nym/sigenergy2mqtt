@@ -592,8 +592,6 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 放电截止荷电状态
-  DistributionCabinet:
-    name: '{model_id} {serial} 配电柜'
   EMSWorkMode:
     attributes:
       source: Modbus 寄存器 {address}
@@ -1008,12 +1006,24 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 相 {phase} 有功功率
+  GridPhaseCurrent:
+    attributes:
+      comment: 从电网传感器处采集的数据，位于电网与系统连接点。仅 SigenStor 和 Sigen Hybrid 支持此功能
+      source: Modbus 寄存器 {address}
+      source_range: Modbus 寄存器 {start}-{end}
+    name: 相 {phase} 电流
   GridPhaseReactivePower:
     attributes:
       comment: 从电网传感器在电网到系统检查点收集的数据
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 相 {phase} 无功功率
+  GridPhaseVoltage:
+    attributes:
+      comment: 从电网传感器处采集的数据，位于电网与系统连接点。仅 SigenStor 和 Sigen Hybrid 支持此功能
+      source: Modbus 寄存器 {address}
+      source_range: Modbus 寄存器 {start}-{end}
+    name: 相 {phase} 电压
   GridPowerLossLockoutAlarmClear:
     attributes:
       comment: 写1清除电网失电闭锁报警
@@ -1354,10 +1364,6 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 温度
-  LA:
-    name: '{model_id} {serial} LA'  # verify:ignore
-  LB:
-    name: '{model_id} {serial} LB'  # verify:ignore
   LineVoltage:
     attributes:
       source: Modbus 寄存器 {address}
@@ -1390,8 +1396,6 @@ class:
     name: MQTT 发布失败
   MQTTReconnections:
     name: MQTT 重连
-  MV:
-    name: '{model_id} {serial} MV'  # verify:ignore
   MaxAbsorptionPower:
     attributes:
       source: Modbus 寄存器 {address}
@@ -1426,13 +1430,13 @@ class:
     name: 最大放电功率
   MaxChargingLimit:
     attributes:
-      comment: '电站中ESS的最大充电功率不得超过该传感器中配置的值。范围：[0，额定ESS充电功率]{active_config}'
+      comment: '该设施中 ESS 的最大充电功率不得超过此传感器中配置的值。范围：[0, ESS 额定充电功率]。{self}'
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 最大充电限制
   MaxDischargingLimit:
     attributes:
-      comment: '电站中ESS的最大放电功率不得超过该传感器中配置的值。范围：[0，额定ESS放电功率]{active_config}'
+      comment: '该设施中 ESS 的最大放电功率不得超过此传感器中配置的值。范围：[0, ESS 额定放电功率]。{self}'
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 最大放电限制
@@ -1539,13 +1543,6 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: PCS最大输入限制
-  PID:
-    name: '{model_id} {serial}'
-  PIDABLineVoltage:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: AB线电压
   PIDAlarm1:
     alarm:
       '0': 软件版本不匹配
@@ -1564,10 +1561,6 @@ class:
       '13': 输出过流保护
       '14': 输出故障
       '15': RS485通讯异常
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 警报1
   PIDAlarm2:
     alarm:
       '0': 电网失电
@@ -1575,740 +1568,34 @@ class:
       '2': 电网欠电压
       '3': 电网超频
       '4': 电网欠频
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 警报2
-  PIDAlarms:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 警报
-  PIDBCLineVoltage:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: BC 线电压
-  PIDBusVoltage:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 总线电压
-  PIDCALineVoltage:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: CA线电压
-  PIDCommunicationStatus:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 通讯状态
-  PIDGridFrequency:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 电网频率
-  PIDInternalTemperature1:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 内部温度1
-  PIDInternalTemperature2:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 内部温度2
-  PIDInternalTemperature3:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 内部温度3
-  PIDInternalTemperature4:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 内部温度4
-  PIDInternalTemperature5:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 内部温度5
-  PIDInverterCurrent:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 逆变器电流
-  PIDInverterVoltage:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 逆变电压
-  PIDMachineFirmwareVersion:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 固件版本
-  PIDModelType:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 型号类型
-  PIDOutputCurrent:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 输出电流
-  PIDOutputVoltage:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 输出电压
-  PIDPhaseAVoltage:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: A相电压
-  PIDPhaseBVoltage:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: B相电压
-  PIDPhaseCVoltage:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: C相电压
-  PIDRunningStatus:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 运行状态
-  PIDSerialNumber:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 序列号
   PIDStartStop:
-    name: PID启动/停止
-    name_off: 停止
-    name_on: 开始
     options:
       '0': 停止
       '1': 开始
-  PSS:
-    name: '{model_id} {serial}'
-  PSSCommunicationStatus:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 通讯状态
-  PSSDistributionCabinetABLineVoltage:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: AB线电压
-  PSSDistributionCabinetBCLineVoltage:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: BC 线电压
-  PSSDistributionCabinetCALineVoltage:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: CA线电压
-  PSSDistributionCabinetForwardActiveEnergy:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 正向有功能量
-  PSSDistributionCabinetForwardReactiveEnergy:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 正向无功电能
-  PSSDistributionCabinetFrequency:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 频率
-  PSSDistributionCabinetHumidity:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 湿度
-  PSSDistributionCabinetPhaseAActivePower:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: A相有功功率
-  PSSDistributionCabinetPhaseAApparentPower:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: A相视在功率
-  PSSDistributionCabinetPhaseACurrent:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: A相电流
-  PSSDistributionCabinetPhaseAPowerFactor:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: A相功率因数
-  PSSDistributionCabinetPhaseAReactivePower:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: A相无功功率
-  PSSDistributionCabinetPhaseAVoltage:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: A相电压
-  PSSDistributionCabinetPhaseBActivePower:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: B相有功功率
-  PSSDistributionCabinetPhaseBApparentPower:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: B相视在功率
-  PSSDistributionCabinetPhaseBCurrent:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: B相电流
-  PSSDistributionCabinetPhaseBPowerFactor:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: B相功率因数
-  PSSDistributionCabinetPhaseBReactivePower:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: B相无功功率
-  PSSDistributionCabinetPhaseBVoltage:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: B相电压
-  PSSDistributionCabinetPhaseCActivePower:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: C相有功功率
-  PSSDistributionCabinetPhaseCApparentPower:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: C相视在功率
-  PSSDistributionCabinetPhaseCCurrent:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: C相电流
-  PSSDistributionCabinetPhaseCPowerFactor:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: C相功率因数
-  PSSDistributionCabinetPhaseCReactivePower:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: C相无功功率
-  PSSDistributionCabinetPhaseCVoltage:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: C相电压
-  PSSDistributionCabinetReverseActiveEnergy:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 反向有功电能
-  PSSDistributionCabinetReverseReactiveEnergy:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 反向无功电能
-  PSSDistributionCabinetTemperature:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 温度
-  PSSDistributionCabinetTotalActivePower:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 总有功功率
-  PSSDistributionCabinetTotalApparentPower:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 总视在功率
-  PSSDistributionCabinetTotalPowerFactor:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 总功率因数
-  PSSDistributionCabinetTotalReactivePower:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 总无功功率
-  PSSLAABLineVoltage:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: AB线电压
-  PSSLABCLineVoltage:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: BC 线电压
-  PSSLACALineVoltage:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: CA线电压
-  PSSLAForwardActiveEnergy:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 正向有功能量
-  PSSLAForwardReactiveEnergy:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 正向无功电能
-  PSSLAFrequency:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 频率
-  PSSLAHumidity:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 湿度
   PSSLALowVoltageCabinetCircuitBreakerSwitchOff:
-    name: 低压柜断路器关闭
-    name_on: 关闭 LA 低压柜断路器
     options:
       '0': 无行动
       '1': 关闭
   PSSLALowVoltageCabinetCircuitBreakerSwitchOn:
-    name: 低压柜断路器合闸
-    name_on: 打开 LA 低压柜断路器
     options:
       '0': 无行动
       '1': 打开
-  PSSLAPhaseAActivePower:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: A相有功功率
-  PSSLAPhaseAApparentPower:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: A相视在功率
-  PSSLAPhaseACurrent:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: A相电流
-  PSSLAPhaseAPowerFactor:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: A相功率因数
-  PSSLAPhaseAReactivePower:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: A相无功功率
-  PSSLAPhaseAVoltage:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: A相电压
-  PSSLAPhaseBActivePower:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: B相有功功率
-  PSSLAPhaseBApparentPower:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: B相视在功率
-  PSSLAPhaseBCurrent:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: B相电流
-  PSSLAPhaseBPowerFactor:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: B相功率因数
-  PSSLAPhaseBReactivePower:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: B相无功功率
-  PSSLAPhaseBVoltage:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: B相电压
-  PSSLAPhaseCActivePower:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: C相有功功率
-  PSSLAPhaseCApparentPower:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: C相视在功率
-  PSSLAPhaseCCurrent:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: C相电流
-  PSSLAPhaseCPowerFactor:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: C相功率因数
-  PSSLAPhaseCReactivePower:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: C相无功功率
-  PSSLAPhaseCVoltage:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: C相电压
-  PSSLAReverseActiveEnergy:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 反向有功电能
-  PSSLAReverseReactiveEnergy:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 反向无功电能
-  PSSLATemperature:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 温度
-  PSSLATotalActivePower:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 总有功功率
-  PSSLATotalApparentPower:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 总视在功率
-  PSSLATotalPowerFactor:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 总功率因数
-  PSSLATotalReactivePower:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 总无功功率
-  PSSLBABLineVoltage:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: AB线电压
-  PSSLBBCLineVoltage:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: BC 线电压
-  PSSLBCALineVoltage:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: CA线电压
-  PSSLBForwardActiveEnergy:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 正向有功能量
-  PSSLBForwardReactiveEnergy:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 正向无功电能
-  PSSLBFrequency:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 频率
-  PSSLBHumidity:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 湿度
   PSSLBLowVoltageCabinetCircuitBreakerSwitchOff:
-    name: 低压柜断路器关闭
-    name_on: 关闭 LB 低压柜断路器
     options:
       '0': 无行动
       '1': 关闭
   PSSLBLowVoltageCabinetCircuitBreakerSwitchOn:
-    name: 低压柜断路器合闸
-    name_on: 打开 LB 低压柜断路器
     options:
       '0': 无行动
       '1': 打开
-  PSSLBPhaseAActivePower:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: A相有功功率
-  PSSLBPhaseAApparentPower:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: A相视在功率
-  PSSLBPhaseACurrent:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: A相电流
-  PSSLBPhaseAPowerFactor:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: A相功率因数
-  PSSLBPhaseAReactivePower:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: A相无功功率
-  PSSLBPhaseAVoltage:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: A相电压
-  PSSLBPhaseBActivePower:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: B相有功功率
-  PSSLBPhaseBApparentPower:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: B相视在功率
-  PSSLBPhaseBCurrent:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: B相电流
-  PSSLBPhaseBPowerFactor:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: B相功率因数
-  PSSLBPhaseBReactivePower:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: B相无功功率
-  PSSLBPhaseBVoltage:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: B相电压
-  PSSLBPhaseCActivePower:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: C相有功功率
-  PSSLBPhaseCApparentPower:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: C相视在功率
-  PSSLBPhaseCCurrent:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: C相电流
-  PSSLBPhaseCPowerFactor:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: C相功率因数
-  PSSLBPhaseCReactivePower:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: C相无功功率
-  PSSLBPhaseCVoltage:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: C相电压
-  PSSLBReverseActiveEnergy:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 反向有功电能
-  PSSLBReverseReactiveEnergy:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 反向无功电能
-  PSSLBTemperature:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 温度
-  PSSLBTotalActivePower:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 总有功功率
-  PSSLBTotalApparentPower:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 总视在功率
-  PSSLBTotalPowerFactor:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 总功率因数
-  PSSLBTotalReactivePower:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 总无功功率
   PSSMVCabinetG3CircuitBreakerSwitchOff:
-    name: G3 断路器关闭
-    name_on: 关闭中压柜 G3 断路器
     options:
       '0': 无行动
       '1': 关闭
   PSSMVCabinetG3CircuitBreakerSwitchOn:
-    name: G3 断路器打开
-    name_on: 打开中压柜 G3 断路器
     options:
       '0': 无行动
       '1': 打开
-  PSSMVFrequency:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 频率
-  PSSMVG1CableL1PhaseTemperature:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: G1 电缆 L1 相温度
-  PSSMVG1CableL2PhaseTemperature:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: G1 电缆 L2 相温度
-  PSSMVG1CableL3PhaseTemperature:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: G1电缆L3相温度
-  PSSMVG2CableL1PhaseTemperature:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: G2 电缆 L1 相温度
-  PSSMVG2CableL2PhaseTemperature:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: G2 电缆 L2 相温度
-  PSSMVG2CableL3PhaseTemperature:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: G2 电缆 L3 相温度
-  PSSMVG3CableL1PhaseTemperature:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: G3电缆L1相温度
-  PSSMVG3CableL2PhaseTemperature:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: G3 电缆 L2 相温度
-  PSSMVG3CableL3PhaseTemperature:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: G3 电缆 L3 相温度
-  PSSMVHumidity:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 湿度
-  PSSMVPhaseACurrent:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: A相电流
-  PSSMVPhaseBCurrent:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: B相电流
-  PSSMVPhaseCCurrent:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: C相电流
-  PSSMVTemperature:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 温度
-  PSSMVZeroSequenceCurrent:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 零序电流
-  PSSModelType:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 型号类型
-  PSSSerialNumber:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 序列号
   PSSTeleindication1:
     alarm:
       '0': 测控单元总行程
@@ -2327,10 +1614,6 @@ class:
       '13': 低压室检修门开启行程
       '14': 变压器室门开启行程
       '15': LA低压柜超温跳闸
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 远程指示1
   PSSTeleindication2:
     alarm:
       '0': LB低压柜超温跳闸
@@ -2349,10 +1632,6 @@ class:
       '13': LA低压柜超温报警
       '14': LB低压柜超温报警
       '15': 中压室超温报警
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 远程指示2
   PSSTeleindication3:
     alarm:
       '0': LA低压柜IMD预警
@@ -2371,10 +1650,6 @@ class:
       '13': 中压柜G3断路器合闸
       '14': 中压柜G3断路器分闸
       '15': 中压柜G3隔离开关合闸
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 远程指示3
   PSSTeleindication4:
     alarm:
       '0': 中压柜G3隔离开关分闸
@@ -2393,10 +1668,6 @@ class:
       '13': 低压室LA操作门打开
       '14': 低压室LB操作门打开
       '15': 中压室门打开
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 远程指示4
   PSSTeleindication5:
     alarm:
       '0': 中压柜G1电缆L1相超温
@@ -2410,20 +1681,6 @@ class:
       '8': 中压柜G3电缆L3相超温
       '9': 中压保护一般保护
       '10': 中压保护通用报警
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 远程指示5
-  PSSTransformerOilSurfaceTemperature:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 油面温度
-  PSSTransformerWindingTemperature:
-    attributes:
-      source: Modbus 寄存器 {address}
-      source_range: Modbus 寄存器 {start}-{end}
-    name: 绕组温度
   PVCurrentSensor:
     attributes:
       source: Modbus 寄存器 {address}
@@ -2433,7 +1690,7 @@ class:
     name: 光伏逆变器
   PVMaxPowerLimit:
     attributes:
-      comment: 电站中光伏组串的最大输出功率不得超过该传感器中配置的值{active_config}
+      comment: 该系统中光伏串的最大输出功率不得超过此传感器中配置的值。{self}
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: PV最大功率限制
@@ -2727,6 +1984,12 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 无功功率固定调节目标值
+  ReactivePowerRegulationGradient:
+    attributes:
+      comment: 范围：[0,5000]。每秒调整的额定功率百分比
+      source: Modbus 寄存器 {address}
+      source_range: Modbus 寄存器 {start}-{end}
+    name: 无功功率调节梯度
   ReadOnlySensor:
     attributes:
       source: Modbus 寄存器 {address}
@@ -2760,11 +2023,22 @@ class:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
     name: 远程EMS限制
+  RemoteEMSPowerLimitGlobalEnable:
+    attributes:
+      comment: '启用后，无论EMS工作模式如何，最大充电限值（40032）、最大放电限值（40034）和光伏最大功率限值（40036）均会生效。 当禁用时，这些设置仅在 EMS 工作模式 (30003) 为“远程 EMS”时生效。默认：禁用'
+      source: Modbus 寄存器 {address}
+      source_range: Modbus 寄存器 {start}-{end}
+    name: 远程EMS功率限制全局启用
   RepeatedStatePublishInterval:
     attributes:
       comment: 发布重复状态的间隔（单位：秒）。（当获取的状态与上次读取的状态完全一致时，会触发重复状态。）<0=从不 0=始终 >0=间隔
     name: 状态发布间隔（重复）
   Reserved30073:
+    attributes:
+      source: Modbus 寄存器 {address}
+      source_range: Modbus 寄存器 {start}-{end}
+    name: 保留
+  Reserved30287:
     attributes:
       source: Modbus 寄存器 {address}
       source_range: Modbus 寄存器 {start}-{end}
@@ -3027,8 +2301,6 @@ class:
     attributes:
       source: PV功率 + 第三方PV功率
     name: 总PV功率
-  Transformer:
-    name: '{model_id} {serial} 变压器'
   WriteOnlySensor:
     name_off: 关机
     name_on: 开机
@@ -3144,7 +2416,7 @@ cli:
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY:
     help: '尝试自动发现 Sigenergy Modbus 主机和设备 ID。如果指定了 ''once''，则仅在未找到现有自动发现结果时进行自动发现。如果为 ''force''，则自动发现将覆盖任何先前发现的 Modbus 主机和设备 ID。如果未指定，则禁用自动发现。'
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_EXCLUDE:
-    help: 要从自动发现中排除的设备类名称的逗号分隔列表。默认值为“PID，PSS”。
+    help: 一个以逗号分隔的设备类名称列表，用于从自动发现中排除这些设备。默认情况下，不排除任何设备。
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_MAX_DEVICE_ID:
     help: 在网络上执行 Sigenergy 设备自动发现时要使用的最大设备 ID。默认值为 10，并且必须介于 1 到 246（含）之间。
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_NETWORKS:
@@ -3169,12 +2441,8 @@ cli:
     help: 记录跳过的 Modbus 请求。
   SIGENERGY2MQTT_MODBUS_NO_REMOTE_EMS:
     help: '不发布远程EMS集成的读写传感器。'
-  SIGENERGY2MQTT_MODBUS_PID_DEVICE_ID:
-    help: Sigenergy PID Modbus 设备 ID。可以指定多个设备IDS，用逗号分隔。
   SIGENERGY2MQTT_MODBUS_PORT:
     help: Sigenergy设备Modbus端口（默认：502）
-  SIGENERGY2MQTT_MODBUS_PSS_DEVICE_ID:
-    help: Sigenergy PSS Modbus 设备 ID。可以指定多个设备IDS，用逗号分隔。
   SIGENERGY2MQTT_MODBUS_READ_ONLY:
     help: '仅发布只读传感器到MQTT。'
   SIGENERGY2MQTT_MODBUS_RETRIES:

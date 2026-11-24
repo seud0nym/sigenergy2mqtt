@@ -592,8 +592,6 @@ class:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
     name: Entladungsabschalt-Ladezustand
-  DistributionCabinet:
-    name: '{model_id} {serial} Verteilerschrank'
   EMSWorkMode:
     attributes:
       source: Modbus-Register {address}
@@ -1008,12 +1006,24 @@ class:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
     name: Phase {phase} Wirkleistung
+  GridPhaseCurrent:
+    attributes:
+      comment: Daten, die vom Netzsensor am Netz-zu-System-Prüfpunkt erfasst werden. Nur SigenStor und Sigen Hybrid werden unterstützt.
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
+    name: Phasen{phase}strom
   GridPhaseReactivePower:
     attributes:
       comment: Vom Netzsensor am Netz-/Systemübergabepunkt erfasste Daten
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
     name: Phase {phase} Blindleistung
+  GridPhaseVoltage:
+    attributes:
+      comment: Daten, die vom Netzsensor am Netz-zu-System-Prüfpunkt erfasst werden. Nur SigenStor und Sigen Hybrid werden unterstützt.
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
+    name: Phasen{phase}spannung
   GridPowerLossLockoutAlarmClear:
     attributes:
       comment: Schreiben Sie 1, um den Alarm für Netzstromausfallsperre zu löschen
@@ -1354,10 +1364,6 @@ class:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
     name: Temperatur
-  LA:
-    name: '{model_id} {serial} LA'  # verify:ignore
-  LB:
-    name: '{model_id} {serial} LB'  # verify:ignore
   LineVoltage:
     attributes:
       source: Modbus-Register {address}
@@ -1390,8 +1396,6 @@ class:
     name: MQTT Veröffentlichungsfehler
   MQTTReconnections:
     name: MQTT-Wiederverbindungen
-  MV:
-    name: '{model_id} {serial} MV'  # verify:ignore
   MaxAbsorptionPower:
     attributes:
       source: Modbus-Register {address}
@@ -1426,13 +1430,13 @@ class:
     name: Max. Entladeleistung
   MaxChargingLimit:
     attributes:
-      comment: 'Die maximale Ladeleistung des ESS in der Anlage darf den in diesem Sensor konfigurierten Wert nicht überschreiten. Bereich: [0, Nenn-ESS-Ladeleistung]{active_config}'
+      comment: 'Die maximale Ladeleistung des ESS in der Anlage darf den in diesem Sensor konfigurierten Wert nicht überschreiten. Bereich: [0, Nennladeleistung des ESS]. {self}'
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
     name: Max. Ladegrenze
   MaxDischargingLimit:
     attributes:
-      comment: 'Die maximale Entladeleistung des ESS in der Anlage darf den in diesem Sensor konfigurierten Wert nicht überschreiten. Bereich: [0, Nenn-ESS-Entladeleistung]{active_config}'
+      comment: 'Die maximale Entladeleistung des ESS in der Anlage darf den in diesem Sensor konfigurierten Wert nicht überschreiten. Bereich: [0, Nenn-Entladeleistung des ESS]. {self}'
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
     name: Max. Entladegrenze
@@ -1539,13 +1543,6 @@ class:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
     name: PCS Max. Importgrenze
-  PID:
-    name: '{model_id} {serial}'
-  PIDABLineVoltage:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: AB-Leitungsspannung
   PIDAlarm1:
     alarm:
       '0': Nichtübereinstimmung der Softwareversion
@@ -1564,10 +1561,6 @@ class:
       '13': Ausgangsüberstromschutz
       '14': Ausgabefehler
       '15': Rs485-Kommunikation abnormal
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Alarm 1  # verify:ignore
   PIDAlarm2:
     alarm:
       '0': Netzstromausfall
@@ -1575,740 +1568,34 @@ class:
       '2': Unterspannung im Netz
       '3': Netzüberfrequenz
       '4': Netzunterfrequenz
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Alarm 2  # verify:ignore
-  PIDAlarms:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Alarm
-  PIDBCLineVoltage:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: BC-Leitungsspannung
-  PIDBusVoltage:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Busspannung
-  PIDCALineVoltage:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: CA-Netzspannung
-  PIDCommunicationStatus:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Kommunikationsstatus
-  PIDGridFrequency:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Netzfrequenz
-  PIDInternalTemperature1:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Innentemperatur 1
-  PIDInternalTemperature2:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Innentemperatur 2
-  PIDInternalTemperature3:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Innentemperatur 3
-  PIDInternalTemperature4:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Innentemperatur 4
-  PIDInternalTemperature5:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Innentemperatur 5
-  PIDInverterCurrent:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Wechselrichterstrom
-  PIDInverterVoltage:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Wechselrichterspannung
-  PIDMachineFirmwareVersion:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Firmware-Version
-  PIDModelType:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Modelltyp
-  PIDOutputCurrent:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Ausgangsstrom
-  PIDOutputVoltage:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Ausgangsspannung
-  PIDPhaseAVoltage:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Spannung der Phase A
-  PIDPhaseBVoltage:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Spannung der Phase B
-  PIDPhaseCVoltage:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Spannung der Phase C
-  PIDRunningStatus:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Laufstatus
-  PIDSerialNumber:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Seriennummer
   PIDStartStop:
-    name: PID-Start/Stopp
-    name_off: Stoppen
-    name_on: Start # verify:ignore
     options:
       '0': Stoppen
       '1': Start # verify:ignore
-  PSS:
-    name: '{model_id} {serial}'
-  PSSCommunicationStatus:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Kommunikationsstatus
-  PSSDistributionCabinetABLineVoltage:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: AB-Leitungsspannung
-  PSSDistributionCabinetBCLineVoltage:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: BC-Leitungsspannung
-  PSSDistributionCabinetCALineVoltage:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: CA-Netzspannung
-  PSSDistributionCabinetForwardActiveEnergy:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Aktive Energie weiterleiten
-  PSSDistributionCabinetForwardReactiveEnergy:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Vorwärts-Blindenergie
-  PSSDistributionCabinetFrequency:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Frequenz
-  PSSDistributionCabinetHumidity:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Luftfeuchtigkeit
-  PSSDistributionCabinetPhaseAActivePower:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Wirkleistung der Phase A
-  PSSDistributionCabinetPhaseAApparentPower:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Scheinleistung der Phase A
-  PSSDistributionCabinetPhaseACurrent:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Phase-A-Strom
-  PSSDistributionCabinetPhaseAPowerFactor:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Leistungsfaktor der Phase A
-  PSSDistributionCabinetPhaseAReactivePower:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Blindleistung der Phase A
-  PSSDistributionCabinetPhaseAVoltage:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Spannung der Phase A
-  PSSDistributionCabinetPhaseBActivePower:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Wirkleistung der Phase B
-  PSSDistributionCabinetPhaseBApparentPower:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Scheinleistung der Phase B
-  PSSDistributionCabinetPhaseBCurrent:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Phase-B-Strom
-  PSSDistributionCabinetPhaseBPowerFactor:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Leistungsfaktor der Phase B
-  PSSDistributionCabinetPhaseBReactivePower:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Blindleistung der Phase B
-  PSSDistributionCabinetPhaseBVoltage:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Spannung der Phase B
-  PSSDistributionCabinetPhaseCActivePower:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Wirkleistung der Phase C
-  PSSDistributionCabinetPhaseCApparentPower:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Scheinleistung der Phase C
-  PSSDistributionCabinetPhaseCCurrent:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Phase-C-Strom
-  PSSDistributionCabinetPhaseCPowerFactor:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Leistungsfaktor der Phase C
-  PSSDistributionCabinetPhaseCReactivePower:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Blindleistung der Phase C
-  PSSDistributionCabinetPhaseCVoltage:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Spannung der Phase C
-  PSSDistributionCabinetReverseActiveEnergy:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Aktive Energie umkehren
-  PSSDistributionCabinetReverseReactiveEnergy:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Umgekehrte Blindenergie
-  PSSDistributionCabinetTemperature:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Temperatur
-  PSSDistributionCabinetTotalActivePower:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Gesamtwirkleistung
-  PSSDistributionCabinetTotalApparentPower:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Gesamtscheinleistung
-  PSSDistributionCabinetTotalPowerFactor:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Gesamtleistungsfaktor
-  PSSDistributionCabinetTotalReactivePower:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Gesamtblindleistung
-  PSSLAABLineVoltage:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: AB-Leitungsspannung
-  PSSLABCLineVoltage:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: BC-Leitungsspannung
-  PSSLACALineVoltage:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: CA-Netzspannung
-  PSSLAForwardActiveEnergy:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Aktive Energie weiterleiten
-  PSSLAForwardReactiveEnergy:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Vorwärts-Blindenergie
-  PSSLAFrequency:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Frequenz
-  PSSLAHumidity:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Luftfeuchtigkeit
   PSSLALowVoltageCabinetCircuitBreakerSwitchOff:
-    name: Ausschalten des Niederspannungs-Schaltschrank-Leistungsschalters
-    name_on: Schalten Sie den LA-Niederspannungs-Schaltschrank-Leistungsschalter aus
     options:
       '0': Keine Aktion
       '1': Ausschalten
   PSSLALowVoltageCabinetCircuitBreakerSwitchOn:
-    name: Schalter des Niederspannungs-Schaltschrank-Leistungsschalters ein
-    name_on: Schalten Sie den LA-Niederspannungs-Schaltschrank-Leistungsschalter ein
     options:
       '0': Keine Aktion
       '1': Einschalten
-  PSSLAPhaseAActivePower:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Wirkleistung der Phase A
-  PSSLAPhaseAApparentPower:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Scheinleistung der Phase A
-  PSSLAPhaseACurrent:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Phase-A-Strom
-  PSSLAPhaseAPowerFactor:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Leistungsfaktor der Phase A
-  PSSLAPhaseAReactivePower:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Blindleistung der Phase A
-  PSSLAPhaseAVoltage:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Spannung der Phase A
-  PSSLAPhaseBActivePower:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Wirkleistung der Phase B
-  PSSLAPhaseBApparentPower:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Scheinleistung der Phase B
-  PSSLAPhaseBCurrent:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Phase-B-Strom
-  PSSLAPhaseBPowerFactor:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Leistungsfaktor der Phase B
-  PSSLAPhaseBReactivePower:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Blindleistung der Phase B
-  PSSLAPhaseBVoltage:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Spannung der Phase B
-  PSSLAPhaseCActivePower:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Wirkleistung der Phase C
-  PSSLAPhaseCApparentPower:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Scheinleistung der Phase C
-  PSSLAPhaseCCurrent:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Phase-C-Strom
-  PSSLAPhaseCPowerFactor:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Leistungsfaktor der Phase C
-  PSSLAPhaseCReactivePower:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Blindleistung der Phase C
-  PSSLAPhaseCVoltage:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Spannung der Phase C
-  PSSLAReverseActiveEnergy:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Aktive Energie umkehren
-  PSSLAReverseReactiveEnergy:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Umgekehrte Blindenergie
-  PSSLATemperature:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Temperatur
-  PSSLATotalActivePower:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Gesamtwirkleistung
-  PSSLATotalApparentPower:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Gesamtscheinleistung
-  PSSLATotalPowerFactor:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Gesamtleistungsfaktor
-  PSSLATotalReactivePower:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Gesamtblindleistung
-  PSSLBABLineVoltage:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: AB-Leitungsspannung
-  PSSLBBCLineVoltage:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: BC-Leitungsspannung
-  PSSLBCALineVoltage:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: CA-Netzspannung
-  PSSLBForwardActiveEnergy:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Aktive Energie weiterleiten
-  PSSLBForwardReactiveEnergy:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Vorwärts-Blindenergie
-  PSSLBFrequency:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Frequenz
-  PSSLBHumidity:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Luftfeuchtigkeit
   PSSLBLowVoltageCabinetCircuitBreakerSwitchOff:
-    name: Ausschalten des Niederspannungs-Schaltschrank-Leistungsschalters
-    name_on: Schalten Sie den Leistungsschalter des LB-Niederspannungsschranks aus
     options:
       '0': Keine Aktion
       '1': Ausschalten
   PSSLBLowVoltageCabinetCircuitBreakerSwitchOn:
-    name: Schalter des Niederspannungs-Schaltschrank-Leistungsschalters ein
-    name_on: Schalten Sie den Leistungsschalter des LB-Niederspannungsschranks ein
     options:
       '0': Keine Aktion
       '1': Einschalten
-  PSSLBPhaseAActivePower:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Wirkleistung der Phase A
-  PSSLBPhaseAApparentPower:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Scheinleistung der Phase A
-  PSSLBPhaseACurrent:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Phase-A-Strom
-  PSSLBPhaseAPowerFactor:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Leistungsfaktor der Phase A
-  PSSLBPhaseAReactivePower:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Blindleistung der Phase A
-  PSSLBPhaseAVoltage:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Spannung der Phase A
-  PSSLBPhaseBActivePower:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Wirkleistung der Phase B
-  PSSLBPhaseBApparentPower:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Scheinleistung der Phase B
-  PSSLBPhaseBCurrent:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Phase-B-Strom
-  PSSLBPhaseBPowerFactor:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Leistungsfaktor der Phase B
-  PSSLBPhaseBReactivePower:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Blindleistung der Phase B
-  PSSLBPhaseBVoltage:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Spannung der Phase B
-  PSSLBPhaseCActivePower:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Wirkleistung der Phase C
-  PSSLBPhaseCApparentPower:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Scheinleistung der Phase C
-  PSSLBPhaseCCurrent:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Phase-C-Strom
-  PSSLBPhaseCPowerFactor:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Leistungsfaktor der Phase C
-  PSSLBPhaseCReactivePower:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Blindleistung der Phase C
-  PSSLBPhaseCVoltage:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Spannung der Phase C
-  PSSLBReverseActiveEnergy:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Aktive Energie umkehren
-  PSSLBReverseReactiveEnergy:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Umgekehrte Blindenergie
-  PSSLBTemperature:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Temperatur
-  PSSLBTotalActivePower:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Gesamtwirkleistung
-  PSSLBTotalApparentPower:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Gesamtscheinleistung
-  PSSLBTotalPowerFactor:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Gesamtleistungsfaktor
-  PSSLBTotalReactivePower:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Gesamtblindleistung
   PSSMVCabinetG3CircuitBreakerSwitchOff:
-    name: Ausschalten des Leistungsschalters G3
-    name_on: Schalten Sie den Leistungsschalter G3 des Mittelspannungsschranks aus
     options:
       '0': Keine Aktion
       '1': Ausschalten
   PSSMVCabinetG3CircuitBreakerSwitchOn:
-    name: G3-Leistungsschalter einschalten
-    name_on: Schalten Sie den Leistungsschalter G3 des Mittelspannungsschranks ein
     options:
       '0': Keine Aktion
       '1': Einschalten
-  PSSMVFrequency:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Frequenz
-  PSSMVG1CableL1PhaseTemperature:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: G1-Kabel L1-Phasentemperatur
-  PSSMVG1CableL2PhaseTemperature:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: G1-Kabel L2-Phasentemperatur
-  PSSMVG1CableL3PhaseTemperature:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: G1 Kabel L3 Phasentemperatur
-  PSSMVG2CableL1PhaseTemperature:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: G2-Kabel L1-Phasentemperatur
-  PSSMVG2CableL2PhaseTemperature:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: G2-Kabel L2-Phasentemperatur
-  PSSMVG2CableL3PhaseTemperature:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: G2-Kabel L3-Phasentemperatur
-  PSSMVG3CableL1PhaseTemperature:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: G3-Kabel L1-Phasentemperatur
-  PSSMVG3CableL2PhaseTemperature:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: G3-Kabel L2-Phasentemperatur
-  PSSMVG3CableL3PhaseTemperature:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: G3-Kabel L3-Phasentemperatur
-  PSSMVHumidity:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Luftfeuchtigkeit
-  PSSMVPhaseACurrent:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Phase-A-Strom
-  PSSMVPhaseBCurrent:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Phase-B-Strom
-  PSSMVPhaseCCurrent:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Phase-C-Strom
-  PSSMVTemperature:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Temperatur
-  PSSMVZeroSequenceCurrent:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Nullstrom
-  PSSModelType:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Modelltyp
-  PSSSerialNumber:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Seriennummer
   PSSTeleindication1:
     alarm:
       '0': Allgemeine Auslösung der Mess- und Steuereinheit
@@ -2327,10 +1614,6 @@ class:
       '13': Auslöser zum Öffnen der Wartungstür des Niederspannungsraums
       '14': Öffnungsauslösung der Transformatorraumtür
       '15': LA-Niederspannungsschrank-Übertemperaturauslöser
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Fernanzeige1
   PSSTeleindication2:
     alarm:
       '0': LB-Niederspannungsschrank-Übertemperaturauslöser
@@ -2349,10 +1632,6 @@ class:
       '13': Übertemperaturalarm für Niederspannungsschrank LA
       '14': LB-Niederspannungsschrank-Übertemperaturalarm
       '15': Übertemperaturalarm für Mittelspannungsräume
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Fernanzeige2
   PSSTeleindication3:
     alarm:
       '0': LA-Niederspannungsschrank IMD-Voralarm
@@ -2371,10 +1650,6 @@ class:
       '13': Einschalten des Leistungsschalters G3 im Mittelspannungsschrank
       '14': Mittelspannungsschrank G3 Leistungsschalterabschaltung
       '15': Mittelspannungsschrank G3 Trennschalter Einschalten
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Fernanzeige3
   PSSTeleindication4:
     alarm:
       '0': Mittelspannungsschrank G3 Trennschalter Abschaltung
@@ -2393,10 +1668,6 @@ class:
       '13': Betriebstür des Niederspannungsraums LA offen
       '14': Niederspannungsraum-LB-Bedientür offen
       '15': Tür des Mittelspannungsraums geöffnet
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Fernanzeige4
   PSSTeleindication5:
     alarm:
       '0': Übertemperatur Mittelspannungsschrank G1 Kabel L1 Phase
@@ -2410,20 +1681,6 @@ class:
       '8': Übertemperatur Mittelspannungsschrank G3-Kabel L3-Phase
       '9': Allgemeiner Mittelspannungsschutz
       '10': Allgemeiner Alarm für den Mittelspannungsschutz
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Fernanzeige5
-  PSSTransformerOilSurfaceTemperature:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Öloberflächentemperatur
-  PSSTransformerWindingTemperature:
-    attributes:
-      source: Modbus-Register {address}
-      source_range: Modbus-Register {start}-{end}
-    name: Wicklungstemperatur
   PVCurrentSensor:
     attributes:
       source: Modbus-Register {address}
@@ -2433,7 +1690,7 @@ class:
     name: PV-Wechselrichter
   PVMaxPowerLimit:
     attributes:
-      comment: Die maximale Ausgangsleistung der PV-Strings in der Anlage darf den in diesem sensor{active_config} konfigurierten Wert nicht überschreiten
+      comment: Die maximale Ausgangsleistung der PV-Stränge in der Anlage darf den in diesem Sensor konfigurierten Wert nicht überschreiten. {self}
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
     name: PV Max. Leistungsgrenze
@@ -2727,6 +1984,12 @@ class:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
     name: Zielwert Blindleistung Festwertanpassung
+  ReactivePowerRegulationGradient:
+    attributes:
+      comment: 'Bereich: [0,5000]. Prozentualer Anteil der Nennleistung, pro Sekunde angepasst'
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
+    name: Gradient der Blindleistungsregelung
   ReadOnlySensor:
     attributes:
       source: Modbus-Register {address}
@@ -2760,11 +2023,22 @@ class:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
     name: Remote-EMS-Grenzwert
+  RemoteEMSPowerLimitGlobalEnable:
+    attributes:
+      comment: 'Wenn diese Option aktiviert ist, gelten die Einstellungen „Max. Ladegrenze“ (40032), „Max. Entladegrenze“ (40034) und „Max. PV-Leistungsgrenze“ (40036) unabhängig vom EMS-Betriebsmodus. Wenn diese Optionen deaktiviert sind, werden sie nur wirksam, wenn der EMS-Betriebsmodus (30003) auf „Remote EMS“ eingestellt ist. Standard: deaktiviert'
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
+    name: Globale Aktivierung der Fernsteuerung der EMS-Leistungsbegrenzung
   RepeatedStatePublishInterval:
     attributes:
       comment: Das Intervall in Sekunden, in dem wiederholte Zustände veröffentlicht werden. (Wiederholte Zustände treten auf, wenn der erfasste Zustand mit dem zuvor gelesenen identisch ist.) <0=Nie 0=Immer >0=Intervall
     name: Intervall für die wiederholte Statusübermittlung
   Reserved30073:
+    attributes:
+      source: Modbus-Register {address}
+      source_range: Modbus-Register {start}-{end}
+    name: Reserviert
+  Reserved30287:
     attributes:
       source: Modbus-Register {address}
       source_range: Modbus-Register {start}-{end}
@@ -3027,8 +2301,6 @@ class:
     attributes:
       source: PV-Leistung + Drittanbieter-PV-Leistung
     name: Gesamte PV-Leistung
-  Transformer:
-    name: '{model_id} {serial} Transformator'
   WriteOnlySensor:
     name_off: Ausschalten
     name_on: Einschalten
@@ -3144,7 +2416,7 @@ cli:
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY:
     help: Automatische Erkennung von Sigenergy Modbus-Hosts und Geräte-IDs versuchen. Bei 'once' erfolgt die Auto-Erkennung nur, wenn keine vorhandenen Ergebnisse gefunden werden. Bei 'force' werden zuvor erkannte Modbus-Hosts und Geräte-IDs überschrieben. Ohne Angabe ist die Auto-Erkennung deaktiviert.
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_EXCLUDE:
-    help: Eine durch Kommas getrennte Liste von Geräteklassennamen, die von der automatischen Erkennung ausgeschlossen werden sollen. Die Standardeinstellung ist „PID,PSS“.
+    help: Eine durch Kommas getrennte Liste von Geräteklassenamen, die von der automatischen Erkennung ausgeschlossen werden sollen. Standardmäßig werden keine Geräte ausgeschlossen.
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_MAX_DEVICE_ID:
     help: Die maximale Geräte-ID, die bei der automatischen Erkennung von Sigenergy-Geräten im Netzwerk verwendet werden soll. Der Standardwert ist 10 und muss zwischen 1 und 246 (einschließlich) liegen.
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_NETWORKS:
@@ -3169,12 +2441,8 @@ cli:
     help: Übersprungene Modbus-Anfragen protokollieren.
   SIGENERGY2MQTT_MODBUS_NO_REMOTE_EMS:
     help: Keine Lese-/Schreib-Sensoren für die Fern-Energiemanagementsystem (EMS)-Integration an MQTT veröffentlichen. Wird ignoriert, wenn --modbus-read-only angegeben ist.
-  SIGENERGY2MQTT_MODBUS_PID_DEVICE_ID:
-    help: Die Sigenergy PID Modbus-Geräte-ID. Es können mehrere Geräte-IDS angegeben werden, getrennt durch Kommas.
   SIGENERGY2MQTT_MODBUS_PORT:
     help: 'Die Modbus-Portnummer des Sigenergy-Geräts (Standard: 502)'
-  SIGENERGY2MQTT_MODBUS_PSS_DEVICE_ID:
-    help: Die Sigenergy PSS Modbus-Geräte-ID. Es können mehrere Geräte-IDS angegeben werden, getrennt durch Kommas.
   SIGENERGY2MQTT_MODBUS_READ_ONLY:
     help: Nur Nur-Lesen-Sensoren an MQTT veröffentlichen. Weder Lese-/Schreibsensoren noch Nur-Schreiben-Sensoren werden bei Angabe veröffentlicht.
   SIGENERGY2MQTT_MODBUS_RETRIES:
