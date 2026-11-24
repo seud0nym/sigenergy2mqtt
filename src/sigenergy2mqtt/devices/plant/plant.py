@@ -168,8 +168,9 @@ class PowerPlant(ModbusDevice):
         # SPC116 (reportedly; at the latest SPC117) reverted to requiring Remote EMS, consistent with V2.10 with 40162 disabled.
         global_enable: rw.RemoteEMSPowerLimitGlobalEnable | None = None
         if self.protocol_version >= ProtocolVersion.V2_10 and self._device_type.has_remote_ems_power_limit_global_enable:
-            global_enable = rw.RemoteEMSPowerLimitGlobalEnable(self.plant_index)
+            global_enable = rw.RemoteEMSPowerLimitGlobalEnable(self.plant_index, remote_ems)
             if not self._add_sensor(global_enable):
+                remote_ems.power_limit_global_enable = None
                 global_enable = None
         gate_limits = global_enable is None and not fw.has_global_power_limits
         limit_remote_ems = remote_ems if gate_limits else None

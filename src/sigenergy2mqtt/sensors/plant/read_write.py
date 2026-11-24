@@ -581,11 +581,19 @@ class RemoteEMS(SwitchSensor, HybridInverter, PVInverter, AvailabilityMixin):
             scan_interval=ScanInterval.high(plant_index),
             protocol_version=ProtocolVersion.V1_8,
         )
+        # Set by RemoteEMSPowerLimitGlobalEnable so that changes to either switch update the combined power limits topic
+        self.power_limit_global_enable: RemoteEMSPowerLimitGlobalEnable | None = None
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "When needed to control EMS remotely, this register needs to be enabled. When enabled, the plant’s EMS Work Mode (30003) will switch to RemoteEMS"
         return attributes
+
+    async def publish(self, mqtt_client: mqtt.Client, transport: Any, republish: bool = False) -> bool:
+        result = await super().publish(mqtt_client, transport, republish=republish)
+        if result and self.power_limit_global_enable is not None:
+            self.power_limit_global_enable.publish_power_limits_active(mqtt_client)
+        return result
 
 
 class RemoteEMSControlMode(SelectSensor, HybridInverter, PVInverter):
@@ -754,6 +762,13 @@ class RemoteEMSLimit(NumericSensor, HybridInverter):
 
     def configure_mqtt_topics(self, device_id: str) -> str:
         base = super().configure_mqtt_topics(device_id)
+        if self._global_enable is not None and self._global_enable.power_limits_active_topic and active_config.home_assistant.enabled:
+            # Available when either Remote EMS Power Limit Global Enable or Remote EMS is enabled (protocol V2.10)
+            cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append({
+                "topic": self._global_enable.power_limits_active_topic,
+                "payload_available": 1,
+                "payload_not_available": 0,
+            })
         if self._remote_ems_mode and active_config.home_assistant.enabled and active_config.ems_mode_check:
             if self._charging and self._discharging:
                 cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append({
@@ -1735,9 +1750,17 @@ class ReactivePowerRegulationGradient(NumericSensor, HybridInverter, PVInverter)
 
 
 class RemoteEMSPowerLimitGlobalEnable(SwitchSensor, HybridInverter):
+    """Remote EMS power limit global enable (protocol V2.10).
+
+    The ESS max charging/discharging limits and PV max power limit (40032~40036) take effect when this register is 1 or
+    the EMS work mode (30003) is Remote EMS, which is the case when Remote EMS (40029) is enabled. Home Assistant
+    availability requires every availability topic to be available, so the "either switch is on" condition is
+    published as a single combined topic (``power_limits_active_topic``) by both this sensor and Remote EMS.
+    """
+
     ADDRESS = 40162
 
-    def __init__(self, plant_index: int):
+    def __init__(self, plant_index: int, remote_ems: RemoteEMS | None = None):
         super().__init__(
             availability_control_sensor=None,
             name="Remote EMS Power Limit Global Enable",
@@ -1748,6 +1771,38 @@ class RemoteEMSPowerLimitGlobalEnable(SwitchSensor, HybridInverter):
             scan_interval=ScanInterval.medium(plant_index),
             protocol_version=ProtocolVersion.V2_10,
         )
+        self._remote_ems = remote_ems
+        if remote_ems is not None:
+            remote_ems.power_limit_global_enable = self
+        self.power_limits_active_topic: str | None = None
+
+    @property
+    def power_limits_active(self) -> bool:
+        """True if either this switch or Remote EMS is enabled, so the power limits (40032~40036) take effect."""
+        enabled = (1, "1")
+        return self.latest_raw_state in enabled or (self._remote_ems is not None and self._remote_ems.latest_raw_state in enabled)
+
+    def configure_mqtt_topics(self, device_id: str) -> str:
+        base = super().configure_mqtt_topics(device_id)
+        self.power_limits_active_topic = f"{base}/power_limits_active"
+        return base
+
+    def publish_power_limits_active(self, mqtt_client: mqtt.Client) -> None:
+        """Publish 1 to the combined topic if either switch is enabled, otherwise 0."""
+        if self.power_limits_active_topic and active_config.home_assistant.enabled:
+            mqtt_client.publish(self.power_limits_active_topic, "1" if self.power_limits_active else "0", self._qos, self._retain)
+
+    async def publish(self, mqtt_client: mqtt.Client, transport: Any, republish: bool = False) -> bool:
+        result = await super().publish(mqtt_client, transport, republish=republish)
+        if result:
+            self.publish_power_limits_active(mqtt_client)
+        return result
+
+    def clean_state(self, mqtt_client: mqtt.Client) -> None:
+        """Clean up published sensor state."""
+        if self.power_limits_active_topic:
+            self._publish_message(mqtt_client, self.power_limits_active_topic, b"", qos=1)
+        return super().clean_state(mqtt_client)
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()

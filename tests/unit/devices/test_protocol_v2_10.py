@@ -386,3 +386,71 @@ async def test_global_enable_takes_precedence_over_firmware(monkeypatch):
         (limit,) = _by_class(sensors, MaxChargingLimit)
         assert limit._availability_control_sensor is None
         assert isinstance(limit._global_enable, RemoteEMSPowerLimitGlobalEnable)
+
+
+# ---------------------------------------------------------------------------
+# Home Assistant availability of the power limits (protocol V2.10)
+# ---------------------------------------------------------------------------
+
+
+async def _ha_sensors() -> dict:
+    cfg = Config()
+    cfg.home_assistant.enabled = True
+    with _swap_active_config(cfg):
+        return await get_sensor_instances(home_assistant_enabled=True, protocol_version=ProtocolVersion.V2_10)
+
+
+@pytest.mark.asyncio
+async def test_power_limits_availability_uses_combined_topic():
+    sensors = await _ha_sensors()
+    (global_enable,) = _by_class(sensors, RemoteEMSPowerLimitGlobalEnable)
+    (remote_ems,) = _by_class(sensors, RemoteEMS)
+    assert remote_ems.power_limit_global_enable is global_enable
+    assert global_enable.power_limits_active_topic and global_enable.power_limits_active_topic.endswith("/power_limits_active")
+    for cls in (MaxChargingLimit, MaxDischargingLimit, PVMaxPowerLimit):
+        (limit,) = _by_class(sensors, cls)
+        topics = [a["topic"] for a in limit["availability"]]
+        assert global_enable.power_limits_active_topic in topics, cls.__name__
+        assert remote_ems["state_topic"] not in topics, cls.__name__  # Not gated on Remote EMS alone
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(("remote_ems_state", "global_enable_state", "expected"), [(0, 0, "0"), (1, 0, "1"), (0, 1, "1"), (1, 1, "1"), (None, None, "0")])
+async def test_power_limits_active_published_when_either_switch_is_on(remote_ems_state, global_enable_state, expected):
+    sensors = await _ha_sensors()
+    (global_enable,) = _by_class(sensors, RemoteEMSPowerLimitGlobalEnable)
+    (remote_ems,) = _by_class(sensors, RemoteEMS)
+    for sensor, state in ((remote_ems, remote_ems_state), (global_enable, global_enable_state)):
+        sensor._states.clear()
+        if state is not None:
+            sensor._states.append((0.0, state))
+
+    cfg = Config()
+    cfg.home_assistant.enabled = True
+    mqtt_client = Mock()
+    with _swap_active_config(cfg):
+        global_enable.publish_power_limits_active(mqtt_client)
+    mqtt_client.publish.assert_called_once()
+    topic, payload = mqtt_client.publish.call_args.args[:2]
+    assert topic == global_enable.power_limits_active_topic
+    assert payload == expected
+
+
+@pytest.mark.asyncio
+async def test_remote_ems_publish_updates_combined_topic(monkeypatch):
+    sensors = await _ha_sensors()
+    (global_enable,) = _by_class(sensors, RemoteEMSPowerLimitGlobalEnable)
+    (remote_ems,) = _by_class(sensors, RemoteEMS)
+    calls = []
+    monkeypatch.setattr(global_enable, "publish_power_limits_active", lambda client: calls.append(client))
+
+    from sigenergy2mqtt.sensors.base.writeable import SwitchSensor
+
+    async def fake_super_publish(self, mqtt_client, transport, republish=False):
+        return True
+
+    monkeypatch.setattr(SwitchSensor, "publish", fake_super_publish)
+    client = Mock()
+    assert await remote_ems.publish(client, None) is True
+    assert await global_enable.publish(client, None) is True
+    assert calls == [client, client]  # Published after either switch publishes
