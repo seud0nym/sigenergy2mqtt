@@ -94,7 +94,7 @@ If not specified, the default depends on the runtime environment:
 </table>
 Turn off the validation that disables ESS Max Charging Discharging Limits and PV Max Power Limits when Remote EMS Control Mode is not Command Charging/Discharging.
 
-Ignored for firmware SPC113 and later as these limits are globally available in those versions.
+Ignored when these limits do not depend on Remote EMS: on firmware SPC113 to SPC115, where they are globally available, or when the firmware supports Remote EMS Power Limit Global Enable (Modbus Protocol V2.10), where they are always writable. Firmware SPC116 and later without that register requires Remote EMS again.
 
 <a id="opt_no_metrics"></a>
 ### No Metrics (Deprecated)

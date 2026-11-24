@@ -345,3 +345,44 @@ async def test_power_limits_use_v2_9_rules_when_v2_10_firmware_lacks_global_enab
             assert limit._remote_ems_mode is not None, cls.__name__
             assert limit._global_enable is None, cls.__name__
             assert "40162" not in limit.get_attributes()["comment"], cls.__name__
+
+
+@pytest.mark.parametrize(
+    ("firmware", "expected"),
+    [("V100R001C00SPC112B107G", False), ("V100R001C00SPC113", True), ("V100R001C00SPC115B100", True), ("V100R001C00SPC116", False), ("V100R001C00SPC117", False)],
+)
+def test_firmware_has_global_power_limits(firmware, expected):
+    from sigenergy2mqtt.common import FirmwareVersion
+
+    assert FirmwareVersion(firmware).has_global_power_limits is expected
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(("firmware", "gated"), [("V100R001C00SPC115", False), ("V100R001C00SPC116", True), ("V100R001C00SPC117", True)])
+async def test_power_limit_gating_by_firmware_without_global_enable(monkeypatch, firmware, gated):
+    """SPC113 to SPC115 applied the limits globally; SPC116 and later require Remote EMS again unless 40162 is available."""
+    from sigenergy2mqtt.common import HybridInverter
+    from tests.utils import modbus_sensors
+
+    def hybrid_without_global_enable(**kwargs):
+        kwargs["has_remote_ems_power_limit_global_enable"] = False
+        return HybridInverter(**kwargs)
+
+    monkeypatch.setattr(modbus_sensors, "HybridInverter", hybrid_without_global_enable)
+    with _swap_active_config(Config()):
+        sensors = await get_sensor_instances(protocol_version=ProtocolVersion.V2_10, firmware_version=firmware)
+        for cls in (MaxChargingLimit, MaxDischargingLimit, PVMaxPowerLimit):
+            (limit,) = _by_class(sensors, cls)
+            assert isinstance(limit._availability_control_sensor, RemoteEMS) is gated, cls.__name__
+            assert (limit._remote_ems_mode is not None) is gated, cls.__name__
+            assert limit._global_enable is None, cls.__name__
+
+
+@pytest.mark.asyncio
+async def test_global_enable_takes_precedence_over_firmware(monkeypatch):
+    """With 40162 available, the V2.10 rules apply whatever the firmware service pack."""
+    with _swap_active_config(Config()):
+        sensors = await get_sensor_instances(protocol_version=ProtocolVersion.V2_10, firmware_version="V100R001C00SPC117")
+        (limit,) = _by_class(sensors, MaxChargingLimit)
+        assert limit._availability_control_sensor is None
+        assert isinstance(limit._global_enable, RemoteEMSPowerLimitGlobalEnable)

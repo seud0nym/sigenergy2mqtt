@@ -12,7 +12,8 @@
 
 ### Changed
 
-- On Modbus Protocol V2.10 systems whose firmware supports the Remote EMS Power Limit Global Enable register, Max Charging Limit, Max Discharging Limit and PV Max Power Limit are now always available and writable, whatever the Remote EMS settings. Sigenergy applies them when Remote EMS Power Limit Global Enable is on, or when the EMS Work Mode is Remote EMS; otherwise the values are kept but not applied. On earlier protocol versions, or when the firmware does not support that register, they are still only available when Remote EMS is enabled and in the matching Remote EMS control mode (firmware before SPC113)
+- On Modbus Protocol V2.10 systems whose firmware supports the Remote EMS Power Limit Global Enable register, Max Charging Limit, Max Discharging Limit and PV Max Power Limit are now always available and writable, whatever the Remote EMS settings. Sigenergy applies them when Remote EMS Power Limit Global Enable is on, or when the EMS Work Mode is Remote EMS; otherwise the values are kept but not applied. On earlier protocol versions, or when the firmware does not support that register, they are only available when Remote EMS is enabled and in the matching Remote EMS control mode, except on firmware SPC113 to SPC115 where they apply globally
+- Max Charging Limit, Max Discharging Limit and PV Max Power Limit once again require Remote EMS (and the matching Remote EMS control mode) on firmware SPC116 and later that does not support Remote EMS Power Limit Global Enable. Sigenergy has reportedly reverted the global behaviour introduced in SPC113 in SPC116 or SPC117, so the limits were shown as writable but had no effect. The `no-ems-mode-check` option is no longer ignored on these firmware versions
 - The `modbus-auto-discovery-exclude` option now excludes nothing by default. `PID` and `PSS` are no longer valid values; they are ignored with a warning
 
 ### Removed

@@ -51,6 +51,16 @@ class FirmwareVersion:
         return self._service_pack
 
     @property
+    def has_global_power_limits(self) -> bool:
+        """True if the ESS max charging/discharging and PV max power limits (40032~40036) apply regardless of Remote EMS.
+
+        This was the case from SPC113 (protocol V2.9: "Takes effect globally regardless of the EMS operating mode") until
+        SPC116 (reportedly; at the latest SPC117), which reverted to requiring Remote EMS, consistent with protocol V2.10 when
+        Remote EMS power limit global enable (40162) is disabled.
+        """
+        return 113 <= self._service_pack <= 115
+
+    @property
     def build(self) -> int | None:
         """Optional build number (B component)."""
         return self._build

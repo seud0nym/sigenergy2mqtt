@@ -162,9 +162,10 @@ options:
   --no-ems-mode-check   Turn off validation that disables ESS Max
                         Charging/Discharging and PV Max Power limits when
                         Remote EMS Control Mode is not Command
-                        Charging/Discharging. This option is ignored for
-                        firmware SPC113 and later as these limits are globally
-                        available in those versions.
+                        Charging/Discharging. This option is ignored when
+                        these limits do not depend on Remote EMS: on firmware
+                        SPC113 to SPC115, or when the firmware supports Remote
+                        EMS Power Limit Global Enable (Modbus Protocol V2.10).
   --no-metrics          Deprecated: metrics publishing is disabled by default.
                         Use --publish-metrics to enable it.
   --publish-metrics     Publish sigenergy2mqtt metrics to MQTT (disabled by
