@@ -2470,7 +2470,7 @@ cli:
   SIGENERGY2MQTT_MQTT_USERNAME:
     help: MQTT 브로커 유효한 사용자명
   SIGENERGY2MQTT_NO_EMS_MODE_CHECK:
-    help: '원격 EMS 제어 모드가 명령 충전/방전이 아닐 때 ESS 최대 충전/방전 및 PV 최대 전력 제한을 비활성화하는 유효성 검사를 끕니다.'
+    help: '원격 EMS 제어 모드가 ‘명령 기반 충전/방전’이 아닐 때 ESS 최대 충전/방전 및 PV 최대 전력 제한을 비활성화하는 유효성 검사를 해제합니다. 이 제한 사항이 원격 EMS에 의존하지 않는 경우(펌웨어 SPC113~SPC115) 또는 펌웨어가 원격 EMS 전력 제한 전역 활성화(Modbus 프로토콜 V2.10)를 지원하는 경우, 이 옵션은 무시됩니다.'
   SIGENERGY2MQTT_NO_METRICS:
     help: '사용 중단: 메트릭스 게시 기능은 기본적으로 비활성화되어 있습니다. --publish-metrics 옵션을 사용하여 활성화하십시오.'
   SIGENERGY2MQTT_PERSISTENCE_CACHE_WARMUP_TIMEOUT:

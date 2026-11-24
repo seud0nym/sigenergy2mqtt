@@ -2470,7 +2470,7 @@ cli:
   SIGENERGY2MQTT_MQTT_USERNAME:
     help: Nome de usuário válido para o broker MQTT
   SIGENERGY2MQTT_NO_EMS_MODE_CHECK:
-    help: 'Desative a validação que desativa os limites de Carga/Descarga Máxima do ESS e de Potência Máxima do PV quando o Modo de Controle EMS Remoto não for Carga/Descarga por Comando.'
+    help: 'Desativar a validação que desativa os limites de carga/descarga máxima do ESS e de potência máxima fotovoltaica quando o modo de controlo remoto do EMS não estiver definido como «Carga/Descarga por comando». Esta opção é ignorada quando estes limites não dependem do EMS remoto: no firmware SPC113 a SPC115, ou quando o firmware suporta a ativação global do limite de potência do EMS remoto (Protocolo Modbus V2.10).'
   SIGENERGY2MQTT_NO_METRICS:
     help: 'Obsoleto: a publicação de métricas está desativada por predefinição. Utilize --publish-metrics para a ativar.'
   SIGENERGY2MQTT_PERSISTENCE_CACHE_WARMUP_TIMEOUT:
