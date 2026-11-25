@@ -164,7 +164,7 @@ options:
                         Remote EMS Control Mode is not Command
                         Charging/Discharging. This option is ignored when
                         these limits do not depend on Remote EMS: on firmware
-                        SPC113 to SPC115, or when the firmware supports Remote
+                        SPC113 to SPC116, or when the firmware supports Remote
                         EMS Power Limit Global Enable (Modbus Protocol V2.10).
   --no-metrics          Deprecated: metrics publishing is disabled by default.
                         Use --publish-metrics to enable it.

@@ -164,8 +164,8 @@ class PowerPlant(ModbusDevice):
         # From protocol V2.10, ESS max charging/discharging limit and PV max power limit (40032~40036) are always writable and
         # take effect when Remote EMS power limit global enable (40162) is 1 or EMS work mode (30003) is Remote EMS (7).
         # Without register 40162 (before V2.10, or V2.10 detected from its other registers), Remote EMS must be enabled with the
-        # appropriate Remote EMS control mode, except on SPC113 to SPC115 where the limits applied globally (protocol V2.9).
-        # SPC116 (reportedly; at the latest SPC117) reverted to requiring Remote EMS, consistent with V2.10 with 40162 disabled.
+        # appropriate Remote EMS control mode, except on SPC113 to SPC116 where the limits applied globally (protocol V2.9).
+        # SPC117 reverted to requiring Remote EMS, consistent with V2.10 with 40162 disabled.
         global_enable: rw.RemoteEMSPowerLimitGlobalEnable | None = None
         if self.protocol_version >= ProtocolVersion.V2_10 and self._device_type.has_remote_ems_power_limit_global_enable:
             global_enable = rw.RemoteEMSPowerLimitGlobalEnable(self.plant_index, remote_ems)

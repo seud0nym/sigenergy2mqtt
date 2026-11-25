@@ -349,7 +349,7 @@ async def test_power_limits_use_v2_9_rules_when_v2_10_firmware_lacks_global_enab
 
 @pytest.mark.parametrize(
     ("firmware", "expected"),
-    [("V100R001C00SPC112B107G", False), ("V100R001C00SPC113", True), ("V100R001C00SPC115B100", True), ("V100R001C00SPC116", False), ("V100R001C00SPC117", False)],
+    [("V100R001C00SPC112B107G", False), ("V100R001C00SPC113", True), ("V100R001C00SPC115B100", True), ("V100R001C00SPC116", True), ("V100R001C00SPC117", False), ("V100R001C00SPC118", False)],
 )
 def test_firmware_has_global_power_limits(firmware, expected):
     from sigenergy2mqtt.common import FirmwareVersion
@@ -358,9 +358,9 @@ def test_firmware_has_global_power_limits(firmware, expected):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(("firmware", "gated"), [("V100R001C00SPC115", False), ("V100R001C00SPC116", True), ("V100R001C00SPC117", True)])
+@pytest.mark.parametrize(("firmware", "gated"), [("V100R001C00SPC116", False), ("V100R001C00SPC117", True), ("V100R001C00SPC118", True)])
 async def test_power_limit_gating_by_firmware_without_global_enable(monkeypatch, firmware, gated):
-    """SPC113 to SPC115 applied the limits globally; SPC116 and later require Remote EMS again unless 40162 is available."""
+    """SPC113 to SPC116 applied the limits globally; SPC117 and later require Remote EMS again unless 40162 is available."""
     from sigenergy2mqtt.common import HybridInverter
     from tests.utils import modbus_sensors
 

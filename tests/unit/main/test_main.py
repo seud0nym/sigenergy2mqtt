@@ -1089,9 +1089,9 @@ class TestFactories:
             assert any("Remote EMS Mode check disabled" in str(call) for call in mock_debug.call_args_list)
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("firmware", ["V122R001C00SPC112B701P", "V122R001C00SPC116", "V122R001C00SPC117"])
+    @pytest.mark.parametrize("firmware", ["V122R001C00SPC112B701P", "V122R001C00SPC117", "V122R001C00SPC118"])
     async def test_make_plant_and_inverter_keeps_ems_mode_check_config(self, clean_config, firmware):
-        """Test ems_mode_check remains as configured for firmware below SPC113, or SPC116 and later (limits require Remote EMS again)."""
+        """Test ems_mode_check remains as configured for firmware below SPC113, or SPC117 and later (limits require Remote EMS again)."""
         mock_client = AsyncMock()
         mock_client.comm_params.host = "h"
         mock_client.comm_params.port = 502
