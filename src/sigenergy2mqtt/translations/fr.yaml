@@ -567,8 +567,6 @@ class:
     attributes:
       comment: On suppose que les codes utilisés sont les mêmes que ceux de l'état de fonctionnement du chargeur CC Modbus ; seuls les codes 0 à 3 ont été vérifiés.
     name: État
-  DcChargerSurplusPvPriority:
-    name: Priorité au surplus photovoltaïque
   DcChargerV2xDischargeCutoffSoc:
     name: 'V2X : coupure de décharge en fonction du niveau de charge (SOC)'
   DcChargerV2xDischargeEnabled:
@@ -2922,6 +2920,10 @@ class:
     name: Heure d'Arrêt
   SigenCloudDevice:
     name: '{model_name} {sn}'
+  SitePvSurplusPriority:
+    attributes:
+      comment: Applies to the entire site, not just one charger.
+    name: Site PV Surplus Priority
   SmartLoadPower:
     attributes:
       source: Registre Modbus {address}

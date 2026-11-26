@@ -567,8 +567,6 @@ class:
     attributes:
       comment: Modbus DC 충전기의 ‘Running State’와 동일한 코드를 사용하는 것으로 가정하며, 0~3번만 확인되었습니다.
     name: 상태
-  DcChargerSurplusPvPriority:
-    name: 잉여 태양광 우선순위
   DcChargerV2xDischargeCutoffSoc:
     name: V2X 방전 차단 SOC
   DcChargerV2xDischargeEnabled:
@@ -2922,6 +2920,10 @@ class:
     name: 종료 시간
   SigenCloudDevice:
     name: '{model_name} {sn}'
+  SitePvSurplusPriority:
+    attributes:
+      comment: Applies to the entire site, not just one charger.
+    name: Site PV Surplus Priority
   SmartLoadPower:
     attributes:
       source: Modbus 레지스터 {address}

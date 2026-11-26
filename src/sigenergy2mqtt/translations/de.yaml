@@ -567,8 +567,6 @@ class:
     attributes:
       comment: Es wird davon ausgegangen, dass dieselben Codes wie beim Modbus-DC-Ladegerät im Betriebsstatus verwendet werden; bisher wurden nur die Werte 0–3 bestätigt.
     name: Status  # verify:ignore
-  DcChargerSurplusPvPriority:
-    name: Priorität für überschüssigen Solarstrom
   DcChargerV2xDischargeCutoffSoc:
     name: V2X-Entladeabschaltung nach SOC
   DcChargerV2xDischargeEnabled:
@@ -2922,6 +2920,10 @@ class:
     name: Abschaltzeit
   SigenCloudDevice:
     name: '{model_name} {sn}'
+  SitePvSurplusPriority:
+    attributes:
+      comment: Applies to the entire site, not just one charger.
+    name: Site PV Surplus Priority
   SmartLoadPower:
     attributes:
       source: Modbus-Register {address}

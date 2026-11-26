@@ -567,8 +567,6 @@ class:
     attributes:
       comment: Assumed to use the same codes as the Modbus DC charger Running State; only 0-3 have been corroborated.
     name: Status
-  DcChargerSurplusPvPriority:
-    name: Surplus PV Priority
   DcChargerV2xDischargeCutoffSoc:
     name: V2X Discharge Cut-off SOC
   DcChargerV2xDischargeEnabled:
@@ -2922,6 +2920,10 @@ class:
     name: Shutdown Time
   SigenCloudDevice:
     name: '{model_name} {sn}'
+  SitePvSurplusPriority:
+    attributes:
+      comment: Applies to the entire site, not just one charger.
+    name: Site PV Surplus Priority
   SmartLoadPower:
     attributes:
       source: Modbus Register {address}
