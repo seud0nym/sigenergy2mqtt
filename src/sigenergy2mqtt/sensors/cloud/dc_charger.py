@@ -14,7 +14,6 @@ from typing import Any, cast
 
 from sigenergy2mqtt.cloud.exceptions import CloudControlUnavailableError
 from sigenergy2mqtt.cloud.port import CloudControlPort
-from sigenergy2mqtt.cloud.vendor.solidfox.sigenergy_cloud import SigenergyCloudClient
 from sigenergy2mqtt.common import (
     PERCENTAGE,
     DeviceClass,
@@ -43,19 +42,8 @@ CHARGE_MODE_LABELS: dict[int, str] = {
     3: "Sigen AI Mode",
 }
 
-#: ``sgDeviceType`` values in the energy profile's ``pvPriority`` list.
-SURPLUS_PV_DEVICE_LABELS: dict[int, str] = {
-    4: "Battery",
-    5: "DC Charger",
-}
-
-
 def charge_mode_label(mode: int) -> str:
     return CHARGE_MODE_LABELS.get(mode, f"Mode {mode}")
-
-
-def surplus_pv_option(device_type: int) -> str:
-    return f"{SURPLUS_PV_DEVICE_LABELS.get(device_type, f'Device Type {device_type}')} First"
 
 
 def dc_charger_identity(plant_index: int, station_id: str, sn: str, index: int, suffix: str) -> tuple[str, str]:
@@ -393,52 +381,6 @@ class DcChargerV2xDischargeCutoffSoc(_DcChargeModeValue):
             device_class=DeviceClass.BATTERY,
             icon="mdi:car-battery",
         )
-
-
-# --- Surplus PV priority (device/energy-profile/setting) ---------------------------
-
-
-class DcChargerSurplusPvPriority(SelectSensorMixin, _DcChargerSensorMixin, CloudReadWriteSensor):
-    """Which device is served first from surplus PV generation."""
-
-    def __init__(self, plant_index: int, station_id: str, sn: str, index: int, device_types: tuple[int, ...]) -> None:
-        if len(set(device_types)) < 2:
-            raise ValueError("DcChargerSurplusPvPriority: fewer than two devices share surplus PV")
-        # A fixed order, so the options do not move when the priority changes between restarts
-        self._device_types = sorted(set(device_types), reverse=True)
-        object_id, unique_id = dc_charger_identity(plant_index, station_id, sn, index, "surplus_pv_priority")
-        super().__init__(
-            availability_control_sensor=None,
-            name="Surplus PV Priority",
-            object_id=object_id,
-            unique_id=unique_id,
-            scan_interval=active_config.cloud.scan_interval,
-            options=[surplus_pv_option(device_type) for device_type in self._device_types],
-            unit=None,
-            device_class=None,
-            state_class=None,
-            icon="mdi:solar-power-variant",
-            gain=None,
-            precision=None,
-            protocol_version=ProtocolVersion.N_A,
-        )
-        self._dc_init(sn, CloudResponseSnapshot(lambda port: port.energy_profile_setting()))
-        self[DiscoveryKeys.ENABLED_BY_DEFAULT] = True
-
-    async def _read_cloud_state(self, port: CloudControlPort) -> int | None:
-        order = SigenergyCloudClient.surplus_pv_priority_order(await self._snapshot.read_object(port))
-        if order and order[0] in self._device_types:
-            return self._device_types.index(order[0])
-        logger.warning(f"{self.log_identity} cloud response contains unknown Surplus PV priority: {order!r}")
-        return None
-
-    async def _write_cloud_value(self, port: CloudControlPort, value: float | str) -> bool:
-        index = int(value)
-        if not 0 <= index < len(self._device_types):
-            logger.warning(f"{self.log_identity} cannot write unknown Surplus PV priority index {index}")
-            return False
-        await port.set_surplus_pv_priority(self._device_types[index])
-        return True
 
 
 # --- Read-only charger values -------------------------------------------------------

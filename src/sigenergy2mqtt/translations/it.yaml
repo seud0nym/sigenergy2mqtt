@@ -567,8 +567,6 @@ class:
     attributes:
       comment: Si presume che utilizzino gli stessi codici dello stato di funzionamento del caricabatterie Modbus DC; solo i valori da 0 a 3 sono stati verificati.
     name: Stato
-  DcChargerSurplusPvPriority:
-    name: Priorità dell'energia fotovoltaica in eccesso
   DcChargerV2xDischargeCutoffSoc:
     name: SOC di interruzione della scarica V2X
   DcChargerV2xDischargeEnabled:
@@ -2922,6 +2920,10 @@ class:
     name: Ora di Spegnimento
   SigenCloudDevice:
     name: '{model_name} {sn}'
+  SitePvSurplusPriority:
+    attributes:
+      comment: Si applica all'intero sito, non solo a un singolo caricabatterie.
+    name: Priorità dell'eccedenza fotovoltaica dell'impianto
   SmartLoadPower:
     attributes:
       source: Registro Modbus {address}

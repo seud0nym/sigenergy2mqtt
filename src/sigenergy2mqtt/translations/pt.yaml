@@ -567,8 +567,6 @@ class:
     attributes:
       comment: Presume-se que sejam utilizados os mesmos códigos que os do estado de funcionamento do carregador Modbus DC; apenas os valores 0 a 3 foram confirmados.
     name: Estado
-  DcChargerSurplusPvPriority:
-    name: Prioridade de excedentes fotovoltaicos
   DcChargerV2xDischargeCutoffSoc:
     name: SOC de corte de descarga V2X
   DcChargerV2xDischargeEnabled:
@@ -2922,6 +2920,10 @@ class:
     name: Hora de Desligamento
   SigenCloudDevice:
     name: '{model_name} {sn}'
+  SitePvSurplusPriority:
+    attributes:
+      comment: Aplica-se a todo o sistema, não apenas a um carregador.
+    name: Prioridade do excedente fotovoltaico do local
   SmartLoadPower:
     attributes:
       source: Registo Modbus {address}

@@ -24,9 +24,9 @@ from sigenergy2mqtt.sensors.cloud.dc_charger import (
     DcChargerOcppLinkStatus,
     DcChargerPrimaryVehicle,
     DcChargerStatusCode,
-    DcChargerSurplusPvPriority,
     DcChargerV2xDischargeEnabled,
 )
+from sigenergy2mqtt.sensors.cloud.read_write import SitePvSurplusPriority
 from tests.utils.modbus_sensors import DC_CHARGER_SERIAL
 from tests.utils.modbus_test_server import CLOUD_TEST_STATION_ID, CloudApiTestServer
 
@@ -158,7 +158,8 @@ async def test_dc_charger_device_sensors_read_and_write_against_server() -> None
     api = _api()
     async with _adapter(api) as adapter:
         discovery = await discover_dc_chargers(adapter, CloudDiscovery(device_list=await adapter.device_list()))
-        assert discovery.dc_chargers == (DcChargerDiscovery(DC_CHARGER_SERIAL, (0, 1, 3), (0.0, 100.0), (5, 4)),)
+        assert discovery.dc_chargers == (DcChargerDiscovery(DC_CHARGER_SERIAL, (0, 1, 3), (0.0, 100.0)),)
+        assert discovery.surplus_pv_devices == (5, 4)
 
         device = CloudDcCharger(0, adapter.station_id, discovery.dc_chargers[0])
 
@@ -170,7 +171,8 @@ async def test_dc_charger_device_sensors_read_and_write_against_server() -> None
         assert await sensor(DcChargerChargingMode)._read_cloud_state(adapter) == 1
         assert await sensor(DcChargerBatteryBoost)._read_cloud_state(adapter) == 0
         assert await sensor(DcChargerBatteryBoostCutoffSoc)._read_cloud_state(adapter) == 5.0
-        assert await sensor(DcChargerSurplusPvPriority)._read_cloud_state(adapter) == 0
+        site_priority = SitePvSurplusPriority(0, adapter.station_id, discovery.surplus_pv_devices)
+        assert await site_priority._read_cloud_state(adapter) == 0
         assert await sensor(DcChargerStatusCode)._read_cloud_state(adapter) == 0
         assert await sensor(DcChargerLifetimeChargedEnergy)._read_cloud_state(adapter) == 781.68
         assert await sensor(DcChargerOcppLinkStatus)._read_cloud_state(adapter) == 0
@@ -184,5 +186,5 @@ async def test_dc_charger_device_sensors_read_and_write_against_server() -> None
         assert api.dc_charge_mode["enableFromPack"] is True
         assert api.dc_charge_mode["cutoffSocFromPack"] == 20.0
 
-        assert await sensor(DcChargerSurplusPvPriority)._write_cloud_value(adapter, 1)
+        assert await site_priority._write_cloud_value(adapter, 1)
         assert _pv_order(api)[2:] == [(1, 4, 2), (1, 5, 1)]

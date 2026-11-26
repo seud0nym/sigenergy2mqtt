@@ -13,7 +13,11 @@ fi
 echo -e "${GREEN}>>> Updating English translations...${NC}"
 python3 scripts/update_en_translation.py || exit
 
-if git diff --name-only | grep -qE 'sigenergy2mqtt/translations/.+\.yaml'; then
+# Look for values still in English, whether or not the translation files have
+# uncommitted changes (they may have been committed before translating).
+python3 scripts/translate_missing.py --check >/dev/null
+check_status=$?
+if [[ $check_status -eq 3 ]]; then
     echo -e "${GREEN}>>> Updating native translations...${NC}"
     if [[ -e scripts/.deepl ]]; then
         source scripts/.deepl
@@ -23,8 +27,11 @@ if git diff --name-only | grep -qE 'sigenergy2mqtt/translations/.+\.yaml'; then
     fi
     python3 scripts/translate_missing.py || exit
 
-    if git diff --name-only | grep -qE 'sigenergy2mqtt/translations/.+\.yaml'; then
-        echo -e "${GREEN}>>> Checking translations...${NC}"
-        python3 scripts/verify_translations.py || exit
-    fi
+    echo -e "${GREEN}>>> Checking translations...${NC}"
+    python3 scripts/verify_translations.py || exit
+elif [[ $check_status -ne 0 ]]; then
+    echo -e "${RED}>>> ERROR: Could not check for untranslated values!${NC}"
+    exit $check_status
+else
+    echo -e "${GREEN}>>> No untranslated values found.${NC}"
 fi

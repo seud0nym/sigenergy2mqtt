@@ -18,6 +18,7 @@ from sigenergy2mqtt.sensors.cloud.read_write import (
     InstantControlMode,
     InstantControlSwitch,
     OperationalMode,
+    SitePvSurplusPriority,
     SolarPowerLimit,
 )
 
@@ -27,6 +28,9 @@ from .gateway import Gateway
 from .sigen_device import SigenCloudDevice, build_sigen_devices
 
 logger = logging.getLogger(__name__)
+
+#: ``sgDeviceType`` of a DC charger in the Surplus PV priority list.
+_DC_CHARGER_SG_DEVICE_TYPE = 5
 
 ChildBuilder = Callable[[int, str, CloudDiscovery], Device | None]
 _CHILD_BUILDERS: tuple[ChildBuilder, ...] = (Gateway.from_discovery,)
@@ -73,6 +77,12 @@ class CloudControl(Device):
             self._add_sensor(battery_charge_limit)
             self._add_sensor(battery_discharge_limit)
             self._add_sensor(BatteryExportLimitation(plant_index, station_id))
+        # A site-wide setting, offered when a DC charger shares surplus PV
+        if _DC_CHARGER_SG_DEVICE_TYPE in discovery.surplus_pv_devices:
+            try:
+                self._add_sensor(SitePvSurplusPriority(plant_index, station_id, discovery.surplus_pv_devices))
+            except ValueError as exc:
+                logger.warning("Cloud Site PV Surplus Priority sensor disabled: %s", exc)
 
         for build_child in _CHILD_BUILDERS:
             if (child := build_child(plant_index, station_id, discovery)) is not None:

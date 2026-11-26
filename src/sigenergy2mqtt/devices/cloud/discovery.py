@@ -28,7 +28,6 @@ class DcChargerDiscovery:
     serial_number: str
     charge_modes: tuple[int, ...] = ()
     soc_range: tuple[float, float] = (0.0, 100.0)
-    surplus_pv_devices: tuple[int, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -41,6 +40,8 @@ class CloudDiscovery:
     device_info: dict[str, tuple[dict[str, Any], dict[str, Any]]] | None = None
     battery_pack_info: dict[str, dict[str, Any]] | None = None
     dc_chargers: tuple[DcChargerDiscovery, ...] = ()
+    #: ``sgDeviceType`` values sharing surplus PV, in the station's priority order.
+    surplus_pv_devices: tuple[int, ...] = ()
 
     @property
     def has_battery(self) -> bool:
@@ -157,7 +158,7 @@ async def discover_dc_chargers(cloud_port: CloudControlPort, discovery: CloudDis
     try:
         surplus_pv_devices = tuple(SigenergyCloudClient.surplus_pv_priority_order(await cloud_port.energy_profile_setting()))
     except (ClientError, CloudControlError) as exc:
-        logger.warning("Cloud Surplus PV Priority discovery failed; the sensor will be disabled: %s", exc)
+        logger.warning("Cloud Site PV Surplus Priority discovery failed; the sensor will be disabled: %s", exc)
     try:
         soc_range = _soc_range(await cloud_port.dc_charge_mode_soc_range())
     except (ClientError, CloudControlError) as exc:
@@ -173,5 +174,5 @@ async def discover_dc_chargers(cloud_port: CloudControlPort, discovery: CloudDis
                 logger.info("Cloud DC charger %s does not support charging modes; mode sensors will be disabled", sn)
         except (ClientError, CloudControlError) as exc:
             logger.warning("Cloud DC charger %s charging-mode discovery failed; mode sensors will be disabled: %s", sn, exc)
-        chargers.append(DcChargerDiscovery(sn, charge_modes=charge_modes, soc_range=soc_range, surplus_pv_devices=surplus_pv_devices))
-    return replace(discovery, dc_chargers=tuple(chargers))
+        chargers.append(DcChargerDiscovery(sn, charge_modes=charge_modes, soc_range=soc_range))
+    return replace(discovery, dc_chargers=tuple(chargers), surplus_pv_devices=surplus_pv_devices)
