@@ -2922,8 +2922,8 @@ class:
     name: '{model_name} {sn}'
   SitePvSurplusPriority:
     attributes:
-      comment: Applies to the entire site, not just one charger.
-    name: Site PV Surplus Priority
+      comment: これは1台の充電器だけでなく、サイト全体に適用されます。
+    name: サイトの太陽光発電余剰電力の優先順位
   SmartLoadPower:
     attributes:
       source: Modbusレジスタ {address}
