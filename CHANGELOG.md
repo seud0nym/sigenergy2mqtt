@@ -50,6 +50,8 @@
 
 - Removed the PSS and PID devices, which Sigenergy has removed from Modbus Protocol V2.10. These were commercial products. The `--modbus-pss-device-id` and `--modbus-pid-device-id` command line options have been removed (using them is now an error), and the `SIGENERGY2MQTT_MODBUS_PSS_DEVICE_ID`/`SIGENERGY2MQTT_MODBUS_PID_DEVICE_ID` environment variables and the `pss`/`pid` YAML keys are ignored with a warning. Auto-discovery no longer probes for PSS or PID devices
 
+---
+
 ## [2026.11.23b2] - 2026-11-23
 
 ### Added
