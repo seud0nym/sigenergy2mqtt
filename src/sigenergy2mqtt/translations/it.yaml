@@ -2470,7 +2470,7 @@ cli:
   SIGENERGY2MQTT_MQTT_USERNAME:
     help: Un nome utente valido per il broker MQTT
   SIGENERGY2MQTT_NO_EMS_MODE_CHECK:
-    help: 'Disattiva la convalida che disabilita i limiti di carica/scarica massima dell’ESS e di potenza massima FV quando la modalità di controllo EMS remoto non è “Comando di carica/scarica”. Questa opzione viene ignorata quando tali limiti non dipendono dall’EMS remoto: sui firmware da SPC113 a SPC115, oppure quando il firmware supporta l’abilitazione globale del limite di potenza EMS remoto (protocollo Modbus V2.10).'
+    help: 'Disattiva la convalida che disabilita i limiti di carica/scarica massima dell’ESS e di potenza massima FV quando la modalità di controllo EMS remoto non è “Comando di carica/scarica”. Questa opzione viene ignorata quando tali limiti non dipendono dall’EMS remoto: sui firmware da SPC113 a SPC116, oppure quando il firmware supporta l’abilitazione globale del limite di potenza EMS remoto (protocollo Modbus V2.10).'
   SIGENERGY2MQTT_NO_METRICS:
     help: 'Obsoleto: la pubblicazione delle metriche è disabilitata per impostazione predefinita. Utilizzare --publish-metrics per abilitarla.'
   SIGENERGY2MQTT_PERSISTENCE_CACHE_WARMUP_TIMEOUT:

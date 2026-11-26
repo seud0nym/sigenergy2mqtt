@@ -2470,7 +2470,7 @@ cli:
   SIGENERGY2MQTT_MQTT_USERNAME:
     help: MQTT代理有效用户名
   SIGENERGY2MQTT_NO_EMS_MODE_CHECK:
-    help: '当远程EMS控制模式非“命令充电/放电”时，关闭会禁用ESS最大充电/放电及光伏最大功率限制的验证。 当这些限制不依赖于远程EMS时，此选项将被忽略：固件版本为SPC113至SPC115，或固件支持“远程EMS功率限制全局启用”（Modbus协议V2.10）时。'
+    help: '当远程EMS控制模式不是“命令充电/放电”时，关闭会禁用ESS最大充电/放电和光伏最大功率限制的验证。 当这些限制不依赖于远程EMS时，此选项将被忽略：固件版本为SPC113至SPC116，或当固件支持“远程EMS功率限制全局启用”（Modbus协议V2.10）时。'
   SIGENERGY2MQTT_NO_METRICS:
     help: '已弃用：指标发布功能默认处于禁用状态。请使用 --publish-metrics 启用该功能。'
   SIGENERGY2MQTT_PERSISTENCE_CACHE_WARMUP_TIMEOUT:

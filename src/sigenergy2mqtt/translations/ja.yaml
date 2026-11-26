@@ -2470,7 +2470,7 @@ cli:
   SIGENERGY2MQTT_MQTT_USERNAME:
     help: MQTTブローカーの有効なユーザー名
   SIGENERGY2MQTT_NO_EMS_MODE_CHECK:
-    help: '「リモートEMS制御モード」が「コマンド充電／放電」でない場合、ESS最大充電／放電およびPV最大出力の制限を無効にする検証を無効にします。 これらの制限がリモートEMSに依存しない場合（ファームウェアバージョンSPC113～SPC115、またはファームウェアがリモートEMS電力制限のグローバル有効化（ModbusプロトコルV2.10）をサポートしている場合）、このオプションは無視されます。'
+    help: '「リモートEMS制御モード」が「コマンド充電／放電」でない場合、ESS最大充電／放電およびPV最大出力の制限を無効にする検証を無効にします。 これらの制限がリモートEMSに依存しない場合（ファームウェアバージョンSPC113～SPC116、またはファームウェアがリモートEMS電力制限のグローバル有効化（ModbusプロトコルV2.10）をサポートしている場合）、このオプションは無視されます。'
   SIGENERGY2MQTT_NO_METRICS:
     help: '非推奨：メトリクスの公開はデフォルトで無効になっています。有効にするには、--publish-metrics オプションを使用してください。'
   SIGENERGY2MQTT_PERSISTENCE_CACHE_WARMUP_TIMEOUT:

@@ -2470,7 +2470,7 @@ cli:
   SIGENERGY2MQTT_MQTT_USERNAME:
     help: Un nom d'utilisateur valide pour le broker MQTT
   SIGENERGY2MQTT_NO_EMS_MODE_CHECK:
-    help: 'Désactiver la validation qui désactive les limites « ESS Max Charging/Discharging » et « PV Max Power » lorsque le mode de contrôle EMS à distance n''est pas en « Command Charging/Discharging ». Cette option est ignorée lorsque ces limites ne dépendent pas de l’EMS à distance : sur les versions de micrologiciel SPC113 à SPC115, ou lorsque le micrologiciel prend en charge l’activation globale des limites de puissance de l’EMS à distance (protocole Modbus V2.10).'
+    help: 'Désactiver la validation qui désactive les limites « ESS Max Charging/Discharging » et « PV Max Power » lorsque le mode de contrôle EMS à distance n''est pas en « Command Charging/Discharging ». Cette option est ignorée lorsque ces limites ne dépendent pas de l’EMS à distance : sur les versions de micrologiciel SPC113 à SPC116, ou lorsque le micrologiciel prend en charge l’activation globale de la limite de puissance de l’EMS à distance (protocole Modbus V2.10).'
   SIGENERGY2MQTT_NO_METRICS:
     help: 'Obsolète : la publication des métriques est désactivée par défaut. Utilisez l''option --publish-metrics pour l''activer.'
   SIGENERGY2MQTT_PERSISTENCE_CACHE_WARMUP_TIMEOUT:
