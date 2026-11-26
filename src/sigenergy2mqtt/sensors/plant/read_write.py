@@ -763,10 +763,11 @@ class RemoteEMSLimit(NumericSensor, HybridInverter):
 
     def configure_mqtt_topics(self, device_id: str) -> str:
         base = super().configure_mqtt_topics(device_id)
-        if self._global_enable is not None and self._global_enable.publishes_power_limits_active and active_config.home_assistant.enabled:
+        power_limits_active_topic = self._global_enable.power_limits_active_topic if self._global_enable is not None else None
+        if power_limits_active_topic is not None and self._global_enable is not None and self._global_enable.publishes_power_limits_active and active_config.home_assistant.enabled:
             # Available when either Remote EMS Power Limit Global Enable or Remote EMS is enabled (protocol V2.10)
             cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append({
-                "topic": self._global_enable.power_limits_active_topic,
+                "topic": power_limits_active_topic,
                 "payload_available": 1,
                 "payload_not_available": 0,
             })
