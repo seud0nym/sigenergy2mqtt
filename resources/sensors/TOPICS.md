@@ -6702,6 +6702,18 @@ Cloud Control and child device topics are only published when the Cloud API acce
 <tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='0'>Maximum Self-Powered</li><li value='1'>Sigen AI Mode</li><li value='2'>TOU</li><li value='5'>Fully Fed to Grid</li><li value='7'>Remote EMS Mode</li></ol></td></tr>
 <tr><td>Sanity&nbsp;Check</td><td>The value must be between 0  and 7  (0 ≦ raw value ≦ 7)</td></tr>
 </table>
+<h5><a id='sigen_0_10000000000001_site_pv_surplus_priority'>Site PV Surplus Priority</a></h5>
+<table>
+<tr><td>Sensor&nbsp;Class</td><td>SitePvSurplusPriority</td></tr>
+<tr><td>Scan&nbsp;Interval</td><td>5s</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;Sensor</td><td>sensor.sigen_0_cloud_site_pv_surplus_priority</td></tr>
+<tr><td>Home&nbsp;Assistant&nbsp;State&nbsp;Topic</td><td>homeassistant/select/sigen_0_10000000000001/sigen_0_cloud_site_pv_surplus_priority/state</td></tr>
+<tr><td>Simplified&nbsp;State&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_site_pv_surplus_priority/state</td></tr>
+</td></tr>
+<tr><td>Options<br><br>(Number == Raw value)</td><td><ol start='0'><li value='0'>DC Charger First</li><li value='1'>Battery First</li></ol></td></tr>
+<tr><td>Comment</td><td>Applies to the entire site, not just one charger.</td></tr>
+<tr><td>Sanity&nbsp;Check</td><td>The value must be between 0  and 1  (0 ≦ raw value ≦ 1)</td></tr>
+</table>
 <h5><a id='sigen_0_10000000000001_solar_power_limit'>Solar Power Limit</a></h5>
 <table>
 <tr><td>Sensor&nbsp;Class</td><td>SolarPowerLimit</td></tr>
@@ -6793,6 +6805,14 @@ Cloud Control and child device topics are only published when the Cloud API acce
 <tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/select/sigen_0_10000000000001/sigen_0_cloud_operational_mode/set</td></tr>
 <tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_operational_mode/set</td></tr>
 <tr><td>Valid&nbsp;Values</td><td><ul><li value='0'>"Maximum Self-Powered"</li><li value='1'>"Sigen AI Mode"</li><li value='2'>"TOU"</li><li value='5'>"Fully Fed to Grid"</li><li value='7'>"Remote EMS Mode"</li></ol></td></tr>
+</table>
+<h5><a id='sigen_0_10000000000001_site_pv_surplus_priority_set'>Site PV Surplus Priority
+</a></h5>
+<table>
+<tr><td>Home&nbsp;Assistant&nbsp;Update&nbsp;Topic</td><td>homeassistant/select/sigen_0_10000000000001/sigen_0_cloud_site_pv_surplus_priority/set</td></tr>
+<tr><td>Simplified&nbsp;Update&nbsp;Topic</td><td>sigenergy2mqtt/sigen_0_cloud_site_pv_surplus_priority/set</td></tr>
+<tr><td>Comment</td><td>Applies to the entire site, not just one charger.</td></tr>
+<tr><td>Valid&nbsp;Values</td><td><ul><li value='0'>"DC Charger First"</li><li value='1'>"Battery First"</li></ol></td></tr>
 </table>
 <h5><a id='sigen_0_10000000000001_solar_power_limit_set'>Solar Power Limit
 </a></h5>
@@ -8718,6 +8738,7 @@ The attributes payload currently includes:
 <a href='#sigen_0_10000000000001_instant_control_duration'>Instant Manual Control Duration</a><br>
 <a href='#sigen_0_10000000000001_instant_control_mode'>Instant Manual Control Mode</a><br>
 <a href='#sigen_0_10000000000001_operational_mode'>Operational Mode</a><br>
+<a href='#sigen_0_10000000000001_site_pv_surplus_priority'>Site PV Surplus Priority</a><br>
 <a href='#sigen_0_10000000000001_solar_power_limit'>Solar Power Limit</a><br>
 
 <h6>Gateway</h6>
@@ -8918,6 +8939,7 @@ The attributes payload currently includes:
 <a href='#sigen_0_10000000000001_instant_control_duration_set'>Instant Manual Control Duration</a><br>
 <a href='#sigen_0_10000000000001_instant_control_mode_set'>Instant Manual Control Mode</a><br>
 <a href='#sigen_0_10000000000001_operational_mode_set'>Operational Mode</a><br>
+<a href='#sigen_0_10000000000001_site_pv_surplus_priority_set'>Site PV Surplus Priority</a><br>
 <a href='#sigen_0_10000000000001_solar_power_limit_set'>Solar Power Limit</a><br>
 
 <h6>Gateway</h6>

@@ -1,21 +1,50 @@
 <!-- git log [since tag]..HEAD --oneline -->
 # Changelog 
 
-## [Unreleased]
+## [2026.11.26] - 2026-11-26
+
+> [!IMPORTANT]
+> **Note for Cloud DC Charger Beta testers** The Cloud API Surplus PV Priority setting has moved from the DC Charger device to the Sigenergy Cloud device and is renamed Site PV Surplus Priority, because it applies to the entire site rather than one charger (the mySigen app warns of this when it is changed). It replaces the previous entity, which can be deleted from Home Assistant (Thanks @sam-ward)
 
 ### Added
 
+- Modbus Protocol V2.10 additions:
+  - Added Phase A/B/C Current and Phase A/B/C Voltage sensors to the Grid Sensor device, measured at the grid sensor (registers 30292-30302). Only SigenStor and Sigen Hybrid systems support these, so they are not published for PV inverter plants
+  - Added the Reactive Power Regulation Gradient setting (register 40160), the percentage of rated power adjusted per second for reactive power
+  - Added the Remote EMS Power Limit Global Enable switch (register 40162, hybrid inverter plants only). It is hidden when `no-remote-ems` is set, like the Remote EMS switch
+- Added a Cloud API DC Charger device for each DC charger, with mySigen charging settings, weekly/monthly/lifetime energy, status, OCPP connection and server details, V2X discharge settings and primary vehicle (#355)
+- Added Cloud API DC Charger live charging sensors for charging power, vehicle SOC, session energy and SECC run state (#355)
+- Added `--clear-validation-cache` and `SIGENERGY2MQTT_CLEAR_VALIDATION_CACHE` to clear the persisted sensor validation cache at startup and probe every sensor again
 - Added support for Sigenergy Modbus Protocol V2.10 (2026-11-03), which is detected automatically from any of its new registers, as firmware may not support them all (for example, register 40160)
-- Added Phase A/B/C Current and Phase A/B/C Voltage sensors to the Grid Sensor device, measured at the grid sensor (registers 30292-30302). Only SigenStor and Sigen Hybrid systems support these, so they are not published for PV inverter plants
-- Added the Reactive Power Regulation Gradient setting (register 40160), the percentage of rated power adjusted per second for reactive power
-- Added the Remote EMS Power Limit Global Enable switch (register 40162, hybrid inverter plants only). It is hidden when `no-remote-ems` is set, like the Remote EMS switch
+- Added MQTT client online/offline Last Will status topics and included them in Home Assistant entity availability, so entities become unavailable when sigenergy2mqtt loses its connection or stops unexpectedly
 
 ### Changed
 
-- The Cloud API Surplus PV Priority setting has moved from the DC Charger device to the Sigenergy Cloud device and is renamed Site PV Surplus Priority, because it applies to the entire site rather than one charger (the mySigen app warns of this when it is changed). It replaces the previous entity, which can be deleted from Home Assistant (#355)
+- New Instant Manual Control Mode and Duration values are published immediately when written instead of waiting for the next repeated-state publish interval (#362)
+- The `modbus-auto-discovery-exclude` option now excludes nothing by default. `PID` and `PSS` are no longer valid values; they are ignored with a warning
+- A second `SIGINT` or `SIGTERM` during shutdown now forces an immediate exit
+- Updated the Docker base Python image from 3.14-alpine3.24 to 3.15-alpine3.24 and updated pycryptodome, pydantic and other dependencies
 - On Modbus Protocol V2.10 systems whose firmware supports the Remote EMS Power Limit Global Enable register, Max Charging Limit, Max Discharging Limit and PV Max Power Limit are available in Home Assistant when either Remote EMS or Remote EMS Power Limit Global Enable is on, which is when Sigenergy applies them. The Remote EMS Control Mode no longer matters. Otherwise the values are kept but not applied. On earlier protocol versions, or when the firmware does not support that register, they are only available when Remote EMS is enabled and in the matching Remote EMS control mode, except on firmware SPC113 to SPC116 where they apply globally
 - Max Charging Limit, Max Discharging Limit and PV Max Power Limit once again require Remote EMS (and the matching Remote EMS control mode) on firmware SPC117 and later that does not support Remote EMS Power Limit Global Enable. Sigenergy reverted the global behaviour introduced in SPC113 in SPC117, so the limits were shown as writable but had no effect. The `no-ems-mode-check` option is no longer ignored on these firmware versions
-- The `modbus-auto-discovery-exclude` option now excludes nothing by default. `PID` and `PSS` are no longer valid values; they are ignored with a warning
+
+### Fixed
+
+- Fixed transient Modbus validation errors permanently marking sensors unsupported; cached unsupported sensors are now probed again, and validation requires repeated confirmation
+- Fixed the dashboard Cell Temperature gauge being empty when plant-level Average Cell Temperature is unavailable; it now falls back to inverter averages (#363)
+- Fixed Cloud API requests hanging for up to five minutes, and made Cloud API outages report promptly with a useful error
+- Fixed DC charger weekly/monthly charged energy getting stuck after a period reset when the first new reading was not exactly zero (#355)
+- Fixed sensor scan groups stopping permanently after non-Modbus errors, worker threads crashing when Modbus became unreachable during startup, and DC charger initialization failures preventing startup
+- Fixed startup and recovery failures with unavailable Modbus hosts or MQTT brokers, refused MQTT reconnects, shutdown signals received during device creation/restart, and `SIGHUP` reloading configuration before worker threads stopped
+- Fixed worker-thread crashes and MQTT connection failures exiting with success status, so restart-on-failure service managers can recover them
+- Fixed MQTT command handling errors being discarded without logging and removed excess pymodbus frame dumps from error logs
+- Fixed PVOutput uploads stopping after unexpected responses, and corrected `l/l-avg` to report calculated line-to-line voltage (omitting it when a phase voltage is unavailable)
+- Fixed daily accumulation sensors carrying the previous day's total across a restart on a later day, and made persistent state writes atomic with MQTT fallback for empty or corrupt files
+- Fixed Home Assistant discovery blocking device event loops on persistent-state operations; runtime discovery now uses the asynchronous state-store API
+- Fixed Inverter Power Factor being read as unsigned instead of signed, and fixed inverter writes truncating values instead of rounding them
+- Fixed Active/Reactive Power Fixed Adjustment Target Value ranges, which were off by orders of magnitude
+- Fixed energy-profile limit writes interleaving with Site PV Surplus Priority writes, and unlocked grid sensor registers after a simulated grid outage
+- Fixed InfluxDB backlog handling so oversized retries can drain in batch-sized chunks; writes are serialized and bounded, in-flight batches survive cancellation, shutdown flushes pending data, and initialization failures are reported as outages
+- Fixed saved timer state using the time a queued write eventually ran instead of the time the save was requested; ordered timer flushes with resets and preserved queued writes when a newer save was held back
 
 ### Removed
 
