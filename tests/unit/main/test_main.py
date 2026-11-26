@@ -1064,8 +1064,8 @@ class TestFactories:
             assert plant is not None
 
     @pytest.mark.asyncio
-    async def test_make_plant_and_inverter_spc113_forces_ems_mode_check_false(self, clean_config):
-        """Test ems_mode_check forced to False for firmware SPC113+."""
+    async def test_make_plant_and_inverter_spc113_keeps_ems_mode_check_config(self, clean_config):
+        """ems_mode_check is a shared setting, so it is not changed for SPC113 to SPC116 (the plant leaves the limits ungated instead)."""
         mock_client = AsyncMock()
         mock_client.comm_params.host = "h"
         mock_client.comm_params.port = 502
@@ -1082,16 +1082,14 @@ class TestFactories:
             patch("sigenergy2mqtt.sensors.inverter.read_only.PVStringCount.get_state", AsyncMock(return_value=1)),
             patch("sigenergy2mqtt.sensors.inverter.read_only.InverterSerialNumber.get_state", AsyncMock(return_value="SN1")),
             patch("sigenergy2mqtt.sensors.inverter.read_only.OutputType.get_state", AsyncMock(return_value=1)),
-            patch("sigenergy2mqtt.devices.inverter.inverter.logger.debug") as mock_debug,
         ):
             await make_plant_and_inverter(0, mock_client, 1, None, seen)
-            assert clean_config.ems_mode_check is False
-            assert any("Remote EMS Mode check disabled" in str(call) for call in mock_debug.call_args_list)
+            assert clean_config.ems_mode_check is True
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("firmware", ["V122R001C00SPC112B701P", "V122R001C00SPC117", "V122R001C00SPC118"])
     async def test_make_plant_and_inverter_keeps_ems_mode_check_config(self, clean_config, firmware):
-        """Test ems_mode_check remains as configured for firmware below SPC113, or SPC117 and later (limits require Remote EMS again)."""
+        """Test ems_mode_check remains as configured whatever the firmware."""
         mock_client = AsyncMock()
         mock_client.comm_params.host = "h"
         mock_client.comm_params.port = 502

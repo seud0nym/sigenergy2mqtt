@@ -758,11 +758,12 @@ class RemoteEMSLimit(NumericSensor, HybridInverter):
         """The comment suffix describing when this limit takes effect."""
         if self._global_enable is not None:
             return " Takes effect when Remote EMS Power Limit Global Enable (40162) is enabled, or when the EMS Work Mode (30003) is Remote EMS."
-        return legacy if active_config.ems_mode_check else ""
+        # Only gated limits depend on the Remote EMS control mode (firmware without global limits)
+        return legacy if active_config.ems_mode_check and self._availability_control_sensor is not None else ""
 
     def configure_mqtt_topics(self, device_id: str) -> str:
         base = super().configure_mqtt_topics(device_id)
-        if self._global_enable is not None and self._global_enable.power_limits_active_topic and active_config.home_assistant.enabled:
+        if self._global_enable is not None and self._global_enable.publishes_power_limits_active and active_config.home_assistant.enabled:
             # Available when either Remote EMS Power Limit Global Enable or Remote EMS is enabled (protocol V2.10)
             cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append({
                 "topic": self._global_enable.power_limits_active_topic,
@@ -1786,6 +1787,14 @@ class RemoteEMSPowerLimitGlobalEnable(SwitchSensor, HybridInverter):
         base = super().configure_mqtt_topics(device_id)
         self.power_limits_active_topic = f"{base}/power_limits_active"
         return base
+
+    @property
+    def publishes_power_limits_active(self) -> bool:
+        """True if the combined topic will be published, which requires both switches to be read and published.
+
+        They are not when hidden (e.g. by no-remote-ems), in which case the power limits cannot depend on the topic.
+        """
+        return bool(self.power_limits_active_topic) and self.publishable and self._remote_ems is not None and self._remote_ems.publishable
 
     def publish_power_limits_active(self, mqtt_client: mqtt.Client) -> None:
         """Publish 1 to the combined topic if either switch is enabled, otherwise 0."""

@@ -454,3 +454,44 @@ async def test_remote_ems_publish_updates_combined_topic(monkeypatch):
     assert await remote_ems.publish(client, None) is True
     assert await global_enable.publish(client, None) is True
     assert calls == [client, client]  # Published after either switch publishes
+
+
+@pytest.mark.asyncio
+async def test_power_limits_not_tied_to_combined_topic_when_switches_hidden():
+    """With no-remote-ems both switches are hidden and never polled, so the combined topic would never be published."""
+    cfg = Config()
+    cfg.home_assistant.enabled = True
+    with _swap_active_config(cfg):
+        sensors = await get_sensor_instances(home_assistant_enabled=True, protocol_version=ProtocolVersion.V2_10)
+        (global_enable,) = _by_class(sensors, RemoteEMSPowerLimitGlobalEnable)
+        (remote_ems,) = _by_class(sensors, RemoteEMS)
+        assert global_enable.publishes_power_limits_active is True
+        remote_ems.apply_device_overrides(RegisterAccess(no_remote_ems=True))
+        global_enable.apply_device_overrides(RegisterAccess(no_remote_ems=True))
+        assert global_enable.publishes_power_limits_active is False
+
+        limit = MaxChargingLimit(1, None, None, 10.0, global_enable)
+        limit.configure_mqtt_topics("device")
+        assert global_enable.power_limits_active_topic not in [a["topic"] for a in limit["availability"]]
+
+
+@pytest.mark.asyncio
+async def test_firmware_does_not_change_shared_ems_mode_check():
+    """A plant on SPC113 to SPC116 must not disable the EMS mode check for another plant on SPC117."""
+    from sigenergy2mqtt.config import active_config
+
+    cfg = Config()
+    with _swap_active_config(cfg):
+        assert cfg.ems_mode_check is True
+        sensors_global = await get_sensor_instances(protocol_version=ProtocolVersion.V2_9, firmware_version="V100R001C00SPC116")
+        assert active_config.ems_mode_check is True
+        (limit,) = _by_class(sensors_global, MaxChargingLimit)
+        assert limit._availability_control_sensor is None
+        assert "40031" not in limit.get_attributes()["comment"]  # Ungated limits do not depend on the control mode
+
+    with _swap_active_config(cfg):
+        sensors_gated = await get_sensor_instances(protocol_version=ProtocolVersion.V2_9, firmware_version="V100R001C00SPC117", plant_index=1)
+        assert active_config.ems_mode_check is True
+        (limit,) = _by_class(sensors_gated, MaxChargingLimit)
+        assert isinstance(limit._availability_control_sensor, RemoteEMS)
+        assert "40031" in limit.get_attributes()["comment"]
