@@ -1,6 +1,12 @@
 <!-- git log [since tag]..HEAD --oneline -->
 # Changelog 
 
+## [Unreleased]
+
+### Changed
+
+- The Cloud API Surplus PV Priority setting has moved from the DC Charger device to the Sigenergy Cloud device and is renamed Site PV Surplus Priority, because it applies to the entire site rather than one charger (the mySigen app warns of this when it is changed). It replaces the previous entity, which can be deleted from Home Assistant (#355)
+
 ## [2026.11.23b2] - 2026-11-23
 
 ### Added

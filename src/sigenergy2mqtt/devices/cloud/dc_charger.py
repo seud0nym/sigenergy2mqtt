@@ -20,7 +20,6 @@ from sigenergy2mqtt.sensors.cloud.dc_charger import (
     DcChargerSeccRunState,
     DcChargerSessionChargedEnergy,
     DcChargerStatusCode,
-    DcChargerSurplusPvPriority,
     DcChargerV2xDischargeCutoffSoc,
     DcChargerV2xDischargeEnabled,
     DcChargerV2xDischargePowerLimit,
@@ -31,10 +30,6 @@ from sigenergy2mqtt.sensors.cloud.dc_charger import (
 from .discovery import CloudDiscovery, DcChargerDiscovery
 
 logger = logging.getLogger(__name__)
-
-#: ``sgDeviceType`` of a DC charger in the Surplus PV priority list.
-_DC_CHARGER_SG_DEVICE_TYPE = 5
-
 
 class CloudDcCharger(Device):
     """A DC charger child device populated from the cloud."""
@@ -70,13 +65,6 @@ class CloudDcCharger(Device):
             self._add_sensor(DcChargerBatteryBoostCutoffSoc(*ids, charger.soc_range, mode))
             self._add_sensor(DcChargerV2xDischargePowerLimit(*ids, mode))
             self._add_sensor(DcChargerV2xDischargeCutoffSoc(*ids, mode))
-        # pvPriority is station-wide, so only the first charger exposes it.
-        if index == 0 and _DC_CHARGER_SG_DEVICE_TYPE in charger.surplus_pv_devices:
-            try:
-                self._add_sensor(DcChargerSurplusPvPriority(*ids, charger.surplus_pv_devices))
-            except ValueError as exc:
-                logger.warning("Cloud Surplus PV Priority sensor disabled: %s", exc)
-
         self._add_sensor(DcChargerStatusCode(*ids))
         realtime = CloudResponseSnapshot(lambda port: port.dc_charge_realtime(sn))
         self._add_sensor(DcChargerSeccRunState(*ids, realtime))

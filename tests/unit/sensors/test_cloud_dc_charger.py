@@ -26,13 +26,13 @@ from sigenergy2mqtt.sensors.cloud.dc_charger import (
     DcChargerPrimaryVehicle,
     DcChargerPrimaryVehicleBatteryCapacity,
     DcChargerStatusCode,
-    DcChargerSurplusPvPriority,
     DcChargerV2xDischargeCutoffSoc,
     DcChargerV2xDischargeEnabled,
     DcChargerV2xDischargePowerLimit,
     DcChargerWeeklyChargedEnergy,
     charge_mode_label,
 )
+from sigenergy2mqtt.sensors.cloud.read_write import SitePvSurplusPriority
 from tests.unit.sensors.test_cloud_sensors import FakeCloudControlPort
 
 STATION = FakeCloudControlPort.station_id
@@ -187,9 +187,11 @@ def test_charging_mode_requires_modes_and_cutoff_uses_soc_range() -> None:
     assert (cutoff[DiscoveryKeys.MIN], cutoff[DiscoveryKeys.MAX]) == (10.0, 90.0)
 
 
-async def test_surplus_pv_priority_reads_and_writes() -> None:
+async def test_site_pv_surplus_priority_reads_and_writes() -> None:
     port = _port()
-    sensor = DcChargerSurplusPvPriority(0, STATION, SN, 0, (4, 5))
+    sensor = SitePvSurplusPriority(0, STATION, (4, 5))
+    assert sensor.unique_id.endswith(f"_{STATION}_site_pv_surplus_priority")
+    assert sensor["name"] == "Site PV Surplus Priority"
     # Options have a fixed order, regardless of the current priority
     assert sensor[DiscoveryKeys.OPTIONS] == ["DC Charger First", "Battery First"]
     assert await sensor._read_cloud_state(port) == 0
@@ -207,9 +209,9 @@ async def test_surplus_pv_priority_reads_and_writes() -> None:
     assert await sensor._read_cloud_state(port) is None
 
 
-def test_surplus_pv_priority_needs_two_devices() -> None:
+def test_site_pv_surplus_priority_needs_two_devices() -> None:
     with pytest.raises(ValueError):
-        DcChargerSurplusPvPriority(0, STATION, "DC-Z", 0, (5, 5))
+        SitePvSurplusPriority(0, STATION, (5, 5))
 
 
 async def test_read_only_values() -> None:
@@ -251,38 +253,34 @@ async def test_read_only_values_tolerate_missing_data() -> None:
 
 
 def test_device_sensors_depend_on_discovered_capabilities() -> None:
-    full = CloudDcCharger(0, STATION, DcChargerDiscovery("DC-A", (0, 1, 3), (0.0, 100.0), (5, 4)))
+    full = CloudDcCharger(0, STATION, DcChargerDiscovery("DC-A", (0, 1, 3), (0.0, 100.0)))
     assert full.get_sensor(DcChargerChargingMode) is not None
-    assert full.get_sensor(DcChargerSurplusPvPriority) is not None
     assert full.unique_id.endswith("_dc_charger_DC-A")
 
-    # No charging-mode support and no DC charger in the Surplus PV list
-    minimal = CloudDcCharger(0, STATION, DcChargerDiscovery("DC-B", (), (0.0, 100.0), (4, 6)))
+    # No charging-mode support
+    minimal = CloudDcCharger(0, STATION, DcChargerDiscovery("DC-B", (), (0.0, 100.0)))
     assert minimal.get_sensor(DcChargerChargingMode) is None
     assert minimal.get_sensor(DcChargerBatteryBoost) is None
-    assert minimal.get_sensor(DcChargerSurplusPvPriority) is None
     assert minimal.get_sensor(DcChargerStatusCode) is not None
 
 
-def test_multiple_chargers_get_numbered_names_and_one_surplus_pv_sensor() -> None:
+def test_multiple_chargers_get_numbered_names() -> None:
     discovery = CloudDiscovery(
         device_list=[],
         dc_chargers=(
-            DcChargerDiscovery("DC-C", (1,), (0.0, 100.0), (5, 4)),
-            DcChargerDiscovery("DC-D", (1,), (0.0, 100.0), (5, 4)),
+            DcChargerDiscovery("DC-C", (1,), (0.0, 100.0)),
+            DcChargerDiscovery("DC-D", (1,), (0.0, 100.0)),
         ),
     )
     first, second = CloudDcCharger.from_discovery(0, STATION, discovery)
     assert (first.name, second.name) == ("Sigenergy Cloud DC Charger 1", "Sigenergy Cloud DC Charger 2")
-    assert first.get_sensor(DcChargerSurplusPvPriority) is not None
-    assert second.get_sensor(DcChargerSurplusPvPriority) is None
     second_mode = second.get_sensor(DcChargerChargingMode)
     assert second_mode is not None
     assert second_mode["object_id"].endswith("_cloud_dc_charger_2_charging_mode")
 
 
 def test_cloud_control_adds_dc_charger_children() -> None:
-    discovery = CloudDiscovery(device_list=[], dc_chargers=(DcChargerDiscovery("DC-E", (0, 1), (0.0, 100.0), (5, 4)),))
+    discovery = CloudDiscovery(device_list=[], dc_chargers=(DcChargerDiscovery("DC-E", (0, 1), (0.0, 100.0)),))
     device = CloudControl(0, FakeCloudControlPort(), discovery)
     assert any(isinstance(child, CloudDcCharger) for child in device.children)
     assert not any(isinstance(child, CloudDcCharger) for child in CloudControl(1, FakeCloudControlPort(), CloudDiscovery(device_list=[])).children)
@@ -292,7 +290,8 @@ async def test_discovery_reads_capabilities_for_each_charger() -> None:
     port = _port()
     discovery = CloudDiscovery(device_list=[{"deviceType": "DcCharger", "serialNumber": "DC-1"}, {"deviceType": "Battery", "serialNumber": "B"}])
     result = await discover_dc_chargers(port, discovery)
-    assert result.dc_chargers == (DcChargerDiscovery("DC-1", (0, 1, 3), (0.0, 100.0), (5, 4)),)
+    assert result.dc_chargers == (DcChargerDiscovery("DC-1", (0, 1, 3), (0.0, 100.0)),)
+    assert result.surplus_pv_devices == (5, 4)
     port.dc_supported_charge_modes.assert_awaited_once_with("DC-1")
 
 
@@ -317,7 +316,7 @@ async def test_discovery_degrades_when_capability_reads_fail() -> None:
 
 
 def test_device_names_have_no_extra_spaces_from_empty_suffixes() -> None:
-    discovery = CloudDiscovery(device_list=[], dc_chargers=(DcChargerDiscovery("DC-F", (1,), (0.0, 100.0), (5, 4)),))
+    discovery = CloudDiscovery(device_list=[], dc_chargers=(DcChargerDiscovery("DC-F", (1,), (0.0, 100.0)),))
     (only,) = CloudDcCharger.from_discovery(0, STATION, discovery)
     assert only.name == "Sigenergy Cloud DC Charger"
     (other_plant,) = CloudDcCharger.from_discovery(1, STATION, discovery)
@@ -396,7 +395,7 @@ def test_device_adds_realtime_sensors() -> None:
         DcChargerSeccRunState,
     )
 
-    device = CloudDcCharger(0, STATION, DcChargerDiscovery("DC-G", (), (0.0, 100.0), ()))
+    device = CloudDcCharger(0, STATION, DcChargerDiscovery("DC-G", (), (0.0, 100.0)))
     assert device.get_sensor(DcChargerSeccRunState) is not None
     assert device.get_sensor(DcChargerChargingPower) is not None
 
@@ -460,3 +459,20 @@ def test_resetting_counter_keeps_a_configured_minimum() -> None:
         sensor = DcChargerSessionChargedEnergy(0, STATION, "DC-O", 0, CloudResponseSnapshot(lambda p: p.dc_charge_realtime(SN)))
     assert sensor.sanity_check.delta is False
     assert sensor.sanity_check.min_raw == 0
+
+
+def test_site_pv_surplus_priority_is_on_the_cloud_device_not_the_chargers() -> None:
+    discovery = CloudDiscovery(
+        device_list=[],
+        dc_chargers=(DcChargerDiscovery("DC-S1", (1,), (0.0, 100.0)), DcChargerDiscovery("DC-S2", (1,), (0.0, 100.0))),
+        surplus_pv_devices=(5, 4),
+    )
+    device = CloudControl(0, FakeCloudControlPort(), discovery)
+    assert isinstance(device.get_sensor(SitePvSurplusPriority), SitePvSurplusPriority)
+    assert all(child.get_sensor(SitePvSurplusPriority) is None for child in device.children)
+
+
+@pytest.mark.parametrize("devices", [(), (4, 6), (5,)])
+def test_site_pv_surplus_priority_needs_a_dc_charger_and_another_device(devices) -> None:
+    device = CloudControl(0, FakeCloudControlPort(), CloudDiscovery(device_list=[], surplus_pv_devices=devices))
+    assert device.get_sensor(SitePvSurplusPriority) is None
