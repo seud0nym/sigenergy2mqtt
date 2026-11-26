@@ -5,13 +5,11 @@ import paho.mqtt.client as paho_mqtt
 import pytest
 from pymodbus import ModbusException
 
-from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.config import Config, active_config
 from sigenergy2mqtt.main.device_setup import (
     _GRID_RESTORE_WATCH_TASKS,
     _is_grid_outage,
     _schedule_restart_on_grid_restore,
-    _setup_pss,
     _watch_grid_restore_and_request_restart,
 )
 from sigenergy2mqtt.main.validation import (
@@ -31,84 +29,6 @@ def clean_config():
     _swap_active_config(cfg)
     yield
     _swap_active_config(Config())
-
-
-# ---------------------------------------------------------------------------
-# _setup_pss
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.asyncio
-async def test_setup_pss_normal():
-    mock_device = MagicMock()
-    mock_device.pss = [1]
-    mock_device.host = "127.0.0.1"
-    mock_device.port = 502
-
-    mock_config = MagicMock()
-    mock_pss = MagicMock()
-    mock_plant = MagicMock()
-
-    with (
-        patch("sigenergy2mqtt.main.device_setup.make_pss", new_callable=AsyncMock) as mock_make,
-        patch("sigenergy2mqtt.main.device_setup.validate_publishable_sensors", new_callable=AsyncMock) as mock_validate,
-    ):
-        mock_make.return_value = mock_pss
-
-        res = await _setup_pss(
-            plant_index=0,
-            device=mock_device,
-            plant=mock_plant,
-            seen_serial_numbers=set(),
-            modbus_client=AsyncMock(),
-            config=mock_config,
-            protocol_version=ProtocolVersion.V2_9,
-            sequence_start=0,
-            total_count=1,
-        )
-
-        assert res == 1
-        mock_config.add_device.assert_called_once_with(mock_pss)
-        mock_validate.assert_called_once()
-
-
-@pytest.mark.asyncio
-async def test_setup_pss_exception_grid_outage(caplog):
-    mock_device = MagicMock()
-    mock_device.pss = [1]
-    mock_device.host = "127.0.0.1"
-    mock_device.port = 502
-
-    with (
-        patch("sigenergy2mqtt.main.device_setup.make_pss", new_callable=AsyncMock) as mock_make,
-        patch("sigenergy2mqtt.main.device_setup._is_grid_outage", new_callable=AsyncMock) as mock_outage,
-        patch("sigenergy2mqtt.main.device_setup._schedule_restart_on_grid_restore") as mock_schedule,
-    ):
-        mock_make.side_effect = RuntimeError("Outage error")
-        mock_outage.return_value = True
-
-        res = await _setup_pss(0, mock_device, MagicMock(), set(), AsyncMock(), MagicMock(), ProtocolVersion.V2_9, 0, 1)
-
-        assert res == 1
-        mock_schedule.assert_called_once()
-        assert "initialization failed during grid outage" in caplog.text
-
-
-@pytest.mark.asyncio
-async def test_setup_pss_exception_normal(caplog):
-    mock_device = MagicMock()
-    mock_device.pss = [1]
-    mock_device.host = "127.0.0.1"
-    mock_device.port = 502
-
-    with patch("sigenergy2mqtt.main.device_setup.make_pss", new_callable=AsyncMock) as mock_make, patch("sigenergy2mqtt.main.device_setup._is_grid_outage", new_callable=AsyncMock) as mock_outage:
-        mock_make.side_effect = RuntimeError("Other error")
-        mock_outage.return_value = False
-
-        res = await _setup_pss(0, mock_device, MagicMock(), set(), AsyncMock(), MagicMock(), ProtocolVersion.V2_9, 0, 1)
-
-        assert res == 1
-        assert "Failed to initialize PSS device at address 1" in caplog.text
 
 
 # ---------------------------------------------------------------------------

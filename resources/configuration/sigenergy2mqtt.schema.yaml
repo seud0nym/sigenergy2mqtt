@@ -133,16 +133,6 @@ properties:
           items:
             type: integer
           default: []
-        pss:
-          type: array
-          items:
-            type: integer
-          default: []
-        pid:
-          type: array
-          items:
-            type: integer
-          default: []
         log-level:
           oneOf:
             - type: string
@@ -624,7 +614,7 @@ properties:
 
   # Pydantic internal
   modbus-auto-discovery: {type: [string, "null"]}
-  modbus-auto-discovery-exclude: { type: array, items: { type: string }, default: [ "PID", "PSS" ] }
+  modbus-auto-discovery-exclude: { type: array, items: { type: string }, default: [ ] }
   modbus-auto-discovery-timeout: {type: [number, "null"]}
   modbus-auto-discovery-ping-timeout: {type: [number, "null"]}
   modbus-auto-discovery-retries: {type: [integer, "null"]}

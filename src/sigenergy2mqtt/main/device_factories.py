@@ -13,7 +13,7 @@ from sigenergy2mqtt.common import (
     PVInverter,
 )
 from sigenergy2mqtt.config import active_config
-from sigenergy2mqtt.devices import PID, PSS, ACCharger, DCCharger, Inverter, PowerPlant
+from sigenergy2mqtt.devices import ACCharger, DCCharger, Inverter, PowerPlant
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.sensors.base import SanityCheckException
 from sigenergy2mqtt.sensors.inverter.read_only import (
@@ -23,14 +23,13 @@ from sigenergy2mqtt.sensors.inverter.read_only import (
     OutputType,
     PACKBCUCount,
 )
-from sigenergy2mqtt.sensors.pid.read_only import PIDSerialNumber
 from sigenergy2mqtt.sensors.plant.ess_preheating_read_write import ESSPreHeatingEnable
 from sigenergy2mqtt.sensors.plant.read_only import SystemTimeZone
 from sigenergy2mqtt.sensors.plant.read_write import (
     GridCodeLVRT,
     IndependentPhasePowerControl,
+    RemoteEMSPowerLimitGlobalEnable,
 )
-from sigenergy2mqtt.sensors.pss.read_only import PSSSerialNumber
 
 from .modbus_helpers import get_modbus_url, get_state
 from .protocol_probe import probe_optional_interface, probe_protocol
@@ -76,34 +75,6 @@ async def make_dc_charger(
     return charger
 
 
-async def make_pid(
-    plant_index: int, device_address: int, modbus_client: ModbusClient, plant: PowerPlant, seen_serial_numbers: set[str], sequence_number: int | None = None, total_count: int | None = None
-) -> PID | None:
-    """Create a PID device and link it to the parent plant.
-
-    ``seen_serial_numbers`` is updated in-place to guard
-    against duplicate serial numbers.
-
-    Side effects: performs async device initialisation reads and sets
-    ``via_device`` to the plant unique ID for topology/discovery metadata.
-    """
-    pid = await PID.create(
-        plant_index=plant_index,
-        device_address=device_address,
-        protocol_version=plant.protocol_version,
-        modbus_client=modbus_client,
-    )
-    pid.via_device = plant.unique_id
-
-    sn = await get_state(pid.get_sensor(PIDSerialNumber), modbus_client, "PID")
-    if sn in seen_serial_numbers:
-        logger.info(f"PID {sn} has already been detected - ignoring (idx={plant_index} id={device_address})")
-        return None
-    seen_serial_numbers.add(str(sn))
-
-    return pid
-
-
 async def make_plant_and_inverter(plant_index: int, modbus_client: ModbusClient, device_address: int, plant: PowerPlant | None, seen_serial_numbers: set[str]) -> tuple[Inverter | None, PowerPlant | None]:
     """Create an Inverter and, on first call, a PowerPlant.
 
@@ -129,6 +100,7 @@ async def make_plant_and_inverter(plant_index: int, modbus_client: ModbusClient,
 
     device_type.has_independent_phase_power_control_interface = await probe_optional_interface(modbus_client, IndependentPhasePowerControl.ADDRESS, "Independent Phase Control Interface")
     device_type.has_grid_code_interface = await probe_optional_interface(modbus_client, GridCodeLVRT.ADDRESS, "Grid Code Interface")
+    device_type.has_remote_ems_power_limit_global_enable = await probe_optional_interface(modbus_client, RemoteEMSPowerLimitGlobalEnable.ADDRESS, "Remote EMS Power Limit Global Enable")
 
     try:
         sys_tz_offset = await get_state(SystemTimeZone(plant_index), modbus_client, "plant", raw=True)
@@ -172,31 +144,3 @@ async def make_plant_and_inverter(plant_index: int, modbus_client: ModbusClient,
         seen_serial_numbers.add(str(sn))
 
     return inverter, plant
-
-
-async def make_pss(
-    plant_index: int, modbus_client: ModbusClient, device_address: int, plant: PowerPlant, seen_serial_numbers: set[str], sequence_number: int | None = None, total_count: int | None = None
-) -> PSS | None:
-    """Create a PSS device and link it to the parent plant.
-
-    ``seen_serial_numbers`` is updated in-place to guard
-    against duplicate serial numbers.
-
-    Side effects: performs async device initialisation reads and sets
-    ``via_device`` to the plant unique ID for topology/discovery metadata.
-    """
-    pss = await PSS.create(
-        plant_index=plant_index,
-        device_address=device_address,
-        protocol_version=plant.protocol_version,
-        modbus_client=modbus_client,
-    )
-    pss.via_device = plant.unique_id
-
-    sn = await get_state(pss.get_sensor(PSSSerialNumber), modbus_client, "PSS")
-    if sn in seen_serial_numbers:
-        logger.info(f"PSS {sn} has already been detected - ignoring (idx={plant_index} id={device_address})")
-        return None
-    seen_serial_numbers.add(str(sn))
-
-    return pss

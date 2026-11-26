@@ -174,8 +174,9 @@ class EnvSettingsSource(PydanticBaseSettingsSource):
         _set(modbus, "inverters", _int_list(g(const.SIGENERGY2MQTT_MODBUS_INVERTER_DEVICE_ID)))
         _set(modbus, "ac_chargers", _int_list(g(const.SIGENERGY2MQTT_MODBUS_ACCHARGER_DEVICE_ID)))
         _set(modbus, "dc_chargers", _int_list(g(const.SIGENERGY2MQTT_MODBUS_DCCHARGER_DEVICE_ID)))
-        _set(modbus, "pss", _int_list(g(const.SIGENERGY2MQTT_MODBUS_PSS_DEVICE_ID)))
-        _set(modbus, "pid", _int_list(g(const.SIGENERGY2MQTT_MODBUS_PID_DEVICE_ID)))
+        for removed in ("SIGENERGY2MQTT_MODBUS_PSS_DEVICE_ID", "SIGENERGY2MQTT_MODBUS_PID_DEVICE_ID"):
+            if removed in os.environ:
+                logger.warning("Ignoring %s: PSS and PID devices are no longer supported (removed from Sigenergy Modbus Protocol V2.10)", removed)
         _set(modbus, "scan_interval_low", _int(g(const.SIGENERGY2MQTT_SCAN_INTERVAL_LOW)))
         _set(modbus, "scan_interval_medium", _int(g(const.SIGENERGY2MQTT_SCAN_INTERVAL_MEDIUM)))
         _set(modbus, "scan_interval_high", _int(g(const.SIGENERGY2MQTT_SCAN_INTERVAL_HIGH)))

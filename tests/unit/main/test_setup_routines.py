@@ -10,7 +10,6 @@ from sigenergy2mqtt.devices import Inverter
 from sigenergy2mqtt.main import main as main_mod
 from sigenergy2mqtt.main.device_setup import (
     _setup_dc_chargers,
-    _setup_pid,
     setup_devices,
 )
 from sigenergy2mqtt.sensors.plant.read_write import (
@@ -78,8 +77,6 @@ async def test_setup_devices_active_power_bounds(caplog):
     mock_modbus.inverters = [1]
     mock_modbus.ac_chargers = []
     mock_modbus.dc_chargers = []
-    mock_modbus.pss = []
-    mock_modbus.pid = []
 
     with (
         patch("sigenergy2mqtt.config.active_config.modbus", [mock_modbus]),
@@ -149,8 +146,6 @@ async def test_setup_devices_active_power_bounds_missing(caplog):
     mock_modbus.inverters = [1]
     mock_modbus.ac_chargers = []
     mock_modbus.dc_chargers = []
-    mock_modbus.pss = []
-    mock_modbus.pid = []
 
     with (
         patch("sigenergy2mqtt.config.active_config.modbus", [mock_modbus]),
@@ -332,78 +327,3 @@ async def test_setup_dc_chargers_normal():
         assert res == 1
         mock_config.add_device.assert_called_once_with(mock_charger)
         mock_validate.assert_called_once()
-
-
-# ---------------------------------------------------------------------------
-# _setup_pid (lines 765-786)
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.asyncio
-async def test_setup_pid_normal():
-    mock_device = MagicMock()
-    mock_device.pid = [1]
-    mock_device.host = "127.0.0.1"
-    mock_device.port = 502
-
-    mock_config = MagicMock()
-    mock_pid = MagicMock()
-    mock_plant = MagicMock()
-
-    with patch("sigenergy2mqtt.main.device_setup.make_pid", new_callable=AsyncMock) as mock_make, patch("sigenergy2mqtt.main.device_setup.validate_publishable_sensors", new_callable=AsyncMock) as mock_validate:
-        mock_make.return_value = mock_pid
-
-        res = await _setup_pid(
-            plant_index=0,
-            device=mock_device,
-            plant=mock_plant,
-            seen_serial_numbers=set(),
-            modbus_client=MagicMock(),
-            config=mock_config,
-            protocol_version=ProtocolVersion.V2_9,
-            sequence_start=0,
-            total_count=1,
-        )
-
-        assert res == 1
-        mock_config.add_device.assert_called_once_with(mock_pid)
-        mock_validate.assert_called_once()
-
-
-@pytest.mark.asyncio
-async def test_setup_pid_exception_grid_outage(caplog):
-    mock_device = MagicMock()
-    mock_device.pid = [1]
-    mock_device.host = "127.0.0.1"
-    mock_device.port = 502
-
-    with (
-        patch("sigenergy2mqtt.main.device_setup.make_pid", new_callable=AsyncMock) as mock_make,
-        patch("sigenergy2mqtt.main.device_setup._is_grid_outage", new_callable=AsyncMock) as mock_outage,
-        patch("sigenergy2mqtt.main.device_setup._schedule_restart_on_grid_restore") as mock_schedule,
-    ):
-        mock_make.side_effect = RuntimeError("Outage error")
-        mock_outage.return_value = True
-
-        res = await _setup_pid(0, mock_device, MagicMock(), set(), MagicMock(), MagicMock(), ProtocolVersion.V2_9, 0, 1)
-
-        assert res == 1
-        mock_schedule.assert_called_once()
-        assert "initialization failed during grid outage" in caplog.text
-
-
-@pytest.mark.asyncio
-async def test_setup_pid_exception_normal(caplog):
-    mock_device = MagicMock()
-    mock_device.pid = [1]
-    mock_device.host = "127.0.0.1"
-    mock_device.port = 502
-
-    with patch("sigenergy2mqtt.main.device_setup.make_pid", new_callable=AsyncMock) as mock_make, patch("sigenergy2mqtt.main.device_setup._is_grid_outage", new_callable=AsyncMock) as mock_outage:
-        mock_make.side_effect = RuntimeError("Other error")
-        mock_outage.return_value = False
-
-        res = await _setup_pid(0, mock_device, MagicMock(), set(), MagicMock(), MagicMock(), ProtocolVersion.V2_9, 0, 1)
-
-        assert res == 1
-        assert "Failed to initialize PID device at address 1" in caplog.text

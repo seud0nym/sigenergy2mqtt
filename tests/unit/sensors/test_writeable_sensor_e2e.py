@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 from pymodbus.client.mixin import ModbusClientMixin
 
+from sigenergy2mqtt.common import ProtocolVersion
 from sigenergy2mqtt.config import Config, _swap_active_config
 from sigenergy2mqtt.sensors.base import (
     NumericSensor,
@@ -28,7 +29,7 @@ from tests.utils.modbus_sensors import get_sensor_instances
 REMOTE_EMS_LIMIT_TYPES = (MaxChargingLimit, MaxDischargingLimit, PVMaxPowerLimit)
 
 
-async def _get_writable_sensors() -> list[WriteableSensorMixin]:
+async def _get_writable_sensors(protocol_version: ProtocolVersion | None = None) -> list[WriteableSensorMixin]:
     cfg = Config()
     cfg.home_assistant.enabled = True
     cfg.home_assistant.unique_id_prefix = "sigen"
@@ -36,7 +37,7 @@ async def _get_writable_sensors() -> list[WriteableSensorMixin]:
     cfg.ems_mode_check = True
 
     with _swap_active_config(cfg):
-        sensors = await get_sensor_instances(home_assistant_enabled=True, concrete_sensor_check=False)
+        sensors = await get_sensor_instances(home_assistant_enabled=True, concrete_sensor_check=False, protocol_version=protocol_version)
 
     return [sensor for sensor in sensors.values() if isinstance(sensor, WriteableSensorMixin)]
 
@@ -231,7 +232,8 @@ def test_availability_control_sensor_gates_writes_for_non_remote_ems_sensors() -
 
 def test_remote_ems_limit_requires_both_checks_when_availability_control_is_set() -> None:
     async def _run() -> None:
-        writable = await _get_writable_sensors()
+        # Before protocol V2.10, firmware earlier than SPC113 gates the limits on Remote EMS and its control mode
+        writable = await _get_writable_sensors(ProtocolVersion.V2_9)
         remote_limits = [sensor for sensor in writable if isinstance(sensor, REMOTE_EMS_LIMIT_TYPES)]
         assert remote_limits
 

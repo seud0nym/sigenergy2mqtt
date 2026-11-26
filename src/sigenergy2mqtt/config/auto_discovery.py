@@ -45,10 +45,6 @@ REG_AC_CHARGER_SYSTEM_STATE = 32000
 REG_DC_CHARGER_CHARGING_CURRENT = 31501
 REG_INVERTER_RUNNING_STATE = 30578
 REG_INVERTER_SERIAL_NUMBER = 30515
-REG_PID_RUNNING_STATUS = 33041
-REG_PID_SERIAL_NUMBER = 33015
-REG_PSS_COMMUNICATION_STATUS = 32525
-REG_PSS_SERIAL_NUMBER = 32515
 REG_PLANT_RUNNING_STATE = 30051
 REG_SERIAL_NUMBER_COUNT = 10
 
@@ -73,11 +69,9 @@ class DiscoveredDevice:
     ac_chargers: list[int] = field(default_factory=list)
     dc_chargers: list[int] = field(default_factory=list)
     inverters: list[int] = field(default_factory=list)
-    pid: list[int] = field(default_factory=list)
-    pss: list[int] = field(default_factory=list)
 
     def has_devices(self) -> bool:
-        return bool(self.ac_chargers or self.dc_chargers or self.inverters or self.pid or self.pss)
+        return bool(self.ac_chargers or self.dc_chargers or self.inverters)
 
     def to_dict(self) -> dict:
         return {
@@ -86,8 +80,6 @@ class DiscoveredDevice:
             "ac-chargers": self.ac_chargers,
             "dc-chargers": self.dc_chargers,
             "inverters": self.inverters,
-            "pid": self.pid,
-            "pss": self.pss,
         }
 
 
@@ -263,28 +255,6 @@ async def _probe_device_id(modbus: AsyncModbusTcpClient, device_id: int, device:
         logger.info(f" -> Found AC-Charger at {host}:{port}: Device ID={device_id}")
         device.ac_chargers.append(device_id)
 
-    # PSS
-    if "PSS" not in exclude_devices and await probe_register(modbus, REG_PSS_COMMUNICATION_STATUS, device_id=device_id):
-        serial = await get_serial_number(modbus, REG_PSS_SERIAL_NUMBER, device_id=device_id)
-        if serial:
-            if serial not in serial_numbers:
-                serial_numbers.append(serial)
-                logger.info(f" -> Found PSS {device_id} ({serial}) at {host}:{port}: Device ID={device_id}")
-                device.pss.append(device_id)
-            else:
-                logger.info(f" -> IGNORED PSS {device_id} at {host}:{port} - serial number {serial} already discovered")
-
-    # PID
-    if "PID" not in exclude_devices and await probe_register(modbus, REG_PID_RUNNING_STATUS, device_id=device_id):
-        serial = await get_serial_number(modbus, REG_PID_SERIAL_NUMBER, device_id=device_id)
-        if serial:
-            if serial not in serial_numbers:
-                serial_numbers.append(serial)
-                logger.info(f" -> Found PID {device_id} ({serial}) at {host}:{port}: Device ID={device_id}")
-                device.pid.append(device_id)
-            else:
-                logger.info(f" -> IGNORED PID {device_id} at {host}:{port} - serial number {serial} already discovered")
-
 
 async def scan_host(ip: str, port: int, results: list, timeout: float = 0.25, retries: int = 0, max_reconnect_attempts: int = 3, max_device_id: int = 246, exclude_devices: list[str] | None = None) -> None:
     """Connect to a single host, enumerate its Sigenergy devices, and append to results."""
@@ -331,9 +301,7 @@ async def scan_host(ip: str, port: int, results: list, timeout: float = 0.25, re
             logger.info(
                 f" -> Scan complete for {ip}:{port}: Found {len(device.inverters)} inverter(s) {sorted(device.inverters)}, "
                 f"{len(device.dc_chargers)} DC charger(s) {sorted(device.dc_chargers)}, "
-                f"{len(device.ac_chargers)} AC charger(s) {sorted(device.ac_chargers)}, "
-                f"{len(device.pid)} PID(s) {sorted(device.pid)}, "
-                f"{len(device.pss)} PSS(s) {sorted(device.pss)}"
+                f"{len(device.ac_chargers)} AC charger(s) {sorted(device.ac_chargers)}"
             )
 
     except DiscoveryInterruptedError:
@@ -496,9 +464,7 @@ async def scan(
                 f"Found {len(results)} Sigenergy plant(s) with "
                 f"{sum(len(r.get('inverters', [])) for r in results)} inverter(s), "
                 f"{sum(len(r.get('dc-chargers', [])) for r in results)} DC charger(s), "
-                f"{sum(len(r.get('ac-chargers', [])) for r in results)} AC charger(s), "
-                f"{sum(len(r.get('pid', [])) for r in results)} PID(s), "
-                f"{sum(len(r.get('pss', [])) for r in results)} PSS(s)"
+                f"{sum(len(r.get('ac-chargers', [])) for r in results)} AC charger(s)"
             )
         else:
             logger.info("No Sigenergy plants found during auto-discovery.")

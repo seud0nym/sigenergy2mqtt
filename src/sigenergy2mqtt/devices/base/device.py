@@ -323,8 +323,8 @@ class Device(HaPublisherMixin, dict[str, str | list[str]]):
     def via_device(self) -> str | None:
         """The unique_id of the device this one is linked to with Home Assistant's ``via_device``.
 
-        Set by ``_add_child_device`` and by the device factories (chargers, PID,
-        inverters and PSS are linked to the plant). Not the same as
+        Set by ``_add_child_device`` and by the device factories (chargers and
+        inverters are linked to the plant). Not the same as
         ``parent_device``, which is only set by ``_add_child_device``. A device
         published as a Home Assistant child device does not publish its own
         device info, so its ``via_device`` is ignored in that mode, but it is kept

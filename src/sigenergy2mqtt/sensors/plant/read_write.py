@@ -581,11 +581,19 @@ class RemoteEMS(SwitchSensor, HybridInverter, PVInverter, AvailabilityMixin):
             scan_interval=ScanInterval.high(plant_index),
             protocol_version=ProtocolVersion.V1_8,
         )
+        # Set by RemoteEMSPowerLimitGlobalEnable so that changes to either switch update the combined power limits topic
+        self.power_limit_global_enable: RemoteEMSPowerLimitGlobalEnable | None = None
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "When needed to control EMS remotely, this register needs to be enabled. When enabled, the plant’s EMS Work Mode (30003) will switch to RemoteEMS"
         return attributes
+
+    async def publish(self, mqtt_client: mqtt.Client, transport: Any, republish: bool = False) -> bool:
+        result = await super().publish(mqtt_client, transport, republish=republish)
+        if result and self.power_limit_global_enable is not None:
+            self.power_limit_global_enable.publish_power_limits_active(mqtt_client)
+        return result
 
 
 class RemoteEMSControlMode(SelectSensor, HybridInverter, PVInverter):
@@ -718,6 +726,7 @@ class RemoteEMSLimit(NumericSensor, HybridInverter):
         icon: str,
         maximum: float,
         protocol_version: ProtocolVersion,
+        global_enable: RemoteEMSPowerLimitGlobalEnable | None = None,
     ):
         super().__init__(
             availability_control_sensor=availability_control_sensor,
@@ -741,9 +750,26 @@ class RemoteEMSLimit(NumericSensor, HybridInverter):
         self._remote_ems_mode = remote_ems_mode
         self._charging = charging
         self._discharging = discharging
+        # Protocol V2.10+: the limit applies when 40162 is enabled or EMS Work Mode (30003) is Remote EMS (7),
+        # and the register remains writable (and retained) at all times.
+        self._global_enable = global_enable
+
+    def activation_comment(self, legacy: str) -> str:
+        """The comment suffix describing when this limit takes effect."""
+        if self._global_enable is not None:
+            return " Takes effect when Remote EMS Power Limit Global Enable (40162) is enabled, or when the EMS Work Mode (30003) is Remote EMS."
+        # Only gated limits depend on the Remote EMS control mode (firmware without global limits)
+        return legacy if active_config.ems_mode_check and self._availability_control_sensor is not None else ""
 
     def configure_mqtt_topics(self, device_id: str) -> str:
         base = super().configure_mqtt_topics(device_id)
+        if self._global_enable is not None and self._global_enable.publishes_power_limits_active and active_config.home_assistant.enabled:
+            # Available when either Remote EMS Power Limit Global Enable or Remote EMS is enabled (protocol V2.10)
+            cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append({
+                "topic": self._global_enable.power_limits_active_topic,
+                "payload_available": 1,
+                "payload_not_available": 0,
+            })
         if self._remote_ems_mode and active_config.home_assistant.enabled and active_config.ems_mode_check:
             if self._charging and self._discharging:
                 cast(list[dict[str, float | int | str]], self[DiscoveryKeys.AVAILABILITY]).append({
@@ -767,7 +793,14 @@ class RemoteEMSLimit(NumericSensor, HybridInverter):
 class MaxChargingLimit(RemoteEMSLimit):
     ADDRESS = 40032
 
-    def __init__(self, plant_index: int, remote_ems: AvailabilityMixin | None, remote_ems_mode: RemoteEMSControlMode | None, rated_charging_power: float):
+    def __init__(
+        self,
+        plant_index: int,
+        remote_ems: AvailabilityMixin | None,
+        remote_ems_mode: RemoteEMSControlMode | None,
+        rated_charging_power: float,
+        global_enable: RemoteEMSPowerLimitGlobalEnable | None = None,
+    ):
         super().__init__(
             availability_control_sensor=remote_ems,
             remote_ems_mode=remote_ems_mode,
@@ -780,13 +813,14 @@ class MaxChargingLimit(RemoteEMSLimit):
             icon="mdi:battery-charging-high",
             maximum=rated_charging_power,
             protocol_version=ProtocolVersion.V1_8,
+            global_enable=global_enable,
         )
         self.sanity_check.max_raw = Constants.UINT32_MAX  # This will be the default value read from Modbus if no value is set by user
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = (
-            f"The maximum charging power of the ESS in the plant must not exceed the value configured in this sensor. Range: [0, Rated ESS charging power]{'. Takes effect when Remote EMS control mode (40031) is set to Command Charging.' if active_config.ems_mode_check else ''}"
+            f"The maximum charging power of the ESS in the plant must not exceed the value configured in this sensor. Range: [0, Rated ESS charging power].{self.activation_comment(' Takes effect when Remote EMS control mode (40031) is set to Command Charging.')}"
         )
         return attributes
 
@@ -800,7 +834,14 @@ class MaxChargingLimit(RemoteEMSLimit):
 class MaxDischargingLimit(RemoteEMSLimit):
     ADDRESS = 40034
 
-    def __init__(self, plant_index: int, remote_ems: AvailabilityMixin | None, remote_ems_mode: RemoteEMSControlMode | None, rated_discharging_power: float):
+    def __init__(
+        self,
+        plant_index: int,
+        remote_ems: AvailabilityMixin | None,
+        remote_ems_mode: RemoteEMSControlMode | None,
+        rated_discharging_power: float,
+        global_enable: RemoteEMSPowerLimitGlobalEnable | None = None,
+    ):
         super().__init__(
             availability_control_sensor=remote_ems,
             remote_ems_mode=remote_ems_mode,
@@ -813,13 +854,14 @@ class MaxDischargingLimit(RemoteEMSLimit):
             icon="mdi:battery-charging-low",
             maximum=rated_discharging_power,
             protocol_version=ProtocolVersion.V1_8,
+            global_enable=global_enable,
         )
         self.sanity_check.max_raw = Constants.UINT32_MAX  # This will be the default value read from Modbus if no value is set by user
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = (
-            f"The maximum discharging power of the ESS in the plant must not exceed the value configured in this sensor. Range: [0, Rated ESS discharging power]{'. Takes effect when Remote EMS control mode (40031) is set to Command Discharging.' if active_config.ems_mode_check else ''}"
+            f"The maximum discharging power of the ESS in the plant must not exceed the value configured in this sensor. Range: [0, Rated ESS discharging power].{self.activation_comment(' Takes effect when Remote EMS control mode (40031) is set to Command Discharging.')}"
         )
         return attributes
 
@@ -833,7 +875,7 @@ class MaxDischargingLimit(RemoteEMSLimit):
 class PVMaxPowerLimit(RemoteEMSLimit):
     ADDRESS = 40036
 
-    def __init__(self, plant_index: int, remote_ems: AvailabilityMixin | None, remote_ems_mode: RemoteEMSControlMode | None):
+    def __init__(self, plant_index: int, remote_ems: AvailabilityMixin | None, remote_ems_mode: RemoteEMSControlMode | None, global_enable: RemoteEMSPowerLimitGlobalEnable | None = None):
         super().__init__(
             availability_control_sensor=remote_ems,
             remote_ems_mode=remote_ems_mode,
@@ -846,12 +888,13 @@ class PVMaxPowerLimit(RemoteEMSLimit):
             icon="mdi:solar-power",
             maximum=4294967.295,
             protocol_version=ProtocolVersion.V1_8,
+            global_enable=global_enable,
         )
 
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = (
-            f"The maximum output power of the PV strings in the plant must not exceed the value configured in this sensor{'. Takes effect when Remote EMS control mode (40031) is set to Command Charging.' if active_config.ems_mode_check else ''}"
+            f"The maximum output power of the PV strings in the plant must not exceed the value configured in this sensor.{self.activation_comment(' Takes effect when Remote EMS control mode (40031) is set to Command Charging.')}"
         )
         return attributes
 
@@ -1674,4 +1717,106 @@ class GridPowerLossLockoutAlarmClear(WriteOnlySensor, HybridInverter, PVInverter
     def get_attributes(self) -> dict[str, float | int | str]:
         attributes = super().get_attributes()
         attributes["comment"] = "Write 1 to clear the grid power loss lockout alarm"
+        return attributes
+
+
+class ReactivePowerRegulationGradient(NumericSensor, HybridInverter, PVInverter):
+    ADDRESS = 40160
+
+    def __init__(self, plant_index: int):
+        super().__init__(
+            availability_control_sensor=None,
+            name="Reactive Power Regulation Gradient",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_reactive_power_regulation_gradient",
+            input_type=InputType.HOLDING,
+            plant_index=plant_index,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
+            address=self.ADDRESS,
+            count=2,
+            data_type=ModbusDataType.UINT32,
+            scan_interval=ScanInterval.medium(plant_index),
+            unit="%/s",
+            device_class=None,
+            icon="mdi:gradient-horizontal",
+            gain=1000,
+            precision=2,
+            protocol_version=ProtocolVersion.V2_10,
+            maximum=5000,
+        )
+
+    def get_attributes(self) -> dict[str, float | int | str]:
+        attributes = super().get_attributes()
+        attributes["comment"] = "Range:[0,5000]。Percentage of rated power adjusted per second"
+        return attributes
+
+
+class RemoteEMSPowerLimitGlobalEnable(SwitchSensor, HybridInverter):
+    """Remote EMS power limit global enable (protocol V2.10).
+
+    The ESS max charging/discharging limits and PV max power limit (40032~40036) take effect when this register is 1 or
+    the EMS work mode (30003) is Remote EMS, which is the case when Remote EMS (40029) is enabled. Home Assistant
+    availability requires every availability topic to be available, so the "either switch is on" condition is
+    published as a single combined topic (``power_limits_active_topic``) by both this sensor and Remote EMS.
+    """
+
+    ADDRESS = 40162
+
+    def __init__(self, plant_index: int, remote_ems: RemoteEMS | None = None):
+        super().__init__(
+            availability_control_sensor=None,
+            name="Remote EMS Power Limit Global Enable",
+            object_id=f"{active_config.home_assistant.entity_id_prefix}_{plant_index}_plant_remote_ems_power_limit_global_enable",
+            plant_index=plant_index,
+            device_address=Constants.PLANT_DEVICE_ADDRESS,
+            address=self.ADDRESS,
+            scan_interval=ScanInterval.medium(plant_index),
+            protocol_version=ProtocolVersion.V2_10,
+        )
+        self._remote_ems = remote_ems
+        if remote_ems is not None:
+            remote_ems.power_limit_global_enable = self
+        self.power_limits_active_topic: str | None = None
+
+    @property
+    def power_limits_active(self) -> bool:
+        """True if either this switch or Remote EMS is enabled, so the power limits (40032~40036) take effect."""
+        enabled = (1, "1")
+        return self.latest_raw_state in enabled or (self._remote_ems is not None and self._remote_ems.latest_raw_state in enabled)
+
+    def configure_mqtt_topics(self, device_id: str) -> str:
+        base = super().configure_mqtt_topics(device_id)
+        self.power_limits_active_topic = f"{base}/power_limits_active"
+        return base
+
+    @property
+    def publishes_power_limits_active(self) -> bool:
+        """True if the combined topic will be published, which requires both switches to be read and published.
+
+        They are not when hidden (e.g. by no-remote-ems), in which case the power limits cannot depend on the topic.
+        """
+        return bool(self.power_limits_active_topic) and self.publishable and self._remote_ems is not None and self._remote_ems.publishable
+
+    def publish_power_limits_active(self, mqtt_client: mqtt.Client) -> None:
+        """Publish 1 to the combined topic if either switch is enabled, otherwise 0."""
+        if self.power_limits_active_topic and active_config.home_assistant.enabled:
+            mqtt_client.publish(self.power_limits_active_topic, "1" if self.power_limits_active else "0", self._qos, self._retain)
+
+    async def publish(self, mqtt_client: mqtt.Client, transport: Any, republish: bool = False) -> bool:
+        result = await super().publish(mqtt_client, transport, republish=republish)
+        if result:
+            self.publish_power_limits_active(mqtt_client)
+        return result
+
+    def clean_state(self, mqtt_client: mqtt.Client) -> None:
+        """Clean up published sensor state."""
+        if self.power_limits_active_topic:
+            self._publish_message(mqtt_client, self.power_limits_active_topic, b"", qos=1)
+        return super().clean_state(mqtt_client)
+
+    def get_attributes(self) -> dict[str, float | int | str]:
+        attributes = super().get_attributes()
+        attributes["comment"] = (
+            "When enabled, Max Charging Limit (40032), Max Discharging Limit (40034) and PV Max Power Limit (40036) take effect regardless of the EMS Work Mode. "
+            "When disabled, they only take effect when the EMS Work Mode (30003) is Remote EMS. Default: disabled"
+        )
         return attributes

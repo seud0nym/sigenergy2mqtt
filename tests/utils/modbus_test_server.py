@@ -138,7 +138,11 @@ from sigenergy2mqtt.sensors.inverter.read_only import (
     PowerFactor,
     RatedActivePower,
 )
-from sigenergy2mqtt.sensors.plant.read_only import GridStatus
+from sigenergy2mqtt.sensors.plant.read_only import (
+    GridPhaseCurrent,
+    GridPhaseVoltage,
+    GridStatus,
+)
 from sigenergy2mqtt.sensors.plant.read_write import RemoteEMS
 from tests.utils import get_sensor_instances
 from tests.utils.modbus_sensors import (
@@ -165,6 +169,10 @@ _logger.setLevel(logging.INFO)
 DELAY_AVG: int = 15
 DELAY_MIN: int = 5
 DELAY_MAX: int = 50
+
+# Protocol V2.10 grid sensor phase current/voltage registers (30292~30302).
+GRID_SENSOR_PHASE_CURRENT_ADDRESSES = (GridPhaseCurrent.PHASE_A_ADDRESS, GridPhaseCurrent.PHASE_B_ADDRESS, GridPhaseCurrent.PHASE_C_ADDRESS)
+GRID_SENSOR_PHASE_VOLTAGE_ADDRESSES = (GridPhaseVoltage.PHASE_A_ADDRESS, GridPhaseVoltage.PHASE_B_ADDRESS, GridPhaseVoltage.PHASE_C_ADDRESS)
 
 UNSIGNED_DATA_TYPES = (ModbusClientMixin.DATATYPE.UINT16, ModbusClientMixin.DATATYPE.UINT32, ModbusClientMixin.DATATYPE.UINT64)
 
@@ -1881,6 +1889,13 @@ class CustomDataBlock:
         finally:
             self._internal_write = False
 
+    async def get_registers(self, address: int, count: int) -> list[int] | None:
+        """Return the *count* raw registers at *address*, or ``None`` if unavailable."""
+        if self._server is None:
+            return None
+        values = await self._server.context.async_getValues(self.device_address, 0x03, address, count)
+        return list(values) if isinstance(values, list) else None
+
     async def force_set_registers(self, address: int, values: list[int]) -> None:
         """Write *values* to *address* directly, bypassing all write-lock checks.
 
@@ -1993,6 +2008,10 @@ class CustomDataBlock:
             return (randint(0, 7000) / sensor.gain, "charging_power")
         if sensor.address == DCChargerOutputPower.ADDRESS:
             return (randint(0, 11000) / sensor.gain, "output_power")
+        if sensor.device_address == Constants.PLANT_DEVICE_ADDRESS and sensor.address in GRID_SENSOR_PHASE_VOLTAGE_ADDRESSES:
+            return (round(uniform(225.0, 245.0), 2), "grid_sensor_phase_voltage")
+        if sensor.device_address == Constants.PLANT_DEVICE_ADDRESS and sensor.address in GRID_SENSOR_PHASE_CURRENT_ADDRESSES:
+            return (round(uniform(-20.0, 20.0), 2), "grid_sensor_phase_current")
         if sensor.latest_raw_state is not None and isinstance(sensor.latest_raw_state, (int, float)):
             return (sensor.latest_raw_state / sensor.gain, "latest_raw_state")
         if sensor.device_class == DeviceClass.TIMESTAMP:
@@ -2118,6 +2137,9 @@ async def simulate_grid_outage(data_block: CustomDataBlock, wait_for_seconds: in
     (outage), holds for *duration_seconds*, then restores it to ``0``.  Loops
     indefinitely until cancelled.
 
+    While the grid is down, the grid sensor phase current and voltage registers
+    (protocol V2.10, when present) read ``0`` and are restored afterwards.
+
     Args:
         data_block: The plant device's data block (unit ID
             ``Constants.PLANT_DEVICE_ADDRESS``).
@@ -2131,7 +2153,20 @@ async def simulate_grid_outage(data_block: CustomDataBlock, wait_for_seconds: in
             await asyncio.sleep(wait_for_seconds)
             _logger.info(f"Simulating grid outage for device address {data_block.device_address} for {duration_seconds} seconds...")
             await data_block.force_set_registers(GridStatus.ADDRESS, [1])
+            saved: dict[int, tuple[list[int], bool]] = {}  # address -> (registers, previously write-locked)
+            for address in GRID_SENSOR_PHASE_CURRENT_ADDRESSES + GRID_SENSOR_PHASE_VOLTAGE_ADDRESSES:
+                sensor = data_block.addresses.get(address)
+                if sensor is not None and sensor.publishable:
+                    registers = await data_block.get_registers(address, sensor.count)
+                    if registers is not None:
+                        saved[address] = (registers, address in data_block._written_addresses)
+                        await data_block.force_set_registers(address, [0] * sensor.count)
             await asyncio.sleep(duration_seconds)
+            for address, (registers, was_locked) in saved.items():
+                await data_block.force_set_registers(address, registers)
+                if not was_locked:
+                    # force_set_registers write-locks the address; unlock it so live MQTT updates resume after the outage
+                    data_block._written_addresses.discard(address)
             await data_block.force_set_registers(GridStatus.ADDRESS, [0])
             _logger.info(f"Grid outage simulation ended for device address {data_block.device_address}.")
             if not repeated:

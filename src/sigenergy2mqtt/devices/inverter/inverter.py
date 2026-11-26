@@ -7,12 +7,10 @@ import sigenergy2mqtt.sensors.inverter.read_only as ro
 import sigenergy2mqtt.sensors.inverter.read_write as rw
 from sigenergy2mqtt.common import (
     DeviceType,
-    FirmwareVersion,
     HybridInverter,
     ProtocolVersion,
     PVInverter,
 )
-from sigenergy2mqtt.config import active_config
 from sigenergy2mqtt.devices import ModbusDevice
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.sensors.inverter.derived import (
@@ -78,13 +76,6 @@ class Inverter(ModbusDevice):
         await inverter._register_child_devices(plant_index, device_address, device_type, protocol_version, cast(str, model_id), cast(str, serial), cast(int, strings), battery_count)
         await inverter._register_sensors(plant_index, device_address, firmware_version, model, serial_number, tz, pv_string_count, pack_bcu_count, battery_count, modbus_client)
 
-        try:
-            parsed_firmware = FirmwareVersion(cast(str, firmware))
-            if active_config.ems_mode_check and parsed_firmware.service_pack >= 113:
-                logger.debug(f"{inverter.log_identity} ({serial}): Remote EMS Mode check disabled in firmware after SPC113 ({firmware})")
-                active_config.ems_mode_check = False
-        except ValueError:
-            logger.warning(f"{inverter.log_identity} ({serial}): Unable to parse firmware version '{firmware}' for ems_mode_check enforcement")
         return inverter
 
     async def _register_child_devices(

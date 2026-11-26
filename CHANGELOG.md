@@ -3,9 +3,23 @@
 
 ## [Unreleased]
 
+### Added
+
+- Added support for Sigenergy Modbus Protocol V2.10 (2026-11-03), which is detected automatically from any of its new registers, as firmware may not support them all (for example, register 40160)
+- Added Phase A/B/C Current and Phase A/B/C Voltage sensors to the Grid Sensor device, measured at the grid sensor (registers 30292-30302). Only SigenStor and Sigen Hybrid systems support these, so they are not published for PV inverter plants
+- Added the Reactive Power Regulation Gradient setting (register 40160), the percentage of rated power adjusted per second for reactive power
+- Added the Remote EMS Power Limit Global Enable switch (register 40162, hybrid inverter plants only). It is hidden when `no-remote-ems` is set, like the Remote EMS switch
+
 ### Changed
 
 - The Cloud API Surplus PV Priority setting has moved from the DC Charger device to the Sigenergy Cloud device and is renamed Site PV Surplus Priority, because it applies to the entire site rather than one charger (the mySigen app warns of this when it is changed). It replaces the previous entity, which can be deleted from Home Assistant (#355)
+- On Modbus Protocol V2.10 systems whose firmware supports the Remote EMS Power Limit Global Enable register, Max Charging Limit, Max Discharging Limit and PV Max Power Limit are available in Home Assistant when either Remote EMS or Remote EMS Power Limit Global Enable is on, which is when Sigenergy applies them. The Remote EMS Control Mode no longer matters. Otherwise the values are kept but not applied. On earlier protocol versions, or when the firmware does not support that register, they are only available when Remote EMS is enabled and in the matching Remote EMS control mode, except on firmware SPC113 to SPC116 where they apply globally
+- Max Charging Limit, Max Discharging Limit and PV Max Power Limit once again require Remote EMS (and the matching Remote EMS control mode) on firmware SPC117 and later that does not support Remote EMS Power Limit Global Enable. Sigenergy reverted the global behaviour introduced in SPC113 in SPC117, so the limits were shown as writable but had no effect. The `no-ems-mode-check` option is no longer ignored on these firmware versions
+- The `modbus-auto-discovery-exclude` option now excludes nothing by default. `PID` and `PSS` are no longer valid values; they are ignored with a warning
+
+### Removed
+
+- Removed the PSS and PID devices, which Sigenergy has removed from Modbus Protocol V2.10. These were commercial products. The `--modbus-pss-device-id` and `--modbus-pid-device-id` command line options have been removed (using them is now an error), and the `SIGENERGY2MQTT_MODBUS_PSS_DEVICE_ID`/`SIGENERGY2MQTT_MODBUS_PID_DEVICE_ID` environment variables and the `pss`/`pid` YAML keys are ignored with a warning. Auto-discovery no longer probes for PSS or PID devices
 
 ## [2026.11.23b2] - 2026-11-23
 

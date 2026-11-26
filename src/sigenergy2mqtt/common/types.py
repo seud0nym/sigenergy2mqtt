@@ -7,6 +7,9 @@ class DeviceType:
         self.has_independent_phase_power_control_interface: bool = kwargs.pop("has_independent_phase_power_control_interface", False)
         """Grid code interface (registers 40051~40068), only SigenStor, Sigen Hybrid support"""
         self.has_grid_code_interface: bool = kwargs.pop("has_grid_code_interface", False)
+        """Remote EMS power limit global enable (register 40162, protocol V2.10). When present, the ESS max charging/discharging
+        limits and PV max power limit (40032~40036) take effect if it is enabled or the EMS work mode is Remote EMS."""
+        self.has_remote_ems_power_limit_global_enable: bool = kwargs.pop("has_remote_ems_power_limit_global_enable", False)
         super().__init__(**kwargs)
 
 
@@ -25,7 +28,9 @@ class HybridInverter(DeviceType):
     SigenStor EC (5.0, 6.0, 8.0, 10.0, 12.0, 15.0, 17.0, 20.0, 25.0, 30.0) TP/TPLV series
     Sigen PV (50, 60, 80, 99.9, 100, 110, 125) M1-HYA series
     PG Controller (3.8, 4.8, 5.7, 7.6, 9.6, 11.4) series
-    Sigen PV (50, 60, 80, 99.9, 100, 110) M1-HYB series
+    Sigen PV (50, 60, 80, 99.9, 100, 110, 125) M1-HYB series
+    Sigen Hybrid (2.0, 2.5, 3.0, 3.6, 4.0, 4.6, 5.0, 6.0) SP2 series
+    Sigen Hybrid (3.0, 4.0, 5.0, 6.0, 8.0, 10.0, 12.0) TP2 series
     """
 
     def __str__(self) -> str:
@@ -36,8 +41,9 @@ class PVInverter(DeviceType):
     """Applicable Models:
     Sigen PV Max (3.0, 3.6, 4.0, 4.6, 5.0, 6.0) SP
     Sigen PV Max (5.0, 6.0, 8.0, 10.0, 12.0, 15.0, 17.0, 20.0, 25.0) TP
-    Sigen PV (50, 60, 80, 99.9, 100, 110, 125)M1 series
-    Sigen PV (500)H1 series
+    Sigen PV (50, 60, 80, 99.9, 100, 110, 125, 150, 166) M1 series
+    Sigen PV (500) H1 series
+    Sigen PV (370, 400) H2 series
     """
 
     def __str__(self) -> str:

@@ -76,7 +76,7 @@ def get_parser() -> argparse.ArgumentParser:
         "--no-ems-mode-check",
         action="store_true",
         dest=const.SIGENERGY2MQTT_NO_EMS_MODE_CHECK,
-        help="Turn off validation that disables ESS Max Charging/Discharging and PV Max Power limits when Remote EMS Control Mode is not Command Charging/Discharging. This option is ignored for firmware SPC113 and later as these limits are globally available in those versions.",
+        help="Turn off validation that disables ESS Max Charging/Discharging and PV Max Power limits when Remote EMS Control Mode is not Command Charging/Discharging. This option is ignored when these limits do not depend on Remote EMS: on firmware SPC113 to SPC116, or when the firmware supports Remote EMS Power Limit Global Enable (Modbus Protocol V2.10).",
     )
     parser.add_argument(
         "--no-metrics",
@@ -315,7 +315,7 @@ def get_parser() -> argparse.ArgumentParser:
         action="store",
         dest=const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_EXCLUDE,
         default=os.getenv(const.SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_EXCLUDE, None),
-        help="A comma-separated list of Device class names to be excluded from auto-discovery. The defaults is 'PID,PSS'.",
+        help="A comma-separated list of Device class names to be excluded from auto-discovery. By default, no devices are excluded.",
     )
     parser.add_argument(
         "--modbus-auto-discovery-networks",
@@ -375,22 +375,6 @@ def get_parser() -> argparse.ArgumentParser:
         dest=const.SIGENERGY2MQTT_MODBUS_DCCHARGER_DEVICE_ID,
         default=os.getenv(const.SIGENERGY2MQTT_MODBUS_DCCHARGER_DEVICE_ID, None),
         help="The Sigenergy DC Charger Modbus Device ID. Multiple device IDS may be specified, separated by commas.",
-    )
-    parser.add_argument(
-        "--modbus-pss-device-id",
-        nargs="*",
-        action="store",
-        dest=const.SIGENERGY2MQTT_MODBUS_PSS_DEVICE_ID,
-        default=os.getenv(const.SIGENERGY2MQTT_MODBUS_PSS_DEVICE_ID, None),
-        help="The Sigenergy PSS Modbus Device ID. Multiple device IDS may be specified, separated by commas.",
-    )
-    parser.add_argument(
-        "--modbus-pid-device-id",
-        nargs="*",
-        action="store",
-        dest=const.SIGENERGY2MQTT_MODBUS_PID_DEVICE_ID,
-        default=os.getenv(const.SIGENERGY2MQTT_MODBUS_PID_DEVICE_ID, None),
-        help="The Sigenergy PID Modbus Device ID. Multiple device IDS may be specified, separated by commas.",
     )
     parser.add_argument(
         "--modbus-readonly",

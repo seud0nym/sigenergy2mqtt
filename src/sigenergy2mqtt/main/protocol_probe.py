@@ -5,11 +5,16 @@ from pymodbus.exceptions import ModbusException
 from sigenergy2mqtt.common import Constants, InputType, ProtocolVersion
 from sigenergy2mqtt.modbus import ModbusClient
 from sigenergy2mqtt.sensors.plant.read_only import (
+    GridPhaseCurrent,
     PlantBatterySoH,
     PlantPVTotalGenerationToday,
     ThirdPartyPVPower,
     TotalLoadDailyConsumption,
     TotalLoadPower,
+)
+from sigenergy2mqtt.sensors.plant.read_write import (
+    ReactivePowerRegulationGradient,
+    RemoteEMSPowerLimitGlobalEnable,
 )
 
 from .modbus_helpers import get_modbus_url, read_registers
@@ -23,19 +28,26 @@ async def probe_protocol(modbus_client: ModbusClient) -> ProtocolVersion:
     Registers are probed in descending version order; the first successful read
     determines the protocol.  Falls back to V1.8 if none respond.
     """
-    # Tuples of (register, count, protocol_version) — must be input registers
+    # Tuples of (register, count, input_type, protocol_version) — registers
     # unique to each version, listed from newest to oldest.
+    # A version may have several candidates; any one succeeding selects it.
+    # V2.10 registers may be rolled out by firmware independently, so any of the
+    # new registers is accepted. The grid sensor phase current (30292) is only
+    # supported by hybrid inverters, so the holding registers are probed first.
     candidates = [
-        (PlantPVTotalGenerationToday.ADDRESS, 2, ProtocolVersion.V2_9),
-        (TotalLoadPower.ADDRESS, 2, ProtocolVersion.V2_8),
-        (ThirdPartyPVPower.ADDRESS, 2, ProtocolVersion.V2_7),
-        (TotalLoadDailyConsumption.ADDRESS, 2, ProtocolVersion.V2_6),
-        (PlantBatterySoH.ADDRESS, 1, ProtocolVersion.V2_5),
+        (ReactivePowerRegulationGradient.ADDRESS, 2, InputType.HOLDING, ProtocolVersion.V2_10),
+        (RemoteEMSPowerLimitGlobalEnable.ADDRESS, 1, InputType.HOLDING, ProtocolVersion.V2_10),
+        (GridPhaseCurrent.PHASE_A_ADDRESS, 2, InputType.INPUT, ProtocolVersion.V2_10),
+        (PlantPVTotalGenerationToday.ADDRESS, 2, InputType.INPUT, ProtocolVersion.V2_9),
+        (TotalLoadPower.ADDRESS, 2, InputType.INPUT, ProtocolVersion.V2_8),
+        (ThirdPartyPVPower.ADDRESS, 2, InputType.INPUT, ProtocolVersion.V2_7),
+        (TotalLoadDailyConsumption.ADDRESS, 2, InputType.INPUT, ProtocolVersion.V2_6),
+        (PlantBatterySoH.ADDRESS, 1, InputType.INPUT, ProtocolVersion.V2_5),
     ]
-    for register, count, version in candidates:
+    for register, count, input_type, version in candidates:
         logger.debug(f"READING {get_modbus_url(modbus_client)} to probe V{version.value} register {register} ({count=} device_id={Constants.PLANT_DEVICE_ADDRESS})")
         try:
-            rr = await read_registers(modbus_client, register, count=count, device_id=Constants.PLANT_DEVICE_ADDRESS, input_type=InputType.INPUT)
+            rr = await read_registers(modbus_client, register, count=count, device_id=Constants.PLANT_DEVICE_ADDRESS, input_type=input_type)
             if rr.isError():
                 logger.debug(f"FAILURE {get_modbus_url(modbus_client)} {register=} {count=} device_id={Constants.PLANT_DEVICE_ADDRESS} -> {rr.exception_code=}")
             else:

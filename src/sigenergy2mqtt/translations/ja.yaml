@@ -590,8 +590,6 @@ class:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: 放電カットオフ率
-  DistributionCabinet:
-    name: '{model_id} {serial} 配電キャビネット'
   EMSWorkMode:
     attributes:
       source: Modbusレジスタ {address}
@@ -1006,12 +1004,24 @@ class:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: フェーズ{phase} 有効電力
+  GridPhaseCurrent:
+    attributes:
+      comment: 系統接続点からシステムチェックポイントまでの系統センサーから収集されたデータ。SigenStorおよびSigen Hybridのみが対応しています。
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
+    name: 相 {phase} 電流
   GridPhaseReactivePower:
     attributes:
       comment: 系統センサーで系統からシステムへのチェックポイントで収集されたデータ
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: フェーズ{phase} 無効電力
+  GridPhaseVoltage:
+    attributes:
+      comment: 系統接続点からシステムチェックポイントまでの系統センサーから収集されたデータ。SigenStorおよびSigen Hybridのみが対応しています。
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
+    name: 相 {phase} 電圧
   GridPowerLossLockoutAlarmClear:
     attributes:
       comment: 1 を書き込むと、グリッド電力損失ロックアウト アラームがクリアされます。
@@ -1352,10 +1362,6 @@ class:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: 温度
-  LA:
-    name: '{model_id} {serial} LA'  # verify:ignore
-  LB:
-    name: '{model_id} {serial} LB'  # verify:ignore
   LineVoltage:
     attributes:
       source: Modbusレジスタ {address}
@@ -1388,8 +1394,6 @@ class:
     name: MQTT パブリッシュ失敗
   MQTTReconnections:
     name: MQTTの再接続
-  MV:
-    name: '{model_id} {serial} MV'  # verify:ignore
   MaxAbsorptionPower:
     attributes:
       source: Modbusレジスタ {address}
@@ -1424,13 +1428,13 @@ class:
     name: 最大放電電力
   MaxChargingLimit:
     attributes:
-      comment: 'プラント内の ESS の最大充電電力は、このセンサーで設定された値を超えてはなりません。範囲: [0、定格 ESS 充電電力]{active_config}'
+      comment: 'プラント内のESSの最大充電電力は、このセンサーで設定された値を超えてはなりません。範囲：[0, ESSの定格充電電力]。{self}'
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: 最大充電制限
   MaxDischargingLimit:
     attributes:
-      comment: 'プラント内の ESS の最大放電電力は、このセンサーで設定された値を超えてはなりません。範囲：[0、定格ESS放電電力]{active_config}'
+      comment: 'プラント内のESSの最大放電電力は、このセンサーで設定された値を超えてはなりません。範囲：[0, ESSの定格放電電力]。{self}'
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: 最大放電制限
@@ -1537,13 +1541,6 @@ class:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: PCS最大輸入制限
-  PID:
-    name: '{model_id} {serial}'
-  PIDABLineVoltage:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: AB 線電圧
   PIDAlarm1:
     alarm:
       '0': ソフトウェアバージョンの不一致
@@ -1562,10 +1559,6 @@ class:
       '13': 出力過電流保護
       '14': 出力障害
       '15': RS485通信異常
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: アラーム1
   PIDAlarm2:
     alarm:
       '0': 系統電力損失
@@ -1573,740 +1566,34 @@ class:
       '2': 系統不足電圧
       '3': グリッド超過周波数
       '4': グリッド不足周波数
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: アラーム2
-  PIDAlarms:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: アラーム
-  PIDBCLineVoltage:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: BC ライン電圧
-  PIDBusVoltage:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: バス電圧
-  PIDCALineVoltage:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: CA ライン電圧
-  PIDCommunicationStatus:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 通信状態
-  PIDGridFrequency:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: グリッド周波数
-  PIDInternalTemperature1:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 内部温度 1
-  PIDInternalTemperature2:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 内部温度 2
-  PIDInternalTemperature3:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 内部温度 3
-  PIDInternalTemperature4:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 内部温度 4
-  PIDInternalTemperature5:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 内部温度 5
-  PIDInverterCurrent:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: インバータ電流
-  PIDInverterVoltage:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: インバータ電圧
-  PIDMachineFirmwareVersion:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: ファームウェアのバージョン
-  PIDModelType:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: モデルタイプ
-  PIDOutputCurrent:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 出力電流
-  PIDOutputVoltage:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 出力電圧
-  PIDPhaseAVoltage:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: A相電圧
-  PIDPhaseBVoltage:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: B相電圧
-  PIDPhaseCVoltage:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: C相電圧
-  PIDRunningStatus:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 稼働状況
-  PIDSerialNumber:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: シリアルナンバー
   PIDStartStop:
-    name: PIDスタート/ストップ
-    name_off: 停止
-    name_on: 始める
     options:
       '0': 停止
       '1': 始める
-  PSS:
-    name: '{model_id} {serial}'
-  PSSCommunicationStatus:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 通信状態
-  PSSDistributionCabinetABLineVoltage:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: AB 線電圧
-  PSSDistributionCabinetBCLineVoltage:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: BC ライン電圧
-  PSSDistributionCabinetCALineVoltage:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: CA ライン電圧
-  PSSDistributionCabinetForwardActiveEnergy:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 前方アクティブエネルギー
-  PSSDistributionCabinetForwardReactiveEnergy:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 順方向無効電力量
-  PSSDistributionCabinetFrequency:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 頻度
-  PSSDistributionCabinetHumidity:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 湿度
-  PSSDistributionCabinetPhaseAActivePower:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: A相有効電力
-  PSSDistributionCabinetPhaseAApparentPower:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: A相皮相電力
-  PSSDistributionCabinetPhaseACurrent:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: A相電流
-  PSSDistributionCabinetPhaseAPowerFactor:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: A相の力率
-  PSSDistributionCabinetPhaseAReactivePower:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: A相無効電力
-  PSSDistributionCabinetPhaseAVoltage:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: A相電圧
-  PSSDistributionCabinetPhaseBActivePower:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: B相有効電力
-  PSSDistributionCabinetPhaseBApparentPower:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: B相皮相電力
-  PSSDistributionCabinetPhaseBCurrent:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: B相電流
-  PSSDistributionCabinetPhaseBPowerFactor:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: B相の力率
-  PSSDistributionCabinetPhaseBReactivePower:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: B相無効電力
-  PSSDistributionCabinetPhaseBVoltage:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: B相電圧
-  PSSDistributionCabinetPhaseCActivePower:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: C相有効電力
-  PSSDistributionCabinetPhaseCApparentPower:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: C相皮相電力
-  PSSDistributionCabinetPhaseCCurrent:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: C相電流
-  PSSDistributionCabinetPhaseCPowerFactor:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: C相の力率
-  PSSDistributionCabinetPhaseCReactivePower:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: C相無効電力
-  PSSDistributionCabinetPhaseCVoltage:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: C相電圧
-  PSSDistributionCabinetReverseActiveEnergy:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 逆有効エネルギー
-  PSSDistributionCabinetReverseReactiveEnergy:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 逆無効電力量
-  PSSDistributionCabinetTemperature:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 温度
-  PSSDistributionCabinetTotalActivePower:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 総有効電力
-  PSSDistributionCabinetTotalApparentPower:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 総皮相電力
-  PSSDistributionCabinetTotalPowerFactor:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 総力率
-  PSSDistributionCabinetTotalReactivePower:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 合計無効電力
-  PSSLAABLineVoltage:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: AB 線電圧
-  PSSLABCLineVoltage:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: BC ライン電圧
-  PSSLACALineVoltage:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: CA ライン電圧
-  PSSLAForwardActiveEnergy:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 前方アクティブエネルギー
-  PSSLAForwardReactiveEnergy:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 順方向無効電力量
-  PSSLAFrequency:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 頻度
-  PSSLAHumidity:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 湿度
   PSSLALowVoltageCabinetCircuitBreakerSwitchOff:
-    name: 低電圧キャビネット回路ブレーカーのスイッチがオフになる
-    name_on: LA の低電圧キャビネット回路ブレーカーをオフに切り替えます
     options:
       '0': アクションなし
       '1': スイッチオフ
   PSSLALowVoltageCabinetCircuitBreakerSwitchOn:
-    name: 低電圧キャビネットのサーキットブレーカーのスイッチがオンになる
-    name_on: LA の低電圧キャビネット回路ブレーカーをオンにします
     options:
       '0': アクションなし
       '1': スイッチオン
-  PSSLAPhaseAActivePower:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: A相有効電力
-  PSSLAPhaseAApparentPower:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: A相皮相電力
-  PSSLAPhaseACurrent:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: A相電流
-  PSSLAPhaseAPowerFactor:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: A相の力率
-  PSSLAPhaseAReactivePower:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: A相無効電力
-  PSSLAPhaseAVoltage:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: A相電圧
-  PSSLAPhaseBActivePower:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: B相有効電力
-  PSSLAPhaseBApparentPower:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: B相皮相電力
-  PSSLAPhaseBCurrent:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: B相電流
-  PSSLAPhaseBPowerFactor:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: B相の力率
-  PSSLAPhaseBReactivePower:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: B相無効電力
-  PSSLAPhaseBVoltage:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: B相電圧
-  PSSLAPhaseCActivePower:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: C相有効電力
-  PSSLAPhaseCApparentPower:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: C相皮相電力
-  PSSLAPhaseCCurrent:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: C相電流
-  PSSLAPhaseCPowerFactor:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: C相の力率
-  PSSLAPhaseCReactivePower:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: C相無効電力
-  PSSLAPhaseCVoltage:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: C相電圧
-  PSSLAReverseActiveEnergy:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 逆有効エネルギー
-  PSSLAReverseReactiveEnergy:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 逆無効電力量
-  PSSLATemperature:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 温度
-  PSSLATotalActivePower:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 総有効電力
-  PSSLATotalApparentPower:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 総皮相電力
-  PSSLATotalPowerFactor:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 総力率
-  PSSLATotalReactivePower:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 合計無効電力
-  PSSLBABLineVoltage:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: AB 線電圧
-  PSSLBBCLineVoltage:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: BC ライン電圧
-  PSSLBCALineVoltage:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: CA ライン電圧
-  PSSLBForwardActiveEnergy:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 前方アクティブエネルギー
-  PSSLBForwardReactiveEnergy:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 順方向無効電力量
-  PSSLBFrequency:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 頻度
-  PSSLBHumidity:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 湿度
   PSSLBLowVoltageCabinetCircuitBreakerSwitchOff:
-    name: 低電圧キャビネット回路ブレーカーのスイッチがオフになる
-    name_on: スイッチ LB 低電圧キャビネット回路ブレーカーをオフにする
     options:
       '0': アクションなし
       '1': スイッチオフ
   PSSLBLowVoltageCabinetCircuitBreakerSwitchOn:
-    name: 低電圧キャビネットのサーキットブレーカーのスイッチがオンになる
-    name_on: スイッチ LB 低電圧キャビネット回路ブレーカーをオンにする
     options:
       '0': アクションなし
       '1': スイッチオン
-  PSSLBPhaseAActivePower:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: A相有効電力
-  PSSLBPhaseAApparentPower:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: A相皮相電力
-  PSSLBPhaseACurrent:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: A相電流
-  PSSLBPhaseAPowerFactor:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: A相の力率
-  PSSLBPhaseAReactivePower:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: A相無効電力
-  PSSLBPhaseAVoltage:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: A相電圧
-  PSSLBPhaseBActivePower:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: B相有効電力
-  PSSLBPhaseBApparentPower:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: B相皮相電力
-  PSSLBPhaseBCurrent:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: B相電流
-  PSSLBPhaseBPowerFactor:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: B相の力率
-  PSSLBPhaseBReactivePower:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: B相無効電力
-  PSSLBPhaseBVoltage:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: B相電圧
-  PSSLBPhaseCActivePower:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: C相有効電力
-  PSSLBPhaseCApparentPower:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: C相皮相電力
-  PSSLBPhaseCCurrent:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: C相電流
-  PSSLBPhaseCPowerFactor:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: C相の力率
-  PSSLBPhaseCReactivePower:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: C相無効電力
-  PSSLBPhaseCVoltage:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: C相電圧
-  PSSLBReverseActiveEnergy:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 逆有効エネルギー
-  PSSLBReverseReactiveEnergy:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 逆無効電力量
-  PSSLBTemperature:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 温度
-  PSSLBTotalActivePower:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 総有効電力
-  PSSLBTotalApparentPower:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 総皮相電力
-  PSSLBTotalPowerFactor:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 総力率
-  PSSLBTotalReactivePower:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 合計無効電力
   PSSMVCabinetG3CircuitBreakerSwitchOff:
-    name: G3 サーキットブレーカーのスイッチがオフになる
-    name_on: MV キャビネット G3 サーキットブレーカーをオフに切り替えます
     options:
       '0': アクションなし
       '1': スイッチオフ
   PSSMVCabinetG3CircuitBreakerSwitchOn:
-    name: G3 サーキットブレーカーのスイッチがオン
-    name_on: MV キャビネット G3 サーキットブレーカーをオンにします
     options:
       '0': アクションなし
       '1': スイッチオン
-  PSSMVFrequency:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 頻度
-  PSSMVG1CableL1PhaseTemperature:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: G1 ケーブル L1 相温度
-  PSSMVG1CableL2PhaseTemperature:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: G1 ケーブル L2 相温度
-  PSSMVG1CableL3PhaseTemperature:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: G1 ケーブル L3 相温度
-  PSSMVG2CableL1PhaseTemperature:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: G2 ケーブル L1 相温度
-  PSSMVG2CableL2PhaseTemperature:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: G2 ケーブル L2 相温度
-  PSSMVG2CableL3PhaseTemperature:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: G2 ケーブル L3 相温度
-  PSSMVG3CableL1PhaseTemperature:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: G3 ケーブル L1 相温度
-  PSSMVG3CableL2PhaseTemperature:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: G3 ケーブル L2 相温度
-  PSSMVG3CableL3PhaseTemperature:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: G3 ケーブル L3 相温度
-  PSSMVHumidity:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 湿度
-  PSSMVPhaseACurrent:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: A相電流
-  PSSMVPhaseBCurrent:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: B相電流
-  PSSMVPhaseCCurrent:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: C相電流
-  PSSMVTemperature:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 温度
-  PSSMVZeroSequenceCurrent:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: ゼロ相電流
-  PSSModelType:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: モデルタイプ
-  PSSSerialNumber:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: シリアルナンバー
   PSSTeleindication1:
     alarm:
       '0': 計測制御装置総合トリップ
@@ -2325,10 +1612,6 @@ class:
       '13': 低圧室保守扉開放トリップ
       '14': 変電室ドアオープントリップ
       '15': LA 低電圧キャビネット過熱トリップ
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 遠隔指示1
   PSSTeleindication2:
     alarm:
       '0': LB 低電圧キャビネット過熱トリップ
@@ -2347,10 +1630,6 @@ class:
       '13': LA 低電圧キャビネット過熱アラーム
       '14': LB 低電圧キャビネット過熱アラーム
       '15': 高圧室内温度過昇警報
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 遠隔指示2
   PSSTeleindication3:
     alarm:
       '0': LA 低電圧キャビネット IMD 事前警報
@@ -2369,10 +1648,6 @@ class:
       '13': 中圧キャビネット G3 サーキットブレーカーのスイッチオン
       '14': 中圧キャビネット G3 サーキットブレーカーのスイッチオフ
       '15': 中圧キャビネット G3 断路器スイッチのスイッチオン
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 遠隔指示3
   PSSTeleindication4:
     alarm:
       '0': 中電圧キャビネット G3 断路器スイッチ スイッチオフ
@@ -2391,10 +1666,6 @@ class:
       '13': 低圧室LA操作扉開
       '14': 低圧室LB操作扉開
       '15': 高圧室のドアが開いています
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 遠隔指示4
   PSSTeleindication5:
     alarm:
       '0': 中電圧キャビネット G1 ケーブル L1 相過熱
@@ -2408,20 +1679,6 @@ class:
       '8': 中電圧キャビネット G3 ケーブル L3 相過熱
       '9': 高圧保護 一般保護
       '10': 高圧保護一般警報
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 遠隔指示5
-  PSSTransformerOilSurfaceTemperature:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 油面温度
-  PSSTransformerWindingTemperature:
-    attributes:
-      source: Modbusレジスタ {address}
-      source_range: Modbusレジスタ {start}-{end}
-    name: 巻線温度
   PVCurrentSensor:
     attributes:
       source: Modbusレジスタ {address}
@@ -2431,7 +1688,7 @@ class:
     name: PVインバータ
   PVMaxPowerLimit:
     attributes:
-      comment: プラント内の PV ストリングの最大出力電力は、このセンサーで設定された値を超えてはなりません{active_config}
+      comment: プラント内のPVストリングの最大出力電力は、このセンサーで設定された値を超えてはなりません。{self}
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: PV最大電力制限
@@ -2725,6 +1982,12 @@ class:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: 無効電力固定調整目標値
+  ReactivePowerRegulationGradient:
+    attributes:
+      comment: 範囲：[0,5000]。1秒ごとに調整される定格出力の割合
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
+    name: 無効電力制御勾配
   ReadOnlySensor:
     attributes:
       source: Modbusレジスタ {address}
@@ -2758,6 +2021,12 @@ class:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: リモートEMS制限
+  RemoteEMSPowerLimitGlobalEnable:
+    attributes:
+      comment: '有効にすると、EMSの動作モードにかかわらず、「最大充電制限（40032）」、「最大放電制限（40034）」、および「PV最大電力制限（40036）」が適用されます。 無効にしている場合、これらはEMS動作モード（30003）が「リモートEMS」である場合にのみ有効になります。デフォルト：無効'
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
+    name: リモートEMS電力制限のグローバル有効化
   RepeatedStatePublishInterval:
     attributes:
       comment: 繰り返し状態が公開される間隔（秒単位）。（繰り返し状態は、取得された状態が前回の読み取り結果と同一である場合に発生します。）<0= nunca 0=常に >0=間隔
@@ -2767,6 +2036,11 @@ class:
       source: Modbusレジスタ {address}
       source_range: Modbusレジスタ {start}-{end}
     name: 予約
+  Reserved30287:
+    attributes:
+      source: Modbusレジスタ {address}
+      source_range: Modbusレジスタ {start}-{end}
+    name: 予約済み
   Reserved30610:
     attributes:
       source: Modbusレジスタ {address}
@@ -3029,8 +2303,6 @@ class:
     attributes:
       source: PV電力 + サードパーティPV電力
     name: 合計PV電力
-  Transformer:
-    name: '{model_id} {serial} 変圧器'
   WriteOnlySensor:
     name_off: 電源オフ
     name_on: 電源オン
@@ -3146,7 +2418,7 @@ cli:
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY:
     help: 'Sigenergy ModbusホストとデバイスIDの自動検出を試みます。「once」が指定されている場合、既存の自動検出結果が見つからない場合にのみ自動検出が行われます。「force」の場合、以前に検出されたModbusホストとデバイスIDを上書きします。指定しない場合、自動検出は無効になります。'
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_EXCLUDE:
-    help: 自動検出から除外するデバイス クラス名のカンマ区切りのリスト。デフォルトは「PID,PSS」です。
+    help: 自動検出から除外するデバイスクラス名のカンマ区切りリスト。デフォルトでは、除外されるデバイスはありません。
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_MAX_DEVICE_ID:
     help: ネットワーク上の Sigenergy デバイスの自動検出を実行するときに使用する最大デバイス ID。デフォルトは 10 で、1 ～ 246 (両端の値を含む) の範囲にする必要があります。
   SIGENERGY2MQTT_MODBUS_AUTO_DISCOVERY_NETWORKS:
@@ -3171,12 +2443,8 @@ cli:
     help: スキップされた Modbus リクエストをログに記録します。
   SIGENERGY2MQTT_MODBUS_NO_REMOTE_EMS:
     help: 'リモートEMS統合用の読み書きセンサーを公開しない。'
-  SIGENERGY2MQTT_MODBUS_PID_DEVICE_ID:
-    help: Sigenergy PID Modbus デバイス ID。複数のデバイス ID をカンマで区切って指定できます。
   SIGENERGY2MQTT_MODBUS_PORT:
     help: 'Sigenergy機器のModbusポート番号（デフォルト: 502）'
-  SIGENERGY2MQTT_MODBUS_PSS_DEVICE_ID:
-    help: Sigenergy PSS Modbus デバイス ID。複数のデバイス ID をカンマで区切って指定できます。
   SIGENERGY2MQTT_MODBUS_READ_ONLY:
     help: '読み取り専用センサーのみMQTTに公開。'
   SIGENERGY2MQTT_MODBUS_RETRIES:
@@ -3204,7 +2472,7 @@ cli:
   SIGENERGY2MQTT_MQTT_USERNAME:
     help: MQTTブローカーの有効なユーザー名
   SIGENERGY2MQTT_NO_EMS_MODE_CHECK:
-    help: 'リモートEMS制御モードが「コマンド充電/放電」でない場合に、ESSの最大充電/放電およびPVの最大電力制限を無効にする検証をオフにします。'
+    help: '「リモートEMS制御モード」が「コマンド充電／放電」でない場合、ESS最大充電／放電およびPV最大出力の制限を無効にする検証を無効にします。 これらの制限がリモートEMSに依存しない場合（ファームウェアバージョンSPC113～SPC116、またはファームウェアがリモートEMS電力制限のグローバル有効化（ModbusプロトコルV2.10）をサポートしている場合）、このオプションは無視されます。'
   SIGENERGY2MQTT_NO_METRICS:
     help: '非推奨：メトリクスの公開はデフォルトで無効になっています。有効にするには、--publish-metrics オプションを使用してください。'
   SIGENERGY2MQTT_PERSISTENCE_CACHE_WARMUP_TIMEOUT:

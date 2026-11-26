@@ -157,7 +157,7 @@ class Settings(BaseSettings):
     modbus_auto_discovery_ping_timeout: float = Field(0.5, alias="modbus-auto-discovery-ping-timeout")
     modbus_auto_discovery_retries: int = Field(0, alias="modbus-auto-discovery-retries")
     modbus_auto_discovery_networks: list[str] = Field(default_factory=list, alias="modbus-auto-discovery-networks")
-    modbus_auto_discovery_exclude: list[str] = Field(default_factory=lambda: ["PID", "PSS"], alias="modbus-auto-discovery-exclude")
+    modbus_auto_discovery_exclude: list[str] = Field(default_factory=list, alias="modbus-auto-discovery-exclude")
     modbus_auto_discovery_max_device_id: int = Field(10, alias="modbus-auto-discovery-max-device-id")
 
     # ── Top-level scalars ────────────────────────────────────────────────────
@@ -308,13 +308,15 @@ class Settings(BaseSettings):
     @classmethod
     def validate_excludes(cls, v: list[str] | str | None) -> list[str]:
         if v is None:
-            return ["PID", "PSS"]
+            return []
         if isinstance(v, str):
             v = [x.strip() for x in v.split(",") if x.strip()]
         validated: list[str] = []
         for entry in v:
-            if entry in ["ACCharger", "DCCharger", "PID", "PSS"]:
+            if entry in ["ACCharger", "DCCharger"]:
                 validated.append(entry)
+            elif entry in ["PID", "PSS"]:
+                logger.warning("Ignoring '%s' in modbus-auto-discovery-exclude: %s devices are no longer supported (removed from Sigenergy Modbus Protocol V2.10)", entry, entry)
             else:
                 raise ValueError(f"Invalid Device class name '{entry}'")
         return validated

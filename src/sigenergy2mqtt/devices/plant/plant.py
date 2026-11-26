@@ -160,11 +160,26 @@ class PowerPlant(ModbusDevice):
 
         self._add_sensor(remote_ems)
         self._add_sensor(remote_ems_mode)
+
+        # From protocol V2.10, ESS max charging/discharging limit and PV max power limit (40032~40036) are always writable and
+        # take effect when Remote EMS power limit global enable (40162) is 1 or EMS work mode (30003) is Remote EMS (7).
+        # Without register 40162 (before V2.10, or V2.10 detected from its other registers), Remote EMS must be enabled with the
+        # appropriate Remote EMS control mode, except on SPC113 to SPC116 where the limits applied globally (protocol V2.9).
+        # SPC117 reverted to requiring Remote EMS, consistent with V2.10 with 40162 disabled.
+        global_enable: rw.RemoteEMSPowerLimitGlobalEnable | None = None
+        if self.protocol_version >= ProtocolVersion.V2_10 and self._device_type.has_remote_ems_power_limit_global_enable:
+            global_enable = rw.RemoteEMSPowerLimitGlobalEnable(self.plant_index, remote_ems)
+            if not self._add_sensor(global_enable):
+                remote_ems.power_limit_global_enable = None
+                global_enable = None
+        gate_limits = global_enable is None and not fw.has_global_power_limits
+        limit_remote_ems = remote_ems if gate_limits else None
+        limit_remote_ems_mode = remote_ems_mode if gate_limits else None
         self._add_sensor(rw.ActivePowerFixedAdjustmentTargetValue(self.plant_index, remote_ems, remote_ems_mode))
         self._add_sensor(rw.ReactivePowerFixedAdjustmentTargetValue(self.plant_index, remote_ems, remote_ems_mode))
         self._add_sensor(rw.ActivePowerPercentageAdjustmentTargetValue(self.plant_index, remote_ems, remote_ems_mode))
 
-        self._add_sensor(rw.PVMaxPowerLimit(self.plant_index, remote_ems if fw.service_pack < 113 else None, remote_ems_mode if fw.service_pack < 113 else None))
+        self._add_sensor(rw.PVMaxPowerLimit(self.plant_index, limit_remote_ems, limit_remote_ems_mode, global_enable))
 
         self._add_sensor(rw.QSAdjustmentTargetValue(self.plant_index, remote_ems, remote_ems_mode))
         self._add_sensor(rw.PowerFactorAdjustmentTargetValue(self.plant_index, remote_ems, remote_ems_mode))
@@ -215,8 +230,8 @@ class PowerPlant(ModbusDevice):
             self._add_sensor(backup_soc)
             self._add_sensor(charge_soc)
             self._add_sensor(discharge_soc)
-            self._add_sensor(rw.MaxChargingLimit(self.plant_index, remote_ems if fw.service_pack < 113 else None, remote_ems_mode if fw.service_pack < 113 else None, cast(float, rcp_value)))
-            self._add_sensor(rw.MaxDischargingLimit(self.plant_index, remote_ems if fw.service_pack < 113 else None, remote_ems_mode if fw.service_pack < 113 else None, cast(float, rdp_value)))
+            self._add_sensor(rw.MaxChargingLimit(self.plant_index, limit_remote_ems, limit_remote_ems_mode, cast(float, rcp_value), global_enable))
+            self._add_sensor(rw.MaxDischargingLimit(self.plant_index, limit_remote_ems, limit_remote_ems_mode, cast(float, rdp_value), global_enable))
             self._add_sensor(total_charge_energy)
             self._add_sensor(total_discharge_energy)
             self._add_sensor(derived.BatteryChargingPower(self.plant_index, battery_power))
@@ -241,6 +256,7 @@ class PowerPlant(ModbusDevice):
         self._add_sensor(general_load_power)
         self._add_sensor(total_load_power)
         self._add_sensor(rw.ActivePowerRegulationGradient(self.plant_index))
+        self._add_sensor(rw.ReactivePowerRegulationGradient(self.plant_index))
 
         self._add_sensor(ro.CurrentControlCommandValue(self.plant_index))
         self._add_sensor(ro.PlantAlarms(self.plant_index, ro.Alarm6(self.plant_index), ro.Alarm7(self.plant_index)))
@@ -285,5 +301,6 @@ class PowerPlant(ModbusDevice):
 
         # Add the reserved registers to optimise sensor scanning
         self._add_sensor(ro.Reserved30073(self.plant_index))
+        self._add_sensor(ro.Reserved30287(self.plant_index))
         self._add_sensor(rw.Reserved40026(self.plant_index))
         self._add_sensor(rw.Reserved40069(self.plant_index))

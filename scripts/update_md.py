@@ -641,8 +641,7 @@ async def compare_sensor_instances() -> None:
         if isinstance(k, int) and k not in typqxq_instances:
             for i in v:
                 sensor = sensor_instances[i]
-                parent_class_name = sensor.parent_device.__class__.__name__
-                if isinstance(sensor, ReservedSensor) or parent_class_name in ("PSS", "PID", "LA", "LB", "MV", "Transformer", "DistributionCabinet"):
+                if isinstance(sensor, ReservedSensor):
                     continue
                 logger.warning(f"V{sensor.protocol_version} Register {k} ({sensor.name}) found in sensor instances but not defined in TypQxQ")
 
