@@ -567,8 +567,6 @@ class:
     attributes:
       comment: Modbus DC充電器の「Running State」と同じコードを使用していると想定されていますが、確認されているのは0～3のみです。
     name: ステータス
-  DcChargerSurplusPvPriority:
-    name: 余剰太陽光発電の優先順位
   DcChargerV2xDischargeCutoffSoc:
     name: V2X 放電遮断 SOC
   DcChargerV2xDischargeEnabled:
@@ -2196,6 +2194,10 @@ class:
     name: 停止時間
   SigenCloudDevice:
     name: '{model_name} {sn}'
+  SitePvSurplusPriority:
+    attributes:
+      comment: これは1台の充電器だけでなく、サイト全体に適用されます。
+    name: サイトの太陽光発電余剰電力の優先順位
   SmartLoadPower:
     attributes:
       source: Modbusレジスタ {address}

@@ -567,8 +567,6 @@ class:
     attributes:
       comment: 假设使用与 Modbus 直流充电器运行状态相同的代码；目前仅确认了 0-3 这几个状态。
     name: 状态
-  DcChargerSurplusPvPriority:
-    name: 剩余光伏电能优先级
   DcChargerV2xDischargeCutoffSoc:
     name: V2X 放电截止 SOC
   DcChargerV2xDischargeEnabled:
@@ -2196,6 +2194,10 @@ class:
     name: 关机时间
   SigenCloudDevice:
     name: '{model_name} {sn}'
+  SitePvSurplusPriority:
+    attributes:
+      comment: 适用于整个站点，而不仅仅是一个充电器。
+    name: 站点光伏富余电能优先级
   SmartLoadPower:
     attributes:
       source: Modbus 寄存器 {address}

@@ -567,8 +567,6 @@ class:
     attributes:
       comment: Er wordt aangenomen dat dezelfde codes worden gebruikt als bij de Modbus DC-lader Running State; alleen 0-3 zijn bevestigd.
     name: Status  # verify:ignore
-  DcChargerSurplusPvPriority:
-    name: Prioriteit voor overtollige PV-stroom
   DcChargerV2xDischargeCutoffSoc:
     name: V2X-ontladingsbeperking SOC
   DcChargerV2xDischargeEnabled:
@@ -2196,6 +2194,10 @@ class:
     name: Uitschakeltijd
   SigenCloudDevice:
     name: '{model_name} {sn}'
+  SitePvSurplusPriority:
+    attributes:
+      comment: Geldt voor de gehele site, niet alleen voor één lader.
+    name: Prioriteit van PV-overschot op locatie
   SmartLoadPower:
     attributes:
       source: Modbus-register {address}

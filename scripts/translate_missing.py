@@ -40,6 +40,9 @@ Usage:
 Options:
     --dry-run        Print what would be changed without writing files or
                       calling the API.
+    --check          Only report whether any values are still untranslated,
+                      without writing files or calling the API. Exits 0 when
+                      there are none and 3 when there are (1 means an error).
     --lang LANG      Limit to one or more language codes (e.g. --lang de fr).
     --verbose        Also report English keys that are missing from target files.
     --cache PATH     Path to persistent JSON translation cache
@@ -673,9 +676,18 @@ def translate_language(
 # ---------------------------------------------------------------------------
 
 
+#: Exit status of --check when untranslated values were found.
+EXIT_UNTRANSLATED = 3
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Translate missing values in non-English YAML translation files using DeepL.")
     parser.add_argument("--dry-run", action="store_true", help="Preview changes without writing files or calling the API.")
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help=f"Only report whether any values are untranslated (exit 0 if none, {EXIT_UNTRANSLATED} if some), without writing files or calling the API.",
+    )
     parser.add_argument("--lang", nargs="+", metavar="LANG", help="Limit to specific language code(s), e.g. --lang de fr.")
     parser.add_argument("--verbose", action="store_true", help="Also report English keys that are missing from target files.")
     parser.add_argument("--cache", metavar="PATH", default=str(DEFAULT_CACHE_PATH), help=f"Path to persistent JSON translation cache (default: {DEFAULT_CACHE_PATH}).")
@@ -704,7 +716,7 @@ def main() -> None:
         print("ERROR: No matching languages found.", file=sys.stderr)
         sys.exit(1)
 
-    if not args.dry_run and not args.api_key:
+    if not args.dry_run and not args.check and not args.api_key:
         print("ERROR: No DeepL API key given. Pass --api-key or set DEEPL_AUTH_KEY.", file=sys.stderr)
         sys.exit(1)
 
@@ -734,6 +746,11 @@ def main() -> None:
         job = LanguageJob(stem, code)
         gather_language(job, en_data, cache, args.verbose)
         jobs.append(job)
+
+    if args.check:
+        total_untranslated = sum(len(j.untranslated) for j in jobs)
+        print(f"\n--- {total_untranslated} untranslated value(s) across {len(jobs)} language file(s). ---")
+        sys.exit(EXIT_UNTRANSLATED if total_untranslated else 0)
 
     total_new_chars = sum(j.billable_chars for j in jobs)
     print(f"\n--- Pre-flight estimate: {total_new_chars} new character(s) would be billed across {len(jobs)} language file(s). ---")

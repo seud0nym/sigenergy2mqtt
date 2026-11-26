@@ -521,9 +521,9 @@ async def get_sensor_instances(
             DcChargerDiscovery(
                 DC_CHARGER_SERIAL,
                 charge_modes=tuple(int(mode) for mode in cloud_server.dc_supported_charge_modes),
-                surplus_pv_devices=tuple(SigenergyCloudClient.surplus_pv_priority_order(cloud_server.energy_profile_setting)),
             ),
         ),
+        surplus_pv_devices=tuple(SigenergyCloudClient.surplus_pv_priority_order(cloud_server.energy_profile_setting)),
     )
     cloud_control = CloudControl(plant_index, cloud_port, cloud_discovery)
 
