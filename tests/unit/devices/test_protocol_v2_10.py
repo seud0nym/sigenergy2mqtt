@@ -320,6 +320,8 @@ def test_simulator_grid_outage_zeroes_and_restores_grid_sensor_registers():
             (voltage.address, [0, 23000]),
             (GridStatus.ADDRESS, [0]),
         ]
+        # The outage must not leave the address write-locked, or live MQTT updates would be ignored afterwards
+        assert voltage.address not in block._written_addresses
 
     asyncio.run(_run())
 

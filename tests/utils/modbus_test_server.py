@@ -2153,17 +2153,20 @@ async def simulate_grid_outage(data_block: CustomDataBlock, wait_for_seconds: in
             await asyncio.sleep(wait_for_seconds)
             _logger.info(f"Simulating grid outage for device address {data_block.device_address} for {duration_seconds} seconds...")
             await data_block.force_set_registers(GridStatus.ADDRESS, [1])
-            saved: dict[int, list[int]] = {}
+            saved: dict[int, tuple[list[int], bool]] = {}  # address -> (registers, previously write-locked)
             for address in GRID_SENSOR_PHASE_CURRENT_ADDRESSES + GRID_SENSOR_PHASE_VOLTAGE_ADDRESSES:
                 sensor = data_block.addresses.get(address)
                 if sensor is not None and sensor.publishable:
                     registers = await data_block.get_registers(address, sensor.count)
                     if registers is not None:
-                        saved[address] = registers
+                        saved[address] = (registers, address in data_block._written_addresses)
                         await data_block.force_set_registers(address, [0] * sensor.count)
             await asyncio.sleep(duration_seconds)
-            for address, registers in saved.items():
+            for address, (registers, was_locked) in saved.items():
                 await data_block.force_set_registers(address, registers)
+                if not was_locked:
+                    # force_set_registers write-locks the address; unlock it so live MQTT updates resume after the outage
+                    data_block._written_addresses.discard(address)
             await data_block.force_set_registers(GridStatus.ADDRESS, [0])
             _logger.info(f"Grid outage simulation ended for device address {data_block.device_address}.")
             if not repeated:
