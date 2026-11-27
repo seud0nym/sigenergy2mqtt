@@ -1,6 +1,14 @@
 <!-- git log [since tag]..HEAD --oneline -->
 # Changelog 
 
+[Unreleased]
+
+### Changed
+
+- Updated pycryptodome from 4.5.0 to 4.6.0
+
+---
+
 ## [2026.11.26] - 2026-11-26
 
 > [!IMPORTANT]
